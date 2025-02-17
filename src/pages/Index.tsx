@@ -1,18 +1,54 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { DocumentCard } from "@/components/DocumentCard";
 import { DocumentViewer } from "@/components/DocumentViewer";
+import { Auth } from "@/components/Auth";
 import { Plus, Search } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+  const [session, setSession] = useState<any>(null);
+  const [documents, setDocuments] = useState<any[]>([]);
 
-  const recentDocuments = [
-    { title: "Proof of Claim #123", type: "Legal Document", date: "Updated 2h ago" },
-    { title: "Financial Statement Q1", type: "Financial", date: "Updated 1d ago" },
-    { title: "Case Summary Report", type: "Report", date: "Updated 3d ago" },
-  ];
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session) {
+      fetchDocuments();
+    }
+  }, [session]);
+
+  const fetchDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    }
+  };
+
+  if (!session) {
+    return <Auth />;
+  }
 
   return (
     <div className="min-h-screen bg-background animate-fade-in">
@@ -20,10 +56,20 @@ const Index = () => {
         {!selectedDocument ? (
           <>
             <div className="mb-8 space-y-4">
-              <h1 className="text-4xl font-semibold tracking-tight">Document Management</h1>
-              <p className="text-lg text-muted-foreground">
-                Upload, organize, and manage your documents efficiently
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-4xl font-semibold tracking-tight">Document Management</h1>
+                  <p className="text-lg text-muted-foreground">
+                    Upload, organize, and manage your documents efficiently
+                  </p>
+                </div>
+                <button
+                  onClick={() => supabase.auth.signOut()}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-[2fr,1fr]">
@@ -44,13 +90,13 @@ const Index = () => {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  {recentDocuments.map((doc, index) => (
+                  {documents.map((doc) => (
                     <DocumentCard
-                      key={index}
+                      key={doc.id}
                       title={doc.title}
                       type={doc.type}
-                      date={doc.date}
-                      onClick={() => setSelectedDocument(doc.title)}
+                      date={`Updated ${new Date(doc.updated_at).toLocaleDateString()}`}
+                      onClick={() => setSelectedDocument(doc.id)}
                     />
                   ))}
                 </div>
@@ -73,9 +119,11 @@ const Index = () => {
               >
                 ← Back to Documents
               </button>
-              <h2 className="text-xl font-semibold">{selectedDocument}</h2>
+              <h2 className="text-xl font-semibold">
+                {documents.find(d => d.id === selectedDocument)?.title}
+              </h2>
             </div>
-            <DocumentViewer />
+            <DocumentViewer documentId={selectedDocument} />
           </div>
         )}
       </main>
