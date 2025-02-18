@@ -1,9 +1,14 @@
 
-import { useState } from 'react';
-import { Calendar, Plus, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar as CalendarIcon, Plus, X, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
 import { DocumentDetails, Deadline } from './types';
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface DeadlineManagerProps {
   document: DocumentDetails;
@@ -12,6 +17,8 @@ interface DeadlineManagerProps {
 
 export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDeadlineUpdated }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedTime, setSelectedTime] = useState<string>();
   const [newDeadline, setNewDeadline] = useState<Deadline>({
     title: '',
     dueDate: '',
@@ -19,22 +26,63 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
   });
   const { toast } = useToast();
 
+  // Check for approaching deadlines
+  useEffect(() => {
+    const checkDeadlines = () => {
+      const now = new Date();
+      document.deadlines?.forEach(deadline => {
+        const dueDate = new Date(deadline.dueDate);
+        const hoursDiff = (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+        if (hoursDiff <= 24 && hoursDiff > 23) {
+          toast({
+            title: "24 Hour Alert",
+            description: "Alert: This File Must Be Done in 24 hours",
+            duration: 10000,
+          });
+        } else if (hoursDiff <= 4 && hoursDiff > 3) {
+          toast({
+            title: "4 Hour Alert",
+            description: "Alert: This File Must Be Done in 4 hours",
+            duration: 10000,
+          });
+        }
+      });
+    };
+
+    const interval = setInterval(checkDeadlines, 1000 * 60); // Check every minute
+    return () => clearInterval(interval);
+  }, [document.deadlines, toast]);
+
+  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
+    const hour = Math.floor(i / 4);
+    const minute = (i % 4) * 15;
+    return format(new Date().setHours(hour, minute), 'HH:mm');
+  });
+
   const handleAddDeadline = async () => {
-    if (!newDeadline.title || !newDeadline.dueDate) {
+    if (!selectedDate || !selectedTime || !newDeadline.title) {
       toast({
         variant: "destructive",
         title: "Invalid deadline",
-        description: "Please provide both a title and due date"
+        description: "Please provide a title, date, and time"
       });
       return;
     }
 
     try {
+      const deadlineDate = new Date(selectedDate);
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      deadlineDate.setHours(hours, minutes);
+
       const currentDeadlines = document.deadlines || [];
       const { error } = await supabase
         .from('documents')
         .update({
-          deadlines: [...currentDeadlines, newDeadline]
+          deadlines: [...currentDeadlines, {
+            ...newDeadline,
+            dueDate: deadlineDate.toISOString()
+          }]
         })
         .eq('id', document.id);
 
@@ -47,6 +95,8 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
 
       setIsAdding(false);
       setNewDeadline({ title: '', dueDate: '', description: '' });
+      setSelectedDate(undefined);
+      setSelectedTime(undefined);
       onDeadlineUpdated();
     } catch (error: any) {
       toast({
@@ -108,12 +158,57 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
             value={newDeadline.title}
             onChange={(e) => setNewDeadline({ ...newDeadline, title: e.target.value })}
           />
-          <input
-            type="datetime-local"
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            value={newDeadline.dueDate}
-            onChange={(e) => setNewDeadline({ ...newDeadline, dueDate: e.target.value })}
-          />
+
+          <div className="grid gap-2">
+            <label className="text-sm">Date:</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className={cn(
+                    "w-full justify-start text-left font-normal rounded-md border bg-background px-3 py-2 text-sm",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="grid gap-2">
+            <label className="text-sm">Time:</label>
+            <Select onValueChange={setSelectedTime}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select time">
+                  {selectedTime ? (
+                    <div className="flex items-center">
+                      <Clock className="mr-2 h-4 w-4" />
+                      {selectedTime}
+                    </div>
+                  ) : (
+                    "Select time"
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {timeOptions.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <textarea
             placeholder="Description (optional)"
             className="w-full rounded-md border bg-background px-3 py-2 text-sm"
