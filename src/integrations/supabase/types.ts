@@ -79,6 +79,7 @@ export type Database = {
       documents: {
         Row: {
           created_at: string
+          deadlines: Json[] | null
           id: string
           size: number | null
           storage_path: string | null
@@ -90,6 +91,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deadlines?: Json[] | null
           id?: string
           size?: number | null
           storage_path?: string | null
@@ -101,6 +103,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deadlines?: Json[] | null
           id?: string
           size?: number | null
           storage_path?: string | null
