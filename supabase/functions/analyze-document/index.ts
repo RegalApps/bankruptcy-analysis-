@@ -16,9 +16,22 @@ serve(async (req) => {
 
   try {
     const { documentText, documentId } = await req.json();
+    
+    console.log('Received request with document ID:', documentId);
+    
+    if (!documentText) {
+      console.error('No document text provided');
+      throw new Error('Document text is required');
+    }
+
+    if (!documentId) {
+      console.error('No document ID provided');
+      throw new Error('Document ID is required');
+    }
 
     // Call OpenAI API to analyze the document
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('Calling OpenAI API...');
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
@@ -71,12 +84,23 @@ serve(async (req) => {
       }),
     });
 
-    const data = await response.json();
+    if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.json();
+      console.error('OpenAI API error:', errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await openAIResponse.json();
+    console.log('OpenAI response received:', data);
+
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response from OpenAI');
+    }
+
     const analysis = data.choices[0].message.content;
 
     // Parse the analysis to ensure it's valid JSON
     const parsedAnalysis = JSON.parse(analysis);
-
     console.log("Document analysis completed:", parsedAnalysis);
 
     // Store the analysis in the database
@@ -94,17 +118,29 @@ serve(async (req) => {
         }
       });
 
-    if (dbError) throw dbError;
+    if (dbError) {
+      console.error('Database error:', dbError);
+      throw dbError;
+    }
 
-    return new Response(JSON.stringify({ success: true, analysis: parsedAnalysis }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.log('Analysis stored successfully');
+
+    return new Response(
+      JSON.stringify({ success: true, analysis: parsedAnalysis }), 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
   } catch (error) {
     console.error('Error in analyze-document function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'An unexpected error occurred',
+        success: false 
+      }),
       { 
-        status: 500,
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
