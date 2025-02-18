@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -14,11 +14,22 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   onAnalysisComplete 
 }) => {
   const [analyzing, setAnalyzing] = useState(false);
+  const [session, setSession] = useState<any>(null);
   const { toast } = useToast();
   const publicUrl = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+  }, []);
+
   const handleAnalyzeDocument = async () => {
     try {
+      if (!session) {
+        throw new Error('You must be logged in to analyze documents');
+      }
+
       setAnalyzing(true);
       
       // First, get the document text content
@@ -42,11 +53,14 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         throw new Error('Could not find document record');
       }
 
-      // Call the analyze-document function with the correct document ID
+      // Call the analyze-document function with auth header
       const { data, error } = await supabase.functions.invoke('analyze-document', {
         body: { 
           documentText: cleanedText,
-          documentId: documents.id // Use the actual document ID from the database
+          documentId: documents.id
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
