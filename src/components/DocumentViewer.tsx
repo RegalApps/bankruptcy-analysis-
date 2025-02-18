@@ -26,14 +26,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         .select(`
           *,
           analysis:document_analysis(content),
-          comments:document_comments(
-            id, 
-            content, 
-            created_at, 
-            user_id,
-            user_email,
-            user_name
-          )
+          comments:document_comments(id, content, created_at, user_id)
         `)
         .eq('id', documentId)
         .single();
