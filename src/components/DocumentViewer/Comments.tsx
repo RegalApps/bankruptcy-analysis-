@@ -35,13 +35,18 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
       const userIds = [...new Set(comments.map(c => c.user_id))];
       userIds.forEach(async (userId) => {
         try {
-          const { data: { user }, error } = await supabase.auth.admin.getUserById(userId);
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', userId)
+            .single();
+
           if (error) throw error;
           
-          if (user?.email) {
+          if (data?.email) {
             setUserEmails(prev => ({
               ...prev,
-              [userId]: user.email
+              [userId]: data.email
             }));
           }
         } catch (error) {
