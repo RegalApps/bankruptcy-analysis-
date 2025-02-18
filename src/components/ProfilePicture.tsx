@@ -24,12 +24,11 @@ export const ProfilePicture = ({ url, onUpload, size = 150 }: ProfilePictureProp
         }
 
         const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) throw new Error("No user found");
 
         const file = event.target.files[0];
         const fileExt = file.name.split(".").pop();
-        const filePath = `${user.id}/${Math.random()}.${fileExt}`;
+        // Generate a unique path even without a user ID
+        const filePath = `${Math.random()}.${fileExt}`;
 
         const { error: uploadError, data } = await supabase.storage
           .from("avatars")

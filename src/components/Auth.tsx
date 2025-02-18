@@ -44,30 +44,27 @@ export const Auth = () => {
 
     try {
       if (isSignUp) {
+        // First, sign up the user
         const { error: signUpError, data } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: {
-              full_name: fullName,
-              user_id: userId,
-              avatar_url: avatarUrl,
-            },
-          },
         });
         
         if (signUpError) throw signUpError;
 
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            full_name: fullName,
-            user_id: userId,
-            avatar_url: avatarUrl,
-          })
-          .eq('id', data.user?.id);
+        // Then update their profile with the additional information
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              full_name: fullName,
+              user_id: userId,
+              avatar_url: avatarUrl,
+            })
+            .eq('id', data.user.id);
 
-        if (profileError) throw profileError;
+          if (profileError) throw profileError;
+        }
 
         toast({
           title: "Success",
