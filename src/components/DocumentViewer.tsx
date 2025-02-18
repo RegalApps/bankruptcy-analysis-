@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { FileText, MessageSquare, Send, AlertTriangle, CheckCircle } from "lucide-react";
+import { FileText, MessageSquare, Send, AlertTriangle, CheckCircle, Calendar } from "lucide-react";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -15,6 +14,19 @@ interface Comment {
   user_id: string;
 }
 
+interface DocumentAnalysis {
+  clientName: string;
+  trusteeName: string;
+  dateSigned: string;
+  formNumber: string;
+  documentType: string;
+  risks: {
+    type: string;
+    description: string;
+    severity: 'low' | 'medium' | 'high';
+  }[];
+}
+
 interface DocumentDetails {
   id: string;
   title: string;
@@ -23,6 +35,7 @@ interface DocumentDetails {
   storage_path: string;
   analysis?: {
     content: string;
+    extracted_info?: DocumentAnalysis;
   }[];
   comments?: Comment[];
 }
@@ -94,6 +107,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     }
   };
 
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'low':
+        return 'text-green-500';
+      case 'medium':
+        return 'text-yellow-500';
+      case 'high':
+        return 'text-red-500';
+      default:
+        return 'text-gray-500';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -109,6 +135,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       </div>
     );
   }
+
+  const extractedInfo = document.analysis?.[0]?.extracted_info;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -131,19 +159,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
               <div className="space-y-2 text-sm">
                 <div>
                   <span className="text-muted-foreground">Client Name:</span>
-                  <p>John Doe</p>
+                  <p>{extractedInfo?.clientName || 'Not extracted'}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Trustee Name:</span>
-                  <p>Jane Smith</p>
+                  <p>{extractedInfo?.trusteeName || 'Not extracted'}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Date Signed:</span>
-                  <p>March 15, 2024</p>
+                  <p>{extractedInfo?.dateSigned || 'Not extracted'}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Form Number:</span>
-                  <p>OSB-12345</p>
+                  <p>{extractedInfo?.formNumber || 'Not extracted'}</p>
                 </div>
               </div>
             </div>
@@ -151,15 +179,34 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
             <div className="p-4 rounded-md bg-muted">
               <h3 className="font-medium mb-2">Risk Assessment</h3>
               <div className="space-y-2">
-                <div className="flex items-center text-sm">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span>Document properly signed</span>
-                </div>
-                <div className="flex items-center text-sm">
-                  <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2" />
-                  <span>Missing date information</span>
-                </div>
+                {extractedInfo?.risks ? (
+                  extractedInfo.risks.map((risk, index) => (
+                    <div key={index} className="flex items-start space-x-2 text-sm">
+                      {risk.severity === 'high' ? (
+                        <AlertTriangle className={`h-4 w-4 ${getSeverityColor(risk.severity)} mt-0.5`} />
+                      ) : (
+                        <CheckCircle className={`h-4 w-4 ${getSeverityColor(risk.severity)} mt-0.5`} />
+                      )}
+                      <div>
+                        <p className="font-medium">{risk.type}</p>
+                        <p className="text-muted-foreground text-xs">{risk.description}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No risks identified</p>
+                )}
               </div>
+            </div>
+
+            <div className="p-4 rounded-md bg-muted">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium">Deadlines</h3>
+                <button className="text-sm text-primary hover:underline">
+                  <Calendar className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground">No deadlines set</p>
             </div>
           </div>
         </div>
@@ -181,12 +228,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           </div>
           
           <div className="aspect-[3/4] w-full bg-muted rounded-lg">
-            {document.analysis?.[0]?.content && (
-              <div className="p-4">
-                <h3 className="font-medium mb-2">Document Analysis</h3>
-                <p className="text-sm text-muted-foreground">{document.analysis[0].content}</p>
-              </div>
-            )}
+            <iframe
+              src={`${supabase.storage.from('documents').getPublicUrl(document.storage_path).data.publicUrl}`}
+              className="w-full h-full rounded-lg"
+              title="Document Preview"
+            />
           </div>
         </div>
       </div>
