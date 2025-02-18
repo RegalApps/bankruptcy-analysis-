@@ -34,11 +34,21 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
     if (comments?.length) {
       const userIds = [...new Set(comments.map(c => c.user_id))];
       userIds.forEach(async (userId) => {
-        const { data } = await supabase.auth.admin.getUserById(userId);
-        if (data?.user) {
+        try {
+          const { data: { user }, error } = await supabase.auth.admin.getUserById(userId);
+          if (error) throw error;
+          
+          if (user?.email) {
+            setUserEmails(prev => ({
+              ...prev,
+              [userId]: user.email
+            }));
+          }
+        } catch (error) {
+          console.error('Error fetching user email:', error);
           setUserEmails(prev => ({
             ...prev,
-            [userId]: data.user.email || 'Unknown User'
+            [userId]: 'Anonymous User'
           }));
         }
       });
@@ -99,7 +109,7 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">
-                    {userEmails[comment.user_id] || 'Loading...'}
+                    {userEmails[comment.user_id] || 'Anonymous User'}
                   </p>
                   <time className="text-xs text-muted-foreground">
                     {format(new Date(comment.created_at), "MMM d, yyyy 'at' h:mm a")}

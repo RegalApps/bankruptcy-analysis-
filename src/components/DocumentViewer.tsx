@@ -59,7 +59,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           filter: `document_id=eq.${documentId}`
         },
         () => {
-          fetchDocumentDetails(); // Refresh when new comments are added
+          fetchDocumentDetails();
         }
       )
       .subscribe();
