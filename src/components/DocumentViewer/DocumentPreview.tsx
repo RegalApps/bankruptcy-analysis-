@@ -30,12 +30,23 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '') // Remove control characters
         .replace(/```[^`]*```/g, '') // Remove code blocks
         .trim(); // Remove leading/trailing whitespace
-      
-      // Call the analyze-document function
+
+      // Get the document record to get its ID
+      const { data: documents, error: fetchError } = await supabase
+        .from('documents')
+        .select('id')
+        .eq('storage_path', storagePath)
+        .single();
+
+      if (fetchError) {
+        throw new Error('Could not find document record');
+      }
+
+      // Call the analyze-document function with the correct document ID
       const { data, error } = await supabase.functions.invoke('analyze-document', {
         body: { 
           documentText: cleanedText,
-          documentId: storagePath.split('/')[0] // Assuming the first part of the path is the document ID
+          documentId: documents.id // Use the actual document ID from the database
         }
       });
 
