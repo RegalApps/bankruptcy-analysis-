@@ -46,6 +46,27 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
   useEffect(() => {
     fetchDocumentDetails();
+
+    // Set up real-time subscription for comments
+    const channel = supabase
+      .channel('document_comments')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'document_comments',
+          filter: `document_id=eq.${documentId}`
+        },
+        () => {
+          fetchDocumentDetails(); // Refresh when new comments are added
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [documentId]);
 
   if (loading) {
