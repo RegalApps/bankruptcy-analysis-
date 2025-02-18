@@ -71,7 +71,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       </div>
 
       <div className="lg:col-span-6">
-        <DocumentPreview document={document} />
+        <DocumentPreview storagePath={document.storage_path} />
       </div>
 
       <div className="lg:col-span-3 space-y-6">
