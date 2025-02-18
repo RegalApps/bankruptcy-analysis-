@@ -3,6 +3,7 @@ import { useState } from "react";
 import { MessageSquare, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { format } from "date-fns";
 
 interface Comment {
   id: string;
@@ -25,13 +26,16 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
     if (!newComment.trim()) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { error } = await supabase
         .from('document_comments')
         .insert([
           {
             document_id: documentId,
             content: newComment,
-            user_id: (await supabase.auth.getUser()).data.user?.id
+            user_id: user.id
           }
         ]);
 
@@ -65,7 +69,7 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
           <div key={comment.id} className="p-3 rounded-md bg-muted">
             <p className="text-sm">{comment.content}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {new Date(comment.created_at).toLocaleDateString()}
+              {format(new Date(comment.created_at), "MMM d, yyyy 'at' h:mm a")}
             </p>
           </div>
         ))}
