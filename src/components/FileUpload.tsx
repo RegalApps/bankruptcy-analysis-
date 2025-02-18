@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Upload, File, Loader2 } from 'lucide-react';
+import { Upload, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
@@ -46,6 +46,10 @@ export const FileUpload = () => {
 
     setIsUploading(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       // Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).slice(2)}.${fileExt}`;
@@ -64,7 +68,8 @@ export const FileUpload = () => {
             type: file.type,
             size: file.size,
             storage_path: fileName,
-            url: data?.path || ''
+            url: data?.path || '',
+            user_id: user.id // Add the user_id to the document record
           }
         ]);
 
@@ -74,12 +79,12 @@ export const FileUpload = () => {
         title: "Success",
         description: "File uploaded successfully"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading file:', error);
       toast({
         variant: "destructive",
         title: "Upload failed",
-        description: "There was an error uploading your file"
+        description: error.message || "There was an error uploading your file"
       });
     } finally {
       setIsUploading(false);
