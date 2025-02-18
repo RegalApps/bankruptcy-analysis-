@@ -37,13 +37,13 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
         if (hoursDiff <= 24 && hoursDiff > 23) {
           toast({
             title: "24 Hour Alert",
-            description: "Alert: This File Must Be Done in 24 hours",
+            description: `Alert: ${deadline.title} must be done in 24 hours`,
             duration: 10000,
           });
         } else if (hoursDiff <= 4 && hoursDiff > 3) {
           toast({
             title: "4 Hour Alert",
-            description: "Alert: This File Must Be Done in 4 hours",
+            description: `Alert: ${deadline.title} must be done in 4 hours`,
             duration: 10000,
           });
         }
@@ -71,11 +71,19 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
     }
 
     try {
+      // Create a new date object combining the selected date and time
       const deadlineDate = new Date(selectedDate);
       const [hours, minutes] = selectedTime.split(':').map(Number);
       deadlineDate.setHours(hours, minutes);
 
+      // Ensure we have an array to work with
       const currentDeadlines = document.deadlines || [];
+      console.log('Current document state:', document);
+      console.log('Adding new deadline:', {
+        ...newDeadline,
+        dueDate: deadlineDate.toISOString()
+      });
+
       const { error } = await supabase
         .from('documents')
         .update({
@@ -86,7 +94,10 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
         })
         .eq('id', document.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -99,10 +110,11 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
       setSelectedTime(undefined);
       onDeadlineUpdated();
     } catch (error: any) {
+      console.error('Error adding deadline:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add deadline"
+        description: error.message || "Failed to add deadline"
       });
     }
   };
@@ -128,10 +140,11 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
 
       onDeadlineUpdated();
     } catch (error: any) {
+      console.error('Error removing deadline:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to remove deadline"
+        description: error.message || "Failed to remove deadline"
       });
     }
   };
