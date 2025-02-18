@@ -64,7 +64,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="lg:col-span-3 space-y-6">
-        <AnalysisPanel document={document} />
+        <AnalysisPanel 
+          document={document} 
+          onDeadlineUpdated={fetchDocumentDetails}
+        />
       </div>
 
       <div className="lg:col-span-6">

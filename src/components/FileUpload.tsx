@@ -49,7 +49,7 @@ export const FileUpload = () => {
       if (uploadError) throw uploadError;
 
       // Create document record in the database
-      const { error: dbError } = await supabase
+      const { error: dbError, data: documentData } = await supabase
         .from('documents')
         .insert([
           {
@@ -58,16 +58,41 @@ export const FileUpload = () => {
             size: file.size,
             storage_path: fileName,
             url: data?.path || '',
-            user_id: user.id // Add the user_id to the document record
+            user_id: user.id,
+            deadlines: []
           }
-        ]);
+        ])
+        .select()
+        .single();
 
       if (dbError) throw dbError;
 
-      toast({
-        title: "Success",
-        description: "File uploaded successfully"
-      });
+      // Trigger document analysis
+      const fileReader = new FileReader();
+      fileReader.onload = async (e) => {
+        const documentText = e.target?.result as string;
+        try {
+          const { error: analysisError } = await supabase.functions.invoke('analyze-document', {
+            body: { documentText }
+          });
+
+          if (analysisError) throw analysisError;
+
+          toast({
+            title: "Success",
+            description: "File uploaded and analysis started"
+          });
+        } catch (error: any) {
+          console.error('Error analyzing document:', error);
+          toast({
+            variant: "destructive",
+            title: "Analysis failed",
+            description: "Document uploaded but analysis failed"
+          });
+        }
+      };
+
+      fileReader.readAsText(file);
     } catch (error: any) {
       console.error('Error uploading file:', error);
       toast({
@@ -92,7 +117,7 @@ export const FileUpload = () => {
       {isUploading ? (
         <div className="flex items-center justify-center space-x-2 rounded-lg border-2 border-dashed p-4">
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-          <p className="text-sm text-gray-600">Uploading file...</p>
+          <p className="text-sm text-gray-600">Uploading and analyzing file...</p>
         </div>
       ) : (
         <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 hover:border-primary hover:bg-primary/5">

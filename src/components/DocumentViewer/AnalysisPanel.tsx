@@ -1,12 +1,14 @@
 
-import { FileText, AlertTriangle, CheckCircle, Calendar } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle } from "lucide-react";
 import { DocumentDetails } from "./types";
+import { DeadlineManager } from "./DeadlineManager";
 
 interface AnalysisPanelProps {
   document: DocumentDetails;
+  onDeadlineUpdated: () => void;
 }
 
-export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document }) => {
+export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadlineUpdated }) => {
   const extractedInfo = document.analysis?.[0]?.extracted_info;
 
   const getSeverityColor = (severity: string) => {
@@ -80,15 +82,10 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document }) => {
           </div>
         </div>
 
-        <div className="p-4 rounded-md bg-muted">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium">Deadlines</h3>
-            <button className="text-sm text-primary hover:underline">
-              <Calendar className="h-4 w-4" />
-            </button>
-          </div>
-          <p className="text-sm text-muted-foreground">No deadlines set</p>
-        </div>
+        <DeadlineManager 
+          document={document}
+          onDeadlineUpdated={onDeadlineUpdated}
+        />
       </div>
     </div>
   );
