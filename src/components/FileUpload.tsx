@@ -6,19 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
 
 export const FileUpload = () => {
-  const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
@@ -91,16 +80,6 @@ export const FileUpload = () => {
     }
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      await handleFileUpload(file);
-    }
-  };
-
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -109,45 +88,24 @@ export const FileUpload = () => {
   };
 
   return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className={cn(
-        "relative w-full h-48 border-2 border-dashed rounded-lg transition-colors duration-200 ease-in-out",
-        "flex items-center justify-center",
-        isDragging 
-          ? "border-primary bg-primary/5" 
-          : "border-gray-200 hover:border-primary"
-      )}
-    >
+    <div className="w-full">
       {isUploading ? (
-        <div className="text-center space-y-2">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400" />
+        <div className="flex items-center justify-center space-x-2 rounded-lg border-2 border-dashed p-4">
+          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
           <p className="text-sm text-gray-600">Uploading file...</p>
         </div>
       ) : (
-        <div className="text-center space-y-2">
-          <Upload className="mx-auto h-8 w-8 text-gray-400" />
-          <div className="flex text-sm text-gray-600">
-            <label
-              htmlFor="file-upload"
-              className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80"
-            >
-              <span>Upload a file</span>
-              <input 
-                id="file-upload" 
-                name="file-upload" 
-                type="file" 
-                className="sr-only"
-                onChange={handleFileInput}
-                accept=".pdf,.doc,.docx"
-              />
-            </label>
-            <p className="pl-1">or drag and drop</p>
-          </div>
-          <p className="text-xs text-gray-500">PDF, DOC, DOCX up to 10MB</p>
-        </div>
+        <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 hover:border-primary hover:bg-primary/5">
+          <Upload className="mb-2 h-8 w-8 text-gray-400" />
+          <span className="text-sm font-medium text-primary hover:text-primary/80">Click to upload a file</span>
+          <input 
+            type="file" 
+            className="hidden"
+            onChange={handleFileInput}
+            accept=".pdf,.doc,.docx"
+          />
+          <p className="mt-1 text-xs text-gray-500">PDF, DOC, DOCX up to 10MB</p>
+        </label>
       )}
     </div>
   );
