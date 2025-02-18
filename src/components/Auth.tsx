@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ProfilePicture } from './ProfilePicture';
-import { Lock, FileText } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
 export const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -97,8 +97,11 @@ export const Auth = () => {
       <div className="container max-w-[1200px] px-4">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <FileText className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">FileSecure</span>
+            <img 
+              src="/lovable-uploads/01eb992b-a293-4ef9-a5ff-fa81da6a95ed.png" 
+              alt="SecureFile AI" 
+              className="h-12"
+            />
           </div>
         </div>
 
