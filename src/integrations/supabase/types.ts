@@ -9,6 +9,73 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      document_analysis: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          document_id: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_analysis_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          document_id: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_comments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           created_at: string
