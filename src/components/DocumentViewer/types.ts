@@ -4,6 +4,8 @@ export interface Comment {
   content: string;
   created_at: string;
   user_id: string;
+  user_email?: string;
+  user_name?: string;
 }
 
 export interface Deadline {
