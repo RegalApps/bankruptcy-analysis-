@@ -72,9 +72,13 @@ export const FileUpload = () => {
       fileReader.onload = async (e) => {
         const documentText = e.target?.result as string;
         try {
-          const { error: analysisError } = await supabase.functions.invoke('analyze-document', {
-            body: { documentText }
-          });
+          const { error: analysisError } = await supabase.functions.invoke(
+            'analyze-document',
+            {
+              body: { documentText },
+              headers: { 'document-id': documentData.id }
+            }
+          );
 
           if (analysisError) throw analysisError;
 
