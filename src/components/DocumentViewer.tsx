@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { FileText, MessageSquare, Send, AlertTriangle, CheckCircle, Calendar } from "lucide-react";
+import { DeadlineManager } from "./DocumentViewer/DeadlineManager";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -33,6 +35,11 @@ interface DocumentDetails {
   type: string;
   url: string;
   storage_path: string;
+  deadlines?: {
+    title: string;
+    dueDate: string;
+    description: string;
+  }[];
   analysis?: {
     content: string;
     extracted_info?: DocumentAnalysis;
@@ -45,10 +52,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchDocumentDetails();
-  }, [documentId]);
 
   const fetchDocumentDetails = async () => {
     try {
@@ -74,6 +77,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDocumentDetails();
+  }, [documentId]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -140,7 +147,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* Left Panel - Document Analysis */}
       <div className="lg:col-span-3 space-y-6">
         <div className="rounded-lg border bg-card p-6">
           <div className="flex items-center space-x-4 mb-6">
@@ -199,15 +205,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
               </div>
             </div>
 
-            <div className="p-4 rounded-md bg-muted">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium">Deadlines</h3>
-                <button className="text-sm text-primary hover:underline">
-                  <Calendar className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="text-sm text-muted-foreground">No deadlines set</p>
-            </div>
+            <DeadlineManager 
+              document={document}
+              onDeadlineUpdated={fetchDocumentDetails}
+            />
           </div>
         </div>
       </div>
