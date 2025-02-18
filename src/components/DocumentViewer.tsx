@@ -111,39 +111,43 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left Panel - Document Analysis */}
-      <div className="space-y-6">
+      <div className="lg:col-span-3 space-y-6">
         <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 rounded-md bg-primary/10">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold">{document.title}</h2>
-                <p className="text-sm text-muted-foreground">{document.type}</p>
-              </div>
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="p-2 rounded-md bg-primary/10">
+              <FileText className="h-6 w-6 text-primary" />
             </div>
-            <a 
-              href={`${supabase.storage.from('documents').getPublicUrl(document.storage_path).data.publicUrl}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline"
-            >
-              Open Document
-            </a>
+            <div>
+              <h2 className="text-lg font-semibold">{document.title}</h2>
+              <p className="text-sm text-muted-foreground">{document.type}</p>
+            </div>
           </div>
 
-          <div className="mt-6 space-y-4">
-            {document.analysis?.[0]?.content && (
-              <div className="p-4 rounded-md bg-muted">
-                <h3 className="font-medium mb-2">Document Analysis</h3>
-                <p className="text-sm text-muted-foreground">{document.analysis[0].content}</p>
+          <div className="space-y-4">
+            <div className="p-4 rounded-md bg-muted">
+              <h3 className="font-medium mb-2">Document Details</h3>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Client Name:</span>
+                  <p>John Doe</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Trustee Name:</span>
+                  <p>Jane Smith</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Date Signed:</span>
+                  <p>March 15, 2024</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Form Number:</span>
+                  <p>OSB-12345</p>
+                </div>
               </div>
-            )}
+            </div>
 
-            {/* Placeholder for Risk Assessment */}
             <div className="p-4 rounded-md bg-muted">
               <h3 className="font-medium mb-2">Risk Assessment</h3>
               <div className="space-y-2">
@@ -161,8 +165,34 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         </div>
       </div>
 
+      {/* Middle Panel - Document View */}
+      <div className="lg:col-span-6">
+        <div className="rounded-lg border bg-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium">Document Preview</h3>
+            <a 
+              href={`${supabase.storage.from('documents').getPublicUrl(document.storage_path).data.publicUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline"
+            >
+              Open Document
+            </a>
+          </div>
+          
+          <div className="aspect-[3/4] w-full bg-muted rounded-lg">
+            {document.analysis?.[0]?.content && (
+              <div className="p-4">
+                <h3 className="font-medium mb-2">Document Analysis</h3>
+                <p className="text-sm text-muted-foreground">{document.analysis[0].content}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Right Panel - Comments & Collaboration */}
-      <div className="space-y-6">
+      <div className="lg:col-span-3 space-y-6">
         <div className="rounded-lg border bg-card p-6">
           <div className="flex items-center space-x-2 mb-4">
             <MessageSquare className="h-5 w-5 text-muted-foreground" />
