@@ -41,12 +41,18 @@ export const FileUpload = () => {
 
       // Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const { error: uploadError, data } = await supabase.storage
         .from('documents')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       // Create document record in the database
       const { error: dbError, data: documentData } = await supabase
@@ -58,45 +64,24 @@ export const FileUpload = () => {
             size: file.size,
             storage_path: fileName,
             url: data?.path || '',
-            user_id: user.id,
-            deadlines: []
+            user_id: user.id
           }
         ])
         .select()
         .single();
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        throw dbError;
+      }
 
-      // Trigger document analysis
-      const fileReader = new FileReader();
-      fileReader.onload = async (e) => {
-        const documentText = e.target?.result as string;
-        try {
-          const { error: analysisError } = await supabase.functions.invoke(
-            'analyze-document',
-            {
-              body: { documentText },
-              headers: { 'document-id': documentData.id }
-            }
-          );
+      console.log('Document uploaded successfully:', documentData);
 
-          if (analysisError) throw analysisError;
+      toast({
+        title: "Success",
+        description: "File uploaded successfully"
+      });
 
-          toast({
-            title: "Success",
-            description: "File uploaded and analysis started"
-          });
-        } catch (error: any) {
-          console.error('Error analyzing document:', error);
-          toast({
-            variant: "destructive",
-            title: "Analysis failed",
-            description: "Document uploaded but analysis failed"
-          });
-        }
-      };
-
-      fileReader.readAsText(file);
     } catch (error: any) {
       console.error('Error uploading file:', error);
       toast({
