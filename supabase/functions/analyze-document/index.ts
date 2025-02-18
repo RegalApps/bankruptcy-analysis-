@@ -1,7 +1,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,7 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    const { documentText } = await req.json();
+    const { documentText, documentId } = await req.json();
 
     // Call OpenAI API to analyze the document
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -29,22 +29,28 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a document analysis assistant specialized in legal and financial documents. 
-            Extract and analyze the following information:
-            - Client Name
-            - Trustee Name
-            - Date Signed
-            - Form Number
-            - Document Type
-            - Risk Assessment (identify any missing information, inconsistencies, or compliance issues)
-
-            Return the information in a JSON format with the following structure:
+            content: `You are a specialized document analysis assistant for Canadian bankruptcy and financial documents. 
+            Your task is to extract key information and assess compliance with Canadian regulations.
+            
+            Reference the following sources for compliance:
+            - Office of the Superintendent of Bankruptcy Canada regulations
+            - Bankruptcy and Insolvency Act (B-3)
+            - Acts O-2.7, C-41.01, T-19.8, and I-11.8
+            - Official bankruptcy forms database
+            
+            Extract and analyze:
+            1. Client Name
+            2. Trustee Name
+            3. Date Signed
+            4. Form Number
+            5. Assess risks and compliance issues
+            
+            Format response as JSON:
             {
-              "clientName": string,
-              "trusteeName": string,
-              "dateSigned": string,
-              "formNumber": string,
-              "documentType": string,
+              "clientName": string | null,
+              "trusteeName": string | null,
+              "dateSigned": string | null,
+              "formNumber": string | null,
               "risks": [
                 {
                   "type": string,
@@ -52,14 +58,16 @@ serve(async (req) => {
                   "severity": "low" | "medium" | "high"
                 }
               ]
-            }`
+            }
+            
+            Mark missing information as null. For risks, identify any compliance issues, missing required information, or inconsistencies.`
           },
           {
             role: 'user',
             content: documentText
           }
         ],
-        temperature: 0.7,
+        temperature: 0.3,
       }),
     });
 
@@ -79,12 +87,12 @@ serve(async (req) => {
 
     const { error: dbError } = await supabase
       .from('document_analysis')
-      .update({ 
+      .upsert({ 
+        document_id: documentId,
         content: {
           extracted_info: parsedAnalysis
         }
-      })
-      .eq('document_id', req.headers.get('document-id'));
+      });
 
     if (dbError) throw dbError;
 
