@@ -42,23 +42,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a specialized document analysis assistant for Canadian bankruptcy and financial documents. 
-            Your task is to extract key information and assess compliance with Canadian regulations.
-            
-            Reference the following sources for compliance:
-            - Office of the Superintendent of Bankruptcy Canada regulations
-            - Bankruptcy and Insolvency Act (B-3)
-            - Acts O-2.7, C-41.01, T-19.8, and I-11.8
-            - Official bankruptcy forms database
-            
-            Extract and analyze:
-            1. Client Name
-            2. Trustee Name
-            3. Date Signed
-            4. Form Number
-            5. Assess risks and compliance issues
-            
-            Format response as JSON:
+            content: `Extract key information from the document and return it in JSON format (no markdown):
             {
               "clientName": string | null,
               "trusteeName": string | null,
@@ -71,9 +55,7 @@ serve(async (req) => {
                   "severity": "low" | "medium" | "high"
                 }
               ]
-            }
-            
-            Mark missing information as null. For risks, identify any compliance issues, missing required information, or inconsistencies.`
+            }`
           },
           {
             role: 'user',
@@ -97,11 +79,16 @@ serve(async (req) => {
       throw new Error('Invalid response from OpenAI');
     }
 
-    const analysis = data.choices[0].message.content;
-
-    // Parse the analysis to ensure it's valid JSON
-    const parsedAnalysis = JSON.parse(analysis);
-    console.log("Document analysis completed:", parsedAnalysis);
+    let parsedAnalysis;
+    try {
+      // Extract JSON from the response content, removing any markdown formatting
+      const jsonContent = data.choices[0].message.content.replace(/```json\n|\n```/g, '');
+      parsedAnalysis = JSON.parse(jsonContent);
+      console.log("Parsed analysis:", parsedAnalysis);
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      throw new Error('Failed to parse document analysis results');
+    }
 
     // Store the analysis in the database
     const supabase = createClient(
