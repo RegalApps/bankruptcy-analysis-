@@ -24,11 +24,17 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       // First, get the document text content
       const response = await fetch(publicUrl);
       const documentText = await response.text();
+
+      // Clean the text content by removing any potential formatting or special characters
+      const cleanedText = documentText
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '') // Remove control characters
+        .replace(/```[^`]*```/g, '') // Remove code blocks
+        .trim(); // Remove leading/trailing whitespace
       
       // Call the analyze-document function
       const { data, error } = await supabase.functions.invoke('analyze-document', {
         body: { 
-          documentText,
+          documentText: cleanedText,
           documentId: storagePath.split('/')[0] // Assuming the first part of the path is the document ID
         }
       });
