@@ -6,6 +6,12 @@ export interface Comment {
   user_id: string;
 }
 
+export interface Deadline {
+  title: string;
+  dueDate: string;
+  description: string;
+}
+
 export interface DocumentAnalysis {
   clientName: string;
   trusteeName: string;
@@ -25,6 +31,7 @@ export interface DocumentDetails {
   type: string;
   url: string;
   storage_path: string;
+  deadlines?: Deadline[];
   analysis?: {
     content: string;
     extracted_info?: DocumentAnalysis;

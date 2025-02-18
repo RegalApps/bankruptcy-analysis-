@@ -3,17 +3,11 @@ import { useState } from 'react';
 import { Calendar, Plus, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
-import { DocumentDetails } from './types';
+import { DocumentDetails, Deadline } from './types';
 
 interface DeadlineManagerProps {
   document: DocumentDetails;
   onDeadlineUpdated: () => void;
-}
-
-interface Deadline {
-  title: string;
-  dueDate: string;
-  description: string;
 }
 
 export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDeadlineUpdated }) => {
