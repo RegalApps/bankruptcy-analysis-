@@ -23,27 +23,37 @@ export const ProfilePicture = ({ url, onUpload, size = 150 }: ProfilePictureProp
           throw new Error("You must select an image to upload.");
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
-
         const file = event.target.files[0];
         const fileExt = file.name.split(".").pop();
-        // Generate a unique path even without a user ID
-        const filePath = `${Math.random()}.${fileExt}`;
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
-        const { error: uploadError, data } = await supabase.storage
+        // Upload the file to Supabase storage
+        const { error: uploadError } = await supabase.storage
           .from("avatars")
-          .upload(filePath, file);
+          .upload(fileName, file, {
+            cacheControl: "3600",
+            upsert: false
+          });
 
         if (uploadError) {
           throw uploadError;
         }
 
+        // Get the public URL
         const { data: { publicUrl } } = supabase.storage
           .from("avatars")
-          .getPublicUrl(filePath);
+          .getPublicUrl(fileName);
 
+        console.log("Upload successful, public URL:", publicUrl);
         onUpload(publicUrl);
+
+        toast({
+          title: "Success",
+          description: "Profile picture uploaded successfully",
+        });
+
       } catch (error: any) {
+        console.error("Upload error:", error);
         toast({
           variant: "destructive",
           title: "Error",
