@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -58,7 +59,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini', // Changed from gpt-4o to gpt-4o-mini
         messages: [
           {
             role: 'system',
@@ -150,9 +151,7 @@ serve(async (req) => {
                   }
                 ]
               }
-            }
-
-            BE EXTREMELY SPECIFIC AND DETAILED IN YOUR ANALYSIS. FOCUS ON ACTIONABLE INSIGHTS AND CLEAR INSTRUCTIONS FOR RESOLUTION.`
+            }`
           },
           {
             role: 'user',
