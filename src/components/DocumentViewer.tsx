@@ -21,6 +21,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
   const fetchDocumentDetails = async () => {
     try {
+      setLoading(true);
       const { data: document, error: docError } = await supabase
         .from('documents')
         .select(`
@@ -33,7 +34,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
       if (docError) throw docError;
       setDocument(document);
+      console.log('Fetched document details:', document); // Debug log
     } catch (error: any) {
+      console.error('Error fetching document details:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -47,15 +50,27 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   useEffect(() => {
     fetchDocumentDetails();
 
-    // Set up real-time subscription for comments
+    // Set up real-time subscription for comments and analysis
     const channel = supabase
-      .channel('document_comments')
+      .channel('document_updates')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'document_comments',
+          filter: `document_id=eq.${documentId}`
+        },
+        () => {
+          fetchDocumentDetails();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'document_analysis',
           filter: `document_id=eq.${documentId}`
         },
         () => {
@@ -85,7 +100,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     );
   }
 
-  const extractedInfo = document.analysis?.[0]?.extracted_info;
+  const extractedInfo = document.analysis?.[0]?.content?.extracted_info;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -109,7 +124,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       </div>
 
       <div className="lg:col-span-6">
-        <DocumentPreview storagePath={document.storage_path} />
+        <DocumentPreview 
+          storagePath={document.storage_path} 
+          onAnalysisComplete={fetchDocumentDetails}
+        />
       </div>
 
       <div className="lg:col-span-3 space-y-6">
