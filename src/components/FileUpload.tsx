@@ -75,6 +75,51 @@ export const FileUpload = () => {
         throw dbError;
       }
 
+      // Read the file content for analysis
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const documentText = e.target?.result as string;
+          
+          // Call analyze-document function
+          const { error: analysisError } = await supabase.functions
+            .invoke('analyze-document', {
+              body: {
+                documentText,
+                documentId: documentData.id
+              }
+            });
+
+          if (analysisError) {
+            console.error('Analysis error:', analysisError);
+            toast({
+              variant: "destructive",
+              title: "Analysis failed",
+              description: "Document was uploaded but analysis failed"
+            });
+            return;
+          }
+
+          toast({
+            title: "Success",
+            description: "File uploaded and analyzed successfully"
+          });
+        } catch (error) {
+          console.error('Error analyzing document:', error);
+          toast({
+            variant: "destructive",
+            title: "Analysis failed",
+            description: "Document was uploaded but analysis failed"
+          });
+        }
+      };
+
+      if (file.type === 'application/pdf') {
+        reader.readAsDataURL(file);
+      } else {
+        reader.readAsText(file);
+      }
+
       console.log('Document uploaded successfully:', documentData);
 
       toast({
@@ -106,7 +151,7 @@ export const FileUpload = () => {
       {isUploading ? (
         <div className="flex items-center justify-center space-x-2 rounded-lg border-2 border-dashed p-4">
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-          <p className="text-sm text-gray-600">Uploading and analyzing file...</p>
+          <p className="text-sm text-gray-600">Uploading and analyzing document...</p>
         </div>
       ) : (
         <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 hover:border-primary hover:bg-primary/5">
