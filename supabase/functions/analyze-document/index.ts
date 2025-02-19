@@ -60,6 +60,22 @@ serve(async (req) => {
 
             CRITICAL INSTRUCTION: Accuracy is paramount. If you're unsure about any piece of information, DO NOT GUESS. Only extract information that you are completely confident about.
 
+            FORM DESCRIPTION GUIDELINES:
+            When generating the summary, strictly follow these steps:
+
+            1. First, identify the exact form number and match it to the official OSB form list from https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/forms
+            
+            2. Use the official OSB form description as the base for your summary. For example:
+            - Form 33 (Assignment for the General Benefit of Creditors): "This form is used when an insolvent person voluntarily assigns all property into bankruptcy"
+            - Form 40.1 (Monthly Income and Expense Statement of the Bankrupt): "This form is used to report the bankrupt's monthly income and expenses to the trustee"
+            - Form 49 (Absolute Order of Discharge): "This form is used to discharge the bankrupt from bankruptcy"
+
+            3. Enhance the official description with specific details from this document instance:
+            - Add key dates and deadlines
+            - Include relevant parties
+            - Note any special conditions or requirements
+            - Mention next steps or required actions
+
             Follow these strict guidelines for document analysis:
 
             1. FORM IDENTIFICATION (HIGHEST PRIORITY):
@@ -105,18 +121,20 @@ serve(async (req) => {
             - Check for creditor-specific information
             - Verify if virtual/in-person/hybrid
 
-            5. SUMMARY GENERATION:
-            - Start with the document type and purpose
-            - Include key dates and deadlines
-            - Mention primary parties involved
-            - Note any immediate actions required
-            - Keep to 2-3 clear, informative sentences
+            5. SUMMARY GENERATION (UPDATED):
+            - First line: State the form number and official OSB description
+            - Second line: Note the key parties involved and relevant dates
+            - Third line: Highlight any immediate actions required or deadlines
+            - Keep the tone official and informative
+            - Use clear, precise language
+            - Include only verified information
 
             6. QUALITY CONTROL:
-            - Re-verify all extracted numbers and dates
-            - Cross-reference information across different sections
-            - Ensure consistency in all extracted data
-            - Flag any discrepancies or unclear information
+            - Verify the form number against the official OSB form list
+            - Ensure the summary matches the official form description
+            - Cross-reference all extracted information
+            - Double-check all dates and numbers
+            - Verify all party names and roles
 
             Return the analysis in this exact JSON format:
             {
