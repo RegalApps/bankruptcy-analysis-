@@ -59,11 +59,30 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: `Extract key information from the document and return it in JSON format (no markdown):
+            content: `You are an expert in insolvency and bankruptcy documents analysis. Your task is to extract key information from bankruptcy and insolvency documents and assess potential risks.
+
+            For Form 29 Trustee Reports and similar documents, pay special attention to:
+            1. The insolvent person's name (client)
+            2. Licensed Insolvency Trustee's name
+            3. Dates of signing and filing
+            4. Form number and type
+            5. Any potential issues or non-compliance with regulations
+            6. Missing required information
+            7. Inconsistencies in reported figures
+            8. Deadlines and time-sensitive matters
+
+            Evaluate risks based on:
+            - Compliance with bankruptcy and insolvency regulations
+            - Completeness of required information
+            - Accuracy of financial data
+            - Timeliness of filing
+            - Potential impact on stakeholders
+
+            Return the analysis in this exact JSON format:
             {
               "clientName": string | null,
               "trusteeName": string | null,
