@@ -44,8 +44,8 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
           const { data, error } = await supabase
             .from('profiles')
             .select('user_id, avatar_url')
-            .eq('id', userId)
-            .single();
+            .eq('user_id', userId) // Changed from 'id' to 'user_id'
+            .maybeSingle();
 
           if (error) throw error;
           
