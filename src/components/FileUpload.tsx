@@ -4,13 +4,30 @@ import { Upload, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
+
+type UploadStatus = {
+  step: number;
+  message: string;
+};
 
 export const FileUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [status, setStatus] = useState<UploadStatus>({ step: 0, message: '' });
   const { toast } = useToast();
+
+  const updateStatus = (step: number, message: string) => {
+    setStatus({ step, message });
+    setUploadProgress(Math.min((step / 4) * 100, 100)); // 4 total steps
+  };
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
+
+    // Reset progress
+    setUploadProgress(0);
+    updateStatus(0, "Starting upload process...");
 
     // Validate file type
     const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -35,11 +52,13 @@ export const FileUpload = () => {
 
     setIsUploading(true);
     try {
-      // Get current user
+      // Step 1: Authentication check
+      updateStatus(1, "Verifying authentication...");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Upload file to Supabase Storage
+      // Step 2: Upload file to storage
+      updateStatus(2, "Uploading file to secure storage...");
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const { error: uploadError, data } = await supabase.storage
@@ -54,7 +73,8 @@ export const FileUpload = () => {
         throw uploadError;
       }
 
-      // Create document record in the database
+      // Step 3: Create database record
+      updateStatus(3, "Creating document record...");
       const { error: dbError, data: documentData } = await supabase
         .from('documents')
         .insert([
@@ -75,13 +95,14 @@ export const FileUpload = () => {
         throw dbError;
       }
 
-      // Read the file content for analysis
+      // Step 4: Analyze document
+      updateStatus(4, "Analyzing document content...");
+      
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
           const documentText = e.target?.result as string;
           
-          // Call analyze-document function
           const { error: analysisError } = await supabase.functions
             .invoke('analyze-document', {
               body: {
@@ -100,6 +121,8 @@ export const FileUpload = () => {
             return;
           }
 
+          // All steps complete
+          setUploadProgress(100);
           toast({
             title: "Success",
             description: "File uploaded and analyzed successfully"
@@ -121,11 +144,6 @@ export const FileUpload = () => {
       }
 
       console.log('Document uploaded successfully:', documentData);
-
-      toast({
-        title: "Success",
-        description: "File uploaded successfully"
-      });
 
     } catch (error: any) {
       console.error('Error uploading file:', error);
@@ -149,9 +167,15 @@ export const FileUpload = () => {
   return (
     <div className="w-full">
       {isUploading ? (
-        <div className="flex items-center justify-center space-x-2 rounded-lg border-2 border-dashed p-4">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-          <p className="text-sm text-gray-600">Uploading and analyzing document...</p>
+        <div className="space-y-4 rounded-lg border-2 border-dashed p-4">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <p className="text-sm font-medium text-gray-600">{status.message}</p>
+          </div>
+          <div className="space-y-2">
+            <Progress value={uploadProgress} className="h-2 w-full" />
+            <p className="text-xs text-gray-500 text-right">{Math.round(uploadProgress)}%</p>
+          </div>
         </div>
       ) : (
         <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 hover:border-primary hover:bg-primary/5">
