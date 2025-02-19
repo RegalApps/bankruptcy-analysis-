@@ -59,7 +59,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -83,11 +83,20 @@ serve(async (req) => {
             For risk assessment, specifically check for:
             1. Missing required fields (list each missing field specifically)
             2. Incomplete information in required fields
-            3. Inconsistencies between dates
+            3. Inconsistencies between dates (comparing date of bankruptcy, date signed, and meeting dates)
             4. Missing signatures or authorizations
-            5. Non-compliance with form requirements
-            6. Deadline-related risks
-            7. Documentation completeness
+            5. Non-compliance with form requirements (check against official guidelines)
+            6. Deadline-related risks (identify any approaching or passed deadlines)
+            7. Documentation completeness (check if all required attachments are mentioned)
+            8. Accuracy of financial information (check for any discrepancies)
+            9. Procedural compliance (verify if proper procedures were followed)
+            10. Creditor-related risks (assess if creditor rights are properly addressed)
+
+            Provide a detailed assessment with:
+            - Clear identification of each risk
+            - Specific description of what's missing or incorrect
+            - Severity level (high/medium/low) based on potential impact
+            - References to relevant sections of bankruptcy regulations where applicable
 
             Return the analysis in this exact JSON format:
             {
@@ -105,11 +114,13 @@ serve(async (req) => {
                 "dateBankruptcy": string | null,
                 "dateSigned": string | null,
                 "officialReceiver": string | null,
+                "summary": string,
                 "risks": [
                   {
                     "type": string,
                     "description": string (be specific about which fields are missing or incomplete),
-                    "severity": "low" | "medium" | "high"
+                    "severity": "low" | "medium" | "high",
+                    "regulation": string | null
                   }
                 ]
               }
@@ -155,9 +166,7 @@ serve(async (req) => {
       .upsert({ 
         document_id: documentId,
         user_id: user.id,
-        content: {
-          extracted_info: parsedAnalysis.extracted_info
-        }
+        content: parsedAnalysis
       });
 
     if (dbError) {

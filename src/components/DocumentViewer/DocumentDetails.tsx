@@ -13,6 +13,7 @@ interface DocumentDetailsProps {
   securityInfo?: string;
   dateBankruptcy?: string;
   officialReceiver?: string;
+  summary?: string;
 }
 
 export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
@@ -28,11 +29,17 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   chairInfo,
   securityInfo,
   dateBankruptcy,
-  officialReceiver
+  officialReceiver,
+  summary
 }) => {
   return (
     <div className="p-4 rounded-md bg-muted">
       <h3 className="font-medium mb-2">Document Details</h3>
+      {summary && (
+        <div className="mb-4 p-3 bg-background rounded border">
+          <p className="text-sm text-muted-foreground">{summary}</p>
+        </div>
+      )}
       <div className="space-y-2 text-sm">
         <div>
           <span className="text-muted-foreground">Form Number:</span>
