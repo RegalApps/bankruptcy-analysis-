@@ -9,7 +9,7 @@ interface AnalysisPanelProps {
 }
 
 export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadlineUpdated }) => {
-  const extractedInfo = document.analysis?.[0]?.extracted_info;
+  const extractedInfo = document.analysis?.[0]?.content?.extracted_info;
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
