@@ -14,8 +14,11 @@ interface Comment {
 }
 
 interface Profile {
+  id: string;
   user_id: string;
   avatar_url: string | null;
+  email: string;
+  full_name: string;
 }
 
 interface CommentsProps {
@@ -43,8 +46,8 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
         try {
           const { data, error } = await supabase
             .from('profiles')
-            .select('user_id, avatar_url')
-            .eq('user_id', userId) // Changed from 'id' to 'user_id'
+            .select('*')
+            .eq('id', userId)
             .maybeSingle();
 
           if (error) throw error;
@@ -59,7 +62,13 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
           console.error('Error fetching user profile:', error);
           setUserProfiles(prev => ({
             ...prev,
-            [userId]: { user_id: 'Anonymous', avatar_url: null }
+            [userId]: { 
+              id: userId,
+              user_id: 'Anonymous',
+              avatar_url: null,
+              email: '',
+              full_name: 'Anonymous'
+            }
           }));
         }
       });
@@ -105,9 +114,9 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
           <MessageSquare className="h-5 w-5 text-muted-foreground" />
           <h3 className="font-medium">Comments & Collaboration</h3>
         </div>
-        {currentUser && (
+        {currentUser && userProfiles[currentUser.id] && (
           <div className="text-xs text-muted-foreground">
-            Commenting as: {userProfiles[currentUser.id]?.user_id || 'Anonymous'}
+            Commenting as: {userProfiles[currentUser.id]?.full_name || userProfiles[currentUser.id]?.user_id || 'Anonymous'}
           </div>
         )}
       </div>
@@ -128,7 +137,9 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">
-                    {userProfiles[comment.user_id]?.user_id || 'Anonymous'}
+                    {userProfiles[comment.user_id]?.full_name || 
+                     userProfiles[comment.user_id]?.user_id || 
+                     'Anonymous'}
                   </p>
                   <time className="text-xs text-muted-foreground">
                     {format(new Date(comment.created_at), "MMM d, yyyy 'at' h:mm a")}
