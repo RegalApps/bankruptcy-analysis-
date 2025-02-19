@@ -4,12 +4,18 @@ import { MessageSquare, Send, UserCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface Comment {
   id: string;
   content: string;
   created_at: string;
   user_id: string;
+}
+
+interface Profile {
+  user_id: string;
+  avatar_url: string | null;
 }
 
 interface CommentsProps {
@@ -21,7 +27,7 @@ interface CommentsProps {
 export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onCommentAdded }) => {
   const [newComment, setNewComment] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [userEmails, setUserEmails] = useState<Record<string, string>>({});
+  const [userProfiles, setUserProfiles] = useState<Record<string, Profile>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,30 +36,30 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
       setCurrentUser(user);
     });
 
-    // Get user emails for all comments
+    // Get user profiles for all comments
     if (comments?.length) {
       const userIds = [...new Set(comments.map(c => c.user_id))];
       userIds.forEach(async (userId) => {
         try {
           const { data, error } = await supabase
             .from('profiles')
-            .select('email')
+            .select('user_id, avatar_url')
             .eq('id', userId)
             .single();
 
           if (error) throw error;
           
-          if (data?.email) {
-            setUserEmails(prev => ({
+          if (data) {
+            setUserProfiles(prev => ({
               ...prev,
-              [userId]: data.email
+              [userId]: data
             }));
           }
         } catch (error) {
-          console.error('Error fetching user email:', error);
-          setUserEmails(prev => ({
+          console.error('Error fetching user profile:', error);
+          setUserProfiles(prev => ({
             ...prev,
-            [userId]: 'Anonymous User'
+            [userId]: { user_id: 'Anonymous', avatar_url: null }
           }));
         }
       });
@@ -101,7 +107,7 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
         </div>
         {currentUser && (
           <div className="text-xs text-muted-foreground">
-            Commenting as: {currentUser.email}
+            Commenting as: {userProfiles[currentUser.id]?.user_id || 'Anonymous'}
           </div>
         )}
       </div>
@@ -109,12 +115,20 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
       <div className="space-y-4">
         {comments && comments.map((comment) => (
           <div key={comment.id} className="p-4 rounded-md bg-muted">
-            <div className="flex items-start space-x-2">
-              <UserCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <div className="flex items-start space-x-3">
+              <Avatar className="h-8 w-8">
+                <AvatarImage 
+                  src={userProfiles[comment.user_id]?.avatar_url || ''} 
+                  alt="Profile" 
+                />
+                <AvatarFallback>
+                  <UserCircle className="h-6 w-6 text-muted-foreground" />
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">
-                    {userEmails[comment.user_id] || 'Anonymous User'}
+                    {userProfiles[comment.user_id]?.user_id || 'Anonymous'}
                   </p>
                   <time className="text-xs text-muted-foreground">
                     {format(new Date(comment.created_at), "MMM d, yyyy 'at' h:mm a")}
