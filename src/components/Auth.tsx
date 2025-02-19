@@ -17,6 +17,7 @@ export const Auth = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastAttemptTime, setLastAttemptTime] = useState(0);
   const { toast } = useToast();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -33,6 +34,20 @@ export const Auth = () => {
     if (!validation.isValid) {
       setError(validation.error);
       return;
+    }
+
+    // Check for rate limiting on signup
+    if (isSignUp) {
+      const currentTime = Date.now();
+      const timeSinceLastAttempt = currentTime - lastAttemptTime;
+      const COOLDOWN_PERIOD = 15000; // 15 seconds to be safe
+
+      if (timeSinceLastAttempt < COOLDOWN_PERIOD) {
+        const remainingTime = Math.ceil((COOLDOWN_PERIOD - timeSinceLastAttempt) / 1000);
+        setError(`Please wait ${remainingTime} seconds before trying again`);
+        return;
+      }
+      setLastAttemptTime(currentTime);
     }
     
     setLoading(true);
@@ -60,7 +75,11 @@ export const Auth = () => {
         });
       }
     } catch (error: any) {
-      setError(error.message);
+      if (error.error_type === 'http_client_error' && error.status === 429) {
+        setError('Too many attempts. Please wait a moment before trying again.');
+      } else {
+        setError(error.message);
+      }
       console.error('Error:', error);
     } finally {
       setLoading(false);
