@@ -12,17 +12,24 @@ export interface Deadline {
   description: string;
 }
 
-export interface DocumentAnalysis {
-  clientName: string;
-  trusteeName: string;
-  dateSigned: string;
-  formNumber: string;
-  documentType: string;
-  risks: {
-    type: string;
-    description: string;
-    severity: 'low' | 'medium' | 'high';
-  }[];
+export interface Risk {
+  type: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+}
+
+export interface ExtractedInfo {
+  clientName: string | null;
+  trusteeName: string | null;
+  dateSigned: string | null;
+  formNumber: string | null;
+  risks: Risk[];
+}
+
+export interface Analysis {
+  content: {
+    extracted_info: ExtractedInfo;
+  };
 }
 
 export interface DocumentDetails {
@@ -32,9 +39,6 @@ export interface DocumentDetails {
   url: string;
   storage_path: string;
   deadlines?: Deadline[];
-  analysis?: {
-    content: string;
-    extracted_info?: DocumentAnalysis;
-  }[];
+  analysis?: Analysis[];
   comments?: Comment[];
 }
