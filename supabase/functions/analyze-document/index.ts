@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -38,7 +37,7 @@ serve(async (req) => {
 
     const { documentText, documentId } = await req.json();
     
-    console.log('Received request with document ID:', documentId);
+    console.log('Analyzing document ID:', documentId);
     
     if (!documentText) {
       console.error('No document text provided');
@@ -50,7 +49,7 @@ serve(async (req) => {
       throw new Error('Document ID is required');
     }
 
-    // Call OpenAI API to analyze the document
+    // Call OpenAI API with enhanced prompt
     console.log('Calling OpenAI API...');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -63,76 +62,105 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert in bankruptcy and insolvency document analysis, specifically for Canadian bankruptcy forms. Extract all required information and assess compliance with regulations.
+            content: `You are an expert legal document analyzer specializing in Canadian bankruptcy and insolvency forms. Your task is to perform an extremely detailed analysis of the document, focusing on compliance, completeness, and accuracy. Be extremely specific in identifying issues.
 
-            For bankruptcy forms, look for and extract these specific fields:
-            1. Form Number (usually at the top of the document)
-            2. Client/Debtor Name
-            3. Licensed Insolvency Trustee Name
-            4. Estate Number
-            5. District Information
-            6. Division Number
-            7. Court Number
-            8. Meeting of Creditors Details
-            9. Chair Information
-            10. Security Details
-            11. Date of Bankruptcy
-            12. Date Form Signed
-            13. Official Receiver Information
+            For each risk or issue found, you must provide:
+            1. EXACT LOCATION of the issue (e.g., "Section 4.2, paragraph 2", "Signature field on page 3", etc.)
+            2. SPECIFIC DETAILS about what's wrong (not just "missing signature" but "Licensed Insolvency Trustee's signature missing from Form 65 Declaration")
+            3. EXPLICIT REFERENCE to the relevant regulation or requirement
+            4. CLEAR IMPACT of the issue on the bankruptcy proceeding
 
-            For risk assessment, specifically check for:
-            1. Missing required fields (list each missing field specifically)
-            2. Incomplete information in required fields
-            3. Inconsistencies between dates (comparing date of bankruptcy, date signed, and meeting dates)
-            4. Missing signatures or authorizations
-            5. Non-compliance with form requirements (check against official guidelines)
-            6. Deadline-related risks (identify any approaching or passed deadlines)
-            7. Documentation completeness (check if all required attachments are mentioned)
-            8. Accuracy of financial information (check for any discrepancies)
-            9. Procedural compliance (verify if proper procedures were followed)
-            10. Creditor-related risks (assess if creditor rights are properly addressed)
+            Analyze the following aspects with extreme detail:
 
-            Provide a detailed assessment with:
-            - Clear identification of each risk
-            - Specific description of what's missing or incorrect
-            - Severity level (high/medium/low) based on potential impact
-            - References to relevant sections of bankruptcy regulations where applicable
+            1. MISSING REQUIRED FIELDS:
+            - List every required field that is missing
+            - Cite the specific section of the form where each field should be
+            - Reference the regulatory requirement for each field
+
+            2. INCOMPLETE FIELDS:
+            - Identify fields that are present but incomplete
+            - Specify exactly what information is missing from each field
+            - Explain why the provided information is insufficient
+
+            3. SIGNATURE VERIFICATION:
+            - Check ALL required signature locations
+            - Verify presence of specific required signatures (debtor, trustee, witness)
+            - Confirm date stamps where required
+            - Verify witness information completeness
+
+            4. FORM COMPLIANCE:
+            - Compare against official form requirements
+            - Check formatting and section completeness
+            - Verify correct form version is being used
+            - Confirm all required attachments are referenced
+
+            5. DATES AND DEADLINES:
+            - Verify all dates are properly formatted
+            - Check for date inconsistencies
+            - Flag any missed or approaching deadlines
+            - Confirm chronological order of events
+
+            6. DOCUMENTATION COMPLETENESS:
+            - List any missing required attachments
+            - Verify cross-references between documents
+            - Check for required supporting documentation
+            - Confirm all schedules are included and complete
+
+            7. PROCEDURAL COMPLIANCE:
+            - Verify proper filing sequence
+            - Check notice requirements
+            - Confirm proper service to all parties
+            - Verify jurisdictional requirements
+
+            For each risk identified, provide:
+            {
+              "type": "Specific category of the issue",
+              "description": "Extremely detailed description including exact location, specific problem, and what needs to be fixed",
+              "severity": "high/medium/low based on legal impact",
+              "regulation": "Specific reference to the relevant regulation, form requirement, or legal precedent",
+              "impact": "Clear explanation of the consequences if not addressed",
+              "requiredAction": "Specific steps needed to resolve the issue"
+            }
 
             Return the analysis in this exact JSON format:
             {
               "extracted_info": {
-                "formNumber": string | null,
-                "clientName": string | null,
-                "trusteeName": string | null,
-                "estateNumber": string | null,
-                "district": string | null,
-                "divisionNumber": string | null,
-                "courtNumber": string | null,
-                "meetingOfCreditors": string | null,
-                "chairInfo": string | null,
-                "securityInfo": string | null,
-                "dateBankruptcy": string | null,
-                "dateSigned": string | null,
-                "officialReceiver": string | null,
+                "formNumber": string,
+                "clientName": string,
+                "trusteeName": string,
+                "estateNumber": string,
+                "district": string,
+                "divisionNumber": string,
+                "courtNumber": string,
+                "meetingOfCreditors": string,
+                "chairInfo": string,
+                "securityInfo": string,
+                "dateBankruptcy": string,
+                "dateSigned": string,
+                "officialReceiver": string,
                 "summary": string,
                 "risks": [
                   {
                     "type": string,
-                    "description": string (be specific about which fields are missing or incomplete),
+                    "description": string,
                     "severity": "low" | "medium" | "high",
-                    "regulation": string | null
+                    "regulation": string,
+                    "impact": string,
+                    "requiredAction": string
                   }
                 ]
               }
-            }`
+            }
+
+            BE EXTREMELY SPECIFIC AND DETAILED IN YOUR ANALYSIS. FOCUS ON ACTIONABLE INSIGHTS AND CLEAR INSTRUCTIONS FOR RESOLUTION.`
           },
           {
             role: 'user',
             content: documentText
           }
         ],
-        temperature: 0.3,
-        max_tokens: 2000
+        temperature: 0.2,
+        max_tokens: 3000
       }),
     });
 
