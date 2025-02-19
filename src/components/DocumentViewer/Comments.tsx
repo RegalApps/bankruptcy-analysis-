@@ -46,6 +46,16 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
           .maybeSingle();
           
         if (profile) {
+          // Get the public URL for the avatar if it exists
+          if (profile.avatar_url) {
+            const { data: { publicUrl } } = supabase
+              .storage
+              .from('avatars')
+              .getPublicUrl(profile.avatar_url);
+            
+            profile.avatar_url = publicUrl;
+          }
+          
           setUserProfiles(prev => ({
             ...prev,
             [user.id]: profile
@@ -72,10 +82,28 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
           if (error) throw error;
           
           if (data) {
-            const profileMap = data.reduce((acc, profile) => ({
-              ...acc,
-              [profile.id]: profile
-            }), {});
+            const profileMap = await Promise.all(
+              data.map(async (profile) => {
+                if (profile.avatar_url) {
+                  // Get the public URL for each avatar
+                  const { data: { publicUrl } } = supabase
+                    .storage
+                    .from('avatars')
+                    .getPublicUrl(profile.avatar_url);
+                  
+                  return {
+                    ...profile,
+                    avatar_url: publicUrl
+                  };
+                }
+                return profile;
+              })
+            ).then(profiles => {
+              return profiles.reduce((acc, profile) => ({
+                ...acc,
+                [profile.id]: profile
+              }), {});
+            });
             
             setUserProfiles(prev => ({
               ...prev,
@@ -136,8 +164,17 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
           <h3 className="font-medium">Comments & Collaboration</h3>
         </div>
         {currentUser && (
-          <div className="text-xs text-muted-foreground">
-            Commenting as: {getUserDisplayName(currentUser.id)}
+          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+            <Avatar className="h-6 w-6">
+              <AvatarImage 
+                src={userProfiles[currentUser.id]?.avatar_url || ''} 
+                alt="Profile" 
+              />
+              <AvatarFallback>
+                <UserCircle className="h-4 w-4 text-muted-foreground" />
+              </AvatarFallback>
+            </Avatar>
+            <span>Commenting as: {getUserDisplayName(currentUser.id)}</span>
           </div>
         )}
       </div>
