@@ -33,7 +33,34 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         .single();
 
       if (docError) throw docError;
-      setDocument(document);
+      
+      // Parse the analysis content if it exists
+      let extractedInfo = null;
+      if (document?.analysis?.[0]?.content) {
+        try {
+          if (typeof document.analysis[0].content === 'string') {
+            // If content is a string, parse it
+            extractedInfo = JSON.parse(document.analysis[0].content).extracted_info;
+          } else {
+            // If content is already an object (sometimes Supabase returns parsed JSON)
+            extractedInfo = document.analysis[0].content.extracted_info;
+          }
+        } catch (e) {
+          console.error('Error parsing analysis content:', e);
+        }
+      }
+
+      // Update the document with parsed analysis
+      setDocument({
+        ...document,
+        analysis: document?.analysis?.map(a => ({
+          ...a,
+          content: {
+            extracted_info: extractedInfo
+          }
+        }))
+      });
+      
       console.log('Fetched document details:', document); // Debug log
     } catch (error: any) {
       console.error('Error fetching document details:', error);
