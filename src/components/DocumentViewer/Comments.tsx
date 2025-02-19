@@ -15,9 +15,8 @@ interface Comment {
 
 interface Profile {
   id: string;
-  user_id: string;
-  avatar_url: string | null;
   email: string;
+  avatar_url: string | null;
   full_name: string;
 }
 
@@ -34,44 +33,61 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get current user
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    const fetchCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
-    });
+      
+      if (user) {
+        // Fetch current user's profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+          
+        if (profile) {
+          setUserProfiles(prev => ({
+            ...prev,
+            [user.id]: profile
+          }));
+        }
+      }
+    };
 
+    fetchCurrentUser();
+  }, []);
+
+  useEffect(() => {
     // Get user profiles for all comments
     if (comments?.length) {
-      const userIds = [...new Set(comments.map(c => c.user_id))];
-      userIds.forEach(async (userId) => {
+      const fetchProfiles = async () => {
+        const userIds = [...new Set(comments.map(c => c.user_id))];
+        
         try {
           const { data, error } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', userId)
-            .maybeSingle();
+            .in('id', userIds);
 
           if (error) throw error;
           
           if (data) {
+            const profileMap = data.reduce((acc, profile) => ({
+              ...acc,
+              [profile.id]: profile
+            }), {});
+            
             setUserProfiles(prev => ({
               ...prev,
-              [userId]: data
+              ...profileMap
             }));
           }
         } catch (error) {
-          console.error('Error fetching user profile:', error);
-          setUserProfiles(prev => ({
-            ...prev,
-            [userId]: { 
-              id: userId,
-              user_id: 'Anonymous',
-              avatar_url: null,
-              email: '',
-              full_name: 'Anonymous'
-            }
-          }));
+          console.error('Error fetching user profiles:', error);
         }
-      });
+      };
+
+      fetchProfiles();
     }
   }, [comments]);
 
@@ -107,6 +123,11 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
     }
   };
 
+  const getUserDisplayName = (userId: string) => {
+    const profile = userProfiles[userId];
+    return profile?.full_name || profile?.email?.split('@')[0] || 'Anonymous';
+  };
+
   return (
     <div className="rounded-lg border bg-card p-6">
       <div className="flex items-center justify-between mb-4">
@@ -114,9 +135,9 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
           <MessageSquare className="h-5 w-5 text-muted-foreground" />
           <h3 className="font-medium">Comments & Collaboration</h3>
         </div>
-        {currentUser && userProfiles[currentUser.id] && (
+        {currentUser && (
           <div className="text-xs text-muted-foreground">
-            Commenting as: {userProfiles[currentUser.id]?.full_name || userProfiles[currentUser.id]?.user_id || 'Anonymous'}
+            Commenting as: {getUserDisplayName(currentUser.id)}
           </div>
         )}
       </div>
@@ -137,9 +158,7 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments, onComm
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">
-                    {userProfiles[comment.user_id]?.full_name || 
-                     userProfiles[comment.user_id]?.user_id || 
-                     'Anonymous'}
+                    {getUserDisplayName(comment.user_id)}
                   </p>
                   <time className="text-xs text-muted-foreground">
                     {format(new Date(comment.created_at), "MMM d, yyyy 'at' h:mm a")}
