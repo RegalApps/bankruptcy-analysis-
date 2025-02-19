@@ -136,10 +136,22 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           <DocumentHeader title={document.title} type={document.type} />
           <div className="space-y-4">
             <DocumentDetails
+              documentId={document.id}
+              formType={document.type}
               clientName={extractedInfo?.clientName}
               trusteeName={extractedInfo?.trusteeName}
               dateSigned={extractedInfo?.dateSigned}
               formNumber={extractedInfo?.formNumber}
+              estateNumber={extractedInfo?.estateNumber}
+              district={extractedInfo?.district}
+              divisionNumber={extractedInfo?.divisionNumber}
+              courtNumber={extractedInfo?.courtNumber}
+              meetingOfCreditors={extractedInfo?.meetingOfCreditors}
+              chairInfo={extractedInfo?.chairInfo}
+              securityInfo={extractedInfo?.securityInfo}
+              dateBankruptcy={extractedInfo?.dateBankruptcy}
+              officialReceiver={extractedInfo?.officialReceiver}
+              summary={extractedInfo?.summary}
             />
             <RiskAssessment risks={extractedInfo?.risks} />
             <DeadlineManager 

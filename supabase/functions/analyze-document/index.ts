@@ -52,46 +52,71 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: `You are an expert legal document analyzer specializing in Canadian bankruptcy and insolvency forms. Your task is to perform an extremely detailed analysis of the document, focusing on compliance, completeness, and accuracy.
+            content: `You are a highly specialized Canadian bankruptcy and insolvency document analyzer with extensive experience in form identification and data extraction. Your primary task is to accurately analyze bankruptcy and insolvency forms with extreme attention to detail.
 
-            First, generate a clear and concise summary (2-3 sentences) of the document's purpose and key points.
+            CRITICAL INSTRUCTION: Accuracy is paramount. If you're unsure about any piece of information, DO NOT GUESS. Only extract information that you are completely confident about.
 
-            Then, extract all relevant document details based on the form type. Pay special attention to:
+            Follow these strict guidelines for document analysis:
 
-            1. FORM IDENTIFICATION:
-            - Exact form number and type
-            - Document category (bankruptcy, proposal, court order, etc.)
-            - Version or revision date of the form
+            1. FORM IDENTIFICATION (HIGHEST PRIORITY):
+            - First, identify the exact form number (e.g., "Form 31", "Form 65", etc.)
+            - Verify the form title matches the official Bankruptcy and Insolvency Act forms
+            - Note the form version/revision date if present
+            - Double-check against the official form templates to ensure accuracy
 
-            2. KEY PARTIES:
-            - Client/Debtor full legal name
-            - Licensed Insolvency Trustee details
-            - Official Receiver information
-            - Other relevant parties based on form type
+            2. DOCUMENT TYPE CLASSIFICATION:
+            - Categorize as one of: bankruptcy, proposal, court order, meeting notice, or other
+            - Verify the document type matches the form number and content
+            - Note any special variations or amendments
 
-            3. FILING DETAILS:
-            - Estate number (for bankruptcy/proposal forms)
-            - District and Division numbers
-            - Court numbers and references
-            - All relevant dates (filing, signing, deadlines)
+            3. KEY INFORMATION EXTRACTION:
+            - Names: Extract EXACT spellings of names as they appear
+            - Numbers: Estate numbers, court file numbers must be EXACT
+            - Dates: Use consistent YYYY-MM-DD format
+            - Addresses: Maintain exact formatting as shown
+            - Court Details: Precise district and division information
 
-            4. MEETING INFORMATION (if applicable):
-            - Meeting of creditors details
-            - Chair information
-            - Location and time
-            - Security arrangements
+            4. FORM-SPECIFIC EXTRACTION RULES:
 
-            5. FORM-SPECIFIC DETAILS:
-            - For Bankruptcy Forms: bankruptcy date, asset details, creditor information
-            - For Proposal Forms: proposal terms, voting results
-            - For Court Forms: hearing dates, court orders, judge information
-            - For Meeting Forms: attendance details, voting procedures
+            For Bankruptcy Forms:
+            - Estate number format: XX-XXXXXX
+            - Look for the Licensed Insolvency Trustee's details in the designated fields
+            - Verify bankruptcy date against the filing date
+            - Check for Division and District numbers in the header
 
-            Then analyze for risks and compliance issues as previously specified.
+            For Proposal Forms:
+            - Check for proposal type (Division I or Division II)
+            - Look for voting results and creditor information
+            - Verify trustee/administrator appointment details
+
+            For Court Orders:
+            - Extract the exact court file number
+            - Identify the issuing court and location
+            - Note the judge's name and title
+            - Record all important dates (issuance, hearing, etc.)
+
+            For Meeting Notices:
+            - Extract precise meeting date, time, and location
+            - Note the chairperson's details
+            - Check for creditor-specific information
+            - Verify if virtual/in-person/hybrid
+
+            5. SUMMARY GENERATION:
+            - Start with the document type and purpose
+            - Include key dates and deadlines
+            - Mention primary parties involved
+            - Note any immediate actions required
+            - Keep to 2-3 clear, informative sentences
+
+            6. QUALITY CONTROL:
+            - Re-verify all extracted numbers and dates
+            - Cross-reference information across different sections
+            - Ensure consistency in all extracted data
+            - Flag any discrepancies or unclear information
 
             Return the analysis in this exact JSON format:
             {
@@ -124,14 +149,14 @@ serve(async (req) => {
               }
             }
 
-            BE EXTREMELY SPECIFIC AND DETAILED IN YOUR ANALYSIS. Only include fields that are relevant to the specific form type. Generate a clear and informative summary that helps users quickly understand the document's purpose and key points.`
+            CRITICAL: Only include fields in the response that you are 100% confident are correct. Do not guess or include uncertain information. It's better to omit a field than to include incorrect information.`
           },
           {
             role: 'user',
             content: documentText
           }
         ],
-        temperature: 0.2,
+        temperature: 0.1,
         max_tokens: 3000
       }),
     });
