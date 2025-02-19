@@ -24,10 +24,20 @@ export interface DocumentDetails {
   analysis?: {
     content: {
       extracted_info: {
+        formNumber?: string;
         clientName?: string;
         trusteeName?: string;
+        estateNumber?: string;
+        district?: string;
+        divisionNumber?: string;
+        courtNumber?: string;
+        meetingOfCreditors?: string;
+        chairInfo?: string;
+        securityInfo?: string;
+        dateBankruptcy?: string;
         dateSigned?: string;
-        formNumber?: string;
+        officialReceiver?: string;
+        summary?: string;
         risks?: Risk[];
       };
     };

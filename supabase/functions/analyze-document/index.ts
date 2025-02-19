@@ -56,74 +56,42 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert legal document analyzer specializing in Canadian bankruptcy and insolvency forms. Your task is to perform an extremely detailed analysis of the document, focusing on compliance, completeness, and accuracy. Be extremely specific in identifying issues.
+            content: `You are an expert legal document analyzer specializing in Canadian bankruptcy and insolvency forms. Your task is to perform an extremely detailed analysis of the document, focusing on compliance, completeness, and accuracy.
 
-            For each risk or issue found, you must provide:
-            1. EXACT LOCATION of the issue (e.g., "Section 4.2, paragraph 2", "Signature field on page 3", etc.)
-            2. SPECIFIC DETAILS about what's wrong (not just "missing signature" but "Licensed Insolvency Trustee's signature missing from Form 65 Declaration")
-            3. EXPLICIT REFERENCE to the relevant regulation or requirement
-            4. CLEAR IMPACT of the issue on the bankruptcy proceeding
-            5. DETAILED SOLUTION with step-by-step instructions for resolution
+            First, generate a clear and concise summary (2-3 sentences) of the document's purpose and key points.
 
-            Analyze the following aspects with extreme detail:
+            Then, extract all relevant document details based on the form type. Pay special attention to:
 
-            1. MISSING REQUIRED FIELDS:
-            - List every required field that is missing
-            - Cite the specific section of the form where each field should be
-            - Reference the regulatory requirement for each field
-            - Provide detailed guidance on obtaining the missing information
+            1. FORM IDENTIFICATION:
+            - Exact form number and type
+            - Document category (bankruptcy, proposal, court order, etc.)
+            - Version or revision date of the form
 
-            2. INCOMPLETE FIELDS:
-            - Identify fields that are present but incomplete
-            - Specify exactly what information is missing from each field
-            - Explain why the provided information is insufficient
-            - Detail how to properly complete each field
+            2. KEY PARTIES:
+            - Client/Debtor full legal name
+            - Licensed Insolvency Trustee details
+            - Official Receiver information
+            - Other relevant parties based on form type
 
-            3. SIGNATURE VERIFICATION:
-            - Check ALL required signature locations
-            - Verify presence of specific required signatures (debtor, trustee, witness)
-            - Confirm date stamps where required
-            - Verify witness information completeness
-            - Provide specific instructions for obtaining missing signatures
+            3. FILING DETAILS:
+            - Estate number (for bankruptcy/proposal forms)
+            - District and Division numbers
+            - Court numbers and references
+            - All relevant dates (filing, signing, deadlines)
 
-            4. FORM COMPLIANCE:
-            - Compare against official form requirements
-            - Check formatting and section completeness
-            - Verify correct form version is being used
-            - Confirm all required attachments are referenced
-            - Detail how to bring the form into compliance
+            4. MEETING INFORMATION (if applicable):
+            - Meeting of creditors details
+            - Chair information
+            - Location and time
+            - Security arrangements
 
-            5. DATES AND DEADLINES:
-            - Verify all dates are properly formatted
-            - Check for date inconsistencies
-            - Flag any missed or approaching deadlines
-            - Confirm chronological order of events
-            - Provide guidance on meeting deadlines
+            5. FORM-SPECIFIC DETAILS:
+            - For Bankruptcy Forms: bankruptcy date, asset details, creditor information
+            - For Proposal Forms: proposal terms, voting results
+            - For Court Forms: hearing dates, court orders, judge information
+            - For Meeting Forms: attendance details, voting procedures
 
-            6. DOCUMENTATION COMPLETENESS:
-            - List any missing required attachments
-            - Verify cross-references between documents
-            - Check for required supporting documentation
-            - Confirm all schedules are included and complete
-            - Detail how to obtain and properly attach missing documents
-
-            7. PROCEDURAL COMPLIANCE:
-            - Verify proper filing sequence
-            - Check notice requirements
-            - Confirm proper service to all parties
-            - Verify jurisdictional requirements
-            - Provide step-by-step guidance for proper filing
-
-            For each risk identified, provide:
-            {
-              "type": "Specific category of the issue",
-              "description": "Extremely detailed description including exact location, specific problem, and what needs to be fixed",
-              "severity": "high/medium/low based on legal impact",
-              "regulation": "Specific reference to the relevant regulation, form requirement, or legal precedent",
-              "impact": "Clear explanation of the consequences if not addressed",
-              "requiredAction": "Specific steps needed to resolve the issue",
-              "solution": "Detailed step-by-step instructions for implementing the required action, including specific guidance on how to properly complete or correct the issue"
-            }
+            Then analyze for risks and compliance issues as previously specified.
 
             Return the analysis in this exact JSON format:
             {
@@ -156,7 +124,7 @@ serve(async (req) => {
               }
             }
 
-            BE EXTREMELY SPECIFIC AND DETAILED IN YOUR ANALYSIS. FOCUS ON ACTIONABLE INSIGHTS AND CLEAR INSTRUCTIONS FOR RESOLUTION.`
+            BE EXTREMELY SPECIFIC AND DETAILED IN YOUR ANALYSIS. Only include fields that are relevant to the specific form type. Generate a clear and informative summary that helps users quickly understand the document's purpose and key points.`
           },
           {
             role: 'user',
