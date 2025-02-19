@@ -1,10 +1,12 @@
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ProfilePicture } from './ProfilePicture';
 import { Lock } from 'lucide-react';
+import { SignUpFields } from './auth/SignUpFields';
+import { AuthFields } from './auth/AuthFields';
+import { validateAuthForm } from './auth/authValidation';
+import { authService } from './auth/authService';
 
 export const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -17,66 +19,41 @@ export const Auth = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const validateForm = () => {
-    if (!email || !password) {
-      setError('Email and password are required');
-      return false;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return false;
-    }
-    if (isSignUp && (!fullName || !userId)) {
-      setError('Full Name and User ID are required');
-      return false;
-    }
-    setError(null);
-    return true;
-  };
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    const validation = validateAuthForm({
+      email,
+      password,
+      isSignUp,
+      fullName,
+      userId
+    });
+    
+    if (!validation.isValid) {
+      setError(validation.error);
+      return;
+    }
     
     setLoading(true);
     setError(null);
 
     try {
       if (isSignUp) {
-        // First, sign up the user
-        const { error: signUpError, data } = await supabase.auth.signUp({
+        await authService.signUp({
           email,
           password,
+          fullName,
+          userId,
+          avatarUrl
         });
-        
-        if (signUpError) throw signUpError;
-
-        // Then update their profile with the additional information
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: data.user.id,
-              full_name: fullName,
-              user_id: userId,
-              avatar_url: avatarUrl,
-              email: email,
-            });
-
-          if (profileError) throw profileError;
-        }
 
         toast({
           title: "Success",
           description: "Please check your email to confirm your account",
         });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
+        await authService.signIn(email, password);
         toast({
           title: "Success",
           description: "Successfully signed in!",
@@ -119,83 +96,22 @@ export const Auth = () => {
 
           <form onSubmit={handleAuth} className="space-y-4">
             {isSignUp && (
-              <>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium">
-                      Full Name
-                    </label>
-                    <input
-                      id="fullName"
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="mt-1 block w-full rounded-md border bg-background px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="userId" className="block text-sm font-medium">
-                      User ID
-                    </label>
-                    <input
-                      id="userId"
-                      type="text"
-                      value={userId}
-                      onChange={(e) => setUserId(e.target.value)}
-                      className="mt-1 block w-full rounded-md border bg-background px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Profile Picture
-                    </label>
-                    <ProfilePicture
-                      url={avatarUrl}
-                      onUpload={(url) => {
-                        setAvatarUrl(url);
-                        toast({
-                          title: "Success",
-                          description: "Profile picture selected successfully",
-                        });
-                      }}
-                      size={100}
-                    />
-                  </div>
-                </div>
-              </>
+              <SignUpFields
+                fullName={fullName}
+                setFullName={setFullName}
+                userId={userId}
+                setUserId={setUserId}
+                avatarUrl={avatarUrl}
+                setAvatarUrl={setAvatarUrl}
+              />
             )}
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="mt-1 block w-full rounded-md border bg-background px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="mt-1 block w-full rounded-md border bg-background px-3 py-2"
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Password must be at least 6 characters long
-              </p>
-            </div>
+            <AuthFields
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+            />
 
             <button
               type="submit"
