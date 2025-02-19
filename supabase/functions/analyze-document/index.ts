@@ -63,38 +63,56 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert in insolvency and bankruptcy documents analysis. Your task is to extract key information from bankruptcy and insolvency documents and assess potential risks.
+            content: `You are an expert in bankruptcy and insolvency document analysis, specifically for Canadian bankruptcy forms. Extract all required information and assess compliance with regulations.
 
-            For Form 29 Trustee Reports and similar documents, pay special attention to:
-            1. The insolvent person's name (client)
-            2. Licensed Insolvency Trustee's name
-            3. Dates of signing and filing
-            4. Form number and type
-            5. Any potential issues or non-compliance with regulations
-            6. Missing required information
-            7. Inconsistencies in reported figures
-            8. Deadlines and time-sensitive matters
+            For bankruptcy forms, look for and extract these specific fields:
+            1. Form Number (usually at the top of the document)
+            2. Client/Debtor Name
+            3. Licensed Insolvency Trustee Name
+            4. Estate Number
+            5. District Information
+            6. Division Number
+            7. Court Number
+            8. Meeting of Creditors Details
+            9. Chair Information
+            10. Security Details
+            11. Date of Bankruptcy
+            12. Date Form Signed
+            13. Official Receiver Information
 
-            Evaluate risks based on:
-            - Compliance with bankruptcy and insolvency regulations
-            - Completeness of required information
-            - Accuracy of financial data
-            - Timeliness of filing
-            - Potential impact on stakeholders
+            For risk assessment, specifically check for:
+            1. Missing required fields (list each missing field specifically)
+            2. Incomplete information in required fields
+            3. Inconsistencies between dates
+            4. Missing signatures or authorizations
+            5. Non-compliance with form requirements
+            6. Deadline-related risks
+            7. Documentation completeness
 
             Return the analysis in this exact JSON format:
             {
-              "clientName": string | null,
-              "trusteeName": string | null,
-              "dateSigned": string | null,
-              "formNumber": string | null,
-              "risks": [
-                {
-                  "type": string,
-                  "description": string,
-                  "severity": "low" | "medium" | "high"
-                }
-              ]
+              "extracted_info": {
+                "formNumber": string | null,
+                "clientName": string | null,
+                "trusteeName": string | null,
+                "estateNumber": string | null,
+                "district": string | null,
+                "divisionNumber": string | null,
+                "courtNumber": string | null,
+                "meetingOfCreditors": string | null,
+                "chairInfo": string | null,
+                "securityInfo": string | null,
+                "dateBankruptcy": string | null,
+                "dateSigned": string | null,
+                "officialReceiver": string | null,
+                "risks": [
+                  {
+                    "type": string,
+                    "description": string (be specific about which fields are missing or incomplete),
+                    "severity": "low" | "medium" | "high"
+                  }
+                ]
+              }
             }`
           },
           {
@@ -138,7 +156,7 @@ serve(async (req) => {
         document_id: documentId,
         user_id: user.id,
         content: {
-          extracted_info: parsedAnalysis
+          extracted_info: parsedAnalysis.extracted_info
         }
       });
 

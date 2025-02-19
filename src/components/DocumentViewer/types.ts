@@ -19,10 +19,19 @@ export interface Risk {
 }
 
 export interface ExtractedInfo {
+  formNumber: string | null;
   clientName: string | null;
   trusteeName: string | null;
+  estateNumber: string | null;
+  district: string | null;
+  divisionNumber: string | null;
+  courtNumber: string | null;
+  meetingOfCreditors: string | null;
+  chairInfo: string | null;
+  securityInfo: string | null;
+  dateBankruptcy: string | null;
   dateSigned: string | null;
-  formNumber: string | null;
+  officialReceiver: string | null;
   risks: Risk[];
 }
 
