@@ -56,12 +56,13 @@ export const Auth = () => {
         if (data.user) {
           const { error: profileError } = await supabase
             .from('profiles')
-            .update({
+            .upsert({
+              id: data.user.id,
               full_name: fullName,
               user_id: userId,
               avatar_url: avatarUrl,
-            })
-            .eq('id', data.user.id);
+              email: email,
+            });
 
           if (profileError) throw profileError;
         }
@@ -150,7 +151,13 @@ export const Auth = () => {
                     </label>
                     <ProfilePicture
                       url={avatarUrl}
-                      onUpload={(url) => setAvatarUrl(url)}
+                      onUpload={(url) => {
+                        setAvatarUrl(url);
+                        toast({
+                          title: "Success",
+                          description: "Profile picture selected successfully",
+                        });
+                      }}
                       size={100}
                     />
                   </div>

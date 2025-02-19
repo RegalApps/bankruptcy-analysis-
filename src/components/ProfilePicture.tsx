@@ -23,18 +23,12 @@ export const ProfilePicture = ({ url, onUpload, size = 150 }: ProfilePictureProp
           throw new Error("You must select an image to upload.");
         }
 
-        // Get current user session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session) {
-          throw new Error("You must be logged in to upload a profile picture.");
-        }
-
         const file = event.target.files[0];
         const fileExt = file.name.split(".").pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `${session.user.id}/${fileName}`;
+        const filePath = `temp/${fileName}`; // Store in temp folder until user is created
 
-        // Upload the file to Supabase storage with user_id in path
+        // Upload the file to Supabase storage in temp folder
         const { error: uploadError } = await supabase.storage
           .from("avatars")
           .upload(filePath, file, {
