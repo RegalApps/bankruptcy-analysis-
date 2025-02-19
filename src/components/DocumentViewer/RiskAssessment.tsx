@@ -8,6 +8,7 @@ interface Risk {
   regulation?: string;
   impact?: string;
   requiredAction?: string;
+  solution?: string;
 }
 
 interface RiskAssessmentProps {
@@ -84,6 +85,17 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks }) => {
                     <div className="flex items-start">
                       <ArrowRight className="h-3 w-3 mt-0.5 mr-1 flex-shrink-0" />
                       <p>{risk.requiredAction}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {risk.solution && (
+                <div className="pl-8 mt-2">
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p className="font-medium text-foreground">Solution:</p>
+                    <div className="p-2 bg-background rounded border">
+                      <p className="whitespace-pre-wrap">{risk.solution}</p>
                     </div>
                   </div>
                 </div>

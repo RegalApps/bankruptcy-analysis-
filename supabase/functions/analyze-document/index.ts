@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -9,13 +8,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Create Supabase client to get user information
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -26,10 +23,8 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the JWT token from the Authorization header
     const token = authHeader.replace('Bearer ', '');
     
-    // Get user from the token
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError || !user) {
@@ -50,8 +45,6 @@ serve(async (req) => {
       throw new Error('Document ID is required');
     }
 
-    // Call OpenAI API with enhanced prompt
-    console.log('Calling OpenAI API...');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -59,7 +52,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Changed from gpt-4o to gpt-4o-mini
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -70,6 +63,7 @@ serve(async (req) => {
             2. SPECIFIC DETAILS about what's wrong (not just "missing signature" but "Licensed Insolvency Trustee's signature missing from Form 65 Declaration")
             3. EXPLICIT REFERENCE to the relevant regulation or requirement
             4. CLEAR IMPACT of the issue on the bankruptcy proceeding
+            5. DETAILED SOLUTION with step-by-step instructions for resolution
 
             Analyze the following aspects with extreme detail:
 
@@ -77,41 +71,48 @@ serve(async (req) => {
             - List every required field that is missing
             - Cite the specific section of the form where each field should be
             - Reference the regulatory requirement for each field
+            - Provide detailed guidance on obtaining the missing information
 
             2. INCOMPLETE FIELDS:
             - Identify fields that are present but incomplete
             - Specify exactly what information is missing from each field
             - Explain why the provided information is insufficient
+            - Detail how to properly complete each field
 
             3. SIGNATURE VERIFICATION:
             - Check ALL required signature locations
             - Verify presence of specific required signatures (debtor, trustee, witness)
             - Confirm date stamps where required
             - Verify witness information completeness
+            - Provide specific instructions for obtaining missing signatures
 
             4. FORM COMPLIANCE:
             - Compare against official form requirements
             - Check formatting and section completeness
             - Verify correct form version is being used
             - Confirm all required attachments are referenced
+            - Detail how to bring the form into compliance
 
             5. DATES AND DEADLINES:
             - Verify all dates are properly formatted
             - Check for date inconsistencies
             - Flag any missed or approaching deadlines
             - Confirm chronological order of events
+            - Provide guidance on meeting deadlines
 
             6. DOCUMENTATION COMPLETENESS:
             - List any missing required attachments
             - Verify cross-references between documents
             - Check for required supporting documentation
             - Confirm all schedules are included and complete
+            - Detail how to obtain and properly attach missing documents
 
             7. PROCEDURAL COMPLIANCE:
             - Verify proper filing sequence
             - Check notice requirements
             - Confirm proper service to all parties
             - Verify jurisdictional requirements
+            - Provide step-by-step guidance for proper filing
 
             For each risk identified, provide:
             {
@@ -120,7 +121,8 @@ serve(async (req) => {
               "severity": "high/medium/low based on legal impact",
               "regulation": "Specific reference to the relevant regulation, form requirement, or legal precedent",
               "impact": "Clear explanation of the consequences if not addressed",
-              "requiredAction": "Specific steps needed to resolve the issue"
+              "requiredAction": "Specific steps needed to resolve the issue",
+              "solution": "Detailed step-by-step instructions for implementing the required action, including specific guidance on how to properly complete or correct the issue"
             }
 
             Return the analysis in this exact JSON format:
@@ -147,11 +149,14 @@ serve(async (req) => {
                     "severity": "low" | "medium" | "high",
                     "regulation": string,
                     "impact": string,
-                    "requiredAction": string
+                    "requiredAction": string,
+                    "solution": string
                   }
                 ]
               }
-            }`
+            }
+
+            BE EXTREMELY SPECIFIC AND DETAILED IN YOUR ANALYSIS. FOCUS ON ACTIONABLE INSIGHTS AND CLEAR INSTRUCTIONS FOR RESOLUTION.`
           },
           {
             role: 'user',
@@ -178,7 +183,6 @@ serve(async (req) => {
 
     let parsedAnalysis;
     try {
-      // Extract JSON from the response content, removing any markdown formatting
       const jsonContent = data.choices[0].message.content.replace(/```json\n|\n```/g, '');
       parsedAnalysis = JSON.parse(jsonContent);
       console.log("Parsed analysis:", parsedAnalysis);
@@ -187,7 +191,6 @@ serve(async (req) => {
       throw new Error('Failed to parse document analysis results');
     }
 
-    // Store the analysis in the database with user_id
     const { error: dbError } = await supabaseClient
       .from('document_analysis')
       .upsert({ 
