@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -7,6 +6,129 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+function determineFormType(formNumber: string): string {
+  // Official form types based on OSBC documentation
+  const formTypes: Record<string, string> = {
+    '49': 'Assignment for General Benefit of Creditors',
+    '65': 'Notice of Intention to Make a Proposal',
+    '66': 'Notice of Mediation',
+    '67': 'Notice of First Meeting of Creditors',
+    '68': 'Notice of Bankruptcy, First Meeting of Creditors and Impending Automatic Discharge of Bankrupt',
+    '69': 'Notice of Bankruptcy and First Meeting of Creditors',
+    '70': 'Notice of Proposal to Creditors',
+    '71': 'Notice of Hearing of Application for Court Approval of Proposal',
+    '72': 'Notice of Appeal to Court of Justice From Decision of Registrar',
+    '74': 'Notice of Contestation of Claim or Dividend',
+    '75': 'Notice of Disallowance of Claim, Right to Priority or Security',
+    '76': 'Notice of Dividend and Application for Discharge of Trustee',
+    '77': 'Notice to Creditor of Estate of Deceased',
+    '78': 'Statement of Affairs (Business Bankruptcy)',
+    '79': 'Statement of Affairs (Business Proposal)',
+    '84': 'Notice of Cancellation of Bankruptcy',
+    '85': 'Notice of Annulment of Bankruptcy',
+    '86': 'Notice of Final Dividend and Application for Discharge of Trustee',
+    '87': 'Notice of Deemed Taxation of Trustee's Accounts and Discharge of Trustee',
+    '89': 'Notice of Impending Automatic Discharge of First-Time Bankrupt',
+    '90': 'Notice of Mediation — Assessment Certificate',
+    '91': 'Notice of Impending Discharge',
+    '92': 'Notice to Creditor of Consumer Proposal',
+    '93': 'Notice of Default of Consumer Proposal',
+    '94': 'Certificate of Full Performance of Consumer Proposal'
+  };
+
+  const baseFormNumber = formNumber.split('.')[0];
+  return formTypes[baseFormNumber] || 'Unknown Form Type';
+}
+
+function generateFormSummary(formNumber: string, formTitle: string): string {
+  // Official form summaries based on OSBC documentation
+  const formSummaries: Record<string, string> = {
+    '49': 'This form is used when a debtor assigns all property for the general benefit of creditors. It initiates bankruptcy proceedings under Section 49(1) of the BIA.',
+    '65': 'This form notifies creditors of a debtor\'s intention to make a proposal. It provides a 30-day stay of proceedings under Section 50.4(1) of the BIA.',
+    '66': 'This form provides notice of mediation proceedings to resolve disputes between the trustee and bankrupt regarding conditions for discharge or surplus income under Directive 6R3.',
+    '67': 'This form notifies creditors of the first meeting, where they can discuss the bankruptcy/proposal, appoint inspectors, and give directions to the trustee under Section 102 of the BIA.',
+    '68': 'This comprehensive notice informs creditors of the bankruptcy, schedules the first meeting, and provides information about the impending automatic discharge under Sections 102 and 168.1 of the BIA.',
+    '69': 'This form notifies creditors of both the bankruptcy and the first creditors\' meeting, combining essential information under Section 102 of the BIA.',
+    '70': 'This form presents the terms of a proposal to creditors, allowing them to vote on the proposed debt resolution under Section 51(1) of the BIA.',
+    '71': 'This notice informs interested parties of the court hearing to approve a proposal under Section 58 of the BIA.',
+    '72': 'This form initiates an appeal of a Registrar\'s decision to a Court of Justice under Section 192 of the BIA.',
+    '74': 'This form notifies of a contestation of a claim or dividend under Section 135(3) of the BIA.',
+    '75': 'This notice informs creditors when their claim, priority, or security has been disallowed under Section 135(3) of the BIA.',
+    '76': 'This form announces dividend distribution and the trustee\'s application for discharge under Section 152 of the BIA.',
+    '77': 'This specialized notice informs creditors about claims against a deceased person\'s estate under Section 68.1 of the BIA.',
+    '78': 'This detailed financial disclosure form for business bankruptcies lists all assets, liabilities, income, and expenses under Section 158(d) of the BIA.',
+    '79': 'Similar to Form 78, this statement of affairs is specifically for business proposals under Section 50(2) of the BIA.',
+    '84': 'This form notifies of the cancellation of a bankruptcy under Section 181(2) of the BIA.',
+    '85': 'This notice informs of the annulment of a bankruptcy by court order under Section 181(1) of the BIA.',
+    '86': 'This form announces the final dividend distribution and trustee\'s discharge application under Section 152 of the BIA.',
+    '87': 'This notice informs of the deemed taxation of trustee\'s accounts and discharge under Section 152(8) of the BIA.',
+    '89': 'This form provides notice of an impending automatic discharge for first-time bankrupts under Section 168.1 of the BIA.',
+    '90': 'This form certifies the completion of mediation assessment under Directive 6R3.',
+    '91': 'This general notice informs of an impending discharge from bankruptcy.',
+    '92': 'This form presents the terms of a consumer proposal to creditors under Section 66.13 of the BIA.',
+    '93': 'This notice informs creditors that a consumer proposal is in default under Section 66.31 of the BIA.',
+    '94': 'This certificate confirms the successful completion of a consumer proposal under Section 66.38 of the BIA.'
+  };
+
+  const baseFormNumber = formNumber.split('.')[0];
+  return formSummaries[baseFormNumber] || 
+    `This is ${formTitle}. Please refer to the Bankruptcy and Insolvency Act for specific requirements.`;
+}
+
+function extractFormInfo(text: string, formNumber: string) {
+  const baseFormNumber = formNumber.split('.')[0];
+  const formType = determineFormType(formNumber);
+  
+  // Common fields for all forms
+  let extractedInfo: any = {
+    type: formType,
+    formNumber: formNumber,
+    summary: generateFormSummary(formNumber, formType)
+  };
+
+  // Extract form-specific fields
+  switch (baseFormNumber) {
+    case '66':
+      extractedInfo = {
+        ...extractedInfo,
+        ...extractForm66Info(text)
+      };
+      break;
+    case '67':
+      extractedInfo = {
+        ...extractedInfo,
+        ...extractForm67Info(text)
+      };
+      break;
+    case '68':
+      extractedInfo = {
+        ...extractedInfo,
+        ...extractForm68Info(text)
+      };
+      break;
+    case '78':
+      extractedInfo = {
+        ...extractedInfo,
+        ...extractForm78Info(text)
+      };
+      break;
+    case '92':
+      extractedInfo = {
+        ...extractedInfo,
+        ...extractForm92Info(text)
+      };
+      break;
+    // Add more form-specific extractors here
+    default:
+      extractedInfo = {
+        ...extractedInfo,
+        ...extractGenericFormInfo(text)
+      };
+  }
+
+  return extractedInfo;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -35,38 +157,15 @@ serve(async (req) => {
       throw new Error('No document text provided');
     }
 
-    // First identify the form number for specific processing
+    // First identify the form number
     const formMatch = documentText.match(/Form\s+(\d+(\.\d+)?(\([a-zA-Z]\))?)/i);
     const formNumber = formMatch ? formMatch[1] : '';
     
-    // Extract information based on specific form types
-    let extractedInfo;
-    
-    if (formNumber.startsWith('66')) {
-      // Form 66 - Notice of Mediation
-      extractedInfo = extractForm66Info(documentText);
-    } else if (formNumber.startsWith('67')) {
-      // Form 67 - Notice of Meeting of Creditors
-      extractedInfo = extractForm67Info(documentText);
-    } else if (formNumber.startsWith('68')) {
-      // Form 68 - Notice of Bankruptcy
-      extractedInfo = extractForm68Info(documentText);
-    } else if (formNumber.startsWith('78')) {
-      // Form 78 - Statement of Affairs
-      extractedInfo = extractForm78Info(documentText);
-    } else if (formNumber.startsWith('92')) {
-      // Form 92 - Notice to Creditor of Consumer Proposal
-      extractedInfo = extractForm92Info(documentText);
-    } else {
-      // Generic extraction for unknown forms
-      extractedInfo = extractGenericFormInfo(documentText);
-    }
-
-    // Add form number to extracted info
-    extractedInfo.formNumber = formNumber;
-
+    // Extract information based on form type
+    const extractedInfo = extractFormInfo(documentText, formNumber);
     console.log('Extracted information:', extractedInfo);
 
+    // Store analysis results
     const { error: analysisError } = await supabase
       .from('document_analysis')
       .upsert({
