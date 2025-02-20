@@ -16,13 +16,16 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("Initializing auth state...");
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Session state:", session);
       setSession(session);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", session);
       setSession(session);
     });
 
@@ -32,6 +35,7 @@ const Index = () => {
   // Set up real-time subscription for documents
   useEffect(() => {
     if (session) {
+      console.log("Setting up document subscription...");
       // Initial fetch
       fetchDocuments();
 
@@ -62,6 +66,7 @@ const Index = () => {
 
   const fetchDocuments = async () => {
     try {
+      console.log("Fetching documents...");
       const { data, error } = await supabase
         .from('documents')
         .select('*')

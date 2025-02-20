@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { DocumentDetails } from "./types";
 import { AnalysisPanel } from "./AnalysisPanel";
 import { DocumentPreview } from "./DocumentPreview";
-import { CollaborationPanel } from "./CollaborationPanel";
+import { Comments } from "./Comments";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -18,6 +18,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
   const fetchDocumentDetails = async () => {
     try {
+      console.log("Fetching document details for:", documentId);
       const { data: document, error: docError } = await supabase
         .from('documents')
         .select(`
@@ -29,8 +30,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         .single();
 
       if (docError) throw docError;
+      console.log("Fetched document:", document);
       setDocument(document);
     } catch (error: any) {
+      console.error("Error fetching document:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -71,12 +74,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       </div>
 
       <div className="lg:col-span-6">
-        <DocumentPreview storagePath={document.storage_path} />
+        <DocumentPreview 
+          storagePath={document.storage_path}
+          onAnalysisComplete={fetchDocumentDetails}
+        />
       </div>
 
       <div className="lg:col-span-3 space-y-6">
-        <CollaborationPanel 
-          document={document}
+        <Comments 
+          documentId={document.id}
+          comments={document.comments || []}
           onCommentAdded={fetchDocumentDetails}
         />
       </div>
