@@ -93,6 +93,7 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
 
       if (fetchError) throw fetchError;
 
+      // Prepare the updated content while preserving existing data
       const updatedContent = {
         ...existingAnalysis?.content,
         extracted_info: {
@@ -102,12 +103,27 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
         }
       };
 
-      const { error: updateError } = await supabase
-        .from('document_analysis')
-        .update({ content: updatedContent })
-        .eq('document_id', documentId);
+      console.log('Saving updated content:', updatedContent);
 
-      if (updateError) throw updateError;
+      // If there's no existing analysis, create one
+      if (!existingAnalysis) {
+        const { error: insertError } = await supabase
+          .from('document_analysis')
+          .insert([{ 
+            document_id: documentId, 
+            content: updatedContent 
+          }]);
+
+        if (insertError) throw insertError;
+      } else {
+        // Update existing analysis
+        const { error: updateError } = await supabase
+          .from('document_analysis')
+          .update({ content: updatedContent })
+          .eq('document_id', documentId);
+
+        if (updateError) throw updateError;
+      }
 
       toast({
         title: "Success",
