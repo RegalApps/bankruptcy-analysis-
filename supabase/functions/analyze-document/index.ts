@@ -14,134 +14,117 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    const { documentText, documentId } = await req.json();
+    console.log('Analyzing document:', { documentId, textLength: documentText?.length });
+
+    if (!documentText) {
+      throw new Error('No document text provided');
     }
 
-    const supabaseClient = createClient(
+    // Document Type and Form Number Detection
+    const formMatch = documentText.match(/Form\s+(\d+(\.\d+)?(\([a-zA-Z]\))?)/i);
+    const formNumber = formMatch ? formMatch[1] : '';
+    
+    // Determine document type and generate appropriate summary
+    const documentType = determineDocumentType(documentText);
+    const summary = generateDetailedSummary(documentText, documentType);
+
+    // Extract all relevant information
+    const extractedInfo = {
+      type: documentType,
+      formNumber: formNumber,
+      clientName: extractPersonInfo(documentText, 'client'),
+      trusteeName: extractPersonInfo(documentText, 'trustee'),
+      estateNumber: extractEstateNumber(documentText),
+      district: extractDistrict(documentText),
+      divisionNumber: extractDivisionNumber(documentText),
+      courtNumber: extractCourtNumber(documentText),
+      meetingOfCreditors: extractMeetingInfo(documentText),
+      chairInfo: extractChairInfo(documentText),
+      securityInfo: extractSecurityInfo(documentText),
+      dateBankruptcy: extractDate(documentText, 'bankruptcy'),
+      dateSigned: extractDate(documentText, 'signed'),
+      officialReceiver: extractOfficialReceiver(documentText),
+      summary: summary,
+      risks: analyzeRisksAndCompliance(documentText, documentType, formNumber)
+    };
+
+    console.log('Extracted information:', extractedInfo);
+
+    // Store analysis results
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const token = authHeader.replace('Bearer ', '');
-    
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-    
-    if (userError || !user) {
-      throw new Error('Invalid user token');
-    }
-
-    const { documentText, documentId } = await req.json();
-    
-    console.log('Analyzing document ID:', documentId);
-
-    // Get the document details from Supabase
-    const { data: document, error: docError } = await supabaseClient
-      .from('documents')
-      .select('*')
-      .eq('id', documentId)
-      .single();
-
-    if (docError) {
-      throw new Error('Failed to fetch document details');
-    }
-
-    console.log('Document title:', document.title);
-
-    // Analyze the document based on its type
-    const formType = document.type || 'unknown';
-    const defaultAnalysis = {
-      extracted_info: {
-        formNumber: detectFormNumber(documentText),
-        type: determineDocumentType(documentText, document.title),
-        clientName: extractClientName(documentText),
-        trusteeName: extractTrusteeName(documentText),
-        estateNumber: extractEstateNumber(documentText),
-        district: extractDistrict(documentText),
-        divisionNumber: extractDivisionNumber(documentText),
-        courtNumber: extractCourtNumber(documentText),
-        dateBankruptcy: extractDate(documentText, 'bankruptcy'),
-        dateSigned: extractDate(documentText, 'signed'),
-        officialReceiver: extractOfficialReceiver(documentText),
-        summary: generateDocumentSummary(documentText, formType),
-        risks: analyzeRisks(documentText, formType)
-      }
-    };
-
-    // Store the analysis results
-    const { error: analysisError } = await supabaseClient
+    const { error: analysisError } = await supabase
       .from('document_analysis')
-      .upsert({ 
+      .upsert({
         document_id: documentId,
-        user_id: user.id,
-        content: defaultAnalysis
+        content: { extracted_info: extractedInfo }
       });
 
-    if (analysisError) {
-      throw analysisError;
-    }
+    if (analysisError) throw analysisError;
 
     return new Response(
-      JSON.stringify({ success: true, analysis: defaultAnalysis }), 
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      JSON.stringify({ success: true, analysis: extractedInfo }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error in analyze-document function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message || 'An unexpected error occurred',
-        success: false 
-      }),
+      JSON.stringify({ error: error.message }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
 });
 
-// Helper functions for document analysis
-function detectFormNumber(text: string): string {
-  const formMatch = text.match(/Form\s+(\d+(\.\d+)?(\([a-zA-Z]\))?)/i);
-  return formMatch ? formMatch[1] : '';
-}
-
-function determineDocumentType(text: string, title: string): string {
-  if (text.toLowerCase().includes('statement of affairs') || title.toLowerCase().includes('form 66')) {
-    return 'business_bankruptcy';
-  }
-  if (text.toLowerCase().includes('proposal') || title.toLowerCase().includes('proposal')) {
-    return 'proposal';
-  }
-  return 'other';
-}
-
-function extractClientName(text: string): string {
-  const namePatterns = [
-    /(?:debtor|client|business)(?:\s+name)?[:]\s*([^\n\r]+)/i,
-    /name\s+of\s+(?:debtor|business|bankrupt)[:]\s*([^\n\r]+)/i
-  ];
+function determineDocumentType(text: string): string {
+  const lowerText = text.toLowerCase();
   
-  for (const pattern of namePatterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      return match[1].trim();
-    }
+  if (lowerText.includes('statement of affairs') || lowerText.includes('form 78')) {
+    return 'Statement of Affairs';
   }
-  return '';
+  if (lowerText.includes('notice of bankruptcy') || lowerText.includes('form 68')) {
+    return 'Notice of Bankruptcy';
+  }
+  if (lowerText.includes('proposal') || lowerText.includes('form 92')) {
+    return 'Consumer Proposal';
+  }
+  if (lowerText.includes('meeting of creditors') || lowerText.includes('form 67')) {
+    return 'Meeting Notice';
+  }
+  return 'Other';
 }
 
-function extractTrusteeName(text: string): string {
-  const trusteePatterns = [
-    /(?:trustee|licensed\s+insolvency\s+trustee)[:]\s*([^\n\r]+)/i,
-    /name\s+of\s+(?:trustee|lit)[:]\s*([^\n\r]+)/i
-  ];
-  
-  for (const pattern of trusteePatterns) {
+function generateDetailedSummary(text: string, type: string): string {
+  const summaryTemplates: Record<string, string> = {
+    'Statement of Affairs': `This Statement of Affairs document provides a comprehensive financial disclosure of the debtor's assets, liabilities, income, and expenses as required under the Bankruptcy and Insolvency Act. It serves as a sworn declaration of the debtor's financial position at the time of filing.`,
+    'Notice of Bankruptcy': `This Notice of Bankruptcy formally declares the commencement of bankruptcy proceedings under the BIA. It includes essential details about the bankruptcy filing, the appointed Licensed Insolvency Trustee, and important deadlines for creditors.`,
+    'Consumer Proposal': `This Consumer Proposal document outlines the terms offered to creditors for debt resolution under the BIA. It details the proposed payment plan, timeline, and conditions for debt settlement.`,
+    'Meeting Notice': `This document provides notice of a Meeting of Creditors, scheduled as required by the BIA. It includes details about the meeting time, location, and agenda for discussing the bankruptcy or proposal proceedings.`,
+    'Other': `This document appears to be related to insolvency proceedings under the Bankruptcy and Insolvency Act. Please review carefully for specific requirements and deadlines.`
+  };
+
+  return summaryTemplates[type] || summaryTemplates['Other'];
+}
+
+function extractPersonInfo(text: string, type: 'client' | 'trustee'): string {
+  const patterns = {
+    client: [
+      /(?:debtor|bankrupt|client)(?:\s+name)?[:]\s*([^\n\r]+)/i,
+      /name\s+of\s+(?:debtor|bankrupt)[:]\s*([^\n\r]+)/i
+    ],
+    trustee: [
+      /(?:trustee|licensed\s+insolvency\s+trustee)[:]\s*([^\n\r]+)/i,
+      /name\s+of\s+(?:trustee|lit)[:]\s*([^\n\r]+)/i
+    ]
+  };
+
+  for (const pattern of patterns[type]) {
     const match = text.match(pattern);
     if (match && match[1]) {
       return match[1].trim();
@@ -170,6 +153,24 @@ function extractCourtNumber(text: string): string {
   return match ? match[1].trim() : '';
 }
 
+function extractMeetingInfo(text: string): string {
+  const datePattern = /\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\d{4}[-/]\d{1,2}[-/]\d{1,2}/;
+  const timePattern = /\d{1,2}[:]\d{2}\s*(?:am|pm|AM|PM)?/;
+  
+  const meetingMatch = text.match(new RegExp(`meeting\\s+of\\s+creditors.*?(?:${datePattern.source}).*?(?:${timePattern.source})`, 'i'));
+  return meetingMatch ? meetingMatch[0].trim() : '';
+}
+
+function extractChairInfo(text: string): string {
+  const match = text.match(/chair(?:person)?[:]\s*([^\n\r]+)/i);
+  return match ? match[1].trim() : '';
+}
+
+function extractSecurityInfo(text: string): string {
+  const match = text.match(/security(?:\s+details)?[:]\s*([^\n\r]+)/i);
+  return match ? match[1].trim() : '';
+}
+
 function extractDate(text: string, type: 'bankruptcy' | 'signed'): string {
   const datePattern = /\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\d{4}[-/]\d{1,2}[-/]\d{1,2}/g;
   const dates = text.match(datePattern) || [];
@@ -188,20 +189,7 @@ function extractOfficialReceiver(text: string): string {
   return match ? match[1].trim() : '';
 }
 
-function generateDocumentSummary(text: string, formType: string): string {
-  const typeDescriptions: Record<string, string> = {
-    'business_bankruptcy': `Business Bankruptcy Document
-This document appears to be related to a business bankruptcy filing. It contains important information about the bankrupt business, including financial details, creditor information, and procedural requirements under the Bankruptcy and Insolvency Act.`,
-    'proposal': `Bankruptcy Proposal Document
-This document outlines a proposal to creditors under the Bankruptcy and Insolvency Act. It contains terms and conditions for debt repayment or restructuring.`,
-    'other': `Legal Document
-This document appears to be a legal form related to bankruptcy or insolvency proceedings. Please review carefully for specific requirements and deadlines.`
-  };
-
-  return typeDescriptions[formType] || typeDescriptions['other'];
-}
-
-function analyzeRisks(text: string, formType: string): Array<{
+function analyzeRisksAndCompliance(text: string, documentType: string, formNumber: string): Array<{
   type: string;
   description: string;
   severity: 'low' | 'medium' | 'high';
@@ -212,49 +200,83 @@ function analyzeRisks(text: string, formType: string): Array<{
 }> {
   const risks = [];
 
-  // Check for common risks based on document type
-  if (formType === 'business_bankruptcy') {
-    // Check for missing financial statements
-    if (!text.toLowerCase().includes('financial statement') && !text.toLowerCase().includes('balance sheet')) {
-      risks.push({
-        type: "Missing Financial Documentation",
-        description: "Required financial statements appear to be missing from the filing",
-        severity: "high",
-        regulation: "BIA Section 49(1) - Statement of Affairs requirements",
-        impact: "Incomplete filing may be rejected by the court or cause delays",
-        requiredAction: "Obtain and attach all required financial statements",
-        solution: "Work with the debtor to prepare comprehensive financial statements including assets, liabilities, income, and expenses"
-      });
-    }
+  // Check for missing essential information based on document type
+  const essentialFields = {
+    'Statement of Affairs': [
+      { field: 'assets', pattern: /assets?|property|possessions/i },
+      { field: 'liabilities', pattern: /liabilit(?:y|ies)|debts?/i },
+      { field: 'income', pattern: /income|earnings|salary/i },
+      { field: 'expenses', pattern: /expenses?|costs?|spending/i }
+    ],
+    'Notice of Bankruptcy': [
+      { field: 'estate number', pattern: /estate\s*(?:no|number|#)/i },
+      { field: 'date of bankruptcy', pattern: /date\s+of\s+bankruptcy/i },
+      { field: 'trustee information', pattern: /trustee|licensed\s+insolvency\s+trustee/i }
+    ],
+    'Consumer Proposal': [
+      { field: 'proposal terms', pattern: /terms?|conditions?|offers?/i },
+      { field: 'payment plan', pattern: /payment|installments?|schedule/i },
+      { field: 'creditor information', pattern: /creditors?|claims?/i }
+    ]
+  };
 
-    // Check for creditor information
-    if (!text.toLowerCase().includes('creditor') || !text.toLowerCase().includes('claim')) {
-      risks.push({
-        type: "Incomplete Creditor Information",
-        description: "Creditor details or claim amounts may be missing or incomplete",
-        severity: "medium",
-        regulation: "BIA Section 50(2) - Proper disclosure of creditors",
-        impact: "Creditors may be omitted from proceedings",
-        requiredAction: "Review and complete creditor information",
-        solution: "Compile comprehensive list of all creditors with claim amounts and contact details"
-      });
-    }
-  }
-
-  // Check for signatures and dates
-  if (!text.match(/signed|signature/i) || !text.match(/dated|date/i)) {
-    risks.push({
-      type: "Missing Signatures or Dates",
-      description: "Required signatures or dates appear to be missing",
-      severity: "high",
-      regulation: "BIA General Rules - Document execution requirements",
-      impact: "Document may be invalid or rejected",
-      requiredAction: "Obtain necessary signatures and dates",
-      solution: "Review signature requirements and ensure all parties have properly executed the document"
+  // Check form-specific requirements
+  if (documentType in essentialFields) {
+    essentialFields[documentType].forEach(({ field, pattern }) => {
+      if (!pattern.test(text)) {
+        risks.push({
+          type: `Missing ${field}`,
+          description: `Required ${field} information is not found in the document`,
+          severity: 'high',
+          regulation: `BIA Section 49(1) - Complete disclosure requirements`,
+          impact: `Incomplete filing may be rejected or cause delays`,
+          requiredAction: `Add missing ${field} information`,
+          solution: `Update the document to include complete ${field} details as required by the BIA`
+        });
+      }
     });
   }
 
-  // Add default low-risk item for normal verification
+  // Check for signatures
+  if (!text.match(/signed|signature/i)) {
+    risks.push({
+      type: "Missing Signatures",
+      description: "Required signatures not found in the document",
+      severity: "high",
+      regulation: "BIA Rules 65-66 - Document execution requirements",
+      impact: "Document may be invalid or rejected",
+      requiredAction: "Obtain necessary signatures",
+      solution: "Ensure all required parties sign the document in the designated areas"
+    });
+  }
+
+  // Check for dates
+  if (!text.match(/dated|date/i)) {
+    risks.push({
+      type: "Missing Dates",
+      description: "Required dates not properly documented",
+      severity: "medium",
+      regulation: "BIA Documentation Requirements",
+      impact: "May affect timing of proceedings",
+      requiredAction: "Add relevant dates",
+      solution: "Include all required dates, especially filing and signature dates"
+    });
+  }
+
+  // Check for creditor information
+  if (text.toLowerCase().includes('creditor') && !text.match(/amount|claim|debt/i)) {
+    risks.push({
+      type: "Incomplete Creditor Information",
+      description: "Creditor details or claim amounts may be missing",
+      severity: "medium",
+      regulation: "BIA Section 50(2) - Proper disclosure of creditors",
+      impact: "Creditors may be omitted from proceedings",
+      requiredAction: "Complete creditor information",
+      solution: "Add detailed creditor information including claim amounts"
+    });
+  }
+
+  // Add standard verification risk
   risks.push({
     type: "Standard Verification Required",
     description: "Regular verification of document contents needed",
@@ -262,7 +284,7 @@ function analyzeRisks(text: string, formType: string): Array<{
     regulation: "BIA General Practice",
     impact: "Ensure accuracy and completeness",
     requiredAction: "Review document contents",
-    solution: "Perform standard verification of all information and cross-reference with supporting documents"
+    solution: "Perform standard verification of all information"
   });
 
   return risks;
