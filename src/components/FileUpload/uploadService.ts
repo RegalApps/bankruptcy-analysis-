@@ -9,24 +9,39 @@ export const handleDocumentUpload = async (
 ) => {
   let documentText = '';
   
-  if (file.type === 'application/pdf') {
-    const arrayBuffer = await file.arrayBuffer();
-    documentText = await extractTextFromPdf(arrayBuffer);
-    console.log('Extracted PDF text:', documentText);
-  } else {
-    const text = await file.text();
-    documentText = text;
+  try {
+    updateProgress('Processing document...');
+    
+    if (file.type === 'application/pdf') {
+      const arrayBuffer = await file.arrayBuffer();
+      documentText = await extractTextFromPdf(arrayBuffer);
+      console.log('Extracted PDF text:', documentText);
+    } else {
+      const text = await file.text();
+      documentText = text;
+    }
+
+    updateProgress('Analyzing document...');
+
+    const { error: analysisError } = await supabase.functions
+      .invoke('analyze-document', {
+        body: {
+          documentText,
+          documentId
+        }
+      });
+
+    if (analysisError) {
+      console.error('Analysis error:', analysisError);
+      throw analysisError;
+    }
+
+    updateProgress('Document processed successfully');
+  } catch (error) {
+    console.error('Document processing error:', error);
+    updateProgress('Error processing document');
+    throw error;
   }
-
-  const { error: analysisError } = await supabase.functions
-    .invoke('analyze-document', {
-      body: {
-        documentText,
-        documentId
-      }
-    });
-
-  if (analysisError) throw analysisError;
 };
 
 export const uploadToStorage = async (
