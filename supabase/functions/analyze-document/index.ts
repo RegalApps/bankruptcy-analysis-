@@ -2,7 +2,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { PDFDocument } from 'https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,40 +35,85 @@ serve(async (req) => {
     const { documentText, documentId } = await req.json();
     
     console.log('Analyzing document ID:', documentId);
-    
-    if (!documentText) {
-      console.error('No document text provided');
-      throw new Error('Document text is required');
+
+    // Get the document details from Supabase
+    const { data: document, error: docError } = await supabaseClient
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .single();
+
+    if (docError) {
+      throw new Error('Failed to fetch document details');
     }
 
-    if (!documentId) {
-      console.error('No document ID provided');
-      throw new Error('Document ID is required');
-    }
+    console.log('Document title:', document.title);
 
-    let textToAnalyze = documentText;
-    
-    // If the document is base64 encoded (PDF), extract text content
-    if (documentText.startsWith('data:application/pdf;base64,')) {
-      console.log('Processing PDF document');
-      const base64Data = documentText.replace('data:application/pdf;base64,', '');
-      
-      // For Form 66(1), provide a template analysis since we can't extract text yet
-      if (documentText.toLowerCase().includes('form66') || documentText.toLowerCase().includes('form 66')) {
-        textToAnalyze = `Form 66(1) - Statement of Affairs (Business Bankruptcy)
+    // Default analysis for Form 66(1)
+    const defaultForm66Analysis = {
+      extracted_info: {
+        formNumber: "Form 66(1)",
+        type: "business_bankruptcy",
+        clientName: "Not extracted",
+        trusteeName: "Not extracted",
+        estateNumber: "Not extracted",
+        district: "Not extracted",
+        divisionNumber: "Not extracted",
+        courtNumber: "Not extracted",
+        dateBankruptcy: "Not extracted",
+        dateSigned: "Not extracted",
+        officialReceiver: "Not extracted",
+        summary: `Form 66(1) - Statement of Affairs (Business Bankruptcy)
 
-This is an official form under the Bankruptcy and Insolvency Act used for business bankruptcies. 
-The form requires detailed information about the business's assets, liabilities, income, and expenses.
+This is an official form under the Bankruptcy and Insolvency Act used for business bankruptcies. The form requires detailed information about the business's assets, liabilities, income, and expenses.
+
 Key sections include:
 1. Identity of the business and bankruptcy details
 2. Asset declarations (property, equipment, inventory)
 3. Liabilities and creditor information
 4. Income and expense statements
-5. Information about the business operations`;
+5. Information about the business operations`,
+        risks: [
+          {
+            type: "Documentation Compliance",
+            description: "Business bankruptcy requires complete and accurate financial disclosure",
+            severity: "high",
+            regulation: "Bankruptcy and Insolvency Act - Form 66(1) requirements",
+            impact: "Incomplete or inaccurate information can lead to delays or rejection of bankruptcy filing",
+            requiredAction: "Ensure all sections of Form 66(1) are completed with accurate financial information",
+            solution: "Review all sections with the trustee and provide supporting documentation for financial declarations"
+          }
+        ]
       }
+    };
+
+    // If it's Form 66, use the default analysis
+    if (document.title.toLowerCase().includes('form66') || document.title.toLowerCase().includes('form 66')) {
+      console.log('Form 66(1) detected, using default analysis template');
+      
+      const { error: analysisError } = await supabaseClient
+        .from('document_analysis')
+        .upsert({ 
+          document_id: documentId,
+          user_id: user.id,
+          content: defaultForm66Analysis
+        });
+
+      if (analysisError) {
+        throw analysisError;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, analysis: defaultForm66Analysis }), 
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
     }
 
-    console.log('Sending text to OpenAI for analysis...');
+    // For other forms, attempt OpenAI analysis
+    console.log('Sending to OpenAI for analysis...');
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -82,122 +126,49 @@ Key sections include:
         messages: [
           {
             role: 'system',
-            content: `You are a highly specialized Canadian bankruptcy and insolvency document analyzer with extensive experience in form identification and data extraction. Your primary task is to accurately analyze bankruptcy and insolvency forms with extreme attention to detail.
+            content: `You are a highly specialized Canadian bankruptcy and insolvency document analyzer. Analyze the document and extract key information.
 
-            CRITICAL INSTRUCTION: Accuracy is paramount. If you're unsure about any piece of information, DO NOT GUESS. Only extract information that you are completely confident about.
+For Form 66(1) specifically:
+- This is a Statement of Affairs for Business Bankruptcy
+- Look for business name, trustee details, and financial information
+- Extract any dates, file numbers, and court information
 
-            FORM DESCRIPTION GUIDELINES:
-            When generating the summary, strictly follow these steps:
-
-            1. First, identify the exact form number and match it to the official OSB form list from https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/forms
-            
-            2. Use the official OSB form description as the base for your summary. For example:
-            - Form 66(1) (Statement of Affairs - Business Bankruptcy): "This form is used to provide detailed financial information by a bankrupt business, including assets, liabilities, income, and expenses."
-            - Form 33 (Assignment for the General Benefit of Creditors): "This form is used when an insolvent person voluntarily assigns all property into bankruptcy"
-            - Form 40.1 (Monthly Income and Expense Statement of the Bankrupt): "This form is used to report the bankrupt's monthly income and expenses to the trustee"
-
-            3. Enhance the official description with specific details from this document instance:
-            - Add key dates and deadlines
-            - Include relevant parties
-            - Note any special conditions or requirements
-            - Mention next steps or required actions
-
-            Follow these strict guidelines for document analysis:
-
-            1. FORM IDENTIFICATION (HIGHEST PRIORITY):
-            - First, identify the exact form number (e.g., "Form 31", "Form 65", etc.)
-            - Verify the form title matches the official Bankruptcy and Insolvency Act forms
-            - Note the form version/revision date if present
-            - Double-check against the official form templates to ensure accuracy
-
-            2. DOCUMENT TYPE CLASSIFICATION:
-            - Categorize as one of: bankruptcy, proposal, court order, meeting notice, or other
-            - Verify the document type matches the form number and content
-            - Note any special variations or amendments
-
-            3. KEY INFORMATION EXTRACTION:
-            - Names: Extract EXACT spellings of names as they appear
-            - Numbers: Estate numbers, court file numbers must be EXACT
-            - Dates: Use consistent YYYY-MM-DD format
-            - Addresses: Maintain exact formatting as shown
-            - Court Details: Precise district and division information
-
-            4. FORM-SPECIFIC EXTRACTION RULES:
-
-            For Bankruptcy Forms:
-            - Estate number format: XX-XXXXXX
-            - Look for the Licensed Insolvency Trustee's details in the designated fields
-            - Verify bankruptcy date against the filing date
-            - Check for Division and District numbers in the header
-
-            For Proposal Forms:
-            - Check for proposal type (Division I or Division II)
-            - Look for voting results and creditor information
-            - Verify trustee/administrator appointment details
-
-            For Court Orders:
-            - Extract the exact court file number
-            - Identify the issuing court and location
-            - Note the judge's name and title
-            - Record all important dates (issuance, hearing, etc.)
-
-            For Meeting Notices:
-            - Extract precise meeting date, time, and location
-            - Note the chairperson's details
-            - Check for creditor-specific information
-            - Verify if virtual/in-person/hybrid
-
-            5. SUMMARY GENERATION (UPDATED):
-            - First line: State the form number and official OSB description
-            - Second line: Note the key parties involved and relevant dates
-            - Third line: Highlight any immediate actions required or deadlines
-            - Keep the tone official and informative
-            - Use clear, precise language
-            - Include only verified information
-
-            6. QUALITY CONTROL:
-            - Verify the form number against the official OSB form list
-            - Ensure the summary matches the official form description
-            - Cross-reference all extracted information
-            - Double-check all dates and numbers
-            - Verify all party names and roles
-
-            Return the analysis in this exact JSON format:
-            {
-              "extracted_info": {
-                "formNumber": "Form 66(1)",
-                "type": "business_bankruptcy",
-                "clientName": string,
-                "trusteeName": string,
-                "estateNumber": string,
-                "district": string,
-                "divisionNumber": string,
-                "courtNumber": string,
-                "dateBankruptcy": string,
-                "dateSigned": string,
-                "officialReceiver": string,
-                "summary": string,
-                "risks": [
-                  {
-                    "type": string,
-                    "description": string,
-                    "severity": "low" | "medium" | "high",
-                    "regulation": string,
-                    "impact": string,
-                    "requiredAction": string,
-                    "solution": string
-                  }
-                ]
-              }
-            }`
+Return the analysis in this JSON format:
+{
+  "extracted_info": {
+    "formNumber": string,
+    "type": "business_bankruptcy" | "consumer_bankruptcy" | "proposal" | "other",
+    "clientName": string,
+    "trusteeName": string,
+    "estateNumber": string,
+    "district": string,
+    "divisionNumber": string,
+    "courtNumber": string,
+    "dateBankruptcy": string,
+    "dateSigned": string,
+    "officialReceiver": string,
+    "summary": string,
+    "risks": [
+      {
+        "type": string,
+        "description": string,
+        "severity": "low" | "medium" | "high",
+        "regulation": string,
+        "impact": string,
+        "requiredAction": string,
+        "solution": string
+      }
+    ]
+  }
+}`
           },
           {
             role: 'user',
-            content: textToAnalyze
+            content: documentText
           }
         ],
         temperature: 0.1,
-        max_tokens: 3000
+        max_tokens: 2000
       }),
     });
 
@@ -208,7 +179,7 @@ Key sections include:
     }
 
     const data = await openAIResponse.json();
-    console.log('OpenAI response received:', data);
+    console.log('OpenAI response received');
 
     if (!data.choices?.[0]?.message?.content) {
       throw new Error('Invalid response from OpenAI');
@@ -218,7 +189,6 @@ Key sections include:
     try {
       const jsonContent = data.choices[0].message.content.replace(/```json\n|\n```/g, '');
       parsedAnalysis = JSON.parse(jsonContent);
-      console.log("Parsed analysis:", parsedAnalysis);
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
       throw new Error('Failed to parse document analysis results');
@@ -233,11 +203,8 @@ Key sections include:
       });
 
     if (dbError) {
-      console.error('Database error:', dbError);
       throw dbError;
     }
-
-    console.log('Analysis stored successfully');
 
     return new Response(
       JSON.stringify({ success: true, analysis: parsedAnalysis }), 
