@@ -70,28 +70,25 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
     { label: "Official Receiver", key: "officialReceiver", value: officialReceiver, showForTypes: ['bankruptcy', 'proposal'] }
   ];
 
-  const relevantFields = fields.filter(field => 
-    field.showForTypes.includes('all') || field.showForTypes.includes(formType.toLowerCase())
-  );
-
   const handleEdit = () => {
-    setEditedValues(
-      relevantFields.reduce((acc, field) => ({
-        ...acc,
-        [field.key]: field.value || ''
-      }), {})
-    );
+    const initialValues = fields.reduce((acc, field) => ({
+      ...acc,
+      [field.key]: field.value || ''
+    }), {});
+    setEditedValues(initialValues);
     setIsEditing(true);
   };
 
   const handleSave = async () => {
     try {
+      // First, get the existing analysis
       const { data: existingAnalysis } = await supabase
         .from('document_analysis')
         .select('content')
         .eq('document_id', documentId)
         .single();
 
+      // Prepare the updated content
       const updatedContent = {
         ...existingAnalysis?.content,
         extracted_info: {
@@ -100,6 +97,7 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
         }
       };
 
+      // Update the analysis in the database
       const { error } = await supabase
         .from('document_analysis')
         .update({ content: updatedContent })
@@ -113,7 +111,30 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
       });
 
       setIsEditing(false);
+
+      // Subscribe to real-time updates for this specific document
+      const channel = supabase
+        .channel(`document_analysis_${documentId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'document_analysis',
+            filter: `document_id=eq.${documentId}`
+          },
+          (payload) => {
+            console.log('Real-time update received:', payload);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+
     } catch (error) {
+      console.error('Error updating document details:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -126,6 +147,10 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
     setIsEditing(false);
     setEditedValues({});
   };
+
+  const relevantFields = fields.filter(field => 
+    field.showForTypes.includes('all') || field.showForTypes.includes(formType.toLowerCase())
+  );
 
   return (
     <div className="p-4 rounded-md bg-muted">
