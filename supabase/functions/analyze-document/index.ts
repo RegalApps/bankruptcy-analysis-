@@ -49,165 +49,41 @@ serve(async (req) => {
 
     console.log('Document title:', document.title);
 
-    // Default analysis for Form 66(1)
-    const defaultForm66Analysis = {
+    // Analyze the document based on its type
+    const formType = document.type || 'unknown';
+    const defaultAnalysis = {
       extracted_info: {
-        formNumber: "Form 66(1)",
-        type: "business_bankruptcy",
-        clientName: "Not extracted",
-        trusteeName: "Not extracted",
-        estateNumber: "Not extracted",
-        district: "Not extracted",
-        divisionNumber: "Not extracted",
-        courtNumber: "Not extracted",
-        dateBankruptcy: "Not extracted",
-        dateSigned: "Not extracted",
-        officialReceiver: "Not extracted",
-        summary: `Form 66(1) - Statement of Affairs (Business Bankruptcy)
-
-This is an official form under the Bankruptcy and Insolvency Act used for business bankruptcies. The form requires detailed information about the business's assets, liabilities, income, and expenses.
-
-Key sections include:
-1. Identity of the business and bankruptcy details
-2. Asset declarations (property, equipment, inventory)
-3. Liabilities and creditor information
-4. Income and expense statements
-5. Information about the business operations`,
-        risks: [
-          {
-            type: "Documentation Compliance",
-            description: "Business bankruptcy requires complete and accurate financial disclosure",
-            severity: "high",
-            regulation: "Bankruptcy and Insolvency Act - Form 66(1) requirements",
-            impact: "Incomplete or inaccurate information can lead to delays or rejection of bankruptcy filing",
-            requiredAction: "Ensure all sections of Form 66(1) are completed with accurate financial information",
-            solution: "Review all sections with the trustee and provide supporting documentation for financial declarations"
-          }
-        ]
+        formNumber: detectFormNumber(documentText),
+        type: determineDocumentType(documentText, document.title),
+        clientName: extractClientName(documentText),
+        trusteeName: extractTrusteeName(documentText),
+        estateNumber: extractEstateNumber(documentText),
+        district: extractDistrict(documentText),
+        divisionNumber: extractDivisionNumber(documentText),
+        courtNumber: extractCourtNumber(documentText),
+        dateBankruptcy: extractDate(documentText, 'bankruptcy'),
+        dateSigned: extractDate(documentText, 'signed'),
+        officialReceiver: extractOfficialReceiver(documentText),
+        summary: generateDocumentSummary(documentText, formType),
+        risks: analyzeRisks(documentText, formType)
       }
     };
 
-    // If it's Form 66, use the default analysis
-    if (document.title.toLowerCase().includes('form66') || document.title.toLowerCase().includes('form 66')) {
-      console.log('Form 66(1) detected, using default analysis template');
-      
-      const { error: analysisError } = await supabaseClient
-        .from('document_analysis')
-        .upsert({ 
-          document_id: documentId,
-          user_id: user.id,
-          content: defaultForm66Analysis
-        });
-
-      if (analysisError) {
-        throw analysisError;
-      }
-
-      return new Response(
-        JSON.stringify({ success: true, analysis: defaultForm66Analysis }), 
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      );
-    }
-
-    // For other forms, attempt OpenAI analysis
-    console.log('Sending to OpenAI for analysis...');
-
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a highly specialized Canadian bankruptcy and insolvency document analyzer. Analyze the document and extract key information.
-
-For Form 66(1) specifically:
-- This is a Statement of Affairs for Business Bankruptcy
-- Look for business name, trustee details, and financial information
-- Extract any dates, file numbers, and court information
-
-Return the analysis in this JSON format:
-{
-  "extracted_info": {
-    "formNumber": string,
-    "type": "business_bankruptcy" | "consumer_bankruptcy" | "proposal" | "other",
-    "clientName": string,
-    "trusteeName": string,
-    "estateNumber": string,
-    "district": string,
-    "divisionNumber": string,
-    "courtNumber": string,
-    "dateBankruptcy": string,
-    "dateSigned": string,
-    "officialReceiver": string,
-    "summary": string,
-    "risks": [
-      {
-        "type": string,
-        "description": string,
-        "severity": "low" | "medium" | "high",
-        "regulation": string,
-        "impact": string,
-        "requiredAction": string,
-        "solution": string
-      }
-    ]
-  }
-}`
-          },
-          {
-            role: 'user',
-            content: documentText
-          }
-        ],
-        temperature: 0.1,
-        max_tokens: 2000
-      }),
-    });
-
-    if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await openAIResponse.json();
-    console.log('OpenAI response received');
-
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response from OpenAI');
-    }
-
-    let parsedAnalysis;
-    try {
-      const jsonContent = data.choices[0].message.content.replace(/```json\n|\n```/g, '');
-      parsedAnalysis = JSON.parse(jsonContent);
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
-      throw new Error('Failed to parse document analysis results');
-    }
-
-    const { error: dbError } = await supabaseClient
+    // Store the analysis results
+    const { error: analysisError } = await supabaseClient
       .from('document_analysis')
       .upsert({ 
         document_id: documentId,
         user_id: user.id,
-        content: parsedAnalysis
+        content: defaultAnalysis
       });
 
-    if (dbError) {
-      throw dbError;
+    if (analysisError) {
+      throw analysisError;
     }
 
     return new Response(
-      JSON.stringify({ success: true, analysis: parsedAnalysis }), 
+      JSON.stringify({ success: true, analysis: defaultAnalysis }), 
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -227,3 +103,167 @@ Return the analysis in this JSON format:
     );
   }
 });
+
+// Helper functions for document analysis
+function detectFormNumber(text: string): string {
+  const formMatch = text.match(/Form\s+(\d+(\.\d+)?(\([a-zA-Z]\))?)/i);
+  return formMatch ? formMatch[1] : '';
+}
+
+function determineDocumentType(text: string, title: string): string {
+  if (text.toLowerCase().includes('statement of affairs') || title.toLowerCase().includes('form 66')) {
+    return 'business_bankruptcy';
+  }
+  if (text.toLowerCase().includes('proposal') || title.toLowerCase().includes('proposal')) {
+    return 'proposal';
+  }
+  return 'other';
+}
+
+function extractClientName(text: string): string {
+  const namePatterns = [
+    /(?:debtor|client|business)(?:\s+name)?[:]\s*([^\n\r]+)/i,
+    /name\s+of\s+(?:debtor|business|bankrupt)[:]\s*([^\n\r]+)/i
+  ];
+  
+  for (const pattern of namePatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  return '';
+}
+
+function extractTrusteeName(text: string): string {
+  const trusteePatterns = [
+    /(?:trustee|licensed\s+insolvency\s+trustee)[:]\s*([^\n\r]+)/i,
+    /name\s+of\s+(?:trustee|lit)[:]\s*([^\n\r]+)/i
+  ];
+  
+  for (const pattern of trusteePatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  return '';
+}
+
+function extractEstateNumber(text: string): string {
+  const match = text.match(/(?:estate|file)\s*(?:no|number|#)[:.]?\s*(\d+[-\s]?\d*)/i);
+  return match ? match[1].trim() : '';
+}
+
+function extractDistrict(text: string): string {
+  const match = text.match(/district\s*(?:of)?[:.]?\s*([^\n\r]+)/i);
+  return match ? match[1].trim() : '';
+}
+
+function extractDivisionNumber(text: string): string {
+  const match = text.match(/division\s*(?:no|number|#)[:.]?\s*(\d+)/i);
+  return match ? match[1].trim() : '';
+}
+
+function extractCourtNumber(text: string): string {
+  const match = text.match(/court\s*(?:no|number|#|reference)[:.]?\s*(\d+[-\s]?\d*)/i);
+  return match ? match[1].trim() : '';
+}
+
+function extractDate(text: string, type: 'bankruptcy' | 'signed'): string {
+  const datePattern = /\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\d{4}[-/]\d{1,2}[-/]\d{1,2}/g;
+  const dates = text.match(datePattern) || [];
+  
+  if (type === 'bankruptcy') {
+    const bankruptcyDate = text.match(/date\s+of\s+bankruptcy[:.]?\s*([^\n\r]+)/i);
+    return bankruptcyDate ? bankruptcyDate[1].trim() : dates[0] || '';
+  } else {
+    const signedDate = text.match(/(?:signed|dated)\s+(?:on|at)?[:.]?\s*([^\n\r]+)/i);
+    return signedDate ? signedDate[1].trim() : dates[dates.length - 1] || '';
+  }
+}
+
+function extractOfficialReceiver(text: string): string {
+  const match = text.match(/official\s+receiver[:.]?\s*([^\n\r]+)/i);
+  return match ? match[1].trim() : '';
+}
+
+function generateDocumentSummary(text: string, formType: string): string {
+  const typeDescriptions: Record<string, string> = {
+    'business_bankruptcy': `Business Bankruptcy Document
+This document appears to be related to a business bankruptcy filing. It contains important information about the bankrupt business, including financial details, creditor information, and procedural requirements under the Bankruptcy and Insolvency Act.`,
+    'proposal': `Bankruptcy Proposal Document
+This document outlines a proposal to creditors under the Bankruptcy and Insolvency Act. It contains terms and conditions for debt repayment or restructuring.`,
+    'other': `Legal Document
+This document appears to be a legal form related to bankruptcy or insolvency proceedings. Please review carefully for specific requirements and deadlines.`
+  };
+
+  return typeDescriptions[formType] || typeDescriptions['other'];
+}
+
+function analyzeRisks(text: string, formType: string): Array<{
+  type: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  regulation?: string;
+  impact?: string;
+  requiredAction?: string;
+  solution?: string;
+}> {
+  const risks = [];
+
+  // Check for common risks based on document type
+  if (formType === 'business_bankruptcy') {
+    // Check for missing financial statements
+    if (!text.toLowerCase().includes('financial statement') && !text.toLowerCase().includes('balance sheet')) {
+      risks.push({
+        type: "Missing Financial Documentation",
+        description: "Required financial statements appear to be missing from the filing",
+        severity: "high",
+        regulation: "BIA Section 49(1) - Statement of Affairs requirements",
+        impact: "Incomplete filing may be rejected by the court or cause delays",
+        requiredAction: "Obtain and attach all required financial statements",
+        solution: "Work with the debtor to prepare comprehensive financial statements including assets, liabilities, income, and expenses"
+      });
+    }
+
+    // Check for creditor information
+    if (!text.toLowerCase().includes('creditor') || !text.toLowerCase().includes('claim')) {
+      risks.push({
+        type: "Incomplete Creditor Information",
+        description: "Creditor details or claim amounts may be missing or incomplete",
+        severity: "medium",
+        regulation: "BIA Section 50(2) - Proper disclosure of creditors",
+        impact: "Creditors may be omitted from proceedings",
+        requiredAction: "Review and complete creditor information",
+        solution: "Compile comprehensive list of all creditors with claim amounts and contact details"
+      });
+    }
+  }
+
+  // Check for signatures and dates
+  if (!text.match(/signed|signature/i) || !text.match(/dated|date/i)) {
+    risks.push({
+      type: "Missing Signatures or Dates",
+      description: "Required signatures or dates appear to be missing",
+      severity: "high",
+      regulation: "BIA General Rules - Document execution requirements",
+      impact: "Document may be invalid or rejected",
+      requiredAction: "Obtain necessary signatures and dates",
+      solution: "Review signature requirements and ensure all parties have properly executed the document"
+    });
+  }
+
+  // Add default low-risk item for normal verification
+  risks.push({
+    type: "Standard Verification Required",
+    description: "Regular verification of document contents needed",
+    severity: "low",
+    regulation: "BIA General Practice",
+    impact: "Ensure accuracy and completeness",
+    requiredAction: "Review document contents",
+    solution: "Perform standard verification of all information and cross-reference with supporting documents"
+  });
+
+  return risks;
+}
