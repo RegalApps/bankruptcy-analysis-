@@ -163,100 +163,241 @@ function extractFormInfo(text: string, formNumber: string) {
     summary: generateFormSummary(formNumber, formType)
   };
 
+  // Form-specific extraction logic based on form categories
   switch (baseFormNumber) {
-    case '29':
+    // Bankruptcy Forms
+    case '21':
+    case '44':
+    case '78':
       return {
         ...extractedInfo,
-        ...extractForm29Info(text)
+        ...extractBankruptcyFormInfo(text)
       };
-    case '66':
-      extractedInfo = {
+
+    // Proposal Forms
+    case '5':
+    case '6':
+    case '29':
+    case '34':
+    case '65':
+    case '70':
+      return {
         ...extractedInfo,
-        ...extractForm66Info(text)
+        ...extractProposalFormInfo(text)
       };
-      break;
+
+    // Notice Forms
+    case '3':
+    case '45':
     case '67':
-      extractedInfo = {
-        ...extractedInfo,
-        ...extractForm67Info(text)
-      };
-      break;
     case '68':
-      extractedInfo = {
+    case '69':
+      return {
         ...extractedInfo,
-        ...extractForm68Info(text)
+        ...extractNoticeFormInfo(text)
       };
-      break;
-    case '78':
-      extractedInfo = {
+
+    // Court Forms
+    case '12':
+    case '71':
+    case '72':
+      return {
         ...extractedInfo,
-        ...extractForm78Info(text)
+        ...extractCourtFormInfo(text)
       };
-      break;
+
+    // Claims and Dividend Forms
+    case '11':
+    case '74':
+    case '75':
+    case '76':
+    case '82':
+    case '83':
+      return {
+        ...extractedInfo,
+        ...extractClaimsAndDividendFormInfo(text)
+      };
+
+    // Consumer Proposal Forms
+    case '33':
     case '92':
-      extractedInfo = {
+    case '93':
+    case '94':
+      return {
         ...extractedInfo,
-        ...extractForm92Info(text)
+        ...extractConsumerProposalFormInfo(text)
       };
-      break;
+
+    // Certificate Forms
+    case '2':
+    case '30':
+    case '38':
+      return {
+        ...extractedInfo,
+        ...extractCertificateFormInfo(text)
+      };
+
     default:
-      extractedInfo = {
+      return {
         ...extractedInfo,
         ...extractGenericFormInfo(text)
       };
   }
-
-  return extractedInfo;
 }
 
-function extractForm29Info(text: string) {
-  // Extract specific information for Form 29 (Report of Trustee on Proposal)
+function extractBankruptcyFormInfo(text: string) {
+  const info: any = {};
+
+  // Extract client/debtor name
+  const clientMatch = text.match(/(?:debtor|bankrupt)(?:'s)?\s*name\s*[:]\s*([^\n\r]+)/i);
+  info.clientName = clientMatch ? clientMatch[1].trim() : '';
+
+  // Extract trustee information
   const trusteeMatch = text.match(/(?:trustee|licensed\s+insolvency\s+trustee)[:]\s*([^\n\r]+)/i);
-  const trusteeName = trusteeMatch ? trusteeMatch[1].trim() : '';
-  
-  const debtorMatch = text.match(/(?:debtor|insolvent\s+person)[:]\s*([^\n\r]+)/i);
-  const clientName = debtorMatch ? debtorMatch[1].trim() : '';
+  info.trusteeName = trusteeMatch ? trusteeMatch[1].trim() : '';
 
-  const dateMatch = text.match(/dated?\s*[:]\s*([^\n\r]+)/i);
-  const dateSigned = dateMatch ? dateMatch[1].trim() : '';
+  // Extract estate number
+  const estateMatch = text.match(/estate\s*(?:no|number|#)\s*[:]\s*([^\n\r]+)/i);
+  info.estateNumber = estateMatch ? estateMatch[1].trim() : '';
 
-  return {
-    trusteeName,
-    clientName,
-    dateSigned,
-    risks: analyzeForm29Risks(text, { trusteeName, clientName, dateSigned })
-  };
+  // Extract district information
+  const districtMatch = text.match(/(?:district|division)\s*[:]\s*([^\n\r]+)/i);
+  info.district = districtMatch ? districtMatch[1].trim() : '';
+
+  // Extract date of bankruptcy
+  const dateMatch = text.match(/date\s*of\s*bankruptcy\s*[:]\s*([^\n\r]+)/i);
+  info.dateBankruptcy = dateMatch ? dateMatch[1].trim() : '';
+
+  return info;
 }
 
-function analyzeForm29Risks(text: string, data: any) {
-  const risks = [];
-  
-  if (!data.trusteeName) {
-    risks.push({
-      type: "Missing Trustee Information",
-      description: "Trustee's name or details are not specified",
-      severity: "high",
-      regulation: "BIA Requirements for Trustee Reports",
-      impact: "Cannot verify trustee's assessment of proposal",
-      requiredAction: "Add trustee information",
-      solution: "Include complete trustee details in the report"
-    });
-  }
+function extractProposalFormInfo(text: string) {
+  const info: any = {};
 
-  // Check for required sections in the report
-  if (!text.includes('opinion') && !text.includes('assessment')) {
-    risks.push({
-      type: "Missing Trustee Opinion",
-      description: "Trustee's opinion on the proposal is not clearly stated",
-      severity: "high",
-      regulation: "BIA Section 50(10)",
-      impact: "Cannot assess viability of proposal",
-      requiredAction: "Add trustee's opinion",
-      solution: "Include detailed assessment and opinion on the proposal"
-    });
-  }
+  // Extract client/debtor name
+  const clientMatch = text.match(/(?:debtor|insolvent\s+person)[:]\s*([^\n\r]+)/i);
+  info.clientName = clientMatch ? clientMatch[1].trim() : '';
 
-  return risks;
+  // Extract trustee information
+  const trusteeMatch = text.match(/(?:trustee|proposal\s+trustee)[:]\s*([^\n\r]+)/i);
+  info.trusteeName = trusteeMatch ? trusteeMatch[1].trim() : '';
+
+  // Extract filing date
+  const dateMatch = text.match(/(?:filing|filed)\s*date[:]\s*([^\n\r]+)/i);
+  info.dateSigned = dateMatch ? dateMatch[1].trim() : '';
+
+  // Extract court information
+  const courtMatch = text.match(/court\s*(?:no|number|file)[:]\s*([^\n\r]+)/i);
+  info.courtNumber = courtMatch ? courtMatch[1].trim() : '';
+
+  return info;
+}
+
+function extractNoticeFormInfo(text: string) {
+  const info: any = {};
+
+  // Extract meeting details
+  const meetingMatch = text.match(/meeting\s*(?:will\s*be\s*held|scheduled|date)[:]\s*([^\n\r]+)/i);
+  info.meetingOfCreditors = meetingMatch ? meetingMatch[1].trim() : '';
+
+  // Extract chair information
+  const chairMatch = text.match(/chair(?:person|man)?[:]\s*([^\n\r]+)/i);
+  info.chairInfo = chairMatch ? chairMatch[1].trim() : '';
+
+  // Extract security information if present
+  const securityMatch = text.match(/security\s*(?:details|information)[:]\s*([^\n\r]+)/i);
+  info.securityInfo = securityMatch ? securityMatch[1].trim() : '';
+
+  return info;
+}
+
+function extractCourtFormInfo(text: string) {
+  const info: any = {};
+
+  // Extract court file number
+  const courtMatch = text.match(/court\s*(?:no|number|file)[:]\s*([^\n\r]+)/i);
+  info.courtNumber = courtMatch ? courtMatch[1].trim() : '';
+
+  // Extract division number
+  const divisionMatch = text.match(/division\s*(?:no|number)[:]\s*([^\n\r]+)/i);
+  info.divisionNumber = divisionMatch ? divisionMatch[1].trim() : '';
+
+  // Extract district
+  const districtMatch = text.match(/district[:]\s*([^\n\r]+)/i);
+  info.district = districtMatch ? districtMatch[1].trim() : '';
+
+  return info;
+}
+
+function extractClaimsAndDividendFormInfo(text: string) {
+  const info: any = {};
+
+  // Extract creditor information
+  const creditorMatch = text.match(/creditor(?:'s)?\s*name[:]\s*([^\n\r]+)/i);
+  info.creditorName = creditorMatch ? creditorMatch[1].trim() : '';
+
+  // Extract claim amount
+  const amountMatch = text.match(/(?:claim|amount)\s*[:]\s*\$?\s*([\d,.]+)/i);
+  info.claimAmount = amountMatch ? amountMatch[1].trim() : '';
+
+  // Extract dividend information
+  const dividendMatch = text.match(/dividend\s*[:]\s*([^\n\r]+)/i);
+  info.dividendInfo = dividendMatch ? dividendMatch[1].trim() : '';
+
+  return info;
+}
+
+function extractConsumerProposalFormInfo(text: string) {
+  const info: any = {};
+
+  // Extract consumer debtor name
+  const clientMatch = text.match(/(?:consumer|debtor)[:]\s*([^\n\r]+)/i);
+  info.clientName = clientMatch ? clientMatch[1].trim() : '';
+
+  // Extract administrator information
+  const adminMatch = text.match(/administrator[:]\s*([^\n\r]+)/i);
+  info.trusteeName = adminMatch ? adminMatch[1].trim() : '';
+
+  // Extract proposal date
+  const dateMatch = text.match(/(?:date|dated)[:]\s*([^\n\r]+)/i);
+  info.dateSigned = dateMatch ? dateMatch[1].trim() : '';
+
+  return info;
+}
+
+function extractCertificateFormInfo(text: string) {
+  const info: any = {};
+
+  // Extract certificate details
+  const certificateMatch = text.match(/certificate\s*(?:of|details)[:]\s*([^\n\r]+)/i);
+  info.certificateDetails = certificateMatch ? certificateMatch[1].trim() : '';
+
+  // Extract official receiver information
+  const receiverMatch = text.match(/official\s*receiver[:]\s*([^\n\r]+)/i);
+  info.officialReceiver = receiverMatch ? receiverMatch[1].trim() : '';
+
+  // Extract date
+  const dateMatch = text.match(/(?:date|dated)[:]\s*([^\n\r]+)/i);
+  info.dateSigned = dateMatch ? dateMatch[1].trim() : '';
+
+  return info;
+}
+
+function extractGenericFormInfo(text: string) {
+  // Generic extraction for any form type
+  const info: any = {};
+
+  // Extract common fields
+  const clientMatch = text.match(/(?:debtor|bankrupt|insolvent person)[:]\s*([^\n\r]+)/i);
+  info.clientName = clientMatch ? clientMatch[1].trim() : '';
+
+  const trusteeMatch = text.match(/(?:trustee|administrator)[:]\s*([^\n\r]+)/i);
+  info.trusteeName = trusteeMatch ? trusteeMatch[1].trim() : '';
+
+  const dateMatch = text.match(/(?:date|dated)[:]\s*([^\n\r]+)/i);
+  info.dateSigned = dateMatch ? dateMatch[1].trim() : '';
+
+  return info;
 }
 
 serve(async (req) => {
@@ -321,114 +462,35 @@ serve(async (req) => {
   }
 });
 
-function extractForm66Info(text: string) {
-  // Form 66 - Notice of Mediation
-  const toMatch = text.match(/To:\s*([^\n\r,]+)/);
-  const clientName = toMatch ? toMatch[1].trim() : '';
+function analyzeForm29Risks(text: string, data: any) {
+  const risks = [];
   
-  const dateMatch = text.match(/Date:\s*([^\n\r]+)/);
-  const dateSigned = dateMatch ? dateMatch[1].trim() : '';
+  if (!data.trusteeName) {
+    risks.push({
+      type: "Missing Trustee Information",
+      description: "Trustee's name or details are not specified",
+      severity: "high",
+      regulation: "BIA Requirements for Trustee Reports",
+      impact: "Cannot verify trustee's assessment of proposal",
+      requiredAction: "Add trustee information",
+      solution: "Include complete trustee details in the report"
+    });
+  }
 
-  const trusteeMatch = text.match(/(?:trustee|licensed\s+insolvency\s+trustee)[:]\s*([^\n\r]+)/i);
-  const trusteeName = trusteeMatch ? trusteeMatch[1].trim() : '';
+  // Check for required sections in the report
+  if (!text.includes('opinion') && !text.includes('assessment')) {
+    risks.push({
+      type: "Missing Trustee Opinion",
+      description: "Trustee's opinion on the proposal is not clearly stated",
+      severity: "high",
+      regulation: "BIA Section 50(10)",
+      impact: "Cannot assess viability of proposal",
+      requiredAction: "Add trustee's opinion",
+      solution: "Include detailed assessment and opinion on the proposal"
+    });
+  }
 
-  return {
-    type: 'Notice of Mediation',
-    clientName,
-    trusteeName,
-    dateSigned,
-    summary: `This Notice of Mediation (Form 66) is addressed to ${clientName}. It serves as an official notification for mediation proceedings under the Bankruptcy and Insolvency Act, providing details about the mediation process and requirements.`,
-    risks: analyzeForm66Risks(text, { clientName, dateSigned, trusteeName })
-  };
-}
-
-function extractForm67Info(text: string) {
-  // Form 67 - Notice of Meeting of Creditors
-  const dateMatch = text.match(/meeting\s+of\s+creditors.*?on\s+([^\n\r]+)/i);
-  const meetingOfCreditors = dateMatch ? dateMatch[1].trim() : '';
-  
-  const clientMatch = text.match(/(?:debtor|bankrupt)[:]\s*([^\n\r]+)/i);
-  const clientName = clientMatch ? clientMatch[1].trim() : '';
-
-  return {
-    type: 'Meeting of Creditors',
-    clientName,
-    meetingOfCreditors,
-    summary: `This Notice of Meeting of Creditors (Form 67) schedules a meeting for ${clientName}'s case on ${meetingOfCreditors}. The meeting allows creditors to discuss the bankruptcy/proposal and make decisions regarding the estate.`,
-    risks: analyzeForm67Risks(text, { clientName, meetingOfCreditors })
-  };
-}
-
-function extractForm68Info(text: string) {
-  // Form 68 - Notice of Bankruptcy
-  const clientMatch = text.match(/(?:debtor|bankrupt)[:]\s*([^\n\r]+)/i);
-  const clientName = clientMatch ? clientMatch[1].trim() : '';
-  
-  const dateMatch = text.match(/date\s+of\s+bankruptcy[:]\s*([^\n\r]+)/i);
-  const dateBankruptcy = dateMatch ? dateMatch[1].trim() : '';
-
-  const estateMatch = text.match(/estate\s*(?:no|number|#)[:.]?\s*(\d+[-\s]?\d*)/i);
-  const estateNumber = estateMatch ? estateMatch[1].trim() : '';
-
-  return {
-    type: 'Notice of Bankruptcy',
-    clientName,
-    dateBankruptcy,
-    estateNumber,
-    summary: `This Notice of Bankruptcy (Form 68) formally declares the bankruptcy of ${clientName}, Estate No. ${estateNumber}, filed on ${dateBankruptcy}. This document initiates the bankruptcy proceedings under the BIA.`,
-    risks: analyzeForm68Risks(text, { clientName, dateBankruptcy, estateNumber })
-  };
-}
-
-function extractForm78Info(text: string) {
-  // Form 78 - Statement of Affairs
-  const clientMatch = text.match(/(?:debtor|bankrupt)[:]\s*([^\n\r]+)/i);
-  const clientName = clientMatch ? clientMatch[1].trim() : '';
-  
-  const dateMatch = text.match(/dated\s+(?:this)?\s*([^\n\r]+)/i);
-  const dateSigned = dateMatch ? dateMatch[1].trim() : '';
-
-  return {
-    type: 'Statement of Affairs',
-    clientName,
-    dateSigned,
-    summary: `This Statement of Affairs (Form 78) filed by ${clientName} on ${dateSigned} provides a comprehensive disclosure of assets, liabilities, income, and expenses as required for bankruptcy proceedings.`,
-    risks: analyzeForm78Risks(text, { clientName, dateSigned })
-  };
-}
-
-function extractForm92Info(text: string) {
-  // Form 92 - Notice to Creditor
-  const clientMatch = text.match(/(?:debtor|consumer)[:]\s*([^\n\r]+)/i);
-  const clientName = clientMatch ? clientMatch[1].trim() : '';
-  
-  const trusteeMatch = text.match(/(?:trustee|administrator)[:]\s*([^\n\r]+)/i);
-  const trusteeName = trusteeMatch ? trusteeMatch[1].trim() : '';
-
-  return {
-    type: 'Consumer Proposal',
-    clientName,
-    trusteeName,
-    summary: `This Notice to Creditor (Form 92) outlines the consumer proposal of ${clientName}, administered by ${trusteeName}. It details the terms offered to creditors for debt resolution under the BIA.`,
-    risks: analyzeForm92Risks(text, { clientName, trusteeName })
-  };
-}
-
-function extractGenericFormInfo(text: string) {
-  // Generic form extraction
-  const clientMatch = text.match(/(?:debtor|bankrupt|client)[:]\s*([^\n\r]+)/i);
-  const clientName = clientMatch ? clientMatch[1].trim() : '';
-  
-  const dateMatch = text.match(/dated?\s*[:]\s*([^\n\r]+)/i);
-  const dateSigned = dateMatch ? dateMatch[1].trim() : '';
-
-  return {
-    type: 'Other',
-    clientName,
-    dateSigned,
-    summary: 'This document appears to be related to insolvency proceedings. Please verify the form type and requirements.',
-    risks: analyzeGenericRisks(text, { clientName, dateSigned })
-  };
+  return risks;
 }
 
 function analyzeForm66Risks(text: string, data: any) {
