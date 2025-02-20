@@ -1,8 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Lock } from 'lucide-react';
+import { Lock, AlertTriangle } from 'lucide-react';
 import { SignUpFields } from './auth/SignUpFields';
 import { AuthFields } from './auth/AuthFields';
 import { validateAuthForm } from './auth/authValidation';
@@ -18,7 +18,19 @@ export const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastAttemptTime, setLastAttemptTime] = useState(0);
+  const [attempts, setAttempts] = useState(0);
   const { toast } = useToast();
+
+  // Reset attempts after 15 minutes
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (attempts > 0 && Date.now() - lastAttemptTime > 900000) {
+        setAttempts(0);
+      }
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, [attempts, lastAttemptTime]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,20 +48,14 @@ export const Auth = () => {
       return;
     }
 
-    // Check for rate limiting on signup
-    if (isSignUp) {
-      const currentTime = Date.now();
-      const timeSinceLastAttempt = currentTime - lastAttemptTime;
-      const COOLDOWN_PERIOD = 15000; // 15 seconds to be safe
-
-      if (timeSinceLastAttempt < COOLDOWN_PERIOD) {
-        const remainingTime = Math.ceil((COOLDOWN_PERIOD - timeSinceLastAttempt) / 1000);
-        setError(`Please wait ${remainingTime} seconds before trying again`);
-        return;
-      }
-      setLastAttemptTime(currentTime);
+    // Check for rate limiting
+    const currentTime = Date.now();
+    if (attempts >= 5) {
+      const timeLeft = Math.ceil((900000 - (currentTime - lastAttemptTime)) / 1000);
+      setError(`Too many attempts. Please wait ${timeLeft} seconds before trying again`);
+      return;
     }
-    
+
     setLoading(true);
     setError(null);
 
@@ -74,13 +80,23 @@ export const Auth = () => {
           description: "Successfully signed in!",
         });
       }
+
+      // Reset attempts on successful auth
+      setAttempts(0);
     } catch (error: any) {
-      if (error.error_type === 'http_client_error' && error.status === 429) {
-        setError('Too many attempts. Please wait a moment before trying again.');
+      console.error('Auth error:', error);
+      setAttempts(prev => prev + 1);
+      setLastAttemptTime(currentTime);
+
+      if (error.message.includes('Invalid login credentials')) {
+        setError('Invalid email or password');
+      } else if (error.message.includes('Email already registered')) {
+        setError('This email is already registered');
+      } else if (error.message.includes('Password should be')) {
+        setError('Password should be at least 6 characters long');
       } else {
         setError(error.message);
       }
-      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -109,6 +125,7 @@ export const Auth = () => {
 
           {error && (
             <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -130,16 +147,23 @@ export const Auth = () => {
               setEmail={setEmail}
               password={password}
               setPassword={setPassword}
+              isDisabled={loading}
             />
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+              disabled={loading || (attempts >= 5)}
+              className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Lock className="h-4 w-4" />
               {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
             </button>
+
+            {attempts > 0 && attempts < 5 && (
+              <p className="text-xs text-destructive text-center">
+                {5 - attempts} attempts remaining before temporary lockout
+              </p>
+            )}
           </form>
 
           <div className="text-center">
