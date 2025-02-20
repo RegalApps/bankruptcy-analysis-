@@ -1,9 +1,8 @@
 
-import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Send, UserCircle, Edit, Trash2, X, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MessageSquare, UserCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
@@ -15,39 +14,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-}
-
-interface Profile {
-  id: string;
-  email: string;
-  avatar_url: string | null;
-  full_name: string;
-}
-
-interface CommentsProps {
-  documentId: string;
-  comments?: Comment[];
-  onCommentAdded: () => void;
-}
+import { CommentItem } from "./CommentItem";
+import { CommentInput } from "./CommentInput";
+import { CommentsProps, Profile } from "./types";
 
 const COMMENTS_PER_PAGE = 10;
 
-export const Comments: React.FC<CommentsProps> = ({ documentId, comments = [], onCommentAdded }) => {
-  const [newComment, setNewComment] = useState("");
+export const Comments = ({ documentId, comments = [], onCommentAdded }: CommentsProps) => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProfiles, setUserProfiles] = useState<Record<string, Profile>>({});
-  const [editingComment, setEditingComment] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState("");
   const [deleteComment, setDeleteComment] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const commentInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -133,8 +111,8 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments = [], o
     }
   }, [comments]);
 
-  const handleAddComment = async () => {
-    if (!newComment.trim() || !currentUser || isSubmitting) return;
+  const handleAddComment = async (content: string) => {
+    if (!content.trim() || !currentUser || isSubmitting) return;
 
     try {
       setIsSubmitting(true);
@@ -143,7 +121,7 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments = [], o
         .insert([
           {
             document_id: documentId,
-            content: newComment,
+            content,
             user_id: currentUser.id
           }
         ]);
@@ -155,7 +133,6 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments = [], o
         description: "Comment added successfully"
       });
 
-      setNewComment("");
       onCommentAdded();
     } catch (error: any) {
       toast({
@@ -168,14 +145,14 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments = [], o
     }
   };
 
-  const handleEditComment = async (commentId: string) => {
-    if (!editContent.trim() || isSubmitting) return;
+  const handleEditComment = async (commentId: string, content: string) => {
+    if (!content.trim() || isSubmitting) return;
 
     try {
       setIsSubmitting(true);
       const { error } = await supabase
         .from('document_comments')
-        .update({ content: editContent })
+        .update({ content })
         .eq('id', commentId);
 
       if (error) throw error;
@@ -185,7 +162,6 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments = [], o
         description: "Comment updated successfully"
       });
 
-      setEditingComment(null);
       onCommentAdded();
     } catch (error: any) {
       toast({
@@ -228,11 +204,6 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments = [], o
     }
   };
 
-  const getUserDisplayName = (userId: string) => {
-    const profile = userProfiles[userId];
-    return profile?.full_name || profile?.email?.split('@')[0] || 'Anonymous';
-  };
-
   const paginatedComments = comments.slice(0, page * COMMENTS_PER_PAGE);
   const hasMoreComments = comments.length > page * COMMENTS_PER_PAGE;
 
@@ -254,86 +225,24 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments = [], o
                 <UserCircle className="h-4 w-4 text-muted-foreground" />
               </AvatarFallback>
             </Avatar>
-            <span>Commenting as: {getUserDisplayName(currentUser.id)}</span>
+            <span>
+              Commenting as: {userProfiles[currentUser.id]?.full_name || 'Anonymous'}
+            </span>
           </div>
         )}
       </div>
 
       <div className="space-y-4">
         {paginatedComments.map((comment) => (
-          <div key={comment.id} className="p-4 rounded-md bg-muted">
-            <div className="flex items-start space-x-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage 
-                  src={userProfiles[comment.user_id]?.avatar_url || ''} 
-                  alt="Profile" 
-                />
-                <AvatarFallback>
-                  <UserCircle className="h-6 w-6 text-muted-foreground" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">
-                    {getUserDisplayName(comment.user_id)}
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <time className="text-xs text-muted-foreground">
-                      {format(new Date(comment.created_at), "MMM d, yyyy 'at' h:mm a")}
-                    </time>
-                    {currentUser?.id === comment.user_id && (
-                      <div className="flex items-center space-x-1">
-                        <button
-                          onClick={() => {
-                            setEditingComment(comment.id);
-                            setEditContent(comment.content);
-                          }}
-                          className="p-1 hover:text-primary"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteComment(comment.id)}
-                          className="p-1 hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {editingComment === comment.id ? (
-                  <div className="mt-2 space-y-2">
-                    <input
-                      type="text"
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      className="w-full rounded-md border bg-background px-3 py-1 text-sm"
-                      autoFocus
-                    />
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={() => setEditingComment(null)}
-                        className="text-sm text-muted-foreground hover:text-foreground"
-                        disabled={isSubmitting}
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEditComment(comment.id)}
-                        className="text-sm text-primary hover:text-primary/90"
-                        disabled={isSubmitting}
-                      >
-                        <Check className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm mt-1">{comment.content}</p>
-                )}
-              </div>
-            </div>
-          </div>
+          <CommentItem
+            key={comment.id}
+            comment={comment}
+            currentUser={currentUser}
+            userProfile={userProfiles[comment.user_id]}
+            onEdit={handleEditComment}
+            onDelete={(id) => setDeleteComment(id)}
+            isSubmitting={isSubmitting}
+          />
         ))}
 
         {hasMoreComments && (
@@ -345,30 +254,12 @@ export const Comments: React.FC<CommentsProps> = ({ documentId, comments = [], o
           </button>
         )}
 
-        <div className="flex items-center space-x-2 mt-4">
-          <input
-            ref={commentInputRef}
-            type="text"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
-            className="flex-1 min-w-0 rounded-md border bg-background px-3 py-2 text-sm"
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAddComment()}
-            disabled={isSubmitting}
-          />
-          <button
-            onClick={handleAddComment}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            disabled={!currentUser || isSubmitting}
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </div>
-        {!currentUser && (
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            Please sign in to add comments
-          </p>
-        )}
+        <CommentInput
+          currentUser={currentUser}
+          userProfile={userProfiles[currentUser?.id]}
+          onSubmit={handleAddComment}
+          isSubmitting={isSubmitting}
+        />
       </div>
 
       <AlertDialog open={!!deleteComment} onOpenChange={() => setDeleteComment(null)}>
