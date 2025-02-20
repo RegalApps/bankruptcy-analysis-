@@ -21,7 +21,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
   const fetchDocumentDetails = async () => {
     try {
-      setLoading(true);
       const { data: document, error: docError } = await supabase
         .from('documents')
         .select(`
@@ -30,9 +29,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           comments:document_comments(id, content, created_at, user_id)
         `)
         .eq('id', documentId)
-        .single();
+        .maybeSingle();
 
       if (docError) throw docError;
+      if (!document) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Document not found"
+        });
+        return;
+      }
       
       let extractedInfo = null;
       console.log("Raw document data:", document);
@@ -73,12 +80,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     }
   };
 
+  // Set up real-time subscriptions
   useEffect(() => {
     fetchDocumentDetails();
 
-    // Set up real-time subscriptions
+    // Create a dedicated channel for this document
+    const channelName = `document_updates_${documentId}`;
     const channel = supabase
-      .channel('document_updates')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -87,9 +96,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           table: 'document_analysis',
           filter: `document_id=eq.${documentId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log("Analysis update detected:", payload);
-          fetchDocumentDetails();
+          await fetchDocumentDetails();
         }
       )
       .on(
@@ -100,17 +109,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           table: 'document_comments',
           filter: `document_id=eq.${documentId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log("Comment update detected:", payload);
-          fetchDocumentDetails();
+          await fetchDocumentDetails();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Subscription status for ${channelName}:`, status);
+      });
 
     console.log("Subscribed to real-time updates for document:", documentId);
 
     return () => {
-      console.log("Cleaning up real-time subscription");
+      console.log("Cleaning up real-time subscription for channel:", channelName);
       supabase.removeChannel(channel);
     };
   }, [documentId]);

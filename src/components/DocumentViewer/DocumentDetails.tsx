@@ -52,6 +52,7 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const fields: EditableField[] = [
@@ -80,27 +81,33 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   };
 
   const handleSave = async () => {
+    if (isSaving) return; // Prevent multiple simultaneous saves
+    
     try {
-      const { data: existingAnalysis } = await supabase
+      setIsSaving(true);
+      const { data: existingAnalysis, error: fetchError } = await supabase
         .from('document_analysis')
         .select('content')
         .eq('document_id', documentId)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
 
       const updatedContent = {
         ...existingAnalysis?.content,
         extracted_info: {
           ...existingAnalysis?.content?.extracted_info,
-          ...editedValues
+          ...editedValues,
+          type: formType // Ensure type is preserved
         }
       };
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('document_analysis')
         .update({ content: updatedContent })
         .eq('document_id', documentId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       toast({
         title: "Success",
@@ -115,8 +122,10 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update document details",
+        description: "Failed to update document details. Please try again."
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -140,13 +149,18 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
           </Button>
         ) : (
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={handleCancel}>
+            <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSaving}>
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button variant="default" size="sm" onClick={handleSave}>
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={handleSave} 
+              disabled={isSaving}
+            >
               <Save className="h-4 w-4 mr-2" />
-              Save
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
           </div>
         )}
@@ -171,6 +185,7 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
                   [field.key]: e.target.value
                 })}
                 className="mt-1"
+                disabled={isSaving}
               />
             ) : (
               <p className="text-sm">{field.value}</p>
