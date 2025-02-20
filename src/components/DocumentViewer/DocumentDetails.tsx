@@ -86,7 +86,6 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
     try {
       setIsSaving(true);
 
-      // Get the current user's ID
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -95,7 +94,7 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
 
       const { data: existingAnalysis, error: fetchError } = await supabase
         .from('document_analysis')
-        .select('content')
+        .select('*')  // Changed to select all fields to get user_id
         .eq('document_id', documentId)
         .maybeSingle();
 
@@ -113,22 +112,31 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
       console.log('Saving updated content:', updatedContent);
 
       if (!existingAnalysis) {
+        // Insert new analysis
         const { error: insertError } = await supabase
           .from('document_analysis')
           .insert([{ 
             document_id: documentId,
-            user_id: user.id, // Include user_id for new records
+            user_id: user.id,
             content: updatedContent 
           }]);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw insertError;
+        }
       } else {
+        // Update existing analysis with user_id check
         const { error: updateError } = await supabase
           .from('document_analysis')
           .update({ content: updatedContent })
-          .eq('document_id', documentId);
+          .eq('document_id', documentId)
+          .eq('user_id', user.id);  // Added user_id check
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Update error:', updateError);
+          throw updateError;
+        }
       }
 
       toast({
@@ -139,12 +147,12 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
       setIsEditing(false);
       setEditedValues({});
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating document details:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update document details. Please try again."
+        description: error.message || "Failed to update document details. Please try again."
       });
     } finally {
       setIsSaving(false);
