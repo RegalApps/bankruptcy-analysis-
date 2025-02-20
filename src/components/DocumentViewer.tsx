@@ -34,26 +34,22 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
       if (docError) throw docError;
       
-      // Parse the analysis content if it exists
       let extractedInfo = null;
-      console.log("Raw document data:", document); // Debug log
+      console.log("Raw document data:", document);
 
       if (document?.analysis?.[0]?.content) {
         try {
           if (typeof document.analysis[0].content === 'string') {
-            // If content is a string, parse it
             extractedInfo = JSON.parse(document.analysis[0].content).extracted_info;
           } else if (document.analysis[0].content.extracted_info) {
-            // If content is already an object
             extractedInfo = document.analysis[0].content.extracted_info;
           }
-          console.log("Extracted info:", extractedInfo); // Debug log
+          console.log("Extracted info:", extractedInfo);
         } catch (e) {
           console.error('Error parsing analysis content:', e);
         }
       }
 
-      // Update the document with parsed analysis
       setDocument({
         ...document,
         analysis: document?.analysis?.map(a => ({
@@ -64,7 +60,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         }))
       });
       
-      console.log('Processed document details:', document); // Debug log
+      console.log('Processed document details:', document);
     } catch (error: any) {
       console.error('Error fetching document details:', error);
       toast({
@@ -80,22 +76,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   useEffect(() => {
     fetchDocumentDetails();
 
-    // Set up real-time subscription for comments and analysis
+    // Set up real-time subscriptions
     const channel = supabase
       .channel('document_updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'document_comments',
-          filter: `document_id=eq.${documentId}`
-        },
-        () => {
-          console.log("Comment update detected");
-          fetchDocumentDetails();
-        }
-      )
       .on(
         'postgres_changes',
         {
@@ -104,14 +87,30 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           table: 'document_analysis',
           filter: `document_id=eq.${documentId}`
         },
-        () => {
-          console.log("Analysis update detected");
+        (payload) => {
+          console.log("Analysis update detected:", payload);
+          fetchDocumentDetails();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'document_comments',
+          filter: `document_id=eq.${documentId}`
+        },
+        (payload) => {
+          console.log("Comment update detected:", payload);
           fetchDocumentDetails();
         }
       )
       .subscribe();
 
+    console.log("Subscribed to real-time updates for document:", documentId);
+
     return () => {
+      console.log("Cleaning up real-time subscription");
       supabase.removeChannel(channel);
     };
   }, [documentId]);
@@ -133,7 +132,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   }
 
   const extractedInfo = document.analysis?.[0]?.content?.extracted_info;
-  console.log("Final extracted info being passed to components:", extractedInfo); // Debug log
+  console.log("Final extracted info being passed to components:", extractedInfo);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
