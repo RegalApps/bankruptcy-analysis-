@@ -240,7 +240,14 @@ export const Comments = ({ documentId, comments = [], onCommentAdded }: Comments
             currentUser={currentUser}
             userProfile={userProfiles[comment.user_id]}
             onEdit={handleEditComment}
-            onDelete={(id) => setDeleteComment(id)}
+            onDelete={async (id) => {
+              setDeleteComment(id);
+              return new Promise<void>((resolve) => {
+                // We'll resolve the promise after the delete operation is complete
+                // This will be handled by the AlertDialog
+                resolve();
+              });
+            }}
             isSubmitting={isSubmitting}
           />
         ))}
