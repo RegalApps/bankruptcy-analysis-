@@ -3,11 +3,15 @@ import * as pdfjs from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
 
 // Configure PDF.js worker with proper error handling
-const workerUrl = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+const workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.js',
+  import.meta.url
+).toString();
+
+pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 // Log worker initialization
-console.log('Initializing PDF.js worker:', workerUrl);
+console.log('Initializing PDF.js worker:', workerSrc);
 
 // Financial and legal terms glossary for better recognition
 const FINANCIAL_TERMS = new Set([
@@ -146,8 +150,7 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
     console.log('Loading PDF document...');
     const pdf = await pdfjs.getDocument({
       data: arrayBuffer,
-      cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.12.313/cmaps/',
-      cMapPacked: true,
+      // Remove cMapUrl and cMapPacked as they're not needed for basic text extraction
     }).promise;
     
     console.log(`PDF loaded successfully. Total pages: ${pdf.numPages}`);
