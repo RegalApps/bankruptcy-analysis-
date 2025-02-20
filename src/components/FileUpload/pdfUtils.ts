@@ -75,8 +75,7 @@ const performOCR = async (imageData: string): Promise<string> => {
     imageData,
     'eng',
     {
-      logger: m => console.log(m),
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.,()$%', // Limit recognition to relevant characters
+      logger: m => console.log(m)
     }
   );
 
