@@ -36,15 +36,18 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       
       // Parse the analysis content if it exists
       let extractedInfo = null;
+      console.log("Raw document data:", document); // Debug log
+
       if (document?.analysis?.[0]?.content) {
         try {
           if (typeof document.analysis[0].content === 'string') {
             // If content is a string, parse it
             extractedInfo = JSON.parse(document.analysis[0].content).extracted_info;
-          } else {
-            // If content is already an object (sometimes Supabase returns parsed JSON)
+          } else if (document.analysis[0].content.extracted_info) {
+            // If content is already an object
             extractedInfo = document.analysis[0].content.extracted_info;
           }
+          console.log("Extracted info:", extractedInfo); // Debug log
         } catch (e) {
           console.error('Error parsing analysis content:', e);
         }
@@ -61,7 +64,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         }))
       });
       
-      console.log('Fetched document details:', document); // Debug log
+      console.log('Processed document details:', document); // Debug log
     } catch (error: any) {
       console.error('Error fetching document details:', error);
       toast({
@@ -89,6 +92,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           filter: `document_id=eq.${documentId}`
         },
         () => {
+          console.log("Comment update detected");
           fetchDocumentDetails();
         }
       )
@@ -101,6 +105,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           filter: `document_id=eq.${documentId}`
         },
         () => {
+          console.log("Analysis update detected");
           fetchDocumentDetails();
         }
       )
@@ -128,6 +133,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   }
 
   const extractedInfo = document.analysis?.[0]?.content?.extracted_info;
+  console.log("Final extracted info being passed to components:", extractedInfo); // Debug log
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -137,7 +143,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           <div className="space-y-4">
             <DocumentDetails
               documentId={document.id}
-              formType={document.type}
+              formType={extractedInfo?.type || document.type}
               clientName={extractedInfo?.clientName}
               trusteeName={extractedInfo?.trusteeName}
               dateSigned={extractedInfo?.dateSigned}
