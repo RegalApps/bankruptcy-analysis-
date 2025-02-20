@@ -1,23 +1,14 @@
 
 import { useState, useRef } from 'react';
-import { Upload, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import * as pdfjs from 'pdfjs-dist';
-
-// Set worker path for PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-type UploadStatus = {
-  step: number;
-  message: string;
-};
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+import { UploadProgress } from './UploadProgress';
+import { UploadStatus } from './types';
+import { validateFile } from './validateFile';
+import { handleDocumentUpload, uploadToStorage, cleanupUpload } from './uploadService';
 
 export const FileUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -32,49 +23,12 @@ export const FileUpload = () => {
     setUploadProgress(Math.min((step / 4) * 100, 100));
   };
 
-  const validateFile = (file: File): string | null => {
-    if (!file) return "No file selected";
-    if (!ALLOWED_TYPES.includes(file.type)) return "Invalid file type. Please upload a PDF or Word document";
-    if (file.size > MAX_FILE_SIZE) return "File size should be less than 10MB";
-    return null;
-  };
-
-  const cleanupUpload = async (fileName: string | null = null) => {
-    if (fileName) {
-      try {
-        await supabase.storage.from('documents').remove([fileName]);
-      } catch (error) {
-        console.error('Error cleaning up failed upload:', error);
-      }
-    }
+  const resetUpload = () => {
     setIsUploading(false);
     setUploadProgress(0);
     setStatus({ step: 0, message: '' });
     if (abortController.current) {
       abortController.current = null;
-    }
-  };
-
-  const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => {
-    try {
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-      let text = '';
-      
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items
-          .map((item: any) => item.str)
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-        text += pageText + '\n';
-      }
-      
-      return text;
-    } catch (error) {
-      console.error('Error extracting text from PDF:', error);
-      throw new Error('Failed to extract text from PDF');
     }
   };
 
@@ -103,61 +57,21 @@ export const FileUpload = () => {
 
       // Step 2: Upload file to storage
       updateStatus(2, "Uploading file to secure storage...");
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const { fileName, documentData } = await uploadToStorage(
+        file,
+        user.id,
+        (message) => updateStatus(2, message)
+      );
       uploadedFileName = fileName;
 
-      const { error: uploadError, data } = await supabase.storage
-        .from('documents')
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: false
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Step 3: Create database record
-      updateStatus(3, "Creating document record...");
-      const { error: dbError, data: documentData } = await supabase
-        .from('documents')
-        .insert([
-          {
-            title: file.name,
-            type: file.type,
-            size: file.size,
-            storage_path: fileName,
-            url: data?.path || '',
-            user_id: user.id
-          }
-        ])
-        .select()
-        .single();
-
-      if (dbError) throw dbError;
-
-      // Step 4: Analyze document
-      updateStatus(4, "Analyzing document content...");
+      // Step 3: Analyze document
+      updateStatus(3, "Analyzing document content...");
       try {
-        let documentText = '';
-        
-        if (file.type === 'application/pdf') {
-          const arrayBuffer = await file.arrayBuffer();
-          documentText = await extractTextFromPdf(arrayBuffer);
-          console.log('Extracted PDF text:', documentText);
-        } else {
-          const text = await file.text();
-          documentText = text;
-        }
-
-        const { error: analysisError } = await supabase.functions
-          .invoke('analyze-document', {
-            body: {
-              documentText,
-              documentId: documentData.id
-            }
-          });
-
-        if (analysisError) throw analysisError;
+        await handleDocumentUpload(
+          file,
+          documentData.id,
+          (message) => updateStatus(3, message)
+        );
 
         setUploadProgress(100);
         toast({
@@ -209,7 +123,7 @@ export const FileUpload = () => {
     if (abortController.current) {
       abortController.current.abort();
     }
-    cleanupUpload();
+    resetUpload();
     toast({
       title: "Upload cancelled",
       description: "The file upload was cancelled"
@@ -226,24 +140,11 @@ export const FileUpload = () => {
       )}
 
       {isUploading ? (
-        <div className="space-y-4 rounded-lg border-2 border-dashed p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-              <p className="text-sm font-medium text-gray-600">{status.message}</p>
-            </div>
-            <button
-              onClick={cancelUpload}
-              className="text-sm text-destructive hover:text-destructive/90"
-            >
-              Cancel
-            </button>
-          </div>
-          <div className="space-y-2">
-            <Progress value={uploadProgress} className="h-2 w-full" />
-            <p className="text-xs text-gray-500 text-right">{Math.round(uploadProgress)}%</p>
-          </div>
-        </div>
+        <UploadProgress
+          message={status.message}
+          progress={uploadProgress}
+          onCancel={cancelUpload}
+        />
       ) : (
         <label
           className={cn(
