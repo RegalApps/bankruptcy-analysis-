@@ -1,17 +1,11 @@
-
 import * as pdfjs from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
 
-// Configure PDF.js worker with proper error handling
-const workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url
-).toString();
-
-pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 // Log worker initialization
-console.log('Initializing PDF.js worker:', workerSrc);
+console.log('Initializing PDF.js worker:', pdfjs.GlobalWorkerOptions.workerSrc);
 
 // Financial and legal terms glossary for better recognition
 const FINANCIAL_TERMS = new Set([
