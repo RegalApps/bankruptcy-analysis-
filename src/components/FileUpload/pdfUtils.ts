@@ -1,11 +1,9 @@
 
 import * as pdfjs from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
-import { WorkerParameters } from 'pdfjs-dist/types/src/display/worker_options';
 
 // Configure PDF.js worker
-const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry');
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjs.DefaultWorkerMessageHandler;
 
 // Financial and legal terms glossary for better recognition
 const FINANCIAL_TERMS = new Set([
