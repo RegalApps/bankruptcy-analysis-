@@ -114,9 +114,7 @@ const performOCR = async (imageData: string): Promise<string> => {
       imageData,
       'eng',
       {
-        logger: m => console.log('Tesseract progress:', m),
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,()$%-', // Limit to relevant characters
-        tessedit_pageseg_mode: '1', // Automatic page segmentation with OSD
+        logger: m => console.log('Tesseract progress:', m)
       }
     );
     
