@@ -28,7 +28,7 @@ function determineFormType(formNumber: string): string {
     '84': 'Notice of Cancellation of Bankruptcy',
     '85': 'Notice of Annulment of Bankruptcy',
     '86': 'Notice of Final Dividend and Application for Discharge of Trustee',
-    '87': 'Notice of Deemed Taxation of Trustee's Accounts and Discharge of Trustee',
+    '87': 'Notice of Deemed Taxation of Trustee\'s Accounts and Discharge of Trustee',
     '89': 'Notice of Impending Automatic Discharge of First-Time Bankrupt',
     '90': 'Notice of Mediation — Assessment Certificate',
     '91': 'Notice of Impending Discharge',
