@@ -14,6 +14,22 @@ serve(async (req) => {
   }
 
   try {
+    // Get the user from the authorization header
+    const authHeader = req.headers.get('authorization')?.split('Bearer ')[1];
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get the user's ID from the JWT
+    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader);
+    if (userError) throw userError;
+    if (!user) throw new Error('No user found');
+
     const { documentText, documentId } = await req.json();
     console.log('Analyzing document:', { documentId, textLength: documentText?.length });
 
@@ -51,16 +67,12 @@ serve(async (req) => {
 
     console.log('Extracted information:', extractedInfo);
 
-    // Store analysis results
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
+    // Store analysis results with user_id
     const { error: analysisError } = await supabase
       .from('document_analysis')
       .upsert({
         document_id: documentId,
+        user_id: user.id, // Add the user_id here
         content: { extracted_info: extractedInfo }
       });
 
