@@ -2,13 +2,13 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { DocumentHeader } from "./DocumentHeader";
-import { DocumentDetails } from "./DocumentDetails";
-import { RiskAssessment } from "./RiskAssessment";
-import { DeadlineManager } from "./DeadlineManager";
-import { DocumentPreview } from "./DocumentPreview";
-import { Comments } from "./Comments";
-import { DocumentDetails as IDocumentDetails } from "./types";
+import { DocumentHeader } from "./DocumentViewer/DocumentHeader";
+import { DocumentDetails } from "./DocumentViewer/DocumentDetails";
+import { RiskAssessment } from "./DocumentViewer/RiskAssessment";
+import { DeadlineManager } from "./DocumentViewer/DeadlineManager";
+import { DocumentPreview } from "./DocumentViewer/DocumentPreview";
+import { Comments } from "./DocumentViewer/Comments";
+import { DocumentDetails as IDocumentDetails } from "./DocumentViewer/types";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -21,7 +21,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
   const fetchDocumentDetails = async () => {
     try {
-      console.log("Fetching document details for:", documentId);
       const { data: document, error: docError } = await supabase
         .from('documents')
         .select(`
@@ -33,9 +32,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         .maybeSingle();
 
       if (docError) throw docError;
-
       if (!document) {
-        console.log("No document found for id:", documentId);
         toast({
           variant: "destructive",
           title: "Error",
@@ -83,11 +80,50 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     }
   };
 
+  // Set up real-time subscriptions
   useEffect(() => {
-    if (documentId) {
-      console.log("DocumentViewer mounted with ID:", documentId);
-      fetchDocumentDetails();
-    }
+    fetchDocumentDetails();
+
+    // Create a dedicated channel for this document
+    const channelName = `document_updates_${documentId}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'document_analysis',
+          filter: `document_id=eq.${documentId}`
+        },
+        async (payload) => {
+          console.log("Analysis update detected:", payload);
+          await fetchDocumentDetails();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'document_comments',
+          filter: `document_id=eq.${documentId}`
+        },
+        async (payload) => {
+          console.log("Comment update detected:", payload);
+          await fetchDocumentDetails();
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Subscription status for ${channelName}:`, status);
+      });
+
+    console.log("Subscribed to real-time updates for document:", documentId);
+
+    return () => {
+      console.log("Cleaning up real-time subscription for channel:", channelName);
+      supabase.removeChannel(channel);
+    };
   }, [documentId]);
 
   if (loading) {
@@ -133,7 +169,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
               officialReceiver={extractedInfo?.officialReceiver}
               summary={extractedInfo?.summary}
             />
-            <RiskAssessment risks={extractedInfo?.risks} />
+            <RiskAssessment 
+              risks={extractedInfo?.risks} 
+              documentId={document.id}
+            />
             <DeadlineManager 
               document={document}
               onDeadlineUpdated={fetchDocumentDetails}
@@ -152,7 +191,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       <div className="lg:col-span-3 space-y-6">
         <Comments
           documentId={document.id}
-          comments={document.comments || []}
+          comments={document.comments}
           onCommentAdded={fetchDocumentDetails}
         />
       </div>
