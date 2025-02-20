@@ -10,7 +10,70 @@ const corsHeaders = {
 function determineFormType(formNumber: string): string {
   // Official form types based on OSBC documentation
   const formTypes: Record<string, string> = {
+    '1': 'Bankruptcy and Insolvency Form',
+    '2': 'Certificate of Appointment',
+    '3': 'Notice of Intention to Enforce Security',
+    '4': 'Certificate of Filing of a Notice of Intention to Enforce Security',
+    '5': 'Certificate of Filing of a Notice of Intention to Make a Proposal',
+    '6': 'Certificate of Filing of a Proposal',
+    '7': 'Certificate of Assignment',
+    '8': 'Certificate of Appointment of a Receiver',
+    '9': 'Certificate of Substantial Performance of Receiver\'s Duties',
+    '10': 'Notice of Disposition of Collateral',
+    '11': 'Proof of Claim',
+    '12': 'Application for Bankruptcy Order',
+    '13': 'Application for Consolidation Order',
+    '14': 'Order for Examination',
+    '15': 'Summons to Witness',
+    '16': 'Warrant for Apprehension of Person',
+    '17': 'Warrant of Committal',
+    '18': 'Warrant of Search and Seizure',
+    '19': 'Warrant for Arrest of Absconding Debtor',
+    '20': 'Order to Pay',
+    '21': 'Assignment for the General Benefit of Creditors',
+    '22': 'Demand for Payment',
+    '23': 'Notice of Retention of Property',
+    '24': 'Notice of Disclaimer of Lease',
+    '25': 'Notice of Redemption of Security',
+    '26': 'Notice of Dispute',
+    '27': 'Notice by Bankrupt of Dispute of Statement of Receipts and Disbursements',
+    '28': 'Notice of Application for a Consolidation Order',
+    '29': 'Report of Trustee on Proposal',
+    '30': 'Certificate of Performance of Proposal',
+    '31': 'Notice of Cancellation of Securities',
+    '32': 'Notice to Disclaim or Resiliate Commercial Lease',
+    '33': 'Notice of Intention to Make a Consumer Proposal',
+    '34': 'Consumer Proposal',
+    '35': 'Certificate of Filing of a Consumer Proposal',
+    '36': 'Report of the Administrator on Consumer Proposal',
+    '37': 'Notice of Default of Consumer Proposal',
+    '38': 'Certificate of Full Performance of Consumer Proposal',
+    '39': 'Notice of Hearing of Application for Court Approval of Consumer Proposal',
+    '40': 'Notice of Motion',
+    '41': 'Affidavit',
+    '42': 'Notice of Hearing',
+    '43': 'Order',
+    '44': 'Statement of Affairs (Non-Business Bankruptcy)',
+    '45': 'Notice of Bankruptcy and Calling of First Meeting of Creditors',
+    '46': 'Declaration Under Section 158(d) of the Act',
+    '47': 'Monthly Income and Expense Statement of the Bankrupt',
+    '48': 'Statement of Discharged Bankrupt\'s Receipts and Disbursements',
     '49': 'Assignment for General Benefit of Creditors',
+    '50': 'Notice of Assignment',
+    '51': 'Certificate of Assignment',
+    '52': 'Petition for Receiving Order',
+    '53': 'Receiving Order',
+    '54': 'Notice of Bankruptcy Order',
+    '55': 'Notice of First Meeting of Creditors',
+    '56': 'Minutes of First Meeting of Creditors',
+    '57': 'List of Creditors',
+    '58': 'Notice of Motion for Court Approval',
+    '59': 'Order Approving Proposal',
+    '60': 'Notice of Hearing of Application for Absolute Discharge',
+    '61': 'Order of Discharge',
+    '62': 'Notice of Application for Court Approval of Proposal',
+    '63': 'Order Approving Proposal',
+    '64': 'Assignment of Book Debts',
     '65': 'Notice of Intention to Make a Proposal',
     '66': 'Notice of Mediation',
     '67': 'Notice of First Meeting of Creditors',
@@ -19,22 +82,30 @@ function determineFormType(formNumber: string): string {
     '70': 'Notice of Proposal to Creditors',
     '71': 'Notice of Hearing of Application for Court Approval of Proposal',
     '72': 'Notice of Appeal to Court of Justice From Decision of Registrar',
+    '73': 'Notice of Appearance',
     '74': 'Notice of Contestation of Claim or Dividend',
     '75': 'Notice of Disallowance of Claim, Right to Priority or Security',
     '76': 'Notice of Dividend and Application for Discharge of Trustee',
     '77': 'Notice to Creditor of Estate of Deceased',
     '78': 'Statement of Affairs (Business Bankruptcy)',
     '79': 'Statement of Affairs (Business Proposal)',
+    '80': 'Voting Letter',
+    '81': 'Proof of Security',
+    '82': 'Proof of Claim',
+    '83': 'Dividend Sheet',
     '84': 'Notice of Cancellation of Bankruptcy',
     '85': 'Notice of Annulment of Bankruptcy',
     '86': 'Notice of Final Dividend and Application for Discharge of Trustee',
     '87': 'Notice of Deemed Taxation of Trustee\'s Accounts and Discharge of Trustee',
+    '88': 'Dividend Sheet and Application for Discharge of Trustee',
     '89': 'Notice of Impending Automatic Discharge of First-Time Bankrupt',
     '90': 'Notice of Mediation — Assessment Certificate',
     '91': 'Notice of Impending Discharge',
     '92': 'Notice to Creditor of Consumer Proposal',
     '93': 'Notice of Default of Consumer Proposal',
-    '94': 'Certificate of Full Performance of Consumer Proposal'
+    '94': 'Certificate of Full Performance of Consumer Proposal',
+    '95': 'Notice of Withdrawal of Consumer Proposal',
+    '96': 'Report of Trustee on Bankrupt\'s Application for Discharge'
   };
 
   const baseFormNumber = formNumber.split('.')[0];
@@ -68,7 +139,13 @@ function generateFormSummary(formNumber: string, formTitle: string): string {
     '91': 'This general notice informs of an impending discharge from bankruptcy.',
     '92': 'This form presents the terms of a consumer proposal to creditors under Section 66.13 of the BIA.',
     '93': 'This notice informs creditors that a consumer proposal is in default under Section 66.31 of the BIA.',
-    '94': 'This certificate confirms the successful completion of a consumer proposal under Section 66.38 of the BIA.'
+    '94': 'This certificate confirms the successful completion of a consumer proposal under Section 66.38 of the BIA.',
+    '29': 'This is a detailed report prepared by the trustee analyzing and assessing the proposal. It includes the trustee\'s opinion on the reasonableness of the proposal and the debtor\'s ability to perform it.',
+    '1': 'This is a general bankruptcy and insolvency form used for various proceedings under the BIA.',
+    '11': 'This form is used by creditors to submit their claims against the bankruptcy estate, detailing the amount and nature of their debt.',
+    '12': 'This form is used to apply for a bankruptcy order against a debtor who has committed an act of bankruptcy.',
+    '21': 'This form is used when a debtor voluntarily assigns all property for the benefit of creditors.',
+    '44': 'This form is a detailed financial disclosure document specifically for individuals declaring personal (non-business) bankruptcy.'
   };
 
   const baseFormNumber = formNumber.split('.')[0];
@@ -80,15 +157,18 @@ function extractFormInfo(text: string, formNumber: string) {
   const baseFormNumber = formNumber.split('.')[0];
   const formType = determineFormType(formNumber);
   
-  // Common fields for all forms
   let extractedInfo: any = {
     type: formType,
     formNumber: formNumber,
     summary: generateFormSummary(formNumber, formType)
   };
 
-  // Extract form-specific fields
   switch (baseFormNumber) {
+    case '29':
+      return {
+        ...extractedInfo,
+        ...extractForm29Info(text)
+      };
     case '66':
       extractedInfo = {
         ...extractedInfo,
@@ -119,7 +199,6 @@ function extractFormInfo(text: string, formNumber: string) {
         ...extractForm92Info(text)
       };
       break;
-    // Add more form-specific extractors here
     default:
       extractedInfo = {
         ...extractedInfo,
@@ -128,6 +207,56 @@ function extractFormInfo(text: string, formNumber: string) {
   }
 
   return extractedInfo;
+}
+
+function extractForm29Info(text: string) {
+  // Extract specific information for Form 29 (Report of Trustee on Proposal)
+  const trusteeMatch = text.match(/(?:trustee|licensed\s+insolvency\s+trustee)[:]\s*([^\n\r]+)/i);
+  const trusteeName = trusteeMatch ? trusteeMatch[1].trim() : '';
+  
+  const debtorMatch = text.match(/(?:debtor|insolvent\s+person)[:]\s*([^\n\r]+)/i);
+  const clientName = debtorMatch ? debtorMatch[1].trim() : '';
+
+  const dateMatch = text.match(/dated?\s*[:]\s*([^\n\r]+)/i);
+  const dateSigned = dateMatch ? dateMatch[1].trim() : '';
+
+  return {
+    trusteeName,
+    clientName,
+    dateSigned,
+    risks: analyzeForm29Risks(text, { trusteeName, clientName, dateSigned })
+  };
+}
+
+function analyzeForm29Risks(text: string, data: any) {
+  const risks = [];
+  
+  if (!data.trusteeName) {
+    risks.push({
+      type: "Missing Trustee Information",
+      description: "Trustee's name or details are not specified",
+      severity: "high",
+      regulation: "BIA Requirements for Trustee Reports",
+      impact: "Cannot verify trustee's assessment of proposal",
+      requiredAction: "Add trustee information",
+      solution: "Include complete trustee details in the report"
+    });
+  }
+
+  // Check for required sections in the report
+  if (!text.includes('opinion') && !text.includes('assessment')) {
+    risks.push({
+      type: "Missing Trustee Opinion",
+      description: "Trustee's opinion on the proposal is not clearly stated",
+      severity: "high",
+      regulation: "BIA Section 50(10)",
+      impact: "Cannot assess viability of proposal",
+      requiredAction: "Add trustee's opinion",
+      solution: "Include detailed assessment and opinion on the proposal"
+    });
+  }
+
+  return risks;
 }
 
 serve(async (req) => {
