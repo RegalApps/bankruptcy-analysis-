@@ -81,10 +81,18 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   };
 
   const handleSave = async () => {
-    if (isSaving) return; // Prevent multiple simultaneous saves
+    if (isSaving) return;
     
     try {
       setIsSaving(true);
+
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
+
       const { data: existingAnalysis, error: fetchError } = await supabase
         .from('document_analysis')
         .select('content')
@@ -93,30 +101,28 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
 
       if (fetchError) throw fetchError;
 
-      // Prepare the updated content while preserving existing data
       const updatedContent = {
         ...existingAnalysis?.content,
         extracted_info: {
           ...existingAnalysis?.content?.extracted_info,
           ...editedValues,
-          type: formType // Ensure type is preserved
+          type: formType
         }
       };
 
       console.log('Saving updated content:', updatedContent);
 
-      // If there's no existing analysis, create one
       if (!existingAnalysis) {
         const { error: insertError } = await supabase
           .from('document_analysis')
           .insert([{ 
-            document_id: documentId, 
+            document_id: documentId,
+            user_id: user.id, // Include user_id for new records
             content: updatedContent 
           }]);
 
         if (insertError) throw insertError;
       } else {
-        // Update existing analysis
         const { error: updateError } = await supabase
           .from('document_analysis')
           .update({ content: updatedContent })
