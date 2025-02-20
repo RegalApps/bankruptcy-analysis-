@@ -3,7 +3,7 @@ import * as pdfjs from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
 
 // Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjs.DefaultWorkerMessageHandler;
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 // Financial and legal terms glossary for better recognition
 const FINANCIAL_TERMS = new Set([
