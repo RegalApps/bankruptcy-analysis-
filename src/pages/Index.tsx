@@ -6,11 +6,14 @@ import { DocumentViewer } from "@/components/DocumentViewer";
 import { Auth } from "@/components/Auth";
 import { Plus, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,9 +29,34 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Set up real-time subscription for documents
   useEffect(() => {
     if (session) {
+      // Initial fetch
       fetchDocuments();
+
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('document_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'documents'
+          },
+          () => {
+            console.log('Document change detected, refreshing...');
+            fetchDocuments();
+          }
+        )
+        .subscribe((status) => {
+          console.log('Subscription status:', status);
+        });
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [session]);
 
@@ -39,12 +67,32 @@ const Index = () => {
         .select('*')
         .order('updated_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching documents:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch documents"
+        });
+        return;
+      }
+
+      console.log('Fetched documents:', data);
       setDocuments(data || []);
     } catch (error) {
-      console.error('Error fetching documents:', error);
+      console.error('Error in fetchDocuments:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An unexpected error occurred while fetching documents"
+      });
     }
   };
+
+  const filteredDocuments = documents.filter(doc =>
+    doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.type?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (!session) {
     return <Auth />;
@@ -80,25 +128,45 @@ const Index = () => {
                     <input
                       type="text"
                       placeholder="Search documents..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 rounded-md border bg-background"
                     />
                   </div>
-                  <button className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                  <button 
+                    className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                    onClick={() => {
+                      const fileInput = document.createElement('input');
+                      fileInput.type = 'file';
+                      fileInput.accept = '.pdf,.doc,.docx';
+                      fileInput.click();
+                    }}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     New Document
                   </button>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  {documents.map((doc) => (
-                    <DocumentCard
-                      key={doc.id}
-                      title={doc.title}
-                      type={doc.type}
-                      date={`Updated ${new Date(doc.updated_at).toLocaleDateString()}`}
-                      onClick={() => setSelectedDocument(doc.id)}
-                    />
-                  ))}
+                  {filteredDocuments.length > 0 ? (
+                    filteredDocuments.map((doc) => (
+                      <DocumentCard
+                        key={doc.id}
+                        title={doc.title}
+                        type={doc.type}
+                        date={`Updated ${new Date(doc.updated_at).toLocaleDateString()}`}
+                        onClick={() => setSelectedDocument(doc.id)}
+                      />
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center py-8 text-muted-foreground">
+                      {documents.length === 0 ? (
+                        "No documents yet. Upload your first document!"
+                      ) : (
+                        "No documents match your search."
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
