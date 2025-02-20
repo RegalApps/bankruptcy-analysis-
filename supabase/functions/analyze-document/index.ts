@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -44,6 +45,18 @@ serve(async (req) => {
       console.error('No document ID provided');
       throw new Error('Document ID is required');
     }
+
+    let textToAnalyze = documentText;
+    
+    // If the document is base64 encoded (PDF), try to extract text content
+    if (documentText.startsWith('data:application/pdf;base64,')) {
+      // For now, we'll analyze the raw text - in a real implementation, 
+      // you'd want to use a PDF parsing library or service
+      console.log('Processing PDF document');
+      textToAnalyze = "PDF document detected. Text extraction pending.";
+    }
+
+    console.log('Sending text to OpenAI for analysis...');
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -171,7 +184,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: documentText
+            content: textToAnalyze
           }
         ],
         temperature: 0.1,
@@ -232,8 +245,8 @@ serve(async (req) => {
         success: false 
       }),
       { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }
