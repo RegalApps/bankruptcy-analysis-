@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,16 +93,17 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
 
       const { data: existingAnalysis, error: fetchError } = await supabase
         .from('document_analysis')
-        .select('*')  // Changed to select all fields to get user_id
+        .select('*')
         .eq('document_id', documentId)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
 
       const updatedContent = {
-        ...existingAnalysis?.content,
+        ...(existingAnalysis?.content || {}),
         extracted_info: {
-          ...existingAnalysis?.content?.extracted_info,
+          ...(existingAnalysis?.content?.extracted_info || {}),
           ...editedValues,
           type: formType
         }
@@ -112,7 +112,6 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
       console.log('Saving updated content:', updatedContent);
 
       if (!existingAnalysis) {
-        // Insert new analysis
         const { error: insertError } = await supabase
           .from('document_analysis')
           .insert([{ 
@@ -126,12 +125,11 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
           throw insertError;
         }
       } else {
-        // Update existing analysis with user_id check
         const { error: updateError } = await supabase
           .from('document_analysis')
           .update({ content: updatedContent })
           .eq('document_id', documentId)
-          .eq('user_id', user.id);  // Added user_id check
+          .eq('user_id', user.id);
 
         if (updateError) {
           console.error('Update error:', updateError);
