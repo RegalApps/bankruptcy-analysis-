@@ -2,13 +2,13 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { DocumentHeader } from "./DocumentViewer/DocumentHeader";
-import { DocumentDetails } from "./DocumentViewer/DocumentDetails";
-import { RiskAssessment } from "./DocumentViewer/RiskAssessment";
-import { DeadlineManager } from "./DocumentViewer/DeadlineManager";
-import { DocumentPreview } from "./DocumentViewer/DocumentPreview";
-import { Comments } from "./DocumentViewer/Comments";
-import { DocumentDetails as IDocumentDetails } from "./DocumentViewer/types";
+import { DocumentHeader } from "./DocumentHeader";
+import { DocumentDetails } from "./DocumentDetails";
+import { RiskAssessment } from "./RiskAssessment";
+import { DeadlineManager } from "./DeadlineManager";
+import { DocumentPreview } from "./DocumentPreview";
+import { Comments } from "./Comments";
+import { DocumentDetails as IDocumentDetails } from "./types";
 
 interface DocumentViewerProps {
   documentId: string;
