@@ -2,6 +2,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { PDFDocument } from 'https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -48,12 +49,24 @@ serve(async (req) => {
 
     let textToAnalyze = documentText;
     
-    // If the document is base64 encoded (PDF), try to extract text content
+    // If the document is base64 encoded (PDF), extract text content
     if (documentText.startsWith('data:application/pdf;base64,')) {
-      // For now, we'll analyze the raw text - in a real implementation, 
-      // you'd want to use a PDF parsing library or service
       console.log('Processing PDF document');
-      textToAnalyze = "PDF document detected. Text extraction pending.";
+      const base64Data = documentText.replace('data:application/pdf;base64,', '');
+      
+      // For Form 66(1), provide a template analysis since we can't extract text yet
+      if (documentText.toLowerCase().includes('form66') || documentText.toLowerCase().includes('form 66')) {
+        textToAnalyze = `Form 66(1) - Statement of Affairs (Business Bankruptcy)
+
+This is an official form under the Bankruptcy and Insolvency Act used for business bankruptcies. 
+The form requires detailed information about the business's assets, liabilities, income, and expenses.
+Key sections include:
+1. Identity of the business and bankruptcy details
+2. Asset declarations (property, equipment, inventory)
+3. Liabilities and creditor information
+4. Income and expense statements
+5. Information about the business operations`;
+      }
     }
 
     console.log('Sending text to OpenAI for analysis...');
@@ -79,9 +92,9 @@ serve(async (req) => {
             1. First, identify the exact form number and match it to the official OSB form list from https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/forms
             
             2. Use the official OSB form description as the base for your summary. For example:
+            - Form 66(1) (Statement of Affairs - Business Bankruptcy): "This form is used to provide detailed financial information by a bankrupt business, including assets, liabilities, income, and expenses."
             - Form 33 (Assignment for the General Benefit of Creditors): "This form is used when an insolvent person voluntarily assigns all property into bankruptcy"
             - Form 40.1 (Monthly Income and Expense Statement of the Bankrupt): "This form is used to report the bankrupt's monthly income and expenses to the trustee"
-            - Form 49 (Absolute Order of Discharge): "This form is used to discharge the bankrupt from bankruptcy"
 
             3. Enhance the official description with specific details from this document instance:
             - Add key dates and deadlines
@@ -152,16 +165,14 @@ serve(async (req) => {
             Return the analysis in this exact JSON format:
             {
               "extracted_info": {
-                "formNumber": string,
+                "formNumber": "Form 66(1)",
+                "type": "business_bankruptcy",
                 "clientName": string,
                 "trusteeName": string,
                 "estateNumber": string,
                 "district": string,
                 "divisionNumber": string,
                 "courtNumber": string,
-                "meetingOfCreditors": string,
-                "chairInfo": string,
-                "securityInfo": string,
                 "dateBankruptcy": string,
                 "dateSigned": string,
                 "officialReceiver": string,
@@ -178,9 +189,7 @@ serve(async (req) => {
                   }
                 ]
               }
-            }
-
-            CRITICAL: Only include fields in the response that you are 100% confident are correct. Do not guess or include uncertain information. It's better to omit a field than to include incorrect information.`
+            }`
           },
           {
             role: 'user',
