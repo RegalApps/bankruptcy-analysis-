@@ -1,9 +1,8 @@
 
 import * as pdfjs from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
 
-// Set worker path using the imported worker
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+// Set worker source to a CDN URL since the direct import isn't working
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => {
   try {
