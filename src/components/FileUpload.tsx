@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Upload, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -84,8 +83,7 @@ export const FileUpload = () => {
         .from('documents')
         .upload(fileName, file, {
           cacheControl: "3600",
-          upsert: false,
-          abortSignal: abortController.current?.signal
+          upsert: false
         });
 
       if (uploadError) throw uploadError;
