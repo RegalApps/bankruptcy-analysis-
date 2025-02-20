@@ -5,6 +5,16 @@ import Tesseract from 'tesseract.js';
 // Set worker source to a CDN URL since the direct import isn't working
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
+// Financial and legal terms glossary for better recognition
+const FINANCIAL_TERMS = new Set([
+  'absolute discharge', 'bankruptcy', 'consumer proposal', 'discharge', 'trustee',
+  'creditor', 'debtor', 'dividend', 'estate', 'insolvency', 'liquidation',
+  'proposal', 'receiver', 'secured creditor', 'unsecured creditor', 'stay of proceedings',
+  'administrator', 'assignment', 'bankrupt', 'claims', 'court order', 'debt',
+  'income tax', 'interest', 'judgment', 'liability', 'lien', 'mortgage',
+  'official receiver', 'petition', 'rehabilitation', 'reorganization', 'surplus'
+]);
+
 // Helper function to check if page contains actual text content
 const isScannedPage = async (page: any): Promise<boolean> => {
   const content = await page.getTextContent();
@@ -15,9 +25,9 @@ const isScannedPage = async (page: any): Promise<boolean> => {
   return text.length < 50; // If less than 50 characters, likely a scanned page
 };
 
-// Function to convert PDF page to image data
+// Function to convert PDF page to image data with enhanced resolution
 const pageToImage = async (page: any): Promise<string> => {
-  const scale = 2.0; // Higher scale for better OCR results
+  const scale = 3.0; // Higher scale for better OCR results with small text
   const viewport = page.getViewport({ scale });
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
@@ -27,22 +37,61 @@ const pageToImage = async (page: any): Promise<string> => {
   
   await page.render({
     canvasContext: context!,
-    viewport: viewport
+    viewport: viewport,
+    intent: 'print' // Better quality for text
   }).promise;
   
   return canvas.toDataURL('image/png');
 };
 
-// Function to perform OCR on an image
+// Enhanced text cleaning and correction
+const cleanExtractedText = (text: string): string => {
+  // Common OCR mistakes in financial documents
+  const corrections: { [key: string]: string } = {
+    'bankruptcv': 'bankruptcy',
+    'credltor': 'creditor',
+    'dlscharge': 'discharge',
+    'trustce': 'trustee',
+    'proposol': 'proposal',
+    'recelver': 'receiver',
+  };
+
+  let cleanedText = text
+    .replace(/\s+/g, ' ')
+    .replace(/[^\w\s-.,()]/g, '') // Remove special characters except common punctuation
+    .trim();
+
+  // Apply corrections for common OCR mistakes
+  Object.entries(corrections).forEach(([mistake, correction]) => {
+    cleanedText = cleanedText.replace(new RegExp(mistake, 'gi'), correction);
+  });
+
+  return cleanedText;
+};
+
+// Function to perform OCR with enhanced financial term recognition
 const performOCR = async (imageData: string): Promise<string> => {
   const result = await Tesseract.recognize(
     imageData,
     'eng',
     {
-      logger: m => console.log(m)
+      logger: m => console.log(m),
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.,()$%', // Limit recognition to relevant characters
     }
   );
-  return result.data.text;
+
+  let extractedText = result.data.text;
+  
+  // Clean and correct the extracted text
+  extractedText = cleanExtractedText(extractedText);
+
+  // Improve recognition of financial terms
+  FINANCIAL_TERMS.forEach(term => {
+    const termRegex = new RegExp(`\\b${term.replace(/\s+/g, '\\s+')}\\b`, 'gi');
+    extractedText = extractedText.replace(termRegex, term);
+  });
+
+  return extractedText;
 };
 
 export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => {
