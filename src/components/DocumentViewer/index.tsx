@@ -2,17 +2,20 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { DocumentDetails } from "./types";
-import { AnalysisPanel } from "./AnalysisPanel";
+import { DocumentHeader } from "./DocumentHeader";
+import { DocumentDetails } from "./DocumentDetails";
+import { RiskAssessment } from "./RiskAssessment";
+import { DeadlineManager } from "./DeadlineManager";
 import { DocumentPreview } from "./DocumentPreview";
 import { Comments } from "./Comments";
+import { DocumentDetails as IDocumentDetails } from "./types";
 
 interface DocumentViewerProps {
   documentId: string;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) => {
-  const [document, setDocument] = useState<DocumentDetails | null>(null);
+  const [document, setDocument] = useState<IDocumentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -27,13 +30,49 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           comments:document_comments(id, content, created_at, user_id)
         `)
         .eq('id', documentId)
-        .single();
+        .maybeSingle();
 
       if (docError) throw docError;
-      console.log("Fetched document:", document);
-      setDocument(document);
+
+      if (!document) {
+        console.log("No document found for id:", documentId);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Document not found"
+        });
+        return;
+      }
+      
+      let extractedInfo = null;
+      console.log("Raw document data:", document);
+
+      if (document?.analysis?.[0]?.content) {
+        try {
+          if (typeof document.analysis[0].content === 'string') {
+            extractedInfo = JSON.parse(document.analysis[0].content).extracted_info;
+          } else if (document.analysis[0].content.extracted_info) {
+            extractedInfo = document.analysis[0].content.extracted_info;
+          }
+          console.log("Extracted info:", extractedInfo);
+        } catch (e) {
+          console.error('Error parsing analysis content:', e);
+        }
+      }
+
+      setDocument({
+        ...document,
+        analysis: document?.analysis?.map(a => ({
+          ...a,
+          content: {
+            extracted_info: extractedInfo
+          }
+        }))
+      });
+      
+      console.log('Processed document details:', document);
     } catch (error: any) {
-      console.error("Error fetching document:", error);
+      console.error('Error fetching document details:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -45,7 +84,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   };
 
   useEffect(() => {
-    fetchDocumentDetails();
+    if (documentId) {
+      console.log("DocumentViewer mounted with ID:", documentId);
+      fetchDocumentDetails();
+    }
   }, [documentId]);
 
   if (loading) {
@@ -64,24 +106,51 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     );
   }
 
+  const extractedInfo = document.analysis?.[0]?.content?.extracted_info;
+  console.log("Final extracted info being passed to components:", extractedInfo);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="lg:col-span-3 space-y-6">
-        <AnalysisPanel 
-          document={document} 
-          onDeadlineUpdated={fetchDocumentDetails}
-        />
+        <div className="rounded-lg border bg-card p-6">
+          <DocumentHeader title={document.title} type={document.type} />
+          <div className="space-y-4">
+            <DocumentDetails
+              documentId={document.id}
+              formType={extractedInfo?.type ?? document.type}
+              clientName={extractedInfo?.clientName}
+              trusteeName={extractedInfo?.trusteeName}
+              dateSigned={extractedInfo?.dateSigned}
+              formNumber={extractedInfo?.formNumber}
+              estateNumber={extractedInfo?.estateNumber}
+              district={extractedInfo?.district}
+              divisionNumber={extractedInfo?.divisionNumber}
+              courtNumber={extractedInfo?.courtNumber}
+              meetingOfCreditors={extractedInfo?.meetingOfCreditors}
+              chairInfo={extractedInfo?.chairInfo}
+              securityInfo={extractedInfo?.securityInfo}
+              dateBankruptcy={extractedInfo?.dateBankruptcy}
+              officialReceiver={extractedInfo?.officialReceiver}
+              summary={extractedInfo?.summary}
+            />
+            <RiskAssessment risks={extractedInfo?.risks} />
+            <DeadlineManager 
+              document={document}
+              onDeadlineUpdated={fetchDocumentDetails}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="lg:col-span-6">
         <DocumentPreview 
-          storagePath={document.storage_path}
+          storagePath={document.storage_path} 
           onAnalysisComplete={fetchDocumentDetails}
         />
       </div>
 
       <div className="lg:col-span-3 space-y-6">
-        <Comments 
+        <Comments
           documentId={document.id}
           comments={document.comments || []}
           onCommentAdded={fetchDocumentDetails}
