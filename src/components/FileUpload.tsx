@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { Upload, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -5,6 +6,10 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import * as pdfjs from 'pdfjs-dist';
+
+// Set worker path for PDF.js
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 type UploadStatus = {
   step: number;
@@ -47,6 +52,29 @@ export const FileUpload = () => {
     setStatus({ step: 0, message: '' });
     if (abortController.current) {
       abortController.current = null;
+    }
+  };
+
+  const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => {
+    try {
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      let text = '';
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items
+          .map((item: any) => item.str)
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        text += pageText + '\n';
+      }
+      
+      return text;
+    } catch (error) {
+      console.error('Error extracting text from PDF:', error);
+      throw new Error('Failed to extract text from PDF');
     }
   };
 
@@ -110,45 +138,41 @@ export const FileUpload = () => {
       // Step 4: Analyze document
       updateStatus(4, "Analyzing document content...");
       try {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          try {
-            const documentText = e.target?.result as string;
-            
-            const { error: analysisError } = await supabase.functions
-              .invoke('analyze-document', {
-                body: {
-                  documentText,
-                  documentId: documentData.id
-                }
-              });
-
-            if (analysisError) throw analysisError;
-
-            setUploadProgress(100);
-            toast({
-              title: "Success",
-              description: "File uploaded and analyzed successfully"
-            });
-          } catch (error) {
-            console.error('Error analyzing document:', error);
-            toast({
-              variant: "destructive",
-              title: "Analysis failed",
-              description: "Document was uploaded but analysis failed"
-            });
-          } finally {
-            setIsUploading(false);
-          }
-        };
-
+        let documentText = '';
+        
         if (file.type === 'application/pdf') {
-          reader.readAsDataURL(file);
+          const arrayBuffer = await file.arrayBuffer();
+          documentText = await extractTextFromPdf(arrayBuffer);
+          console.log('Extracted PDF text:', documentText);
         } else {
-          reader.readAsText(file);
+          const text = await file.text();
+          documentText = text;
         }
+
+        const { error: analysisError } = await supabase.functions
+          .invoke('analyze-document', {
+            body: {
+              documentText,
+              documentId: documentData.id
+            }
+          });
+
+        if (analysisError) throw analysisError;
+
+        setUploadProgress(100);
+        toast({
+          title: "Success",
+          description: "File uploaded and analyzed successfully"
+        });
       } catch (error) {
-        throw error;
+        console.error('Error analyzing document:', error);
+        toast({
+          variant: "destructive",
+          title: "Analysis failed",
+          description: "Document was uploaded but analysis failed"
+        });
+      } finally {
+        setIsUploading(false);
       }
     } catch (error: any) {
       console.error('Error uploading file:', error);
