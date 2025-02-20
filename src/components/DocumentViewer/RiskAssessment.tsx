@@ -2,6 +2,7 @@
 import { AlertTriangle, CheckCircle, Info, ArrowRight, ClipboardList } from "lucide-react";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface Risk {
   type: string;
@@ -15,9 +16,10 @@ interface Risk {
 
 interface RiskAssessmentProps {
   risks?: Risk[];
+  documentId: string;
 }
 
-export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks }) => {
+export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks, documentId }) => {
   const { toast } = useToast();
 
   const getSeverityColor = (severity: string) => {
@@ -48,16 +50,39 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks }) => {
 
   const handleCreateTask = async (risk: Risk) => {
     try {
-      // For now, just show a toast notification
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser();
+
+      if (userError) throw userError;
+
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .insert({
+          title: risk.type,
+          description: risk.description,
+          severity: risk.severity,
+          document_id: documentId,
+          created_by: user.id,
+          regulation: risk.regulation,
+          solution: risk.solution,
+          due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default due date: 1 week
+          status: 'pending'
+        });
+
+      if (taskError) throw taskError;
+
       toast({
         title: "Task Created",
         description: `Created task for risk: ${risk.type}`,
       });
     } catch (error) {
+      console.error('Error creating task:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create task",
+        description: "Failed to create task"
       });
     }
   };

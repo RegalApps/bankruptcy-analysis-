@@ -169,7 +169,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
               officialReceiver={extractedInfo?.officialReceiver}
               summary={extractedInfo?.summary}
             />
-            <RiskAssessment risks={extractedInfo?.risks} />
+            <RiskAssessment 
+              risks={extractedInfo?.risks} 
+              documentId={document.id}
+            />
             <DeadlineManager 
               document={document}
               onDeadlineUpdated={fetchDocumentDetails}
