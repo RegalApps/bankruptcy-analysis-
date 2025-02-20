@@ -143,7 +143,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           <div className="space-y-4">
             <DocumentDetails
               documentId={document.id}
-              formType={extractedInfo?.type || document.type}
+              formType={extractedInfo?.type ?? document.type}
               clientName={extractedInfo?.clientName}
               trusteeName={extractedInfo?.trusteeName}
               dateSigned={extractedInfo?.dateSigned}

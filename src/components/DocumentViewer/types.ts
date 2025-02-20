@@ -24,6 +24,7 @@ export interface DocumentDetails {
   analysis?: {
     content: {
       extracted_info: {
+        type?: string;
         formNumber?: string;
         clientName?: string;
         trusteeName?: string;
