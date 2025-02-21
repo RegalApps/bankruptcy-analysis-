@@ -35,14 +35,13 @@ async function parseForm66(text: string): Promise<AnalysisResult['extracted_info
     
     const meetingMatch = text.match(/meeting\s+of\s+creditors[^\n]*/i);
     const dateMatch = text.match(/(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i);
-    const trusteeMatch = text.match(/(?:Licensed\s+Insolvency\s+Trustee|trustee)[:\s]+([^\n]+)/i);
+    const trusteeMatch = text.match(/Licensed\s+Insolvency\s+Trustee:?\s*([^\n]+)/i) || text.match(/Trustee:?\s*([^\n]+)/i);
     const estateMatch = text.match(/(?:estate|file)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
     const formNumberMatch = text.match(/Form\s*(?:no\.?|number)?[:\s]*(\d+)/i);
-    const clientMatch = text.match(/to:\s*([^,\n]+)/i);
+    const clientMatch = text.match(/To:\s*([^,\n]+)/i) || text.match(/(?:bankrupt|debtor)[:\s]*([^,\n]+)/i);
     const courtNumberMatch = text.match(/(?:court)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
     const districtMatch = text.match(/(?:district)[:\s]+([^\n]+)/i);
     const divisionMatch = text.match(/(?:division)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
-    const locationMatch = text.match(/(?:location)[:\s]+([^\n]+)/i);
 
     const extractedInfo = {
       type: 'Form 66',
@@ -50,12 +49,11 @@ async function parseForm66(text: string): Promise<AnalysisResult['extracted_info
       dateSigned: dateMatch ? dateMatch[0] : '',
       trusteeName: trusteeMatch ? trusteeMatch[1].trim() : '',
       estateNumber: estateMatch ? estateMatch[1].trim() : '',
-      formNumber: formNumberMatch ? formNumberMatch[1].trim() : '66',
+      formNumber: '66',
       clientName: clientMatch ? clientMatch[1].trim() : '',
       courtNumber: courtNumberMatch ? courtNumberMatch[1].trim() : '',
       district: districtMatch ? districtMatch[1].trim() : '',
-      divisionNumber: divisionMatch ? divisionMatch[1].trim() : '',
-      location: locationMatch ? locationMatch[1].trim() : ''
+      divisionNumber: divisionMatch ? divisionMatch[1].trim() : ''
     };
 
     console.log('Extracted Form 66 info:', extractedInfo);
@@ -66,77 +64,42 @@ async function parseForm66(text: string): Promise<AnalysisResult['extracted_info
   }
 }
 
-async function analyzeWithOpenAI(text: string): Promise<AnalysisResult> {
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-  if (!openAIApiKey) {
-    throw new Error('OpenAI API key not configured');
-  }
-
-  console.log('Analyzing text with OpenAI:', text.substring(0, 100) + '...');
-
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a legal document analyzer. Extract key information and format it as JSON.'
-          },
-          {
-            role: 'user',
-            content: `Extract key information from this document and return it in JSON format:\n\n${text}`
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 500
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('OpenAI response:', data);
-
-    let extracted_info;
-    try {
-      extracted_info = JSON.parse(data.choices[0].message.content);
-    } catch (error) {
-      console.warn('Failed to parse OpenAI response as JSON:', error);
-      extracted_info = {
-        type: 'Unknown',
-        summary: data.choices[0].message.content
-      };
-    }
-
-    return {
-      type: extracted_info.type || 'Unknown',
-      extracted_info,
-      summary: `Document analysis complete. Identified as ${extracted_info.type || 'Unknown'} document.`
-    };
-  } catch (error) {
-    console.error('OpenAI analysis error:', error);
-    throw new Error(`OpenAI analysis failed: ${error.message}`);
-  }
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase credentials not configured');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get the JWT token
+    const token = authHeader.replace('Bearer ', '');
+
+    // Get the user from the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      throw new Error('Invalid user token');
+    }
+
     const requestBody = await req.json();
     const { documentText, documentId } = requestBody;
     
-    console.log(`Processing document ${documentId} (length: ${documentText?.length || 0})`);
+    console.log(`Processing document ${documentId} for user ${user.id}`);
 
     if (!documentText || documentText.trim().length === 0) {
       throw new Error('Document text is empty');
@@ -152,31 +115,23 @@ serve(async (req) => {
       const extractedInfo = await parseForm66(cleanedText);
       analysisResult = {
         type: 'Form 66',
-        extracted_info: extractedInfo
+        extracted_info: extractedInfo,
+        summary: 'Form 66 - Notice to Bankrupt of Meeting of Creditors'
       };
     } else {
       console.log('Using OpenAI analysis');
-      analysisResult = await analyzeWithOpenAI(cleanedText);
+      throw new Error('Document type not supported');
     }
 
     console.log('Analysis completed successfully');
-
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Supabase credentials not configured');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Store analysis results
     const { error: analysisError } = await supabase
       .from('document_analysis')
       .upsert({
         document_id: documentId,
-        content: analysisResult
+        content: analysisResult,
+        user_id: user.id
       });
 
     if (analysisError) {
