@@ -1,5 +1,6 @@
+
 import * as pdfjs from 'pdfjs-dist';
-import './utils/pdfConfig';
+import { PDF_CONFIG } from './utils/pdfConfig';
 import { isScannedPage, pageToImage } from './utils/pdfPageUtils';
 import { performOCR } from './utils/ocrUtils';
 

@@ -1,4 +1,5 @@
 
+import * as pdfjs from 'pdfjs-dist';
 import { GlobalWorkerOptions } from 'pdfjs-dist';
 
 // Configure PDF.js worker to use CDN instead of local file
