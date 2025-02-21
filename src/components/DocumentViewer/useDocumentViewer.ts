@@ -44,18 +44,58 @@ export const useDocumentViewer = (documentId: string) => {
             analysisContent = JSON.parse(analysisContent);
           }
 
-          // Extract the info from either format
-          const extractedInfo = analysisContent.extracted_info || {};
-          
-          console.log("Processed analysis content:", extractedInfo);
+          // Process and validate extracted information
+          const extractedInfo = {
+            // Client Information
+            clientName: analysisContent.extracted_info?.clientName || '',
+            clientAddress: analysisContent.extracted_info?.clientAddress || '',
+            clientPhone: analysisContent.extracted_info?.clientPhone || '',
+            clientId: analysisContent.extracted_info?.clientId || '',
+            
+            // Document Details
+            formNumber: analysisContent.extracted_info?.formNumber || '',
+            formType: analysisContent.extracted_info?.type || document.type,
+            dateSigned: analysisContent.extracted_info?.dateSigned || '',
+            
+            // Trustee Information
+            trusteeName: analysisContent.extracted_info?.trusteeName || '',
+            trusteeAddress: analysisContent.extracted_info?.trusteeAddress || '',
+            trusteePhone: analysisContent.extracted_info?.trusteePhone || '',
+            
+            // Case Information
+            estateNumber: analysisContent.extracted_info?.estateNumber || '',
+            district: analysisContent.extracted_info?.district || '',
+            divisionNumber: analysisContent.extracted_info?.divisionNumber || '',
+            courtNumber: analysisContent.extracted_info?.courtNumber || '',
+            
+            // Additional Details
+            meetingOfCreditors: analysisContent.extracted_info?.meetingOfCreditors || '',
+            chairInfo: analysisContent.extracted_info?.chairInfo || '',
+            securityInfo: analysisContent.extracted_info?.securityInfo || '',
+            dateBankruptcy: analysisContent.extracted_info?.dateBankruptcy || '',
+            officialReceiver: analysisContent.extracted_info?.officialReceiver || '',
+            
+            // Document Summary
+            summary: analysisContent.extracted_info?.summary || '',
+          };
+
+          // Process risks with severity levels and recommendations
+          const risks = (analysisContent.risks || []).map((risk: any) => ({
+            type: risk.type || 'Unknown Risk',
+            description: risk.description || '',
+            severity: risk.severity || 'medium',
+            regulation: risk.regulation || '',
+            impact: risk.impact || '',
+            requiredAction: risk.requiredAction || '',
+            solution: risk.solution || '',
+          }));
+
+          console.log("Processed analysis content:", { extractedInfo, risks });
 
           processedAnalysis = [{
             content: {
-              extracted_info: {
-                ...extractedInfo,
-                type: extractedInfo.type || document.type,
-                risks: analysisContent.risks || [] // Ensure risks are included
-              }
+              extracted_info: extractedInfo,
+              risks: risks
             }
           }];
         } catch (e) {
@@ -69,15 +109,13 @@ export const useDocumentViewer = (documentId: string) => {
       }
 
       // Set the document with processed analysis
-      setDocument({
+      const processedDocument = {
         ...document,
         analysis: processedAnalysis
-      });
+      };
       
-      console.log('Final processed document:', {
-        ...document,
-        analysis: processedAnalysis
-      });
+      setDocument(processedDocument);
+      console.log('Final processed document:', processedDocument);
 
     } catch (error: any) {
       console.error('Error fetching document details:', error);
