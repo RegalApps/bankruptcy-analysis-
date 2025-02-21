@@ -1,15 +1,13 @@
 
 import * as pdfjs from 'pdfjs-dist';
 import { GlobalWorkerOptions } from 'pdfjs-dist';
-import worker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 
-// Configure PDF.js worker using the bundled worker file
-GlobalWorkerOptions.workerSrc = worker;
+// Set the worker source to a raw path
+GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.js';
 
 // Export configuration
 export const PDF_CONFIG = {
-  // Use local paths instead of CDN
-  cMapUrl: '/cmaps/',
+  cMapUrl: '/node_modules/pdfjs-dist/cmaps/',
   cMapPacked: true,
-  standardFontDataUrl: '/standard_fonts/'
+  standardFontDataUrl: '/node_modules/pdfjs-dist/standard_fonts/'
 };
