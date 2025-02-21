@@ -1,38 +1,61 @@
 import * as pdfjs from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
 
-// Configure PDF.js worker with fallback options
-const loadWorker = () => {
-  try {
-    // First, try loading from unpkg
-    const workerUrl = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
-    console.log('Attempting to load PDF.js worker from:', workerUrl);
-    
-    // Test if the worker URL is accessible
-    fetch(workerUrl)
-      .then(() => {
-        pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-        console.log('Successfully loaded PDF.js worker from unpkg');
-      })
-      .catch((error) => {
-        console.warn('Failed to load worker from unpkg, using fake worker:', error);
-        // If unpkg fails, use fake worker (less performant but works as fallback)
+// Configure PDF.js worker with fallback options and retry mechanism
+const loadWorker = async () => {
+  const maxAttempts = 3;
+  let attempt = 0;
+
+  while (attempt < maxAttempts) {
+    try {
+      const workerUrl = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+      console.log(`Attempt ${attempt + 1}: Loading PDF.js worker from:`, workerUrl);
+      
+      const response = await fetch(workerUrl);
+      if (!response.ok) throw new Error(`Failed to fetch worker: ${response.statusText}`);
+      
+      pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+      console.log('Successfully loaded PDF.js worker');
+      return true;
+    } catch (error) {
+      console.warn(`Attempt ${attempt + 1} failed:`, error);
+      attempt++;
+      
+      if (attempt === maxAttempts) {
+        console.warn('All worker load attempts failed, using fake worker');
         (pdfjs as any).GlobalWorkerOptions.disableWorker = true;
-      });
-  } catch (error) {
-    console.warn('Error setting up PDF.js worker, using fake worker:', error);
-    (pdfjs as any).GlobalWorkerOptions.disableWorker = true;
+        return false;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
   }
+  return false;
 };
 
-// Initialize worker immediately
-loadWorker();
+// Initialize worker immediately and track its state
+let workerInitialized = false;
+let workerInitialization: Promise<boolean>;
 
-// Add delay to ensure worker is initialized
+const initializeWorker = async () => {
+  if (!workerInitialization) {
+    workerInitialization = loadWorker().then(success => {
+      workerInitialized = success;
+      return success;
+    });
+  }
+  return workerInitialization;
+};
+
+initializeWorker();
+
+// Ensure worker is ready before processing
 const ensureWorkerLoaded = async () => {
-  // Wait a short time for worker to initialize
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  console.log('Worker initialization completed');
+  if (!workerInitialized) {
+    await initializeWorker();
+  }
+  return workerInitialized;
 };
 
 // Financial and legal terms glossary for better recognition
@@ -164,12 +187,32 @@ const performOCR = async (imageData: string): Promise<string> => {
   }
 };
 
+// Helper function to validate extracted text
+const validateExtractedText = (text: string): boolean => {
+  // Check if text contains any substantial content
+  if (!text || text.trim().length < 10) return false;
+  
+  // Check if text contains mostly errors
+  const errorCount = (text.match(/\[Error processing page/g) || []).length;
+  const lines = text.split('\n').length;
+  
+  return errorCount < lines / 2; // Less than 50% of pages failed
+};
+
 export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => {
   try {
     console.log('Starting PDF text extraction...');
     
-    // Wait for worker to be ready
-    await ensureWorkerLoaded();
+    // Ensure worker is loaded
+    const workerLoaded = await ensureWorkerLoaded();
+    if (!workerLoaded) {
+      console.warn('Using fallback worker mode - performance may be reduced');
+    }
+    
+    // Validate input
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error('Invalid PDF data received');
+    }
     
     // Initialize PDF document with verbose logging
     console.log('Loading PDF document...');
@@ -179,6 +222,7 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
     
     console.log(`PDF loaded successfully. Total pages: ${pdf.numPages}`);
     let text = '';
+    let successfulPages = 0;
     
     for (let i = 1; i <= pdf.numPages; i++) {
       console.log(`Processing page ${i} of ${pdf.numPages}`);
@@ -192,7 +236,6 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
           .replace(/\s+/g, ' ')
           .trim();
         
-        // If page appears to be scanned or has low text content, use OCR
         if (await isScannedPage(page)) {
           console.log(`Page ${i} appears to be scanned or has low text content, attempting OCR...`);
           const imageData = await pageToImage(page);
@@ -201,6 +244,7 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
         }
         
         text += pageText + '\n';
+        successfulPages++;
         console.log(`Successfully extracted text from page ${i}`);
       } catch (pageError) {
         console.error(`Error processing page ${i}:`, pageError);
@@ -208,11 +252,12 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
       }
     }
     
-    console.log('PDF text extraction completed successfully');
-    if (text.trim().length === 0) {
-      throw new Error('No text could be extracted from the PDF');
+    // Validate extracted text
+    if (!validateExtractedText(text)) {
+      throw new Error('Failed to extract meaningful text from the PDF');
     }
     
+    console.log(`PDF text extraction completed. Successfully processed ${successfulPages} of ${pdf.numPages} pages`);
     return text;
   } catch (error) {
     console.error('Error extracting text from PDF:', error);

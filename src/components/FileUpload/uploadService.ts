@@ -21,22 +21,54 @@ export const handleDocumentUpload = async (
       documentText = text;
     }
 
-    updateProgress('Analyzing document...');
-
-    const { error: analysisError } = await supabase.functions
-      .invoke('analyze-document', {
-        body: {
-          documentText,
-          documentId
-        }
-      });
-
-    if (analysisError) {
-      console.error('Analysis error:', analysisError);
-      throw analysisError;
+    // Validate that we have text content before proceeding
+    if (!documentText || documentText.trim().length === 0) {
+      throw new Error('No text could be extracted from the document');
     }
 
-    updateProgress('Document processed successfully');
+    updateProgress('Analyzing document...');
+
+    // Retry mechanism for analysis
+    let attempts = 0;
+    const maxAttempts = 3;
+    let analysisError = null;
+
+    while (attempts < maxAttempts) {
+      try {
+        const { error } = await supabase.functions
+          .invoke('analyze-document', {
+            body: {
+              documentText,
+              documentId
+            }
+          });
+
+        if (!error) {
+          updateProgress('Document processed successfully');
+          return;
+        }
+
+        analysisError = error;
+        attempts++;
+        
+        if (attempts < maxAttempts) {
+          updateProgress(`Retrying analysis (attempt ${attempts + 1}/${maxAttempts})...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Exponential backoff
+        }
+      } catch (error) {
+        analysisError = error;
+        attempts++;
+        if (attempts < maxAttempts) {
+          updateProgress(`Retrying analysis (attempt ${attempts + 1}/${maxAttempts})...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+        }
+      }
+    }
+
+    if (analysisError) {
+      console.error('Analysis error after retries:', analysisError);
+      throw analysisError;
+    }
   } catch (error) {
     console.error('Document processing error:', error);
     updateProgress('Error processing document');
