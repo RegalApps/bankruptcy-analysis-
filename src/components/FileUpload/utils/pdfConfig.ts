@@ -1,12 +1,13 @@
 
 import { GlobalWorkerOptions } from 'pdfjs-dist';
 
-// Configure PDF.js worker
-GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.js';
+// Configure PDF.js worker to use CDN instead of local file
+GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 // Export configuration
 export const PDF_CONFIG = {
-  cMapUrl: '/node_modules/pdfjs-dist/cmaps/',
+  // Use CDN for CMap files
+  cMapUrl: 'https://unpkg.com/pdfjs-dist/cmaps/',
   cMapPacked: true,
-  standardFontDataUrl: '/node_modules/pdfjs-dist/standard_fonts/'
+  standardFontDataUrl: 'https://unpkg.com/pdfjs-dist/standard_fonts/'
 };

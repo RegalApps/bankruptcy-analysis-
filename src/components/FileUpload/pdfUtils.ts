@@ -1,4 +1,3 @@
-
 import * as pdfjs from 'pdfjs-dist';
 import './utils/pdfConfig';
 import { isScannedPage, pageToImage } from './utils/pdfPageUtils';
@@ -15,7 +14,7 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
     console.log('Loading PDF document...');
     const pdf = await pdfjs.getDocument({
       data: arrayBuffer,
-      useWorkerFetch: true,
+      ...PDF_CONFIG
     }).promise;
     
     console.log(`PDF loaded successfully. Total pages: ${pdf.numPages}`);
@@ -34,16 +33,22 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
           .replace(/\s+/g, ' ')
           .trim();
         
+        // If text extraction yields little content, try OCR
         if (pageText.length < 100) {
-          console.log(`Page ${i} has low text content, attempting OCR...`);
-          const imageData = await pageToImage(page);
-          pageText = await performOCR(imageData);
-          console.log(`OCR completed for page ${i}`);
+          console.log(`Page ${i} has low text content (${pageText.length} chars), attempting OCR...`);
+          try {
+            const imageData = await pageToImage(page);
+            pageText = await performOCR(imageData);
+            console.log(`OCR completed for page ${i}, extracted ${pageText.length} chars`);
+          } catch (ocrError) {
+            console.error(`OCR failed for page ${i}:`, ocrError);
+            // Keep the limited text we got from direct extraction
+          }
         }
         
         text += pageText + '\n';
         successfulPages++;
-        console.log(`Successfully extracted text from page ${i}`);
+        console.log(`Successfully processed page ${i}, text length: ${pageText.length}`);
       } catch (pageError) {
         console.error(`Error processing page ${i}:`, pageError);
         text += `[Error processing page ${i}]\n`;
