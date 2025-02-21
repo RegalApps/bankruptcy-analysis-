@@ -1,5 +1,4 @@
-
-import Tesseract from 'tesseract.js';
+import Tesseract, { createWorker } from 'tesseract.js';
 import { FINANCIAL_TERMS } from './constants';
 
 // Helper function to clean and correct extracted text
@@ -69,18 +68,16 @@ export const performOCR = async (imageData: string): Promise<string> => {
   try {
     console.log('Starting OCR process...');
     
-    // Initialize Tesseract with proper configuration
-    const worker = await Tesseract.createWorker({
-      logger: m => console.log('Tesseract progress:', m),
-      workerPath: '/node_modules/tesseract.js/dist/worker.min.js',
-      corePath: '/node_modules/tesseract.js-core/tesseract-core.wasm.js',
-      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
-    });
-
-    await worker.loadLanguage('eng');
-    await worker.initialize('eng');
-    
-    const result = await worker.recognize(imageData);
+    // Using the correct Tesseract.js API
+    const result = await Tesseract.recognize(
+      imageData,
+      'eng',
+      {
+        logger: progress => {
+          console.log('Tesseract progress:', progress);
+        }
+      }
+    );
     
     console.log('OCR completed. Raw text length:', result.data.text.length);
     
@@ -105,9 +102,6 @@ export const performOCR = async (imageData: string): Promise<string> => {
 
     console.log('Final text length:', extractedText.length);
     console.log('Sample final text:', extractedText.substring(0, 200));
-    
-    // Cleanup
-    await worker.terminate();
     
     return extractedText;
   } catch (error) {
