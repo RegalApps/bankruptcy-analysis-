@@ -6,6 +6,7 @@ import { RiskAssessment } from "./RiskAssessment";
 import { DeadlineManager } from "./DeadlineManager";
 import { DocumentPreview } from "./DocumentPreview";
 import { Comments } from "./Comments";
+import { VersionControl } from "./VersionControl";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -77,6 +78,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       </div>
 
       <div className="lg:col-span-3 space-y-6">
+        <VersionControl documentId={document.id} />
         <Comments
           documentId={document.id}
           comments={document.comments}
