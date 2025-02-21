@@ -15,12 +15,28 @@ export interface Deadline {
   description?: string;
 }
 
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  due_date: string;
+  created_at: string;
+  created_by: string;
+  assigned_to?: string;
+  document_id: string;
+  regulation?: string;
+  solution?: string;
+}
+
 export interface DocumentDetails {
   id: string;
   title: string;
   type: string;
   storage_path: string;
   deadlines?: Deadline[];
+  tasks?: Task[];
   analysis?: {
     content: {
       extracted_info: {
