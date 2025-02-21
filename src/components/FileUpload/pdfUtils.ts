@@ -1,8 +1,10 @@
+
 import * as pdfjs from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
 
-// Simple worker setup - disable worker mode to use main thread
-(pdfjs as any).GlobalWorkerOptions.disableWorker = true;
+// Initialize PDF.js worker
+const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs');
+pdfjs.GlobalWorkerOptions.workerPort = new pdfjsWorker.PDFWorker();
 
 // Financial and legal terms glossary for better recognition
 const FINANCIAL_TERMS = new Set([

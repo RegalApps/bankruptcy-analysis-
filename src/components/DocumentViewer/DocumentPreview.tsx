@@ -33,14 +33,22 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       setAnalyzing(true);
       
       // First, get the document text content
+      console.log('Fetching document from URL:', publicUrl);
       const response = await fetch(publicUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch document: ${response.statusText}`);
+      }
+
       const documentText = await response.text();
+      console.log('Document text fetched, length:', documentText.length);
 
       // Clean the text content by removing any potential formatting or special characters
       const cleanedText = documentText
         .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '') // Remove control characters
         .replace(/```[^`]*```/g, '') // Remove code blocks
         .trim(); // Remove leading/trailing whitespace
+
+      console.log('Cleaned text length:', cleanedText.length);
 
       // Get the document record to get its ID
       const { data: documents, error: fetchError } = await supabase
@@ -50,8 +58,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         .single();
 
       if (fetchError) {
+        console.error('Error fetching document record:', fetchError);
         throw new Error('Could not find document record');
       }
+
+      console.log('Calling analyze-document function with document ID:', documents.id);
 
       // Call the analyze-document function with auth header
       const { data, error } = await supabase.functions.invoke('analyze-document', {
@@ -64,7 +75,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      console.log('Analysis complete:', data);
 
       toast({
         title: "Analysis Complete",
