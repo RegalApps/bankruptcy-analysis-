@@ -24,7 +24,7 @@ export type Database = {
           document_id?: string | null
           id?: string
           updated_at?: string | null
-          user_id: string
+          user_id?: string
         }
         Update: {
           content?: string | null
