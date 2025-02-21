@@ -21,19 +21,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['pdfjs-dist', 'pdfjs-dist/build/pdf.worker.mjs']
+    include: ['pdfjs-dist']
   },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          pdfjs: ['pdfjs-dist', 'pdfjs-dist/build/pdf.worker.mjs']
-        }
-      }
+    commonjsOptions: {
+      include: [/pdfjs-dist/]
     }
-  },
-  // Copy PDF.js worker file to public directory during build
-  publicDir: 'public',
-  // Ensure PDF.js worker files are properly served
-  assetsInclude: ['**/*.worker.js']
+  }
 }));
