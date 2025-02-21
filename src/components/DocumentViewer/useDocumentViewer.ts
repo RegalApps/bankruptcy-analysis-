@@ -31,33 +31,54 @@ export const useDocumentViewer = (documentId: string) => {
         return;
       }
       
-      let extractedInfo = null;
       console.log("Raw document data:", document);
 
+      // Process the analysis content
+      let processedAnalysis = null;
       if (document?.analysis?.[0]?.content) {
         try {
-          if (typeof document.analysis[0].content === 'string') {
-            extractedInfo = JSON.parse(document.analysis[0].content).extracted_info;
-          } else if (document.analysis[0].content.extracted_info) {
-            extractedInfo = document.analysis[0].content.extracted_info;
+          let analysisContent = document.analysis[0].content;
+          
+          // Handle both string and object content
+          if (typeof analysisContent === 'string') {
+            analysisContent = JSON.parse(analysisContent);
           }
-          console.log("Extracted info:", extractedInfo);
+
+          // Extract the info from either format
+          const extractedInfo = analysisContent.extracted_info || {};
+          
+          console.log("Processed analysis content:", extractedInfo);
+
+          processedAnalysis = [{
+            content: {
+              extracted_info: {
+                ...extractedInfo,
+                type: extractedInfo.type || document.type,
+                risks: analysisContent.risks || [] // Ensure risks are included
+              }
+            }
+          }];
         } catch (e) {
-          console.error('Error parsing analysis content:', e);
+          console.error('Error processing analysis content:', e);
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "Could not process document analysis"
+          });
         }
       }
 
+      // Set the document with processed analysis
       setDocument({
         ...document,
-        analysis: document?.analysis?.map(a => ({
-          ...a,
-          content: {
-            extracted_info: extractedInfo
-          }
-        }))
+        analysis: processedAnalysis
       });
       
-      console.log('Processed document details:', document);
+      console.log('Final processed document:', {
+        ...document,
+        analysis: processedAnalysis
+      });
+
     } catch (error: any) {
       console.error('Error fetching document details:', error);
       toast({
