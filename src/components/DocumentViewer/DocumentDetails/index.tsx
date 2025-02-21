@@ -30,25 +30,25 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   const { saveDocumentDetails, isSaving } = useDocumentUpdate(documentId, formType);
 
   const fields: EditableField[] = [
-    { label: "Form Number", key: "formNumber", value: formNumber, showForTypes: ['all'] },
-    { label: "Client/Debtor Name", key: "clientName", value: clientName, showForTypes: ['all'] },
-    { label: "Licensed Insolvency Trustee", key: "trusteeName", value: trusteeName, showForTypes: ['all'] },
-    { label: "Estate Number", key: "estateNumber", value: estateNumber, showForTypes: ['bankruptcy', 'proposal'] },
-    { label: "District", key: "district", value: district, showForTypes: ['bankruptcy', 'proposal'] },
-    { label: "Division Number", key: "divisionNumber", value: divisionNumber, showForTypes: ['bankruptcy', 'proposal'] },
-    { label: "Court Number", key: "courtNumber", value: courtNumber, showForTypes: ['bankruptcy', 'proposal', 'court'] },
-    { label: "Meeting of Creditors", key: "meetingOfCreditors", value: meetingOfCreditors, showForTypes: ['bankruptcy', 'proposal', 'meeting'] },
-    { label: "Chair Information", key: "chairInfo", value: chairInfo, showForTypes: ['meeting'] },
-    { label: "Security Information", key: "securityInfo", value: securityInfo, showForTypes: ['security'] },
-    { label: "Date of Bankruptcy", key: "dateBankruptcy", value: dateBankruptcy, showForTypes: ['bankruptcy'] },
-    { label: "Date Signed", key: "dateSigned", value: dateSigned, showForTypes: ['all'] },
-    { label: "Official Receiver", key: "officialReceiver", value: officialReceiver, showForTypes: ['bankruptcy', 'proposal'] }
+    { label: "Form Number", key: "formNumber", value: formNumber || '', showForTypes: ['all'] },
+    { label: "Client/Debtor Name", key: "clientName", value: clientName || '', showForTypes: ['all'] },
+    { label: "Licensed Insolvency Trustee", key: "trusteeName", value: trusteeName || '', showForTypes: ['all'] },
+    { label: "Estate Number", key: "estateNumber", value: estateNumber || '', showForTypes: ['bankruptcy', 'proposal'] },
+    { label: "District", key: "district", value: district || '', showForTypes: ['bankruptcy', 'proposal'] },
+    { label: "Division Number", key: "divisionNumber", value: divisionNumber || '', showForTypes: ['bankruptcy', 'proposal'] },
+    { label: "Court Number", key: "courtNumber", value: courtNumber || '', showForTypes: ['bankruptcy', 'proposal', 'court'] },
+    { label: "Meeting of Creditors", key: "meetingOfCreditors", value: meetingOfCreditors || '', showForTypes: ['bankruptcy', 'proposal', 'meeting'] },
+    { label: "Chair Information", key: "chairInfo", value: chairInfo || '', showForTypes: ['meeting'] },
+    { label: "Security Information", key: "securityInfo", value: securityInfo || '', showForTypes: ['security'] },
+    { label: "Date of Bankruptcy", key: "dateBankruptcy", value: dateBankruptcy || '', showForTypes: ['bankruptcy'] },
+    { label: "Date Signed", key: "dateSigned", value: dateSigned || '', showForTypes: ['all'] },
+    { label: "Official Receiver", key: "officialReceiver", value: officialReceiver || '', showForTypes: ['bankruptcy', 'proposal'] }
   ];
 
   const handleEdit = () => {
     const initialValues = fields.reduce((acc, field) => ({
       ...acc,
-      [field.key]: field.value || ''
+      [field.key]: field.value
     }), {});
     setEditedValues(initialValues);
     setIsEditing(true);
@@ -67,9 +67,13 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
     setEditedValues({});
   };
 
-  const relevantFields = fields.filter(field => 
-    field.showForTypes.includes('all') || field.showForTypes.includes(formType.toLowerCase())
-  );
+  // Show all fields for unknown document types
+  const relevantFields = formType 
+    ? fields.filter(field => 
+        field.showForTypes.includes('all') || 
+        field.showForTypes.includes(formType.toLowerCase())
+      )
+    : fields;
 
   return (
     <div className="p-4 rounded-md bg-muted">
@@ -99,7 +103,7 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
         )}
       </div>
 
-      <DocumentSummary summary={summary || ''} />
+      {summary && <DocumentSummary summary={summary} />}
       
       <EditableFields
         fields={relevantFields}

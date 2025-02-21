@@ -11,7 +11,9 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated }) => {
+  // Safely access the extracted_info, handling potential undefined values
   const extractedInfo = document.analysis?.[0]?.content?.extracted_info;
+  console.log('Extracted info in Sidebar:', extractedInfo); // Debug log
 
   return (
     <div className="rounded-lg border bg-card p-6">
