@@ -1,6 +1,5 @@
 
-import { ArrowRight, Info } from "lucide-react";
-import * as Icons from "lucide-react";
+import { ArrowRight, Info, CheckCircle, AlertTriangle, AlertOctagon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "../../ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { Risk } from "./types";
@@ -13,14 +12,25 @@ interface RiskItemProps {
 }
 
 export const RiskItem = ({ risk, documentId }: RiskItemProps) => {
-  const IconComponent = Icons[getSeverityIcon(risk.severity) as keyof typeof Icons];
+  const getIcon = () => {
+    switch (getSeverityIcon(risk.severity)) {
+      case 'CheckCircle':
+        return <CheckCircle className="h-5 w-5" />;
+      case 'AlertTriangle':
+        return <AlertTriangle className="h-5 w-5" />;
+      case 'AlertOctagon':
+        return <AlertOctagon className="h-5 w-5" />;
+      default:
+        return <Info className="h-5 w-5" />;
+    }
+  };
 
   return (
     <div className={`space-y-3 p-4 rounded-lg border ${getSeverityBg(risk.severity)}`}>
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3 flex-1">
           <div className={`${getSeverityColor(risk.severity)} mt-0.5 flex-shrink-0`}>
-            <IconComponent className="h-5 w-5" />
+            {getIcon()}
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
