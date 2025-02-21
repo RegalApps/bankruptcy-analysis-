@@ -1,11 +1,32 @@
 import * as pdfjs from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Configure PDF.js worker with fallback options
+const loadWorker = () => {
+  try {
+    // First, try loading from unpkg
+    const workerUrl = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+    console.log('Attempting to load PDF.js worker from:', workerUrl);
+    
+    // Test if the worker URL is accessible
+    fetch(workerUrl)
+      .then(() => {
+        pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+        console.log('Successfully loaded PDF.js worker from unpkg');
+      })
+      .catch((error) => {
+        console.warn('Failed to load worker from unpkg, using fake worker:', error);
+        // If unpkg fails, use fake worker (less performant but works as fallback)
+        (pdfjs as any).GlobalWorkerOptions.disableWorker = true;
+      });
+  } catch (error) {
+    console.warn('Error setting up PDF.js worker, using fake worker:', error);
+    (pdfjs as any).GlobalWorkerOptions.disableWorker = true;
+  }
+};
 
-// Log worker initialization
-console.log('Initializing PDF.js worker:', pdfjs.GlobalWorkerOptions.workerSrc);
+// Initialize worker
+loadWorker();
 
 // Financial and legal terms glossary for better recognition
 const FINANCIAL_TERMS = new Set([

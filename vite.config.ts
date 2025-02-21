@@ -31,5 +31,7 @@ export default defineConfig(({ mode }) => ({
         }
       }
     }
-  }
+  },
+  // Add public directory configuration
+  publicDir: 'public'
 }));
