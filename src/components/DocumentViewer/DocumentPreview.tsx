@@ -64,14 +64,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       console.log('Calling analyze-document function with document ID:', documents.id);
 
-      // Call the analyze-document function with auth header
+      // Call the analyze-document function
       const { data, error } = await supabase.functions.invoke('analyze-document', {
         body: { 
           documentText: cleanedText,
           documentId: documents.id
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
         }
       });
 
