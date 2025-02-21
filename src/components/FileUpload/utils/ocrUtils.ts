@@ -1,11 +1,12 @@
-
 import Tesseract from 'tesseract.js';
 import { FINANCIAL_TERMS } from './constants';
 
 // Helper function to clean and correct extracted text
 const cleanExtractedText = (text: string): string => {
-  console.log('Cleaning extracted text:', text.substring(0, 200));
+  console.log('Input text length:', text.length);
+  console.log('Sample input:', text.substring(0, 100));
   
+  // Enhanced corrections map
   const corrections: { [key: string]: string } = {
     'bankruptcv': 'bankruptcy',
     'credltor': 'creditor',
@@ -21,67 +22,91 @@ const cleanExtractedText = (text: string): string => {
     'lnterest': 'interest',
     'slgned': 'signed',
     'certlficate': 'certificate',
-    'asslgnment': 'assignment'
+    'asslgnment': 'assignment',
+    'notlce': 'notice',
+    'credlt': 'credit',
+    'propertv': 'property'
   };
 
-  // Initial cleaning
-  let cleanedText = text
+  // Clean text in stages for better control
+  let cleaned = text
+    // Remove excess whitespace
     .replace(/\s+/g, ' ')
-    .replace(/[^\w\s\-.,()$%]/g, ' ')
+    // Keep only useful characters
+    .replace(/[^\w\s\-.,()$%:/\\]/g, ' ')
+    // Fix common OCR issues
+    .replace(/[|]/g, 'I')
+    .replace(/[{}]/g, '')
+    .replace(/(\d)[\s.]+(\d)/g, '$1$2') // Fix split numbers
     .trim();
 
   // Apply corrections
   Object.entries(corrections).forEach(([mistake, correction]) => {
-    cleanedText = cleanedText.replace(new RegExp(mistake, 'gi'), correction);
+    const pattern = new RegExp(mistake, 'gi');
+    cleaned = cleaned.replace(pattern, correction);
   });
 
-  // Standardize number formats
-  cleanedText = cleanedText.replace(/(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/, '$1');
+  // Standardize common formats
+  cleaned = cleaned
+    // Standardize form references
+    .replace(/form\s*(?:#|no\.?|number)?\s*(\d+)/gi, 'Form $1')
+    // Standardize dates (various formats)
+    .replace(/(\d{1,2})\s*[-/.]\s*(\d{1,2})\s*[-/.]\s*(\d{4})/g, 
+             (_, d, m, y) => `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`)
+    // Fix split words
+    .replace(/(\w)-\s+(\w)/g, '$1$2')
+    // Standardize dollar amounts
+    .replace(/\$\s*(\d+)/g, '$$$1');
 
-  // Standardize form references
-  cleanedText = cleanedText.replace(/form\s*#?\s*(\d+)/gi, 'Form $1');
+  console.log('Cleaned text length:', cleaned.length);
+  console.log('Sample cleaned:', cleaned.substring(0, 100));
   
-  // Standardize date formats
-  cleanedText = cleanedText.replace(
-    /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})/g,
-    (_, d, m, y) => `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
-  );
-
-  console.log('Cleaned text result:', cleanedText.substring(0, 200));
-  return cleanedText;
+  return cleaned;
 };
 
 export const performOCR = async (imageData: string): Promise<string> => {
   try {
     console.log('Starting OCR process...');
     
+    // Configure Tesseract for optimal recognition
     const result = await Tesseract.recognize(
       imageData,
       'eng',
       {
-        logger: m => console.log('Tesseract progress:', m)
+        logger: m => console.log('Tesseract progress:', m),
+        tessedit_pageseg_mode: '1', // Automatic page segmentation with OSD
+        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,()-$/%: ', // Limit to expected characters
+        tessedit_ocr_engine_mode: '3', // Use neural nets mode
       }
     );
     
     console.log('OCR completed. Raw text length:', result.data.text.length);
-    console.log('Sample of raw OCR text:', result.data.text.substring(0, 200));
-
+    
     let extractedText = result.data.text;
     extractedText = cleanExtractedText(extractedText);
 
-    // Enhance recognition of financial terms
+    // Enhance recognition of financial and legal terms
     FINANCIAL_TERMS.forEach(term => {
-      const termRegex = new RegExp(`\\b${term.replace(/\s+/g, '\\s+')}\\b`, 'gi');
-      extractedText = extractedText.replace(termRegex, term);
+      const pattern = new RegExp(`\\b${term.replace(/\s+/g, '\\s+')}\\b`, 'gi');
+      extractedText = extractedText.replace(pattern, term);
     });
 
-    console.log('Final processed text length:', extractedText.length);
-    console.log('Sample of final processed text:', extractedText.substring(0, 200));
+    // Post-process specific document elements
+    extractedText = extractedText
+      // Fix form titles
+      .replace(/(?:^|\n)\s*(Form\s+\d+[A-Z]?)/gi, '\n$1')
+      // Fix dollar amounts
+      .replace(/\$\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/g, '$$1')
+      // Fix dates
+      .replace(/(\d{1,2})\s*(st|nd|rd|th)?\s+(?:day\s+of\s+)?([A-Za-z]+)\s*,?\s*(\d{4})/gi,
+               (_, d, suffix, m, y) => `${d} ${m}, ${y}`);
 
+    console.log('Final text length:', extractedText.length);
+    console.log('Sample final text:', extractedText.substring(0, 200));
+    
     return extractedText;
   } catch (error) {
     console.error('Error performing OCR:', error);
     throw error;
   }
 };
-
