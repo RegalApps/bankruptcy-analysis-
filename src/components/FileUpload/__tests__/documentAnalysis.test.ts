@@ -1,7 +1,7 @@
 
 import { extractTextFromPdf } from '../pdfUtils';
 import { supabase } from '@/lib/supabase';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, afterAll } from 'vitest';
 import { StorageError } from '@supabase/storage-js';
 
 // Mock PDF.js
