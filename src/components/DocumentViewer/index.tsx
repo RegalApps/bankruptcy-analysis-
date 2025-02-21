@@ -4,6 +4,7 @@ import { DocumentPreview } from "./DocumentPreview";
 import { Sidebar } from "./Sidebar";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { LoadingState } from "./LoadingState";
+import { TaskManager } from "./TaskManager";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -40,10 +41,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         />
       </div>
 
-      <div className="lg:col-span-3">
+      <div className="lg:col-span-3 space-y-6">
         <CollaborationPanel 
           document={document}
           onCommentAdded={fetchDocumentDetails}
+        />
+        <TaskManager
+          documentId={document.id}
+          tasks={document.tasks || []}
+          onTaskUpdate={fetchDocumentDetails}
         />
       </div>
     </div>
