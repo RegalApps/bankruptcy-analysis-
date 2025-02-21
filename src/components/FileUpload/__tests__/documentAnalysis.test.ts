@@ -2,6 +2,7 @@
 import { extractTextFromPdf } from '../pdfUtils';
 import { supabase } from '@/lib/supabase';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { StorageError } from '@supabase/storage-js';
 
 // Mock PDF.js
 vi.mock('pdfjs-dist', () => ({
@@ -68,25 +69,50 @@ describe('Document Analysis', () => {
     const mockFile = new File(['test pdf content'], 'test.pdf', { type: 'application/pdf' });
     const mockUserId = 'test-user-id';
 
-    // Mock supabase storage upload
-    const mockStorageResponse = { data: { path: 'test-path.pdf' }, error: null };
+    // Mock supabase storage upload with correct types
+    const mockStorageResponse = { 
+      data: { 
+        id: 'test-file-id',
+        path: 'test-path.pdf',
+        fullPath: 'test-full-path.pdf'
+      }, 
+      error: null 
+    };
+    
     vi.spyOn(supabase.storage.from('documents'), 'upload')
-      .mockResolvedValue(mockStorageResponse);
+      .mockResolvedValue(mockStorageResponse as any);
 
-    // Mock document record creation
+    // Mock document record creation with full PostgrestQueryBuilder implementation
     const mockDocumentData = {
       id: 'test-doc-id',
       title: 'test.pdf',
       storage_path: 'test-path.pdf'
     };
-    vi.spyOn(supabase, 'from').mockReturnValue({
+
+    const mockQueryBuilder = {
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockResolvedValue({
           data: [mockDocumentData],
           error: null
         })
-      })
-    });
+      }),
+      select: vi.fn(),
+      update: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
+      eq: vi.fn(),
+      or: vi.fn(),
+      filter: vi.fn(),
+      order: vi.fn(),
+      limit: vi.fn(),
+      single: vi.fn(),
+      maybeSingle: vi.fn(),
+      csv: vi.fn(),
+      headers: {},
+      url: 'mock-url',
+    };
+
+    vi.spyOn(supabase, 'from').mockReturnValue(mockQueryBuilder as any);
 
     // Mock analyze-document function call
     const mockAnalysisResponse = {
