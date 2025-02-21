@@ -12,55 +12,112 @@ interface AnalysisResult {
   type: string;
   extracted_info: {
     type?: string;
-    clientName?: string;
-    trusteeName?: string;
-    dateSigned?: string;
-    formNumber?: string;
-    estateNumber?: string;
-    meetingOfCreditors?: string;
-    district?: string;
-    divisionNumber?: string;
-    courtNumber?: string;
-    chairInfo?: string;
-    securityInfo?: string;
-    dateBankruptcy?: string;
-    officialReceiver?: string;
+    clientInfo?: {
+      name: string;
+      phoneNumber?: string;
+      address?: string;
+    };
+    appointmentDetails?: {
+      date: string;
+      time: string;
+    };
+    propertyInfo?: {
+      address: string;
+      inspectionDate?: string;
+    };
+    trusteeInfo?: {
+      name: string;
+      title: string;
+    };
   };
   summary?: string;
 }
 
-async function parseForm66(text: string): Promise<AnalysisResult['extracted_info']> {
+function capitalizeAddress(address: string): string {
+  return address
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function parseDateTime(dateTimeStr: string): { date: string; time: string } {
+  const date = new Date(dateTimeStr);
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  const day = date.getDate();
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const formattedHours = hours % 12 || 12;
+  
+  return {
+    date: `${day} ${month}, ${year}`,
+    time: `${formattedHours}:${minutes.toString().padStart(2, '0')} ${ampm}`
+  };
+}
+
+async function parseDocument(text: string): Promise<AnalysisResult['extracted_info']> {
   try {
-    console.log('Parsing Form 66 text:', text.substring(0, 100) + '...');
+    console.log('Parsing document text:', text);
     
-    const meetingMatch = text.match(/meeting\s+of\s+creditors[^\n]*/i);
-    const dateMatch = text.match(/(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i);
-    const trusteeMatch = text.match(/Licensed\s+Insolvency\s+Trustee:?\s*([^\n]+)/i) || text.match(/Trustee:?\s*([^\n]+)/i);
-    const estateMatch = text.match(/(?:estate|file)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
-    const formNumberMatch = text.match(/Form\s*(?:no\.?|number)?[:\s]*(\d+)/i);
-    const clientMatch = text.match(/To:\s*([^,\n]+)/i) || text.match(/(?:bankrupt|debtor)[:\s]*([^,\n]+)/i);
-    const courtNumberMatch = text.match(/(?:court)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
-    const districtMatch = text.match(/(?:district)[:\s]+([^\n]+)/i);
-    const divisionMatch = text.match(/(?:division)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
+    // Extract client name (assuming it's at the start)
+    const clientNameMatch = text.match(/^([A-Za-z\s]+?)(?=\d|$)/);
+    
+    // Extract phone number
+    const phoneMatch = text.match(/(\d{3}-\d{3}-\d{4})/);
+    
+    // Extract addresses
+    const addresses = text.match(/\d+[^,\n]*(?:drive|street)/gi);
+    
+    // Extract date and time
+    const dateTimeMatch = text.match(/(\d{1,2}\s+[A-Za-z]+,\s*\d{4}\s+\d{1,2}:\d{2}(?:am|pm)?)/i);
+    
+    // Extract inspection date
+    const inspectionDateMatch = text.match(/(\d{4}\/\s*\d{2}\/\s*\d{2})/);
+    
+    // Extract trustee information
+    const trusteeMatch = text.match(/([A-Za-z\s]+)\s+Trustee\b/i);
+
+    let dateTime = { date: '', time: '' };
+    if (dateTimeMatch) {
+      try {
+        dateTime = parseDateTime(dateTimeMatch[1]);
+      } catch (e) {
+        console.error('Error parsing date time:', e);
+      }
+    }
 
     const extractedInfo = {
-      type: 'Form 66',
-      meetingOfCreditors: meetingMatch ? meetingMatch[0].trim() : '',
-      dateSigned: dateMatch ? dateMatch[0] : '',
-      trusteeName: trusteeMatch ? trusteeMatch[1].trim() : '',
-      estateNumber: estateMatch ? estateMatch[1].trim() : '',
-      formNumber: '66',
-      clientName: clientMatch ? clientMatch[1].trim() : '',
-      courtNumber: courtNumberMatch ? courtNumberMatch[1].trim() : '',
-      district: districtMatch ? districtMatch[1].trim() : '',
-      divisionNumber: divisionMatch ? divisionMatch[1].trim() : ''
+      type: 'Appointment Document',
+      clientInfo: {
+        name: clientNameMatch ? clientNameMatch[1].trim() : '',
+        phoneNumber: phoneMatch ? phoneMatch[1] : '',
+        address: addresses ? capitalizeAddress(addresses[0]) : ''
+      },
+      appointmentDetails: {
+        date: dateTime.date,
+        time: dateTime.time
+      },
+      propertyInfo: {
+        address: addresses && addresses[1] ? capitalizeAddress(addresses[1]) : '',
+        inspectionDate: inspectionDateMatch ? inspectionDateMatch[1].replace(/\s+/g, '') : ''
+      },
+      trusteeInfo: {
+        name: trusteeMatch ? trusteeMatch[1].trim() : '',
+        title: 'Trustee'
+      }
     };
 
-    console.log('Extracted Form 66 info:', extractedInfo);
+    console.log('Extracted info:', extractedInfo);
     return extractedInfo;
   } catch (error) {
-    console.error('Form 66 parsing error:', error);
-    throw new Error(`Failed to parse Form 66: ${error.message}`);
+    console.error('Document parsing error:', error);
+    throw new Error(`Failed to parse document: ${error.message}`);
   }
 }
 
@@ -106,22 +163,12 @@ serve(async (req) => {
     }
 
     const cleanedText = documentText.replace(/\s+/g, ' ').trim();
-    const isForm66 = /form\s*66|notice\s*to\s*bankrupt/i.test(cleanedText);
     
-    let analysisResult: AnalysisResult;
-
-    if (isForm66) {
-      console.log('Using Form 66 parser');
-      const extractedInfo = await parseForm66(cleanedText);
-      analysisResult = {
-        type: 'Form 66',
-        extracted_info: extractedInfo,
-        summary: 'Form 66 - Notice to Bankrupt of Meeting of Creditors'
-      };
-    } else {
-      console.log('Using OpenAI analysis');
-      throw new Error('Document type not supported');
-    }
+    let analysisResult: AnalysisResult = {
+      type: 'Appointment Document',
+      extracted_info: await parseDocument(cleanedText),
+      summary: 'Appointment and Property Inspection Document'
+    };
 
     console.log('Analysis completed successfully');
 
