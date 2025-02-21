@@ -32,6 +32,8 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
-  // Add public directory configuration
-  publicDir: 'public'
+  // Copy PDF.js worker file to public directory during build
+  publicDir: 'public',
+  // Ensure PDF.js worker files are properly served
+  assetsInclude: ['**/*.worker.js']
 }));
