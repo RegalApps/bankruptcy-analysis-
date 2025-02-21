@@ -35,13 +35,14 @@ async function parseForm66(text: string): Promise<AnalysisResult['extracted_info
     
     const meetingMatch = text.match(/meeting\s+of\s+creditors[^\n]*/i);
     const dateMatch = text.match(/(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i);
-    const trusteeMatch = text.match(/(?:trustee|Licensed\s+Insolvency\s+Trustee)[:\s]+([^\n]+)/i);
+    const trusteeMatch = text.match(/(?:Licensed\s+Insolvency\s+Trustee|trustee)[:\s]+([^\n]+)/i);
     const estateMatch = text.match(/(?:estate|file)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
     const formNumberMatch = text.match(/Form\s*(?:no\.?|number)?[:\s]*(\d+)/i);
-    const clientMatch = text.match(/(?:debtor|bankrupt)[:\s]+([^\n]+)/i);
+    const clientMatch = text.match(/to:\s*([^,\n]+)/i);
     const courtNumberMatch = text.match(/(?:court)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
     const districtMatch = text.match(/(?:district)[:\s]+([^\n]+)/i);
     const divisionMatch = text.match(/(?:division)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
+    const locationMatch = text.match(/(?:location)[:\s]+([^\n]+)/i);
 
     const extractedInfo = {
       type: 'Form 66',
@@ -49,11 +50,12 @@ async function parseForm66(text: string): Promise<AnalysisResult['extracted_info
       dateSigned: dateMatch ? dateMatch[0] : '',
       trusteeName: trusteeMatch ? trusteeMatch[1].trim() : '',
       estateNumber: estateMatch ? estateMatch[1].trim() : '',
-      formNumber: formNumberMatch ? formNumberMatch[1].trim() : '',
+      formNumber: formNumberMatch ? formNumberMatch[1].trim() : '66',
       clientName: clientMatch ? clientMatch[1].trim() : '',
       courtNumber: courtNumberMatch ? courtNumberMatch[1].trim() : '',
       district: districtMatch ? districtMatch[1].trim() : '',
-      divisionNumber: divisionMatch ? divisionMatch[1].trim() : ''
+      divisionNumber: divisionMatch ? divisionMatch[1].trim() : '',
+      location: locationMatch ? locationMatch[1].trim() : ''
     };
 
     console.log('Extracted Form 66 info:', extractedInfo);
@@ -84,27 +86,11 @@ async function analyzeWithOpenAI(text: string): Promise<AnalysisResult> {
         messages: [
           {
             role: 'system',
-            content: `Extract key information from legal documents into this JSON structure:
-            {
-              "type": "document type",
-              "clientName": "name",
-              "trusteeName": "name",
-              "dateSigned": "date",
-              "formNumber": "number",
-              "estateNumber": "number",
-              "district": "district name",
-              "divisionNumber": "number",
-              "courtNumber": "number",
-              "meetingOfCreditors": "details",
-              "chairInfo": "details",
-              "securityInfo": "details",
-              "dateBankruptcy": "date",
-              "officialReceiver": "name"
-            }`
+            content: 'You are a legal document analyzer. Extract key information and format it as JSON.'
           },
           {
             role: 'user',
-            content: text
+            content: `Extract key information from this document and return it in JSON format:\n\n${text}`
           }
         ],
         temperature: 0.3,
@@ -147,8 +133,10 @@ serve(async (req) => {
   }
 
   try {
-    const { documentText, documentId } = await req.json();
-    console.log(`Processing document ${documentId} (length: ${documentText.length})`);
+    const requestBody = await req.json();
+    const { documentText, documentId } = requestBody;
+    
+    console.log(`Processing document ${documentId} (length: ${documentText?.length || 0})`);
 
     if (!documentText || documentText.trim().length === 0) {
       throw new Error('Document text is empty');
@@ -188,8 +176,7 @@ serve(async (req) => {
       .from('document_analysis')
       .upsert({
         document_id: documentId,
-        content: analysisResult,
-        user_id: (await req.json()).userId // Get the user ID from the request
+        content: analysisResult
       });
 
     if (analysisError) {
