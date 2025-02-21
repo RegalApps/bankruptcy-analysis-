@@ -27,5 +27,8 @@ export default defineConfig(({ mode }) => ({
     commonjsOptions: {
       include: [/pdfjs-dist/]
     }
+  },
+  worker: {
+    format: 'es'
   }
 }));
