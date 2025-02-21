@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { ChatGPTAPI } from 'https://esm.sh/chatgpt@5.2.5'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,43 +43,56 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Initialize ChatGPT with error handling
+    // Verify OpenAI API key
     const apiKey = Deno.env.get('OPENAI_API_KEY');
     if (!apiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Initializing ChatGPT API');
-    const api = new ChatGPTAPI({
-      apiKey,
-      completionParams: {
-        model: 'gpt-4o-mini',
-        temperature: 0.2,
-      },
-    })
-
+    console.log('Sending request to OpenAI API');
+    
     const systemPrompt = `You are a legal expert specializing in Canadian Bankruptcy and Insolvency Act (BIA) forms. Analyze the provided document and:
 1. Identify the BIA form number (1-96) and type
 2. Extract key information based on the form type
 3. Identify potential risks and compliance issues
 4. Provide solutions and required actions for each risk
-5. Reference specific sections of the BIA (RSC 1985, c B-3) when relevant`
+5. Reference specific sections of the BIA (RSC 1985, c B-3) when relevant
 
-    console.log('Sending request to ChatGPT');
-    const response = await api.sendMessage(
-      `${systemPrompt}\n\nDocument content:\n${documentText}`,
-      {
-        timeoutMs: 60000, // 1 minute timeout
-      }
-    )
-    console.log('Received ChatGPT response');
+Format the response as a JSON object.`;
 
-    let extractedInfo
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: documentText }
+        ],
+        temperature: 0.2,
+      }),
+    });
+
+    if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.text();
+      console.error('OpenAI API Error:', errorData);
+      throw new Error(`OpenAI API error: ${openAIResponse.status} ${openAIResponse.statusText}`);
+    }
+
+    console.log('Received OpenAI response');
+    const openAIData = await openAIResponse.json();
+    
+    let extractedInfo;
     try {
-      extractedInfo = JSON.parse(response.text)
+      const responseText = openAIData.choices[0].message.content;
+      console.log('OpenAI raw response:', responseText);
+      extractedInfo = JSON.parse(responseText);
     } catch (error) {
-      console.error('Error parsing ChatGPT response:', error, '\nResponse text:', response.text)
-      throw new Error('Failed to parse document analysis')
+      console.error('Error parsing OpenAI response:', error);
+      throw new Error('Failed to parse document analysis');
     }
 
     console.log('Storing analysis in database');
@@ -90,13 +102,13 @@ serve(async (req) => {
         document_id: documentId,
         content: {
           extracted_info: extractedInfo,
-          raw_response: response.text // Store raw response for debugging
+          raw_response: openAIData.choices[0].message.content
         }
-      })
+      });
 
     if (analysisError) {
-      console.error('Database error:', analysisError)
-      throw analysisError
+      console.error('Database error:', analysisError);
+      throw analysisError;
     }
 
     console.log('Analysis completed successfully');
@@ -111,13 +123,13 @@ serve(async (req) => {
           'Content-Type': 'application/json' 
         } 
       }
-    )
+    );
   } catch (error) {
-    console.error('Error in analyze-document function:', error)
+    console.error('Error in analyze-document function:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        stack: error.stack // Include stack trace for debugging
+        stack: error.stack
       }),
       { 
         headers: { 
@@ -126,6 +138,6 @@ serve(async (req) => {
         }, 
         status: 500 
       }
-    )
+    );
   }
-})
+});
