@@ -45,26 +45,37 @@ const mockCanvas = {
 global.document.createElement = vi.fn().mockReturnValue(mockCanvas);
 
 describe('Document Analysis', () => {
+  let testScore = 0;
+  const totalTests = 4; // Total number of test cases
+  const pointsPerTest = 25; // Each test is worth 25 points
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should successfully extract text from PDF', async () => {
+  afterAll(() => {
+    console.log(`\nDocument Analysis Test Score: ${testScore}/${totalTests * pointsPerTest}`);
+    console.log(`Success Rate: ${(testScore / (totalTests * pointsPerTest) * 100).toFixed(2)}%`);
+  });
+
+  it('should successfully extract text from PDF (25 points)', async () => {
     const mockArrayBuffer = new ArrayBuffer(8);
     const result = await extractTextFromPdf(mockArrayBuffer);
     
     expect(result).toContain('Form 47 Consumer Proposal');
     expect(result).toContain('Client Name: John Doe');
     expect(result).toContain('Estate Number: 12345');
+    testScore += pointsPerTest;
   });
 
-  it('should handle empty PDFs', async () => {
+  it('should handle empty PDFs (25 points)', async () => {
     await expect(extractTextFromPdf(new ArrayBuffer(0)))
       .rejects
       .toThrow('Invalid PDF data received');
+    testScore += pointsPerTest;
   });
 
-  it('should upload and analyze document successfully', async () => {
+  it('should upload and analyze document successfully (25 points)', async () => {
     // Mock the file
     const mockFile = new File(['test pdf content'], 'test.pdf', { type: 'application/pdf' });
     const mockUserId = 'test-user-id';
@@ -169,9 +180,10 @@ describe('Document Analysis', () => {
 
     const result = await handleDocumentUpload();
     expect(result).toEqual(mockAnalysisResponse.data);
+    testScore += pointsPerTest;
   });
 
-  it('should handle document analysis failures gracefully', async () => {
+  it('should handle document analysis failures gracefully (25 points)', async () => {
     // Mock failed analysis
     vi.spyOn(supabase.functions, 'invoke')
       .mockRejectedValue(new Error('Analysis failed'));
@@ -194,5 +206,6 @@ describe('Document Analysis', () => {
     await expect(analyzeDocument())
       .rejects
       .toThrow('Document analysis failed');
+    testScore += pointsPerTest;
   });
 });
