@@ -1,3 +1,4 @@
+
 import Tesseract from 'tesseract.js';
 import { FINANCIAL_TERMS } from './constants';
 
@@ -68,15 +69,15 @@ export const performOCR = async (imageData: string): Promise<string> => {
   try {
     console.log('Starting OCR process...');
     
-    // Configure Tesseract for optimal recognition
+    // Using only supported Tesseract.js configuration options
     const result = await Tesseract.recognize(
       imageData,
       'eng',
       {
         logger: m => console.log('Tesseract progress:', m),
-        tessedit_pageseg_mode: '1', // Automatic page segmentation with OSD
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,()-$/%: ', // Limit to expected characters
-        tessedit_ocr_engine_mode: '3', // Use neural nets mode
+        workerPath: 'https://unpkg.com/tesseract.js@v4.0.0/dist/worker.min.js',
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+        corePath: 'https://unpkg.com/tesseract.js-core@v4.0.0/tesseract-core.wasm.js',
       }
     );
     
