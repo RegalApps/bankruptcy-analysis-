@@ -1,6 +1,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,13 @@ interface AnalysisResult {
     formNumber?: string;
     estateNumber?: string;
     meetingOfCreditors?: string;
+    district?: string;
+    divisionNumber?: string;
+    courtNumber?: string;
+    chairInfo?: string;
+    securityInfo?: string;
+    dateBankruptcy?: string;
+    officialReceiver?: string;
   };
   summary?: string;
 }
@@ -29,13 +37,23 @@ async function parseForm66(text: string): Promise<AnalysisResult['extracted_info
     const dateMatch = text.match(/(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})/i);
     const trusteeMatch = text.match(/(?:trustee|Licensed\s+Insolvency\s+Trustee)[:\s]+([^\n]+)/i);
     const estateMatch = text.match(/(?:estate|file)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
+    const formNumberMatch = text.match(/Form\s*(?:no\.?|number)?[:\s]*(\d+)/i);
+    const clientMatch = text.match(/(?:debtor|bankrupt)[:\s]+([^\n]+)/i);
+    const courtNumberMatch = text.match(/(?:court)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
+    const districtMatch = text.match(/(?:district)[:\s]+([^\n]+)/i);
+    const divisionMatch = text.match(/(?:division)\s*(?:no\.?|number)[:\s]*([^\n]+)/i);
 
     const extractedInfo = {
       type: 'Form 66',
       meetingOfCreditors: meetingMatch ? meetingMatch[0].trim() : '',
       dateSigned: dateMatch ? dateMatch[0] : '',
       trusteeName: trusteeMatch ? trusteeMatch[1].trim() : '',
-      estateNumber: estateMatch ? estateMatch[1].trim() : ''
+      estateNumber: estateMatch ? estateMatch[1].trim() : '',
+      formNumber: formNumberMatch ? formNumberMatch[1].trim() : '',
+      clientName: clientMatch ? clientMatch[1].trim() : '',
+      courtNumber: courtNumberMatch ? courtNumberMatch[1].trim() : '',
+      district: districtMatch ? districtMatch[1].trim() : '',
+      divisionNumber: divisionMatch ? divisionMatch[1].trim() : ''
     };
 
     console.log('Extracted Form 66 info:', extractedInfo);
@@ -62,7 +80,7 @@ async function analyzeWithOpenAI(text: string): Promise<AnalysisResult> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -73,12 +91,20 @@ async function analyzeWithOpenAI(text: string): Promise<AnalysisResult> {
               "trusteeName": "name",
               "dateSigned": "date",
               "formNumber": "number",
-              "estateNumber": "number"
+              "estateNumber": "number",
+              "district": "district name",
+              "divisionNumber": "number",
+              "courtNumber": "number",
+              "meetingOfCreditors": "details",
+              "chairInfo": "details",
+              "securityInfo": "details",
+              "dateBankruptcy": "date",
+              "officialReceiver": "name"
             }`
           },
           {
             role: 'user',
-            content: text.substring(0, 1000) // First 1000 chars for analysis
+            content: text
           }
         ],
         temperature: 0.3,
@@ -95,11 +121,9 @@ async function analyzeWithOpenAI(text: string): Promise<AnalysisResult> {
 
     let extracted_info;
     try {
-      // Try to parse the content as JSON
       extracted_info = JSON.parse(data.choices[0].message.content);
     } catch (error) {
       console.warn('Failed to parse OpenAI response as JSON:', error);
-      // If parsing fails, use the raw content
       extracted_info = {
         type: 'Unknown',
         summary: data.choices[0].message.content
@@ -109,7 +133,7 @@ async function analyzeWithOpenAI(text: string): Promise<AnalysisResult> {
     return {
       type: extracted_info.type || 'Unknown',
       extracted_info,
-      summary: data.choices[0].message.content
+      summary: `Document analysis complete. Identified as ${extracted_info.type || 'Unknown'} document.`
     };
   } catch (error) {
     console.error('OpenAI analysis error:', error);
@@ -148,6 +172,31 @@ serve(async (req) => {
     }
 
     console.log('Analysis completed successfully');
+
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase credentials not configured');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Store analysis results
+    const { error: analysisError } = await supabase
+      .from('document_analysis')
+      .upsert({
+        document_id: documentId,
+        content: analysisResult,
+        user_id: (await req.json()).userId // Get the user ID from the request
+      });
+
+    if (analysisError) {
+      console.error('Error storing analysis:', analysisError);
+      throw analysisError;
+    }
+
     return new Response(JSON.stringify(analysisResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
