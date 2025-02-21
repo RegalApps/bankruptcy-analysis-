@@ -25,8 +25,15 @@ const loadWorker = () => {
   }
 };
 
-// Initialize worker
+// Initialize worker immediately
 loadWorker();
+
+// Add delay to ensure worker is initialized
+const ensureWorkerLoaded = async () => {
+  // Wait a short time for worker to initialize
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log('Worker initialization completed');
+};
 
 // Financial and legal terms glossary for better recognition
 const FINANCIAL_TERMS = new Set([
@@ -161,11 +168,13 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
   try {
     console.log('Starting PDF text extraction...');
     
+    // Wait for worker to be ready
+    await ensureWorkerLoaded();
+    
     // Initialize PDF document with verbose logging
     console.log('Loading PDF document...');
     const pdf = await pdfjs.getDocument({
       data: arrayBuffer,
-      // Remove cMapUrl and cMapPacked as they're not needed for basic text extraction
     }).promise;
     
     console.log(`PDF loaded successfully. Total pages: ${pdf.numPages}`);
@@ -176,7 +185,6 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
       const page = await pdf.getPage(i);
       
       try {
-        // First try to get text directly with improved extraction
         const content = await page.getTextContent();
         let pageText = content.items
           .map((item: any) => item.str)
@@ -196,7 +204,6 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
         console.log(`Successfully extracted text from page ${i}`);
       } catch (pageError) {
         console.error(`Error processing page ${i}:`, pageError);
-        // Continue with next page instead of failing completely
         text += `[Error processing page ${i}]\n`;
       }
     }
