@@ -69,17 +69,18 @@ export const performOCR = async (imageData: string): Promise<string> => {
   try {
     console.log('Starting OCR process...');
     
-    // Using only supported Tesseract.js configuration options
-    const result = await Tesseract.recognize(
-      imageData,
-      'eng',
-      {
-        logger: m => console.log('Tesseract progress:', m),
-        workerPath: 'https://unpkg.com/tesseract.js@v4.0.0/dist/worker.min.js',
-        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
-        corePath: 'https://unpkg.com/tesseract.js-core@v4.0.0/tesseract-core.wasm.js',
-      }
-    );
+    // Initialize Tesseract with proper configuration
+    const worker = await Tesseract.createWorker({
+      logger: m => console.log('Tesseract progress:', m),
+      workerPath: '/node_modules/tesseract.js/dist/worker.min.js',
+      corePath: '/node_modules/tesseract.js-core/tesseract-core.wasm.js',
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+    });
+
+    await worker.loadLanguage('eng');
+    await worker.initialize('eng');
+    
+    const result = await worker.recognize(imageData);
     
     console.log('OCR completed. Raw text length:', result.data.text.length);
     
@@ -104,6 +105,9 @@ export const performOCR = async (imageData: string): Promise<string> => {
 
     console.log('Final text length:', extractedText.length);
     console.log('Sample final text:', extractedText.substring(0, 200));
+    
+    // Cleanup
+    await worker.terminate();
     
     return extractedText;
   } catch (error) {
