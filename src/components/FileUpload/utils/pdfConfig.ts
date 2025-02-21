@@ -1,8 +1,9 @@
 
 import * as pdfjs from 'pdfjs-dist';
 
-// Get the worker from the pdfjs-dist package
-const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs');
+// Initialize PDF.js worker with direct path to local worker bundle
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).toString();
 
-// Set the workerSrc to the worker code
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
