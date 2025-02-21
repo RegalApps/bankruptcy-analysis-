@@ -1,13 +1,8 @@
 import * as pdfjs from 'pdfjs-dist';
 import Tesseract from 'tesseract.js';
 
-// Initialize PDF.js worker
-const pdfjsWorkerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url,
-).toString();
-
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerSrc;
+// Initialize PDF.js worker - using the correct method for Vite/React environment
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 // Financial and legal terms glossary for better recognition
 const FINANCIAL_TERMS = new Set([
@@ -159,10 +154,11 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<stri
       throw new Error('Invalid PDF data received');
     }
     
-    // Initialize PDF document with verbose logging
+    // Load PDF document
     console.log('Loading PDF document...');
     const pdf = await pdfjs.getDocument({
       data: arrayBuffer,
+      useWorkerFetch: true,
     }).promise;
     
     console.log(`PDF loaded successfully. Total pages: ${pdf.numPages}`);

@@ -1,10 +1,11 @@
-
 import { extractTextFromPdf } from '../pdfUtils';
 import { supabase } from '@/lib/supabase';
 import { beforeEach, describe, expect, it, vi, afterAll } from 'vitest';
+import * as pdfjs from 'pdfjs-dist';
 
 // Mock PDF.js
 vi.mock('pdfjs-dist', () => ({
+  version: '3.4.120',
   getDocument: () => ({
     promise: Promise.resolve({
       numPages: 2,
@@ -19,7 +20,10 @@ vi.mock('pdfjs-dist', () => ({
         getViewport: () => ({ width: 800, height: 1000 })
       })
     })
-  })
+  }),
+  GlobalWorkerOptions: {
+    workerSrc: null
+  }
 }));
 
 // Mock Tesseract.js
