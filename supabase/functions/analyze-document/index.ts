@@ -8,23 +8,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ExtractedInfo {
-  clientName: string;
-  clientPhone: string;
-  clientAddress: string;
-  appointmentDate: string;
-  appointmentTime: string;
-  propertyAddress: string;
-  inspectionDate: string;
-  trusteeName: string;
-  trusteeTitle: string;
+interface DocumentInfo {
+  type: string;
+  formNumber?: string;
+  clientName?: string;
+  trusteeName?: string;
+  dateSigned?: string;
+  estateNumber?: string;
+  district?: string;
+  divisionNumber?: string;
+  courtNumber?: string;
+  meetingDetails?: string;
+  chairInfo?: string;
+  securityInfo?: string;
+  dateBankruptcy?: string;
+  officialReceiver?: string;
   flags: string[];
 }
 
 function standardizeDate(dateStr: string): string {
   try {
-    const [year, month, day] = dateStr.split('/').map(s => s.trim());
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) throw new Error('Invalid date');
+    
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
@@ -36,92 +42,110 @@ function standardizeDate(dateStr: string): string {
   }
 }
 
-function standardizeTime(timeStr: string): string {
-  try {
-    const [time, period] = timeStr.toLowerCase().split(/([ap]m)/);
-    const [hours, minutes] = time.split(':').map(n => parseInt(n));
-    const ampm = period || (hours >= 12 ? 'pm' : 'am');
-    const standardHours = hours % 12 || 12;
-    return `${standardHours}:${minutes.toString().padStart(2, '0')} ${ampm.toUpperCase()}`;
-  } catch (e) {
-    console.error('Error standardizing time:', e);
-    return timeStr;
-  }
+function extractFormType(text: string): string {
+  const formMatch = text.match(/form\s*(?:no\.|number|#)?\s*(\d+)/i);
+  return formMatch ? `form${formMatch[1]}` : 'unknown';
 }
 
-function capitalizeAddress(address: string): string {
-  return address
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
+function extractFormNumber(text: string): string {
+  const formMatch = text.match(/form\s*(?:no\.|number|#)?\s*(\d+)/i);
+  return formMatch ? formMatch[1] : '';
 }
 
-function parseDocument(text: string): ExtractedInfo {
-  console.log('Starting document parsing with text:', text);
+function extractDates(text: string): { dateSigned?: string; dateBankruptcy?: string } {
+  const dates: { dateSigned?: string; dateBankruptcy?: string } = {};
+  
+  // Look for dates in various formats
+  const datePatterns = [
+    /(?:signed|date|dated)(?:\s+on)?\s*[:;]?\s*([A-Za-z]+\s+\d{1,2},?\s*\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}[-/]\d{1,2}[-/]\d{4})/i,
+    /(?:bankruptcy|filed)(?:\s+on|date)?\s*[:;]?\s*([A-Za-z]+\s+\d{1,2},?\s*\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}[-/]\d{1,2}[-/]\d{4})/i
+  ];
+
+  const [signedMatch, bankruptcyMatch] = datePatterns.map(pattern => text.match(pattern));
+  
+  if (signedMatch) dates.dateSigned = standardizeDate(signedMatch[1]);
+  if (bankruptcyMatch) dates.dateBankruptcy = standardizeDate(bankruptcyMatch[1]);
+
+  return dates;
+}
+
+function extractNames(text: string): { clientName?: string; trusteeName?: string; officialReceiver?: string } {
+  const names: { clientName?: string; trusteeName?: string; officialReceiver?: string } = {};
+  
+  // Look for names in various contexts
+  const trusteePattern = /(?:licensed(?:\s+insolvency)?\s+trustee|trustee)[:\s]+([A-Za-z\s,]+?)(?=\n|$|\d|licensed)/i;
+  const clientPattern = /(?:debtor|client|bankrupt)[:\s]+([A-Za-z\s,]+?)(?=\n|$|\d)/i;
+  const receiverPattern = /(?:official\s+receiver)[:\s]+([A-Za-z\s,]+?)(?=\n|$|\d)/i;
+
+  const trusteeMatch = text.match(trusteePattern);
+  const clientMatch = text.match(clientPattern);
+  const receiverMatch = text.match(receiverPattern);
+
+  if (trusteeMatch) names.trusteeName = trusteeMatch[1].trim();
+  if (clientMatch) names.clientName = clientMatch[1].trim();
+  if (receiverMatch) names.officialReceiver = receiverMatch[1].trim();
+
+  return names;
+}
+
+function extractNumbers(text: string): { estateNumber?: string; district?: string; divisionNumber?: string; courtNumber?: string } {
+  const numbers: { estateNumber?: string; district?: string; divisionNumber?: string; courtNumber?: string } = {};
+  
+  const estatePattern = /(?:estate\s*(?:no\.|number|#)?)[:\s]+(\d[\d-]*)/i;
+  const districtPattern = /district[:\s]+(\d+)/i;
+  const divisionPattern = /division[:\s]+(?:no\.|number|#)?[:\s]*(\d+)/i;
+  const courtPattern = /court[:\s]+(?:no\.|number|#)?[:\s]*(\d+)/i;
+
+  const estateMatch = text.match(estatePattern);
+  const districtMatch = text.match(districtPattern);
+  const divisionMatch = text.match(divisionPattern);
+  const courtMatch = text.match(courtPattern);
+
+  if (estateMatch) numbers.estateNumber = estateMatch[1];
+  if (districtMatch) numbers.district = districtMatch[1];
+  if (divisionMatch) numbers.divisionNumber = divisionMatch[1];
+  if (courtMatch) numbers.courtNumber = courtMatch[1];
+
+  return numbers;
+}
+
+function parseDocument(text: string): DocumentInfo {
+  console.log('Parsing document text:', text);
   
   const flags: string[] = [];
+  const formType = extractFormType(text);
+  const formNumber = extractFormNumber(text);
   
-  // Extract client name (first words before any numbers)
-  const clientNameMatch = text.match(/^([A-Za-z\s]+?)(?=\d|$)/);
-  const clientName = clientNameMatch ? clientNameMatch[1].trim() : '';
-  if (!clientName) flags.push('Client name could not be identified');
+  // Extract various components
+  const dates = extractDates(text);
+  const names = extractNames(text);
+  const numbers = extractNumbers(text);
   
-  // Extract phone number
-  const phoneMatch = text.match(/(\d{3}-\d{3}-\d{4})/);
-  const clientPhone = phoneMatch ? phoneMatch[1] : '';
-  if (!clientPhone) flags.push('Phone number not found or in incorrect format');
-  
-  // Extract addresses
-  const addressPattern = /(\d+[^,\n]*(?:drive|street))/gi;
-  const addresses = text.match(addressPattern) || [];
-  const [clientAddress, propertyAddress] = addresses.map(capitalizeAddress);
-  
-  if (!clientAddress) flags.push('Client address not found');
-  if (!propertyAddress) flags.push('Property address not found');
-  
-  // Extract appointment date and time
-  const dateTimeMatch = text.match(/(\d{1,2})\s*(February|Feb)[,\s]*(\d{4})\s*(\d{1,2}):(\d{2})(?:pm|am)?/i);
-  let appointmentDate = '';
-  let appointmentTime = '';
-  
-  if (dateTimeMatch) {
-    const [_, day, month, year, hours, minutes] = dateTimeMatch;
-    appointmentDate = `${day} ${month}, ${year}`;
-    appointmentTime = standardizeTime(`${hours}:${minutes}`);
-  } else {
-    flags.push('Appointment date/time not found or in incorrect format');
-  }
-  
-  // Extract inspection date
-  const inspectionDateMatch = text.match(/(\d{4}\/\s*\d{2}\/\s*\d{2})/);
-  const inspectionDate = inspectionDateMatch 
-    ? standardizeDate(inspectionDateMatch[1].replace(/\s+/g, ''))
-    : '';
-  
-  if (!inspectionDate) flags.push('Inspection date not found or in incorrect format');
-  
-  // Extract trustee information
-  const trusteeMatch = text.match(/([A-Za-z\s]+)\s+Trustee\b/i);
-  const trusteeName = trusteeMatch ? trusteeMatch[1].trim() : '';
-  const trusteeTitle = trusteeMatch ? 'Trustee' : '';
-  
-  if (!trusteeName) flags.push('Trustee information not found');
+  // Meeting details
+  const meetingMatch = text.match(/meeting\s+of\s+creditors[:\s]+([^\.]+)/i);
+  const chairMatch = text.match(/chair(?:person)?[:\s]+([^\.]+)/i);
+  const securityMatch = text.match(/security[:\s]+([^\.]+)/i);
 
-  const extractedInfo: ExtractedInfo = {
-    clientName,
-    clientPhone,
-    clientAddress,
-    appointmentDate,
-    appointmentTime,
-    propertyAddress,
-    inspectionDate,
-    trusteeName,
-    trusteeTitle,
+  // Validate and flag missing information
+  if (!formNumber) flags.push('Form number not found');
+  if (!names.clientName) flags.push('Client/Debtor name not found');
+  if (!names.trusteeName) flags.push('Trustee name not found');
+  if (!dates.dateSigned) flags.push('Date signed not found');
+  
+  const documentInfo: DocumentInfo = {
+    type: formType,
+    formNumber,
+    ...names,
+    ...dates,
+    ...numbers,
+    meetingDetails: meetingMatch ? meetingMatch[1].trim() : undefined,
+    chairInfo: chairMatch ? chairMatch[1].trim() : undefined,
+    securityInfo: securityMatch ? securityMatch[1].trim() : undefined,
     flags
   };
 
-  console.log('Extracted information:', extractedInfo);
-  return extractedInfo;
+  console.log('Extracted document info:', documentInfo);
+  return documentInfo;
 }
 
 serve(async (req) => {
@@ -152,32 +176,15 @@ serve(async (req) => {
     if (!documentText?.trim()) throw new Error('Document text is empty');
 
     const cleanedText = documentText.replace(/\s+/g, ' ').trim();
-    const extractedInfo = parseDocument(cleanedText);
+    const documentInfo = parseDocument(cleanedText);
     
     const analysisResult = {
-      type: 'Appointment Document',
+      type: documentInfo.type,
       extracted_info: {
-        type: 'Appointment',
-        clientInfo: {
-          name: extractedInfo.clientName,
-          phoneNumber: extractedInfo.clientPhone,
-          address: extractedInfo.clientAddress
-        },
-        appointmentDetails: {
-          date: extractedInfo.appointmentDate,
-          time: extractedInfo.appointmentTime
-        },
-        propertyInfo: {
-          address: extractedInfo.propertyAddress,
-          inspectionDate: extractedInfo.inspectionDate
-        },
-        trusteeInfo: {
-          name: extractedInfo.trusteeName,
-          title: extractedInfo.trusteeTitle
-        },
-        flags: extractedInfo.flags
+        ...documentInfo,
+        type: documentInfo.type
       },
-      summary: 'Appointment and Property Inspection Document'
+      summary: `Document analysis complete. Form type: ${documentInfo.type}. ${documentInfo.flags.length} issues found.`
     };
 
     console.log('Final analysis result:', analysisResult);
