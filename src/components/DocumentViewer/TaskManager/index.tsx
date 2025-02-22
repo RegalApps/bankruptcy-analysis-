@@ -65,9 +65,6 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
               )
             );
           }
-          
-          // Also trigger the parent update
-          onTaskUpdate();
         }
       )
       .subscribe((status) => {
