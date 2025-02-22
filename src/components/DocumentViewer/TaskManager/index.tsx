@@ -22,17 +22,12 @@ interface AvailableUser {
   email: string;
 }
 
-export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProps) => {
+export const TaskManager = ({ documentId, tasks: initialTasks, onTaskUpdate }: TaskManagerProps) => {
   const { toast } = useToast();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
-  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
-
-  // Update local tasks when props change
-  useEffect(() => {
-    setLocalTasks(tasks);
-  }, [tasks]);
+  const [localTasks, setLocalTasks] = useState<Task[]>(initialTasks);
 
   const fetchTasks = async () => {
     try {
@@ -46,7 +41,6 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
 
       console.log('Fetched tasks:', data);
       setLocalTasks(data || []);
-      onTaskUpdate(); // Notify parent of the update
     } catch (error) {
       console.error('Error fetching tasks:', error);
       toast({
@@ -60,9 +54,8 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
   useEffect(() => {
     console.log('Setting up real-time subscription for document:', documentId);
     fetchAvailableUsers();
-    fetchTasks(); // Initial fetch of tasks
+    fetchTasks();
 
-    // Set up real-time subscription for tasks
     const channel = supabase
       .channel('tasks_changes')
       .on(
@@ -75,10 +68,8 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
         },
         async (payload) => {
           console.log('Task change detected:', payload);
-          const { eventType } = payload;
-          
-          // Fetch all tasks after any change to ensure consistent state
           await fetchTasks();
+          onTaskUpdate();
         }
       )
       .subscribe((status) => {
