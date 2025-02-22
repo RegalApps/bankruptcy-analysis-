@@ -1,4 +1,3 @@
-
 export const validationPatterns = {
   postalCode: {
     CA: '^[ABCEGHJ-NPRSTVXY]\\d[ABCEGHJ-NPRSTV-Z][ -]?\\d[ABCEGHJ-NPRSTV-Z]\\d$',
@@ -19,5 +18,16 @@ export const validationPatterns = {
   currencyAmount: '^\\$?\\d{1,3}(?:,\\d{3})*(?:\\.\\d{2})?$',
   percentageValue: '^\\d{1,3}(?:\\.\\d{1,2})?%?$',
   legalEntityName: '^[A-Za-z0-9\\s.,&\'()-]{1,100}$',
-  estateNumber: '^[A-Z]{2}\\d{8}$'
+  estateNumber: '^[A-Z]{2}\\d{8}$',
+  taxID: {
+    business: '^\\d{2}-\\d{7}$',
+    trust: '^T-\\d{8}$',
+    partnership: '^P-\\d{8}$'
+  },
+  insurancePolicy: '^[A-Z]{2}-\\d{6}-[A-Z]{2}$',
+  mortgageNumber: '^M-\\d{4}-[A-Z]{2}-\\d{6}$',
+  assetTag: '^AT\\d{6}[A-Z]$',
+  employeeCount: '^\\d{1,6}$',
+  jurisdictionCode: '^[A-Z]{2}-[A-Z]{3}$',
+  industryCode: '^[A-Z]{4}\\d{4}$'
 };

@@ -1,5 +1,5 @@
-
 import { ValidationError, CrossValidationRule } from './types';
+import { regulatoryFrameworks } from './regulatoryFrameworks';
 
 export const crossValidationScenarios: Record<string, CrossValidationRule[]> = {
   bankruptcy: [
@@ -125,6 +125,129 @@ export const crossValidationScenarios: Record<string, CrossValidationRule[]> = {
         return errors;
       },
       category: 'corporateRestructuring'
+    }
+  ],
+  farmingOperations: [
+    {
+      fields: ['farmingIncome', 'totalDebt', 'landValue', 'equipmentValue', 'cropInventory'],
+      validate: (values) => {
+        const errors: ValidationError[] = [];
+        const income = parseFloat(values.farmingIncome?.replace(/[$,]/g, '') || '0');
+        const debt = parseFloat(values.totalDebt?.replace(/[$,]/g, '') || '0');
+        const assets = parseFloat(values.landValue?.replace(/[$,]/g, '') || '0') +
+                      parseFloat(values.equipmentValue?.replace(/[$,]/g, '') || '0') +
+                      parseFloat(values.cropInventory?.replace(/[$,]/g, '') || '0');
+
+        if (debt < regulatoryFrameworks.fdma.thresholds.minDebt) {
+          errors.push({
+            field: 'debt_threshold',
+            type: 'regulatory',
+            message: 'Debt amount below FDMA threshold',
+            code: 'FDMA_THRESHOLD',
+            context: { 
+              currentDebt: debt,
+              requiredMinimum: regulatoryFrameworks.fdma.thresholds.minDebt
+            }
+          });
+        }
+
+        const debtToAssetRatio = debt / assets;
+        if (debtToAssetRatio > 0.75) {
+          errors.push({
+            field: 'farm_viability',
+            type: 'warning',
+            message: 'High debt-to-asset ratio may affect farm viability',
+            code: 'HIGH_DEBT_RATIO',
+            context: { debtToAssetRatio }
+          });
+        }
+
+        return errors;
+      },
+      category: 'farmingOperations'
+    }
+  ],
+  pensionRestructuring: [
+    {
+      fields: ['fundingRatio', 'planAssets', 'planLiabilities', 'employerContributions'],
+      validate: (values) => {
+        const errors: ValidationError[] = [];
+        const fundingRatio = parseFloat(values.fundingRatio || '0');
+        const assets = parseFloat(values.planAssets?.replace(/[$,]/g, '') || '0');
+        const liabilities = parseFloat(values.planLiabilities?.replace(/[$,]/g, '') || '0');
+        const contributions = parseFloat(values.employerContributions?.replace(/[$,]/g, '') || '0');
+
+        if (fundingRatio < regulatoryFrameworks.pbsa.requirements.fundingRatio) {
+          errors.push({
+            field: 'funding_ratio',
+            type: 'regulatory',
+            message: 'Funding ratio below PBSA requirements',
+            code: 'INSUFFICIENT_FUNDING',
+            context: { 
+              currentRatio: fundingRatio,
+              requiredRatio: regulatoryFrameworks.pbsa.requirements.fundingRatio
+            }
+          });
+        }
+
+        if (contributions < regulatoryFrameworks.pbsa.requirements.minimumContribution) {
+          errors.push({
+            field: 'contributions',
+            type: 'error',
+            message: 'Employer contributions below required minimum',
+            code: 'LOW_CONTRIBUTIONS',
+            context: {
+              currentContributions: contributions,
+              requiredMinimum: regulatoryFrameworks.pbsa.requirements.minimumContribution
+            }
+          });
+        }
+
+        return errors;
+      },
+      category: 'pensionRestructuring'
+    }
+  ],
+  securitiesRestructuring: [
+    {
+      fields: ['workingCapital', 'customerAssets', 'segregatedFunds', 'operatingCapital'],
+      validate: (values) => {
+        const errors: ValidationError[] = [];
+        const workingCapital = parseFloat(values.workingCapital?.replace(/[$,]/g, '') || '0');
+        const customerAssets = parseFloat(values.customerAssets?.replace(/[$,]/g, '') || '0');
+        const segregatedFunds = parseFloat(values.segregatedFunds?.replace(/[$,]/g, '') || '0');
+        const operatingCapital = parseFloat(values.operatingCapital?.replace(/[$,]/g, '') || '0');
+
+        if (operatingCapital < regulatoryFrameworks.securities.capitalRequirements.minimumCapital) {
+          errors.push({
+            field: 'capital_adequacy',
+            type: 'regulatory',
+            message: 'Operating capital below regulatory minimum',
+            code: 'INSUFFICIENT_CAPITAL',
+            context: {
+              currentCapital: operatingCapital,
+              requiredMinimum: regulatoryFrameworks.securities.capitalRequirements.minimumCapital
+            }
+          });
+        }
+
+        if (segregatedFunds < customerAssets) {
+          errors.push({
+            field: 'asset_segregation',
+            type: 'error',
+            message: 'Insufficient segregation of customer assets',
+            code: 'SEGREGATION_VIOLATION',
+            context: {
+              segregatedFunds,
+              customerAssets,
+              shortfall: customerAssets - segregatedFunds
+            }
+          });
+        }
+
+        return errors;
+      },
+      category: 'securitiesRestructuring'
     }
   ]
 };

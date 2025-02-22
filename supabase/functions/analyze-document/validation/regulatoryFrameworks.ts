@@ -1,4 +1,3 @@
-
 export const regulatoryFrameworks = {
   bia: {
     debtThresholds: {
@@ -39,6 +38,61 @@ export const regulatoryFrameworks = {
       minLiabilities: 1000000,
       ceaseBusinessDays: 60,
       petitionThreshold: 0.25
+    }
+  },
+  fdma: {
+    thresholds: {
+      minDebt: 25000,
+      mediationPeriod: 30,
+      stayPeriod: 45
+    },
+    requirements: {
+      documentationNeeded: [
+        'farmingIncome',
+        'assetInventory',
+        'operationsReport',
+        'environmentalAssessment'
+      ],
+      minimumFarmingPeriod: 24 // months
+    }
+  },
+  ccaaExtended: {
+    thresholds: {
+      crossBorderDebt: 10000000,
+      minimumOperatingTime: 36, // months
+      employeeCount: 100
+    },
+    internationalProvisions: {
+      recognizedJurisdictions: ['US', 'UK', 'EU'],
+      documentationRequirements: [
+        'foreignProceedingRecognition',
+        'assetDisclosure',
+        'creditorAgreements'
+      ]
+    }
+  },
+  pbsa: {
+    requirements: {
+      fundingRatio: 0.85,
+      minimumContribution: 100000,
+      reportingFrequency: 3 // months
+    },
+    disclosureRequirements: [
+      'actuarialReport',
+      'investmentPolicy',
+      'memberCommunications'
+    ]
+  },
+  securities: {
+    capitalRequirements: {
+      minimumCapital: 250000,
+      workingCapitalRatio: 2.0,
+      customerAssetSegregation: true
+    },
+    compliance: {
+      reportingFrequency: 'monthly',
+      auditRequirements: ['external', 'internal'],
+      customerProtection: ['insurance', 'segregation']
     }
   }
 };
