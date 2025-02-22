@@ -1,33 +1,39 @@
 
-export interface Risk {
-  type: string;
+export interface LegalReference {
+  source: 'BIA' | 'CCAA' | 'OSB' | 'DIRECTIVE';
+  referenceNumber: string;
+  title: string;
   description: string;
+  relevantSections: string[];
+}
+
+export interface RiskAssessment {
+  category: string;
   severity: 'low' | 'medium' | 'high';
-  impact: string;
-  regulation: string;
-  requiredAction: string;
-  solution: string;
+  description: string;
+  legalReferences: LegalReference[];
+  impactAnalysis: string;
+  recommendedActions: string[];
+  complianceStatus: 'compliant' | 'non_compliant' | 'needs_review';
 }
 
-export interface ExtractedInfo {
-  type: string;
-  formNumber: string;
-  clientName?: string;
-  dateSigned?: string;
-  trusteeName?: string;
-  estateNumber?: string;
-  district?: string;
-  divisionNumber?: string;
-  courtNumber?: string;
-  meetingOfCreditors?: string;
-  chairInfo?: string;
-  securityInfo?: string;
-  dateBankruptcy?: string;
-  officialReceiver?: string;
-  summary: string;
+export interface ValidationResult {
+  field: string;
+  status: 'valid' | 'invalid' | 'warning';
+  message: string;
+  legalReferences?: LegalReference[];
 }
 
-export interface DocumentAnalysis {
-  extracted_info: ExtractedInfo;
-  risks: Risk[];
+export interface AnalysisResult {
+  formNumber: string | null;
+  extractedFields: Record<string, any>;
+  validationResults: ValidationResult[];
+  riskAssessment: RiskAssessment[];
+  legalCompliance: {
+    status: 'compliant' | 'non_compliant' | 'needs_review';
+    details: Record<string, any>;
+  };
+  narrativeSummary: string;
+  confidenceScore: number;
+  status: 'success' | 'partial' | 'failed';
 }

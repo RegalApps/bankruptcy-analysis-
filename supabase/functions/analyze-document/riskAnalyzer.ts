@@ -1,123 +1,153 @@
 
-import { Risk, DocumentAnalysis } from "./types.ts";
+import { RiskAssessment, LegalReference } from "./types.ts";
 
-const checkBIADocumentation = (text: string): Risk | null => {
-  if (!text.includes('Notice of Bankruptcy') && !text.includes('Statement of Affairs')) {
+export class RiskAnalyzer {
+  private generateLegalReference(
+    source: 'BIA' | 'CCAA' | 'OSB' | 'DIRECTIVE',
+    referenceData: { number: string; title: string; description: string; sections: string[] }
+  ): LegalReference {
     return {
-      type: 'BIA Documentation Risk',
-      description: 'Missing required bankruptcy documentation under BIA Section 49(1)',
-      severity: 'high',
-      impact: 'Non-compliance with mandatory bankruptcy filing requirements',
-      regulation: 'Bankruptcy and Insolvency Act (BIA) Section 49(1)',
-      requiredAction: 'Submit complete bankruptcy documentation including Notice of Bankruptcy and Statement of Affairs',
-      solution: "Review Directive No. 23 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars for documentation requirements"
+      source,
+      referenceNumber: referenceData.number,
+      title: referenceData.title,
+      description: referenceData.description,
+      relevantSections: referenceData.sections
     };
   }
-  return null;
-};
 
-const checkCreditorMeeting = (text: string): Risk | null => {
-  if (text.includes('meeting of creditors') && !text.includes('notice to creditors')) {
-    return {
-      type: 'Creditor Meeting Compliance Risk',
-      description: 'Inadequate creditor notification for meeting under BIA Section 102(2)',
-      severity: 'high',
-      impact: 'Potential invalidation of creditors meeting proceedings',
-      regulation: 'BIA Section 102(2) and Directive No. 9R6',
-      requiredAction: 'Ensure proper notice is given to all creditors within prescribed timeframe',
-      solution: "Follow notification requirements outlined in Directive No. 9R6 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars"
-    };
-  }
-  return null;
-};
+  public analyzeRisks(formNumber: string, extractedFields: Record<string, any>): RiskAssessment[] {
+    const risks: RiskAssessment[] = [];
+    
+    // Form-specific risk analysis
+    switch (formNumber) {
+      case "1":
+        // Voluntary Petition risks
+        this.analyzeVoluntaryPetitionRisks(extractedFields, risks);
+        break;
+      // Add cases for other forms
+    }
 
-const checkTrusteeAuthorization = (text: string): Risk | null => {
-  if (!text.includes('trustee') || !text.includes('licensed')) {
-    return {
-      type: 'Trustee Authorization Risk',
-      description: 'Potential unauthorized administration of bankruptcy estate',
-      severity: 'high',
-      impact: 'Violation of BIA trustee licensing requirements',
-      regulation: 'BIA Section 13.2 and Directive No. 13R6',
-      requiredAction: 'Verify trustee licensing status and authorization',
-      solution: "Consult OSB's Licensed Insolvency Trustee requirements at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars/directive-no-13r6-licensing-trustees"
-    };
-  }
-  return null;
-};
+    // Common risks across all forms
+    this.analyzeCommonRisks(extractedFields, risks);
 
-const checkConsumerProposal = (text: string): Risk | null => {
-  if (text.includes('consumer proposal') && !text.includes('assessment certificate')) {
-    return {
-      type: 'Consumer Proposal Compliance Risk',
-      description: 'Missing mandatory counselling assessment for consumer proposal',
-      severity: 'high',
-      impact: 'Non-compliance with BIA counselling requirements',
-      regulation: 'BIA Directive No. 1R5',
-      requiredAction: 'Complete mandatory counselling sessions and obtain assessment certificate',
-      solution: "Review counselling requirements in Directive No. 1R5 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars"
-    };
-  }
-  return null;
-};
-
-const checkDocumentExecution = (text: string): Risk | null => {
-  if (!text.includes('signed') || !text.includes('dated')) {
-    return {
-      type: 'Document Execution Risk',
-      description: 'Improper document execution under BIA requirements',
-      severity: 'high',
-      impact: 'Potential invalidity of bankruptcy documentation',
-      regulation: 'BIA Section 148 and General Rules',
-      requiredAction: 'Ensure all documents are properly signed and dated by authorized parties',
-      solution: "Review documentation requirements in the BIA General Rules at https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._368/"
-    };
-  }
-  return null;
-};
-
-const checkCCAACompliance = (text: string): Risk | null => {
-  if (text.includes('CCAA') || text.includes('Companies\' Creditors Arrangement Act')) {
-    return {
-      type: 'CCAA Compliance Risk',
-      description: 'Additional compliance requirements under CCAA',
-      severity: 'high',
-      impact: 'Potential non-compliance with CCAA requirements',
-      regulation: 'Companies\' Creditors Arrangement Act (CCAA)',
-      requiredAction: 'Review and ensure compliance with CCAA requirements',
-      solution: "Consult CCAA guidelines at https://laws-lois.justice.gc.ca/eng/acts/C-36/index.html"
-    };
-  }
-  return null;
-};
-
-export function analyzeDocument(text: string): DocumentAnalysis {
-  const analysis: DocumentAnalysis = {
-    extracted_info: {
-      type: 'unknown',
-      formNumber: '',
-      summary: ''
-    },
-    risks: []
-  };
-
-  // Basic form info extraction
-  const formMatches = text.match(/FORM (\d+)|Form (\d+)/);
-  if (formMatches) {
-    analysis.extracted_info.formNumber = formMatches[1] || formMatches[2];
+    console.log(`Identified ${risks.length} risks for form ${formNumber}`);
+    return risks;
   }
 
-  // Run all risk checks and filter out null results
-  const risks = [
-    checkBIADocumentation(text),
-    checkCreditorMeeting(text),
-    checkTrusteeAuthorization(text),
-    checkConsumerProposal(text),
-    checkDocumentExecution(text),
-    checkCCAACompliance(text)
-  ].filter((risk): risk is Risk => risk !== null);
+  private analyzeVoluntaryPetitionRisks(
+    extractedFields: Record<string, any>,
+    risks: RiskAssessment[]
+  ) {
+    // Check for missing or invalid debtor information
+    if (!extractedFields.debtorName) {
+      risks.push({
+        category: "Missing Critical Information",
+        severity: "high",
+        description: "Debtor name is missing from the petition",
+        legalReferences: [
+          this.generateLegalReference("BIA", {
+            number: "Section 43(1)",
+            title: "Bankruptcy Petition Requirements",
+            description: "Requirements for valid bankruptcy petition",
+            sections: ["43(1)(a)"]
+          })
+        ],
+        impactAnalysis: "Petition may be rejected or delayed",
+        recommendedActions: ["Provide complete debtor information"],
+        complianceStatus: "non_compliant"
+      });
+    }
 
-  analysis.risks = risks;
-  console.log('Enhanced BIA/CCAA compliance analysis completed:', analysis);
-  return analysis;
+    // Validate filing date
+    if (extractedFields.filingDate) {
+      const filingDate = new Date(extractedFields.filingDate);
+      const today = new Date();
+      if (filingDate > today) {
+        risks.push({
+          category: "Invalid Date",
+          severity: "high",
+          description: "Filing date cannot be in the future",
+          legalReferences: [
+            this.generateLegalReference("OSB", {
+              number: "Directive 31",
+              title: "Filing Requirements",
+              description: "Requirements for filing dates",
+              sections: ["31.1"]
+            })
+          ],
+          impactAnalysis: "Petition will be rejected",
+          recommendedActions: ["Correct the filing date"],
+          complianceStatus: "non_compliant"
+        });
+      }
+    }
+  }
+
+  private analyzeCommonRisks(
+    extractedFields: Record<string, any>,
+    risks: RiskAssessment[]
+  ) {
+    // Check for data consistency
+    if (Object.keys(extractedFields).length === 0) {
+      risks.push({
+        category: "Data Extraction",
+        severity: "high",
+        description: "No data could be extracted from the form",
+        legalReferences: [],
+        impactAnalysis: "Unable to process the form",
+        recommendedActions: ["Review document quality", "Manually verify form content"],
+        complianceStatus: "needs_review"
+      });
+    }
+
+    // Check for potentially fraudulent information
+    this.analyzeFraudRisks(extractedFields, risks);
+  }
+
+  private analyzeFraudRisks(
+    extractedFields: Record<string, any>,
+    risks: RiskAssessment[]
+  ) {
+    // Example fraud detection logic
+    const suspiciousPatterns = this.detectSuspiciousPatterns(extractedFields);
+    if (suspiciousPatterns.length > 0) {
+      risks.push({
+        category: "Potential Fraud",
+        severity: "high",
+        description: "Suspicious patterns detected in form data",
+        legalReferences: [
+          this.generateLegalReference("BIA", {
+            number: "Section 198",
+            title: "Fraudulent Bankruptcy",
+            description: "Offenses in relation to fraudulent bankruptcy",
+            sections: ["198(1)"]
+          })
+        ],
+        impactAnalysis: "Possible fraudulent filing",
+        recommendedActions: [
+          "Review suspicious entries",
+          "Request additional documentation",
+          "Consider reporting to authorities"
+        ],
+        complianceStatus: "needs_review"
+      });
+    }
+  }
+
+  private detectSuspiciousPatterns(extractedFields: Record<string, any>): string[] {
+    const patterns: string[] = [];
+    
+    // Check for suspicious amounts
+    const amountFields = Object.entries(extractedFields)
+      .filter(([_, value]) => typeof value === "string" && value.includes("$"));
+    
+    for (const [field, value] of amountFields) {
+      const amount = parseFloat(value.replace(/[$,]/g, ""));
+      if (amount > 1000000) {
+        patterns.push(`Unusually large amount in ${field}: ${value}`);
+      }
+    }
+
+    return patterns;
+  }
 }

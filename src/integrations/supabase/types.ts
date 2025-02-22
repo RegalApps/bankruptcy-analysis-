@@ -188,8 +188,12 @@ export type Database = {
           extracted_fields: Json | null
           form_number: string | null
           id: string
+          legal_compliance_status: Json | null
+          narrative_summary: string | null
+          risk_assessment_details: Json | null
           status: string | null
           updated_at: string
+          user_feedback: Json | null
           validation_results: Json | null
         }
         Insert: {
@@ -199,8 +203,12 @@ export type Database = {
           extracted_fields?: Json | null
           form_number?: string | null
           id?: string
+          legal_compliance_status?: Json | null
+          narrative_summary?: string | null
+          risk_assessment_details?: Json | null
           status?: string | null
           updated_at?: string
+          user_feedback?: Json | null
           validation_results?: Json | null
         }
         Update: {
@@ -210,8 +218,12 @@ export type Database = {
           extracted_fields?: Json | null
           form_number?: string | null
           id?: string
+          legal_compliance_status?: Json | null
+          narrative_summary?: string | null
+          risk_assessment_details?: Json | null
           status?: string | null
           updated_at?: string
+          user_feedback?: Json | null
           validation_results?: Json | null
         }
         Relationships: [
@@ -231,6 +243,8 @@ export type Database = {
           field_mappings: Json
           form_number: string
           id: string
+          legal_references: Json | null
+          regulatory_updates: Json | null
           required_fields: Json
           title: string
           updated_at: string
@@ -242,6 +256,8 @@ export type Database = {
           field_mappings: Json
           form_number: string
           id?: string
+          legal_references?: Json | null
+          regulatory_updates?: Json | null
           required_fields: Json
           title: string
           updated_at?: string
@@ -253,6 +269,8 @@ export type Database = {
           field_mappings?: Json
           form_number?: string
           id?: string
+          legal_references?: Json | null
+          regulatory_updates?: Json | null
           required_fields?: Json
           title?: string
           updated_at?: string
@@ -297,6 +315,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      regulatory_updates: {
+        Row: {
+          content: string
+          created_at: string
+          effective_date: string
+          id: string
+          metadata: Json | null
+          publication_date: string
+          reference_number: string | null
+          source_type: string
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          effective_date: string
+          id?: string
+          metadata?: Json | null
+          publication_date: string
+          reference_number?: string | null
+          source_type: string
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          effective_date?: string
+          id?: string
+          metadata?: Json | null
+          publication_date?: string
+          reference_number?: string | null
+          source_type?: string
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       tasks: {
         Row: {
