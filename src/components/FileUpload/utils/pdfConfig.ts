@@ -1,13 +1,12 @@
 
-import * as pdfjs from 'pdfjs-dist';
 import { GlobalWorkerOptions } from 'pdfjs-dist';
 
-// Set the worker source to a raw path
-GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.js';
+// We need to load the PDF.js worker from the npm package
+GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.js`;
 
 // Export configuration
 export const PDF_CONFIG = {
-  cMapUrl: '/node_modules/pdfjs-dist/cmaps/',
+  cMapUrl: 'https://unpkg.com/pdfjs-dist@4.10.38/cmaps/',
   cMapPacked: true,
-  standardFontDataUrl: '/node_modules/pdfjs-dist/standard_fonts/'
+  standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@4.10.38/standard_fonts/'
 };
