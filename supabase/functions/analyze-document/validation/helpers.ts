@@ -1,7 +1,6 @@
-
-import { FormField, ValidationError } from '../types';
+import { FormField } from '../types';
+import { ValidationError, ComplianceResult } from './types';
 import { validationPatterns } from './patterns';
-import { ComplianceResult } from './types';
 
 export function validateDate(fieldName: string, value: string, results: ValidationError[]) {
   const date = new Date(value);

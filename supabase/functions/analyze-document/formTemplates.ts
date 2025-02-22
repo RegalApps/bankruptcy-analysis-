@@ -1,9 +1,7 @@
-
-import { FormTemplate, FormField, ValidationRule } from "./types";
+import { FormTemplate, FormField, ValidationRule, ValidationError } from "./types";
 import { validationPatterns } from "./validation/patterns";
 import { regulatoryFrameworks } from "./validation/regulatoryFrameworks";
 import { crossValidationScenarios } from "./validation/crossValidation";
-import { ValidationError } from "./validation/types";
 import {
   validateDate,
   validateCurrency,
