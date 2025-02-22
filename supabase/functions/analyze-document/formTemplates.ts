@@ -1,13 +1,13 @@
-import { FormTemplate, FormField, ValidationRule, ValidationError } from "./types";
-import { validationPatterns } from "./validation/patterns";
-import { regulatoryFrameworks } from "./validation/regulatoryFrameworks";
-import { crossValidationScenarios } from "./validation/crossValidation";
+import { FormTemplate, FormField, ValidationRule, ValidationError } from "./types.ts";
+import { validationPatterns } from "./validation/patterns.ts";
+import { regulatoryFrameworks } from "./validation/regulatoryFrameworks.ts";
+import { crossValidationScenarios } from "./validation/crossValidation.ts";
 import {
   validateDate,
   validateCurrency,
   validateText,
   checkRegulationCompliance
-} from "./validation/helpers";
+} from "./validation/helpers.ts";
 
 export const validateFormData = (formNumber: string, data: any) => {
   const template = formTemplates[formNumber];
@@ -119,4 +119,4 @@ export type {
   FormField,
   ValidationRule,
   ValidationError,
-} from "./types";
+} from "./types.ts";
