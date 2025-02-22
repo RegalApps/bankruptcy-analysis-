@@ -2,8 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { analyzeDocument } from "./riskAnalyzer.ts";
-import { DocumentAnalysis } from "./types.ts";
+import { FormAnalyzer } from "./formAnalyzer.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,34 +22,28 @@ serve(async (req) => {
     }
 
     console.log('Starting enhanced document analysis for document:', documentId);
-    const analysisResult = analyzeDocument(documentText);
+    const formAnalyzer = new FormAnalyzer();
+    const analysisResult = await formAnalyzer.analyzeDocument(documentText);
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: document, error: docError } = await supabaseClient
-      .from('documents')
-      .select('user_id')
-      .eq('id', documentId)
-      .single();
-
-    if (docError) {
-      console.error('Error fetching document:', docError);
-      throw docError;
-    }
-
+    // Save analysis results
     const { error: analysisError } = await supabaseClient
-      .from('document_analysis')
+      .from('form_analysis_results')
       .upsert({
         document_id: documentId,
-        user_id: document.user_id,
-        content: analysisResult
+        form_number: analysisResult.formNumber,
+        extracted_fields: analysisResult.extractedFields,
+        validation_results: analysisResult.validationResults,
+        confidence_score: analysisResult.confidenceScore,
+        status: analysisResult.status
       });
 
     if (analysisError) {
-      console.error('Error saving analysis:', analysisError);
+      console.error('Error saving analysis results:', analysisError);
       throw analysisError;
     }
 

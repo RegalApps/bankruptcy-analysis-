@@ -180,6 +180,86 @@ export type Database = {
           },
         ]
       }
+      form_analysis_results: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          document_id: string | null
+          extracted_fields: Json | null
+          form_number: string | null
+          id: string
+          status: string | null
+          updated_at: string
+          validation_results: Json | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          document_id?: string | null
+          extracted_fields?: Json | null
+          form_number?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string
+          validation_results?: Json | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          document_id?: string | null
+          extracted_fields?: Json | null
+          form_number?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string
+          validation_results?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_analysis_results_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          field_mappings: Json
+          form_number: string
+          id: string
+          required_fields: Json
+          title: string
+          updated_at: string
+          validation_rules: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          field_mappings: Json
+          form_number: string
+          id?: string
+          required_fields: Json
+          title: string
+          updated_at?: string
+          validation_rules: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          field_mappings?: Json
+          form_number?: string
+          id?: string
+          required_fields?: Json
+          title?: string
+          updated_at?: string
+          validation_rules?: Json
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
