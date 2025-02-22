@@ -32,7 +32,8 @@ vi.mock('@/utils/logger', () => ({
   default: {
     info: vi.fn(),
     debug: vi.fn(),
-    error: vi.fn()
+    error: vi.fn(),
+    warn: vi.fn()
   }
 }));
 
@@ -70,7 +71,6 @@ describe('PDF Utils', () => {
     const mockArrayBuffer = new ArrayBuffer(8);
     const result = await extractTextFromPdf(mockArrayBuffer);
 
-    // Page 2 should trigger OCR
     expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('attempting OCR'));
     expect(result.successfulPages).toBe(3);
   });
