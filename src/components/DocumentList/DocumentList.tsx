@@ -1,8 +1,17 @@
 
 import { DocumentCard } from "@/components/DocumentCard";
 
+interface Document {
+  id: string;
+  title: string;
+  type: string;
+  updated_at: string;
+  storage_path: string;
+  size: number;
+}
+
 interface DocumentListProps {
-  documents: any[];
+  documents: Document[];
   searchQuery: string;
   onDocumentSelect: (id: string) => void;
 }
@@ -17,27 +26,46 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     doc.type?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Group documents by type
+  const groupedDocuments = filteredDocuments.reduce((acc, doc) => {
+    const type = doc.type || 'Other';
+    if (!acc[type]) {
+      acc[type] = [];
+    }
+    acc[type].push(doc);
+    return acc;
+  }, {} as Record<string, Document[]>);
+
+  if (filteredDocuments.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        {documents.length === 0 ? (
+          "No documents yet. Upload your first document!"
+        ) : (
+          "No documents match your search."
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {filteredDocuments.length > 0 ? (
-        filteredDocuments.map((doc) => (
-          <DocumentCard
-            key={doc.id}
-            title={doc.title}
-            type={doc.type}
-            date={`Updated ${new Date(doc.updated_at).toLocaleDateString()}`}
-            onClick={() => onDocumentSelect(doc.id)}
-          />
-        ))
-      ) : (
-        <div className="col-span-2 text-center py-8 text-muted-foreground">
-          {documents.length === 0 ? (
-            "No documents yet. Upload your first document!"
-          ) : (
-            "No documents match your search."
-          )}
+    <div className="space-y-8">
+      {Object.entries(groupedDocuments).map(([type, docs]) => (
+        <div key={type} className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">{type}</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            {docs.map((doc) => (
+              <DocumentCard
+                key={doc.id}
+                title={doc.title}
+                type={doc.type}
+                date={`Updated ${new Date(doc.updated_at).toLocaleDateString()}`}
+                onClick={() => onDocumentSelect(doc.id)}
+              />
+            ))}
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 };

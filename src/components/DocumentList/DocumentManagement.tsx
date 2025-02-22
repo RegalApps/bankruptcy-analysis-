@@ -15,14 +15,25 @@ interface DocumentManagementProps {
 export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocumentSelect }) => {
   const [documents, setDocuments] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchDocuments = async () => {
     try {
       console.log("Fetching documents...");
+      setIsLoading(true);
+
       const { data, error } = await supabase
         .from('documents')
-        .select('*')
+        .select(`
+          id,
+          title,
+          type,
+          size,
+          storage_path,
+          created_at,
+          updated_at
+        `)
         .order('updated_at', { ascending: false });
 
       if (error) {
@@ -35,8 +46,14 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
         return;
       }
 
-      console.log('Fetched documents:', data);
-      setDocuments(data || []);
+      // Process and organize documents
+      const processedData = data?.map(doc => ({
+        ...doc,
+        type: doc.type || determineFileType(doc.title)
+      })) || [];
+
+      console.log('Processed documents:', processedData);
+      setDocuments(processedData);
     } catch (error) {
       console.error('Error in fetchDocuments:', error);
       toast({
@@ -44,6 +61,29 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
         title: "Error",
         description: "An unexpected error occurred while fetching documents"
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const determineFileType = (filename: string) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'pdf':
+        return 'PDF Document';
+      case 'doc':
+      case 'docx':
+        return 'Word Document';
+      case 'xls':
+      case 'xlsx':
+        return 'Excel Spreadsheet';
+      case 'ppt':
+      case 'pptx':
+        return 'PowerPoint Presentation';
+      case 'txt':
+        return 'Text Document';
+      default:
+        return 'Other';
     }
   };
 
@@ -85,11 +125,22 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
             />
             <DocumentUploadButton />
           </div>
-          <DocumentList 
-            documents={documents}
-            searchQuery={searchQuery}
-            onDocumentSelect={onDocumentSelect}
-          />
+          {isLoading ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {[...Array(4)].map((_, i) => (
+                <div 
+                  key={i}
+                  className="h-[120px] rounded-lg border bg-card animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <DocumentList 
+              documents={documents}
+              searchQuery={searchQuery}
+              onDocumentSelect={onDocumentSelect}
+            />
+          )}
         </div>
 
         <div className="space-y-6">
