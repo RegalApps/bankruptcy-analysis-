@@ -1,14 +1,221 @@
 import { FormTemplate, FormField, ValidationRule } from "./types.ts";
 
-// Enhanced validation patterns
+// Enhanced validation patterns with more sophisticated matching
 const validationPatterns = {
-  postalCode: '^[A-Za-z]\\d[A-Za-z][ -]?\\d[A-Za-z]\\d$',
-  phoneNumber: '^(?:\\+1|1)?[-. ]?\\(?[0-9]{3}\\)?[-. ]?[0-9]{3}[-. ]?[0-9]{4}$',
-  email: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+  postalCode: {
+    CA: '^[ABCEGHJ-NPRSTVXY]\\d[ABCEGHJ-NPRSTV-Z][ -]?\\d[ABCEGHJ-NPRSTV-Z]\\d$',
+    US: '^\\d{5}(-\\d{4})?$'
+  },
+  phoneNumber: {
+    standard: '^(?:\\+1|1)?[-. ]?\\(?[0-9]{3}\\)?[-. ]?[0-9]{3}[-. ]?[0-9]{4}$',
+    international: '^\\+(?:[0-9] ?){6,14}[0-9]$'
+  },
+  email: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
   sinNumber: '^\\d{3}-\\d{3}-\\d{3}$',
-  businessNumber: '^\\d{9}[A-Za-z]{2}\\d{4}$',
-  courtFileNumber: '^[A-Z]{2}-\\d{2}-\\d{5}$',
-  currencyAmount: '^\\$?\\d{1,3}(?:,\\d{3})*(?:\\.\\d{2})?$'
+  businessNumber: {
+    corporation: '^\\d{9}[A-Z]{2}\\d{4}$',
+    partnership: '^\\d{9}[P][A-Z]\\d{4}$',
+    trust: '^\\d{9}[T][A-Z]\\d{4}$'
+  },
+  courtFileNumber: '^[A-Z]{2}-\\d{2}-\\d{5}-[A-Z]{2}$',
+  currencyAmount: '^\\$?\\d{1,3}(?:,\\d{3})*(?:\\.\\d{2})?$',
+  percentageValue: '^\\d{1,3}(?:\\.\\d{1,2})?%?$',
+  legalEntityName: '^[A-Za-z0-9\\s.,&\'()-]{1,100}$',
+  estateNumber: '^[A-Z]{2}\\d{8}$'
+};
+
+// Enhanced regulatory frameworks
+const regulatoryFrameworks = {
+  bia: {
+    debtThresholds: {
+      personal: 1000,
+      corporate: 5000,
+      farming: 25000
+    },
+    timeframes: {
+      stayPeriod: 30,
+      creditorsNotice: 21,
+      dischargeWait: {
+        firstTime: 9,
+        secondTime: 24,
+        thirdTime: 36
+      }
+    },
+    documentationRequirements: [
+      'incomeStatements',
+      'assetInventory',
+      'creditorList',
+      'taxReturns',
+      'monthlyExpenses'
+    ]
+  },
+  ccaa: {
+    thresholds: {
+      minDebt: 5000000,
+      minCreditors: 10,
+      minEmployees: 50
+    },
+    votingRequirements: {
+      valueThreshold: 0.662,
+      numberThreshold: 0.5
+    }
+  },
+  wura: {
+    conditions: {
+      minLiabilities: 1000000,
+      ceaseBusinessDays: 60,
+      petitionThreshold: 0.25
+    }
+  }
+};
+
+// Enhanced cross-validation scenarios
+interface CrossValidationRule {
+  fields: string[];
+  validate: (values: Record<string, string | undefined>) => ValidationError[];
+  category: string;
+}
+
+interface ValidationError {
+  field: string;
+  type: 'error' | 'warning';
+  message: string;
+  code: string;
+  context?: Record<string, any>;
+}
+
+const crossValidationScenarios: Record<string, CrossValidationRule[]> = {
+  bankruptcy: [
+    {
+      fields: ['totalAssets', 'totalLiabilities', 'monthlyIncome', 'monthlyExpenses'],
+      validate: (values) => {
+        const errors: ValidationError[] = [];
+        const assets = parseFloat(values.totalAssets?.replace(/[$,]/g, '') || '0');
+        const liabilities = parseFloat(values.totalLiabilities?.replace(/[$,]/g, '') || '0');
+        const monthlyIncome = parseFloat(values.monthlyIncome?.replace(/[$,]/g, '') || '0');
+        const monthlyExpenses = parseFloat(values.monthlyExpenses?.replace(/[$,]/g, '') || '0');
+        
+        // Solvency test
+        if (assets > liabilities * 1.2) {
+          errors.push({
+            field: 'solvency',
+            type: 'warning',
+            message: 'Assets significantly exceed liabilities',
+            code: 'SOLVENCY_CHECK',
+            context: { assets, liabilities, ratio: assets / liabilities }
+          });
+        }
+
+        // Income surplus test
+        const surplusRatio = (monthlyIncome - monthlyExpenses) / monthlyExpenses;
+        if (surplusRatio > 0.3) {
+          errors.push({
+            field: 'income_surplus',
+            type: 'warning',
+            message: 'Significant monthly surplus detected',
+            code: 'SURPLUS_CHECK',
+            context: { surplus: monthlyIncome - monthlyExpenses, ratio: surplusRatio }
+          });
+        }
+
+        return errors;
+      },
+      category: 'bankruptcy'
+    }
+  ],
+  proposal: [
+    {
+      fields: ['proposalAmount', 'totalDebt', 'monthlyPayment', 'proposalTerm', 'securedDebt'],
+      validate: (values) => {
+        const errors: ValidationError[] = [];
+        const proposalAmount = parseFloat(values.proposalAmount?.replace(/[$,]/g, '') || '0');
+        const totalDebt = parseFloat(values.totalDebt?.replace(/[$,]/g, '') || '0');
+        const securedDebt = parseFloat(values.securedDebt?.replace(/[$,]/g, '') || '0');
+        const monthlyPayment = parseFloat(values.monthlyPayment?.replace(/[$,]/g, '') || '0');
+        const term = parseInt(values.proposalTerm || '0');
+
+        // Proposal viability check
+        const unsecuredDebt = totalDebt - securedDebt;
+        if (proposalAmount < unsecuredDebt * 0.3) {
+          errors.push({
+            field: 'proposal_viability',
+            type: 'warning',
+            message: 'Proposal amount may be too low for unsecured creditors',
+            code: 'LOW_PROPOSAL_RATIO',
+            context: { 
+              proposalAmount, 
+              unsecuredDebt,
+              recommendedMinimum: unsecuredDebt * 0.3 
+            }
+          });
+        }
+
+        // Payment schedule feasibility
+        const totalPayments = monthlyPayment * term;
+        if (totalPayments < proposalAmount) {
+          errors.push({
+            field: 'payment_schedule',
+            type: 'error',
+            message: 'Payment schedule insufficient to meet proposal amount',
+            code: 'INSUFFICIENT_PAYMENTS',
+            context: { 
+              totalPayments,
+              proposalAmount,
+              shortfall: proposalAmount - totalPayments 
+            }
+          });
+        }
+
+        return errors;
+      },
+      category: 'proposal'
+    }
+  ],
+  corporateRestructuring: [
+    {
+      fields: ['operatingCash', 'projectedRevenue', 'currentLiabilities', 'restructuringCosts'],
+      validate: (values) => {
+        const errors: ValidationError[] = [];
+        const cash = parseFloat(values.operatingCash?.replace(/[$,]/g, '') || '0');
+        const revenue = parseFloat(values.projectedRevenue?.replace(/[$,]/g, '') || '0');
+        const liabilities = parseFloat(values.currentLiabilities?.replace(/[$,]/g, '') || '0');
+        const costs = parseFloat(values.restructuringCosts?.replace(/[$,]/g, '') || '0');
+
+        // Cash flow adequacy
+        if (cash < costs * 1.5) {
+          errors.push({
+            field: 'cash_adequacy',
+            type: 'warning',
+            message: 'Operating cash may be insufficient for restructuring',
+            code: 'INSUFFICIENT_CASH',
+            context: { 
+              cash,
+              costs,
+              recommendedBuffer: costs * 1.5 
+            }
+          });
+        }
+
+        // Revenue projection feasibility
+        if (revenue < liabilities * 1.2) {
+          errors.push({
+            field: 'revenue_projection',
+            type: 'warning',
+            message: 'Projected revenue may be insufficient to service liabilities',
+            code: 'LOW_REVENUE_PROJECTION',
+            context: { 
+              revenue,
+              liabilities,
+              recommendedRatio: 1.2 
+            }
+          });
+        }
+
+        return errors;
+      },
+      category: 'corporateRestructuring'
+    }
+  ]
 };
 
 // Enhanced validation rules
@@ -34,7 +241,7 @@ const advancedValidations = {
   minLength: (length: number): ValidationRule => ({
     rule: 'minLength',
     message: `Must be at least ${length} characters long`,
-    params: { length }
+    params: { length },
   }),
   maxLength: (length: number): ValidationRule => ({
     rule: 'maxLength',
@@ -224,6 +431,21 @@ export const validateFormData = (formNumber: string, data: any) => {
     warnings.push(...proposalValidation.warnings);
   }
 
+  // Cross-validation scenarios
+  const formType = template.category;
+  if (crossValidationScenarios[formType]) {
+    crossValidationScenarios[formType].forEach(scenario => {
+      const scenarioErrors = scenario.validate(data);
+      scenarioErrors.forEach(validationError => {
+        if (validationError.type === 'error') {
+          errors.push(validationError.message);
+        } else if (validationError.type === 'warning') {
+          warnings.push(validationError.message);
+        }
+      });
+    });
+  }
+
   // Field validation with enhanced pattern matching
   template.requiredFields.forEach(field => {
     const value = data[field.name];
@@ -323,5 +545,44 @@ interface ComplianceResult {
   message: string;
 }
 
+// Define the FormTemplate type
+interface FormTemplate {
+  formNumber: string;
+  category: string;
+  requiredFields: FormField[];
+}
+
+// Mock formTemplates object (replace with your actual data)
+const formTemplates: { [key: string]: FormTemplate } = {
+  "Form 1": {
+    formNumber: "Form 1",
+    category: "bankruptcy",
+    requiredFields: [
+      { name: "totalAssets", type: "currency", required: true },
+      { name: "totalLiabilities", type: "currency", required: true },
+      { name: "monthlyIncome", type: "currency", required: true },
+      { name: "monthlyExpenses", type: "currency", required: true },
+      { name: "bankruptcyDate", type: "date", required: true },
+      { name: "lastEmploymentDate", type: "date", required: true },
+    ],
+  },
+  "Form 2": {
+    formNumber: "Form 2",
+    category: "proposal",
+    requiredFields: [
+      { name: "proposalAmount", type: "currency", required: true },
+      { name: "totalDebt", type: "currency", required: true },
+      { name: "monthlyPayment", type: "currency", required: true },
+      { name: "proposalTerm", type: "text", required: true },
+      { name: "securedDebt", type: "currency", required: true },
+    ],
+  },
+};
+
 // Export types
-export type { FormField, ValidationRule } from "./types.ts";
+export type {
+  FormField,
+  ValidationRule,
+  ValidationError,
+  CrossValidationRule
+} from "./types.ts";
