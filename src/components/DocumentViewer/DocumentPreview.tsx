@@ -19,6 +19,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const publicUrl = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
 
   useEffect(() => {
+    console.log('DocumentPreview mounted with storagePath:', storagePath);
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
@@ -33,14 +34,15 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       setAnalyzing(true);
       
       // First, get the document text content
-      console.log('Fetching document from URL:', publicUrl);
+      console.log('Attempting to fetch document from URL:', publicUrl);
       const response = await fetch(publicUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch document: ${response.statusText}`);
       }
 
       const documentText = await response.text();
-      console.log('Document text fetched, length:', documentText.length);
+      console.log('Document text fetched successfully, length:', documentText.length);
+      console.log('First 200 characters of document:', documentText.substring(0, 200));
 
       // Clean the text content by removing any potential formatting or special characters
       const cleanedText = documentText
@@ -49,6 +51,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         .trim(); // Remove leading/trailing whitespace
 
       console.log('Cleaned text length:', cleanedText.length);
+      console.log('First 200 characters of cleaned text:', cleanedText.substring(0, 200));
 
       // Get the document record to get its ID
       const { data: documents, error: fetchError } = await supabase
@@ -62,7 +65,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         throw new Error('Could not find document record');
       }
 
-      console.log('Calling analyze-document function with document ID:', documents.id);
+      console.log('Found document record with ID:', documents.id);
+      console.log('Calling analyze-document function...');
 
       // Call the analyze-document function
       const { data, error } = await supabase.functions.invoke('analyze-document', {
@@ -77,7 +81,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         throw error;
       }
 
-      console.log('Analysis complete:', data);
+      console.log('Analysis complete, result:', data);
 
       toast({
         title: "Analysis Complete",
