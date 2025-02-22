@@ -21,11 +21,18 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['pdfjs-dist']
+    include: ['pdfjs-dist/build/pdf.worker.min.js']
   },
   build: {
     commonjsOptions: {
       include: [/pdfjs-dist/]
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          pdfworker: ['pdfjs-dist/build/pdf.worker.min.js']
+        }
+      }
     }
   }
 }));
