@@ -27,5 +27,11 @@ export default defineConfig(({ mode }) => ({
     commonjsOptions: {
       include: [/pdfjs-dist/]
     }
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+    // Force PDF.js worker to use the CDN URL
+    'typeof window': JSON.stringify('object'),
+    'global': 'globalThis',
   }
 }));
