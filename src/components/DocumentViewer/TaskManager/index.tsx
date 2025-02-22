@@ -1,11 +1,14 @@
 
 import { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import type { Task } from "../types";
 import { TaskItem } from "./TaskItem";
 import { TaskFilter } from "./TaskFilter";
 import { EmptyState } from "./EmptyState";
+import { TaskCreationDialog } from "./TaskCreationDialog";
+import { Button } from "@/components/ui/button";
 
 interface TaskManagerProps {
   documentId: string;
@@ -23,6 +26,7 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
   const { toast } = useToast();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   useEffect(() => {
     fetchAvailableUsers();
@@ -106,7 +110,17 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Tasks</h3>
-        <TaskFilter currentFilter={filter} onFilterChange={setFilter} />
+        <div className="flex items-center gap-2">
+          <TaskFilter currentFilter={filter} onFilterChange={setFilter} />
+          <Button
+            size="sm"
+            onClick={() => setIsCreatingTask(true)}
+            className="flex items-center gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            New Task
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -124,6 +138,14 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
           <EmptyState filter={filter} />
         )}
       </div>
+
+      <TaskCreationDialog 
+        isOpen={isCreatingTask}
+        onClose={() => setIsCreatingTask(false)}
+        documentId={documentId}
+        availableUsers={availableUsers}
+        onTaskCreated={onTaskUpdate}
+      />
     </div>
   );
 };
