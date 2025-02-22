@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Upload, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -18,9 +17,9 @@ export const FileUpload = () => {
   const abortController = useRef<AbortController | null>(null);
   const { toast } = useToast();
 
-  const updateStatus = (step: number, message: string) => {
-    setStatus({ step, message });
-    setUploadProgress(Math.min((step / 4) * 100, 100));
+  const updateProgress = (message: string, percentage?: number) => {
+    setStatus({ step: percentage ? Math.floor(percentage / 25) : 0, message });
+    setUploadProgress(percentage || 0);
   };
 
   const resetUpload = () => {
@@ -46,34 +45,28 @@ export const FileUpload = () => {
     }
 
     setIsUploading(true);
-    updateStatus(1, "Starting upload process...");
+    updateProgress("Starting upload process...", 5);
     abortController.current = new AbortController();
     let uploadedFileName: string | null = null;
 
     try {
-      // Step 1: Authentication check
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Step 2: Upload file to storage
-      updateStatus(2, "Uploading file to secure storage...");
       const { fileName, documentData } = await uploadToStorage(
         file,
         user.id,
-        (message) => updateStatus(2, message)
+        updateProgress
       );
       uploadedFileName = fileName;
 
-      // Step 3: Analyze document
-      updateStatus(3, "Analyzing document content...");
       try {
         await handleDocumentUpload(
           file,
           documentData.id,
-          (message) => updateStatus(3, message)
+          updateProgress
         );
 
-        setUploadProgress(100);
         toast({
           title: "Success",
           description: "File uploaded and analyzed successfully"
