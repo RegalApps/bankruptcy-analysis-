@@ -1,24 +1,16 @@
 
 import { GlobalWorkerOptions } from 'pdfjs-dist';
 
-// Configure worker to use the bundled worker file
-GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url
-).href;
-
-// Define version and base URL (using unpkg as fallback for cmaps)
-const PDFJS_VERSION = '4.10.38';
-const BASE_URL = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}`;
-
-// Export configuration with updated worker settings
-export const PDF_CONFIG = {
-  cMapUrl: `${BASE_URL}/cmaps/`,
+// Remove the CDN worker configuration and use the bundled worker
+const PDF_CONFIG = {
+  cMapUrl: `https://unpkg.com/pdfjs-dist@4.10.38/cmaps/`,
   cMapPacked: true,
-  standardFontDataUrl: `${BASE_URL}/standard_fonts/`,
+  standardFontDataUrl: `https://unpkg.com/pdfjs-dist@4.10.38/standard_fonts/`,
   enableWorker: true,
   useWorker: true,
   disableFontFace: false,
   isEvalSupported: true,
   useSystemFonts: false,
 };
+
+export { PDF_CONFIG };

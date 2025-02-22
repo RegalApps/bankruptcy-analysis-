@@ -4,6 +4,10 @@ import { PDF_CONFIG } from './utils/pdfConfig';
 import { isScannedPage, pageToImage } from './utils/pdfPageUtils';
 import { performOCR } from './utils/ocrUtils';
 
+// Initialize PDF.js with the worker
+const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs');
+pdfjs.GlobalWorkerOptions.workerPort = new pdfjsWorker.PDFWorker();
+
 export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => {
   try {
     console.log('Starting PDF text extraction...');
