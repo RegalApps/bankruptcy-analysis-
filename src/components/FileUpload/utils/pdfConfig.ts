@@ -1,7 +1,7 @@
 
 import { GlobalWorkerOptions } from 'pdfjs-dist';
 
-// Remove the CDN worker configuration and use the bundled worker
+// Basic configuration without worker settings (worker is configured in pdfUtils.ts)
 const PDF_CONFIG = {
   cMapUrl: `https://unpkg.com/pdfjs-dist@4.10.38/cmaps/`,
   cMapPacked: true,
