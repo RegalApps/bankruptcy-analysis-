@@ -27,8 +27,15 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+
+  // Update local tasks when props change
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
 
   useEffect(() => {
+    console.log('Setting up real-time subscription for document:', documentId);
     fetchAvailableUsers();
 
     // Set up real-time subscription for tasks
@@ -44,6 +51,22 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
         },
         (payload) => {
           console.log('Task change detected:', payload);
+          const { eventType } = payload;
+          
+          // Update local state immediately for better UX
+          if (eventType === 'INSERT') {
+            const newTask = payload.new as Task;
+            setLocalTasks(prev => [...prev, newTask]);
+          } else if (eventType === 'UPDATE') {
+            const updatedTask = payload.new as Task;
+            setLocalTasks(prev => 
+              prev.map(task => 
+                task.id === updatedTask.id ? updatedTask : task
+              )
+            );
+          }
+          
+          // Also trigger the parent update
           onTaskUpdate();
         }
       )
@@ -52,6 +75,7 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
       });
 
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [documentId]);
@@ -120,7 +144,7 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
     }
   };
 
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = localTasks.filter(task => {
     if (filter === 'all') return true;
     if (filter === 'pending') return ['pending', 'in_progress'].includes(task.status);
     return task.status === 'completed';
