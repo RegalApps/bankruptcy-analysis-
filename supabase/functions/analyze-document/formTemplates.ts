@@ -1,122 +1,149 @@
-import { FormTemplate, FormField, ValidationRule, ValidationError } from "./types.ts";
-import { validationPatterns } from "./validation/patterns.ts";
-import { regulatoryFrameworks } from "./validation/regulatoryFrameworks.ts";
-import { crossValidationScenarios } from "./validation/crossValidation.ts";
-import {
-  validateDate,
-  validateCurrency,
-  validateText,
-  checkRegulationCompliance
-} from "./validation/helpers.ts";
 
-export const validateFormData = (formNumber: string, data: any) => {
-  const template = formTemplates[formNumber];
+import { OSBFormTemplate, ValidationRule } from "./types.ts";
+import { validationPatterns } from "./validation/patterns.ts";
+
+export const osbFormTemplates: Record<string, OSBFormTemplate> = {
+  "1": {
+    formNumber: "1",
+    title: "Assignment for the General Benefit of Creditors",
+    category: "bankruptcy",
+    subcategory: "consumer_bankruptcy",
+    purpose: "Initial filing to commence bankruptcy proceedings",
+    relatedForms: ["2", "3", "4"],
+    clientInfoFields: ["debtorName", "address", "occupation"],
+    keyDates: ["assignmentDate"],
+    monetaryFields: ["totalAssets", "totalLiabilities"],
+    requiredFields: [
+      {
+        name: "debtorName",
+        type: "text",
+        required: true,
+        osbReference: "BIA.49",
+        formNumbers: ["1"],
+        description: "Full legal name of the debtor"
+      },
+      {
+        name: "assignmentDate",
+        type: "date",
+        required: true,
+        osbReference: "BIA.49(1)",
+        formNumbers: ["1"],
+        description: "Date of the assignment"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "totalAssets",
+        riskType: "financial",
+        severity: "high",
+        description: "Asset value significantly different from liabilities"
+      },
+      {
+        field: "assignmentDate",
+        riskType: "compliance",
+        severity: "high",
+        description: "Assignment date must be within required filing period"
+      }
+    ]
+  },
+  "2": {
+    formNumber: "2",
+    title: "Statement of Affairs (Non-Business Bankruptcy)",
+    category: "bankruptcy",
+    subcategory: "consumer_bankruptcy",
+    purpose: "Detailed disclosure of debtor's financial situation",
+    relatedForms: ["1", "3", "4"],
+    clientInfoFields: ["debtorName", "address", "maritalStatus", "dependents"],
+    keyDates: ["statementDate"],
+    monetaryFields: [
+      "totalAssets",
+      "totalLiabilities",
+      "monthlyIncome",
+      "monthlyExpenses"
+    ],
+    requiredFields: [
+      {
+        name: "debtorName",
+        type: "text",
+        required: true,
+        osbReference: "BIA.158",
+        formNumbers: ["2"],
+        description: "Full legal name of the debtor"
+      },
+      {
+        name: "maritalStatus",
+        type: "select",
+        required: true,
+        options: ["Single", "Married", "Separated", "Divorced", "Widowed"],
+        osbReference: "BIA.158(d)",
+        formNumbers: ["2"],
+        description: "Current marital status"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "monthlyIncome",
+        riskType: "financial",
+        severity: "high",
+        description: "Income may be sufficient to support a proposal"
+      },
+      {
+        field: "assets",
+        riskType: "compliance",
+        severity: "high",
+        description: "Undisclosed or undervalued assets"
+      }
+    ]
+  }
+  // ... Additional forms would be added here
+};
+
+export function validateOSBForm(formNumber: string, data: any): ValidationError[] {
+  const template = osbFormTemplates[formNumber];
   if (!template) {
-    return {
-      valid: false,
-      errors: [{
-        field: 'form',
-        type: 'error',
-        message: 'Invalid form number',
-        code: 'INVALID_FORM'
-      }],
-      warnings: [],
-      regulatoryIssues: []
-    };
+    throw new Error(`No template found for form ${formNumber}`);
   }
 
-  const validationResults: ValidationError[] = [];
+  const errors: ValidationError[] = [];
 
-  // Field-level validation
+  // Validate required fields
   template.requiredFields.forEach(field => {
-    const value = data[field.name];
-    
-    if (field.required && !value) {
-      validationResults.push({
+    if (field.required && !data[field.name]) {
+      errors.push({
         field: field.name,
         type: 'error',
-        message: `${field.name} is required`,
+        message: `${field.name} is required for Form ${formNumber}`,
         code: 'REQUIRED_FIELD'
       });
-      return;
     }
+  });
 
+  // Check for risk indicators
+  template.riskIndicators.forEach(indicator => {
+    const value = data[indicator.field];
     if (value) {
-      // Type-specific validation
-      switch (field.type) {
-        case 'date':
-          validateDate(field.name, value, validationResults);
+      // Add risk-based validation logic here
+      switch (indicator.riskType) {
+        case 'financial':
+          // Financial risk checks
           break;
-        case 'currency':
-          validateCurrency(field.name, value, validationResults);
+        case 'compliance':
+          // Compliance risk checks
           break;
-        case 'text':
-          validateText(field.name, value, field.pattern, validationResults);
+        case 'legal':
+          // Legal risk checks
           break;
-      }
-
-      // Regulatory compliance checks
-      if (field.regulatoryReferences) {
-        checkRegulationCompliance(field, value, validationResults);
+        case 'operational':
+          // Operational risk checks
+          break;
       }
     }
   });
 
-  // Cross-field validation
-  const relevantRules = crossValidationScenarios[template.category] || [];
-  relevantRules.forEach(rule => {
-    const fieldValues = rule.fields.reduce((acc, field) => ({
-      ...acc,
-      [field]: data[field]
-    }), {});
-
-    const crossErrors = rule.validate(fieldValues);
-    validationResults.push(...crossErrors);
-  });
-
-  // Categorize validation results
-  const errors = validationResults.filter(r => r.type === 'error');
-  const warnings = validationResults.filter(r => r.type === 'warning');
-  const regulatoryIssues = validationResults.filter(r => r.type === 'regulatory');
-
-  return {
-    valid: errors.length === 0,
-    errors,
-    warnings,
-    regulatoryIssues,
-    details: validationResults
-  };
-};
-
-// Mock formTemplates object (replace with your actual data)
-const formTemplates: { [key: string]: FormTemplate } = {
-  "Form 1": {
-    formNumber: "Form 1",
-    category: "bankruptcy",
-    requiredFields: [
-      { name: "totalAssets", type: "currency", required: true },
-      { name: "totalLiabilities", type: "currency", required: true },
-      { name: "monthlyIncome", type: "currency", required: true },
-      { name: "monthlyExpenses", type: "currency", required: true },
-      { name: "bankruptcyDate", type: "date", required: true },
-      { name: "lastEmploymentDate", type: "date", required: true },
-    ],
-  },
-  "Form 2": {
-    formNumber: "Form 2",
-    category: "proposal",
-    requiredFields: [
-      { name: "proposalAmount", type: "currency", required: true },
-      { name: "totalDebt", type: "currency", required: true },
-      { name: "monthlyPayment", type: "currency", required: true },
-      { name: "proposalTerm", type: "text", required: true },
-      { name: "securedDebt", type: "currency", required: true },
-    ],
-  },
-};
+  return errors;
+}
 
 export type {
-  FormField,
-  ValidationRule,
-  ValidationError,
+  OSBFormTemplate,
+  ValidationRule
 } from "./types.ts";
