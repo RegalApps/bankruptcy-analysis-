@@ -1,4 +1,3 @@
-
 import { FormTemplate, FormField, ValidationRule } from "./types.ts";
 
 // Enhanced validation patterns
