@@ -1,10 +1,12 @@
+
 import * as pdfjs from 'pdfjs-dist';
 import { PDF_CONFIG } from './utils/pdfConfig';
 import { isScannedPage, pageToImage } from './utils/pdfPageUtils';
 import { performOCR } from './utils/ocrUtils';
 
 // Initialize PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs');
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<string> => {
   try {
