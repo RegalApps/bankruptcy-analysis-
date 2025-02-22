@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -33,9 +34,33 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
     setLocalTasks(tasks);
   }, [tasks]);
 
+  const fetchTasks = async () => {
+    try {
+      console.log('Fetching tasks for document:', documentId);
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('document_id', documentId);
+
+      if (error) throw error;
+
+      console.log('Fetched tasks:', data);
+      setLocalTasks(data || []);
+      onTaskUpdate(); // Notify parent of the update
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch tasks"
+      });
+    }
+  };
+
   useEffect(() => {
     console.log('Setting up real-time subscription for document:', documentId);
     fetchAvailableUsers();
+    fetchTasks(); // Initial fetch of tasks
 
     // Set up real-time subscription for tasks
     const channel = supabase
@@ -48,25 +73,12 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
           table: 'tasks',
           filter: `document_id=eq.${documentId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Task change detected:', payload);
           const { eventType } = payload;
           
-          // Update local state immediately for better UX
-          if (eventType === 'INSERT') {
-            const newTask = payload.new as Task;
-            setLocalTasks(prev => [...prev, newTask]);
-          } else if (eventType === 'UPDATE') {
-            const updatedTask = payload.new as Task;
-            setLocalTasks(prev => 
-              prev.map(task => 
-                task.id === updatedTask.id ? updatedTask : task
-              )
-            );
-          }
-          
-          // Trigger parent update to keep everything in sync
-          onTaskUpdate();
+          // Fetch all tasks after any change to ensure consistent state
+          await fetchTasks();
         }
       )
       .subscribe((status) => {
