@@ -1,5 +1,7 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,13 +13,9 @@ interface Risk {
   description: string;
   severity: 'low' | 'medium' | 'high';
   impact: string;
-  likelihood: string;
-  category: string;
-  regulation?: string;
+  regulation: string;
   requiredAction: string;
   solution: string;
-  references?: string[];
-  color: string; // Hex color code for the risk level
 }
 
 interface DocumentAnalysis {
@@ -51,114 +49,95 @@ function analyzeDocument(text: string): DocumentAnalysis {
     risks: []
   };
 
-  // Basic document info extraction (keep existing code)
+  // Basic form info extraction
   const formMatches = text.match(/FORM (\d+)|Form (\d+)/);
   if (formMatches) {
     analysis.extracted_info.formNumber = formMatches[1] || formMatches[2];
-    // ... keep existing form type detection code
   }
 
-  // Enhanced risk assessment
-  // 1. Deployment & Integration Risk
-  analysis.risks.push({
-    type: 'Integration Risk',
-    category: 'Deployment & Integration',
-    description: 'Document processing workflow integration status',
-    severity: 'high',
-    impact: 'Critical functionality availability affecting complete analysis process',
-    likelihood: 'High - based on system integration checks',
-    color: '#FF0000', // Red
-    requiredAction: 'Verify integration points and automated triggers',
-    solution: 'Implement automated integration testing and monitoring',
-    references: ['BIA Deployment Guidelines Section 3.1', 'System Integration Best Practices'],
-    regulation: 'BIA Technical Standards 2024'
-  });
-
-  // 2. Data Integrity Risk
-  analysis.risks.push({
-    type: 'Data Quality Risk',
-    category: 'Data Integrity & Accuracy',
-    description: 'Document content extraction and validation',
-    severity: 'medium',
-    impact: 'Potential for incomplete or inaccurate analysis results',
-    likelihood: 'Medium - based on content validation checks',
-    color: '#FFFF00', // Yellow
-    requiredAction: 'Implement comprehensive data validation',
-    solution: 'Deploy advanced OCR and content verification systems',
-    references: ['BIA Data Quality Standards', 'Content Validation Framework'],
-    regulation: 'BIA Data Integrity Guidelines'
-  });
-
-  // 3. Security Risk
-  analysis.risks.push({
-    type: 'Security & Privacy Risk',
-    category: 'Security',
-    description: 'Document handling and storage security assessment',
-    severity: 'high',
-    impact: 'Potential exposure of sensitive information',
-    likelihood: 'Medium - requires constant monitoring',
-    color: '#FF0000', // Red
-    requiredAction: 'Review and enhance security measures',
-    solution: 'Implement encryption and access controls',
-    references: ['BIA Security Framework', 'Data Protection Guidelines'],
-    regulation: 'BIA Security Requirements 2024'
-  });
-
-  // Add form-specific risks based on content
-  if (analysis.extracted_info.type === 'meeting') {
+  // BIA Compliance Risks
+  if (!text.includes('Notice of Bankruptcy') && !text.includes('Statement of Affairs')) {
     analysis.risks.push({
-      type: 'Compliance Risk',
-      category: 'Operational',
-      description: 'Meeting of creditors scheduling and notification requirements',
+      type: 'BIA Documentation Risk',
+      description: 'Missing required bankruptcy documentation under BIA Section 49(1)',
       severity: 'high',
-      impact: 'Legal and procedural compliance issues',
-      likelihood: 'High - time-sensitive requirement',
-      color: '#FF0000', // Red
-      requiredAction: 'Schedule meeting within required timeframe',
-      solution: 'Implement automated scheduling and notification system',
-      references: ['BIA Section 102(1)', 'Meeting Procedures Guide'],
-      regulation: 'Bankruptcy and Insolvency Act, Section 102'
+      impact: 'Non-compliance with mandatory bankruptcy filing requirements',
+      regulation: 'Bankruptcy and Insolvency Act (BIA) Section 49(1)',
+      requiredAction: 'Submit complete bankruptcy documentation including Notice of Bankruptcy and Statement of Affairs',
+      solution: 'Review Directive No. 23 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars for documentation requirements'
     });
   }
 
-  // Add accessibility-focused risk assessment
-  analysis.risks.push({
-    type: 'Accessibility Risk',
-    category: 'User Experience',
-    description: 'Document viewer accessibility compliance',
-    severity: 'medium',
-    impact: 'Potential barriers for users with disabilities',
-    likelihood: 'Medium - requires regular assessment',
-    color: '#FFFF00', // Yellow
-    requiredAction: 'Conduct accessibility audit',
-    solution: 'Implement WCAG 2.1 compliance measures',
-    references: ['BIA Accessibility Guidelines', 'WCAG 2.1 Standards'],
-    regulation: 'Accessibility Requirements'
-  });
-
-  // Process validation risk
-  if (!analysis.extracted_info.clientName || !analysis.extracted_info.dateSigned) {
+  // Creditor Meeting Requirements
+  if (text.includes('meeting of creditors') && !text.includes('notice to creditors')) {
     analysis.risks.push({
-      type: 'Documentation Risk',
-      category: 'Data Integrity',
-      description: 'Missing or unclear essential information',
+      type: 'Creditor Meeting Compliance Risk',
+      description: 'Inadequate creditor notification for meeting under BIA Section 102(2)',
       severity: 'high',
-      impact: 'Legal and procedural validity concerns',
-      likelihood: 'High - based on current document state',
-      color: '#FF0000', // Red
-      requiredAction: 'Complete all required fields',
-      solution: 'Implement mandatory field validation',
-      references: ['BIA Documentation Standards', 'Form Completion Guide'],
-      regulation: 'BIA Documentation Requirements'
+      impact: 'Potential invalidation of creditors meeting proceedings',
+      regulation: 'BIA Section 102(2) and Directive No. 9R6',
+      requiredAction: 'Ensure proper notice is given to all creditors within prescribed timeframe',
+      solution: 'Follow notification requirements outlined in Directive No. 9R6 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars'
     });
   }
 
-  console.log('Enhanced analysis completed:', analysis);
+  // Estate Administration
+  if (!text.includes('trustee') || !text.includes('licensed')) {
+    analysis.risks.push({
+      type: 'Trustee Authorization Risk',
+      description: 'Potential unauthorized administration of bankruptcy estate',
+      severity: 'high',
+      impact: 'Violation of BIA trustee licensing requirements',
+      regulation: 'BIA Section 13.2 and Directive No. 13R6',
+      requiredAction: 'Verify trustee licensing status and authorization',
+      solution: 'Consult OSB's Licensed Insolvency Trustee requirements at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars/directive-no-13r6-licensing-trustees'
+    });
+  }
+
+  // Consumer Proposal Compliance
+  if (text.includes('consumer proposal') && !text.includes('assessment certificate')) {
+    analysis.risks.push({
+      type: 'Consumer Proposal Compliance Risk',
+      description: 'Missing mandatory counselling assessment for consumer proposal',
+      severity: 'high',
+      impact: 'Non-compliance with BIA counselling requirements',
+      regulation: 'BIA Directive No. 1R5',
+      requiredAction: 'Complete mandatory counselling sessions and obtain assessment certificate',
+      solution: 'Review counselling requirements in Directive No. 1R5 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars'
+    });
+  }
+
+  // Document Signing and Dating
+  if (!text.includes('signed') || !text.includes('dated')) {
+    analysis.risks.push({
+      type: 'Document Execution Risk',
+      description: 'Improper document execution under BIA requirements',
+      severity: 'high',
+      impact: 'Potential invalidity of bankruptcy documentation',
+      regulation: 'BIA Section 148 and General Rules',
+      requiredAction: 'Ensure all documents are properly signed and dated by authorized parties',
+      solution: 'Review documentation requirements in the BIA General Rules at https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._368/'
+    });
+  }
+
+  // CCAA Compliance (if applicable)
+  if (text.includes('CCAA') || text.includes('Companies\' Creditors Arrangement Act')) {
+    analysis.risks.push({
+      type: 'CCAA Compliance Risk',
+      description: 'Additional compliance requirements under CCAA',
+      severity: 'high',
+      impact: 'Potential non-compliance with CCAA requirements',
+      regulation: 'Companies\' Creditors Arrangement Act (CCAA)',
+      requiredAction: 'Review and ensure compliance with CCAA requirements',
+      solution: 'Consult CCAA guidelines at https://laws-lois.justice.gc.ca/eng/acts/C-36/index.html'
+    });
+  }
+
+  console.log('Enhanced BIA/CCAA compliance analysis completed:', analysis);
   return analysis;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -173,13 +152,11 @@ serve(async (req) => {
     console.log('Starting enhanced document analysis for document:', documentId);
     const analysisResult = analyzeDocument(documentText);
 
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the user who owns the document
     const { data: document, error: docError } = await supabaseClient
       .from('documents')
       .select('user_id')
@@ -191,7 +168,6 @@ serve(async (req) => {
       throw docError;
     }
 
-    // Save analysis results
     const { error: analysisError } = await supabaseClient
       .from('document_analysis')
       .upsert({
