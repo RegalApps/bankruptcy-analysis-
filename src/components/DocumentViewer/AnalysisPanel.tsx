@@ -1,6 +1,6 @@
 
 import { FileText, AlertTriangle, CheckCircle } from "lucide-react";
-import { DocumentDetails } from "./types";
+import { DocumentDetails, Risk } from "./types";
 import { DeadlineManager } from "./DeadlineManager";
 
 interface AnalysisPanelProps {
@@ -9,7 +9,9 @@ interface AnalysisPanelProps {
 }
 
 export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadlineUpdated }) => {
-  const extractedInfo = document.analysis?.[0]?.content?.extracted_info;
+  const analysisContent = document.analysis?.[0]?.content;
+  const extractedInfo = analysisContent?.extracted_info;
+  const risks = analysisContent?.risks || [];
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -62,8 +64,8 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadli
         <div className="p-4 rounded-md bg-muted">
           <h3 className="font-medium mb-2">Risk Assessment</h3>
           <div className="space-y-2">
-            {extractedInfo?.risks ? (
-              extractedInfo.risks.map((risk, index) => (
+            {risks.length > 0 ? (
+              risks.map((risk: Risk, index: number) => (
                 <div key={index} className="flex items-start space-x-2 text-sm">
                   {risk.severity === 'high' ? (
                     <AlertTriangle className={`h-4 w-4 ${getSeverityColor(risk.severity)} mt-0.5`} />
