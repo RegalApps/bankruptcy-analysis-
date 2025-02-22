@@ -1,6 +1,7 @@
 
 // Basic configuration without worker settings (worker is configured in pdfUtils.ts)
 export const PDF_CONFIG = {
+  // Use consistent URL construction for all paths
   cMapUrl: new URL(
     'pdfjs-dist/cmaps/',
     import.meta.url
@@ -10,6 +11,7 @@ export const PDF_CONFIG = {
     'pdfjs-dist/standard_fonts/',
     import.meta.url
   ).toString(),
+  // Core PDF.js configuration
   enableWorker: true,
   useWorker: true,
   disableFontFace: false,

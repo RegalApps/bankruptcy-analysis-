@@ -4,7 +4,7 @@ import { PDF_CONFIG } from './utils/pdfConfig';
 import { isScannedPage, pageToImage } from './utils/pdfPageUtils';
 import { performOCR } from './utils/ocrUtils';
 
-// Initialize PDF.js worker
+// Initialize PDF.js worker with a single, clear configuration
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
   import.meta.url
