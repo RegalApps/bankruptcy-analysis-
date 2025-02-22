@@ -42,31 +42,35 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       const documentText = await response.text();
       console.log('Document text fetched successfully, length:', documentText.length);
-      console.log('First 200 characters of document:', documentText.substring(0, 200));
 
-      // Clean the text content by removing any potential formatting or special characters
+      // Clean the text content
       const cleanedText = documentText
-        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '') // Remove control characters
-        .replace(/```[^`]*```/g, '') // Remove code blocks
-        .trim(); // Remove leading/trailing whitespace
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
+        .replace(/```[^`]*```/g, '')
+        .trim();
 
-      console.log('Cleaned text length:', cleanedText.length);
-      console.log('First 200 characters of cleaned text:', cleanedText.substring(0, 200));
-
-      // Get the document record to get its ID
+      // Get the document record
       const { data: documents, error: fetchError } = await supabase
         .from('documents')
         .select('id')
         .eq('storage_path', storagePath)
         .single();
 
-      if (fetchError) {
-        console.error('Error fetching document record:', fetchError);
-        throw new Error('Could not find document record');
-      }
+      if (fetchError) throw fetchError;
 
-      console.log('Found document record with ID:', documents.id);
-      console.log('Calling analyze-document function...');
+      // Create a new version
+      const { error: versionError } = await supabase
+        .from('document_versions')
+        .insert({
+          document_id: documents.id,
+          version_number: 1,
+          storage_path: storagePath,
+          is_current: true,
+          description: 'Initial analysis',
+          created_by: session.user.id
+        });
+
+      if (versionError) throw versionError;
 
       // Call the analyze-document function
       const { data, error } = await supabase.functions.invoke('analyze-document', {
@@ -76,12 +80,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         }
       });
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
-      }
-
-      console.log('Analysis complete, result:', data);
+      if (error) throw error;
 
       toast({
         title: "Analysis Complete",

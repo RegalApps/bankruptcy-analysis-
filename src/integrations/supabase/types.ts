@@ -76,6 +76,63 @@ export type Database = {
           },
         ]
       }
+      document_versions: {
+        Row: {
+          changes_summary: string | null
+          content: Json | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          document_id: string
+          id: string
+          is_current: boolean | null
+          metadata: Json | null
+          storage_path: string | null
+          version_number: number
+        }
+        Insert: {
+          changes_summary?: string | null
+          content?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_id: string
+          id?: string
+          is_current?: boolean | null
+          metadata?: Json | null
+          storage_path?: string | null
+          version_number: number
+        }
+        Update: {
+          changes_summary?: string | null
+          content?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_id?: string
+          id?: string
+          is_current?: boolean | null
+          metadata?: Json | null
+          storage_path?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "available_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           created_at: string

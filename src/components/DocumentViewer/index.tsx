@@ -5,6 +5,8 @@ import { Sidebar } from "./Sidebar";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { LoadingState } from "./LoadingState";
 import { TaskManager } from "./TaskManager";
+import { VersionTab } from "./VersionTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import logger from "@/utils/logger";
 
 interface DocumentViewerProps {
@@ -28,7 +30,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     );
   }
 
-  // Extract analysis data for better visibility
   const analysis = document.analysis?.[0]?.content;
   logger.debug('Analysis content:', analysis);
 
@@ -42,10 +43,21 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       </div>
 
       <div className="lg:col-span-6">
-        <DocumentPreview 
-          storagePath={document.storage_path} 
-          onAnalysisComplete={fetchDocumentDetails}
-        />
+        <Tabs defaultValue="preview">
+          <TabsList>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+            <TabsTrigger value="versions">Versions</TabsTrigger>
+          </TabsList>
+          <TabsContent value="preview">
+            <DocumentPreview 
+              storagePath={document.storage_path} 
+              onAnalysisComplete={fetchDocumentDetails}
+            />
+          </TabsContent>
+          <TabsContent value="versions">
+            <VersionTab documentId={document.id} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <div className="lg:col-span-3 space-y-6">
