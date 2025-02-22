@@ -30,7 +30,31 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
 
   useEffect(() => {
     fetchAvailableUsers();
-  }, []);
+
+    // Set up real-time subscription for tasks
+    const channel = supabase
+      .channel('tasks_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks',
+          filter: `document_id=eq.${documentId}`
+        },
+        (payload) => {
+          console.log('Task change detected:', payload);
+          onTaskUpdate();
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [documentId]);
 
   const fetchAvailableUsers = async () => {
     try {
@@ -63,8 +87,6 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
         title: "Task Updated",
         description: `Task status changed to ${newStatus}`,
       });
-
-      onTaskUpdate();
     } catch (error) {
       console.error('Error updating task:', error);
       toast({
@@ -88,8 +110,6 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
         title: "Task Assigned",
         description: "Task has been assigned successfully",
       });
-
-      onTaskUpdate();
     } catch (error) {
       console.error('Error assigning task:', error);
       toast({

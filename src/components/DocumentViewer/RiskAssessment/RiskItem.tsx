@@ -4,7 +4,6 @@ import { Alert, AlertDescription, AlertTitle } from "../../ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { Risk } from "./types";
 import { getSeverityBg, getSeverityColor, getSeverityIcon } from "./utils";
-import { CreateTaskButton } from "./CreateTaskButton";
 
 interface RiskItemProps {
   risk: Risk;
@@ -42,7 +41,6 @@ export const RiskItem = ({ risk, documentId }: RiskItemProps) => {
             <p className="text-sm text-muted-foreground mt-1">{risk.description}</p>
           </div>
         </div>
-        <CreateTaskButton risk={risk} documentId={documentId} />
       </div>
 
       {risk.impact && (
