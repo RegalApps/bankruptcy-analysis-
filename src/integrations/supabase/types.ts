@@ -113,7 +113,15 @@ export type Database = {
           url?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "available_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -143,7 +151,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "available_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -203,7 +219,14 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      available_users: {
+        Row: {
+          email: string | null
+          full_name: string | null
+          id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

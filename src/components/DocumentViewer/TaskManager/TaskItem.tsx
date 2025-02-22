@@ -6,17 +6,33 @@ import {
   AlertOctagon,
   Clock,
   CheckCircle2,
-  XCircle
+  XCircle,
+  UserCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Task } from "../types";
+
+interface AvailableUser {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
 
 interface TaskItemProps {
   task: Task;
+  availableUsers: AvailableUser[];
   onUpdateStatus: (taskId: string, newStatus: Task['status']) => void;
+  onAssignTask: (taskId: string, userId: string) => void;
 }
 
-export const TaskItem = ({ task, onUpdateStatus }: TaskItemProps) => {
+export const TaskItem = ({ task, availableUsers, onUpdateStatus, onAssignTask }: TaskItemProps) => {
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'low':
@@ -43,6 +59,8 @@ export const TaskItem = ({ task, onUpdateStatus }: TaskItemProps) => {
     }
   };
 
+  const assignedUser = availableUsers.find(user => user.id === task.assigned_to);
+
   return (
     <div className="p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
       <div className="flex items-start justify-between gap-4">
@@ -68,6 +86,24 @@ export const TaskItem = ({ task, onUpdateStatus }: TaskItemProps) => {
                 <span className="font-medium">Regulation:</span> {task.regulation}
               </p>
             )}
+            <div className="mt-2 flex items-center gap-2">
+              <UserCircle2 className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={task.assigned_to || ""}
+                onValueChange={(value) => onAssignTask(task.id, value)}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Assign to..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableUsers.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.full_name || user.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>

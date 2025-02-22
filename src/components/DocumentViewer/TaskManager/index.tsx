@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import type { Task } from "../types";
@@ -13,9 +13,38 @@ interface TaskManagerProps {
   onTaskUpdate: () => void;
 }
 
+interface AvailableUser {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
 export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProps) => {
   const { toast } = useToast();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
+
+  useEffect(() => {
+    fetchAvailableUsers();
+  }, []);
+
+  const fetchAvailableUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('available_users')
+        .select('*');
+
+      if (error) throw error;
+      setAvailableUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching available users:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch available users"
+      });
+    }
+  };
 
   const handleUpdateTaskStatus = async (taskId: string, newStatus: Task['status']) => {
     try {
@@ -42,6 +71,31 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
     }
   };
 
+  const handleAssignTask = async (taskId: string, userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ assigned_to: userId })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Task Assigned",
+        description: "Task has been assigned successfully",
+      });
+
+      onTaskUpdate();
+    } catch (error) {
+      console.error('Error assigning task:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to assign task"
+      });
+    }
+  };
+
   const filteredTasks = tasks.filter(task => {
     if (filter === 'all') return true;
     if (filter === 'pending') return ['pending', 'in_progress'].includes(task.status);
@@ -61,7 +115,9 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
             <TaskItem 
               key={task.id} 
               task={task} 
+              availableUsers={availableUsers}
               onUpdateStatus={handleUpdateTaskStatus}
+              onAssignTask={handleAssignTask}
             />
           ))
         ) : (
