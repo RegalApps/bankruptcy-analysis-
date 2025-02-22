@@ -1,14 +1,14 @@
 
-import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import type { Task } from "../types";
 import { TaskItem } from "./TaskItem";
-import { TaskFilter } from "./TaskFilter";
 import { EmptyState } from "./EmptyState";
 import { TaskCreationDialog } from "./TaskCreationDialog";
-import { Button } from "@/components/ui/button";
+import { TaskHeader } from "./components/TaskHeader";
+import { useTaskManager } from "./hooks/useTaskManager";
+import { useAvailableUsers } from "./hooks/useAvailableUsers";
+import { updateTaskStatus, assignTask } from "./services/taskService";
 
 interface TaskManagerProps {
   documentId: string;
@@ -16,99 +16,17 @@ interface TaskManagerProps {
   onTaskUpdate: () => void;
 }
 
-interface AvailableUser {
-  id: string;
-  full_name: string | null;
-  email: string;
-}
-
 export const TaskManager = ({ documentId, tasks: initialTasks, onTaskUpdate }: TaskManagerProps) => {
   const { toast } = useToast();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
-  const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
-  const [localTasks, setLocalTasks] = useState<Task[]>(initialTasks);
-
-  const fetchTasks = async () => {
-    try {
-      console.log('Fetching tasks for document:', documentId);
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('document_id', documentId);
-
-      if (error) throw error;
-
-      console.log('Fetched tasks:', data);
-      setLocalTasks(data || []);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch tasks"
-      });
-    }
-  };
-
-  useEffect(() => {
-    console.log('Setting up real-time subscription for document:', documentId);
-    fetchAvailableUsers();
-    fetchTasks();
-
-    const channel = supabase
-      .channel('tasks_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks',
-          filter: `document_id=eq.${documentId}`
-        },
-        async (payload) => {
-          console.log('Task change detected:', payload);
-          await fetchTasks();
-          onTaskUpdate();
-        }
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-      });
-
-    return () => {
-      console.log('Cleaning up real-time subscription');
-      supabase.removeChannel(channel);
-    };
-  }, [documentId, onTaskUpdate]);
-
-  const fetchAvailableUsers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('available_users')
-        .select('*');
-
-      if (error) throw error;
-      setAvailableUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching available users:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch available users"
-      });
-    }
-  };
+  
+  const { localTasks } = useTaskManager({ documentId, initialTasks, onTaskUpdate });
+  const { availableUsers } = useAvailableUsers();
 
   const handleUpdateTaskStatus = async (taskId: string, newStatus: Task['status']) => {
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: newStatus })
-        .eq('id', taskId);
-
-      if (error) throw error;
-
+      await updateTaskStatus(taskId, newStatus);
       toast({
         title: "Task Updated",
         description: `Task status changed to ${newStatus}`,
@@ -125,13 +43,7 @@ export const TaskManager = ({ documentId, tasks: initialTasks, onTaskUpdate }: T
 
   const handleAssignTask = async (taskId: string, userId: string) => {
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ assigned_to: userId })
-        .eq('id', taskId);
-
-      if (error) throw error;
-
+      await assignTask(taskId, userId);
       toast({
         title: "Task Assigned",
         description: "Task has been assigned successfully",
@@ -154,20 +66,11 @@ export const TaskManager = ({ documentId, tasks: initialTasks, onTaskUpdate }: T
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Tasks</h3>
-        <div className="flex items-center gap-2">
-          <TaskFilter currentFilter={filter} onFilterChange={setFilter} />
-          <Button
-            size="sm"
-            onClick={() => setIsCreatingTask(true)}
-            className="flex items-center gap-1"
-          >
-            <Plus className="h-4 w-4" />
-            New Task
-          </Button>
-        </div>
-      </div>
+      <TaskHeader 
+        filter={filter}
+        onFilterChange={setFilter}
+        onCreateTask={() => setIsCreatingTask(true)}
+      />
 
       <div className="space-y-3">
         {filteredTasks.length > 0 ? (
