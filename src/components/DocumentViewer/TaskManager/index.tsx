@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +64,9 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
               )
             );
           }
+          
+          // Trigger parent update to keep everything in sync
+          onTaskUpdate();
         }
       )
       .subscribe((status) => {
@@ -75,7 +77,7 @@ export const TaskManager = ({ documentId, tasks, onTaskUpdate }: TaskManagerProp
       console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
-  }, [documentId]);
+  }, [documentId, onTaskUpdate]);
 
   const fetchAvailableUsers = async () => {
     try {
