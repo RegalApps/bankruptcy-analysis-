@@ -16,8 +16,15 @@ export const handleDocumentUpload = async (
     if (file.type === 'application/pdf') {
       updateProgress('Processing PDF document...', 20);
       const arrayBuffer = await file.arrayBuffer();
-      documentText = await extractTextFromPdf(arrayBuffer);
-      console.log('Extracted PDF text length:', documentText.length);
+      const result = await extractTextFromPdf(arrayBuffer);
+      documentText = result.text;
+      
+      if (result.errors.length > 0) {
+        console.warn(`PDF processing completed with ${result.errors.length} errors`);
+        console.warn('Pages with errors:', result.errors.map(e => e.pageNum).join(', '));
+      }
+      
+      console.log(`Successfully processed ${result.successfulPages} of ${result.totalPages} pages`);
       updateProgress('PDF text extraction complete', 40);
     } else {
       const text = await file.text();
