@@ -1,5 +1,5 @@
-import { ValidationError, CrossValidationRule } from './types';
-import { regulatoryFrameworks } from './regulatoryFrameworks';
+import { ValidationError, CrossValidationRule } from './types.ts';
+import { regulatoryFrameworks } from './regulatoryFrameworks.ts';
 
 export const crossValidationScenarios: Record<string, CrossValidationRule[]> = {
   bankruptcy: [
@@ -38,6 +38,7 @@ export const crossValidationScenarios: Record<string, CrossValidationRule[]> = {
       category: 'bankruptcy'
     }
   ],
+
   proposal: [
     {
       fields: ['proposalAmount', 'totalDebt', 'monthlyPayment', 'proposalTerm', 'securedDebt'],
@@ -84,6 +85,7 @@ export const crossValidationScenarios: Record<string, CrossValidationRule[]> = {
       category: 'proposal'
     }
   ],
+
   corporateRestructuring: [
     {
       fields: ['operatingCash', 'projectedRevenue', 'currentLiabilities', 'restructuringCosts'],
@@ -127,6 +129,7 @@ export const crossValidationScenarios: Record<string, CrossValidationRule[]> = {
       category: 'corporateRestructuring'
     }
   ],
+
   farmingOperations: [
     {
       fields: ['farmingIncome', 'totalDebt', 'landValue', 'equipmentValue', 'cropInventory'],
@@ -167,6 +170,7 @@ export const crossValidationScenarios: Record<string, CrossValidationRule[]> = {
       category: 'farmingOperations'
     }
   ],
+
   pensionRestructuring: [
     {
       fields: ['fundingRatio', 'planAssets', 'planLiabilities', 'employerContributions'],
@@ -208,6 +212,7 @@ export const crossValidationScenarios: Record<string, CrossValidationRule[]> = {
       category: 'pensionRestructuring'
     }
   ],
+
   securitiesRestructuring: [
     {
       fields: ['workingCapital', 'customerAssets', 'segregatedFunds', 'operatingCapital'],
