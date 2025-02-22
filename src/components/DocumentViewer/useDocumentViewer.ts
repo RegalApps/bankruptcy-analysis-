@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -44,7 +43,7 @@ export const useDocumentViewer = (documentId: string) => {
             analysisContent = JSON.parse(analysisContent);
           }
 
-          // Process and validate extracted information
+          // Ensure extracted info has all required fields
           const extractedInfo = {
             // Client Information
             clientName: analysisContent.extracted_info?.clientName || '',
@@ -53,8 +52,8 @@ export const useDocumentViewer = (documentId: string) => {
             clientId: analysisContent.extracted_info?.clientId || '',
             
             // Document Details
-            formNumber: analysisContent.extracted_info?.formNumber || '',
-            formType: analysisContent.extracted_info?.type || document.type,
+            formNumber: analysisContent.extracted_info?.formNumber || document.title.match(/Form\s+(\d+)/)?.[1] || '',
+            formType: analysisContent.extracted_info?.type || document.type || '',
             dateSigned: analysisContent.extracted_info?.dateSigned || '',
             
             // Trustee Information
@@ -79,7 +78,7 @@ export const useDocumentViewer = (documentId: string) => {
             summary: analysisContent.extracted_info?.summary || '',
           };
 
-          // Process risks with severity levels and recommendations
+          // Ensure risks are properly formatted
           const risks = (analysisContent.risks || []).map((risk: any) => ({
             type: risk.type || 'Unknown Risk',
             description: risk.description || '',
@@ -114,9 +113,9 @@ export const useDocumentViewer = (documentId: string) => {
         analysis: processedAnalysis
       };
       
-      setDocument(processedDocument);
       console.log('Final processed document:', processedDocument);
 
+      setDocument(processedDocument);
     } catch (error: any) {
       console.error('Error fetching document details:', error);
       toast({

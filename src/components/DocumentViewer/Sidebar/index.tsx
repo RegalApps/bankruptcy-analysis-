@@ -4,6 +4,7 @@ import { DocumentDetails } from "../DocumentDetails";
 import { RiskAssessment } from "../RiskAssessment";
 import { DeadlineManager } from "../DeadlineManager";
 import { DocumentDetails as DocumentDetailsType } from "../types";
+import logger from "@/utils/logger";
 
 interface SidebarProps {
   document: DocumentDetailsType;
@@ -13,7 +14,23 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated }) => {
   // Safely access the extracted_info, handling potential undefined values
   const extractedInfo = document.analysis?.[0]?.content?.extracted_info;
-  console.log('Extracted info in Sidebar:', extractedInfo); // Debug log
+  const risks = document.analysis?.[0]?.content?.risks;
+
+  // Add logging to help debug data flow
+  logger.debug('Extracted info in Sidebar:', extractedInfo);
+  logger.debug('Risks in Sidebar:', risks);
+
+  if (!extractedInfo && !risks) {
+    return (
+      <div className="rounded-lg border bg-card p-6">
+        <DocumentHeader title={document.title} type={document.type} />
+        <div className="text-center py-4 text-muted-foreground">
+          <p>No analysis data available.</p>
+          <p className="text-sm mt-2">Try clicking "Analyze Document" in the preview panel.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border bg-card p-6">
@@ -38,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
           summary={extractedInfo?.summary}
         />
         <RiskAssessment 
-          risks={extractedInfo?.risks} 
+          risks={risks} 
           documentId={document.id}
         />
         <DeadlineManager 

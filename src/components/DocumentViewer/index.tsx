@@ -5,6 +5,7 @@ import { Sidebar } from "./Sidebar";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { LoadingState } from "./LoadingState";
 import { TaskManager } from "./TaskManager";
+import logger from "@/utils/logger";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -12,6 +13,9 @@ interface DocumentViewerProps {
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) => {
   const { document, loading, fetchDocumentDetails } = useDocumentViewer(documentId);
+
+  // Add logging to help debug data flow
+  logger.debug('Document data in DocumentViewer:', document);
 
   if (loading) {
     return <LoadingState />;
@@ -25,11 +29,23 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     );
   }
 
+  // Extract analysis data for better visibility
+  const analysis = document.analysis?.[0]?.content;
+  logger.debug('Analysis content:', analysis);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="lg:col-span-3 space-y-6">
         <Sidebar 
-          document={document} 
+          document={{
+            ...document,
+            analysis: document.analysis ? [{
+              content: {
+                extracted_info: analysis?.extracted_info || {},
+                risks: analysis?.risks || []
+              }
+            }] : []
+          }}
           onDeadlineUpdated={fetchDocumentDetails} 
         />
       </div>
