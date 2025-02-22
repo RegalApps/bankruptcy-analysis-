@@ -1,5 +1,39 @@
+import { FormTemplate, FormField, ValidationRule } from "./types.ts";
 
-import { FormTemplate } from "./types.ts";
+// Common validation rules that can be reused across forms
+const commonValidations = {
+  required: (fieldName: string): ValidationRule => ({
+    rule: 'required',
+    message: `${fieldName} is required`
+  }),
+  date: (): ValidationRule => ({
+    rule: 'validDate',
+    message: 'Must be a valid date'
+  }),
+  currency: (): ValidationRule => ({
+    rule: 'currency',
+    message: 'Must be a valid currency amount'
+  }),
+  caseNumber: (): ValidationRule => ({
+    rule: 'pattern',
+    message: 'Must be in format XX-XXXXX',
+    params: { pattern: '^\\d{2}-\\d{5}$' }
+  })
+};
+
+// Common regulatory references
+const commonRegulations = {
+  bankruptcy: {
+    bia: ['43(1)', '43(2)', '43(3)'],
+    ccaa: ['4', '5'],
+    osb: ['31', '33']
+  },
+  proposal: {
+    bia: ['50(1)', '50(2)', '50(3)'],
+    ccaa: ['6', '7'],
+    osb: ['21', '22']
+  }
+};
 
 export const formTemplates: Record<string, FormTemplate> = {
   "1": {
@@ -138,11 +172,163 @@ export const formTemplates: Record<string, FormTemplate> = {
       claimDate: ["Date:", "Claim Date", "Filing Date"]
     }
   },
-  // ... Additional form templates would be added here following the same pattern
-  // Forms 8-96 would follow similar structure based on specific requirements
+  "8": {
+    formNumber: "8",
+    title: "Assignment for General Benefit of Creditors",
+    description: "Document for voluntary assignment into bankruptcy",
+    category: "bankruptcy",
+    requiredFields: [
+      {
+        name: "assignorName",
+        type: "text",
+        required: true,
+        description: "Name of person making assignment",
+        regulatoryReferences: {
+          bia: ['49(1)'],
+          osb: ['31']
+        }
+      },
+      {
+        name: "assignmentDate",
+        type: "date",
+        required: true,
+        description: "Date of assignment",
+        regulatoryReferences: {
+          bia: ['49(2)']
+        }
+      }
+    ],
+    validationRules: {
+      assignorName: [commonValidations.required("Assignor name")],
+      assignmentDate: [
+        commonValidations.required("Assignment date"),
+        commonValidations.date()
+      ]
+    },
+    fieldMappings: {
+      assignorName: ["Assignor:", "Name of Assignor", "Debtor Name"],
+      assignmentDate: ["Date of Assignment:", "Assignment Date", "Date"]
+    },
+    regulatoryFramework: commonRegulations.bankruptcy
+  },
+  "9": {
+    formNumber: "9",
+    title: "Certificate of Assignment",
+    description: "Official certification of bankruptcy assignment",
+    category: "bankruptcy",
+    requiredFields: [
+      {
+        name: "officialReceiver",
+        type: "text",
+        required: true,
+        description: "Name of Official Receiver",
+        regulatoryReferences: {
+          bia: ['49(3)'],
+          osb: ['32']
+        }
+      },
+      {
+        name: "certificateDate",
+        type: "date",
+        required: true,
+        description: "Date of certificate"
+      }
+    ],
+    validationRules: {
+      officialReceiver: [commonValidations.required("Official Receiver name")],
+      certificateDate: [
+        commonValidations.required("Certificate date"),
+        commonValidations.date()
+      ]
+    },
+    fieldMappings: {
+      officialReceiver: ["Official Receiver:", "Receiver Name", "OR Name"],
+      certificateDate: ["Certificate Date:", "Date Issued", "Date"]
+    },
+    regulatoryFramework: commonRegulations.bankruptcy
+  },
+  "21": {
+    formNumber: "21",
+    title: "Statement of Receipts and Disbursements",
+    description: "Financial statement of bankruptcy administration",
+    category: "administrative",
+    requiredFields: [
+      {
+        name: "totalReceipts",
+        type: "currency",
+        required: true,
+        description: "Total receipts amount",
+        regulatoryReferences: {
+          bia: ['152(1)'],
+          osb: ['75']
+        }
+      },
+      {
+        name: "totalDisbursements",
+        type: "currency",
+        required: true,
+        description: "Total disbursements amount"
+      }
+    ],
+    validationRules: {
+      totalReceipts: [
+        commonValidations.required("Total receipts"),
+        commonValidations.currency()
+      ],
+      totalDisbursements: [
+        commonValidations.required("Total disbursements"),
+        commonValidations.currency()
+      ]
+    },
+    fieldMappings: {
+      totalReceipts: ["Total Receipts:", "Receipts Total", "Income"],
+      totalDisbursements: ["Total Disbursements:", "Disbursements", "Expenses"]
+    },
+    regulatoryFramework: {
+      bia: ['152', '153'],
+      ccaa: [],
+      osb: ['75', '76']
+    }
+  },
+  "47": {
+    formNumber: "47",
+    title: "Consumer Proposal",
+    description: "Proposal to creditors under Division II",
+    category: "proposal",
+    requiredFields: [
+      {
+        name: "proposalAmount",
+        type: "currency",
+        required: true,
+        description: "Total proposal amount",
+        regulatoryReferences: {
+          bia: ['66.13'],
+          osb: ['42']
+        }
+      },
+      {
+        name: "paymentSchedule",
+        type: "text",
+        required: true,
+        description: "Payment schedule details"
+      }
+    ],
+    validationRules: {
+      proposalAmount: [
+        commonValidations.required("Proposal amount"),
+        commonValidations.currency()
+      ],
+      paymentSchedule: [commonValidations.required("Payment schedule")]
+    },
+    fieldMappings: {
+      proposalAmount: ["Proposal Amount:", "Total Proposal", "Amount Offered"],
+      paymentSchedule: ["Payment Schedule:", "Schedule of Payments", "Terms"]
+    },
+    regulatoryFramework: commonRegulations.proposal
+  }
 };
 
-// Helper function to validate forms
+// Enhanced validation function
 export const validateFormData = (formNumber: string, data: any) => {
   const template = formTemplates[formNumber];
   if (!template) {
@@ -150,23 +336,76 @@ export const validateFormData = (formNumber: string, data: any) => {
   }
 
   const errors: string[] = [];
+  const warnings: string[] = [];
+
   template.requiredFields.forEach(field => {
+    // Required field validation
     if (field.required && !data[field.name]) {
       errors.push(`${field.name} is required`);
     }
+
+    // Type-specific validation
+    if (data[field.name]) {
+      switch (field.type) {
+        case 'date':
+          if (!isValidDate(data[field.name])) {
+            errors.push(`${field.name} must be a valid date`);
+          }
+          break;
+        case 'currency':
+          if (!isValidCurrency(data[field.name])) {
+            errors.push(`${field.name} must be a valid currency amount`);
+          }
+          break;
+        case 'number':
+          if (isNaN(Number(data[field.name]))) {
+            errors.push(`${field.name} must be a valid number`);
+          }
+          break;
+      }
+    }
+
+    // Pattern validation
     if (data[field.name] && field.pattern) {
       const regex = new RegExp(field.pattern);
       if (!regex.test(data[field.name])) {
         errors.push(`${field.name} format is invalid`);
       }
     }
+
+    // Regulatory compliance checks
+    if (field.regulatoryReferences) {
+      Object.entries(field.regulatoryReferences).forEach(([framework, sections]) => {
+        sections.forEach(section => {
+          if (!isCompliantWithRegulation(data[field.name], framework, section)) {
+            warnings.push(`${field.name} may not comply with ${framework} section ${section}`);
+          }
+        });
+      });
+    }
   });
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
+    warnings
   };
 };
 
-// Export types for type safety
-export type { FormField } from "./types.ts";
+// Helper functions for validation
+function isValidDate(dateStr: string): boolean {
+  const date = new Date(dateStr);
+  return !isNaN(date.getTime());
+}
+
+function isValidCurrency(amount: string): boolean {
+  return /^\$?\d+(\.\d{2})?$/.test(amount.toString());
+}
+
+function isCompliantWithRegulation(value: any, framework: string, section: string): boolean {
+  // Implement specific regulatory compliance checks
+  // This would contain actual logic to verify compliance with specific sections
+  return true; // Placeholder
+}
+
+export type { FormField, ValidationRule } from "./types.ts";
