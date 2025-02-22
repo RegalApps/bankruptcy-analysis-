@@ -10,7 +10,7 @@ const checkBIADocumentation = (text: string): Risk | null => {
       impact: 'Non-compliance with mandatory bankruptcy filing requirements',
       regulation: 'Bankruptcy and Insolvency Act (BIA) Section 49(1)',
       requiredAction: 'Submit complete bankruptcy documentation including Notice of Bankruptcy and Statement of Affairs',
-      solution: 'Review Directive No. 23 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars for documentation requirements'
+      solution: "Review Directive No. 23 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars for documentation requirements"
     };
   }
   return null;
@@ -25,7 +25,7 @@ const checkCreditorMeeting = (text: string): Risk | null => {
       impact: 'Potential invalidation of creditors meeting proceedings',
       regulation: 'BIA Section 102(2) and Directive No. 9R6',
       requiredAction: 'Ensure proper notice is given to all creditors within prescribed timeframe',
-      solution: 'Follow notification requirements outlined in Directive No. 9R6 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars'
+      solution: "Follow notification requirements outlined in Directive No. 9R6 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars"
     };
   }
   return null;
@@ -40,7 +40,7 @@ const checkTrusteeAuthorization = (text: string): Risk | null => {
       impact: 'Violation of BIA trustee licensing requirements',
       regulation: 'BIA Section 13.2 and Directive No. 13R6',
       requiredAction: 'Verify trustee licensing status and authorization',
-      solution: 'Consult OSB's Licensed Insolvency Trustee requirements at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars/directive-no-13r6-licensing-trustees'
+      solution: "Consult OSB's Licensed Insolvency Trustee requirements at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars/directive-no-13r6-licensing-trustees"
     };
   }
   return null;
@@ -55,7 +55,7 @@ const checkConsumerProposal = (text: string): Risk | null => {
       impact: 'Non-compliance with BIA counselling requirements',
       regulation: 'BIA Directive No. 1R5',
       requiredAction: 'Complete mandatory counselling sessions and obtain assessment certificate',
-      solution: 'Review counselling requirements in Directive No. 1R5 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars'
+      solution: "Review counselling requirements in Directive No. 1R5 at https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/directives-and-circulars"
     };
   }
   return null;
@@ -70,7 +70,7 @@ const checkDocumentExecution = (text: string): Risk | null => {
       impact: 'Potential invalidity of bankruptcy documentation',
       regulation: 'BIA Section 148 and General Rules',
       requiredAction: 'Ensure all documents are properly signed and dated by authorized parties',
-      solution: 'Review documentation requirements in the BIA General Rules at https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._368/'
+      solution: "Review documentation requirements in the BIA General Rules at https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._368/"
     };
   }
   return null;
@@ -85,7 +85,7 @@ const checkCCAACompliance = (text: string): Risk | null => {
       impact: 'Potential non-compliance with CCAA requirements',
       regulation: 'Companies\' Creditors Arrangement Act (CCAA)',
       requiredAction: 'Review and ensure compliance with CCAA requirements',
-      solution: 'Consult CCAA guidelines at https://laws-lois.justice.gc.ca/eng/acts/C-36/index.html'
+      solution: "Consult CCAA guidelines at https://laws-lois.justice.gc.ca/eng/acts/C-36/index.html"
     };
   }
   return null;

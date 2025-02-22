@@ -55,8 +55,8 @@ export interface DocumentDetails {
         dateSigned?: string;
         officialReceiver?: string;
         summary?: string;
-        risks?: Risk[];
       };
+      risks: Risk[];
     };
   }[];
   comments?: {

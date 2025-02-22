@@ -14,7 +14,6 @@ interface DocumentViewerProps {
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) => {
   const { document, loading, fetchDocumentDetails } = useDocumentViewer(documentId);
 
-  // Add logging to help debug data flow
   logger.debug('Document data in DocumentViewer:', document);
 
   if (loading) {
@@ -37,15 +36,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div className="lg:col-span-3 space-y-6">
         <Sidebar 
-          document={{
-            ...document,
-            analysis: document.analysis ? [{
-              content: {
-                extracted_info: analysis?.extracted_info || {},
-                risks: analysis?.risks || []
-              }
-            }] : []
-          }}
+          document={document}
           onDeadlineUpdated={fetchDocumentDetails} 
         />
       </div>

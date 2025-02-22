@@ -12,15 +12,14 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated }) => {
-  // Safely access the extracted_info, handling potential undefined values
-  const extractedInfo = document.analysis?.[0]?.content?.extracted_info;
-  const risks = document.analysis?.[0]?.content?.risks;
+  const analysisContent = document.analysis?.[0]?.content;
+  const extractedInfo = analysisContent?.extracted_info;
+  const risks = analysisContent?.risks || [];
 
-  // Add logging to help debug data flow
   logger.debug('Extracted info in Sidebar:', extractedInfo);
   logger.debug('Risks in Sidebar:', risks);
 
-  if (!extractedInfo && !risks) {
+  if (!extractedInfo && risks.length === 0) {
     return (
       <div className="rounded-lg border bg-card p-6">
         <DocumentHeader title={document.title} type={document.type} />
