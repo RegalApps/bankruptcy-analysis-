@@ -1,6 +1,12 @@
 
 import { GlobalWorkerOptions } from 'pdfjs-dist';
-import 'pdfjs-dist/build/pdf.worker.js';
+
+// Configure worker
+// @ts-ignore - Path exists in node_modules but TS doesn't recognize it
+GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).href;
 
 // Define version and base URL
 const PDFJS_VERSION = '4.10.38';
