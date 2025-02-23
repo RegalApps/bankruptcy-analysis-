@@ -18,4 +18,11 @@ export interface Document {
     client_name?: string;
     [key: string]: any;
   };
+  // Add new properties to match the database schema
+  is_folder?: boolean;
+  folder_type?: string;
+  parent_folder_id?: string;
+  ai_processing_status?: string;
+  ai_confidence_score?: number;
+  url?: string;
 }

@@ -54,7 +54,11 @@ export const organizeDocumentsIntoTree = (docs: Document[]): DocumentNode[] => {
             title: 'Uncategorized',
             type: 'folder',
             is_folder: true,
-            folder_type: 'uncategorized'
+            folder_type: 'uncategorized',
+            storage_path: '',
+            size: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           documents: []
         };
