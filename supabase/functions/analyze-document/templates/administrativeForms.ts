@@ -700,5 +700,181 @@ export const administrativeForms: Record<string, OSBFormTemplate> = {
         }
       }
     ]
+  },
+  "66": {
+    formNumber: "66",
+    title: "Notice of Conditional Order of Discharge",
+    category: "administrative",
+    subcategory: "discharge",
+    purpose: "Conditional discharge notification",
+    relatedForms: ["63", "64", "65"],
+    clientInfoFields: [
+      "bankruptName",
+      "courtInfo",
+      "trusteeInfo"
+    ],
+    keyDates: [
+      "orderDate",
+      "notificationDate",
+      "conditionDeadline"
+    ],
+    monetaryFields: [
+      "requiredPayment",
+      "monthlyInstallment"
+    ],
+    requiredFields: [
+      {
+        name: "conditions",
+        type: "text",
+        required: true,
+        osbReference: "BIA.172",
+        formNumbers: ["66"],
+        description: "Discharge conditions"
+      },
+      {
+        name: "paymentSchedule",
+        type: "text",
+        required: true,
+        osbReference: "BIA.172",
+        formNumbers: ["66"],
+        description: "Payment schedule details"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "notificationDate",
+        riskType: "compliance",
+        severity: "high",
+        description: "Order notification timing",
+        threshold: {
+          type: "days",
+          value: 5,
+          comparison: "maximum",
+          baseline: "orderDate"
+        }
+      }
+    ]
+  },
+  "67": {
+    formNumber: "67",
+    title: "Notice of Deemed Annulment of Bankruptcy",
+    category: "administrative",
+    subcategory: "annulment",
+    purpose: "Bankruptcy annulment notice",
+    relatedForms: ["66", "68"],
+    clientInfoFields: [
+      "bankruptName",
+      "estateNumber",
+      "creditorList"
+    ],
+    keyDates: [
+      "bankruptcyDate",
+      "annulmentDate",
+      "noticeDate"
+    ],
+    monetaryFields: [
+      "totalClaims",
+      "totalPayments"
+    ],
+    requiredFields: [
+      {
+        name: "annulmentReason",
+        type: "text",
+        required: true,
+        osbReference: "BIA.181",
+        formNumbers: ["67"],
+        description: "Reason for annulment"
+      },
+      {
+        name: "effectiveDate",
+        type: "date",
+        required: true,
+        osbReference: "BIA.181",
+        formNumbers: ["67"],
+        description: "Effective date of annulment"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "noticeDate",
+        riskType: "compliance",
+        severity: "high",
+        description: "Notice timing compliance",
+        threshold: {
+          type: "days",
+          value: 10,
+          comparison: "maximum",
+          baseline: "annulmentDate"
+        }
+      }
+    ]
+  },
+  "68": {
+    formNumber: "68",
+    title: "Notice of Final Dividend and Application for Discharge of Trustee",
+    category: "administrative",
+    subcategory: "dividend",
+    purpose: "Final dividend distribution",
+    relatedForms: ["66", "67"],
+    clientInfoFields: [
+      "trusteeInfo",
+      "estateNumber",
+      "creditorList"
+    ],
+    keyDates: [
+      "applicationDate",
+      "dividendDate",
+      "objectionsDeadline"
+    ],
+    monetaryFields: [
+      "totalEstate",
+      "totalClaims",
+      "dividendAmount",
+      "trusteeRemuneration"
+    ],
+    requiredFields: [
+      {
+        name: "dividendDetails",
+        type: "text",
+        required: true,
+        osbReference: "BIA.152",
+        formNumbers: ["68"],
+        description: "Dividend calculation details"
+      },
+      {
+        name: "remuneration",
+        type: "text",
+        required: true,
+        osbReference: "BIA.152",
+        formNumbers: ["68"],
+        description: "Trustee remuneration details"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "trusteeRemuneration",
+        riskType: "financial",
+        severity: "medium",
+        description: "Remuneration analysis",
+        threshold: {
+          type: "percentage",
+          value: 20,
+          comparison: "maximum",
+          baseline: "totalEstate"
+        }
+      },
+      {
+        field: "dividendAmount",
+        riskType: "financial",
+        severity: "high",
+        description: "Dividend ratio analysis",
+        threshold: {
+          type: "percentage",
+          value: 5,
+          comparison: "minimum",
+          baseline: "totalClaims"
+        }
+      }
+    ]
   }
 };
