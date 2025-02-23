@@ -44,6 +44,51 @@ export type Database = {
           },
         ]
       }
+      document_audit_log: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          document_id: string | null
+          id: string
+          new_state: Json | null
+          previous_state: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          new_state?: Json | null
+          previous_state?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          new_state?: Json | null
+          previous_state?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_audit_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "available_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_comments: {
         Row: {
           content: string
@@ -69,6 +114,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "document_comments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_metadata: {
+        Row: {
+          confidence_scores: Json | null
+          created_at: string | null
+          document_id: string | null
+          extracted_metadata: Json | null
+          id: string
+          manual_metadata: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          confidence_scores?: Json | null
+          created_at?: string | null
+          document_id?: string | null
+          extracted_metadata?: Json | null
+          id?: string
+          manual_metadata?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          confidence_scores?: Json | null
+          created_at?: string | null
+          document_id?: string | null
+          extracted_metadata?: Json | null
+          id?: string
+          manual_metadata?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_metadata_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
@@ -135,10 +218,15 @@ export type Database = {
       }
       documents: {
         Row: {
+          ai_confidence_score: number | null
+          ai_processing_status: string | null
           created_at: string
           deadlines: Json[] | null
+          folder_type: string | null
           id: string
+          is_folder: boolean | null
           metadata: Json | null
+          parent_folder_id: string | null
           size: number | null
           storage_path: string | null
           title: string
@@ -148,10 +236,15 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          ai_confidence_score?: number | null
+          ai_processing_status?: string | null
           created_at?: string
           deadlines?: Json[] | null
+          folder_type?: string | null
           id?: string
+          is_folder?: boolean | null
           metadata?: Json | null
+          parent_folder_id?: string | null
           size?: number | null
           storage_path?: string | null
           title: string
@@ -161,10 +254,15 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          ai_confidence_score?: number | null
+          ai_processing_status?: string | null
           created_at?: string
           deadlines?: Json[] | null
+          folder_type?: string | null
           id?: string
+          is_folder?: boolean | null
           metadata?: Json | null
+          parent_folder_id?: string | null
           size?: number | null
           storage_path?: string | null
           title?: string
@@ -174,6 +272,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "documents_parent_folder_id_fkey"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "documents_user_id_fkey"
             columns: ["user_id"]
