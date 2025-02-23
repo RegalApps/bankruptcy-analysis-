@@ -1,383 +1,100 @@
+<lov-code>
 import { OSBFormTemplate } from "../types.ts";
 
 const administrativeForms: Record<string, OSBFormTemplate> = {
   "53": {
     formNumber: "53",
-    title: "Notice of Intention to Make a Proposal",
+    title: "Notice of Bankruptcy and First Meeting of Creditors",
     category: "administrative",
-    subcategory: "proposal",
-    purpose: "Initiate proposal process",
-    relatedForms: ["50", "51"],
+    subcategory: "bankruptcy",
+    purpose: "Inform creditors of bankruptcy and meeting",
+    relatedForms: ["54", "55"],
     clientInfoFields: [
       "debtorInfo",
       "trusteeInfo",
-      "creditorInfo"
+      "courtInfo"
     ],
     keyDates: [
-      "filingDate",
+      "bankruptcyDate",
       "meetingDate",
-      "deadlineDate"
+      "filingDeadline"
     ],
-    monetaryFields: [
-      "totalDebt",
-      "assetsValue",
-      "proposedPayment"
-    ],
+    monetaryFields: [],
     requiredFields: [
       {
-        name: "proposalTerms",
+        name: "debtorName",
         type: "text",
         required: true,
-        osbReference: "BIA.50.1",
-        directives: ["11R2"],
+        osbReference: "BIA.102",
+        directives: ["12R2"],
         formNumbers: ["53"],
-        description: "Terms of the proposal"
+        description: "Debtor's full legal name"
       },
       {
-        name: "creditorList",
-        type: "table",
+        name: "meetingLocation",
+        type: "text",
         required: true,
-        osbReference: "BIA.50.2",
-        directives: ["11R2"],
+        osbReference: "BIA.102",
+        directives: ["12R2"],
         formNumbers: ["53"],
-        description: "List of creditors"
+        description: "Location of the first creditors meeting"
       }
     ],
     riskIndicators: [
       {
-        field: "totalDebt",
-        riskType: "financial",
-        severity: "medium",
-        description: "High debt to asset ratio",
-        regulation: "BIA.50",
-        directive: "11R2",
+        field: "meetingDate",
+        riskType: "regulatory",
+        severity: "high",
+        description: "Compliance with meeting notice timeframe",
+        regulation: "BIA.102",
+        directive: "12R2",
         threshold: {
-          type: "ratio",
-          value: 0.75,
-          comparison: "greater",
-          baseline: "assetsValue"
+          type: "days",
+          value: 21,
+          comparison: "minimum",
+          baseline: "bankruptcyDate"
         }
       }
     ]
   },
   "54": {
     formNumber: "54",
-    title: "Proposal",
-    category: "administrative",
-    subcategory: "proposal",
-    purpose: "Formalize proposal terms",
-    relatedForms: ["53", "55"],
-    clientInfoFields: [
-      "debtorInfo",
-      "trusteeInfo",
-      "creditorInfo"
-    ],
-    keyDates: [
-      "proposalDate",
-      "acceptanceDate",
-      "implementationDate"
-    ],
-    monetaryFields: [
-      "totalDebt",
-      "assetsValue",
-      "paymentTerms"
-    ],
-    requiredFields: [
-      {
-        name: "paymentSchedule",
-        type: "text",
-        required: true,
-        osbReference: "BIA.54.1",
-        directives: ["11R2"],
-        formNumbers: ["54"],
-        description: "Schedule of payments"
-      },
-      {
-        name: "creditorApproval",
-        type: "checkbox",
-        required: true,
-        osbReference: "BIA.54.2",
-        directives: ["11R2"],
-        formNumbers: ["54"],
-        description: "Creditor approval status"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "paymentTerms",
-        riskType: "financial",
-        severity: "medium",
-        description: "Unrealistic payment terms",
-        regulation: "BIA.54",
-        directive: "11R2",
-        threshold: {
-          type: "percentage",
-          value: 0.1,
-          comparison: "less",
-          baseline: "totalDebt"
-        }
-      }
-    ]
-  },
-  "55": {
-    formNumber: "55",
-    title: "Certificate of Full Performance of Proposal",
-    category: "administrative",
-    subcategory: "proposal",
-    purpose: "Certify proposal completion",
-    relatedForms: ["54", "56"],
-    clientInfoFields: [
-      "debtorInfo",
-      "trusteeInfo"
-    ],
-    keyDates: [
-      "performanceDate",
-      "certificationDate"
-    ],
-    monetaryFields: [
-      "totalPaid",
-      "originalDebt"
-    ],
-    requiredFields: [
-      {
-        name: "trusteeStatement",
-        type: "text",
-        required: true,
-        osbReference: "BIA.66.1",
-        directives: ["11R2"],
-        formNumbers: ["55"],
-        description: "Trustee statement of completion"
-      },
-      {
-        name: "debtorRelease",
-        type: "checkbox",
-        required: true,
-        osbReference: "BIA.66.2",
-        directives: ["11R2"],
-        formNumbers: ["55"],
-        description: "Debtor release confirmation"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "totalPaid",
-        riskType: "financial",
-        severity: "low",
-        description: "Discrepancy in total paid vs original debt",
-        regulation: "BIA.66",
-        directive: "11R2",
-        threshold: {
-          type: "percentage",
-          value: 0.05,
-          comparison: "greater",
-          baseline: "originalDebt"
-        }
-      }
-    ]
-  },
-  "56": {
-    formNumber: "56",
-    title: "Notice of Default Under Proposal",
-    category: "administrative",
-    subcategory: "proposal",
-    purpose: "Notify proposal default",
-    relatedForms: ["55", "57"],
-    clientInfoFields: [
-      "debtorInfo",
-      "trusteeInfo",
-      "creditorInfo"
-    ],
-    keyDates: [
-      "defaultDate",
-      "noticeDate"
-    ],
-    monetaryFields: [
-      "amountOutstanding",
-      "originalDebt"
-    ],
-    requiredFields: [
-      {
-        name: "defaultReason",
-        type: "text",
-        required: true,
-        osbReference: "BIA.66.3",
-        directives: ["11R2"],
-        formNumbers: ["56"],
-        description: "Reason for default"
-      },
-      {
-        name: "creditorRemedies",
-        type: "text",
-        required: true,
-        osbReference: "BIA.66.4",
-        directives: ["11R2"],
-        formNumbers: ["56"],
-        description: "Creditor remedies"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "amountOutstanding",
-        riskType: "financial",
-        severity: "high",
-        description: "Significant amount outstanding after default",
-        regulation: "BIA.66",
-        directive: "11R2",
-        threshold: {
-          type: "percentage",
-          value: 0.2,
-          comparison: "greater",
-          baseline: "originalDebt"
-        }
-      }
-    ]
-  },
-  "57": {
-    formNumber: "57",
-    title: "Assignment for the General Benefit of Creditors",
-    category: "administrative",
-    subcategory: "bankruptcy",
-    purpose: "Assign assets to trustee",
-    relatedForms: ["56", "58"],
-    clientInfoFields: [
-      "assignorInfo",
-      "trusteeInfo",
-      "creditorInfo"
-    ],
-    keyDates: [
-      "assignmentDate",
-      "effectiveDate"
-    ],
-    monetaryFields: [
-      "estimatedAssets",
-      "totalLiabilities"
-    ],
-    requiredFields: [
-      {
-        name: "assetList",
-        type: "table",
-        required: true,
-        osbReference: "BIA.73.1",
-        directives: ["12R2"],
-        formNumbers: ["57"],
-        description: "List of assigned assets"
-      },
-      {
-        name: "liabilityList",
-        type: "table",
-        required: true,
-        osbReference: "BIA.73.2",
-        directives: ["12R2"],
-        formNumbers: ["57"],
-        description: "List of liabilities"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "totalLiabilities",
-        riskType: "financial",
-        severity: "high",
-        description: "High liabilities compared to assets",
-        regulation: "BIA.73",
-        directive: "12R2",
-        threshold: {
-          type: "ratio",
-          value: 0.9,
-          comparison: "greater",
-          baseline: "estimatedAssets"
-        }
-      }
-    ]
-  },
-  "58": {
-    formNumber: "58",
-    title: "Statement of Affairs",
-    category: "administrative",
-    subcategory: "bankruptcy",
-    purpose: "Detail financial status",
-    relatedForms: ["57", "59"],
-    clientInfoFields: [
-      "bankruptInfo",
-      "trusteeInfo"
-    ],
-    keyDates: [
-      "statementDate"
-    ],
-    monetaryFields: [
-      "assetsRealizable",
-      "liabilitiesTotal"
-    ],
-    requiredFields: [
-      {
-        name: "assetValuation",
-        type: "text",
-        required: true,
-        osbReference: "BIA.78.1",
-        directives: ["12R2"],
-        formNumbers: ["58"],
-        description: "Method of asset valuation"
-      },
-      {
-        name: "liabilityDetails",
-        type: "text",
-        required: true,
-        osbReference: "BIA.78.2",
-        directives: ["12R2"],
-        formNumbers: ["58"],
-        description: "Details of liabilities"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "liabilitiesTotal",
-        riskType: "financial",
-        severity: "high",
-        description: "High total liabilities",
-        regulation: "BIA.78",
-        directive: "12R2",
-        threshold: {
-          type: "amount",
-          value: 1000000,
-          comparison: "greater"
-        }
-      }
-    ]
-  },
-  "59": {
-    formNumber: "59",
     title: "Proof of Claim",
     category: "administrative",
     subcategory: "bankruptcy",
-    purpose: "Assert creditor claim",
-    relatedForms: ["58", "60"],
+    purpose: "Formal claim submission by creditors",
+    relatedForms: ["53", "55"],
     clientInfoFields: [
       "creditorInfo",
-      "bankruptInfo"
+      "debtorInfo",
+      "claimDetails"
     ],
     keyDates: [
-      "claimDate"
+      "claimDate",
+      "filingDeadline"
     ],
     monetaryFields: [
-      "claimAmount"
+      "claimAmount",
+      "interestAccrued"
     ],
     requiredFields: [
+      {
+        name: "creditorName",
+        type: "text",
+        required: true,
+        osbReference: "BIA.103",
+        directives: ["11R2"],
+        formNumbers: ["54"],
+        description: "Name of the creditor filing the claim"
+      },
       {
         name: "claimBasis",
         type: "text",
         required: true,
-        osbReference: "BIA.81.1",
-        directives: ["12R2"],
-        formNumbers: ["59"],
-        description: "Basis of claim"
-      },
-      {
-        name: "supportingDocs",
-        type: "text",
-        required: true,
-        osbReference: "BIA.81.2",
-        directives: ["12R2"],
-        formNumbers: ["59"],
-        description: "Supporting documentation"
+        osbReference: "BIA.103",
+        directives: ["11R2"],
+        formNumbers: ["54"],
+        description: "Legal basis for the claim"
       }
     ],
     riskIndicators: [
@@ -385,238 +102,351 @@ const administrativeForms: Record<string, OSBFormTemplate> = {
         field: "claimAmount",
         riskType: "financial",
         severity: "medium",
-        description: "Large claim amount",
-        regulation: "BIA.81",
-        directive: "12R2",
+        description: "Unsubstantiated or excessive claim amount",
+        regulation: "BIA.103",
+        directive: "11R2",
         threshold: {
           type: "amount",
-          value: 500000,
-          comparison: "greater"
+          value: 100000,
+          comparison: "maximum"
         }
       }
     ]
   },
-  "60": {
-    formNumber: "60",
-    title: "Proxy",
+  "55": {
+    formNumber: "55",
+    title: "Proxy Form",
     category: "administrative",
     subcategory: "bankruptcy",
-    purpose: "Authorize representation",
-    relatedForms: ["59", "61"],
+    purpose: "Authorization for representation at meetings",
+    relatedForms: ["53", "54"],
     clientInfoFields: [
       "creditorInfo",
-      "proxyInfo"
+      "proxyInfo",
+      "debtorInfo"
     ],
     keyDates: [
-      "authorizationDate"
-    ],
-    monetaryFields: [],
-    requiredFields: [
-      {
-        name: "votingInstructions",
-        type: "text",
-        required: true,
-        osbReference: "BIA.102.1",
-        directives: ["12R2"],
-        formNumbers: ["60"],
-        description: "Voting instructions"
-      },
-      {
-        name: "proxyLimitations",
-        type: "text",
-        required: true,
-        osbReference: "BIA.102.2",
-        directives: ["12R2"],
-        formNumbers: ["60"],
-        description: "Limitations on proxy"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "proxyLimitations",
-        riskType: "governance",
-        severity: "low",
-        description: "Unclear proxy limitations",
-        regulation: "BIA.102",
-        directive: "12R2",
-        threshold: {
-          type: "textLength",
-          value: 50,
-          comparison: "less"
-        }
-      }
-    ]
-  },
-  "61": {
-    formNumber: "61",
-    title: "Minutes of Meeting of Creditors",
-    category: "administrative",
-    subcategory: "bankruptcy",
-    purpose: "Record meeting events",
-    relatedForms: ["60", "62"],
-    clientInfoFields: [
-      "trusteeInfo",
-      "creditorAttendees"
-    ],
-    keyDates: [
+      "authorizationDate",
       "meetingDate"
     ],
     monetaryFields: [],
     requiredFields: [
       {
-        name: "meetingAgenda",
+        name: "creditorName",
         type: "text",
         required: true,
-        osbReference: "BIA.107.1",
+        osbReference: "BIA.104",
         directives: ["12R2"],
-        formNumbers: ["61"],
-        description: "Meeting agenda"
+        formNumbers: ["55"],
+        description: "Name of the creditor granting proxy"
       },
       {
-        name: "resolutionsPassed",
+        name: "proxyName",
         type: "text",
         required: true,
-        osbReference: "BIA.107.2",
+        osbReference: "BIA.104",
         directives: ["12R2"],
-        formNumbers: ["61"],
-        description: "Resolutions passed"
+        formNumbers: ["55"],
+        description: "Name of the appointed proxy"
       }
     ],
     riskIndicators: [
       {
-        field: "resolutionsPassed",
-        riskType: "governance",
-        severity: "medium",
-        description: "Controversial resolutions",
-        regulation: "BIA.107",
+        field: "authorizationDate",
+        riskType: "compliance",
+        severity: "low",
+        description: "Proxy authorization validity",
+        regulation: "BIA.104",
         directive: "12R2",
         threshold: {
-          type: "keywordCount",
-          value: 3,
-          comparison: "greater",
-          keywords: ["dispute", "objection", "challenge"]
+          type: "days",
+          value: 7,
+          comparison: "minimum",
+          baseline: "meetingDate"
         }
       }
     ]
   },
-  "62": {
-    formNumber: "62",
-    title: "Trustee's Preliminary Report",
+  "56": {
+    formNumber: "56",
+    title: "Statement of Affairs",
     category: "administrative",
     subcategory: "bankruptcy",
-    purpose: "Initial bankruptcy overview",
-    relatedForms: ["61", "63"],
+    purpose: "Detailed financial disclosure by debtor",
+    relatedForms: [],
     clientInfoFields: [
-      "trusteeInfo",
-      "bankruptInfo"
+      "debtorInfo",
+      "financialDetails"
     ],
     keyDates: [
-      "reportDate"
+      "statementDate"
     ],
     monetaryFields: [
-      "estimatedAssets",
+      "totalAssets",
       "totalLiabilities"
     ],
     requiredFields: [
       {
-        name: "assetSummary",
+        name: "employmentHistory",
         type: "text",
         required: true,
-        osbReference: "BIA.152.1",
-        directives: ["12R2"],
-        formNumbers: ["62"],
-        description: "Summary of assets"
+        osbReference: "BIA.128",
+        directives: ["11R2"],
+        formNumbers: ["56"],
+        description: "Debtor's employment history"
       },
       {
-        name: "liabilityAnalysis",
+        name: "assetList",
         type: "text",
         required: true,
-        osbReference: "BIA.152.2",
-        directives: ["12R2"],
-        formNumbers: ["62"],
-        description: "Analysis of liabilities"
+        osbReference: "BIA.128",
+        directives: ["11R2"],
+        formNumbers: ["56"],
+        description: "List of debtor's assets"
       }
     ],
     riskIndicators: [
       {
         field: "totalLiabilities",
         riskType: "financial",
-        severity: "high",
-        description: "High liabilities relative to assets",
-        regulation: "BIA.152",
-        directive: "12R2",
+        severity: "medium",
+        description: "Discrepancy between declared and verified liabilities",
+        regulation: "BIA.128",
+        directive: "11R2",
         threshold: {
-          type: "ratio",
-          value: 0.8,
-          comparison: "greater",
-          baseline: "estimatedAssets"
+          type: "percentage",
+          value: 20,
+          comparison: "maximum"
         }
       }
     ]
   },
-  "63": {
-    formNumber: "63",
-    title: "Notice of Bankruptcy",
+  "57": {
+    formNumber: "57",
+    title: "List of Creditors",
     category: "administrative",
     subcategory: "bankruptcy",
-    purpose: "Public bankruptcy notice",
-    relatedForms: ["62", "64"],
+    purpose: "Comprehensive list of all creditors",
+    relatedForms: ["56"],
     clientInfoFields: [
-      "bankruptInfo",
-      "trusteeInfo"
+      "debtorInfo",
+      "creditorInfo"
     ],
-    keyDates: [
-      "bankruptcyDate",
-      "noticeDate"
+    keyDates: [],
+    monetaryFields: [
+      "outstandingBalance"
     ],
-    monetaryFields: [],
     requiredFields: [
       {
-        name: "bankruptcyDetails",
+        name: "creditorName",
         type: "text",
         required: true,
-        osbReference: "BIA.157.1",
+        osbReference: "BIA.129",
         directives: ["12R2"],
-        formNumbers: ["63"],
-        description: "Details of bankruptcy"
+        formNumbers: ["57"],
+        description: "Name of each creditor"
       },
       {
-        name: "creditorMeetingInfo",
-        type: "text",
+        name: "amountOwed",
+        type: "currency",
         required: true,
-        osbReference: "BIA.157.2",
+        osbReference: "BIA.129",
         directives: ["12R2"],
-        formNumbers: ["63"],
-        description: "Information on creditor meeting"
+        formNumbers: ["57"],
+        description: "Amount owed to each creditor"
       }
     ],
     riskIndicators: [
       {
-        field: "noticeDate",
-        riskType: "regulatory",
-        severity: "medium",
-        description: "Delay in bankruptcy notice",
-        regulation: "BIA.157",
+        field: "amountOwed",
+        riskType: "financial",
+        severity: "low",
+        description: "Unsecured debt concentration",
+        regulation: "BIA.129",
         directive: "12R2",
         threshold: {
-          type: "days",
-          value: 30,
-          comparison: "greater",
-          baseline: "bankruptcyDate"
+          type: "percentage",
+          value: 50,
+          comparison: "maximum"
         }
       }
     ]
   },
-  "64": {
-    formNumber: "64",
+  "58": {
+    formNumber: "58",
+    title: "Notice of Intention to Make a Proposal",
+    category: "administrative",
+    subcategory: "proposal",
+    purpose: "Notification to creditors of proposal intention",
+    relatedForms: ["59", "60"],
+    clientInfoFields: [
+      "debtorInfo",
+      "creditorInfo"
+    ],
+    keyDates: [
+      "noticeDate",
+      "proposalFilingDeadline"
+    ],
+    monetaryFields: [],
+    requiredFields: [
+      {
+        name: "debtorName",
+        type: "text",
+        required: true,
+        osbReference: "BIA.62",
+        directives: ["13R1"],
+        formNumbers: ["58"],
+        description: "Debtor's legal name"
+      },
+      {
+        name: "proposalTerms",
+        type: "text",
+        required: true,
+        osbReference: "BIA.62",
+        directives: ["13R1"],
+        formNumbers: ["58"],
+        description: "Summary of proposal terms"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "proposalFilingDeadline",
+        riskType: "regulatory",
+        severity: "high",
+        description: "Compliance with proposal filing deadline",
+        regulation: "BIA.62",
+        directive: "13R1",
+        threshold: {
+          type: "days",
+          value: 30,
+          comparison: "maximum",
+          baseline: "noticeDate"
+        }
+      }
+    ]
+  },
+  "59": {
+    formNumber: "59",
+    title: "Proposal",
+    category: "administrative",
+    subcategory: "proposal",
+    purpose: "Formal debt restructuring proposal to creditors",
+    relatedForms: ["58", "60"],
+    clientInfoFields: [
+      "debtorInfo",
+      "creditorInfo",
+      "proposalDetails"
+    ],
+    keyDates: [
+      "proposalDate",
+      "creditorMeetingDate",
+      "acceptanceDeadline"
+    ],
+    monetaryFields: [
+      "proposedPaymentAmount",
+      "totalDebtAmount"
+    ],
+    requiredFields: [
+      {
+        name: "proposalTerms",
+        type: "text",
+        required: true,
+        osbReference: "BIA.63",
+        directives: ["11R2"],
+        formNumbers: ["59"],
+        description: "Detailed terms of the proposal"
+      },
+      {
+        name: "creditorList",
+        type: "text",
+        required: true,
+        osbReference: "BIA.63",
+        directives: ["11R2"],
+        formNumbers: ["59"],
+        description: "List of creditors affected by the proposal"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "proposedPaymentAmount",
+        riskType: "financial",
+        severity: "medium",
+        description: "Feasibility of proposed payments",
+        regulation: "BIA.63",
+        directive: "11R2",
+        threshold: {
+          type: "percentage",
+          value: 70,
+          comparison: "minimum",
+          baseline: "totalDebtAmount"
+        }
+      }
+    ]
+  },
+  "60": {
+    formNumber: "60",
+    title: "Report of the Trustee on Proposal",
+    category: "administrative",
+    subcategory: "proposal",
+    purpose: "Trustee's assessment of the proposal",
+    relatedForms: ["58", "59"],
+    clientInfoFields: [
+      "trusteeInfo",
+      "debtorInfo",
+      "proposalDetails"
+    ],
+    keyDates: [
+      "reportDate",
+      "creditorMeetingDate"
+    ],
+    monetaryFields: [],
+    requiredFields: [
+      {
+        name: "trusteeAssessment",
+        type: "text",
+        required: true,
+        osbReference: "BIA.64",
+        directives: ["13R1"],
+        formNumbers: ["60"],
+        description: "Trustee's opinion on the proposal"
+      },
+      {
+        name: "creditorVotingRecommendation",
+        type: "text",
+        required: true,
+        osbReference: "BIA.64",
+        directives: ["13R1"],
+        formNumbers: ["60"],
+        description: "Trustee's recommendation to creditors"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "reportDate",
+        riskType: "regulatory",
+        severity: "high",
+        description: "Compliance with reporting deadline",
+        regulation: "BIA.64",
+        directive: "13R1",
+        threshold: {
+          type: "days",
+          value: 10,
+          comparison: "maximum",
+          baseline: "creditorMeetingDate"
+        }
+      }
+    ]
+  },
+  "61": {
+    formNumber: "61",
     title: "Application for Discharge",
     category: "administrative",
-    subcategory: "bankruptcy",
-    purpose: "Request bankruptcy discharge",
-    relatedForms: ["63", "65"],
+    subcategory: "discharge",
+    purpose: "Debtor's application for release from debts",
+    relatedForms: [],
     clientInfoFields: [
-      "bankruptInfo",
-      "trusteeInfo"
+      "debtorInfo",
+      "courtInfo"
     ],
     keyDates: [
       "applicationDate",
@@ -625,106 +455,165 @@ const administrativeForms: Record<string, OSBFormTemplate> = {
     monetaryFields: [],
     requiredFields: [
       {
-        name: "dischargeGrounds",
+        name: "reasonForDischarge",
         type: "text",
         required: true,
-        osbReference: "BIA.170.1",
+        osbReference: "BIA.178",
         directives: ["12R2"],
-        formNumbers: ["64"],
-        description: "Grounds for discharge"
+        formNumbers: ["61"],
+        description: "Reasons for seeking discharge"
       },
       {
-        name: "creditorObjections",
+        name: "complianceStatement",
         type: "text",
-        required: false,
-        osbReference: "BIA.170.2",
+        required: true,
+        osbReference: "BIA.178",
         directives: ["12R2"],
-        formNumbers: ["64"],
-        description: "Creditor objections"
+        formNumbers: ["61"],
+        description: "Statement of compliance with duties"
       }
     ],
     riskIndicators: [
       {
-        field: "creditorObjections",
-        riskType: "legal",
+        field: "hearingDate",
+        riskType: "regulatory",
         severity: "medium",
-        description: "Creditor objections to discharge",
-        regulation: "BIA.170",
+        description: "Timeliness of discharge hearing",
+        regulation: "BIA.178",
         directive: "12R2",
         threshold: {
-          type: "keywordCount",
-          value: 1,
-          comparison: "greater",
-          keywords: ["objection", "dispute", "challenge"]
+          type: "days",
+          value: 90,
+          comparison: "maximum",
+          baseline: "applicationDate"
         }
       }
     ]
   },
-  "65": {
-    formNumber: "65",
+  "62": {
+    formNumber: "62",
     title: "Order of Discharge",
     category: "administrative",
-    subcategory: "bankruptcy",
-    purpose: "Grant bankruptcy discharge",
-    relatedForms: ["64", "66"],
+    subcategory: "discharge",
+    purpose: "Court order releasing debtor from debts",
+    relatedForms: ["61"],
     clientInfoFields: [
-      "bankruptInfo",
+      "debtorInfo",
       "courtInfo"
     ],
     keyDates: [
-      "orderDate"
+      "orderDate",
+      "effectiveDate"
     ],
     monetaryFields: [],
     requiredFields: [
       {
-        name: "dischargeTerms",
+        name: "dischargeConditions",
         type: "text",
-        required: true,
-        osbReference: "BIA.172.1",
-        directives: ["12R2"],
-        formNumbers: ["65"],
-        description: "Terms of discharge"
+        required: false,
+        osbReference: "BIA.179",
+        directives: ["11R2"],
+        formNumbers: ["62"],
+        description: "Conditions attached to the discharge"
       },
       {
-        name: "conditionsMet",
-        type: "checkbox",
+        name: "debtsDischarged",
+        type: "text",
         required: true,
-        osbReference: "BIA.172.2",
-        directives: ["12R2"],
-        formNumbers: ["65"],
-        description: "Conditions met for discharge"
+        osbReference: "BIA.179",
+        directives: ["11R2"],
+        formNumbers: ["62"],
+        description: "List of debts discharged"
       }
     ],
     riskIndicators: [
       {
-        field: "dischargeTerms",
-        riskType: "legal",
+        field: "effectiveDate",
+        riskType: "compliance",
         severity: "low",
-        description: "Restrictive discharge terms",
-        regulation: "BIA.172",
-        directive: "12R2",
+        description: "Effective date of discharge",
+        regulation: "BIA.179",
+        directive: "11R2",
         threshold: {
-          type: "keywordCount",
-          value: 2,
-          comparison: "greater",
-          keywords: ["restriction", "condition", "limitation"]
+          type: "days",
+          value: 30,
+          comparison: "maximum",
+          baseline: "orderDate"
         }
       }
     ]
   },
-  "66": {
-    formNumber: "66",
-    title: "Final Statement of Receipts and Disbursements",
+  "63": {
+    formNumber: "63",
+    title: "Notice of Final Dividend and Application for Discharge",
     category: "administrative",
-    subcategory: "bankruptcy",
-    purpose: "Summarize financial activity",
-    relatedForms: ["65", "67"],
+    subcategory: "dividend",
+    purpose: "Notification of final dividend distribution",
+    relatedForms: [],
     clientInfoFields: [
       "trusteeInfo",
-      "bankruptInfo"
+      "creditorInfo",
+      "debtorInfo"
     ],
     keyDates: [
-      "statementDate"
+      "dividendDate",
+      "dischargeApplicationDate"
+    ],
+    monetaryFields: [
+      "dividendAmount",
+      "totalAssetsRealized"
+    ],
+    requiredFields: [
+      {
+        name: "dividendRate",
+        type: "text",
+        required: true,
+        osbReference: "BIA.149",
+        directives: ["13R1"],
+        formNumbers: ["63"],
+        description: "Rate of the final dividend"
+      },
+      {
+        name: "assetRealizationSummary",
+        type: "text",
+        required: true,
+        osbReference: "BIA.149",
+        directives: ["13R1"],
+        formNumbers: ["63"],
+        description: "Summary of asset realization"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "dividendAmount",
+        riskType: "financial",
+        severity: "medium",
+        description: "Adequacy of dividend distribution",
+        regulation: "BIA.149",
+        directive: "13R1",
+        threshold: {
+          type: "percentage",
+          value: 5,
+          comparison: "minimum",
+          baseline: "totalAssetsRealized"
+        }
+      }
+    ]
+  },
+  "64": {
+    formNumber: "64",
+    title: "Statement of Receipts and Disbursements",
+    category: "administrative",
+    subcategory: "dividend",
+    purpose: "Summary of financial transactions",
+    relatedForms: [],
+    clientInfoFields: [
+      "trusteeInfo",
+      "estateInfo"
+    ],
+    keyDates: [
+      "statementPeriodStart",
+      "statementPeriodEnd"
     ],
     monetaryFields: [
       "totalReceipts",
@@ -733,20 +622,20 @@ const administrativeForms: Record<string, OSBFormTemplate> = {
     requiredFields: [
       {
         name: "receiptDetails",
-        type: "table",
+        type: "text",
         required: true,
-        osbReference: "BIA.152.3",
-        directives: ["12R2"],
-        formNumbers: ["66"],
+        osbReference: "BIA.150",
+        directives: ["14R1"],
+        formNumbers: ["64"],
         description: "Details of receipts"
       },
       {
         name: "disbursementDetails",
-        type: "table",
+        type: "text",
         required: true,
-        osbReference: "BIA.152.4",
-        directives: ["12R2"],
-        formNumbers: ["66"],
+        osbReference: "BIA.150",
+        directives: ["14R1"],
+        formNumbers: ["64"],
         description: "Details of disbursements"
       }
     ],
@@ -755,14 +644,122 @@ const administrativeForms: Record<string, OSBFormTemplate> = {
         field: "totalDisbursements",
         riskType: "financial",
         severity: "medium",
-        description: "High disbursements relative to receipts",
-        regulation: "BIA.152",
+        description: "Reasonableness of disbursements",
+        regulation: "BIA.150",
+        directive: "14R1",
+        threshold: {
+          type: "percentage",
+          value: 80,
+          comparison: "maximum",
+          baseline: "totalReceipts"
+        }
+      }
+    ]
+  },
+  "65": {
+    formNumber: "65",
+    title: "Minutes of the First Meeting of Creditors",
+    category: "administrative",
+    subcategory: "bankruptcy",
+    purpose: "Record of the first meeting",
+    relatedForms: ["53", "54", "55"],
+    clientInfoFields: [
+      "trusteeInfo",
+      "debtorInfo",
+      "creditorInfo"
+    ],
+    keyDates: [
+      "meetingDate"
+    ],
+    monetaryFields: [],
+    requiredFields: [
+      {
+        name: "attendeesList",
+        type: "text",
+        required: true,
+        osbReference: "BIA.105",
+        directives: ["12R2"],
+        formNumbers: ["65"],
+        description: "List of attendees"
+      },
+      {
+        name: "resolutionsPassed",
+        type: "text",
+        required: true,
+        osbReference: "BIA.105",
+        directives: ["12R2"],
+        formNumbers: ["65"],
+        description: "Summary of resolutions"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "meetingDate",
+        riskType: "regulatory",
+        severity: "low",
+        description: "Compliance with meeting timeframe",
+        regulation: "BIA.105",
         directive: "12R2",
         threshold: {
-          type: "ratio",
-          value: 0.9,
-          comparison: "greater",
-          baseline: "totalReceipts"
+          type: "days",
+          value: 21,
+          comparison: "minimum",
+          baseline: "bankruptcyDate"
+        }
+      }
+    ]
+  },
+  "66": {
+    formNumber: "66",
+    title: "Notice of Intention to Declare Dividend",
+    category: "administrative",
+    subcategory: "dividend",
+    purpose: "Notification of dividend distribution",
+    relatedForms: ["63", "64"],
+    clientInfoFields: [
+      "trusteeInfo",
+      "creditorInfo"
+    ],
+    keyDates: [
+      "noticeDate",
+      "dividendPaymentDate"
+    ],
+    monetaryFields: [
+      "dividendAmount"
+    ],
+    requiredFields: [
+      {
+        name: "dividendRate",
+        type: "text",
+        required: true,
+        osbReference: "BIA.151",
+        directives: ["13R1"],
+        formNumbers: ["66"],
+        description: "Rate of dividend"
+      },
+      {
+        name: "paymentDetails",
+        type: "text",
+        required: true,
+        osbReference: "BIA.151",
+        directives: ["13R1"],
+        formNumbers: ["66"],
+        description: "Details of payment"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "dividendAmount",
+        riskType: "financial",
+        severity: "medium",
+        description: "Adequacy of dividend",
+        regulation: "BIA.151",
+        directive: "13R1",
+        threshold: {
+          type: "percentage",
+          value: 5,
+          comparison: "minimum",
+          baseline: "totalAssetsRealized"
         }
       }
     ]
@@ -772,26 +769,27 @@ const administrativeForms: Record<string, OSBFormTemplate> = {
     title: "Application for Taxation of Accounts",
     category: "administrative",
     subcategory: "bankruptcy",
-    purpose: "Request account review",
-    relatedForms: ["66", "68"],
+    purpose: "Review of trustee's accounts",
+    relatedForms: [],
     clientInfoFields: [
       "trusteeInfo",
       "courtInfo"
     ],
     keyDates: [
-      "applicationDate"
+      "applicationDate",
+      "taxationDate"
     ],
     monetaryFields: [
-      "feesRequested",
-      "expensesRequested"
+      "trusteeFees",
+      "legalFees"
     ],
     requiredFields: [
       {
         name: "feeJustification",
         type: "text",
         required: true,
-        osbReference: "BIA.39.1",
-        directives: ["12R2"],
+        osbReference: "BIA.39",
+        directives: ["14R1"],
         formNumbers: ["67"],
         description: "Justification of fees"
       },
@@ -799,480 +797,365 @@ const administrativeForms: Record<string, OSBFormTemplate> = {
         name: "expenseDetails",
         type: "text",
         required: true,
-        osbReference: "BIA.39.2",
-        directives: ["12R2"],
+        osbReference: "BIA.39",
+        directives: ["14R1"],
         formNumbers: ["67"],
         description: "Details of expenses"
       }
     ],
     riskIndicators: [
       {
-        field: "feesRequested",
+        field: "trusteeFees",
         riskType: "financial",
         severity: "medium",
-        description: "High fees requested",
+        description: "Reasonableness of fees",
         regulation: "BIA.39",
-        directive: "12R2",
+        directive: "14R1",
         threshold: {
-          type: "amount",
-          value: 100000,
-          comparison: "greater"
+          type: "percentage",
+          value: 10,
+          comparison: "maximum",
+          baseline: "totalAssetsRealized"
         }
       }
     ]
   },
   "68": {
     formNumber: "68",
-    title: "Order for Taxation of Accounts",
+    title: "Order Approving Accounts",
     category: "administrative",
     subcategory: "bankruptcy",
-    purpose: "Authorize account review",
-    relatedForms: ["67", "69"],
+    purpose: "Court approval of trustee's accounts",
+    relatedForms: ["67"],
     clientInfoFields: [
-      "courtInfo",
-      "trusteeInfo"
+      "trusteeInfo",
+      "courtInfo"
     ],
     keyDates: [
-      "orderDate",
-      "taxationDate"
+      "orderDate"
     ],
-    monetaryFields: [],
+    monetaryFields: [
+      "approvedFees",
+      "approvedExpenses"
+    ],
     requiredFields: [
       {
-        name: "taxationDetails",
+        name: "courtFindings",
         type: "text",
         required: true,
-        osbReference: "BIA.39.3",
+        osbReference: "BIA.40",
         directives: ["12R2"],
         formNumbers: ["68"],
-        description: "Details of taxation"
+        description: "Findings of the court"
       },
       {
-        name: "noticeRequirements",
+        name: "approvalDetails",
         type: "text",
         required: true,
-        osbReference: "BIA.39.4",
+        osbReference: "BIA.40",
         directives: ["12R2"],
         formNumbers: ["68"],
-        description: "Notice requirements"
+        description: "Details of approval"
       }
     ],
     riskIndicators: [
       {
-        field: "taxationDetails",
-        riskType: "regulatory",
+        field: "approvedFees",
+        riskType: "financial",
         severity: "low",
-        description: "Unclear taxation details",
-        regulation: "BIA.39",
+        description: "Compliance with fee guidelines",
+        regulation: "BIA.40",
         directive: "12R2",
         threshold: {
-          type: "textLength",
-          value: 50,
-          comparison: "less"
+          type: "percentage",
+          value: 10,
+          comparison: "maximum",
+          baseline: "totalAssetsRealized"
         }
       }
     ]
   },
   "69": {
     formNumber: "69",
-    title: "Certificate of Taxation",
+    title: "Final Statement of Receipts and Disbursements",
     category: "administrative",
-    subcategory: "bankruptcy",
-    purpose: "Certify account taxation",
-    relatedForms: ["68", "70"],
+    subcategory: "dividend",
+    purpose: "Final summary of financial transactions",
+    relatedForms: ["64"],
     clientInfoFields: [
-      "courtInfo",
-      "trusteeInfo"
+      "trusteeInfo",
+      "estateInfo"
     ],
     keyDates: [
-      "taxationDate",
-      "certificationDate"
+      "statementPeriodStart",
+      "statementPeriodEnd"
     ],
     monetaryFields: [
-      "feesAllowed",
-      "expensesAllowed"
+      "totalReceipts",
+      "totalDisbursements"
     ],
     requiredFields: [
       {
-        name: "taxationResult",
+        name: "receiptDetails",
         type: "text",
         required: true,
-        osbReference: "BIA.39.5",
-        directives: ["12R2"],
+        osbReference: "BIA.152",
+        directives: ["14R1"],
         formNumbers: ["69"],
-        description: "Result of taxation"
+        description: "Details of receipts"
       },
       {
-        name: "appealRights",
+        name: "disbursementDetails",
         type: "text",
         required: true,
-        osbReference: "BIA.39.6",
-        directives: ["12R2"],
+        osbReference: "BIA.152",
+        directives: ["14R1"],
         formNumbers: ["69"],
-        description: "Appeal rights"
+        description: "Details of disbursements"
       }
     ],
     riskIndicators: [
       {
-        field: "feesAllowed",
+        field: "totalDisbursements",
         riskType: "financial",
         severity: "medium",
-        description: "Significant reduction in fees",
-        regulation: "BIA.39",
-        directive: "12R2",
+        description: "Reasonableness of disbursements",
+        regulation: "BIA.152",
+        directive: "14R1",
         threshold: {
           type: "percentage",
-          value: 0.2,
-          comparison: "less",
-          baseline: "feesRequested"
+          value: 80,
+          comparison: "maximum",
+          baseline: "totalReceipts"
         }
       }
     ]
   },
   "70": {
     formNumber: "70",
-    title: "Dividend Sheet",
+    title: "Application for Release of Trustee",
     category: "administrative",
     subcategory: "bankruptcy",
-    purpose: "Record dividend distribution",
-    relatedForms: ["69", "71"],
+    purpose: "Application for trustee release",
+    relatedForms: [],
     clientInfoFields: [
       "trusteeInfo",
-      "creditorInfo"
+      "courtInfo"
     ],
     keyDates: [
-      "dividendDate"
+      "applicationDate"
     ],
-    monetaryFields: [
-      "dividendAmount",
-      "claimAmount"
-    ],
+    monetaryFields: [],
     requiredFields: [
       {
-        name: "dividendRate",
+        name: "completionReport",
         type: "text",
         required: true,
-        osbReference: "BIA.144.1",
+        osbReference: "BIA.41",
         directives: ["12R2"],
         formNumbers: ["70"],
-        description: "Dividend rate"
+        description: "Report on completion"
       },
       {
-        name: "paymentMethod",
+        name: "complianceStatement",
         type: "text",
         required: true,
-        osbReference: "BIA.144.2",
+        osbReference: "BIA.41",
         directives: ["12R2"],
         formNumbers: ["70"],
-        description: "Payment method"
+        description: "Statement of compliance"
       }
     ],
     riskIndicators: [
       {
-        field: "dividendAmount",
-        riskType: "financial",
+        field: "applicationDate",
+        riskType: "regulatory",
         severity: "low",
-        description: "Low dividend amount",
-        regulation: "BIA.144",
+        description: "Timeliness of application",
+        regulation: "BIA.41",
         directive: "12R2",
         threshold: {
-          type: "percentage",
-          value: 0.05,
-          comparison: "less",
-          baseline: "claimAmount"
+          type: "days",
+          value: 365,
+          comparison: "maximum",
+          baseline: "bankruptcyDate"
         }
       }
     ]
   },
   "71": {
     formNumber: "71",
-    title: "Notice of Final Dividend and Application for Discharge",
+    title: "Order Releasing Trustee",
     category: "administrative",
     subcategory: "bankruptcy",
-    purpose: "Notify final actions",
+    purpose: "Court order releasing trustee",
     relatedForms: ["70"],
     clientInfoFields: [
       "trusteeInfo",
-      "creditorInfo"
+      "courtInfo"
     ],
     keyDates: [
-      "dividendDate",
-      "dischargeApplicationDate"
+      "orderDate"
     ],
     monetaryFields: [],
     requiredFields: [
       {
-        name: "dischargeDetails",
+        name: "courtFindings",
         type: "text",
         required: true,
-        osbReference: "BIA.170.3",
-        directives: ["12R2"],
+        osbReference: "BIA.42",
+        directives: ["11R2"],
         formNumbers: ["71"],
-        description: "Details of discharge application"
+        description: "Findings of the court"
       },
       {
-        name: "objectionDeadline",
+        name: "releaseTerms",
         type: "text",
         required: true,
-        osbReference: "BIA.170.4",
-        directives: ["12R2"],
+        osbReference: "BIA.42",
+        directives: ["11R2"],
         formNumbers: ["71"],
-        description: "Deadline for objections"
+        description: "Terms of release"
       }
     ],
-    riskIndicators: [
-      {
-        field: "objectionDeadline",
-        riskType: "legal",
-        severity: "medium",
-        description: "Short objection deadline",
-        regulation: "BIA.170",
-        directive: "12R2",
-        threshold: {
-          type: "days",
-          value: 15,
-          comparison: "less"
-        }
-      }
-    ]
+    riskIndicators: [],
   },
   "72": {
     formNumber: "72",
-    title: "Notice of Appointment of Receiver",
+    title: "Notice of Assignment",
     category: "administrative",
-    subcategory: "receivership_appointment",
-    purpose: "Receiver appointment",
-    relatedForms: ["73", "74"],
+    subcategory: "receivership",
+    purpose: "Notification of assignment",
+    relatedForms: [],
     clientInfoFields: [
-      "receiverInfo",
-      "debtorInfo",
-      "securedCreditor"
+      "assignorInfo",
+      "assigneeInfo"
     ],
     keyDates: [
-      "appointmentDate",
-      "noticeDate",
-      "registrationDeadline"
+      "assignmentDate"
     ],
-    monetaryFields: [
-      "securedAmount",
-      "estimatedAssets"
-    ],
+    monetaryFields: [],
     requiredFields: [
       {
-        name: "appointmentBasis",
+        name: "assignmentDetails",
         type: "text",
         required: true,
-        osbReference: "BIA.243",
-        directives: ["12R2"],
+        osbReference: "RCA.22",
+        directives: ["13R1"],
         formNumbers: ["72"],
-        description: "Basis of receiver appointment"
-      },
-      {
-        name: "securityDetails",
-        type: "text",
-        required: true,
-        osbReference: "BIA.243(1)",
-        directives: ["12R2"],
-        formNumbers: ["72"],
-        description: "Security instrument details"
+        description: "Details of assignment"
       }
     ],
-    riskIndicators: [
-      {
-        field: "noticeDate",
-        riskType: "regulatory",
-        severity: "high",
-        description: "BIA 243(1) compliance - Notice timing",
-        regulation: "BIA.243(1)",
-        directive: "12R2",
-        threshold: {
-          type: "days",
-          value: 10,
-          comparison: "maximum",
-          baseline: "appointmentDate"
-        }
-      }
-    ]
+    riskIndicators: []
   },
   "73": {
     formNumber: "73",
-    title: "Statement of Receiver",
+    title: "Receiver’s Statement of Affairs",
     category: "administrative",
-    subcategory: "receivership_report",
-    purpose: "Initial receiver reporting",
-    relatedForms: ["72", "74"],
+    subcategory: "receivership",
+    purpose: "Statement of affairs",
+    relatedForms: [],
     clientInfoFields: [
       "receiverInfo",
-      "debtorInfo",
-      "businessInfo"
+      "companyInfo"
     ],
     keyDates: [
-      "possessionDate",
-      "reportDate",
-      "filingDeadline"
+      "statementDate"
     ],
     monetaryFields: [
-      "assetsValue",
-      "liabilitiesAmount",
-      "projectedRealization"
+      "totalAssets",
+      "totalLiabilities"
     ],
     requiredFields: [
       {
-        name: "propertyInventory",
+        name: "assetList",
         type: "text",
         required: true,
-        osbReference: "BIA.246",
-        directives: ["12R2"],
+        osbReference: "RCA.23",
+        directives: ["14R1"],
         formNumbers: ["73"],
-        description: "Inventory of property possessed"
+        description: "List of assets"
       },
       {
-        name: "realizationPlan",
+        name: "liabilityList",
         type: "text",
         required: true,
-        osbReference: "BIA.246(2)",
-        directives: ["12R2"],
+        osbReference: "RCA.23",
+        directives: ["14R1"],
         formNumbers: ["73"],
-        description: "Plan for property realization"
+        description: "List of liabilities"
       }
     ],
     riskIndicators: [
       {
-        field: "reportDate",
-        riskType: "regulatory",
-        severity: "high",
-        description: "BIA 246(2) compliance - Initial report filing",
-        regulation: "BIA.246(2)",
-        directive: "12R2",
+        field: "totalLiabilities",
+        riskType: "financial",
+        severity: "medium",
+        description: "Discrepancy in liabilities",
+        regulation: "RCA.23",
+        directive: "14R1",
         threshold: {
-          type: "days",
-          value: 30,
-          comparison: "maximum",
-          baseline: "possessionDate"
+          type: "percentage",
+          value: 20,
+          comparison: "maximum"
         }
       }
     ]
   },
   "74": {
     formNumber: "74",
-    title: "Interim Report of Receiver",
+    title: "Receiver’s Preliminary Report",
     category: "administrative",
-    subcategory: "receivership_report",
-    purpose: "Periodic receiver reporting",
-    relatedForms: ["72", "73"],
+    subcategory: "receivership",
+    purpose: "Preliminary report",
+    relatedForms: [],
     clientInfoFields: [
       "receiverInfo",
-      "debtorInfo",
-      "periodCovered"
+      "companyInfo"
     ],
     keyDates: [
-      "periodStart",
-      "periodEnd",
-      "reportDeadline"
+      "reportDate"
     ],
-    monetaryFields: [
-      "receipts",
-      "disbursements",
-      "receiverFees",
-      "balanceHeld"
-    ],
+    monetaryFields: [],
     requiredFields: [
       {
-        name: "activitySummary",
+        name: "assetAssessment",
         type: "text",
         required: true,
-        osbReference: "BIA.246(3)",
+        osbReference: "RCA.24",
         directives: ["12R2"],
         formNumbers: ["74"],
-        description: "Summary of receiver's activities"
+        description: "Assessment of assets"
       },
       {
-        name: "financialPosition",
+        name: "liabilityAssessment",
         type: "text",
         required: true,
-        osbReference: "BIA.246(3)",
+        osbReference: "RCA.24",
         directives: ["12R2"],
         formNumbers: ["74"],
-        description: "Current financial position"
+        description: "Assessment of liabilities"
       }
     ],
-    riskIndicators: [
-      {
-        field: "reportDeadline",
-        riskType: "regulatory",
-        severity: "high",
-        description: "BIA 246(3) compliance - Interim report timing",
-        regulation: "BIA.246(3)",
-        directive: "12R2",
-        threshold: {
-          type: "days",
-          value: 60,
-          comparison: "maximum",
-          baseline: "periodEnd"
-        }
-      }
-    ]
+    riskIndicators: []
   },
   "75": {
     formNumber: "75",
-    title: "Final Report of Receiver",
+    title: "Receiver’s Interim Report",
     category: "administrative",
-    subcategory: "receivership_report",
-    purpose: "Final receiver reporting",
-    relatedForms: ["72", "73", "74"],
+    subcategory: "receivership",
+    purpose: "Interim report",
+    relatedForms: [],
     clientInfoFields: [
       "receiverInfo",
-      "debtorInfo",
-      "periodCovered"
+      "companyInfo"
     ],
     keyDates: [
-      "appointmentDate",
-      "dischargeDate",
-      "reportDeadline"
+      "reportDate"
     ],
-    monetaryFields: [
-      "totalReceipts",
-      "totalDisbursements",
-      "totalFees",
-      "finalDistribution"
-    ],
+    monetaryFields: [],
     requiredFields: [
       {
-        name: "completeSummary",
+        name: "progressSummary",
         type: "text",
-        required: true,
-        osbReference: "BIA.246(3)",
-        directives: ["12R2"],
-        formNumbers: ["75"],
-        description: "Complete summary of receivership"
-      },
-      {
-        name: "finalStatement",
-        type: "text",
-        required: true,
-        osbReference: "BIA.246(3)",
-        directives: ["12R2"],
-        formNumbers: ["75"],
-        description: "Final statement of receipts and disbursements"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "totalFees",
-        riskType: "regulatory",
-        severity: "high",
-        description: "Receiver compensation compliance",
-        regulation: "BIA.246(3)",
-        directive: "12R2",
-        threshold: {
-          type: "percentage",
-          value: 20,
-          comparison: "maximum",
-          baseline: "totalReceipts"
-        }
-      }
-    ]
-  }
-};
-
-export { administrativeForms };
+        required: true

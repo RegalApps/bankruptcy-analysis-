@@ -62,6 +62,40 @@ export const regulatoryPatterns = {
             "expense analysis",
             "payment calculation"
           ]
+        },
+        "155": {
+          timeframes: {
+            initialReport: 30,
+            creditorMeeting: 21
+          },
+          requirements: [
+            "asset summary",
+            "preliminary findings",
+            "meeting details"
+          ]
+        },
+        "156": {
+          timeframes: {
+            preliminaryReport: 45,
+            investigationConclusion: 60
+          },
+          requirements: [
+            "asset verification",
+            "investigation results",
+            "recommendations"
+          ]
+        },
+        "157": {
+          timeframes: {
+            distributionNotice: 30,
+            objectionPeriod: 30,
+            paymentExecution: 15
+          },
+          requirements: [
+            "distribution plan",
+            "creditor allocation",
+            "payment schedule"
+          ]
         }
       }
     }
@@ -141,6 +175,31 @@ export const regulatoryPatterns = {
         distributionPeriod: 60,
         documentationRetention: 72
       }
+    },
+    
+    "14R1": {
+      requirements: {
+        initialAssessment: [
+          "asset verification",
+          "liability confirmation",
+          "income analysis"
+        ],
+        investigation: [
+          "transaction review",
+          "preference analysis",
+          "conduct assessment"
+        ],
+        distribution: [
+          "priority calculation",
+          "dividend projection",
+          "payment plan"
+        ]
+      },
+      thresholds: {
+        assessmentPeriod: 45,
+        investigationTime: 60,
+        distributionNotice: 30
+      }
     }
   }
 };
@@ -192,5 +251,38 @@ export const validationHelpers = {
       (submissionDate.getTime() - baselineDate.getTime()) / (1000 * 60 * 60 * 24)
     );
     return diffDays <= allowedDays;
+  },
+
+  validateDistributionCompliance: (
+    directive: string,
+    distributionPlan: any,
+    creditorClaims: any[]
+  ): boolean => {
+    const directiveRules = regulatoryPatterns.directives[directive];
+    if (!directiveRules) return false;
+
+    const requiredElements = directiveRules.requirements.distribution;
+    return requiredElements.every(element => 
+      distributionPlan && distributionPlan[element] && 
+      creditorClaims.length > 0
+    );
+  },
+
+  validateInvestigationTimeline: (
+    section: string,
+    investigation: any,
+    filingDate: Date
+  ): boolean => {
+    const sectionRules = regulatoryPatterns.BIA.highRisk.sections[section];
+    if (!sectionRules) return false;
+
+    const maxDays = sectionRules.timeframes.investigationConclusion;
+    const completionDate = new Date(investigation.completionDate);
+    const diffDays = Math.floor(
+      (completionDate.getTime() - filingDate.getTime()) / 
+      (1000 * 60 * 60 * 24)
+    );
+    
+    return diffDays <= maxDays;
   }
 };
