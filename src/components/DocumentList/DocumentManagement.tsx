@@ -8,6 +8,7 @@ import { Sidebar } from "./components/Sidebar";
 import { FolderCard } from "./components/FolderCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DocumentPreview } from "@/components/DocumentViewer/DocumentPreview";
+import { FileText } from "lucide-react";
 import { 
   Dialog,
   DialogContent,
@@ -78,6 +79,70 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
     types: Set<string>
   }>);
 
+  const renderContent = () => {
+    // If Uncategorized is selected, show a list view of uncategorized documents
+    if (selectedFolder === 'Uncategorized') {
+      const uncategorizedDocs = filteredDocuments.filter(
+        doc => !doc.parent_folder_id && !doc.metadata?.client_name
+      );
+
+      return (
+        <div className="space-y-4">
+          <div className="grid gap-4">
+            {uncategorizedDocs.map((doc) => (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:border-primary/50 cursor-pointer"
+                onClick={() => setPreviewDocument(doc)}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">{doc.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Last updated: {new Date(doc.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm px-2 py-1 rounded-full bg-secondary">
+                    {doc.type || 'Other'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Default view showing all folders
+    return (
+      <div className={cn(
+        "grid gap-4",
+        isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+      )}>
+        {Object.entries(groupedByClient)
+          .map(([clientName, folderData]) => (
+            <FolderCard
+              key={clientName}
+              clientName={clientName}
+              isSelected={selectedFolder === clientName}
+              documentsCount={folderData.documents.length}
+              lastUpdated={folderData.lastUpdated}
+              types={folderData.types}
+              onSelect={() => setSelectedFolder(clientName)}
+              onDocumentClick={(doc) => setPreviewDocument(doc)}
+              documents={folderData.documents}
+              isGridView={isGridView}
+            />
+          ))}
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="flex h-[calc(100vh-4rem)]">
@@ -114,28 +179,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
                     />
                   ))}
                 </div>
-              ) : (
-                <div className={cn(
-                  "grid gap-4",
-                  isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-                )}>
-                  {Object.entries(groupedByClient)
-                    .map(([clientName, folderData]) => (
-                      <FolderCard
-                        key={clientName}
-                        clientName={clientName}
-                        isSelected={selectedFolder === clientName}
-                        documentsCount={folderData.documents.length}
-                        lastUpdated={folderData.lastUpdated}
-                        types={folderData.types}
-                        onSelect={() => setSelectedFolder(clientName)}
-                        onDocumentClick={(doc) => setPreviewDocument(doc)}
-                        documents={folderData.documents}
-                        isGridView={isGridView}
-                      />
-                    ))}
-                </div>
-              )}
+              ) : renderContent()}
             </ScrollArea>
           </div>
         </main>
