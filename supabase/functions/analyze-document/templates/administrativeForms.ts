@@ -524,5 +524,181 @@ export const administrativeForms: Record<string, OSBFormTemplate> = {
         }
       }
     ]
+  },
+  "63": {
+    formNumber: "63",
+    title: "Notice of Impending Automatic Discharge of First-Time Bankrupt",
+    category: "administrative",
+    subcategory: "discharge",
+    purpose: "Discharge notification",
+    relatedForms: ["64", "65"],
+    clientInfoFields: [
+      "bankruptName",
+      "trusteeInfo",
+      "estateNumber"
+    ],
+    keyDates: [
+      "bankruptcyDate",
+      "dischargeDate",
+      "notificationDate"
+    ],
+    monetaryFields: [
+      "totalClaims",
+      "totalPayments",
+      "surplusIncome"
+    ],
+    requiredFields: [
+      {
+        name: "complianceStatus",
+        type: "text",
+        required: true,
+        osbReference: "BIA.168.1",
+        formNumbers: ["63"],
+        description: "Bankruptcy compliance status"
+      },
+      {
+        name: "counselingSessions",
+        type: "text",
+        required: true,
+        osbReference: "BIA.157.1",
+        formNumbers: ["63"],
+        description: "Counseling sessions completed"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "notificationDate",
+        riskType: "compliance",
+        severity: "high",
+        description: "Discharge notification timing",
+        threshold: {
+          type: "days",
+          value: 60,
+          comparison: "minimum",
+          baseline: "dischargeDate"
+        }
+      }
+    ]
+  },
+  "64": {
+    formNumber: "64",
+    title: "Report of Trustee on Bankrupt's Application for Discharge",
+    category: "administrative",
+    subcategory: "discharge",
+    purpose: "Discharge assessment",
+    relatedForms: ["63", "65"],
+    clientInfoFields: [
+      "bankruptName",
+      "trusteeInfo",
+      "courtReference"
+    ],
+    keyDates: [
+      "applicationDate",
+      "reportDate",
+      "hearingDate"
+    ],
+    monetaryFields: [
+      "realizedAssets",
+      "distributedAmount",
+      "trusteeRemuneration"
+    ],
+    requiredFields: [
+      {
+        name: "conductAssessment",
+        type: "text",
+        required: true,
+        osbReference: "BIA.170",
+        formNumbers: ["64"],
+        description: "Assessment of bankrupt's conduct"
+      },
+      {
+        name: "recommendationDetails",
+        type: "text",
+        required: true,
+        osbReference: "BIA.170",
+        formNumbers: ["64"],
+        description: "Trustee's recommendation"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "trusteeRemuneration",
+        riskType: "financial",
+        severity: "medium",
+        description: "Remuneration analysis",
+        threshold: {
+          type: "percentage",
+          value: 25,
+          comparison: "maximum",
+          baseline: "realizedAssets"
+        }
+      }
+    ]
+  },
+  "65": {
+    formNumber: "65",
+    title: "Notice of Hearing of Application for Discharge",
+    category: "administrative",
+    subcategory: "discharge",
+    purpose: "Discharge hearing notification",
+    relatedForms: ["63", "64"],
+    clientInfoFields: [
+      "bankruptName",
+      "courtInfo",
+      "creditorList"
+    ],
+    keyDates: [
+      "hearingDate",
+      "noticeDate",
+      "oppositionDeadline"
+    ],
+    monetaryFields: [
+      "outstandingClaims",
+      "proposedSettlement"
+    ],
+    requiredFields: [
+      {
+        name: "hearingDetails",
+        type: "text",
+        required: true,
+        osbReference: "BIA.169",
+        formNumbers: ["65"],
+        description: "Hearing location and time"
+      },
+      {
+        name: "oppositionProcess",
+        type: "text",
+        required: true,
+        osbReference: "BIA.169",
+        formNumbers: ["65"],
+        description: "Process for filing opposition"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "noticeDate",
+        riskType: "compliance",
+        severity: "high",
+        description: "Notice period compliance",
+        threshold: {
+          type: "days",
+          value: 15,
+          comparison: "minimum",
+          baseline: "hearingDate"
+        }
+      },
+      {
+        field: "proposedSettlement",
+        riskType: "financial",
+        severity: "medium",
+        description: "Settlement adequacy",
+        threshold: {
+          type: "percentage",
+          value: 30,
+          comparison: "minimum",
+          baseline: "outstandingClaims"
+        }
+      }
+    ]
   }
 };

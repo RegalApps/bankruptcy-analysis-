@@ -1,33 +1,144 @@
+
 export const validationPatterns = {
-  postalCode: {
-    CA: '^[ABCEGHJ-NPRSTVXY]\\d[ABCEGHJ-NPRSTV-Z][ -]?\\d[ABCEGHJ-NPRSTV-Z]\\d$',
-    US: '^\\d{5}(-\\d{4})?$'
+  // Identification patterns
+  estateNumber: /^\d{2}-\d{6}$/,
+  courtReference: /^[A-Z]{2}-\d{2}-\d{4}$/,
+  sinNumber: /^\d{3}-\d{3}-\d{3}$/,
+
+  // Financial patterns
+  currencyAmount: /^\$?\d{1,3}(,\d{3})*(\.\d{2})?$/,
+  percentageValue: /^-?\d{1,3}(\.\d{1,2})?%$/,
+  taxNumber: /^[0-9A-Z]{9}$/,
+
+  // Date patterns
+  standardDate: /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
+  flexibleDate: /^(0[1-9]|[12]\d|3[01])[-.\/](0[1-9]|1[0-2])[-.\/]\d{4}$/,
+
+  // Contact patterns
+  phoneNumber: /^\+?[\d\s-]{10,}$/,
+  emailAddress: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
+  postalCode: /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/,
+
+  // Document-specific patterns
+  formNumber: /^(Form\s)?[0-9]{1,3}[A-Z]?$/i,
+  registrationNumber: /^[A-Z]{2}\d{6}$/,
+  licenseNumber: /^[A-Z]{3}-\d{4}-[A-Z]\d{2}$/,
+
+  // Legal reference patterns
+  sectionReference: /^s\.\s?\d+(\.\d+)*$/i,
+  regulationCode: /^[A-Z]{3,5}\s\d{4}$/,
+  clauseReference: /^cl\.\s?\d+(\([a-z]\))?$/i,
+
+  // Validation helpers
+  hasMinimumWords: (text: string, minWords: number): boolean => {
+    return text.trim().split(/\s+/).length >= minWords;
   },
-  phoneNumber: {
-    standard: '^(?:\\+1|1)?[-. ]?\\(?[0-9]{3}\\)?[-. ]?[0-9]{3}[-. ]?[0-9]{4}$',
-    international: '^\\+(?:[0-9] ?){6,14}[0-9]$'
+
+  containsRequiredKeywords: (text: string, keywords: string[]): boolean => {
+    const lowerText = text.toLowerCase();
+    return keywords.some(keyword => lowerText.includes(keyword.toLowerCase()));
   },
-  email: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-  sinNumber: '^\\d{3}-\\d{3}-\\d{3}$',
-  businessNumber: {
-    corporation: '^\\d{9}[A-Z]{2}\\d{4}$',
-    partnership: '^\\d{9}[P][A-Z]\\d{4}$',
-    trust: '^\\d{9}[T][A-Z]\\d{4}$'
+
+  isWithinDateRange: (date: Date, start: Date, end: Date): boolean => {
+    return date >= start && date <= end;
   },
-  courtFileNumber: '^[A-Z]{2}-\\d{2}-\\d{5}-[A-Z]{2}$',
-  currencyAmount: '^\\$?\\d{1,3}(?:,\\d{3})*(?:\\.\\d{2})?$',
-  percentageValue: '^\\d{1,3}(?:\\.\\d{1,2})?%?$',
-  legalEntityName: '^[A-Za-z0-9\\s.,&\'()-]{1,100}$',
-  estateNumber: '^[A-Z]{2}\\d{8}$',
-  taxID: {
-    business: '^\\d{2}-\\d{7}$',
-    trust: '^T-\\d{8}$',
-    partnership: '^P-\\d{8}$'
+
+  isValidMonetaryRange: (amount: number, min: number, max: number): boolean => {
+    return amount >= min && amount <= max;
   },
-  insurancePolicy: '^[A-Z]{2}-\\d{6}-[A-Z]{2}$',
-  mortgageNumber: '^M-\\d{4}-[A-Z]{2}-\\d{6}$',
-  assetTag: '^AT\\d{6}[A-Z]$',
-  employeeCount: '^\\d{1,6}$',
-  jurisdictionCode: '^[A-Z]{2}-[A-Z]{3}$',
-  industryCode: '^[A-Z]{4}\\d{4}$'
+
+  hasRequiredFormat: (text: string, format: RegExp): boolean => {
+    return format.test(text);
+  },
+
+  isSequentialDate: (dates: Date[]): boolean => {
+    for (let i = 1; i < dates.length; i++) {
+      if (dates[i] <= dates[i - 1]) return false;
+    }
+    return true;
+  },
+
+  sumEqualsTotal: (values: number[], total: number, tolerance: number = 0.01): boolean => {
+    return Math.abs(values.reduce((a, b) => a + b, 0) - total) <= tolerance;
+  }
+};
+
+export const riskPatterns = {
+  financialRisk: {
+    highRisk: {
+      thresholds: {
+        amount: 100000,
+        percentage: 75,
+        ratio: 2.0
+      },
+      indicators: [
+        "insufficient assets",
+        "significant deficiency",
+        "large exposure"
+      ]
+    },
+    mediumRisk: {
+      thresholds: {
+        amount: 50000,
+        percentage: 50,
+        ratio: 1.5
+      },
+      indicators: [
+        "moderate deficiency",
+        "potential loss",
+        "payment delay"
+      ]
+    },
+    lowRisk: {
+      thresholds: {
+        amount: 10000,
+        percentage: 25,
+        ratio: 1.2
+      },
+      indicators: [
+        "minor deficiency",
+        "small exposure",
+        "stable position"
+      ]
+    }
+  },
+
+  complianceRisk: {
+    highRisk: {
+      timeframes: {
+        days: 30,
+        notifications: 5,
+        responses: 10
+      },
+      indicators: [
+        "deadline missed",
+        "incomplete documentation",
+        "regulatory breach"
+      ]
+    },
+    mediumRisk: {
+      timeframes: {
+        days: 15,
+        notifications: 3,
+        responses: 5
+      },
+      indicators: [
+        "approaching deadline",
+        "pending documentation",
+        "partial compliance"
+      ]
+    },
+    lowRisk: {
+      timeframes: {
+        days: 7,
+        notifications: 1,
+        responses: 2
+      },
+      indicators: [
+        "within timeframe",
+        "minor delay",
+        "technical issue"
+      ]
+    }
+  }
 };
