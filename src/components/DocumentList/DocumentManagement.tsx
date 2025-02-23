@@ -33,9 +33,10 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.metadata?.client_name?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesFolder = !selectedFolder || 
-      (doc.metadata?.client_name === selectedFolder) ||
-      (doc.parent_folder_id === selectedFolder);
+    const matchesFolder = !selectedFolder ? true : 
+      selectedFolder === 'Uncategorized' 
+        ? !doc.parent_folder_id && !doc.metadata?.client_name
+        : doc.metadata?.client_name === selectedFolder || doc.parent_folder_id === selectedFolder;
     
     const matchesType = !filterType || doc.type === filterType;
 
@@ -44,7 +45,18 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
 
   // Group documents by client
   const groupedByClient = filteredDocuments.reduce((acc, doc) => {
-    const clientName = doc.metadata?.client_name || 'Uncategorized';
+    let clientName = 'Uncategorized';
+    
+    // Determine the client name
+    if (doc.metadata?.client_name) {
+      clientName = doc.metadata.client_name;
+    } else if (doc.parent_folder_id) {
+      const parentDoc = documents.find(d => d.id === doc.parent_folder_id);
+      if (parentDoc?.metadata?.client_name) {
+        clientName = parentDoc.metadata.client_name;
+      }
+    }
+
     if (!acc[clientName]) {
       acc[clientName] = {
         documents: [],
@@ -52,6 +64,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
         types: new Set<string>()
       };
     }
+    
     acc[clientName].documents.push(doc);
     acc[clientName].types.add(doc.type || 'Other');
     const updatedAt = new Date(doc.updated_at);
