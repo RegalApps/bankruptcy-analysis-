@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "../SearchBar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronLeft, ChevronRight, Filter, Folder } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Folder, Home, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -33,6 +33,47 @@ export const Sidebar = ({
       "border-r bg-background transition-all duration-300 ease-in-out relative",
       isSidebarCollapsed ? "w-16" : "w-64"
     )}>
+      {/* Home Section */}
+      <div className="p-4 border-b">
+        {isSidebarCollapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-full"
+                onClick={() => setSelectedFolder(null)}
+              >
+                <Home className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Document Management</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={() => setSelectedFolder(null)}
+          >
+            <Home className="h-4 w-4 mr-2" />
+            <span>Document Management</span>
+          </Button>
+        )}
+      </div>
+
+      {/* Search Section */}
+      <div className="p-4 border-b">
+        {!isSidebarCollapsed && (
+          <SearchBar 
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+        )}
+      </div>
+
+      {/* Folders Section */}
       <div className="p-4 border-b flex items-center justify-between">
         {!isSidebarCollapsed && (
           <h2 className="font-semibold">Folders</h2>
@@ -41,7 +82,7 @@ export const Sidebar = ({
           variant="ghost"
           size="icon"
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          className="ml-auto"
+          className={cn("ml-auto", isSidebarCollapsed && "w-full")}
         >
           {isSidebarCollapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -49,21 +90,6 @@ export const Sidebar = ({
             <ChevronLeft className="h-4 w-4" />
           )}
         </Button>
-      </div>
-
-      <div className="p-4 border-b space-y-4">
-        {!isSidebarCollapsed && (
-          <SearchBar 
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-          />
-        )}
-        <div className="flex items-center justify-between">
-          <Button variant="outline" size="sm" className="w-full">
-            <Filter className="h-4 w-4 mr-2" />
-            {!isSidebarCollapsed && "Filter"}
-          </Button>
-        </div>
       </div>
 
       <div className="overflow-y-auto h-full p-4">
