@@ -1,5 +1,3 @@
-
-import { FileUpload } from "@/components/FileUpload";
 import { useState } from "react";
 import { useDocuments } from "./hooks/useDocuments";
 import { cn } from "@/lib/utils";
@@ -17,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 
 interface DocumentManagementProps {
-  onDocumentSelect: (id: string) => void;
+  onDocumentSelect?: (id: string) => void;
 }
 
 export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocumentSelect }) => {
@@ -28,7 +26,6 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
   const [previewDocument, setPreviewDocument] = useState<{ id: string; storage_path: string } | null>(null);
   const [filterType, setFilterType] = useState<string | null>(null);
 
-  // Filter documents based on search query, selected folder and type
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = !searchQuery || 
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -44,11 +41,9 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
     return matchesSearch && matchesFolder && matchesType;
   });
 
-  // Group documents by client
   const groupedByClient = filteredDocuments.reduce((acc, doc) => {
     let clientName = 'Uncategorized';
     
-    // Determine the client name
     if (doc.metadata?.client_name) {
       clientName = doc.metadata.client_name;
     } else if (doc.parent_folder_id) {
@@ -80,7 +75,6 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
   }>);
 
   const renderContent = () => {
-    // If Uncategorized is selected, show a list view of uncategorized documents
     if (selectedFolder === 'Uncategorized') {
       const uncategorizedDocs = filteredDocuments.filter(
         doc => !doc.parent_folder_id && !doc.metadata?.client_name
@@ -118,7 +112,6 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
       );
     }
 
-    // Default view showing all folders
     return (
       <div className={cn(
         "grid gap-4",
@@ -144,75 +137,68 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
   };
 
   return (
-    <>
-      <div className="flex h-[calc(100vh-4rem)]">
-        <Sidebar
-          isSidebarCollapsed={isSidebarCollapsed}
-          setIsSidebarCollapsed={setIsSidebarCollapsed}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          groupedByClient={groupedByClient}
-          selectedFolder={selectedFolder}
-          setSelectedFolder={setSelectedFolder}
-        />
+    <div className="flex h-[calc(100vh-8rem)]">
+      <Sidebar
+        isSidebarCollapsed={isSidebarCollapsed}
+        setIsSidebarCollapsed={setIsSidebarCollapsed}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        groupedByClient={groupedByClient}
+        selectedFolder={selectedFolder}
+        setSelectedFolder={setSelectedFolder}
+      />
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-6">
-            <Toolbar
-              selectedFolder={selectedFolder}
-              isGridView={isGridView}
-              setIsGridView={setIsGridView}
-              onFilterChange={setFilterType}
-              currentFilter={filterType}
-            />
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-6 space-y-6">
+          <Toolbar
+            selectedFolder={selectedFolder}
+            isGridView={isGridView}
+            setIsGridView={setIsGridView}
+            onFilterChange={setFilterType}
+            currentFilter={filterType}
+          />
 
-            <ScrollArea className="h-[calc(100vh-10rem)]">
-              {isLoading ? (
-                <div className={cn(
-                  "grid gap-4",
-                  isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-                )}>
-                  {[...Array(6)].map((_, i) => (
-                    <div 
-                      key={i}
-                      className="h-[200px] rounded-lg border bg-card animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : renderContent()}
-            </ScrollArea>
-          </div>
-        </main>
-
-        <Dialog 
-          open={!!previewDocument} 
-          onOpenChange={() => setPreviewDocument(null)}
-        >
-          <DialogContent className="max-w-4xl h-[80vh]">
-            <DialogHeader>
-              <DialogTitle>Document Preview</DialogTitle>
-            </DialogHeader>
-            {previewDocument && (
-              <div className="flex-1 overflow-hidden">
-                <DocumentPreview 
-                  storagePath={previewDocument.storage_path}
-                  onAnalysisComplete={() => {
-                    setPreviewDocument(null);
-                    onDocumentSelect(previewDocument.id);
-                  }}
-                />
+          <ScrollArea className="h-[calc(100vh-14rem)]">
+            {isLoading ? (
+              <div className={cn(
+                "grid gap-4",
+                isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+              )}>
+                {[...Array(6)].map((_, i) => (
+                  <div 
+                    key={i}
+                    className="h-[200px] rounded-lg border bg-card animate-pulse"
+                  />
+                ))}
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        <div className="fixed bottom-6 right-6">
-          <div className="rounded-lg border bg-card p-4 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Upload Documents</h2>
-            <FileUpload />
-          </div>
+            ) : renderContent()}
+          </ScrollArea>
         </div>
-      </div>
-    </>
+      </main>
+
+      <Dialog 
+        open={!!previewDocument} 
+        onOpenChange={() => setPreviewDocument(null)}
+      >
+        <DialogContent className="max-w-4xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Document Preview</DialogTitle>
+          </DialogHeader>
+          {previewDocument && (
+            <div className="flex-1 overflow-hidden">
+              <DocumentPreview 
+                storagePath={previewDocument.storage_path}
+                onAnalysisComplete={() => {
+                  setPreviewDocument(null);
+                  if (onDocumentSelect) {
+                    onDocumentSelect(previewDocument.id);
+                  }
+                }}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };

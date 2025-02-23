@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { DocumentViewer } from "@/components/DocumentViewer";
-import { DocumentManagement } from "@/components/DocumentList/DocumentManagement";
+import { DocumentManagementPage } from "@/pages/DocumentManagementPage";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
 
@@ -49,10 +49,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container py-8">
-        {!selectedDocument ? (
-          <DocumentManagement onDocumentSelect={setSelectedDocument} />
-        ) : (
+      {!selectedDocument ? (
+        <DocumentManagementPage />
+      ) : (
+        <div className="container py-8">
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <button
@@ -64,8 +64,8 @@ const Index = () => {
             </div>
             <DocumentViewer documentId={selectedDocument} />
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 };
