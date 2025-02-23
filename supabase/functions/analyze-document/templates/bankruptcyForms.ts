@@ -7,27 +7,33 @@ export const bankruptcyForms: Record<string, OSBFormTemplate> = {
     title: "Assignment for the General Benefit of Creditors",
     category: "bankruptcy",
     subcategory: "consumer_bankruptcy",
-    purpose: "Initial filing to commence bankruptcy proceedings",
+    purpose: "Voluntary assignment into bankruptcy",
     relatedForms: ["2", "3", "4"],
-    clientInfoFields: ["debtorName", "address", "occupation"],
-    keyDates: ["assignmentDate"],
-    monetaryFields: ["totalAssets", "totalLiabilities"],
+    clientInfoFields: [
+      "debtorName",
+      "debtorAddress",
+      "occupation",
+      "businessName"
+    ],
+    keyDates: [
+      "filingDate",
+      "assignmentDate",
+      "firstMeetingDate"
+    ],
+    monetaryFields: [
+      "totalLiabilities",
+      "totalAssets",
+      "monthlyIncome",
+      "monthlyExpenses"
+    ],
     requiredFields: [
       {
-        name: "debtorName",
+        name: "debtorSignature",
         type: "text",
         required: true,
         osbReference: "BIA.49",
         formNumbers: ["1"],
-        description: "Full legal name of the debtor"
-      },
-      {
-        name: "assignmentDate",
-        type: "date",
-        required: true,
-        osbReference: "BIA.49(1)",
-        formNumbers: ["1"],
-        description: "Date of the assignment"
+        description: "Debtor's signature on assignment"
       }
     ],
     riskIndicators: [
@@ -35,169 +41,160 @@ export const bankruptcyForms: Record<string, OSBFormTemplate> = {
         field: "totalAssets",
         riskType: "financial",
         severity: "high",
-        description: "Asset value significantly different from liabilities"
-      },
-      {
-        field: "assignmentDate",
-        riskType: "compliance",
-        severity: "high",
-        description: "Assignment date must be within required filing period"
+        description: "Asset valuation discrepancy"
       }
     ]
   },
-  "2": {
-    formNumber: "2",
-    title: "Statement of Affairs (Non-Business Bankruptcy)",
+  "5": {
+    formNumber: "5",
+    title: "Notice of Bankruptcy and First Meeting of Creditors",
     category: "bankruptcy",
     subcategory: "consumer_bankruptcy",
-    purpose: "Detailed disclosure of debtor's financial situation",
-    relatedForms: ["1", "3", "4"],
-    clientInfoFields: ["debtorName", "address", "maritalStatus", "dependents"],
-    keyDates: ["statementDate"],
-    monetaryFields: [
-      "totalAssets",
-      "totalLiabilities",
-      "monthlyIncome",
-      "monthlyExpenses"
-    ],
-    requiredFields: [
-      {
-        name: "debtorName",
-        type: "text",
-        required: true,
-        osbReference: "BIA.158",
-        formNumbers: ["2"],
-        description: "Full legal name of the debtor"
-      },
-      {
-        name: "maritalStatus",
-        type: "select",
-        required: true,
-        options: ["Single", "Married", "Separated", "Divorced", "Widowed"],
-        osbReference: "BIA.158(d)",
-        formNumbers: ["2"],
-        description: "Current marital status"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "monthlyIncome",
-        riskType: "financial",
-        severity: "high",
-        description: "Income may be sufficient to support a proposal"
-      },
-      {
-        field: "assets",
-        riskType: "compliance",
-        severity: "high",
-        description: "Undisclosed or undervalued assets"
-      }
-    ]
-  },
-  "3": {
-    formNumber: "3",
-    title: "Assignment",
-    category: "bankruptcy",
-    subcategory: "business_bankruptcy",
-    purpose: "Business bankruptcy assignment filing",
-    relatedForms: ["1", "2", "4"],
+    purpose: "Notification of bankruptcy and creditors meeting",
+    relatedForms: ["1", "2", "6"],
     clientInfoFields: [
-      "businessName",
-      "tradingName",
-      "businessAddress",
-      "natureOfBusiness",
-      "registrationNumber"
+      "debtorName",
+      "estateNumber",
+      "trusteeName"
     ],
-    keyDates: ["assignmentDate", "cessationDate"],
-    monetaryFields: ["totalAssets", "totalLiabilities", "estimatedDeficiency"],
-    requiredFields: [
-      {
-        name: "businessName",
-        type: "text",
-        required: true,
-        osbReference: "BIA.49",
-        formNumbers: ["3"],
-        description: "Legal business name"
-      },
-      {
-        name: "natureOfBusiness",
-        type: "text",
-        required: true,
-        osbReference: "BIA.49",
-        formNumbers: ["3"],
-        description: "Nature of business operations"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "estimatedDeficiency",
-        riskType: "financial",
-        severity: "high",
-        description: "Large deficiency may indicate potential fraud or mismanagement"
-      },
-      {
-        field: "cessationDate",
-        riskType: "compliance",
-        severity: "medium",
-        description: "Gap between cessation and filing date requires explanation"
-      }
-    ]
-  },
-  "4": {
-    formNumber: "4",
-    title: "Report of Trustee on Bankrupt's Application for Discharge",
-    category: "bankruptcy",
-    subcategory: "consumer_bankruptcy",
-    purpose: "Trustee's assessment of bankrupt's conduct and discharge recommendation",
-    relatedForms: ["1", "2", "3"],
-    clientInfoFields: ["bankruptName", "estateNumber", "dateOfBankruptcy"],
     keyDates: [
       "bankruptcyDate",
-      "dischargeHearingDate",
-      "counsellingDates"
+      "meetingDate",
+      "meetingTime",
+      "noticeDate"
     ],
     monetaryFields: [
-      "realizedAmount",
-      "dividendPaid",
-      "trusteeRemuneration",
-      "monthlyIncome"
+      "estimatedAssets",
+      "estimatedLiabilities"
     ],
     requiredFields: [
       {
-        name: "conductAssessment",
+        name: "meetingLocation",
         type: "text",
         required: true,
-        osbReference: "BIA.170",
-        formNumbers: ["4"],
-        description: "Assessment of bankrupt's conduct"
-      },
-      {
-        name: "recommendationType",
-        type: "select",
-        required: true,
-        options: [
-          "Absolute Discharge",
-          "Conditional Discharge",
-          "Suspended Discharge",
-          "Refuse Discharge"
-        ],
-        osbReference: "BIA.172",
-        formNumbers: ["4"],
-        description: "Trustee's discharge recommendation"
+        osbReference: "BIA.102(1)",
+        formNumbers: ["5"],
+        description: "Location of first meeting"
       }
     ],
     riskIndicators: [
       {
-        field: "conductAssessment",
+        field: "meetingDate",
         riskType: "compliance",
         severity: "high",
-        description: "Negative conduct assessment requires detailed documentation"
-      },
+        description: "Meeting schedule compliance"
+      }
+    ]
+  },
+  "6": {
+    formNumber: "6",
+    title: "Notice to Creditor of Impending First Meeting",
+    category: "bankruptcy",
+    subcategory: "consumer_bankruptcy",
+    purpose: "Individual creditor notification",
+    relatedForms: ["5", "7"],
+    clientInfoFields: [
+      "creditorName",
+      "creditorAddress",
+      "estateReference"
+    ],
+    keyDates: [
+      "meetingDate",
+      "proofDueDate"
+    ],
+    monetaryFields: [
+      "claimAmount"
+    ],
+    requiredFields: [
       {
-        field: "counsellingDates",
+        name: "creditorNotification",
+        type: "text",
+        required: true,
+        osbReference: "BIA.102(2)",
+        formNumbers: ["6"],
+        description: "Creditor notification details"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "proofDueDate",
+        riskType: "legal",
+        severity: "medium",
+        description: "Proof of claim deadline"
+      }
+    ]
+  },
+  "7": {
+    formNumber: "7",
+    title: "List of Creditors",
+    category: "bankruptcy",
+    subcategory: "consumer_bankruptcy",
+    purpose: "Comprehensive creditor listing",
+    relatedForms: ["1", "5", "6"],
+    clientInfoFields: [
+      "debtorName",
+      "estateNumber"
+    ],
+    keyDates: [
+      "listDate"
+    ],
+    monetaryFields: [
+      "totalUnsecured",
+      "totalSecured",
+      "totalPreferred"
+    ],
+    requiredFields: [
+      {
+        name: "creditorDetails",
+        type: "text",
+        required: true,
+        osbReference: "BIA.50(1.3)",
+        formNumbers: ["7"],
+        description: "Complete creditor information"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "totalUnsecured",
+        riskType: "financial",
+        severity: "medium",
+        description: "Unsecured debt ratio analysis"
+      }
+    ]
+  },
+  "8": {
+    formNumber: "8",
+    title: "Notice of Extension of Time for Filing a Proposal",
+    category: "bankruptcy",
+    subcategory: "business_bankruptcy",
+    purpose: "Extension request for proposal filing",
+    relatedForms: ["32", "33"],
+    clientInfoFields: [
+      "debtorName",
+      "trusteeInfo"
+    ],
+    keyDates: [
+      "currentDeadline",
+      "extensionDate",
+      "hearingDate"
+    ],
+    monetaryFields: [],
+    requiredFields: [
+      {
+        name: "extensionReason",
+        type: "text",
+        required: true,
+        osbReference: "BIA.50.4(9)",
+        formNumbers: ["8"],
+        description: "Justification for extension"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "extensionDate",
         riskType: "legal",
         severity: "high",
-        description: "Missing or late counselling sessions impact discharge"
+        description: "Extension timeline compliance"
       }
     ]
   }

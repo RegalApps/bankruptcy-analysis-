@@ -2,58 +2,81 @@
 import { OSBFormTemplate } from "../types.ts";
 
 export const receivershipForms: Record<string, OSBFormTemplate> = {
-  "40": {
-    formNumber: "40",
-    title: "Assignment of Book Debts",
+  "41": {
+    formNumber: "41",
+    title: "Notice of Intention to Enforce Security",
     category: "receivership",
     subcategory: "receivership_appointment",
-    purpose: "Documentation of receivership over book debts",
-    relatedForms: ["41", "42"],
+    purpose: "Notice of enforcement of security",
+    relatedForms: ["40", "42"],
     clientInfoFields: [
-      "debtorName",
       "securedCreditor",
-      "receiverName"
+      "debtorName",
+      "securityDetails"
     ],
     keyDates: [
-      "appointmentDate",
-      "effectiveDate",
-      "registrationDate"
+      "noticeDate",
+      "enforcementDate"
     ],
     monetaryFields: [
-      "bookDebtsValue",
       "securedAmount",
-      "estimatedRealization"
+      "propertyValue"
     ],
     requiredFields: [
       {
         name: "securityDescription",
         type: "text",
         required: true,
-        osbReference: "BIA.243",
-        formNumbers: ["40"],
-        description: "Description of security agreement"
-      },
-      {
-        name: "collateralDescription",
-        type: "text",
-        required: true,
-        osbReference: "BIA.243(1)",
-        formNumbers: ["40"],
-        description: "Description of book debts"
+        osbReference: "BIA.244(1)",
+        formNumbers: ["41"],
+        description: "Security details"
       }
     ],
     riskIndicators: [
       {
-        field: "bookDebtsValue",
-        riskType: "financial",
-        severity: "high",
-        description: "Significant variance between book value and estimated realization"
-      },
-      {
-        field: "registrationDate",
+        field: "enforcementDate",
         riskType: "legal",
         severity: "high",
-        description: "Late registration may affect priority"
+        description: "Notice period compliance"
+      }
+    ]
+  },
+  "42": {
+    formNumber: "42",
+    title: "Notice of Appointment of Receiver",
+    category: "receivership",
+    subcategory: "receivership_appointment",
+    purpose: "Notification of receiver appointment",
+    relatedForms: ["40", "41"],
+    clientInfoFields: [
+      "receiverName",
+      "debtorInfo",
+      "creditorInfo"
+    ],
+    keyDates: [
+      "appointmentDate",
+      "filingDate"
+    ],
+    monetaryFields: [
+      "securedDebt",
+      "propertyValue"
+    ],
+    requiredFields: [
+      {
+        name: "appointmentTerms",
+        type: "text",
+        required: true,
+        osbReference: "BIA.245(1)",
+        formNumbers: ["42"],
+        description: "Terms of appointment"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "appointmentDate",
+        riskType: "compliance",
+        severity: "high",
+        description: "Appointment notification compliance"
       }
     ]
   }

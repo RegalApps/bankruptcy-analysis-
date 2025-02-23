@@ -2,58 +2,82 @@
 import { OSBFormTemplate } from "../types.ts";
 
 export const ccaaForms: Record<string, OSBFormTemplate> = {
-  "50": {
-    formNumber: "50",
-    title: "Notice of Stay of Proceedings",
+  "51": {
+    formNumber: "51",
+    title: "Monitor's Report on Cash Flow Statement",
     category: "ccaa",
-    subcategory: "ccaa_initial",
-    purpose: "Notice of CCAA proceedings and stay of proceedings",
-    relatedForms: ["51", "52"],
+    subcategory: "ccaa_monitor",
+    purpose: "Cash flow analysis and report",
+    relatedForms: ["50", "52"],
     clientInfoFields: [
-      "companyName",
-      "courtFileNumber",
-      "monitorName"
+      "monitorName",
+      "companyName"
     ],
     keyDates: [
-      "filingDate",
-      "stayExpiryDate",
-      "hearingDate"
+      "reportDate",
+      "periodStart",
+      "periodEnd"
     ],
     monetaryFields: [
-      "totalLiabilities",
-      "operatingCosts",
-      "interimFinancing"
+      "projectedCashFlow",
+      "actualCashFlow",
+      "variance"
     ],
     requiredFields: [
       {
-        name: "stayPeriod",
-        type: "date",
+        name: "cashFlowAnalysis",
+        type: "text",
         required: true,
-        osbReference: "CCAA.11.02",
-        formNumbers: ["50"],
-        description: "Period of stay of proceedings"
-      },
-      {
-        name: "courtOrder",
-        type: "file",
-        required: true,
-        osbReference: "CCAA.11",
-        formNumbers: ["50"],
-        description: "Initial court order"
+        osbReference: "CCAA.23",
+        formNumbers: ["51"],
+        description: "Cash flow statement analysis"
       }
     ],
     riskIndicators: [
       {
-        field: "operatingCosts",
+        field: "variance",
         riskType: "financial",
         severity: "high",
-        description: "Insufficient working capital during stay period"
-      },
+        description: "Cash flow variance analysis"
+      }
+    ]
+  },
+  "52": {
+    formNumber: "52",
+    title: "Monitor's Report on Company's Business and Financial Affairs",
+    category: "ccaa",
+    subcategory: "ccaa_monitor",
+    purpose: "Comprehensive business review",
+    relatedForms: ["50", "51"],
+    clientInfoFields: [
+      "monitorName",
+      "companyInfo"
+    ],
+    keyDates: [
+      "reportDate",
+      "reviewPeriod"
+    ],
+    monetaryFields: [
+      "operatingResults",
+      "workingCapital",
+      "restructuringCosts"
+    ],
+    requiredFields: [
       {
-        field: "stayPeriod",
-        riskType: "legal",
-        severity: "medium",
-        description: "Stay extension may be required"
+        name: "businessReview",
+        type: "text",
+        required: true,
+        osbReference: "CCAA.23(1)(b)",
+        formNumbers: ["52"],
+        description: "Business operations review"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "workingCapital",
+        riskType: "operational",
+        severity: "high",
+        description: "Working capital adequacy"
       }
     ]
   }
