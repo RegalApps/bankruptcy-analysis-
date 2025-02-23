@@ -1,7 +1,6 @@
-<lov-code>
 import { OSBFormTemplate } from "../types.ts";
 
-export const administrativeForms: Record<string, OSBFormTemplate> = {
+const administrativeForms: Record<string, OSBFormTemplate> = {
   "53": {
     formNumber: "53",
     title: "Notice of Intention to Make a Proposal",
@@ -1041,7 +1040,7 @@ export const administrativeForms: Record<string, OSBFormTemplate> = {
     formNumber: "72",
     title: "Notice of Appointment of Receiver",
     category: "administrative",
-    subcategory: "receivership",
+    subcategory: "receivership_appointment",
     purpose: "Receiver appointment",
     relatedForms: ["73", "74"],
     clientInfoFields: [
@@ -1094,58 +1093,7 @@ export const administrativeForms: Record<string, OSBFormTemplate> = {
         }
       }
     ]
-  },
+  }
+};
 
-  "73": {
-    formNumber: "73",
-    title: "Statement of Receiver",
-    category: "administrative",
-    subcategory: "receivership",
-    purpose: "Receiver reporting",
-    relatedForms: ["72", "74"],
-    clientInfoFields: [
-      "receiverInfo",
-      "debtorInfo",
-      "businessInfo"
-    ],
-    keyDates: [
-      "possessionDate",
-      "reportDate",
-      "filingDeadline"
-    ],
-    monetaryFields: [
-      "assetsValue",
-      "liabilitiesAmount",
-      "projectedRealization"
-    ],
-    requiredFields: [
-      {
-        name: "propertyInventory",
-        type: "text",
-        required: true,
-        osbReference: "BIA.246",
-        directives: ["12R2"],
-        formNumbers: ["73"],
-        description: "Inventory of property possessed"
-      },
-      {
-        name: "realizationPlan",
-        type: "text",
-        required: true,
-        osbReference: "BIA.246(2)",
-        directives: ["12R2"],
-        formNumbers: ["73"],
-        description: "Plan for property realization"
-      }
-    ],
-    riskIndicators: [
-      {
-        field: "reportDate",
-        riskType: "regulatory",
-        severity: "high",
-        description: "BIA 246(2) compliance - Report filing",
-        regulation: "BIA.246(2)",
-        directive: "12R2",
-        threshold: {
-          type: "days",
-          value: 30,
+export { administrativeForms };
