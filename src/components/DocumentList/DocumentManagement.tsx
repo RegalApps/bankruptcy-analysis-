@@ -94,7 +94,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)]">
+    <div className="flex h-[calc(100vh-3.5rem)]">
       <Sidebar
         isSidebarCollapsed={isSidebarCollapsed}
         setIsSidebarCollapsed={setIsSidebarCollapsed}
@@ -115,7 +115,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
             currentFilter={filterType}
           />
 
-          <ScrollArea className="h-[calc(100vh-14rem)]">
+          <ScrollArea className="h-[calc(100vh-12rem)]">
             {isLoading ? (
               <div className={cn(
                 "grid gap-4",
