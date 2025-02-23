@@ -1,4 +1,3 @@
-
 import { OSBFormTemplate, ValidationRule } from "./types.ts";
 import { validationPatterns } from "./validation/patterns.ts";
 
@@ -94,8 +93,225 @@ export const osbFormTemplates: Record<string, OSBFormTemplate> = {
         description: "Undisclosed or undervalued assets"
       }
     ]
+  },
+  "3": {
+    formNumber: "3",
+    title: "Assignment",
+    category: "bankruptcy",
+    subcategory: "business_bankruptcy",
+    purpose: "Business bankruptcy assignment filing",
+    relatedForms: ["1", "2", "4"],
+    clientInfoFields: [
+      "businessName",
+      "tradingName",
+      "businessAddress",
+      "natureOfBusiness",
+      "registrationNumber"
+    ],
+    keyDates: ["assignmentDate", "cessationDate"],
+    monetaryFields: ["totalAssets", "totalLiabilities", "estimatedDeficiency"],
+    requiredFields: [
+      {
+        name: "businessName",
+        type: "text",
+        required: true,
+        osbReference: "BIA.49",
+        formNumbers: ["3"],
+        description: "Legal business name"
+      },
+      {
+        name: "natureOfBusiness",
+        type: "text",
+        required: true,
+        osbReference: "BIA.49",
+        formNumbers: ["3"],
+        description: "Nature of business operations"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "estimatedDeficiency",
+        riskType: "financial",
+        severity: "high",
+        description: "Large deficiency may indicate potential fraud or mismanagement"
+      },
+      {
+        field: "cessationDate",
+        riskType: "compliance",
+        severity: "medium",
+        description: "Gap between cessation and filing date requires explanation"
+      }
+    ]
+  },
+  "4": {
+    formNumber: "4",
+    title: "Report of Trustee on Bankrupt's Application for Discharge",
+    category: "bankruptcy",
+    subcategory: "consumer_bankruptcy",
+    purpose: "Trustee's assessment of bankrupt's conduct and discharge recommendation",
+    relatedForms: ["1", "2", "3"],
+    clientInfoFields: ["bankruptName", "estateNumber", "dateOfBankruptcy"],
+    keyDates: [
+      "bankruptcyDate",
+      "dischargeHearingDate",
+      "counsellingDates"
+    ],
+    monetaryFields: [
+      "realizedAmount",
+      "dividendPaid",
+      "trusteeRemuneration",
+      "monthlyIncome"
+    ],
+    requiredFields: [
+      {
+        name: "conductAssessment",
+        type: "text",
+        required: true,
+        osbReference: "BIA.170",
+        formNumbers: ["4"],
+        description: "Assessment of bankrupt's conduct"
+      },
+      {
+        name: "recommendationType",
+        type: "select",
+        required: true,
+        options: [
+          "Absolute Discharge",
+          "Conditional Discharge",
+          "Suspended Discharge",
+          "Refuse Discharge"
+        ],
+        osbReference: "BIA.172",
+        formNumbers: ["4"],
+        description: "Trustee's discharge recommendation"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "conductAssessment",
+        riskType: "compliance",
+        severity: "high",
+        description: "Negative conduct assessment requires detailed documentation"
+      },
+      {
+        field: "counsellingDates",
+        riskType: "legal",
+        severity: "high",
+        description: "Missing or late counselling sessions impact discharge"
+      }
+    ]
+  },
+  "31": {
+    formNumber: "31",
+    title: "Notice of Division I Proposal",
+    category: "proposal",
+    subcategory: "division_1_proposal",
+    purpose: "Filing of a commercial proposal under Division I",
+    relatedForms: ["32", "33", "34"],
+    clientInfoFields: [
+      "insolventPerson",
+      "businessAddress",
+      "natureOfBusiness"
+    ],
+    keyDates: [
+      "filingDate",
+      "meetingDate",
+      "votingDate"
+    ],
+    monetaryFields: [
+      "totalClaims",
+      "proposalAmount",
+      "estimatedRealization"
+    ],
+    requiredFields: [
+      {
+        name: "proposalTerms",
+        type: "text",
+        required: true,
+        osbReference: "BIA.50(2)",
+        formNumbers: ["31"],
+        description: "Terms of the proposal"
+      },
+      {
+        name: "securedClaims",
+        type: "currency",
+        required: true,
+        osbReference: "BIA.50(5)",
+        formNumbers: ["31"],
+        description: "Amount of secured claims"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "proposalTerms",
+        riskType: "financial",
+        severity: "high",
+        description: "Unfeasible proposal terms may lead to failure"
+      },
+      {
+        field: "creditorRights",
+        riskType: "legal",
+        severity: "high",
+        description: "Improper treatment of creditor classes"
+      }
+    ]
+  },
+  "78": {
+    formNumber: "78",
+    title: "Statement of Receipts and Disbursements",
+    category: "administrative",
+    subcategory: "administrative_general",
+    purpose: "Detailed accounting of estate administration",
+    relatedForms: ["1", "2", "3", "4"],
+    clientInfoFields: [
+      "estateId",
+      "trusteeName",
+      "estateName"
+    ],
+    keyDates: [
+      "startDate",
+      "endDate",
+      "reportingPeriod"
+    ],
+    monetaryFields: [
+      "totalReceipts",
+      "totalDisbursements",
+      "trusteeFees",
+      "creditorDividends"
+    ],
+    requiredFields: [
+      {
+        name: "receiptsBreakdown",
+        type: "text",
+        required: true,
+        osbReference: "BIA.Directive.5R",
+        formNumbers: ["78"],
+        description: "Detailed breakdown of receipts"
+      },
+      {
+        name: "disbursementsBreakdown",
+        type: "text",
+        required: true,
+        osbReference: "BIA.Directive.5R",
+        formNumbers: ["78"],
+        description: "Detailed breakdown of disbursements"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "trusteeFees",
+        riskType: "compliance",
+        severity: "high",
+        description: "Trustee fees exceed tariff or guidelines"
+      },
+      {
+        field: "unexplainedDisbursements",
+        riskType: "financial",
+        severity: "high",
+        description: "Unexplained or unusual disbursements"
+      }
+    ]
   }
-  // ... Additional forms would be added here
 };
 
 export function validateOSBForm(formNumber: string, data: any): ValidationError[] {
