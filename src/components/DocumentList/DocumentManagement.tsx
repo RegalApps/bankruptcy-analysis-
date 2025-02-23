@@ -6,6 +6,14 @@ import { cn } from "@/lib/utils";
 import { Toolbar } from "./components/Toolbar";
 import { Sidebar } from "./components/Sidebar";
 import { FolderCard } from "./components/FolderCard";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { DocumentPreview } from "@/components/DocumentViewer/DocumentPreview";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle 
+} from "@/components/ui/dialog";
 
 interface DocumentManagementProps {
   onDocumentSelect: (id: string) => void;
@@ -16,9 +24,26 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isGridView, setIsGridView] = useState(true);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [previewDocument, setPreviewDocument] = useState<{ id: string; storage_path: string } | null>(null);
+  const [filterType, setFilterType] = useState<string | null>(null);
+
+  // Filter documents based on search query, selected folder and type
+  const filteredDocuments = documents.filter(doc => {
+    const matchesSearch = !searchQuery || 
+      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.metadata?.client_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesFolder = !selectedFolder || 
+      (doc.metadata?.client_name === selectedFolder) ||
+      (doc.parent_folder_id === selectedFolder);
+    
+    const matchesType = !filterType || doc.type === filterType;
+
+    return matchesSearch && matchesFolder && matchesType;
+  });
 
   // Group documents by client
-  const groupedByClient = documents.reduce((acc, doc) => {
+  const groupedByClient = filteredDocuments.reduce((acc, doc) => {
     const clientName = doc.metadata?.client_name || 'Uncategorized';
     if (!acc[clientName]) {
       acc[clientName] = {
@@ -59,46 +84,70 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
               selectedFolder={selectedFolder}
               isGridView={isGridView}
               setIsGridView={setIsGridView}
+              onFilterChange={setFilterType}
+              currentFilter={filterType}
             />
 
-            {isLoading ? (
-              <div className={cn(
-                "grid gap-4",
-                isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-              )}>
-                {[...Array(6)].map((_, i) => (
-                  <div 
-                    key={i}
-                    className="h-[200px] rounded-lg border bg-card animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className={cn(
-                "grid gap-4",
-                isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-              )}>
-                {Object.entries(groupedByClient)
-                  .filter(([clientName]) => 
-                    !searchQuery || 
-                    clientName.toLowerCase().includes(searchQuery.toLowerCase())
-                  )
-                  .map(([clientName, folderData]) => (
-                    <FolderCard
-                      key={clientName}
-                      clientName={clientName}
-                      isSelected={selectedFolder === clientName}
-                      documentsCount={folderData.documents.length}
-                      lastUpdated={folderData.lastUpdated}
-                      types={folderData.types}
-                      onSelect={() => setSelectedFolder(clientName)}
-                      isGridView={isGridView}
+            <ScrollArea className="h-[calc(100vh-10rem)]">
+              {isLoading ? (
+                <div className={cn(
+                  "grid gap-4",
+                  isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+                )}>
+                  {[...Array(6)].map((_, i) => (
+                    <div 
+                      key={i}
+                      className="h-[200px] rounded-lg border bg-card animate-pulse"
                     />
                   ))}
-              </div>
-            )}
+                </div>
+              ) : (
+                <div className={cn(
+                  "grid gap-4",
+                  isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+                )}>
+                  {Object.entries(groupedByClient)
+                    .map(([clientName, folderData]) => (
+                      <FolderCard
+                        key={clientName}
+                        clientName={clientName}
+                        isSelected={selectedFolder === clientName}
+                        documentsCount={folderData.documents.length}
+                        lastUpdated={folderData.lastUpdated}
+                        types={folderData.types}
+                        onSelect={() => setSelectedFolder(clientName)}
+                        onDocumentClick={(doc) => setPreviewDocument(doc)}
+                        documents={folderData.documents}
+                        isGridView={isGridView}
+                      />
+                    ))}
+                </div>
+              )}
+            </ScrollArea>
           </div>
         </main>
+
+        <Dialog 
+          open={!!previewDocument} 
+          onOpenChange={() => setPreviewDocument(null)}
+        >
+          <DialogContent className="max-w-4xl h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>Document Preview</DialogTitle>
+            </DialogHeader>
+            {previewDocument && (
+              <div className="flex-1 overflow-hidden">
+                <DocumentPreview 
+                  storagePath={previewDocument.storage_path}
+                  onAnalysisComplete={() => {
+                    setPreviewDocument(null);
+                    onDocumentSelect(previewDocument.id);
+                  }}
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <div className="fixed bottom-6 right-6">
           <div className="rounded-lg border bg-card p-4 shadow-lg">
