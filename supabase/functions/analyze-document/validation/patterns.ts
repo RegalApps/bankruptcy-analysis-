@@ -1,4 +1,3 @@
-
 export const validationPatterns = {
   // Identification patterns
   estateNumber: /^\d{2}-\d{6}$/,
@@ -41,6 +40,28 @@ export const regulatoryPatterns = {
             "realization plan",
             "financial statements"
           ]
+        },
+        "247": {
+          timeframes: {
+            finalReport: 90,
+            feeApplication: 30
+          },
+          requirements: [
+            "complete accounting",
+            "fee justification",
+            "distribution plan"
+          ]
+        },
+        "13.4": {
+          timeframes: {
+            assessmentPeriod: 45,
+            reportingDeadline: 30
+          },
+          requirements: [
+            "income verification",
+            "expense analysis",
+            "payment calculation"
+          ]
         }
       }
     }
@@ -70,6 +91,56 @@ export const regulatoryPatterns = {
         reportingDelay: 5,
         documentationGap: 2
       }
+    },
+    
+    "11R2": {
+      requirements: {
+        assessment: [
+          "income calculation",
+          "expense verification",
+          "surplus determination"
+        ],
+        reporting: [
+          "monthly income",
+          "payment schedule",
+          "variance explanation"
+        ],
+        documentation: [
+          "pay statements",
+          "expense receipts",
+          "bank statements"
+        ]
+      },
+      thresholds: {
+        paymentDelay: 15,
+        reportingPeriod: 30,
+        assessmentUpdate: 45
+      }
+    },
+    
+    "13R1": {
+      requirements: {
+        assessment: [
+          "asset valuation",
+          "creditor claims",
+          "distribution priority"
+        ],
+        reporting: [
+          "asset inventory",
+          "realization strategy",
+          "distribution schedule"
+        ],
+        documentation: [
+          "appraisals",
+          "sale agreements",
+          "creditor claims"
+        ]
+      },
+      thresholds: {
+        reportingDelay: 30,
+        distributionPeriod: 60,
+        documentationRetention: 72
+      }
     }
   }
 };
@@ -95,5 +166,31 @@ export const validationHelpers = {
   ): boolean => {
     const directiveRules = regulatoryPatterns.directives[directive];
     return directiveRules?.requirements[category]?.includes(requirement) || false;
+  },
+
+  validateAssessmentCompliance: (
+    directive: string,
+    category: string,
+    documents: string[]
+  ): boolean => {
+    const directiveRules = regulatoryPatterns.directives[directive];
+    const requiredDocs = directiveRules?.requirements[category] || [];
+    return requiredDocs.every(doc => documents.includes(doc));
+  },
+
+  validateReportingTimeline: (
+    section: string,
+    reportType: string,
+    submissionDate: Date,
+    baselineDate: Date
+  ): boolean => {
+    const sectionRules = regulatoryPatterns.BIA.highRisk.sections[section];
+    const allowedDays = sectionRules?.timeframes[reportType];
+    if (!allowedDays) return true;
+    
+    const diffDays = Math.floor(
+      (submissionDate.getTime() - baselineDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return diffDays <= allowedDays;
   }
 };

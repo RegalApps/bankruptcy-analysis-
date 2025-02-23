@@ -1093,6 +1093,185 @@ const administrativeForms: Record<string, OSBFormTemplate> = {
         }
       }
     ]
+  },
+  "73": {
+    formNumber: "73",
+    title: "Statement of Receiver",
+    category: "administrative",
+    subcategory: "receivership_report",
+    purpose: "Initial receiver reporting",
+    relatedForms: ["72", "74"],
+    clientInfoFields: [
+      "receiverInfo",
+      "debtorInfo",
+      "businessInfo"
+    ],
+    keyDates: [
+      "possessionDate",
+      "reportDate",
+      "filingDeadline"
+    ],
+    monetaryFields: [
+      "assetsValue",
+      "liabilitiesAmount",
+      "projectedRealization"
+    ],
+    requiredFields: [
+      {
+        name: "propertyInventory",
+        type: "text",
+        required: true,
+        osbReference: "BIA.246",
+        directives: ["12R2"],
+        formNumbers: ["73"],
+        description: "Inventory of property possessed"
+      },
+      {
+        name: "realizationPlan",
+        type: "text",
+        required: true,
+        osbReference: "BIA.246(2)",
+        directives: ["12R2"],
+        formNumbers: ["73"],
+        description: "Plan for property realization"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "reportDate",
+        riskType: "regulatory",
+        severity: "high",
+        description: "BIA 246(2) compliance - Initial report filing",
+        regulation: "BIA.246(2)",
+        directive: "12R2",
+        threshold: {
+          type: "days",
+          value: 30,
+          comparison: "maximum",
+          baseline: "possessionDate"
+        }
+      }
+    ]
+  },
+  "74": {
+    formNumber: "74",
+    title: "Interim Report of Receiver",
+    category: "administrative",
+    subcategory: "receivership_report",
+    purpose: "Periodic receiver reporting",
+    relatedForms: ["72", "73"],
+    clientInfoFields: [
+      "receiverInfo",
+      "debtorInfo",
+      "periodCovered"
+    ],
+    keyDates: [
+      "periodStart",
+      "periodEnd",
+      "reportDeadline"
+    ],
+    monetaryFields: [
+      "receipts",
+      "disbursements",
+      "receiverFees",
+      "balanceHeld"
+    ],
+    requiredFields: [
+      {
+        name: "activitySummary",
+        type: "text",
+        required: true,
+        osbReference: "BIA.246(3)",
+        directives: ["12R2"],
+        formNumbers: ["74"],
+        description: "Summary of receiver's activities"
+      },
+      {
+        name: "financialPosition",
+        type: "text",
+        required: true,
+        osbReference: "BIA.246(3)",
+        directives: ["12R2"],
+        formNumbers: ["74"],
+        description: "Current financial position"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "reportDeadline",
+        riskType: "regulatory",
+        severity: "high",
+        description: "BIA 246(3) compliance - Interim report timing",
+        regulation: "BIA.246(3)",
+        directive: "12R2",
+        threshold: {
+          type: "days",
+          value: 60,
+          comparison: "maximum",
+          baseline: "periodEnd"
+        }
+      }
+    ]
+  },
+  "75": {
+    formNumber: "75",
+    title: "Final Report of Receiver",
+    category: "administrative",
+    subcategory: "receivership_report",
+    purpose: "Final receiver reporting",
+    relatedForms: ["72", "73", "74"],
+    clientInfoFields: [
+      "receiverInfo",
+      "debtorInfo",
+      "periodCovered"
+    ],
+    keyDates: [
+      "appointmentDate",
+      "dischargeDate",
+      "reportDeadline"
+    ],
+    monetaryFields: [
+      "totalReceipts",
+      "totalDisbursements",
+      "totalFees",
+      "finalDistribution"
+    ],
+    requiredFields: [
+      {
+        name: "completeSummary",
+        type: "text",
+        required: true,
+        osbReference: "BIA.246(3)",
+        directives: ["12R2"],
+        formNumbers: ["75"],
+        description: "Complete summary of receivership"
+      },
+      {
+        name: "finalStatement",
+        type: "text",
+        required: true,
+        osbReference: "BIA.246(3)",
+        directives: ["12R2"],
+        formNumbers: ["75"],
+        description: "Final statement of receipts and disbursements"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "totalFees",
+        riskType: "regulatory",
+        severity: "high",
+        description: "Receiver compensation compliance",
+        regulation: "BIA.246(3)",
+        directive: "12R2",
+        threshold: {
+          type: "percentage",
+          value: 20,
+          comparison: "maximum",
+          baseline: "totalReceipts"
+        }
+      }
+    ]
   }
 };
 
