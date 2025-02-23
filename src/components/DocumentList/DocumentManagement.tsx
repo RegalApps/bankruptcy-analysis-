@@ -1,182 +1,18 @@
 
-import { useState, useEffect } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { Header } from "./Header";
 import { SearchBar } from "./SearchBar";
 import { DocumentList } from "./DocumentList";
 import { DocumentUploadButton } from "./DocumentUploadButton";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
 import { TreeView } from "./TreeView";
+import { useDocuments } from "./hooks/useDocuments";
 
 interface DocumentManagementProps {
   onDocumentSelect: (id: string) => void;
 }
 
-interface DocumentNode {
-  id: string;
-  title: string;
-  type: string;
-  children?: DocumentNode[];
-}
-
-interface Document {
-  id: string;
-  title: string;
-  type: string;
-  size: number;
-  storage_path: string;
-  created_at: string;
-  updated_at: string;
-  metadata?: {
-    client_name?: string;
-    [key: string]: any;
-  };
-}
-
 export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocumentSelect }) => {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [treeData, setTreeData] = useState<DocumentNode[]>([]);
-  const { toast } = useToast();
-
-  const fetchDocuments = async () => {
-    try {
-      console.log("Fetching documents...");
-      setIsLoading(true);
-
-      const { data, error } = await supabase
-        .from('documents')
-        .select(`
-          id,
-          title,
-          type,
-          size,
-          storage_path,
-          created_at,
-          updated_at,
-          metadata
-        `)
-        .order('updated_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching documents:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch documents"
-        });
-        return;
-      }
-
-      // Process and organize documents into tree structure
-      const processedData = (data as Document[])?.map(doc => ({
-        ...doc,
-        type: doc.type || determineFileType(doc.title)
-      })) || [];
-
-      // Organize documents into tree structure
-      const tree = organizeDocumentsIntoTree(processedData);
-
-      console.log('Processed documents:', processedData);
-      setDocuments(processedData);
-      setTreeData(tree);
-    } catch (error) {
-      console.error('Error in fetchDocuments:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred while fetching documents"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const organizeDocumentsIntoTree = (docs: Document[]): DocumentNode[] => {
-    // First, group by client (assuming we extract client from metadata)
-    const clientGroups = docs.reduce((acc, doc) => {
-      const clientName = doc.metadata?.client_name || 'Uncategorized';
-      if (!acc[clientName]) {
-        acc[clientName] = [];
-      }
-      acc[clientName].push(doc);
-      return acc;
-    }, {} as Record<string, Document[]>);
-
-    // Then, for each client, group by document type
-    return Object.entries(clientGroups).map(([clientName, clientDocs]) => {
-      const typeGroups = clientDocs.reduce((acc, doc) => {
-        const type = doc.type || 'Other';
-        if (!acc[type]) {
-          acc[type] = [];
-        }
-        acc[type].push(doc);
-        return acc;
-      }, {} as Record<string, Document[]>);
-
-      // Create the tree structure
-      return {
-        id: clientName,
-        title: clientName,
-        type: 'client',
-        children: Object.entries(typeGroups).map(([type, docs]) => ({
-          id: `${clientName}-${type}`,
-          title: type,
-          type: 'category',
-          children: docs.map(doc => ({
-            id: doc.id,
-            title: doc.title,
-            type: 'document'
-          }))
-        }))
-      };
-    });
-  };
-
-  const determineFileType = (filename: string) => {
-    const ext = filename.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'pdf':
-        return 'PDF Document';
-      case 'doc':
-      case 'docx':
-        return 'Word Document';
-      case 'xls':
-      case 'xlsx':
-        return 'Excel Spreadsheet';
-      case 'ppt':
-      case 'pptx':
-        return 'PowerPoint Presentation';
-      case 'txt':
-        return 'Text Document';
-      default:
-        return 'Other';
-    }
-  };
-
-  useEffect(() => {
-    fetchDocuments();
-
-    const channel = supabase
-      .channel('document_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'documents' },
-        () => {
-          console.log('Document change detected, refreshing...');
-          fetchDocuments();
-        }
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const { documents, treeData, isLoading, searchQuery, setSearchQuery } = useDocuments();
 
   return (
     <>
