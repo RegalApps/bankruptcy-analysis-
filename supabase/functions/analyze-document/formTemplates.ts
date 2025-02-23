@@ -1,16 +1,16 @@
 
 import { OSBFormTemplate, ValidationRule, ValidationError } from "./types.ts";
-import { bankruptcyForms } from "./templates/bankruptcyForms";
-import { proposalForms } from "./templates/proposalForms";
-import { receivershipForms } from "./templates/receivershipForms";
-import { ccaaForms } from "./templates/ccaaForms";
-import { administrativeForms } from "./templates/administrativeForms";
+import { bankruptcyForms } from "./templates/bankruptcyForms.ts";
+import { proposalForms } from "./templates/proposalForms.ts";
+import { receivershipForms } from "./templates/receivershipForms.ts";
+import { ccaaForms } from "./templates/ccaaForms.ts";
+import { administrativeForms } from "./templates/administrativeForms.ts";
 import {
   validateFinancialRisk,
   validateComplianceRisk,
   validateLegalRisk,
   validateOperationalRisk
-} from "./validation/formValidation";
+} from "./validation/formValidation.ts";
 
 // Combine all form templates
 export const osbFormTemplates: Record<string, OSBFormTemplate> = {
