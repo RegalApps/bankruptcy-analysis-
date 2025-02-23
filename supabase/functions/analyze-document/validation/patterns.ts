@@ -1,4 +1,3 @@
-
 export const validationPatterns = {
   // Identification patterns
   estateNumber: /^\d{2}-\d{6}$/,
@@ -138,6 +137,123 @@ export const riskPatterns = {
         "within timeframe",
         "minor delay",
         "technical issue"
+      ]
+    }
+  },
+
+  legalRisk: {
+    highRisk: {
+      conditions: {
+        courtOrders: true,
+        statutoryDeadlines: true,
+        regulatoryCompliance: false
+      },
+      indicators: [
+        "court order violation",
+        "statutory breach",
+        "regulatory non-compliance"
+      ]
+    },
+    mediumRisk: {
+      conditions: {
+        documentationGaps: true,
+        procedureDeviation: true,
+        minorDelay: true
+      },
+      indicators: [
+        "incomplete documentation",
+        "procedure variation",
+        "timeline extension"
+      ]
+    },
+    lowRisk: {
+      conditions: {
+        minorOmissions: true,
+        technicalIssues: true,
+        clarificationNeeded: true
+      },
+      indicators: [
+        "minor oversight",
+        "technical correction",
+        "clarification request"
+      ]
+    }
+  },
+
+  operationalRisk: {
+    highRisk: {
+      conditions: {
+        systemFailure: true,
+        dataLoss: true,
+        processBreakdown: true
+      },
+      indicators: [
+        "system outage",
+        "data corruption",
+        "process failure"
+      ]
+    },
+    mediumRisk: {
+      conditions: {
+        performanceIssues: true,
+        dataInconsistency: true,
+        processDelay: true
+      },
+      indicators: [
+        "system slowdown",
+        "data discrepancy",
+        "process bottleneck"
+      ]
+    },
+    lowRisk: {
+      conditions: {
+        minorGlitches: true,
+        dataWarnings: true,
+        processInefficiency: true
+      },
+      indicators: [
+        "minor glitch",
+        "data warning",
+        "process inefficiency"
+      ]
+    }
+  },
+
+  reputationalRisk: {
+    highRisk: {
+      conditions: {
+        publicExposure: true,
+        stakeholderImpact: true,
+        mediaAttention: true
+      },
+      indicators: [
+        "public controversy",
+        "stakeholder complaint",
+        "media coverage"
+      ]
+    },
+    mediumRisk: {
+      conditions: {
+        limitedExposure: true,
+        stakeholderConcern: true,
+        localAttention: true
+      },
+      indicators: [
+        "local concern",
+        "stakeholder inquiry",
+        "limited exposure"
+      ]
+    },
+    lowRisk: {
+      conditions: {
+        internalIssue: true,
+        minorConcern: true,
+        noPublicity: true
+      },
+      indicators: [
+        "internal matter",
+        "minor concern",
+        "no publicity"
       ]
     }
   }
