@@ -346,5 +346,183 @@ export const administrativeForms: Record<string, OSBFormTemplate> = {
         }
       }
     ]
+  },
+  "60": {
+    formNumber: "60",
+    title: "Assignment for the General Benefit of Creditors",
+    category: "administrative",
+    subcategory: "creditor_rights",
+    purpose: "Voluntary assignment",
+    relatedForms: ["61", "62"],
+    clientInfoFields: [
+      "debtorName",
+      "assigneeName",
+      "creditorList"
+    ],
+    keyDates: [
+      "assignmentDate",
+      "acceptanceDate",
+      "notificationDeadline"
+    ],
+    monetaryFields: [
+      "totalAssets",
+      "totalLiabilities",
+      "estimatedDeficiency"
+    ],
+    requiredFields: [
+      {
+        name: "assetList",
+        type: "text",
+        required: true,
+        osbReference: "BIA.49",
+        formNumbers: ["60"],
+        description: "List of assigned assets"
+      },
+      {
+        name: "creditorSchedule",
+        type: "text",
+        required: true,
+        osbReference: "BIA.49",
+        formNumbers: ["60"],
+        description: "Schedule of creditors"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "notificationDeadline",
+        riskType: "compliance",
+        severity: "high",
+        description: "Creditor notification compliance",
+        threshold: {
+          type: "days",
+          value: 5,
+          comparison: "maximum",
+          baseline: "assignmentDate"
+        }
+      },
+      {
+        field: "estimatedDeficiency",
+        riskType: "financial",
+        severity: "medium",
+        description: "Asset deficiency analysis",
+        threshold: {
+          type: "percentage",
+          value: 50,
+          comparison: "maximum",
+          baseline: "totalLiabilities"
+        }
+      }
+    ]
+  },
+  "61": {
+    formNumber: "61",
+    title: "Certificate of Independent Legal Advice",
+    category: "administrative",
+    subcategory: "legal_compliance",
+    purpose: "Legal advice verification",
+    relatedForms: ["60", "62"],
+    clientInfoFields: [
+      "clientName",
+      "lawyerName",
+      "lawFirm"
+    ],
+    keyDates: [
+      "consultationDate",
+      "certificationDate"
+    ],
+    monetaryFields: [
+      "consultationFee"
+    ],
+    requiredFields: [
+      {
+        name: "adviceScope",
+        type: "text",
+        required: true,
+        osbReference: "BIA.R104",
+        formNumbers: ["61"],
+        description: "Scope of legal advice provided"
+      },
+      {
+        name: "clientUnderstanding",
+        type: "text",
+        required: true,
+        osbReference: "BIA.R104",
+        formNumbers: ["61"],
+        description: "Confirmation of client understanding"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "certificationDate",
+        riskType: "legal",
+        severity: "high",
+        description: "Certification timing verification",
+        threshold: {
+          type: "days",
+          value: 1,
+          comparison: "maximum",
+          baseline: "consultationDate"
+        }
+      }
+    ]
+  },
+  "62": {
+    formNumber: "62",
+    title: "Notice of Intention to Enforce Security",
+    category: "administrative",
+    subcategory: "secured_creditors",
+    purpose: "Security enforcement notice",
+    relatedForms: ["60", "61"],
+    clientInfoFields: [
+      "securedCreditorName",
+      "debtorName",
+      "securityDescription"
+    ],
+    keyDates: [
+      "noticeDate",
+      "enforcementDate",
+      "responseDeadline"
+    ],
+    monetaryFields: [
+      "securedAmount",
+      "estimatedValue",
+      "enforcementCosts"
+    ],
+    requiredFields: [
+      {
+        name: "securityDetails",
+        type: "text",
+        required: true,
+        osbReference: "BIA.244",
+        formNumbers: ["62"],
+        description: "Details of security being enforced"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "enforcementDate",
+        riskType: "compliance",
+        severity: "high",
+        description: "Notice period compliance",
+        threshold: {
+          type: "days",
+          value: 10,
+          comparison: "minimum",
+          baseline: "noticeDate"
+        }
+      },
+      {
+        field: "estimatedValue",
+        riskType: "financial",
+        severity: "medium",
+        description: "Security valuation analysis",
+        threshold: {
+          type: "percentage",
+          value: 120,
+          comparison: "minimum",
+          baseline: "securedAmount"
+        }
+      }
+    ]
   }
 };
