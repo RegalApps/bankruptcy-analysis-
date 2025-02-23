@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { Upload, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -20,6 +21,14 @@ export const FileUpload = () => {
   const updateProgress = (message: string, percentage?: number) => {
     setStatus({ step: percentage ? Math.floor(percentage / 25) : 0, message });
     setUploadProgress(percentage || 0);
+    
+    // Show progress toast for important steps
+    if (percentage && percentage % 25 === 0) {
+      toast({
+        title: "Upload Progress",
+        description: message,
+      });
+    }
   };
 
   const resetUpload = () => {
@@ -53,6 +62,12 @@ export const FileUpload = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Show initial upload toast
+      toast({
+        title: "Upload Started",
+        description: `Uploading ${file.name}...`
+      });
+
       const { fileName, documentData } = await uploadToStorage(
         file,
         user.id,
@@ -67,16 +82,21 @@ export const FileUpload = () => {
           updateProgress
         );
 
+        // Show success toast with document details
         toast({
-          title: "Success",
-          description: "File uploaded and analyzed successfully"
+          title: "Upload Successful",
+          description: `${file.name} has been uploaded and processed successfully`,
+          variant: "default"
         });
+
+        // Reset the upload state
+        resetUpload();
       } catch (error) {
         console.error('Error analyzing document:', error);
         toast({
           variant: "destructive",
-          title: "Analysis failed",
-          description: "Document was uploaded but analysis failed"
+          title: "Analysis Failed",
+          description: "Document was uploaded but analysis failed. Please try again."
         });
       } finally {
         setIsUploading(false);
@@ -87,9 +107,10 @@ export const FileUpload = () => {
       setError(error.message || "There was an error uploading your file");
       toast({
         variant: "destructive",
-        title: "Upload failed",
+        title: "Upload Failed",
         description: error.message || "There was an error uploading your file"
       });
+      resetUpload();
     }
   };
 
@@ -118,7 +139,7 @@ export const FileUpload = () => {
     }
     resetUpload();
     toast({
-      title: "Upload cancelled",
+      title: "Upload Cancelled",
       description: "The file upload was cancelled"
     });
   };

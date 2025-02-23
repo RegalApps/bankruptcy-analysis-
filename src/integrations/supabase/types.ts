@@ -138,6 +138,7 @@ export type Database = {
           created_at: string
           deadlines: Json[] | null
           id: string
+          metadata: Json | null
           size: number | null
           storage_path: string | null
           title: string
@@ -150,6 +151,7 @@ export type Database = {
           created_at?: string
           deadlines?: Json[] | null
           id?: string
+          metadata?: Json | null
           size?: number | null
           storage_path?: string | null
           title: string
@@ -162,6 +164,7 @@ export type Database = {
           created_at?: string
           deadlines?: Json[] | null
           id?: string
+          metadata?: Json | null
           size?: number | null
           storage_path?: string | null
           title?: string

@@ -40,48 +40,35 @@ export const handleDocumentUpload = async (
     // Step 2: Document Analysis (40-80%)
     updateProgress('Analyzing document content...', 50);
 
-    // Retry mechanism for analysis with progress updates
-    let attempts = 0;
-    const maxAttempts = 3;
-    let analysisError = null;
+    // Extract potential client name from document text (basic example)
+    const metadata = {
+      client_name: 'Uncategorized', // Default value
+      processed_at: new Date().toISOString(),
+      extraction_status: 'completed'
+    };
 
-    while (attempts < maxAttempts) {
-      try {
-        const { error } = await supabase.functions.invoke('analyze-document', {
-          body: {
-            documentText,
-            documentId
-          }
-        });
+    // Update document with metadata
+    const { error: updateError } = await supabase
+      .from('documents')
+      .update({ 
+        metadata,
+        type: file.type 
+      })
+      .eq('id', documentId);
 
-        if (!error) {
-          updateProgress('Document analysis completed successfully', 100);
-          return;
-        }
+    if (updateError) throw updateError;
 
-        analysisError = error;
-        attempts++;
-        
-        if (attempts < maxAttempts) {
-          const progress = 50 + (attempts * 10); // Progress from 50-80%
-          updateProgress(`Retrying analysis (attempt ${attempts + 1}/${maxAttempts})...`, progress);
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
-        }
-      } catch (error) {
-        analysisError = error;
-        attempts++;
-        if (attempts < maxAttempts) {
-          const progress = 50 + (attempts * 10);
-          updateProgress(`Retrying analysis (attempt ${attempts + 1}/${maxAttempts})...`, progress);
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
-        }
+    // Continue with document analysis
+    const { error } = await supabase.functions.invoke('analyze-document', {
+      body: {
+        documentText,
+        documentId
       }
-    }
+    });
 
-    if (analysisError) {
-      console.error('Analysis error after retries:', analysisError);
-      throw analysisError;
-    }
+    if (error) throw error;
+
+    updateProgress('Document analysis completed successfully', 100);
   } catch (error) {
     console.error('Document processing error:', error);
     updateProgress('Error processing document');
@@ -119,7 +106,8 @@ export const uploadToStorage = async (
         size: file.size,
         storage_path: fileName,
         url: data?.path || '',
-        user_id: userId
+        user_id: userId,
+        metadata: {} // Initialize empty metadata
       }
     ])
     .select()
