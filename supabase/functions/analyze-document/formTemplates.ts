@@ -311,6 +311,228 @@ export const osbFormTemplates: Record<string, OSBFormTemplate> = {
         description: "Unexplained or unusual disbursements"
       }
     ]
+  },
+  "33": {
+    formNumber: "33",
+    title: "Report of Trustee on Proposal",
+    category: "proposal",
+    subcategory: "division_1_proposal",
+    purpose: "Trustee's assessment of proposal viability and recommendations",
+    relatedForms: ["31", "32", "34"],
+    clientInfoFields: [
+      "debtorName",
+      "businessName",
+      "trusteeContact",
+      "estateNumber"
+    ],
+    keyDates: [
+      "filingDate",
+      "meetingDate",
+      "reportDate",
+      "projectionPeriod"
+    ],
+    monetaryFields: [
+      "totalDebt",
+      "proposalPayment",
+      "projectedCashFlow",
+      "administrativeCosts"
+    ],
+    requiredFields: [
+      {
+        name: "viabilityAssessment",
+        type: "text",
+        required: true,
+        osbReference: "BIA.50(10)",
+        formNumbers: ["33"],
+        description: "Assessment of proposal viability"
+      },
+      {
+        name: "cashFlowStatement",
+        type: "file",
+        required: true,
+        osbReference: "BIA.50(6)",
+        formNumbers: ["33"],
+        description: "Projected cash flow statement"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "projectedCashFlow",
+        riskType: "financial",
+        severity: "high",
+        description: "Insufficient cash flow to support proposal payments"
+      },
+      {
+        field: "viabilityAssessment",
+        riskType: "compliance",
+        severity: "high",
+        description: "Concerns about business viability"
+      }
+    ]
+  },
+  "40": {
+    formNumber: "40",
+    title: "Assignment of Book Debts",
+    category: "receivership",
+    subcategory: "receivership_appointment",
+    purpose: "Documentation of receivership over book debts",
+    relatedForms: ["41", "42"],
+    clientInfoFields: [
+      "debtorName",
+      "securedCreditor",
+      "receiverName"
+    ],
+    keyDates: [
+      "appointmentDate",
+      "effectiveDate",
+      "registrationDate"
+    ],
+    monetaryFields: [
+      "bookDebtsValue",
+      "securedAmount",
+      "estimatedRealization"
+    ],
+    requiredFields: [
+      {
+        name: "securityDescription",
+        type: "text",
+        required: true,
+        osbReference: "BIA.243",
+        formNumbers: ["40"],
+        description: "Description of security agreement"
+      },
+      {
+        name: "collateralDescription",
+        type: "text",
+        required: true,
+        osbReference: "BIA.243(1)",
+        formNumbers: ["40"],
+        description: "Description of book debts"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "bookDebtsValue",
+        riskType: "financial",
+        severity: "high",
+        description: "Significant variance between book value and estimated realization"
+      },
+      {
+        field: "registrationDate",
+        riskType: "legal",
+        severity: "high",
+        description: "Late registration may affect priority"
+      }
+    ]
+  },
+  "50": {
+    formNumber: "50",
+    title: "Notice of Stay of Proceedings",
+    category: "ccaa",
+    subcategory: "ccaa_initial",
+    purpose: "Notice of CCAA proceedings and stay of proceedings",
+    relatedForms: ["51", "52"],
+    clientInfoFields: [
+      "companyName",
+      "courtFileNumber",
+      "monitorName"
+    ],
+    keyDates: [
+      "filingDate",
+      "stayExpiryDate",
+      "hearingDate"
+    ],
+    monetaryFields: [
+      "totalLiabilities",
+      "operatingCosts",
+      "interimFinancing"
+    ],
+    requiredFields: [
+      {
+        name: "stayPeriod",
+        type: "date",
+        required: true,
+        osbReference: "CCAA.11.02",
+        formNumbers: ["50"],
+        description: "Period of stay of proceedings"
+      },
+      {
+        name: "courtOrder",
+        type: "file",
+        required: true,
+        osbReference: "CCAA.11",
+        formNumbers: ["50"],
+        description: "Initial court order"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "operatingCosts",
+        riskType: "financial",
+        severity: "high",
+        description: "Insufficient working capital during stay period"
+      },
+      {
+        field: "stayPeriod",
+        riskType: "legal",
+        severity: "medium",
+        description: "Stay extension may be required"
+      }
+    ]
+  },
+  "82": {
+    formNumber: "82",
+    title: "Notice of Mediation",
+    category: "administrative",
+    subcategory: "administrative_general",
+    purpose: "Notification of mediation for disputed matters",
+    relatedForms: ["83", "84"],
+    clientInfoFields: [
+      "bankruptName",
+      "trusteeContact",
+      "mediatorName"
+    ],
+    keyDates: [
+      "mediationDate",
+      "responseDeadline",
+      "documentationDeadline"
+    ],
+    monetaryFields: [
+      "disputedAmount",
+      "mediationCosts"
+    ],
+    requiredFields: [
+      {
+        name: "disputeDescription",
+        type: "text",
+        required: true,
+        osbReference: "BIA.170.1",
+        formNumbers: ["82"],
+        description: "Description of disputed matters"
+      },
+      {
+        name: "mediatorAppointment",
+        type: "file",
+        required: true,
+        osbReference: "BIA.170.1(1)",
+        formNumbers: ["82"],
+        description: "Mediator appointment document"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "disputedAmount",
+        riskType: "financial",
+        severity: "medium",
+        description: "High disputed amount may affect estate administration"
+      },
+      {
+        field: "responseDeadline",
+        riskType: "compliance",
+        severity: "high",
+        description: "Missed deadline may result in adverse determination"
+      }
+    ]
   }
 };
 
@@ -322,7 +544,7 @@ export function validateOSBForm(formNumber: string, data: any): ValidationError[
 
   const errors: ValidationError[] = [];
 
-  // Validate required fields
+  // Required field validation
   template.requiredFields.forEach(field => {
     if (field.required && !data[field.name]) {
       errors.push({
@@ -334,29 +556,114 @@ export function validateOSBForm(formNumber: string, data: any): ValidationError[
     }
   });
 
-  // Check for risk indicators
+  // Date validations
+  template.keyDates.forEach(dateField => {
+    if (data[dateField]) {
+      const date = new Date(data[dateField]);
+      if (isNaN(date.getTime())) {
+        errors.push({
+          field: dateField,
+          type: 'error',
+          message: `Invalid date format for ${dateField}`,
+          code: 'INVALID_DATE'
+        });
+      }
+    }
+  });
+
+  // Monetary field validations
+  template.monetaryFields.forEach(moneyField => {
+    if (data[moneyField]) {
+      const amount = parseFloat(data[moneyField]);
+      if (isNaN(amount) || amount < 0) {
+        errors.push({
+          field: moneyField,
+          type: 'error',
+          message: `Invalid monetary value for ${moneyField}`,
+          code: 'INVALID_AMOUNT'
+        });
+      }
+    }
+  });
+
+  // Risk analysis
   template.riskIndicators.forEach(indicator => {
     const value = data[indicator.field];
     if (value) {
-      // Add risk-based validation logic here
       switch (indicator.riskType) {
         case 'financial':
-          // Financial risk checks
+          validateFinancialRisk(value, indicator, errors);
           break;
         case 'compliance':
-          // Compliance risk checks
+          validateComplianceRisk(value, indicator, errors);
           break;
         case 'legal':
-          // Legal risk checks
+          validateLegalRisk(value, indicator, errors);
           break;
         case 'operational':
-          // Operational risk checks
+          validateOperationalRisk(value, indicator, errors);
           break;
       }
     }
   });
 
   return errors;
+}
+
+function validateFinancialRisk(value: any, indicator: any, errors: ValidationError[]) {
+  // Add specific financial risk validation logic
+  if (indicator.field.includes('cashFlow') && parseFloat(value) < 0) {
+    errors.push({
+      field: indicator.field,
+      type: 'warning',
+      message: 'Negative cash flow detected',
+      code: 'NEGATIVE_CASH_FLOW'
+    });
+  }
+}
+
+function validateComplianceRisk(value: any, indicator: any, errors: ValidationError[]) {
+  // Add specific compliance risk validation logic
+  if (indicator.field.includes('Date')) {
+    const date = new Date(value);
+    const today = new Date();
+    if (date < today) {
+      errors.push({
+        field: indicator.field,
+        type: 'warning',
+        message: 'Past due date detected',
+        code: 'PAST_DUE_DATE'
+      });
+    }
+  }
+}
+
+function validateLegalRisk(value: any, indicator: any, errors: ValidationError[]) {
+  // Add specific legal risk validation logic
+  if (indicator.field.includes('court') || indicator.field.includes('order')) {
+    if (!value || value.length < 10) {
+      errors.push({
+        field: indicator.field,
+        type: 'warning',
+        message: 'Insufficient legal documentation',
+        code: 'INSUFFICIENT_LEGAL_DOC'
+      });
+    }
+  }
+}
+
+function validateOperationalRisk(value: any, indicator: any, errors: ValidationError[]) {
+  // Add specific operational risk validation logic
+  if (indicator.field.includes('process') || indicator.field.includes('procedure')) {
+    if (!value || value.length < 50) {
+      errors.push({
+        field: indicator.field,
+        type: 'warning',
+        message: 'Incomplete process documentation',
+        code: 'INCOMPLETE_PROCESS_DOC'
+      });
+    }
+  }
 }
 
 export type {
