@@ -6,173 +6,184 @@ import { DocumentList } from "./DocumentList";
 import { DocumentUploadButton } from "./DocumentUploadButton";
 import { useDocuments } from "./hooks/useDocuments";
 import { Button } from "@/components/ui/button";
-import { 
-  MoreVertical, 
-  Search,
-  Plus,
-  Grid, 
-  List,
-  File
-} from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChevronLeft, ChevronRight, File, Folder, Grid, List, Users } from "lucide-react";
 import { DocumentNode } from "./types";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DocumentManagementProps {
   onDocumentSelect: (id: string) => void;
 }
 
 export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocumentSelect }) => {
-  const { documents, treeData, isLoading } = useDocuments();
-  const [searchQuery, setSearchQuery] = useState("");
+  const { documents, treeData, isLoading, searchQuery, setSearchQuery } = useDocuments();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isGridView, setIsGridView] = useState(true);
 
-  // Group documents by client
-  const groupedByClient = documents.reduce((acc, doc) => {
-    const clientName = doc.metadata?.client_name || 'Uncategorized';
-    if (!acc[clientName]) {
-      acc[clientName] = [];
-    }
-    acc[clientName].push(doc);
-    return acc;
-  }, {} as Record<string, typeof documents>);
+  const renderTreeNode = (node: DocumentNode) => {
+    const hasChildren = node.children && node.children.length > 0;
+    const [isExpanded, setIsExpanded] = useState(true);
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      {/* Search Section */}
-      <section className="border-b">
-        <div className="container mx-auto py-8">
-          <div className="max-w-2xl mx-auto space-y-4">
-            <h2 className="text-2xl font-semibold text-center">Search Documents</h2>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search by client name, form number, or document type..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border bg-background"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Document Folders Section */}
-      <section className="container mx-auto py-8">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold">Document Folders</h2>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsGridView(true)}
-                className={cn(isGridView && "bg-accent")}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsGridView(false)}
-                className={cn(!isGridView && "bg-accent")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <DocumentUploadButton />
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-[200px] rounded-lg border bg-card animate-pulse" />
-              ))}
-            </div>
+    return (
+      <div key={node.id} className="space-y-1">
+        <div 
+          className={cn(
+            "group flex items-center gap-2 p-2 rounded-md hover:bg-accent cursor-pointer",
+            "transition-colors duration-200"
+          )}
+          onClick={() => hasChildren ? setIsExpanded(!isExpanded) : onDocumentSelect(node.id)}
+        >
+          {hasChildren ? (
+            <ChevronRight 
+              className={cn(
+                "h-4 w-4 transition-transform",
+                isExpanded && "rotate-90"
+              )} 
+            />
           ) : (
-            <div className={cn(
-              "grid gap-4",
-              isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-            )}>
-              {Object.entries(groupedByClient)
-                .filter(([clientName]) => 
-                  clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  documents.some(doc => 
-                    doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    doc.type?.toLowerCase().includes(searchQuery.toLowerCase())
-                  )
-                )
-                .map(([clientName, clientDocs]) => (
-                  <Card key={clientName} className="group hover:shadow-lg transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-lg font-semibold">{clientName}</CardTitle>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Document
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Delete Folder
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <File className="mr-2 h-4 w-4" />
-                          {clientDocs.length} document{clientDocs.length !== 1 ? 's' : ''}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Last updated: {new Date(
-                            Math.max(...clientDocs.map(d => new Date(d.updated_at).getTime()))
-                          ).toLocaleDateString()}
-                        </div>
-                        <div className="mt-4">
-                          <Button 
-                            variant="outline" 
-                            className="w-full"
-                            onClick={() => onDocumentSelect(clientDocs[0].id)}
-                          >
-                            View Documents
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
+            <div className="w-4" />
+          )}
+          
+          {node.type === 'client' ? (
+            <Users className="h-4 w-4" />
+          ) : node.type === 'category' ? (
+            <Folder className="h-4 w-4" />
+          ) : (
+            <File className="h-4 w-4" />
+          )}
+          
+          <span className={cn(
+            "truncate",
+            !isSidebarCollapsed && "transition-opacity duration-200",
+            isSidebarCollapsed && "opacity-0 w-0"
+          )}>
+            {node.title}
+          </span>
+
+          {isSidebarCollapsed && (
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="sr-only">{node.title}</span>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>{node.title}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
-      </section>
 
-      {/* Upload Panel */}
-      <div className="fixed bottom-6 right-6">
-        <div className="rounded-lg border bg-card p-4 shadow-lg">
-          <h2 className="text-lg font-semibold mb-4">Upload Documents</h2>
-          <FileUpload />
-        </div>
+        {hasChildren && isExpanded && (
+          <div className="ml-4 border-l pl-2 space-y-1">
+            {node.children.map(child => renderTreeNode(child))}
+          </div>
+        )}
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <>
+      <Header />
+      <div className="flex h-[calc(100vh-4rem)]">
+        {/* Sidebar */}
+        <aside className={cn(
+          "border-r bg-background transition-all duration-300 ease-in-out relative",
+          isSidebarCollapsed ? "w-16" : "w-64"
+        )}>
+          {/* Sidebar Header */}
+          <div className="p-4 border-b flex items-center justify-between">
+            {!isSidebarCollapsed && (
+              <h2 className="font-semibold">Documents</h2>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="ml-auto"
+            >
+              {isSidebarCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Search Bar (only visible when sidebar is expanded) */}
+          {!isSidebarCollapsed && (
+            <div className="p-4">
+              <SearchBar 
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+              />
+            </div>
+          )}
+
+          {/* Document Tree */}
+          <div className="overflow-y-auto h-full p-4">
+            {treeData.map(node => renderTreeNode(node))}
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-6 space-y-6">
+            {/* Toolbar */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsGridView(true)}
+                  className={cn(isGridView && "bg-accent")}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsGridView(false)}
+                  className={cn(!isGridView && "bg-accent")}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+              <DocumentUploadButton />
+            </div>
+
+            {/* Document List */}
+            {isLoading ? (
+              <div className={cn(
+                "grid gap-4",
+                isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+              )}>
+                {[...Array(6)].map((_, i) => (
+                  <div 
+                    key={i}
+                    className="h-[120px] rounded-lg border bg-card animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : (
+              <DocumentList 
+                documents={documents}
+                searchQuery={searchQuery}
+                onDocumentSelect={onDocumentSelect}
+                viewMode={isGridView ? "grid" : "list"}
+              />
+            )}
+          </div>
+
+          {/* Upload Panel */}
+          <div className="fixed bottom-6 right-6">
+            <div className="rounded-lg border bg-card p-4 shadow-lg">
+              <h2 className="text-lg font-semibold mb-4">Upload Documents</h2>
+              <FileUpload />
+            </div>
+          </div>
+        </main>
+      </div>
+    </>
   );
 };
