@@ -1,4 +1,3 @@
-
 export const validationPatterns = {
   // Identification patterns
   estateNumber: /^\d{2}-\d{6}$/,
@@ -29,10 +28,79 @@ export const regulatoryPatterns = {
             "appointment details",
             "property description"
           ]
+        },
+        "246": {
+          timeframes: {
+            initialReport: 30,
+            interimReport: 60,
+            finalReport: 90
+          },
+          requirements: [
+            "property inventory",
+            "realization plan",
+            "financial statements"
+          ]
+        },
+        "247": {
+          timeframes: {
+            finalReport: 90,
+            feeApplication: 30
+          },
+          requirements: [
+            "complete accounting",
+            "fee justification",
+            "distribution plan"
+          ]
+        },
+        "13.4": {
+          timeframes: {
+            assessmentPeriod: 45,
+            reportingDeadline: 30
+          },
+          requirements: [
+            "income verification",
+            "expense analysis",
+            "payment calculation"
+          ]
+        },
+        "155": {
+          timeframes: {
+            initialReport: 30,
+            creditorMeeting: 21
+          },
+          requirements: [
+            "asset summary",
+            "preliminary findings",
+            "meeting details"
+          ]
+        },
+        "156": {
+          timeframes: {
+            preliminaryReport: 45,
+            investigationConclusion: 60
+          },
+          requirements: [
+            "asset verification",
+            "investigation results",
+            "recommendations"
+          ]
+        },
+        "157": {
+          timeframes: {
+            distributionNotice: 30,
+            objectionPeriod: 30,
+            paymentExecution: 15
+          },
+          requirements: [
+            "distribution plan",
+            "creditor allocation",
+            "payment schedule"
+          ]
         }
       }
     }
   },
+  
   directives: {
     "12R2": {
       requirements: {
@@ -40,25 +108,181 @@ export const regulatoryPatterns = {
           "secured creditor details",
           "security instrument",
           "appointment basis"
+        ],
+        reporting: [
+          "property inventory",
+          "financial statements",
+          "realization progress"
+        ],
+        fees: [
+          "detailed time records",
+          "rate justification",
+          "disbursement support"
         ]
       },
       thresholds: {
-        reportingDelay: 5
+        feePercentage: 20,
+        reportingDelay: 5,
+        documentationGap: 2
+      }
+    },
+    
+    "11R2": {
+      requirements: {
+        assessment: [
+          "income calculation",
+          "expense verification",
+          "surplus determination"
+        ],
+        reporting: [
+          "monthly income",
+          "payment schedule",
+          "variance explanation"
+        ],
+        documentation: [
+          "pay statements",
+          "expense receipts",
+          "bank statements"
+        ]
+      },
+      thresholds: {
+        paymentDelay: 15,
+        reportingPeriod: 30,
+        assessmentUpdate: 45
+      }
+    },
+    
+    "13R1": {
+      requirements: {
+        assessment: [
+          "asset valuation",
+          "creditor claims",
+          "distribution priority"
+        ],
+        reporting: [
+          "asset inventory",
+          "realization strategy",
+          "distribution schedule"
+        ],
+        documentation: [
+          "appraisals",
+          "sale agreements",
+          "creditor claims"
+        ]
+      },
+      thresholds: {
+        reportingDelay: 30,
+        distributionPeriod: 60,
+        documentationRetention: 72
+      }
+    },
+    
+    "14R1": {
+      requirements: {
+        initialAssessment: [
+          "asset verification",
+          "liability confirmation",
+          "income analysis"
+        ],
+        investigation: [
+          "transaction review",
+          "preference analysis",
+          "conduct assessment"
+        ],
+        distribution: [
+          "priority calculation",
+          "dividend projection",
+          "payment plan"
+        ]
+      },
+      thresholds: {
+        assessmentPeriod: 45,
+        investigationTime: 60,
+        distributionNotice: 30
       }
     }
   }
 };
 
-export function validateBIACompliance(section: string, requirement: string): boolean {
-  const sectionRules = regulatoryPatterns.BIA.highRisk.sections[section];
-  return sectionRules?.requirements.includes(requirement) || false;
-}
+export const validationHelpers = {
+  hasMinimumWords: (text: string, minWords: number): boolean => {
+    return text.trim().split(/\s+/).length >= minWords;
+  },
 
-export function validateDirectiveCompliance(
-  directive: string,
-  category: string,
-  requirement: string
-): boolean {
-  const directiveRules = regulatoryPatterns.directives[directive];
-  return directiveRules?.requirements[category]?.includes(requirement) || false;
-}
+  checkBIACompliance: (
+    section: string,
+    requirement: string,
+    value: any
+  ): boolean => {
+    const sectionRules = regulatoryPatterns.BIA.highRisk.sections[section];
+    return sectionRules?.requirements.includes(requirement) || false;
+  },
+
+  checkDirectiveCompliance: (
+    directive: string,
+    category: string,
+    requirement: string
+  ): boolean => {
+    const directiveRules = regulatoryPatterns.directives[directive];
+    return directiveRules?.requirements[category]?.includes(requirement) || false;
+  },
+
+  validateAssessmentCompliance: (
+    directive: string,
+    category: string,
+    documents: string[]
+  ): boolean => {
+    const directiveRules = regulatoryPatterns.directives[directive];
+    const requiredDocs = directiveRules?.requirements[category] || [];
+    return requiredDocs.every(doc => documents.includes(doc));
+  },
+
+  validateReportingTimeline: (
+    section: string,
+    reportType: string,
+    submissionDate: Date,
+    baselineDate: Date
+  ): boolean => {
+    const sectionRules = regulatoryPatterns.BIA.highRisk.sections[section];
+    const allowedDays = sectionRules?.timeframes[reportType];
+    if (!allowedDays) return true;
+    
+    const diffDays = Math.floor(
+      (submissionDate.getTime() - baselineDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return diffDays <= allowedDays;
+  },
+
+  validateDistributionCompliance: (
+    directive: string,
+    distributionPlan: any,
+    creditorClaims: any[]
+  ): boolean => {
+    const directiveRules = regulatoryPatterns.directives[directive];
+    if (!directiveRules) return false;
+
+    const requiredElements = directiveRules.requirements.distribution;
+    return requiredElements.every(element => 
+      distributionPlan && distributionPlan[element] && 
+      creditorClaims.length > 0
+    );
+  },
+
+  validateInvestigationTimeline: (
+    section: string,
+    investigation: any,
+    filingDate: Date
+  ): boolean => {
+    const sectionRules = regulatoryPatterns.BIA.highRisk.sections[section];
+    if (!sectionRules) return false;
+
+    const maxDays = sectionRules.timeframes.investigationConclusion;
+    const completionDate = new Date(investigation.completionDate);
+    const diffDays = Math.floor(
+      (completionDate.getTime() - filingDate.getTime()) / 
+      (1000 * 60 * 60 * 24)
+    );
+    
+    return diffDays <= maxDays;
+  }
+};
