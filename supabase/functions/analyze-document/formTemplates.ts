@@ -1,10 +1,10 @@
-
 import { OSBFormTemplate, ValidationRule, ValidationError } from "./types.ts";
 import { bankruptcyForms } from "./templates/bankruptcyForms.ts";
 import { proposalForms } from "./templates/proposalForms.ts";
 import { receivershipForms } from "./templates/receivershipForms.ts";
 import { ccaaForms } from "./templates/ccaaForms.ts";
 import { administrativeForms } from "./templates/administrativeForms.ts";
+import { specializedForms } from "./templates/specializedForms.ts";
 import {
   validateFinancialRisk,
   validateComplianceRisk,
@@ -18,7 +18,8 @@ export const osbFormTemplates: Record<string, OSBFormTemplate> = {
   ...proposalForms,
   ...receivershipForms,
   ...ccaaForms,
-  ...administrativeForms
+  ...administrativeForms,
+  ...specializedForms
 };
 
 export function validateOSBForm(formNumber: string, data: any): ValidationError[] {

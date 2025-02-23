@@ -2,113 +2,186 @@
 import { OSBFormTemplate } from "../types.ts";
 
 export const administrativeForms: Record<string, OSBFormTemplate> = {
-  "78": {
-    formNumber: "78",
-    title: "Statement of Receipts and Disbursements",
+  "53": {
+    formNumber: "53",
+    title: "Notice of Appeal to Court of Appeal",
     category: "administrative",
-    subcategory: "administrative_general",
-    purpose: "Detailed accounting of estate administration",
-    relatedForms: ["1", "2", "3", "4"],
+    subcategory: "appeals",
+    purpose: "Filing appeal notice",
+    relatedForms: ["54", "55"],
     clientInfoFields: [
-      "estateId",
-      "trusteeName",
-      "estateName"
+      "appellantName",
+      "respondentName",
+      "courtFileNumber"
     ],
     keyDates: [
-      "startDate",
-      "endDate",
-      "reportingPeriod"
+      "decisionDate",
+      "appealDeadline",
+      "filingDate"
     ],
     monetaryFields: [
-      "totalReceipts",
-      "totalDisbursements",
-      "trusteeFees",
-      "creditorDividends"
+      "appealBondAmount",
+      "estimatedCosts"
     ],
     requiredFields: [
       {
-        name: "receiptsBreakdown",
+        name: "groundsForAppeal",
         type: "text",
         required: true,
-        osbReference: "BIA.Directive.5R",
-        formNumbers: ["78"],
-        description: "Detailed breakdown of receipts"
-      },
-      {
-        name: "disbursementsBreakdown",
-        type: "text",
-        required: true,
-        osbReference: "BIA.Directive.5R",
-        formNumbers: ["78"],
-        description: "Detailed breakdown of disbursements"
+        osbReference: "BIA.193",
+        formNumbers: ["53"],
+        description: "Detailed grounds for appeal"
       }
     ],
     riskIndicators: [
       {
-        field: "trusteeFees",
-        riskType: "compliance",
+        field: "appealDeadline",
+        riskType: "legal",
         severity: "high",
-        description: "Trustee fees exceed tariff or guidelines"
-      },
-      {
-        field: "unexplainedDisbursements",
-        riskType: "financial",
-        severity: "high",
-        description: "Unexplained or unusual disbursements"
+        description: "Appeal filing deadline compliance",
+        threshold: {
+          type: "days",
+          value: 10,
+          comparison: "minimum",
+          baseline: "decisionDate"
+        }
       }
     ]
   },
-  "82": {
-    formNumber: "82",
-    title: "Notice of Mediation",
+  "54": {
+    formNumber: "54",
+    title: "Application for Consolidation Order",
     category: "administrative",
-    subcategory: "administrative_general",
-    purpose: "Notification of mediation for disputed matters",
-    relatedForms: ["83", "84"],
+    subcategory: "consolidation",
+    purpose: "Debt consolidation request",
+    relatedForms: ["55", "56"],
     clientInfoFields: [
-      "bankruptName",
-      "trusteeContact",
-      "mediatorName"
+      "debtorName",
+      "employmentInfo",
+      "familyInfo"
     ],
     keyDates: [
-      "mediationDate",
-      "responseDeadline",
-      "documentationDeadline"
+      "applicationDate",
+      "firstPaymentDate"
     ],
     monetaryFields: [
-      "disputedAmount",
-      "mediationCosts"
+      "totalDebt",
+      "monthlyPayment",
+      "monthlyIncome",
+      "monthlyExpenses"
     ],
     requiredFields: [
       {
-        name: "disputeDescription",
+        name: "financialStatement",
         type: "text",
         required: true,
-        osbReference: "BIA.170.1",
-        formNumbers: ["82"],
-        description: "Description of disputed matters"
-      },
-      {
-        name: "mediatorAppointment",
-        type: "file",
-        required: true,
-        osbReference: "BIA.170.1(1)",
-        formNumbers: ["82"],
-        description: "Mediator appointment document"
+        osbReference: "BIA.218",
+        formNumbers: ["54"],
+        description: "Current financial statement"
       }
     ],
     riskIndicators: [
       {
-        field: "disputedAmount",
+        field: "monthlyPayment",
+        riskType: "financial",
+        severity: "high",
+        description: "Payment affordability analysis",
+        threshold: {
+          type: "percentage",
+          value: 40,
+          comparison: "maximum",
+          baseline: "monthlyIncome"
+        }
+      }
+    ]
+  },
+  "55": {
+    formNumber: "55",
+    title: "Notice of Taxation of Receiver's Accounts",
+    category: "administrative",
+    subcategory: "taxation",
+    purpose: "Account taxation notice",
+    relatedForms: ["42", "56"],
+    clientInfoFields: [
+      "receiverName",
+      "estateInfo"
+    ],
+    keyDates: [
+      "taxationDate",
+      "objectionDeadline"
+    ],
+    monetaryFields: [
+      "feesAmount",
+      "disbursements",
+      "totalCharges"
+    ],
+    requiredFields: [
+      {
+        name: "accountDetails",
+        type: "text",
+        required: true,
+        osbReference: "BIA.249",
+        formNumbers: ["55"],
+        description: "Detailed account statement"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "feesAmount",
         riskType: "financial",
         severity: "medium",
-        description: "High disputed amount may affect estate administration"
-      },
+        description: "Fee reasonableness analysis",
+        threshold: {
+          type: "percentage",
+          value: 15,
+          comparison: "maximum",
+          baseline: "estateValue"
+        }
+      }
+    ]
+  },
+  "56": {
+    formNumber: "56",
+    title: "Notice of Hearing of Application for Bankruptcy Order",
+    category: "administrative",
+    subcategory: "hearings",
+    purpose: "Bankruptcy hearing notification",
+    relatedForms: ["1", "57"],
+    clientInfoFields: [
+      "applicantName",
+      "respondentName",
+      "courtLocation"
+    ],
+    keyDates: [
+      "hearingDate",
+      "serviceDeadline"
+    ],
+    monetaryFields: [
+      "claimAmount",
+      "securityValue"
+    ],
+    requiredFields: [
       {
-        field: "responseDeadline",
-        riskType: "compliance",
+        name: "hearingDetails",
+        type: "text",
+        required: true,
+        osbReference: "BIA.43(5)",
+        formNumbers: ["56"],
+        description: "Hearing information"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "serviceDeadline",
+        riskType: "legal",
         severity: "high",
-        description: "Missed deadline may result in adverse determination"
+        description: "Service requirement compliance",
+        threshold: {
+          type: "days",
+          value: 7,
+          comparison: "minimum",
+          baseline: "hearingDate"
+        }
       }
     ]
   }
