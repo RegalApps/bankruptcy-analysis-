@@ -14,12 +14,14 @@ interface DocumentListProps {
   documents: Document[];
   searchQuery: string;
   onDocumentSelect: (id: string) => void;
+  viewMode?: "grid" | "list";
 }
 
 export const DocumentList: React.FC<DocumentListProps> = ({ 
   documents, 
   searchQuery, 
-  onDocumentSelect 
+  onDocumentSelect,
+  viewMode = "grid"
 }) => {
   const filteredDocuments = documents.filter(doc =>
     doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -53,7 +55,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       {Object.entries(groupedDocuments).map(([type, docs]) => (
         <div key={type} className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">{type}</h3>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className={`grid gap-4 ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
             {docs.map((doc) => (
               <DocumentCard
                 key={doc.id}
