@@ -20,8 +20,22 @@ interface DocumentNode {
   children?: DocumentNode[];
 }
 
+interface Document {
+  id: string;
+  title: string;
+  type: string;
+  size: number;
+  storage_path: string;
+  created_at: string;
+  updated_at: string;
+  metadata?: {
+    client_name?: string;
+    [key: string]: any;
+  };
+}
+
 export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocumentSelect }) => {
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [treeData, setTreeData] = useState<DocumentNode[]>([]);
@@ -57,7 +71,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
       }
 
       // Process and organize documents into tree structure
-      const processedData = data?.map(doc => ({
+      const processedData = (data as Document[])?.map(doc => ({
         ...doc,
         type: doc.type || determineFileType(doc.title)
       })) || [];
@@ -80,7 +94,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
     }
   };
 
-  const organizeDocumentsIntoTree = (docs: any[]): DocumentNode[] => {
+  const organizeDocumentsIntoTree = (docs: Document[]): DocumentNode[] => {
     // First, group by client (assuming we extract client from metadata)
     const clientGroups = docs.reduce((acc, doc) => {
       const clientName = doc.metadata?.client_name || 'Uncategorized';
@@ -89,7 +103,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
       }
       acc[clientName].push(doc);
       return acc;
-    }, {} as Record<string, any[]>);
+    }, {} as Record<string, Document[]>);
 
     // Then, for each client, group by document type
     return Object.entries(clientGroups).map(([clientName, clientDocs]) => {
@@ -100,7 +114,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
         }
         acc[type].push(doc);
         return acc;
-      }, {} as Record<string, any[]>);
+      }, {} as Record<string, Document[]>);
 
       // Create the tree structure
       return {
