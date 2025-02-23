@@ -258,3 +258,155 @@ export const riskPatterns = {
     }
   }
 };
+
+export const regulatoryPatterns = {
+  BIA: {
+    highRisk: {
+      sections: {
+        "243": {
+          timeframes: {
+            appointmentNotice: 10,
+            filingDeadline: 15
+          },
+          requirements: [
+            "secured creditor notice",
+            "appointment details",
+            "property description"
+          ]
+        },
+        "246": {
+          timeframes: {
+            initialReport: 30,
+            interimReport: 60,
+            finalReport: 90
+          },
+          requirements: [
+            "property inventory",
+            "realization plan",
+            "financial statements"
+          ]
+        }
+      },
+      indicators: [
+        "statutory deadline breach",
+        "incomplete filing",
+        "non-compliant documentation"
+      ]
+    }
+  },
+  
+  directives: {
+    "12R2": {
+      requirements: {
+        receiverAppointment: [
+          "secured creditor details",
+          "security instrument",
+          "appointment basis"
+        ],
+        reporting: [
+          "property inventory",
+          "financial statements",
+          "realization progress"
+        ],
+        fees: [
+          "detailed time records",
+          "rate justification",
+          "disbursement support"
+        ]
+      },
+      thresholds: {
+        feePercentage: 20,
+        reportingDelay: 5,
+        documentationGap: 2
+      }
+    },
+    "11R2": {
+      requirements: {
+        assessment: [
+          "income calculation",
+          "expense verification",
+          "surplus determination"
+        ],
+        reporting: [
+          "monthly income",
+          "payment schedule",
+          "variance explanation"
+        ]
+      },
+      thresholds: {
+        paymentDelay: 15,
+        reportingPeriod: 30,
+        assessmentUpdate: 45
+      }
+    }
+  }
+};
+
+// Update validation helpers
+export const validationHelpers = {
+  hasMinimumWords: (text: string, minWords: number): boolean => {
+    return text.trim().split(/\s+/).length >= minWords;
+  },
+
+  containsRequiredKeywords: (text: string, keywords: string[]): boolean => {
+    const lowerText = text.toLowerCase();
+    return keywords.some(keyword => lowerText.includes(keyword.toLowerCase()));
+  },
+
+  isWithinDateRange: (date: Date, start: Date, end: Date): boolean => {
+    return date >= start && date <= end;
+  },
+
+  isValidMonetaryRange: (amount: number, min: number, max: number): boolean => {
+    return amount >= min && amount <= max;
+  },
+
+  hasRequiredFormat: (text: string, format: RegExp): boolean => {
+    return format.test(text);
+  },
+
+  isSequentialDate: (dates: Date[]): boolean => {
+    for (let i = 1; i < dates.length; i++) {
+      if (dates[i] <= dates[i - 1]) return false;
+    }
+    return true;
+  },
+
+  sumEqualsTotal: (values: number[], total: number, tolerance: number = 0.01): boolean => {
+    return Math.abs(values.reduce((a, b) => a + b, 0) - total) <= tolerance;
+  },
+
+  checkBIACompliance: (
+    section: string,
+    requirement: string,
+    value: any
+  ): boolean => {
+    const sectionRules = regulatoryPatterns.BIA.highRisk.sections[section];
+    return sectionRules?.requirements.includes(requirement) || false;
+  },
+
+  checkDirectiveCompliance: (
+    directive: string,
+    category: string,
+    requirement: string
+  ): boolean => {
+    const directiveRules = regulatoryPatterns.directives[directive];
+    return directiveRules?.requirements[category]?.includes(requirement) || false;
+  },
+
+  validateTimeframe: (
+    date: Date,
+    baseline: Date,
+    section: string,
+    timeframe: string
+  ): boolean => {
+    const sectionRules = regulatoryPatterns.BIA.highRisk.sections[section];
+    const requiredDays = sectionRules?.timeframes[timeframe];
+    if (!requiredDays) return true;
+    
+    const diffDays = Math.abs(
+      (date.getTime() - baseline.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return diffDays <= requiredDays;
+  }
+};
