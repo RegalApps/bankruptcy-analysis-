@@ -1,25 +1,20 @@
+
 import { useState } from "react";
 import { useDocuments } from "./hooks/useDocuments";
 import { cn } from "@/lib/utils";
 import { Toolbar } from "./components/Toolbar";
 import { Sidebar } from "./components/Sidebar";
-import { FolderCard } from "./components/FolderCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { DocumentPreview } from "@/components/DocumentViewer/DocumentPreview";
-import { FileText } from "lucide-react";
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle 
-} from "@/components/ui/dialog";
+import { UncategorizedDocuments } from "./components/UncategorizedDocuments";
+import { DocumentGrid } from "./components/DocumentGrid";
+import { PreviewDialog } from "./components/PreviewDialog";
 
 interface DocumentManagementProps {
   onDocumentSelect?: (id: string) => void;
 }
 
 export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocumentSelect }) => {
-  const { documents, treeData, isLoading, searchQuery, setSearchQuery } = useDocuments();
+  const { documents, isLoading, searchQuery, setSearchQuery } = useDocuments();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isGridView, setIsGridView] = useState(true);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
@@ -79,60 +74,22 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
       const uncategorizedDocs = filteredDocuments.filter(
         doc => !doc.parent_folder_id && !doc.metadata?.client_name
       );
-
       return (
-        <div className="space-y-4">
-          <div className="grid gap-4">
-            {uncategorizedDocs.map((doc) => (
-              <div
-                key={doc.id}
-                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:border-primary/50 cursor-pointer"
-                onClick={() => setPreviewDocument(doc)}
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="p-2 rounded-md bg-primary/10">
-                    <FileText className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{doc.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Last updated: {new Date(doc.updated_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm px-2 py-1 rounded-full bg-secondary">
-                    {doc.type || 'Other'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <UncategorizedDocuments 
+          documents={uncategorizedDocs}
+          onDocumentClick={setPreviewDocument}
+        />
       );
     }
 
     return (
-      <div className={cn(
-        "grid gap-4",
-        isGridView ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-      )}>
-        {Object.entries(groupedByClient)
-          .map(([clientName, folderData]) => (
-            <FolderCard
-              key={clientName}
-              clientName={clientName}
-              isSelected={selectedFolder === clientName}
-              documentsCount={folderData.documents.length}
-              lastUpdated={folderData.lastUpdated}
-              types={folderData.types}
-              onSelect={() => setSelectedFolder(clientName)}
-              onDocumentClick={(doc) => setPreviewDocument(doc)}
-              documents={folderData.documents}
-              isGridView={isGridView}
-            />
-          ))}
-      </div>
+      <DocumentGrid
+        isGridView={isGridView}
+        groupedByClient={groupedByClient}
+        selectedFolder={selectedFolder}
+        onFolderSelect={setSelectedFolder}
+        onDocumentClick={setPreviewDocument}
+      />
     );
   };
 
@@ -176,29 +133,15 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
         </div>
       </main>
 
-      <Dialog 
-        open={!!previewDocument} 
-        onOpenChange={() => setPreviewDocument(null)}
-      >
-        <DialogContent className="max-w-4xl h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Document Preview</DialogTitle>
-          </DialogHeader>
-          {previewDocument && (
-            <div className="flex-1 overflow-hidden">
-              <DocumentPreview 
-                storagePath={previewDocument.storage_path}
-                onAnalysisComplete={() => {
-                  setPreviewDocument(null);
-                  if (onDocumentSelect) {
-                    onDocumentSelect(previewDocument.id);
-                  }
-                }}
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <PreviewDialog
+        document={previewDocument}
+        onClose={() => setPreviewDocument(null)}
+        onAnalysisComplete={(id) => {
+          if (onDocumentSelect) {
+            onDocumentSelect(id);
+          }
+        }}
+      />
     </div>
   );
 };
