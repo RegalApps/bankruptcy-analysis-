@@ -5,6 +5,7 @@ import { Header } from "./Header";
 import { SearchBar } from "./SearchBar";
 import { DocumentList } from "./DocumentList";
 import { DocumentUploadButton } from "./DocumentUploadButton";
+import { FormReportGenerator } from "./FormReportGenerator";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -124,6 +125,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
               onSearchChange={setSearchQuery}
             />
             <DocumentUploadButton />
+            <FormReportGenerator />
           </div>
           {isLoading ? (
             <div className="grid gap-4 md:grid-cols-2">
