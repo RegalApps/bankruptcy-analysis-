@@ -19,38 +19,44 @@ export const MainHeader = () => {
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="flex h-16 items-center px-6">
-        <Button 
-          variant="ghost" 
-          className="font-semibold text-xl p-0 hover:bg-transparent"
-          onClick={() => navigate('/')}
-        >
-          Document Management
-        </Button>
+      <div className="flex h-16 items-center px-6 gap-8">
+        <div className="w-64">
+          <Button 
+            variant="ghost" 
+            className="font-semibold text-xl p-0 hover:bg-transparent"
+            onClick={() => navigate('/')}
+          >
+            Document Management
+          </Button>
+        </div>
         
-        <div className="flex-1 max-w-md mx-auto">
-          <SearchBar 
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-          />
+        <div className="flex-1 flex justify-center max-w-2xl mx-auto">
+          <div className="w-full max-w-md">
+            <SearchBar 
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+          </div>
         </div>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="ml-auto">
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Document
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-xl">
-            <DialogHeader>
-              <DialogTitle>Upload New Document</DialogTitle>
-            </DialogHeader>
-            <div className="p-4">
-              <FileUpload onUploadComplete={() => {}} />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <div className="w-64 flex justify-end">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Document
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Upload New Document</DialogTitle>
+              </DialogHeader>
+              <div className="p-4">
+                <FileUpload onUploadComplete={() => {}} />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </header>
   );
