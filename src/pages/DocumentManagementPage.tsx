@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const navigation = [
   { name: 'Home', icon: Home },
@@ -32,6 +34,15 @@ const navigation = [
 ];
 
 export const DocumentManagementPage = () => {
+  const { toast } = useToast();
+
+  const handleUploadComplete = useCallback(async (documentId: string) => {
+    toast({
+      title: "Success",
+      description: "Document uploaded successfully",
+    });
+  }, [toast]);
+
   return (
     <div className="min-h-screen flex">
       {/* Main Navigation Sidebar */}
@@ -105,7 +116,7 @@ export const DocumentManagementPage = () => {
                     <DialogTitle>Upload New Document</DialogTitle>
                   </DialogHeader>
                   <div className="p-4">
-                    <FileUpload />
+                    <FileUpload onUploadComplete={handleUploadComplete} />
                   </div>
                 </DialogContent>
               </Dialog>
