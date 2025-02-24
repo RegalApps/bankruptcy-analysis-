@@ -4,14 +4,13 @@ import { MainSidebar } from "@/components/layout/MainSidebar";
 
 export const AnalyticsPage = () => {
   return (
-    <div>
+    <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
-      <div className="pl-16">
+      <div className="flex-1 flex flex-col pl-64">
         <MainHeader />
-        <div className="p-6">
-          <h1 className="text-2xl font-semibold mb-4">Analytics</h1>
-          <p className="text-muted-foreground">View your document analytics here.</p>
-        </div>
+        <main className="flex-1 overflow-y-auto p-6">
+          {/* Analytics content */}
+        </main>
       </div>
     </div>
   );

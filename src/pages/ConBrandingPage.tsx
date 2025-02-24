@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
@@ -132,62 +133,64 @@ export const ConBrandingPage = () => {
   }, [toast]);
 
   return (
-    <div>
+    <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
-      <div className="pl-16">
+      <div className="flex-1 flex flex-col pl-64">
         <MainHeader />
-        <div className="flex h-[calc(100vh-64px)]">
-          <aside className="w-64 border-r bg-muted/30 p-4 space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Categories</h2>
-              <Tabs value={activeModule} onValueChange={(value: any) => setActiveModule(value)} className="w-full">
-                <TabsList className="grid w-full grid-cols-1 h-auto">
-                  <TabsTrigger value="document" className="w-full justify-start">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Document Analysis
-                  </TabsTrigger>
-                  <TabsTrigger value="legal" className="w-full justify-start">
-                    <Scale className="mr-2 h-4 w-4" />
-                    Legal & Regulatory
-                  </TabsTrigger>
-                  <TabsTrigger value="help" className="w-full justify-start">
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Training & Help
-                  </TabsTrigger>
-                </TabsList>
+        <div className="flex-1 overflow-hidden">
+          <div className="flex h-full">
+            <aside className="w-64 border-r bg-muted/30 overflow-y-auto">
+              <div className="p-4 space-y-4">
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold">Categories</h2>
+                  <Tabs value={activeModule} onValueChange={(value: any) => setActiveModule(value)} className="w-full">
+                    <TabsList className="grid w-full grid-cols-1 h-auto">
+                      <TabsTrigger value="document" className="w-full justify-start">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Document Analysis
+                      </TabsTrigger>
+                      <TabsTrigger value="legal" className="w-full justify-start">
+                        <Scale className="mr-2 h-4 w-4" />
+                        Legal & Regulatory
+                      </TabsTrigger>
+                      <TabsTrigger value="help" className="w-full justify-start">
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        Training & Help
+                      </TabsTrigger>
+                    </TabsList>
 
-                <TabsContent value="document" className="mt-4">
-                  <Card className="p-4">
-                    <FileUpload onUploadComplete={handleFileUploadComplete} />
-                  </Card>
-                </TabsContent>
+                    <TabsContent value="document" className="mt-4">
+                      <Card className="p-4">
+                        <FileUpload onUploadComplete={handleFileUploadComplete} />
+                      </Card>
+                    </TabsContent>
 
-                <TabsContent value="help" className="mt-4">
-                  <Card className="p-4">
-                    <div className="space-y-2">
-                      <h3 className="font-medium">Training Options</h3>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Training Data
-                      </Button>
-                    </div>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            </div>
+                    <TabsContent value="help" className="mt-4">
+                      <Card className="p-4">
+                        <div className="space-y-2">
+                          <h3 className="font-medium">Training Options</h3>
+                          <Button variant="outline" size="sm" className="w-full">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload Training Data
+                          </Button>
+                        </div>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
+                </div>
 
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Recent Conversations</h2>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input className="pl-8" placeholder="Search conversations..." />
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold">Recent Conversations</h2>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input className="pl-8" placeholder="Search conversations..." />
+                  </div>
+                </div>
               </div>
-            </div>
-          </aside>
+            </aside>
 
-          <main className="flex-1 flex flex-col">
-            <div className="flex-1 p-4">
-              <ScrollArea className="h-full">
+            <main className="flex-1 flex flex-col overflow-hidden">
+              <ScrollArea className="flex-1 p-4">
                 <div className="space-y-4">
                   {messages.map((message) => (
                     <Card 
@@ -217,38 +220,38 @@ export const ConBrandingPage = () => {
                   ))}
                 </div>
               </ScrollArea>
-            </div>
 
-            <div className="border-t p-4">
-              <div className="flex gap-2">
-                <Input 
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Ask about document management, OSB, BIA acts, and more..." 
-                  className="flex-1"
-                  disabled={isProcessing}
-                />
-                <Button 
-                  size="icon" 
-                  onClick={handleSendMessage}
-                  disabled={isProcessing}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+              <div className="border-t p-4">
+                <div className="flex gap-2">
+                  <Input 
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="Ask about document management, OSB, BIA acts, and more..." 
+                    className="flex-1"
+                    disabled={isProcessing}
+                  />
+                  <Button 
+                    size="icon" 
+                    onClick={handleSendMessage}
+                    disabled={isProcessing}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <Button variant="outline" size="sm">
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    Help Topics
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Filter className="mr-2 h-4 w-4" />
+                    Filters
+                  </Button>
+                </div>
               </div>
-              <div className="mt-2 flex gap-2">
-                <Button variant="outline" size="sm">
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  Help Topics
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filters
-                </Button>
-              </div>
-            </div>
-          </main>
+            </main>
+          </div>
         </div>
       </div>
     </div>

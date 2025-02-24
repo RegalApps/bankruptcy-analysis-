@@ -4,14 +4,13 @@ import { MainSidebar } from "@/components/layout/MainSidebar";
 
 export const ActivityPage = () => {
   return (
-    <div>
+    <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
-      <div className="pl-16">
+      <div className="flex-1 flex flex-col pl-64">
         <MainHeader />
-        <div className="p-6">
-          <h1 className="text-2xl font-semibold mb-4">Activity</h1>
-          <p className="text-muted-foreground">Track your document activity here.</p>
-        </div>
+        <main className="flex-1 overflow-y-auto p-6">
+          {/* Activity content */}
+        </main>
       </div>
     </div>
   );
