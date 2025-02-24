@@ -6,14 +6,60 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, UserCircle2 } from "lucide-react";
+import { ProfilePicture } from "@/components/ProfilePicture";
+import { useDebounce } from "@/hooks/use-debounce";
+
+interface UserProfile {
+  id: string;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+interface PasswordUpdate {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
 
 export const ProfilePage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [passwordFields, setPasswordFields] = useState<PasswordUpdate>({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const debouncedProfile = useDebounce(profile, 500);
+
+  // Fetch user profile
+  const { isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+      return data;
+    },
+  });
 
   // Fetch user preferences
-  const { data: preferences, isLoading } = useQuery({
+  const { data: preferences, isLoading: isLoadingPreferences } = useQuery({
     queryKey: ['user-preferences'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -26,13 +72,39 @@ export const ProfilePage = () => {
     },
   });
 
+  // Update profile mutation
+  const updateProfile = useMutation({
+    mutationFn: async (updatedProfile: Partial<UserProfile>) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updatedProfile)
+        .eq('id', profile?.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating profile",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Update preferences mutation
   const updatePreferences = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: boolean }) => {
       const { error } = await supabase
         .from('user_preferences')
         .update({ [key]: value })
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('user_id', profile?.id);
 
       if (error) throw error;
     },
@@ -52,6 +124,13 @@ export const ProfilePage = () => {
     },
   });
 
+  // Handle profile updates
+  useEffect(() => {
+    if (debouncedProfile && profile) {
+      updateProfile.mutate(debouncedProfile);
+    }
+  }, [debouncedProfile]);
+
   // Handle theme changes
   useEffect(() => {
     if (preferences?.dark_mode) {
@@ -61,13 +140,58 @@ export const ProfilePage = () => {
     }
   }, [preferences?.dark_mode]);
 
-  const handleThemeChange = (checked: boolean) => {
-    updatePreferences.mutate({ key: 'dark_mode', value: checked });
+  const handleProfileChange = (field: keyof UserProfile, value: string) => {
+    if (profile) {
+      setProfile({ ...profile, [field]: value });
+    }
   };
 
-  const handleNotificationsChange = (checked: boolean) => {
-    updatePreferences.mutate({ key: 'email_notifications', value: checked });
+  const handlePasswordUpdate = async () => {
+    if (passwordFields.newPassword !== passwordFields.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordFields.newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been updated successfully.",
+      });
+
+      setPasswordFields({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating password",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
+
+  const handleAvatarUpload = (url: string) => {
+    if (profile) {
+      handleProfileChange('avatar_url', url);
+    }
+  };
+
+  const isLoading = isLoadingProfile || isLoadingPreferences;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -75,86 +199,143 @@ export const ProfilePage = () => {
       <div className="flex-1 flex flex-col pl-64">
         <MainHeader />
         <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="glass-panel rounded-lg p-6">
-              <h2 className="text-2xl font-semibold mb-4">Profile Settings</h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="glass-panel rounded-lg p-6">
+                <div className="flex items-start justify-between mb-6">
                   <div>
-                    <label className="text-sm font-medium">First Name</label>
-                    <input type="text" className="w-full mt-1 p-2 rounded-md border" />
+                    <h2 className="text-2xl font-semibold">Profile Settings</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Manage your account settings and preferences
+                    </p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">Last Name</label>
-                    <input type="text" className="w-full mt-1 p-2 rounded-md border" />
+                  <div className="flex flex-col items-center">
+                    <ProfilePicture
+                      url={profile?.avatar_url || null}
+                      onUpload={handleAvatarUpload}
+                      size={120}
+                    />
                   </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Email</label>
-                  <input type="email" className="w-full mt-1 p-2 rounded-md border" />
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input
+                        id="fullName"
+                        value={profile?.full_name || ''}
+                        onChange={(e) => handleProfileChange('full_name', e.target.value)}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profile?.email || ''}
+                        onChange={(e) => handleProfileChange('email', e.target.value)}
+                        placeholder="Enter your email"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Role</label>
-                  <input type="text" className="w-full mt-1 p-2 rounded-md border" disabled />
+              </div>
+
+              <div className="glass-panel rounded-lg p-6">
+                <h2 className="text-2xl font-semibold mb-4">Security</h2>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <Input
+                      id="currentPassword"
+                      type="password"
+                      value={passwordFields.currentPassword}
+                      onChange={(e) => setPasswordFields(prev => ({
+                        ...prev,
+                        currentPassword: e.target.value
+                      }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={passwordFields.newPassword}
+                      onChange={(e) => setPasswordFields(prev => ({
+                        ...prev,
+                        newPassword: e.target.value
+                      }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={passwordFields.confirmPassword}
+                      onChange={(e) => setPasswordFields(prev => ({
+                        ...prev,
+                        confirmPassword: e.target.value
+                      }))}
+                    />
+                  </div>
+                  <Button
+                    onClick={handlePasswordUpdate}
+                    disabled={isUpdatingPassword || !passwordFields.currentPassword || !passwordFields.newPassword || !passwordFields.confirmPassword}
+                    className="w-full"
+                  >
+                    {isUpdatingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Update Password
+                  </Button>
+                </div>
+              </div>
+
+              <div className="glass-panel rounded-lg p-6">
+                <h2 className="text-2xl font-semibold mb-4">Preferences</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Email Notifications</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Receive email updates about your activity
+                      </p>
+                    </div>
+                    <Switch
+                      checked={preferences?.email_notifications ?? false}
+                      onCheckedChange={(checked) => updatePreferences.mutate({
+                        key: 'email_notifications',
+                        value: checked
+                      })}
+                      disabled={isLoading || updatePreferences.isPending}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Dark Mode</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Toggle dark mode theme
+                      </p>
+                    </div>
+                    <Switch
+                      checked={preferences?.dark_mode ?? false}
+                      onCheckedChange={(checked) => updatePreferences.mutate({
+                        key: 'dark_mode',
+                        value: checked
+                      })}
+                      disabled={isLoading || updatePreferences.isPending}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-
-            <div className="glass-panel rounded-lg p-6">
-              <h2 className="text-2xl font-semibold mb-4">Security</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Current Password</label>
-                  <input type="password" className="w-full mt-1 p-2 rounded-md border" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">New Password</label>
-                  <input type="password" className="w-full mt-1 p-2 rounded-md border" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Confirm New Password</label>
-                  <input type="password" className="w-full mt-1 p-2 rounded-md border" />
-                </div>
-              </div>
-            </div>
-
-            <div className="glass-panel rounded-lg p-6">
-              <h2 className="text-2xl font-semibold mb-4">Preferences</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Email Notifications</h3>
-                    <p className="text-sm text-muted-foreground">Receive email updates about your activity</p>
-                  </div>
-                  <Switch
-                    checked={preferences?.email_notifications ?? false}
-                    onCheckedChange={handleNotificationsChange}
-                    disabled={isLoading || updatePreferences.isPending}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Dark Mode</h3>
-                    <p className="text-sm text-muted-foreground">Toggle dark mode theme</p>
-                  </div>
-                  <Switch
-                    checked={preferences?.dark_mode ?? false}
-                    onCheckedChange={handleThemeChange}
-                    disabled={isLoading || updatePreferences.isPending}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-4">
-              <button className="px-4 py-2 rounded-md border hover:bg-muted transition-colors">
-                Cancel
-              </button>
-              <button className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                Save Changes
-              </button>
-            </div>
-          </div>
+          )}
         </main>
       </div>
       <Toaster />
