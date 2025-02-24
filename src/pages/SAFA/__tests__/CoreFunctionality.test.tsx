@@ -1,7 +1,13 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ConBrandingPage } from '@/pages/ConBrandingPage';
-import { createMockMessage, logTestResult, waitForAsync, mockAIResponse } from './utils/testHelpers';
+import { 
+  createMockMessage, 
+  logTestResult, 
+  waitForAsync, 
+  mockAIResponse,
+  simulateChat
+} from './utils/testHelpers';
 
 describe('SAFA Core Functionality', () => {
   // Test 1.1: Module Launch and Navigation

@@ -1,5 +1,7 @@
 
 import { vi } from 'vitest';
+import { expect } from 'vitest';
+import { fireEvent } from '@testing-library/react';
 import { supabase } from '@/lib/supabase';
 import logger from '@/utils/logger';
 import { ChatMessage } from '../../types';
@@ -67,8 +69,6 @@ export const mockDocumentUpload = (success = true) => {
   }
 };
 
-// New helper functions
-
 // Simulate user interaction with chat
 export const simulateChat = async (screen: any, message: string) => {
   const input = screen.getByPlaceholderText(/Ask about document management/i);
@@ -84,8 +84,12 @@ export const mockErrorResponse = (errorMessage: string) => {
 };
 
 // Verify toast notifications
-export const verifyToastNotification = (screen: any, message: string) => {
-  expect(screen.getByRole('alert')).toHaveTextContent(message);
+export const verifyToastNotification = (screen: any, messagePattern: RegExp | string) => {
+  if (messagePattern instanceof RegExp) {
+    expect(screen.getByRole('alert').textContent).toMatch(messagePattern);
+  } else {
+    expect(screen.getByRole('alert')).toHaveTextContent(messagePattern);
+  }
 };
 
 // Mock document analysis response
