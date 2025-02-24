@@ -6,6 +6,7 @@ import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
+import { Footer } from "@/components/layout/Footer";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -48,7 +49,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex">
       <MainSidebar />
-      <div className="flex-1 pl-64">
+      <div className="flex-1 pl-64 flex flex-col">
         <MainHeader />
         <main className="flex-1">
           {selectedDocument ? (
@@ -67,6 +68,7 @@ const Index = () => {
             <DocumentManagementPage />
           )}
         </main>
+        <Footer />
       </div>
     </div>
   );
