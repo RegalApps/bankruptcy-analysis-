@@ -1,103 +1,96 @@
 
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  FolderOpen, 
-  Activity,
-  MessageCircle, // For SAFA
-  Bell, 
-  Users,
-  FileCheck,
-  Settings,
-  BrainCog, // For Smart Income & Expense
-  UserCircle2
-} from "lucide-react";
+import { BrainCog, Bell, FileText, Home, MessageCircle, PieChart, Settings, User, Users } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export const MainSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const isCurrentPath = (path: string) => {
-    return location.pathname === path;
-  };
+  const isActivePath = (path: string) => location.pathname === path;
 
-  const links = [
-    { name: "Dashboard", path: "/", icon: LayoutDashboard },
-    { name: "Documents", path: "/documents", icon: FolderOpen },
-    { name: "Analytics", path: "/analytics", icon: Activity },
-    { name: "Smart Income & Expense", path: "/activity", icon: BrainCog },
-    { name: "SAFA", path: "/SAFA", icon: MessageCircle },
-    { name: "Notifications", path: "/notifications", icon: Bell },
-    { name: "E-Filing", path: "/e-filing", icon: FileCheck },
-    { name: "CRM", path: "/crm", icon: Users },
-  ];
-
-  const bottomLinks = [
-    { name: "Profile", path: "/profile", icon: UserCircle2 },
-    { name: "Settings", path: "/settings", icon: Settings },
+  const navigationItems = [
+    { icon: Home, label: "Home", path: "/" },
+    { icon: FileText, label: "Documents", path: "/documents" },
+    { icon: MessageCircle, label: "SAFA", path: "/SAFA" },
+    { icon: Users, label: "CRM", path: "/crm" },
+    { icon: BrainCog, label: "Smart Income Expense", path: "/activity" },
+    { icon: PieChart, label: "Analytics", path: "/analytics" },
+    { icon: Bell, label: "Notifications", path: "/notifications" },
   ];
 
   return (
-    <div className="fixed inset-y-0 left-0 w-64 bg-card border-r">
-      <div className="flex flex-col h-full">
-        <div className="p-6">
-          <img 
-            src="/lovable-uploads/01eb992b-a293-4ef9-a5ff-fa81da6a95ed.png" 
-            alt="Logo" 
-            className="h-8" 
-          />
-        </div>
-        
-        {/* Main navigation */}
-        <nav className="flex-1 p-4">
-          <ul className="space-y-1">
-            {links.map((link) => {
-              const Icon = link.icon;
-              return (
-                <li key={link.path}>
-                  <Link
-                    to={link.path}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-2 text-sm rounded-md transition-colors",
-                      isCurrentPath(link.path)
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {link.name}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {/* Bottom section with Profile and Settings */}
-        <div className="p-4 border-t">
-          <ul className="space-y-1">
-            {bottomLinks.map((link) => {
-              const Icon = link.icon;
-              return (
-                <li key={link.path}>
-                  <Link
-                    to={link.path}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-2 text-sm rounded-md transition-colors",
-                      isCurrentPath(link.path)
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {link.name}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+    <aside className="w-64 h-screen flex flex-col fixed left-0 top-0 z-40 border-r bg-background">
+      {/* App Logo */}
+      <div className="p-4">
+        <Button
+          variant="ghost"
+          className="w-full justify-start px-4 py-6 hover:bg-transparent"
+          onClick={() => navigate('/')}
+        >
+          <div className="flex items-center gap-3">
+            <img 
+              src="/lovable-uploads/b8620d24-fab6-4068-9af7-3e91ace7b559.png" 
+              alt="Secure Files AI Logo" 
+              className="w-8 h-8 mix-blend-multiply dark:mix-blend-normal"
+              style={{ filter: 'brightness(1) contrast(1)' }}
+            />
+            <span className="font-semibold text-lg text-foreground">Secure Files AI</span>
+          </div>
+        </Button>
       </div>
-    </div>
+
+      {/* Navigation Links with ScrollArea */}
+      <ScrollArea className="flex-1">
+        <nav className="px-3 py-2 space-y-1">
+          {navigationItems.map((item) => (
+            <Button
+              key={item.label}
+              variant="ghost"
+              className={cn(
+                "w-full justify-start gap-3 px-4 py-6 h-auto",
+                "hover:bg-accent/10 hover:text-accent transition-colors duration-200",
+                isActivePath(item.path) && "bg-accent/10 text-accent"
+              )}
+              onClick={() => navigate(item.path)}
+            >
+              <item.icon className={cn(
+                "h-5 w-5",
+                isActivePath(item.path) ? "text-accent" : "text-muted-foreground group-hover:text-accent"
+              )} />
+              <span className={cn(
+                "text-sm font-medium",
+                isActivePath(item.path) ? "text-accent" : "text-black dark:text-white"
+              )}>
+                {item.label}
+              </span>
+            </Button>
+          ))}
+        </nav>
+      </ScrollArea>
+
+      {/* Bottom Section */}
+      <div className="px-3 py-4 border-t">
+        <Button 
+          variant="ghost"
+          className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-accent/10 hover:text-accent"
+          onClick={() => navigate("/settings")}
+        >
+          <Settings className="h-5 w-5 text-muted-foreground" />
+          <span className="text-sm font-medium text-black dark:text-white">Settings</span>
+        </Button>
+        
+        <Button 
+          variant="ghost"
+          className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-accent/10 hover:text-accent"
+          onClick={() => navigate("/profile")}
+        >
+          <User className="h-5 w-5 text-muted-foreground" />
+          <span className="text-sm font-medium text-black dark:text-white">Profile</span>
+        </Button>
+      </div>
+    </aside>
   );
 };
