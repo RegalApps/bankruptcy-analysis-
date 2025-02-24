@@ -11,6 +11,7 @@ import { DocumentsPage } from "./pages/DocumentsPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { ConBrandingPage } from "./pages/ConBrandingPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { CRMPage } from "./pages/CRMPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App: React.FC = () => {
             <Route path="/activity" element={<ActivityPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/con-branding" element={<ConBrandingPage />} />
+            <Route path="/crm" element={<CRMPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
