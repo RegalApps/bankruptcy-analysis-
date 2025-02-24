@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Activity, Bell, FileText, Home, MessageCircle, PieChart, Settings, User, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -41,32 +42,34 @@ export const MainSidebar = () => {
         </Button>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-2 space-y-1">
-        {navigationItems.map((item) => (
-          <Button
-            key={item.label}
-            variant="ghost"
-            className={cn(
-              "w-full justify-start gap-3 px-4 py-6 h-auto",
-              "hover:bg-accent/10 hover:text-accent transition-colors duration-200",
-              isActivePath(item.path) && "bg-accent/10 text-accent"
-            )}
-            onClick={() => navigate(item.path)}
-          >
-            <item.icon className={cn(
-              "h-5 w-5",
-              isActivePath(item.path) ? "text-accent" : "text-muted-foreground group-hover:text-accent"
-            )} />
-            <span className={cn(
-              "text-sm font-medium",
-              isActivePath(item.path) ? "text-accent" : "text-black dark:text-white"
-            )}>
-              {item.label}
-            </span>
-          </Button>
-        ))}
-      </nav>
+      {/* Navigation Links with ScrollArea */}
+      <ScrollArea className="flex-1">
+        <nav className="px-3 py-2 space-y-1">
+          {navigationItems.map((item) => (
+            <Button
+              key={item.label}
+              variant="ghost"
+              className={cn(
+                "w-full justify-start gap-3 px-4 py-6 h-auto",
+                "hover:bg-accent/10 hover:text-accent transition-colors duration-200",
+                isActivePath(item.path) && "bg-accent/10 text-accent"
+              )}
+              onClick={() => navigate(item.path)}
+            >
+              <item.icon className={cn(
+                "h-5 w-5",
+                isActivePath(item.path) ? "text-accent" : "text-muted-foreground group-hover:text-accent"
+              )} />
+              <span className={cn(
+                "text-sm font-medium",
+                isActivePath(item.path) ? "text-accent" : "text-black dark:text-white"
+              )}>
+                {item.label}
+              </span>
+            </Button>
+          ))}
+        </nav>
+      </ScrollArea>
 
       {/* Bottom Section */}
       <div className="px-3 py-4 border-t">
