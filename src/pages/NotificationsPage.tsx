@@ -36,6 +36,22 @@ interface Notification {
   metadata: Record<string, any>;
 }
 
+// Define the database response type
+interface DatabaseNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  created_at: string;
+  read: boolean;
+  user_id: string;
+  category?: NotificationCategory;
+  priority?: string;
+  action_url?: string;
+  icon?: string;
+  metadata?: Record<string, any>;
+}
+
 const categoryConfig = {
   file_activity: {
     label: "File Activity",
@@ -84,6 +100,21 @@ const getIconForNotification = (category: NotificationCategory, type?: string) =
   return categoryConfig[category].icon;
 };
 
+const mapDatabaseNotificationToNotification = (dbNotification: DatabaseNotification): Notification => {
+  return {
+    id: dbNotification.id,
+    title: dbNotification.title,
+    message: dbNotification.message,
+    category: (dbNotification.category as NotificationCategory) || 'file_activity',
+    created_at: dbNotification.created_at,
+    read: dbNotification.read,
+    priority: dbNotification.priority || 'normal',
+    action_url: dbNotification.action_url,
+    icon: dbNotification.icon,
+    metadata: dbNotification.metadata || {},
+  };
+};
+
 export const NotificationsPage = () => {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications'],
@@ -94,7 +125,9 @@ export const NotificationsPage = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Notification[];
+      
+      // Map the database response to our Notification type
+      return (data as DatabaseNotification[]).map(mapDatabaseNotificationToNotification);
     },
   });
 
