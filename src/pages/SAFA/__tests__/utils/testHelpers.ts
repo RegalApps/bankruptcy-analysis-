@@ -66,3 +66,35 @@ export const mockDocumentUpload = (success = true) => {
     } as any);
   }
 };
+
+// New helper functions
+
+// Simulate user interaction with chat
+export const simulateChat = async (screen: any, message: string) => {
+  const input = screen.getByPlaceholderText(/Ask about document management/i);
+  fireEvent.change(input, { target: { value: message } });
+  const sendButton = screen.getByRole('button', { name: '' });
+  fireEvent.click(sendButton);
+  await waitForAsync();
+};
+
+// Mock error responses
+export const mockErrorResponse = (errorMessage: string) => {
+  vi.mocked(supabase.functions.invoke).mockRejectedValueOnce(new Error(errorMessage));
+};
+
+// Verify toast notifications
+export const verifyToastNotification = (screen: any, message: string) => {
+  expect(screen.getByRole('alert')).toHaveTextContent(message);
+};
+
+// Mock document analysis response
+export const mockDocumentAnalysis = (metadata: Record<string, any>) => {
+  vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
+    data: {
+      metadata,
+      success: true
+    },
+    error: null
+  });
+};

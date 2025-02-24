@@ -1,4 +1,3 @@
-
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ConBrandingPage } from '@/pages/ConBrandingPage';
@@ -89,6 +88,73 @@ describe('SAFA Core Functionality', () => {
       logTestResult('Work-Related Query Response', true);
     } catch (error) {
       logTestResult('Work-Related Query Response', false, error as Error);
+      throw error;
+    }
+  });
+
+  // Test 1.5: Module State Persistence
+  test('maintains module state between tab switches', async () => {
+    try {
+      render(<ConBrandingPage />);
+      
+      // Input a message in document analysis
+      await simulateChat(screen, 'Analyze this document');
+      
+      // Switch to legal tab and back
+      const legalTab = screen.getByText(/Legal & Regulatory/i);
+      fireEvent.click(legalTab);
+      const documentTab = screen.getByText(/Document Analysis/i);
+      fireEvent.click(documentTab);
+      
+      // Verify chat history is maintained
+      expect(screen.getByText(/Analyze this document/i)).toBeInTheDocument();
+      
+      logTestResult('Module State Persistence', true);
+    } catch (error) {
+      logTestResult('Module State Persistence', false, error as Error);
+      throw error;
+    }
+  });
+
+  // Test 1.6: Search Functionality
+  test('performs search across all modules', async () => {
+    try {
+      render(<ConBrandingPage />);
+      
+      // Mock search results
+      mockAIResponse('help', 'Found 3 relevant documents...');
+      
+      const searchInput = screen.getByPlaceholderText(/Search/i);
+      fireEvent.change(searchInput, { target: { value: 'bankruptcy' } });
+      await waitForAsync();
+      
+      expect(screen.getByText(/Found 3 relevant documents/i)).toBeInTheDocument();
+      
+      logTestResult('Search Functionality', true);
+    } catch (error) {
+      logTestResult('Search Functionality', false, error as Error);
+      throw error;
+    }
+  });
+
+  // Test 1.7: Accessibility
+  test('meets accessibility requirements', () => {
+    try {
+      render(<ConBrandingPage />);
+      
+      // Test keyboard navigation
+      const firstTab = screen.getByText(/Document Analysis/i);
+      firstTab.focus();
+      fireEvent.keyDown(firstTab, { key: 'Enter' });
+      expect(screen.getByRole('tab', { name: /Document Analysis/i })).toHaveAttribute('aria-selected', 'true');
+      
+      // Test ARIA attributes
+      expect(screen.getByRole('tablist')).toBeInTheDocument();
+      expect(screen.getByRole('complementary')).toBeInTheDocument();
+      
+      logTestResult('Accessibility Requirements', true);
+    } catch (error) {
+      logTestResult('Accessibility Requirements', false, error as Error);
       throw error;
     }
   });
