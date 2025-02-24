@@ -1,12 +1,15 @@
-import { useState } from "react";
+
+import { useState, useCallback } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { FileUpload } from "@/components/FileUpload";
 import { 
   FileText, 
   MessageCircle, 
@@ -15,7 +18,8 @@ import {
   BookOpen,
   Scale,
   HelpCircle,
-  Filter
+  Filter,
+  Upload
 } from "lucide-react";
 
 interface ChatMessage {
@@ -35,10 +39,11 @@ export const ConBrandingPage = () => {
   }]);
   const [inputMessage, setInputMessage] = useState("");
   const [activeModule, setActiveModule] = useState<'document' | 'legal' | 'help'>('document');
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isProcessing) return;
 
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -50,13 +55,14 @@ export const ConBrandingPage = () => {
 
     setMessages(prev => [...prev, newMessage]);
     setInputMessage("");
+    setIsProcessing(true);
 
     try {
       const response = await supabase.functions.invoke('process-ai-request', {
         body: {
           message: inputMessage,
           module: activeModule,
-          documentId: null // We'll add document context handling later
+          documentId: null
         }
       });
 
@@ -76,6 +82,8 @@ export const ConBrandingPage = () => {
         title: "Error",
         description: "Failed to process your request. Please try again."
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -85,6 +93,17 @@ export const ConBrandingPage = () => {
       handleSendMessage();
     }
   };
+
+  const handleFileUploadComplete = useCallback(async (documentId: string) => {
+    const assistantMessage: ChatMessage = {
+      id: Date.now().toString(),
+      content: "I've received your document. Would you like me to analyze it for you?",
+      type: 'assistant',
+      timestamp: new Date(),
+      module: 'document'
+    };
+    setMessages(prev => [...prev, assistantMessage]);
+  }, []);
 
   return (
     <div>
@@ -111,6 +130,24 @@ export const ConBrandingPage = () => {
                     Training & Help
                   </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="document" className="mt-4">
+                  <Card className="p-4">
+                    <FileUpload onUploadComplete={handleFileUploadComplete} />
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="help" className="mt-4">
+                  <Card className="p-4">
+                    <div className="space-y-2">
+                      <h3 className="font-medium">Training Options</h3>
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Training Data
+                      </Button>
+                    </div>
+                  </Card>
+                </TabsContent>
               </Tabs>
             </div>
 
@@ -167,8 +204,13 @@ export const ConBrandingPage = () => {
                   onKeyDown={handleKeyPress}
                   placeholder="Ask about document management, OSB, BIA acts, and more..." 
                   className="flex-1"
+                  disabled={isProcessing}
                 />
-                <Button size="icon" onClick={handleSendMessage}>
+                <Button 
+                  size="icon" 
+                  onClick={handleSendMessage}
+                  disabled={isProcessing}
+                >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
