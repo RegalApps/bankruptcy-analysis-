@@ -1,11 +1,18 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { Document } from "@/components/DocumentList/types";
+import { useNavigate } from "react-router-dom";
 
 export const DocumentManagementPage = () => {
   const { documents, isLoading } = useDocuments();
+  const navigate = useNavigate();
+
+  const handleDocumentDoubleClick = (documentId: string) => {
+    navigate('/', { state: { selectedDocument: documentId } });
+  };
 
   return (
     <div className="flex-1 p-6 space-y-8">
@@ -54,7 +61,11 @@ export const DocumentManagementPage = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {documents.map((doc: Document) => (
-              <Card key={doc.id} className="hover:shadow-lg transition-shadow">
+              <Card 
+                key={doc.id} 
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onDoubleClick={() => handleDocumentDoubleClick(doc.id)}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
