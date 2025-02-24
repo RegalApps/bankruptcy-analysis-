@@ -13,6 +13,7 @@ import { ConBrandingPage } from "./pages/ConBrandingPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { CRMPage } from "./pages/CRMPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { EFilingPage } from "./pages/EFilingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App: React.FC = () => {
             <Route path="/crm" element={<CRMPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/e-filing" element={<EFilingPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
