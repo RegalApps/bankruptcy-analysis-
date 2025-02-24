@@ -2,8 +2,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ConBrandingPage } from '@/pages/ConBrandingPage';
-import { supabase } from '@/lib/supabase';
-import { createMockMessage, logTestResult, waitForAsync } from './utils/testHelpers';
+import { createMockMessage, logTestResult, waitForAsync, mockAIResponse } from './utils/testHelpers';
 
 describe('SAFA Core Functionality', () => {
   // Test 1.1: Module Launch and Navigation
@@ -46,24 +45,40 @@ describe('SAFA Core Functionality', () => {
     }
   });
 
+  // Test 1.3: Responsive Design
+  test('adapts layout for different screen sizes', async () => {
+    try {
+      const { container } = render(<ConBrandingPage />);
+      
+      // Test mobile view
+      window.innerWidth = 375;
+      window.dispatchEvent(new Event('resize'));
+      await waitForAsync();
+      
+      // Verify mobile layout adjustments
+      const sidebar = container.querySelector('[data-testid="sidebar"]');
+      expect(sidebar).toHaveClass('hidden md:block');
+      
+      logTestResult('Responsive Design', true);
+    } catch (error) {
+      logTestResult('Responsive Design', false, error as Error);
+      throw error;
+    }
+  });
+
   // Test 1.4: Work-Related Query Response
   test('handles work-related queries correctly', async () => {
     try {
       render(<ConBrandingPage />);
       
-      // Mock Supabase response
-      vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-        data: {
-          response: "Here are the steps to update document metadata..."
-        },
-        error: null
-      });
+      // Mock AI response
+      mockAIResponse('help', "Here are the steps to update document metadata...");
 
       // Type and send a query
       const input = screen.getByPlaceholderText(/Ask about document management/i);
       fireEvent.change(input, { target: { value: 'How do I update document metadata?' } });
       
-      const sendButton = screen.getByRole('button', { name: '' }); // Send button has no accessible name
+      const sendButton = screen.getByRole('button', { name: '' });
       fireEvent.click(sendButton);
       
       await waitForAsync();
