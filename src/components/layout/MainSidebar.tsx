@@ -32,7 +32,8 @@ export const MainSidebar = () => {
             <img 
               src="/lovable-uploads/b8620d24-fab6-4068-9af7-3e91ace7b559.png" 
               alt="Secure Files AI Logo" 
-              className="w-8 h-8"
+              className="w-8 h-8 mix-blend-multiply dark:mix-blend-normal"
+              style={{ filter: 'brightness(1) contrast(1)' }}
             />
             <span className="font-semibold text-lg text-foreground">Secure Files AI</span>
           </div>
