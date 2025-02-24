@@ -1,97 +1,57 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
-import { Document, DocumentNode } from "../types";
-import { determineFileType, organizeDocumentsIntoTree } from "../utils/documentUtils";
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Document } from '../types';
+import { toast } from 'sonner';
 
 export const useDocuments = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [treeData, setTreeData] = useState<DocumentNode[]>([]);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
 
   const fetchDocuments = async () => {
     try {
-      console.log("Fetching documents...");
-      setIsLoading(true);
-
+      setLoading(true);
       const { data, error } = await supabase
         .from('documents')
-        .select(`
-          id,
-          title,
-          type,
-          size,
-          storage_path,
-          created_at,
-          updated_at,
-          metadata
-        `)
-        .order('updated_at', { ascending: false });
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching documents:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch documents"
-        });
-        return;
+        throw error;
       }
 
-      // Process and organize documents into tree structure
-      const processedData = (data as Document[])?.map(doc => ({
-        ...doc,
-        type: doc.type || determineFileType(doc.title)
-      })) || [];
-
-      // Organize documents into tree structure
-      const tree = organizeDocumentsIntoTree(processedData);
-
-      console.log('Processed documents:', processedData);
-      setDocuments(processedData);
-      setTreeData(tree);
+      setDocuments(data || []);
     } catch (error) {
-      console.error('Error in fetchDocuments:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred while fetching documents"
-      });
+      console.error('Error fetching documents:', error);
+      toast.error('Failed to fetch documents');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchDocuments();
 
+    // Set up real-time subscription
     const channel = supabase
       .channel('document_changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'documents' },
+        {
+          event: '*',
+          schema: 'public',
+          table: 'documents'
+        },
         () => {
-          console.log('Document change detected, refreshing...');
           fetchDocuments();
         }
       )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
 
-  return {
-    documents,
-    treeData,
-    isLoading,
-    searchQuery,
-    setSearchQuery
-  };
+  return { documents, loading, fetchDocuments };
 };

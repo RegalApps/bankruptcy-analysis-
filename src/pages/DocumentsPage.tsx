@@ -5,7 +5,7 @@ import { MainSidebar } from "@/components/layout/MainSidebar";
 import { FolderManagement } from "@/components/folders/FolderManagement";
 
 export const DocumentsPage = () => {
-  const { documents } = useDocuments();
+  const { documents, fetchDocuments } = useDocuments();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -13,7 +13,9 @@ export const DocumentsPage = () => {
       <div className="flex-1 flex flex-col pl-64">
         <MainHeader />
         <main className="flex-1 overflow-y-auto p-6">
-          <FolderManagement documents={documents} />
+          <FolderManagement 
+            documents={documents ?? []} 
+          />
         </main>
       </div>
     </div>
