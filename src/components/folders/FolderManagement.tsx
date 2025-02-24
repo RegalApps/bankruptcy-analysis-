@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FolderIcon } from "@/components/DocumentList/components/FolderIcon";
-import { FolderPlus, Grid, Tags } from "lucide-react";
+import { FolderPlus, Grid, Tags, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { Document } from "@/components/DocumentList/types";
@@ -137,8 +137,12 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
             View All Documents
           </Button>
           <Button variant="outline" className="w-full justify-start">
+            <Tag className="h-4 w-4 mr-2" />
+            Add Meta Tags
+          </Button>
+          <Button variant="outline" className="w-full justify-start">
             <Tags className="h-4 w-4 mr-2" />
-            Manage Tags
+            Manage All Tags
           </Button>
         </div>
       </Card>
