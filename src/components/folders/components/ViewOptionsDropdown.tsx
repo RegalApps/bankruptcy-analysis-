@@ -18,7 +18,7 @@ import {
   FolderPen, 
   FilePen, 
   Trash2,
-  Tool
+  Settings // Replaced 'Tool' with 'Settings'
 } from "lucide-react";
 import { RenameDialog } from "./dialogs/RenameDialog";
 import { DeleteDialog } from "./dialogs/DeleteDialog";
@@ -108,7 +108,7 @@ export const ViewOptionsDropdown = ({
 
           <DropdownMenuSeparator />
           <DropdownMenuLabel>
-            <Tool className="h-4 w-4 inline mr-2" />
+            <Settings className="h-4 w-4 inline mr-2" />
             Tools
           </DropdownMenuLabel>
           
