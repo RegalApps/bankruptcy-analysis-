@@ -2,10 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, Calendar, FileText, Users, Mic } from "lucide-react";
+import { Bell, Calendar, Clock, Users, Mic } from "lucide-react";
 import { ClientIntakeSection } from "@/components/crm/ClientIntakeSection";
 import { ClientDashboard } from "@/components/crm/ClientDashboard";
-import { DocumentManagement } from "@/components/crm/DocumentManagement";
+import { IntelligentScheduling } from "@/components/crm/IntelligentScheduling";
 
 export const CRMPage = () => {
   return (
@@ -44,12 +44,12 @@ export const CRMPage = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pending Documents</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Scheduled Meetings</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">Requires attention</p>
+            <p className="text-xs text-muted-foreground">This week</p>
           </CardContent>
         </Card>
         <Card>
@@ -69,7 +69,7 @@ export const CRMPage = () => {
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="intake">Client Intake</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard" className="space-y-4">
           <ClientDashboard />
@@ -77,8 +77,8 @@ export const CRMPage = () => {
         <TabsContent value="intake" className="space-y-4">
           <ClientIntakeSection />
         </TabsContent>
-        <TabsContent value="documents" className="space-y-4">
-          <DocumentManagement />
+        <TabsContent value="scheduling" className="space-y-4">
+          <IntelligentScheduling />
         </TabsContent>
       </Tabs>
     </div>
