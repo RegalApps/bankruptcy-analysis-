@@ -2,36 +2,16 @@
 import { useState, useCallback } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { FileUpload } from "@/components/FileUpload";
-import { 
-  FileText, 
-  MessageCircle, 
-  Search, 
-  Send,
-  BookOpen,
-  Scale,
-  HelpCircle,
-  Filter,
-  Upload
-} from "lucide-react";
-
-interface ChatMessage {
-  id: string;
-  content: string;
-  type: 'user' | 'assistant';
-  timestamp: Date;
-  module?: 'document' | 'legal' | 'help';
-}
+import { ChatMessage as ChatMessageType } from "./SAFA/types";
+import { ChatMessage } from "./SAFA/components/ChatMessage";
+import { ChatInput } from "./SAFA/components/ChatInput";
+import { Sidebar } from "./SAFA/components/Sidebar";
 
 export const ConBrandingPage = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([{
+  const [messages, setMessages] = useState<ChatMessageType[]>([{
     id: '1',
     content: "Welcome to Secure Files Adaptive Future-forward Assistant. I can help you with document management, OSB regulations, BIA acts, and more. How can I assist you today?",
     type: 'assistant',
@@ -45,7 +25,7 @@ export const ConBrandingPage = () => {
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isProcessing) return;
 
-    const newMessage: ChatMessage = {
+    const newMessage: ChatMessageType = {
       id: Date.now().toString(),
       content: inputMessage,
       type: 'user',
@@ -66,7 +46,7 @@ export const ConBrandingPage = () => {
         }
       });
 
-      const assistantMessage: ChatMessage = {
+      const assistantMessage: ChatMessageType = {
         id: (Date.now() + 1).toString(),
         content: response.data.response,
         type: 'assistant',
@@ -95,7 +75,7 @@ export const ConBrandingPage = () => {
   };
 
   const handleFileUploadComplete = useCallback(async (documentId: string) => {
-    const assistantMessage: ChatMessage = {
+    const assistantMessage: ChatMessageType = {
       id: Date.now().toString(),
       content: "I've received your document. Would you like me to analyze it for you?",
       type: 'assistant',
@@ -113,7 +93,7 @@ export const ConBrandingPage = () => {
         }
       });
 
-      const analysisMessage: ChatMessage = {
+      const analysisMessage: ChatMessageType = {
         id: Date.now().toString(),
         content: response.data.response,
         type: 'assistant',
@@ -139,117 +119,26 @@ export const ConBrandingPage = () => {
         <MainHeader />
         <div className="flex-1 overflow-hidden">
           <div className="flex h-full">
-            <aside className="w-64 border-r bg-muted/30 overflow-y-auto">
-              <div className="p-4 space-y-4">
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold">Categories</h2>
-                  <Tabs value={activeModule} onValueChange={(value: any) => setActiveModule(value)} className="w-full">
-                    <TabsList className="grid w-full grid-cols-1 h-auto">
-                      <TabsTrigger value="document" className="w-full justify-start">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Document Analysis
-                      </TabsTrigger>
-                      <TabsTrigger value="legal" className="w-full justify-start">
-                        <Scale className="mr-2 h-4 w-4" />
-                        Legal & Regulatory
-                      </TabsTrigger>
-                      <TabsTrigger value="help" className="w-full justify-start">
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        Training & Help
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="document" className="mt-4">
-                      <Card className="p-4">
-                        <FileUpload onUploadComplete={handleFileUploadComplete} />
-                      </Card>
-                    </TabsContent>
-
-                    <TabsContent value="help" className="mt-4">
-                      <Card className="p-4">
-                        <div className="space-y-2">
-                          <h3 className="font-medium">Training Options</h3>
-                          <Button variant="outline" size="sm" className="w-full">
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Training Data
-                          </Button>
-                        </div>
-                      </Card>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold">Recent Conversations</h2>
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input className="pl-8" placeholder="Search conversations..." />
-                  </div>
-                </div>
-              </div>
-            </aside>
-
+            <Sidebar 
+              activeModule={activeModule}
+              setActiveModule={setActiveModule}
+              onUploadComplete={handleFileUploadComplete}
+            />
             <main className="flex-1 flex flex-col overflow-hidden">
               <ScrollArea className="flex-1 p-4">
                 <div className="space-y-4">
                   {messages.map((message) => (
-                    <Card 
-                      key={message.id} 
-                      className={`p-4 ${
-                        message.type === 'assistant' ? 'bg-muted/30' : 'bg-primary/5'
-                      }`}
-                    >
-                      <div className="flex gap-3">
-                        <div className={`w-8 h-8 rounded-full ${
-                          message.type === 'assistant' ? 'bg-primary/10' : 'bg-secondary/10'
-                        } flex items-center justify-center`}>
-                          <MessageCircle className={`h-4 w-4 ${
-                            message.type === 'assistant' ? 'text-primary' : 'text-secondary'
-                          }`} />
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            {message.content}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {message.timestamp.toLocaleTimeString()}
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
+                    <ChatMessage key={message.id} message={message} />
                   ))}
                 </div>
               </ScrollArea>
-
-              <div className="border-t p-4">
-                <div className="flex gap-2">
-                  <Input 
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder="Ask about document management, OSB, BIA acts, and more..." 
-                    className="flex-1"
-                    disabled={isProcessing}
-                  />
-                  <Button 
-                    size="icon" 
-                    onClick={handleSendMessage}
-                    disabled={isProcessing}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <HelpCircle className="mr-2 h-4 w-4" />
-                    Help Topics
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Filter className="mr-2 h-4 w-4" />
-                    Filters
-                  </Button>
-                </div>
-              </div>
+              <ChatInput 
+                inputMessage={inputMessage}
+                setInputMessage={setInputMessage}
+                handleSendMessage={handleSendMessage}
+                handleKeyPress={handleKeyPress}
+                isProcessing={isProcessing}
+              />
             </main>
           </div>
         </div>
