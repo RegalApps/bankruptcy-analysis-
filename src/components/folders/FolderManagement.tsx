@@ -25,6 +25,19 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
   const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>();
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Filter documents based on active view
+  const getFilteredDocuments = () => {
+    switch (activeView) {
+      case "folders":
+        return documents.filter(doc => doc.is_folder);
+      case "uncategorized":
+        return documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
+      case "all":
+      default:
+        return documents;
+    }
+  };
+
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
     
@@ -86,6 +99,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
     setRefreshKey(prev => prev + 1);
   };
 
+  const filteredDocuments = getFilteredDocuments();
   const folders = documents.filter(doc => doc.is_folder);
   const uncategorizedDocuments = documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
 
@@ -130,7 +144,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
           <TabsContent value="folders">
             <FolderGrid
               folders={folders}
-              documents={documents}
+              documents={filteredDocuments}
               isDragging={isDragging}
               selectedFolder={selectedFolder}
               onFolderSelect={handleFolderSelect}

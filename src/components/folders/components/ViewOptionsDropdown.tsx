@@ -8,7 +8,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Grid, FolderPlus, FileText, Pencil, Trash2, Files } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { ChevronDown, Grid, FolderPlus, FileText, Files, Pencil, Trash2 } from "lucide-react";
 
 interface ViewOptionsDropdownProps {
   onViewChange: (view: "all" | "uncategorized" | "folders") => void;
@@ -122,33 +122,29 @@ export const ViewOptionsDropdown = ({
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>Document Views</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onViewChange("all")}>
+          <DropdownMenuItem onClick={() => onViewChange("all")} role="button">
             <Grid className="h-4 w-4 mr-2" />
             All Documents
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onViewChange("folders")}>
+          <DropdownMenuItem onClick={() => onViewChange("folders")} role="button">
             <FolderPlus className="h-4 w-4 mr-2" />
             Folder View
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onViewChange("uncategorized")}>
+          <DropdownMenuItem onClick={() => onViewChange("uncategorized")} role="button">
             <FileText className="h-4 w-4 mr-2" />
             Uncategorized
           </DropdownMenuItem>
-          
+
           {selectedItemId && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Selected Item Actions</DropdownMenuLabel>
-              <DropdownMenuItem 
-                onClick={() => setIsRenameDialogOpen(true)}
-                disabled={!selectedItemId}
-              >
+              <DropdownMenuLabel>Selected {selectedItemType === 'folder' ? 'Folder' : 'File'} Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setIsRenameDialogOpen(true)}>
                 <Pencil className="h-4 w-4 mr-2" />
                 Rename {selectedItemType === 'folder' ? 'Folder' : 'File'}
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => setIsDeleteDialogOpen(true)}
-                disabled={!selectedItemId}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
