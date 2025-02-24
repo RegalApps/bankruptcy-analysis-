@@ -39,6 +39,7 @@ export const FolderIcon = ({
 
   return (
     <div
+      data-testid="folder-icon"
       className={cn(
         "relative p-3 rounded-xl transition-all duration-200",
         "bg-gradient-to-br shadow-lg",
@@ -60,7 +61,10 @@ export const FolderIcon = ({
         )} 
       />
       {isHovered && (
-        <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-accent animate-pulse" />
+        <div 
+          data-testid="hover-indicator"
+          className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-accent animate-pulse" 
+        />
       )}
     </div>
   );
