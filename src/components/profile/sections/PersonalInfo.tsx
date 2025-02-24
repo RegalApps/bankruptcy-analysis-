@@ -45,6 +45,16 @@ export const PersonalInfo = () => {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input 
+              id="phone" 
+              type="tel" 
+              placeholder="Enter your phone number"
+              pattern="[0-9]*"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
             <Select>
               <SelectTrigger>
