@@ -330,6 +330,80 @@ export type Database = {
           },
         ]
       }
+      financial_records: {
+        Row: {
+          created_at: string | null
+          employment_income: number | null
+          food: number | null
+          id: string
+          insurance: number | null
+          medical_expenses: number | null
+          monthly_income: number | null
+          notes: string | null
+          other_expenses: number | null
+          other_income: number | null
+          rent_mortgage: number | null
+          status: string | null
+          submission_date: string | null
+          surplus_income: number | null
+          total_expenses: number | null
+          transportation: number | null
+          updated_at: string | null
+          user_id: string | null
+          utilities: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          employment_income?: number | null
+          food?: number | null
+          id?: string
+          insurance?: number | null
+          medical_expenses?: number | null
+          monthly_income?: number | null
+          notes?: string | null
+          other_expenses?: number | null
+          other_income?: number | null
+          rent_mortgage?: number | null
+          status?: string | null
+          submission_date?: string | null
+          surplus_income?: number | null
+          total_expenses?: number | null
+          transportation?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          utilities?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          employment_income?: number | null
+          food?: number | null
+          id?: string
+          insurance?: number | null
+          medical_expenses?: number | null
+          monthly_income?: number | null
+          notes?: string | null
+          other_expenses?: number | null
+          other_income?: number | null
+          rent_mortgage?: number | null
+          status?: string | null
+          submission_date?: string | null
+          surplus_income?: number | null
+          total_expenses?: number | null
+          transportation?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          utilities?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_records_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "available_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_analysis_results: {
         Row: {
           confidence_score: number | null
