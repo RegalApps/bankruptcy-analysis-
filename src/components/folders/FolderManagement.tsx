@@ -6,10 +6,19 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FolderIcon } from "@/components/DocumentList/components/FolderIcon";
-import { FolderPlus, Grid, Tags, Tag, FileText } from "lucide-react";
+import { FolderPlus, Grid, Tags, Tag, FileText, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { Document } from "@/components/DocumentList/types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FolderManagementProps {
   documents: Document[];
@@ -19,6 +28,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [activeView, setActiveView] = useState<"all" | "uncategorized" | "folders">("all");
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
@@ -59,7 +69,6 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
     }
   };
 
-  // Get folders and uncategorized documents
   const folders = documents.filter(doc => doc.is_folder);
   const uncategorizedDocuments = documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
 
@@ -67,7 +76,33 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
     <div className="space-y-6">
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Folder Management</h3>
+          <div className="flex items-center gap-4">
+            <h3 className="font-semibold">Document Management</h3>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  View Options
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                <DropdownMenuLabel>Document Views</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setActiveView("all")}>
+                  <Grid className="h-4 w-4 mr-2" />
+                  All Documents
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveView("folders")}>
+                  <FolderPlus className="h-4 w-4 mr-2" />
+                  Folder View
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveView("uncategorized")}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Uncategorized
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <div className="flex gap-2">
             <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
               <DialogTrigger asChild>
@@ -108,79 +143,82 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
               <Tags className="h-4 w-4 mr-2" />
               Manage Tags
             </Button>
-            <Button variant="outline" size="sm">
-              <Grid className="h-4 w-4 mr-2" />
-              View All
-            </Button>
           </div>
         </div>
-        <ScrollArea className="h-[400px]">
-          <div className="grid gap-6">
-            <div 
-              className={cn(
-                "grid gap-4 md:grid-cols-2",
-                isDragging && "ring-2 ring-primary/50 rounded-lg p-4"
-              )}
-            >
-              {folders.map((folder) => {
-                const folderDocuments = documents.filter(d => d.parent_folder_id === folder.id);
-                return (
-                  <div
-                    key={folder.id}
-                    className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setIsDragging(true);
-                    }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={(e) => {
-                      setIsDragging(false);
-                      handleDocumentDrop(e, folder.id);
-                    }}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <FolderIcon variant="client" />
-                      <div>
-                        <h4 className="font-medium">{folder.title}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {folderDocuments.length} documents
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
 
-            {uncategorizedDocuments.length > 0 && (
-              <div className="mt-6">
-                <h4 className="font-medium text-sm text-muted-foreground mb-3">Uncategorized Documents</h4>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {uncategorizedDocuments.map((doc) => (
+        <Tabs defaultValue="folders" className="mt-6">
+          <TabsList className="mb-4">
+            <TabsTrigger value="folders">Folders</TabsTrigger>
+            <TabsTrigger value="uncategorized">Uncategorized</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="folders">
+            <ScrollArea className="h-[400px]">
+              <div 
+                className={cn(
+                  "grid gap-4 md:grid-cols-2",
+                  isDragging && "ring-2 ring-primary/50 rounded-lg p-4"
+                )}
+              >
+                {folders.map((folder) => {
+                  const folderDocuments = documents.filter(d => d.parent_folder_id === folder.id);
+                  return (
                     <div
-                      key={doc.id}
-                      className="flex items-center p-3 rounded-lg border bg-card hover:shadow-md transition-shadow"
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('documentId', doc.id);
+                      key={folder.id}
+                      className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                      }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={(e) => {
+                        setIsDragging(false);
+                        handleDocumentDrop(e, folder.id);
                       }}
                     >
-                      <div className="p-2 rounded-md bg-primary/10 mr-3">
-                        <FileText className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm">{doc.title}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {doc.type || 'Document'}
-                        </p>
+                      <div className="flex items-center space-x-3">
+                        <FolderIcon variant="client" />
+                        <div>
+                          <h4 className="font-medium">{folder.title}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {folderDocuments.length} documents
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            )}
-          </div>
-        </ScrollArea>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="uncategorized">
+            <ScrollArea className="h-[400px]">
+              <div className="grid gap-3 md:grid-cols-2">
+                {uncategorizedDocuments.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center p-3 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('documentId', doc.id);
+                    }}
+                  >
+                    <div className="p-2 rounded-md bg-primary/10 mr-3">
+                      <FileText className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">{doc.title}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {doc.type || 'Document'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </Card>
     </div>
   );
