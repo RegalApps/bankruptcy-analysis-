@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Folder, Plus, SlidersHorizontal, Users, FileText, Eye } from "lucide-react";
+import { Edit2, Eye, FileText, MoreHorizontal, Plus, Trash, Users } from "lucide-react";
 import type { Document } from "../types";
+import { FolderIcon } from "./FolderIcon";
 
 interface FolderCardProps {
   clientName: string;
@@ -29,10 +30,16 @@ export const FolderCard = ({
   documents,
   isGridView
 }: FolderCardProps) => {
+  const getVariant = () => {
+    if (clientName === "Uncategorized") return "uncategorized";
+    if (documents.some(doc => doc.metadata?.status === "archived")) return "archive";
+    return "client";
+  };
+
   return (
     <div 
       className={cn(
-        "p-4 rounded-lg border bg-card transition-all",
+        "group p-4 rounded-lg border bg-card transition-all",
         "hover:shadow-md hover:border-primary/50",
         isSelected && "border-primary shadow-md",
         isGridView ? "h-[200px]" : "h-auto"
@@ -43,17 +50,14 @@ export const FolderCard = ({
           className="flex items-center space-x-3 cursor-pointer"
           onClick={onSelect}
         >
-          <div className={cn(
-            "p-2 rounded-md",
-            isSelected ? "bg-primary/20" : "bg-primary/10"
-          )}>
-            <Folder className={cn(
-              "h-6 w-6",
-              isSelected ? "text-primary" : "text-primary/70"
-            )} />
-          </div>
+          <FolderIcon 
+            variant={getVariant()} 
+            isActive={isSelected}
+          />
           <div>
-            <h3 className="font-medium">{clientName}</h3>
+            <h3 className="font-medium group-hover:text-primary transition-colors">
+              {clientName}
+            </h3>
             <p className="text-sm text-muted-foreground">
               {documentsCount} document{documentsCount !== 1 ? 's' : ''}
             </p>
@@ -61,14 +65,18 @@ export const FolderCard = ({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <SlidersHorizontal className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem>
               <Plus className="h-4 w-4 mr-2" />
               Add Document
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Edit2 className="h-4 w-4 mr-2" />
+              Rename Folder
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Users className="h-4 w-4 mr-2" />
@@ -76,6 +84,7 @@ export const FolderCard = ({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive">
+              <Trash className="h-4 w-4 mr-2" />
               Delete Folder
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -88,14 +97,18 @@ export const FolderCard = ({
             {documents.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer"
+                className="flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer group/item"
                 onClick={() => onDocumentClick(doc)}
               >
                 <div className="flex items-center space-x-2">
                   <FileText className="h-4 w-4" />
                   <span className="text-sm truncate">{doc.title}</span>
                 </div>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
               </div>
