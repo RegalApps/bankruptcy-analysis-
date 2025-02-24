@@ -57,6 +57,26 @@ const sampleNotifications: Notification[] = [
   },
   {
     id: "4",
+    title: "New Task Assigned",
+    message: "You have been assigned to review the latest contract",
+    category: "task",
+    created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(), // 1.5 hours ago
+    read: false,
+    priority: "high",
+    metadata: { type: "task_assigned" }
+  },
+  {
+    id: "5",
+    title: "Task Comment",
+    message: "Sarah commented on your document review task",
+    category: "task",
+    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 minutes ago
+    read: false,
+    priority: "normal",
+    metadata: { type: "comment" }
+  },
+  {
+    id: "6",
     title: "Subscription Renewal",
     message: "Your subscription will renew in 7 days",
     category: "subscription",
@@ -66,7 +86,7 @@ const sampleNotifications: Notification[] = [
     metadata: {}
   },
   {
-    id: "5",
+    id: "7",
     title: "Meeting Reminder",
     message: "Team meeting starts in 15 minutes",
     category: "reminder",
