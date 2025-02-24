@@ -1,35 +1,14 @@
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { IncomeExpenseData } from "./types";
+import { IncomeSection } from "./form/IncomeSection";
+import { ExpensesSection } from "./form/ExpensesSection";
 
 type FinancialRecord = Database["public"]["Tables"]["financial_records"]["Insert"];
-
-interface IncomeExpenseData {
-  monthly_income: string;
-  employment_income: string;
-  other_income: string;
-  rent_mortgage: string;
-  utilities: string;
-  food: string;
-  transportation: string;
-  insurance: string;
-  medical_expenses: string;
-  other_expenses: string;
-  notes: string;
-}
 
 export const IncomeExpenseForm = () => {
   const { toast } = useToast();
@@ -63,7 +42,6 @@ export const IncomeExpenseForm = () => {
     setIsSubmitting(true);
 
     try {
-      // Convert string values to numbers for the database
       const financialRecord: FinancialRecord = {
         monthly_income: formData.monthly_income ? parseFloat(formData.monthly_income) : null,
         employment_income: formData.employment_income ? parseFloat(formData.employment_income) : null,
@@ -91,7 +69,6 @@ export const IncomeExpenseForm = () => {
         description: "Financial data submitted successfully",
       });
 
-      // Reset form
       setFormData({
         monthly_income: "",
         employment_income: "",
@@ -119,162 +96,11 @@ export const IncomeExpenseForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Income Information</CardTitle>
-          <CardDescription>
-            Please provide your monthly income details
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="monthly_income">Total Monthly Income</Label>
-              <Input
-                id="monthly_income"
-                name="monthly_income"
-                type="number"
-                placeholder="0.00"
-                value={formData.monthly_income}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="employment_income">Employment Income</Label>
-              <Input
-                id="employment_income"
-                name="employment_income"
-                type="number"
-                placeholder="0.00"
-                value={formData.employment_income}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="other_income">Other Income</Label>
-              <Input
-                id="other_income"
-                name="other_income"
-                type="number"
-                placeholder="0.00"
-                value={formData.other_income}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Expenses</CardTitle>
-          <CardDescription>
-            Enter your regular monthly expenses
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="rent_mortgage">Rent/Mortgage</Label>
-              <Input
-                id="rent_mortgage"
-                name="rent_mortgage"
-                type="number"
-                placeholder="0.00"
-                value={formData.rent_mortgage}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="utilities">Utilities</Label>
-              <Input
-                id="utilities"
-                name="utilities"
-                type="number"
-                placeholder="0.00"
-                value={formData.utilities}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="food">Food</Label>
-              <Input
-                id="food"
-                name="food"
-                type="number"
-                placeholder="0.00"
-                value={formData.food}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="transportation">Transportation</Label>
-              <Input
-                id="transportation"
-                name="transportation"
-                type="number"
-                placeholder="0.00"
-                value={formData.transportation}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="insurance">Insurance</Label>
-              <Input
-                id="insurance"
-                name="insurance"
-                type="number"
-                placeholder="0.00"
-                value={formData.insurance}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="medical_expenses">Medical Expenses</Label>
-              <Input
-                id="medical_expenses"
-                name="medical_expenses"
-                type="number"
-                placeholder="0.00"
-                value={formData.medical_expenses}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="other_expenses">Other Expenses</Label>
-              <Input
-                id="other_expenses"
-                name="other_expenses"
-                type="number"
-                placeholder="0.00"
-                value={formData.other_expenses}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes">Additional Notes</Label>
-            <Textarea
-              id="notes"
-              name="notes"
-              placeholder="Add any relevant notes or comments"
-              value={formData.notes}
-              onChange={handleChange}
-            />
-          </div>
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? "Submitting..." : "Submit Financial Data"}
-          </Button>
-        </CardContent>
-      </Card>
+      <IncomeSection formData={formData} onChange={handleChange} />
+      <ExpensesSection formData={formData} onChange={handleChange} />
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? "Submitting..." : "Submit Financial Data"}
+      </Button>
     </form>
   );
 };
