@@ -20,7 +20,7 @@ export const MainSidebar = () => {
   ];
 
   return (
-    <aside className="w-64 h-screen sidebar-gradient border-r flex flex-col fixed left-0 top-0 z-40">
+    <aside className="w-64 h-screen flex flex-col fixed left-0 top-0 z-40 border-r bg-background">
       {/* App Logo */}
       <div className="p-4">
         <Button
@@ -29,10 +29,12 @@ export const MainSidebar = () => {
           onClick={() => navigate('/')}
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-black/5 rounded-lg flex items-center justify-center">
-              <FileText className="w-5 h-5 text-black" />
-            </div>
-            <span className="font-semibold text-lg text-black">Secure Files AI</span>
+            <img 
+              src="/lovable-uploads/7111ec34-de13-4b7d-b821-5f804822ebc5.png" 
+              alt="Secure Files AI Logo" 
+              className="w-8 h-8"
+            />
+            <span className="font-semibold text-lg text-foreground">Secure Files AI</span>
           </div>
         </Button>
       </div>
@@ -65,7 +67,7 @@ export const MainSidebar = () => {
       </nav>
 
       {/* Bottom Section */}
-      <div className="px-3 py-4 border-t bg-card/50">
+      <div className="px-3 py-4 border-t">
         <Button 
           variant="ghost"
           className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-primary/5"
