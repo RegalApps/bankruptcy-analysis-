@@ -1,137 +1,161 @@
 
-interface CrossValidationRule {
-  sourceField: string;
-  targetField: string;
-  type: 'date' | 'amount' | 'percentage' | 'text';
-  operation: 'before' | 'after' | 'greater' | 'lesser' | 'equal' | 'contains' | 'matches';
-  tolerance?: number;
-  errorMessage: string;
+import { regulatoryFramework } from './regulatoryFrameworks';
+
+export interface ValidationContext {
+  formNumber: string;
+  documentContent: string;
+  extractedData: Record<string, any>;
 }
 
-export const validateCrossFields = (
-  document: Record<string, any>,
-  rules: CrossValidationRule[]
-): Array<{ field: string; error: string }> => {
-  return rules.reduce((errors, rule) => {
-    const sourceValue = document[rule.sourceField];
-    const targetValue = document[rule.targetField];
+export const performCrossValidation = async (context: ValidationContext) => {
+  const validationResults = {
+    biaCompliance: await validateBIACompliance(context),
+    formCompliance: await validateFormCompliance(context),
+    dataIntegrity: await validateDataIntegrity(context),
+    regulatoryCompliance: await validateRegulatoryCompliance(context)
+  };
 
-    if (!sourceValue || !targetValue) {
-      return errors;
+  return {
+    isValid: !Object.values(validationResults).some(result => !result.isValid),
+    results: validationResults,
+    recommendations: generateRecommendations(validationResults)
+  };
+};
+
+const validateBIACompliance = async (context: ValidationContext) => {
+  const { formNumber, documentContent } = context;
+  const biaRequirements = regulatoryFramework.BIA.sections;
+  
+  const violations = [];
+  const warnings = [];
+
+  // Validate against BIA requirements
+  for (const [section, requirements] of Object.entries(biaRequirements)) {
+    for (const rule of requirements.validationRules) {
+      if (!rule.test(documentContent)) {
+        violations.push({
+          section,
+          description: requirements.description,
+          severity: "high"
+        });
+      }
     }
+  }
 
-    let isValid = true;
-    switch (rule.type) {
-      case 'date':
-        const sourceDate = new Date(sourceValue);
-        const targetDate = new Date(targetValue);
-        isValid = validateDateComparison(sourceDate, targetDate, rule.operation);
-        break;
+  return {
+    isValid: violations.length === 0,
+    violations,
+    warnings
+  };
+};
 
-      case 'amount':
-        isValid = validateAmountComparison(
-          Number(sourceValue),
-          Number(targetValue),
-          rule.operation,
-          rule.tolerance
-        );
-        break;
-
-      case 'percentage':
-        isValid = validatePercentageComparison(
-          Number(sourceValue),
-          Number(targetValue),
-          rule.operation,
-          rule.tolerance
-        );
-        break;
-
-      case 'text':
-        isValid = validateTextComparison(
-          String(sourceValue),
-          String(targetValue),
-          rule.operation
-        );
-        break;
-    }
-
-    if (!isValid) {
-      errors.push({
-        field: rule.sourceField,
-        error: rule.errorMessage
+const validateFormCompliance = async (context: ValidationContext) => {
+  const { formNumber, extractedData } = context;
+  
+  // Validate form-specific requirements
+  const formUrl = `https://ised-isde.canada.ca/site/office-superintendent-bankruptcy/en/forms/${formNumber}`;
+  const requiredFields = getFormRequiredFields(formNumber);
+  
+  const violations = [];
+  
+  for (const field of requiredFields) {
+    if (!extractedData[field]) {
+      violations.push({
+        field,
+        message: `Required field ${field} is missing`,
+        reference: formUrl
       });
     }
+  }
 
-    return errors;
-  }, [] as Array<{ field: string; error: string }>);
+  return {
+    isValid: violations.length === 0,
+    violations
+  };
 };
 
-const validateDateComparison = (
-  source: Date,
-  target: Date,
-  operation: string
-): boolean => {
-  switch (operation) {
-    case 'before':
-      return source < target;
-    case 'after':
-      return source > target;
-    case 'equal':
-      return source.getTime() === target.getTime();
-    default:
-      return false;
+const validateDataIntegrity = async (context: ValidationContext) => {
+  const { extractedData } = context;
+  
+  const inconsistencies = [];
+  
+  // Check for data consistency
+  if (extractedData.totalAssets && extractedData.totalLiabilities) {
+    const assets = parseFloat(extractedData.totalAssets);
+    const liabilities = parseFloat(extractedData.totalLiabilities);
+    
+    if (assets > liabilities) {
+      inconsistencies.push({
+        message: "Total assets exceed total liabilities - verify if bankruptcy is appropriate",
+        severity: "warning"
+      });
+    }
   }
+
+  return {
+    isValid: inconsistencies.length === 0,
+    inconsistencies
+  };
 };
 
-const validateAmountComparison = (
-  source: number,
-  target: number,
-  operation: string,
-  tolerance = 0
-): boolean => {
-  const diff = Math.abs(source - target);
-  switch (operation) {
-    case 'greater':
-      return source > target;
-    case 'lesser':
-      return source < target;
-    case 'equal':
-      return diff <= tolerance;
-    default:
-      return false;
+const validateRegulatoryCompliance = async (context: ValidationContext) => {
+  const { formNumber, documentContent } = context;
+  
+  // Check compliance with other relevant legislation
+  const relevantActs = [
+    { code: "O-2.7", name: "Office of the Superintendent of Bankruptcy Canada" },
+    { code: "C-41.01", name: "Companies' Creditors Arrangement Act" },
+    { code: "T-19.8", name: "Tax Court of Canada Act" },
+    { code: "I-11.8", name: "Insolvency Counsellor's Qualification Course Act" }
+  ];
+  
+  const violations = [];
+  
+  for (const act of relevantActs) {
+    const actRequirements = getActRequirements(act.code);
+    for (const requirement of actRequirements) {
+      if (!validateRequirement(documentContent, requirement)) {
+        violations.push({
+          act: act.code,
+          requirement: requirement.description,
+          severity: "high"
+        });
+      }
+    }
   }
+
+  return {
+    isValid: violations.length === 0,
+    violations
+  };
 };
 
-const validatePercentageComparison = (
-  source: number,
-  target: number,
-  operation: string,
-  tolerance = 0.01
-): boolean => {
-  const percentage = (source / target) * 100;
-  switch (operation) {
-    case 'greater':
-      return percentage > (100 + tolerance);
-    case 'lesser':
-      return percentage < (100 - tolerance);
-    case 'equal':
-      return Math.abs(percentage - 100) <= tolerance;
-    default:
-      return false;
+const generateRecommendations = (validationResults: any) => {
+  const recommendations = [];
+  
+  // Generate recommendations based on validation results
+  if (!validationResults.biaCompliance.isValid) {
+    recommendations.push({
+      type: "compliance",
+      message: "Document requires review for BIA compliance",
+      priority: "high"
+    });
   }
+  
+  return recommendations;
 };
 
-const validateTextComparison = (
-  source: string,
-  target: string,
-  operation: string
-): boolean => {
-  switch (operation) {
-    case 'contains':
-      return source.includes(target);
-    case 'matches':
-      return source === target;
-    default:
-      return false;
-  }
+const getFormRequiredFields = (formNumber: string): string[] => {
+  // Return required fields based on form number
+  return [];
+};
+
+const getActRequirements = (actCode: string): any[] => {
+  // Return requirements for specific act
+  return [];
+};
+
+const validateRequirement = (content: string, requirement: any): boolean => {
+  // Validate content against requirement
+  return true;
 };

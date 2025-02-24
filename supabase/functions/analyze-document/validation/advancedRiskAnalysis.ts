@@ -1,209 +1,165 @@
 
-import { Risk, ValidationError } from "../types.ts";
+import { regulatoryFramework } from './regulatoryFrameworks';
 
-interface RiskThreshold {
-  type: 'amount' | 'percentage' | 'ratio' | 'time';
-  value: number;
-  comparison: 'minimum' | 'maximum' | 'exact';
-  baseline?: number | Date;
-}
-
-interface RiskPattern {
+interface RiskFactor {
+  category: string;
+  description: string;
   severity: 'low' | 'medium' | 'high';
-  indicators: string[];
-  thresholds: RiskThreshold[];
+  regulatoryReference?: string;
 }
 
-export class RiskAnalyzer {
-  private patterns: Record<string, RiskPattern[]>;
+export const performRiskAnalysis = async (
+  content: string,
+  extractedData: Record<string, any>,
+  formNumber: string
+) => {
+  const risks: RiskFactor[] = [];
+  
+  // Financial Risk Analysis
+  await analyzeFinancialRisks(extractedData, risks);
+  
+  // Compliance Risk Analysis
+  await analyzeComplianceRisks(content, formNumber, risks);
+  
+  // Legal Risk Analysis
+  await analyzeLegalRisks(content, extractedData, risks);
+  
+  // Document Integrity Risks
+  await analyzeDocumentIntegrity(content, extractedData, risks);
 
-  constructor() {
-    this.patterns = {
-      financial: [
-        {
-          severity: 'high',
-          indicators: [
-            'insufficient funds',
-            'significant loss',
-            'major deficiency'
-          ],
-          thresholds: [
-            {
-              type: 'amount',
-              value: 100000,
-              comparison: 'maximum'
-            },
-            {
-              type: 'percentage',
-              value: 75,
-              comparison: 'maximum'
-            }
-          ]
-        }
-      ],
-      compliance: [
-        {
-          severity: 'high',
-          indicators: [
-            'deadline breach',
-            'missing documentation',
-            'regulatory violation'
-          ],
-          thresholds: [
-            {
-              type: 'time',
-              value: 30,
-              comparison: 'maximum'
-            }
-          ]
-        }
-      ],
-      legal: [
-        {
-          severity: 'high',
-          indicators: [
-            'court order breach',
-            'statutory violation',
-            'legal non-compliance'
-          ],
-          thresholds: [
-            {
-              type: 'time',
-              value: 15,
-              comparison: 'maximum'
-            }
-          ]
-        }
-      ]
-    };
-  }
+  return {
+    risks,
+    riskScore: calculateRiskScore(risks),
+    recommendations: generateRiskRecommendations(risks)
+  };
+};
 
-  public analyzeRisks(
-    document: Record<string, any>,
-    fieldConfig: Record<string, any>
-  ): Risk[] {
-    const risks: Risk[] = [];
-
-    // Financial risk analysis
-    this.analyzeFinancialRisks(document, fieldConfig, risks);
-
-    // Compliance risk analysis
-    this.analyzeComplianceRisks(document, fieldConfig, risks);
-
-    // Legal risk analysis
-    this.analyzeLegalRisks(document, fieldConfig, risks);
-
-    return risks;
-  }
-
-  private analyzeFinancialRisks(
-    document: Record<string, any>,
-    fieldConfig: Record<string, any>,
-    risks: Risk[]
-  ): void {
-    const financialFields = fieldConfig.monetaryFields || [];
-    financialFields.forEach(field => {
-      const value = document[field];
-      if (typeof value === 'number') {
-        this.patterns.financial.forEach(pattern => {
-          pattern.thresholds.forEach(threshold => {
-            if (this.isThresholdExceeded(value, threshold)) {
-              risks.push({
-                type: 'financial',
-                severity: pattern.severity,
-                description: `Financial risk detected in ${field}`,
-                impact: `Threshold of ${threshold.value} ${threshold.comparison}`,
-                requiredAction: `Review and adjust ${field} values`
-              });
-            }
-          });
-        });
-      }
-    });
-  }
-
-  private analyzeComplianceRisks(
-    document: Record<string, any>,
-    fieldConfig: Record<string, any>,
-    risks: Risk[]
-  ): void {
-    const complianceFields = fieldConfig.keyDates || [];
-    complianceFields.forEach(field => {
-      const value = document[field];
-      if (value instanceof Date) {
-        this.patterns.compliance.forEach(pattern => {
-          pattern.thresholds.forEach(threshold => {
-            if (this.isDateThresholdExceeded(value, threshold)) {
-              risks.push({
-                type: 'compliance',
-                severity: pattern.severity,
-                description: `Compliance risk detected for ${field}`,
-                impact: `Time threshold of ${threshold.value} days ${threshold.comparison}`,
-                requiredAction: `Review and adjust ${field} timeline`
-              });
-            }
-          });
-        });
-      }
-    });
-  }
-
-  private analyzeLegalRisks(
-    document: Record<string, any>,
-    fieldConfig: Record<string, any>,
-    risks: Risk[]
-  ): void {
-    const legalFields = fieldConfig.requiredFields || [];
-    legalFields.forEach(field => {
-      if (!document[field.name] && field.required) {
-        risks.push({
-          type: 'legal',
-          severity: 'high',
-          description: `Required field ${field.name} is missing`,
-          impact: 'Legal compliance affected',
-          requiredAction: `Provide required information for ${field.name}`
-        });
-      }
-    });
-  }
-
-  private isThresholdExceeded(
-    value: number,
-    threshold: RiskThreshold
-  ): boolean {
-    switch (threshold.comparison) {
-      case 'minimum':
-        return value < threshold.value;
-      case 'maximum':
-        return value > threshold.value;
-      case 'exact':
-        return Math.abs(value - threshold.value) > 0.01;
-      default:
-        return false;
+const analyzeFinancialRisks = async (
+  extractedData: Record<string, any>,
+  risks: RiskFactor[]
+) => {
+  // Analyze financial data points
+  if (extractedData.totalDebt && extractedData.totalIncome) {
+    const debtToIncomeRatio = parseFloat(extractedData.totalDebt) / parseFloat(extractedData.totalIncome);
+    
+    if (debtToIncomeRatio > 0.8) {
+      risks.push({
+        category: 'financial',
+        description: 'High debt-to-income ratio detected',
+        severity: 'high',
+        regulatoryReference: 'BIA Section 43(1)'
+      });
     }
   }
+};
 
-  private isDateThresholdExceeded(
-    date: Date,
-    threshold: RiskThreshold
-  ): boolean {
-    if (threshold.type !== 'time' || !threshold.baseline) {
-      return false;
-    }
-
-    const diffDays = Math.abs(
-      (date.getTime() - (threshold.baseline as Date).getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    switch (threshold.comparison) {
-      case 'minimum':
-        return diffDays < threshold.value;
-      case 'maximum':
-        return diffDays > threshold.value;
-      case 'exact':
-        return Math.abs(diffDays - threshold.value) > 1;
-      default:
-        return false;
+const analyzeComplianceRisks = async (
+  content: string,
+  formNumber: string,
+  risks: RiskFactor[]
+) => {
+  // Check for regulatory compliance issues
+  const biaRequirements = regulatoryFramework.BIA.sections;
+  
+  for (const [section, requirements] of Object.entries(biaRequirements)) {
+    const hasCompliance = requirements.validationRules.some(rule => rule.test(content));
+    
+    if (!hasCompliance) {
+      risks.push({
+        category: 'compliance',
+        description: `Non-compliance with BIA ${section}: ${requirements.description}`,
+        severity: 'high',
+        regulatoryReference: `BIA ${section}`
+      });
     }
   }
-}
+};
+
+const analyzeLegalRisks = async (
+  content: string,
+  extractedData: Record<string, any>,
+  risks: RiskFactor[]
+) => {
+  // Analyze legal requirements and potential issues
+  const legalChecks = [
+    {
+      pattern: /fraud|misrepresentation|concealment/i,
+      description: 'Potential fraudulent activity indicators',
+      reference: 'BIA Section 198'
+    },
+    {
+      pattern: /undisclosed.*assets|hidden.*property/i,
+      description: 'Potential undisclosed assets',
+      reference: 'BIA Section 199'
+    }
+  ];
+
+  legalChecks.forEach(check => {
+    if (check.pattern.test(content)) {
+      risks.push({
+        category: 'legal',
+        description: check.description,
+        severity: 'high',
+        regulatoryReference: check.reference
+      });
+    }
+  });
+};
+
+const analyzeDocumentIntegrity = async (
+  content: string,
+  extractedData: Record<string, any>,
+  risks: RiskFactor[]
+) => {
+  // Check document completeness and integrity
+  const requiredSections = [
+    'personal information',
+    'financial statements',
+    'creditor information'
+  ];
+
+  requiredSections.forEach(section => {
+    if (!content.toLowerCase().includes(section)) {
+      risks.push({
+        category: 'document',
+        description: `Missing required section: ${section}`,
+        severity: 'medium'
+      });
+    }
+  });
+};
+
+const calculateRiskScore = (risks: RiskFactor[]): number => {
+  const weights = {
+    high: 3,
+    medium: 2,
+    low: 1
+  };
+
+  const totalWeight = risks.reduce((sum, risk) => sum + weights[risk.severity], 0);
+  return Math.min(100, (totalWeight / (risks.length * 3)) * 100);
+};
+
+const generateRiskRecommendations = (risks: RiskFactor[]): string[] => {
+  const recommendations: string[] = [];
+  
+  // Generate specific recommendations based on identified risks
+  risks.forEach(risk => {
+    switch (risk.category) {
+      case 'financial':
+        recommendations.push(`Review and verify financial information: ${risk.description}`);
+        break;
+      case 'compliance':
+        recommendations.push(`Ensure compliance with ${risk.regulatoryReference}: ${risk.description}`);
+        break;
+      case 'legal':
+        recommendations.push(`Legal review required: ${risk.description}`);
+        break;
+      case 'document':
+        recommendations.push(`Document completion required: ${risk.description}`);
+        break;
+    }
+  });
+
+  return recommendations;
+};
