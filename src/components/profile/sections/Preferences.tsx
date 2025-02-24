@@ -46,6 +46,16 @@ export const Preferences = () => {
           
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
+              <Label>SMS Notifications</Label>
+              <CardDescription>
+                Receive text messages for important updates
+              </CardDescription>
+            </div>
+            <Switch />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
               <Label>Push Notifications</Label>
               <CardDescription>
                 Receive push notifications about your account
