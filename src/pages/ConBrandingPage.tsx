@@ -1,10 +1,13 @@
 
+import { useState } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { 
   FileText, 
   MessageCircle, 
@@ -16,7 +19,60 @@ import {
   Filter
 } from "lucide-react";
 
+interface ChatMessage {
+  id: string;
+  content: string;
+  type: 'user' | 'assistant';
+  timestamp: Date;
+  module?: 'document' | 'legal' | 'help';
+}
+
 export const ConBrandingPage = () => {
+  const [messages, setMessages] = useState<ChatMessage[]>([{
+    id: '1',
+    content: "Welcome to Secure Files AI Assistant. I can help you with document management, OSB regulations, BIA acts, and more. How can I assist you today?",
+    type: 'assistant',
+    timestamp: new Date()
+  }]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [activeModule, setActiveModule] = useState<'document' | 'legal' | 'help'>('document');
+  const { toast } = useToast();
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    const newMessage: ChatMessage = {
+      id: Date.now().toString(),
+      content: inputMessage,
+      type: 'user',
+      timestamp: new Date(),
+      module: activeModule
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setInputMessage("");
+
+    // Placeholder for AI response - to be implemented with edge function
+    const assistantMessage: ChatMessage = {
+      id: (Date.now() + 1).toString(),
+      content: "I understand you're asking about " + activeModule + ". I'll help you with that.",
+      type: 'assistant',
+      timestamp: new Date(),
+      module: activeModule
+    };
+
+    setTimeout(() => {
+      setMessages(prev => [...prev, assistantMessage]);
+    }, 1000);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   return (
     <div>
       <MainSidebar />
@@ -27,20 +83,22 @@ export const ConBrandingPage = () => {
           <aside className="w-64 border-r bg-muted/30 p-4 space-y-4">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold">Categories</h2>
-              <div className="space-y-1">
-                <Button variant="ghost" className="w-full justify-start" size="sm">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Document Analysis
-                </Button>
-                <Button variant="ghost" className="w-full justify-start" size="sm">
-                  <Scale className="mr-2 h-4 w-4" />
-                  Legal & Regulatory
-                </Button>
-                <Button variant="ghost" className="w-full justify-start" size="sm">
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  Training & Help
-                </Button>
-              </div>
+              <Tabs value={activeModule} onValueChange={(value: any) => setActiveModule(value)} className="w-full">
+                <TabsList className="grid w-full grid-cols-1 h-auto">
+                  <TabsTrigger value="document" className="w-full justify-start">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Document Analysis
+                  </TabsTrigger>
+                  <TabsTrigger value="legal" className="w-full justify-start">
+                    <Scale className="mr-2 h-4 w-4" />
+                    Legal & Regulatory
+                  </TabsTrigger>
+                  <TabsTrigger value="help" className="w-full justify-start">
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Training & Help
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
 
             <div className="space-y-2">
@@ -57,19 +115,32 @@ export const ConBrandingPage = () => {
             <div className="flex-1 p-4">
               <ScrollArea className="h-full">
                 <div className="space-y-4">
-                  <Card className="p-4 bg-muted/30">
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <MessageCircle className="h-4 w-4 text-primary" />
+                  {messages.map((message) => (
+                    <Card 
+                      key={message.id} 
+                      className={`p-4 ${
+                        message.type === 'assistant' ? 'bg-muted/30' : 'bg-primary/5'
+                      }`}
+                    >
+                      <div className="flex gap-3">
+                        <div className={`w-8 h-8 rounded-full ${
+                          message.type === 'assistant' ? 'bg-primary/10' : 'bg-secondary/10'
+                        } flex items-center justify-center`}>
+                          <MessageCircle className={`h-4 w-4 ${
+                            message.type === 'assistant' ? 'text-primary' : 'text-secondary'
+                          }`} />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            {message.content}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {message.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Welcome to Secure Files AI Assistant. I can help you with document management,
-                          OSB regulations, BIA acts, and more. How can I assist you today?
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  ))}
                 </div>
               </ScrollArea>
             </div>
@@ -78,10 +149,13 @@ export const ConBrandingPage = () => {
             <div className="border-t p-4">
               <div className="flex gap-2">
                 <Input 
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={handleKeyPress}
                   placeholder="Ask about document management, OSB, BIA acts, and more..." 
                   className="flex-1"
                 />
-                <Button size="icon">
+                <Button size="icon" onClick={handleSendMessage}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
