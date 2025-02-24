@@ -48,18 +48,18 @@ export const MainSidebar = () => {
             variant="ghost"
             className={cn(
               "w-full justify-start gap-3 px-4 py-6 h-auto",
-              "hover:bg-primary/5 transition-colors duration-200",
-              isActivePath(item.path) && "bg-primary/10 text-primary"
+              "hover:bg-accent/10 hover:text-accent transition-colors duration-200",
+              isActivePath(item.path) && "bg-accent/10 text-accent"
             )}
             onClick={() => navigate(item.path)}
           >
             <item.icon className={cn(
               "h-5 w-5",
-              isActivePath(item.path) ? "text-primary" : "text-muted-foreground"
+              isActivePath(item.path) ? "text-accent" : "text-muted-foreground group-hover:text-accent"
             )} />
             <span className={cn(
               "text-sm",
-              isActivePath(item.path) ? "text-primary" : "text-muted-foreground"
+              isActivePath(item.path) ? "text-accent" : "text-muted-foreground"
             )}>
               {item.label}
             </span>
@@ -71,7 +71,7 @@ export const MainSidebar = () => {
       <div className="px-3 py-4 border-t">
         <Button 
           variant="ghost"
-          className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-primary/5"
+          className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-accent/10 hover:text-accent"
           onClick={() => navigate("/notifications")}
         >
           <Bell className="h-5 w-5 text-muted-foreground" />
@@ -80,7 +80,7 @@ export const MainSidebar = () => {
         
         <Button 
           variant="ghost"
-          className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-primary/5"
+          className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-accent/10 hover:text-accent"
           onClick={() => navigate("/profile")}
         >
           <User className="h-5 w-5 text-muted-foreground" />
