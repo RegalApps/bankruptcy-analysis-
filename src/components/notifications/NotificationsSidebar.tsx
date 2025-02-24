@@ -2,35 +2,53 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { categoryConfig } from "@/lib/notifications/categoryConfig";
+import { useNavigate } from "react-router-dom";
 import type { Notification } from "@/types/notifications";
 
 interface NotificationsSidebarProps {
   notifications: Notification[] | undefined;
+  selectedCategory?: string;
 }
 
-export const NotificationsSidebar = ({ notifications }: NotificationsSidebarProps) => {
+export const NotificationsSidebar = ({ notifications, selectedCategory }: NotificationsSidebarProps) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="w-64 shrink-0 space-y-2">
-      <h2 className="text-lg font-semibold mb-4">Categories</h2>
-      {Object.entries(categoryConfig).map(([key, config]) => {
-        const count = notifications?.filter(n => n.category === key && !n.read).length || 0;
-        const Icon = config.icon;
-        return (
+    <div className="w-full border-b mb-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex gap-2 overflow-x-auto pb-4 px-4">
           <Button
-            key={key}
-            variant="ghost"
-            className="w-full justify-start gap-3 h-auto py-3"
+            variant={!selectedCategory ? "default" : "ghost"}
+            className="whitespace-nowrap"
+            onClick={() => navigate('/notifications')}
           >
-            <Icon className={cn("h-5 w-5", config.color)} />
-            <span className="flex-1 text-left">{config.label}</span>
-            {count > 0 && (
-              <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
-                {count}
-              </span>
-            )}
+            All Notifications
+            <span className="ml-2 bg-primary-foreground/10 text-xs px-2 py-1 rounded-full">
+              {notifications?.filter(n => !n.read).length || 0}
+            </span>
           </Button>
-        );
-      })}
+          {Object.entries(categoryConfig).map(([key, config]) => {
+            const count = notifications?.filter(n => n.category === key && !n.read).length || 0;
+            const Icon = config.icon;
+            return (
+              <Button
+                key={key}
+                variant={selectedCategory === key ? "default" : "ghost"}
+                className="whitespace-nowrap"
+                onClick={() => navigate(`/notifications/${key}`)}
+              >
+                <Icon className={cn("h-5 w-5 mr-2", config.color)} />
+                {config.label}
+                {count > 0 && (
+                  <span className="ml-2 bg-primary-foreground/10 text-xs px-2 py-1 rounded-full">
+                    {count}
+                  </span>
+                )}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };
