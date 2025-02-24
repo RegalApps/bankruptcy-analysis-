@@ -4,16 +4,13 @@ import { DocumentViewer } from "@/components/DocumentViewer";
 import { DocumentManagementPage } from "@/pages/DocumentManagementPage";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
-import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
-import { FolderManagement } from "@/components/folders/FolderManagement";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { documents } = useDocuments();
 
   useEffect(() => {
     console.log("Initializing auth state...");
@@ -48,23 +45,31 @@ const Index = () => {
     return <Auth />;
   }
 
-  if (selectedDocument) {
-    return (
-      <div className="container py-8">
-        <div className="space-y-6">
-          <button
-            onClick={() => setSelectedDocument(null)}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Back to Documents
-          </button>
-          <DocumentViewer documentId={selectedDocument} />
-        </div>
+  return (
+    <div className="min-h-screen flex">
+      <MainSidebar />
+      <div className="flex-1 flex flex-col">
+        <MainHeader />
+        <main className="flex-1">
+          {selectedDocument ? (
+            <div className="container py-8">
+              <div className="space-y-6">
+                <button
+                  onClick={() => setSelectedDocument(null)}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  ← Back to Documents
+                </button>
+                <DocumentViewer documentId={selectedDocument} />
+              </div>
+            </div>
+          ) : (
+            <DocumentManagementPage />
+          )}
+        </main>
       </div>
-    );
-  }
-
-  return <DocumentManagementPage />;
+    </div>
+  );
 };
 
 export default Index;

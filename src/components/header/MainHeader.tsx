@@ -1,14 +1,25 @@
 
 import { Button } from "@/components/ui/button";
-import { Search, Settings } from "lucide-react";
+import { Search, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { FileUpload } from "@/components/FileUpload";
+import { SearchBar } from "@/components/DocumentList/SearchBar";
+import { useState } from "react";
 
 export const MainHeader = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="flex h-14 items-center px-6 gap-4">
+      <div className="flex h-16 items-center px-6">
         <Button 
           variant="ghost" 
           className="font-semibold text-xl p-0 hover:bg-transparent"
@@ -16,21 +27,30 @@ export const MainHeader = () => {
         >
           Document Management
         </Button>
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="search"
-              placeholder="Search documents..."
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-md border bg-background"
-            />
-          </div>
+        
+        <div className="flex-1 max-w-md mx-auto">
+          <SearchBar 
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon">
-            <Settings className="h-4 w-4" />
-          </Button>
-        </div>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="ml-auto">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Document
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-xl">
+            <DialogHeader>
+              <DialogTitle>Upload New Document</DialogTitle>
+            </DialogHeader>
+            <div className="p-4">
+              <FileUpload onUploadComplete={() => {}} />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </header>
   );
