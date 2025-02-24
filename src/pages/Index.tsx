@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { DocumentViewer } from "@/components/DocumentViewer";
-import { DocumentManagementPage } from "@/pages/DocumentManagementPage";
+import { DocumentManagement } from "@/pages/DocumentManagementPage";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
 import { FileUpload } from "@/components/FileUpload";
@@ -11,12 +10,16 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Activity,
   Bell,
   FileText,
+  Folder,
   FolderPlus,
   Grid,
   Home,
@@ -32,11 +35,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
+import { FolderIcon } from "@/components/DocumentList/components/FolderIcon";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFolderDialog, setShowFolderDialog] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
   const { documents } = useDocuments();
 
   useEffect(() => {
@@ -62,7 +69,6 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -71,12 +77,10 @@ const Index = () => {
     );
   }
 
-  // Show auth page if not authenticated
   if (!session) {
     return <Auth />;
   }
 
-  // If a document is selected, show the document viewer
   if (selectedDocument) {
     return (
       <div className="container py-8">
@@ -93,24 +97,48 @@ const Index = () => {
     );
   }
 
-  // Main homepage content
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .insert([
+          {
+            title: newFolderName,
+            is_folder: true,
+            folder_type: 'client',
+          }
+        ]);
+
+      if (error) throw error;
+      setShowFolderDialog(false);
+      setNewFolderName("");
+    } catch (error) {
+      console.error('Error creating folder:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        {/* Main Navigation Sidebar */}
         <aside className="w-16 h-screen bg-background border-r flex flex-col items-center py-4 space-y-4 fixed">
-          {/* Logo Section */}
           <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-8">
             <FileText className="w-6 h-6 text-primary" />
           </div>
-
-          {/* Navigation Items */}
           <nav className="flex-1 w-full flex flex-col items-center space-y-2">
             <Button variant="ghost" size="icon" className="w-10 h-10">
               <Home className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="w-10 h-10">
-              <Grid className="h-5 w-5" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={cn(
+                "w-10 h-10",
+                "relative after:content-[''] after:absolute after:inset-0 after:rounded-md after:ring-2 after:ring-primary/50"
+              )}
+            >
+              <Folder className="h-5 w-5 text-primary" />
             </Button>
             <Button variant="ghost" size="icon" className="w-10 h-10">
               <Activity className="h-5 w-5" />
@@ -119,8 +147,6 @@ const Index = () => {
               <PieChart className="h-5 w-5" />
             </Button>
           </nav>
-
-          {/* User Section */}
           <div className="mt-auto space-y-2">
             <Button variant="ghost" size="icon" className="w-10 h-10">
               <Bell className="h-5 w-5" />
@@ -130,10 +156,7 @@ const Index = () => {
             </Button>
           </div>
         </aside>
-
-        {/* Main Content Area */}
         <main className="flex-1 pl-16">
-          {/* Header */}
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
             <div className="flex h-14 items-center px-6 gap-4">
               <h1 className="text-xl font-semibold">Document Management</h1>
@@ -157,11 +180,8 @@ const Index = () => {
               </div>
             </div>
           </header>
-
-          {/* Content Grid */}
           <div className="p-6">
             <div className="grid gap-6">
-              {/* Upload Section */}
               <section className="border rounded-lg p-8 bg-gradient-to-b from-background to-muted/20">
                 <div className="max-w-2xl mx-auto text-center space-y-4">
                   <h2 className="text-2xl font-semibold">Upload Your Documents</h2>
@@ -184,36 +204,87 @@ const Index = () => {
                   </Dialog>
                 </div>
               </section>
-
-              {/* Recent Uploads & Quick Actions */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* Recent Activity */}
                 <Card className="col-span-2 p-6">
-                  <h3 className="font-semibold mb-4">Recent Uploads</h3>
-                  <ScrollArea className="h-[300px] pr-4">
-                    <div className="space-y-4">
-                      {documents.slice(0, 5).map((doc) => (
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold">Folder Management</h3>
+                    <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <FolderPlus className="h-4 w-4 mr-2" />
+                          New Folder
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Folder</DialogTitle>
+                          <DialogDescription>
+                            Enter a name for your new folder. You can drag and drop documents into it later.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <Input
+                            placeholder="Folder name"
+                            value={newFolderName}
+                            onChange={(e) => setNewFolderName(e.target.value)}
+                          />
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setShowFolderDialog(false)}>
+                            Cancel
+                          </Button>
+                          <Button onClick={handleCreateFolder}>
+                            Create Folder
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  <ScrollArea className="h-[300px]">
+                    <div 
+                      className={cn(
+                        "grid gap-4 md:grid-cols-2",
+                        isDragging && "ring-2 ring-primary/50 rounded-lg p-4"
+                      )}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                      }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        // Handle drop logic here
+                      }}
+                    >
+                      {Object.entries(documents.reduce((acc, doc) => {
+                        if (doc.is_folder) {
+                          acc[doc.title] = {
+                            id: doc.id,
+                            documents: documents.filter(d => d.parent_folder_id === doc.id)
+                          };
+                        }
+                        return acc;
+                      }, {} as Record<string, { id: string; documents: typeof documents }>)).map(([folderName, folder]) => (
                         <div
-                          key={doc.id}
-                          className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-accent/50 cursor-pointer"
-                          onClick={() => setSelectedDocument(doc.id)}
+                          key={folder.id}
+                          className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                          draggable
                         >
-                          <div className="p-2 rounded-md bg-primary/10">
-                            <FileText className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{doc.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Uploaded {new Date(doc.created_at).toLocaleDateString()}
-                            </p>
+                          <div className="flex items-center space-x-3">
+                            <FolderIcon variant="client" />
+                            <div>
+                              <h4 className="font-medium">{folderName}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {folder.documents.length} documents
+                              </p>
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   </ScrollArea>
                 </Card>
-
-                {/* Quick Actions */}
                 <Card className="p-6">
                   <h3 className="font-semibold mb-4">Quick Actions</h3>
                   <div className="space-y-2">
