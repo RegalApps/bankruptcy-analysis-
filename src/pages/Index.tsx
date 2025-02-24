@@ -4,7 +4,6 @@ import { DocumentViewer } from "@/components/DocumentViewer";
 import { DocumentManagementPage } from "@/pages/DocumentManagementPage";
 import { Auth } from "@/components/Auth";
 import { supabase } from "@/lib/supabase";
-import { FileUpload } from "@/components/FileUpload";
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
@@ -65,19 +64,7 @@ const Index = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="flex">
-        <MainSidebar />
-        <main className="flex-1 pl-16">
-          <MainHeader />
-          <div className="p-6">
-            <FolderManagement documents={documents} />
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+  return <DocumentManagementPage />;
 };
 
 export default Index;
