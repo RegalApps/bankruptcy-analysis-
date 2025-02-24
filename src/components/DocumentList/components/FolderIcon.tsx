@@ -1,50 +1,67 @@
 
 import { cn } from "@/lib/utils";
-import { Folder } from "lucide-react";
+import { Folder, FolderOpen } from "lucide-react";
+import { useState } from "react";
 
 interface FolderIconProps {
   color?: string;
   isActive?: boolean;
   className?: string;
   variant?: "client" | "form" | "archive" | "uncategorized";
+  isOpen?: boolean;
 }
 
 export const FolderIcon = ({ 
   color, 
   isActive, 
   className,
-  variant = "client" 
+  variant = "client",
+  isOpen = false
 }: FolderIconProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   const getVariantStyles = () => {
     switch (variant) {
       case "client":
-        return "text-blue-500 bg-blue-500/10";
+        return "from-blue-500 to-blue-600 text-blue-50";
       case "form":
-        return "text-green-500 bg-green-500/10";
+        return "from-green-500 to-green-600 text-green-50";
       case "archive":
-        return "text-gray-500 bg-gray-500/10";
+        return "from-gray-500 to-gray-600 text-gray-50";
       case "uncategorized":
-        return "text-yellow-500 bg-yellow-500/10";
+        return "from-yellow-500 to-yellow-600 text-yellow-50";
       default:
-        return "text-primary bg-primary/10";
+        return "from-primary to-primary/80 text-primary-foreground";
     }
   };
+
+  const Icon = isOpen ? FolderOpen : Folder;
 
   return (
     <div
       className={cn(
-        "p-2 rounded-md transition-all duration-200",
-        "group-hover:scale-105 group-hover:shadow-sm",
-        isActive && "scale-105 shadow-sm",
+        "relative p-3 rounded-xl transition-all duration-200",
+        "bg-gradient-to-br shadow-lg",
+        "hover:shadow-xl hover:scale-105",
+        isActive && "scale-105 ring-2 ring-primary/20",
         getVariantStyles(),
         className
       )}
       style={color ? {
-        backgroundColor: `${color}10`,
-        color: color
+        background: `linear-gradient(135deg, ${color}, ${color}dd)`,
       } : undefined}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <Folder className="h-6 w-6" />
+      <Icon 
+        className={cn(
+          "h-6 w-6 transition-transform duration-200",
+          isHovered && "transform rotate-2"
+        )} 
+      />
+      {isHovered && (
+        <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-accent animate-pulse" />
+      )}
     </div>
   );
 };

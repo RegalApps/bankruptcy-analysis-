@@ -8,9 +8,9 @@ export const FoldersPage = () => {
   const { documents } = useDocuments();
 
   return (
-    <div>
+    <div className="min-h-screen bg-background">
       <MainSidebar />
-      <div className="pl-16">
+      <div className="pl-64">
         <MainHeader />
         <div className="p-6">
           <FolderManagement documents={documents} />

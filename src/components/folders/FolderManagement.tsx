@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 interface FolderManagementProps {
   documents: Document[];
@@ -29,6 +30,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
   const [newFolderName, setNewFolderName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [activeView, setActiveView] = useState<"all" | "uncategorized" | "folders">("all");
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
@@ -45,10 +47,13 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
         ]);
 
       if (error) throw error;
+      
       setShowFolderDialog(false);
       setNewFolderName("");
+      toast.success("Folder created successfully");
     } catch (error) {
       console.error('Error creating folder:', error);
+      toast.error("Failed to create folder");
     }
   };
 
@@ -64,9 +69,12 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
         .eq('id', documentId);
 
       if (error) throw error;
+      toast.success("Document moved successfully");
     } catch (error) {
       console.error('Error moving document:', error);
+      toast.error("Failed to move document");
     }
+    setIsDragging(false);
   };
 
   const folders = documents.filter(doc => doc.is_folder);
@@ -77,7 +85,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            <h3 className="font-semibold">Document Management</h3>
+            <h3 className="font-semibold text-xl">Document Management</h3>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -106,12 +114,12 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
           <div className="flex gap-2">
             <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="gradient-button">
                   <FolderPlus className="h-4 w-4 mr-2" />
                   New Folder
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="glass-panel">
                 <DialogHeader>
                   <DialogTitle>Create New Folder</DialogTitle>
                   <DialogDescription>
@@ -123,13 +131,14 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
                     placeholder="Folder name"
                     value={newFolderName}
                     onChange={(e) => setNewFolderName(e.target.value)}
+                    className="glass-panel"
                   />
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setShowFolderDialog(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateFolder}>
+                  <Button onClick={handleCreateFolder} className="gradient-button">
                     Create Folder
                   </Button>
                 </DialogFooter>
@@ -156,30 +165,37 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
             <ScrollArea className="h-[400px]">
               <div 
                 className={cn(
-                  "grid gap-4 md:grid-cols-2",
+                  "grid gap-4 md:grid-cols-2 lg:grid-cols-3",
                   isDragging && "ring-2 ring-primary/50 rounded-lg p-4"
                 )}
               >
                 {folders.map((folder) => {
                   const folderDocuments = documents.filter(d => d.parent_folder_id === folder.id);
+                  const isSelected = selectedFolder === folder.id;
+                  
                   return (
                     <div
                       key={folder.id}
-                      className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                      className={cn(
+                        "p-4 rounded-lg glass-panel hover:shadow-lg transition-all duration-200 card-highlight",
+                        isSelected && "ring-2 ring-primary"
+                      )}
                       onDragOver={(e) => {
                         e.preventDefault();
                         setIsDragging(true);
                       }}
                       onDragLeave={() => setIsDragging(false)}
-                      onDrop={(e) => {
-                        setIsDragging(false);
-                        handleDocumentDrop(e, folder.id);
-                      }}
+                      onDrop={(e) => handleDocumentDrop(e, folder.id)}
+                      onClick={() => setSelectedFolder(isSelected ? null : folder.id)}
                     >
-                      <div className="flex items-center space-x-3">
-                        <FolderIcon variant="client" />
+                      <div className="flex items-center space-x-4">
+                        <FolderIcon 
+                          variant="client" 
+                          isActive={isSelected}
+                          isOpen={isSelected}
+                        />
                         <div>
-                          <h4 className="font-medium">{folder.title}</h4>
+                          <h4 className="font-medium text-lg">{folder.title}</h4>
                           <p className="text-sm text-muted-foreground">
                             {folderDocuments.length} documents
                           </p>
@@ -194,22 +210,22 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
 
           <TabsContent value="uncategorized">
             <ScrollArea className="h-[400px]">
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {uncategorizedDocuments.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex items-center p-3 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                    className="flex items-center p-4 rounded-lg glass-panel hover:shadow-lg transition-all duration-200 card-highlight"
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.setData('documentId', doc.id);
                     }}
                   >
                     <div className="p-2 rounded-md bg-primary/10 mr-3">
-                      <FileText className="h-4 w-4 text-primary" />
+                      <FileText className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-sm">{doc.title}</h4>
-                      <p className="text-xs text-muted-foreground">
+                      <h4 className="font-medium">{doc.title}</h4>
+                      <p className="text-sm text-muted-foreground">
                         {doc.type || 'Document'}
                       </p>
                     </div>
