@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Activity, Bell, FileText, Folder, Home, PieChart, User } from "lucide-react";
+import { Activity, Bell, FileText, Folder, Home, MessageCircle, PieChart, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const MainSidebar = () => {
@@ -14,6 +14,7 @@ export const MainSidebar = () => {
   const navigationItems = [
     { icon: Home, path: "/", label: "Home" },
     { icon: Folder, path: "/folders", label: "Folders" },
+    { icon: MessageCircle, path: "/con-branding", label: "Con & Branding" },
     { icon: Activity, path: "/activity", label: "Activity" },
     { icon: PieChart, path: "/analytics", label: "Analytics" },
   ];
