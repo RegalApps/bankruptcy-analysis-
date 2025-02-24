@@ -1,6 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 interface DocumentSummaryProps {
   summary: string;
@@ -30,13 +31,10 @@ export const DocumentSummary: React.FC<DocumentSummaryProps> = ({
             <div>
               <h4 className="font-medium mb-2">Regulatory Compliance</h4>
               <Alert 
-                variant={
-                  regulatoryCompliance.status === 'compliant' 
-                    ? 'default'
-                    : regulatoryCompliance.status === 'needs_review'
-                    ? 'warning'
-                    : 'destructive'
-                }
+                variant={regulatoryCompliance.status === 'non_compliant' ? 'destructive' : 'default'}
+                className={cn(
+                  regulatoryCompliance.status === 'needs_review' && "border-orange-500 text-orange-500"
+                )}
               >
                 <p className="text-sm">{regulatoryCompliance.details}</p>
                 {regulatoryCompliance.references && (
