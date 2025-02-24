@@ -9,32 +9,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Bell,
-  FileText,
-  FolderPlus,
-  Home,
-  PieChart,
-  Plus,
-  Settings,
-  Upload,
-  User
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useCallback } from "react";
+import { Upload } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-
-const navigation = [
-  { name: 'Home', icon: Home },
-  { name: 'Document Folders', icon: FileText },
-  { name: 'Upload', icon: Upload },
-  { name: 'Reports', icon: PieChart },
-  { name: 'Settings', icon: Settings },
-];
+import { Card, CardContent } from "@/components/ui/card";
+import { SearchBar } from "@/components/DocumentList/SearchBar";
 
 export const DocumentManagementPage = () => {
   const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleUploadComplete = useCallback(async (documentId: string) => {
     toast({
@@ -45,65 +28,24 @@ export const DocumentManagementPage = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Main Navigation Sidebar */}
-      <aside className="w-16 bg-background border-r flex flex-col items-center py-4 space-y-4">
-        {/* Logo Section */}
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-8">
-          <FileText className="w-6 h-6 text-primary" />
-        </div>
-
-        {/* Navigation Items */}
-        <nav className="flex-1 w-full">
-          {navigation.map((item) => (
-            <Tooltip key={item.name}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-full mb-2"
-                >
-                  <item.icon className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>{item.name}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-        </nav>
-
-        {/* User Section */}
-        <div className="mt-auto space-y-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>Notifications</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>Profile</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </aside>
-
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex h-14 items-center px-6 gap-4">
-            <h1 className="text-xl font-semibold">Document Management</h1>
-            <div className="flex items-center gap-2 ml-auto">
+          <div className="flex flex-col px-6 py-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold">Document Management</h1>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="w-full max-w-2xl">
+              <SearchBar 
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
               <Dialog>
                 <DialogTrigger asChild>
                   <Button>
@@ -120,17 +62,50 @@ export const DocumentManagementPage = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-              <Button variant="outline">
-                <FolderPlus className="h-4 w-4 mr-2" />
-                New Folder
-              </Button>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="flex-1">
-          <DocumentManagement />
+        <main className="flex-1 p-6 space-y-6">
+          {/* Drag and Drop Upload Area */}
+          <Card className="border-2 border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+              <Upload className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                Drag and drop your documents here
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                or click to browse your files
+              </p>
+              <input
+                type="file"
+                id="file-upload"
+                className="hidden"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    // Handle file upload
+                  }
+                }}
+              />
+              <Button
+                variant="outline"
+                onClick={() => document.getElementById('file-upload')?.click()}
+              >
+                Browse Files
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Recently Uploaded Documents */}
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Recently Uploaded</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <DocumentManagement />
+            </div>
+          </div>
         </main>
       </div>
     </div>
