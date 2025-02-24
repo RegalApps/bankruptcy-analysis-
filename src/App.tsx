@@ -27,7 +27,7 @@ const App: React.FC = () => {
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/activity" element={<ActivityPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/con-branding" element={<ConBrandingPage />} />
+            <Route path="/SAFA" element={<ConBrandingPage />} />
             <Route path="/crm" element={<CRMPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
