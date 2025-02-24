@@ -4,14 +4,14 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   FolderOpen, 
-  Activity, 
+  Activity,
+  MessageCircle, // Changed for SAFA
   Bell, 
   Users,
   FileCheck,
   Settings,
-  Shield, // For SAFA
-  DollarSign, // For Smart Income and Expense
-  UserCircle2 // For Profile
+  BrainCog, // Changed for Smart Income & Expense
+  UserCircle2
 } from "lucide-react";
 
 export const MainSidebar = () => {
@@ -24,10 +24,11 @@ export const MainSidebar = () => {
   const links = [
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
     { name: "Documents", path: "/documents", icon: FolderOpen },
-    { name: "E-Filing", path: "/e-filing", icon: FileCheck },
-    { name: "Smart Income & Expense", path: "/activity", icon: DollarSign },
-    { name: "SAFA", path: "/SAFA", icon: Shield },
+    { name: "Analytics", path: "/analytics", icon: Activity },
+    { name: "Smart Income & Expense", path: "/activity", icon: BrainCog },
+    { name: "SAFA", path: "/SAFA", icon: MessageCircle },
     { name: "Notifications", path: "/notifications", icon: Bell },
+    { name: "E-Filing", path: "/e-filing", icon: FileCheck },
     { name: "CRM", path: "/crm", icon: Users },
   ];
 
