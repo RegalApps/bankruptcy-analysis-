@@ -1,6 +1,7 @@
 
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
+import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -156,6 +157,7 @@ export const ProfilePage = () => {
           </div>
         </main>
       </div>
+      <Toaster />
     </div>
   );
 };
