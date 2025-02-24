@@ -29,10 +29,10 @@ export const MainSidebar = () => {
           onClick={() => navigate('/')}
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-              <FileText className="w-5 h-5 text-primary" />
+            <div className="w-8 h-8 bg-black/5 rounded-lg flex items-center justify-center">
+              <FileText className="w-5 h-5 text-black" />
             </div>
-            <span className="font-semibold text-lg">Secure Files AI</span>
+            <span className="font-semibold text-lg text-black">Secure Files AI</span>
           </div>
         </Button>
       </div>
