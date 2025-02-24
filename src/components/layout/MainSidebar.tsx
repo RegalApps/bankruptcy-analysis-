@@ -18,10 +18,16 @@ export const MainSidebar = () => {
   ];
 
   return (
-    <aside className="w-16 h-screen bg-background border-r flex flex-col items-center py-4 space-y-4 fixed">
-      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-8">
-        <FileText className="w-6 h-6 text-primary" />
-      </div>
+    <aside className="w-16 h-screen bg-background border-r flex flex-col items-center py-4 space-y-4 fixed left-0 top-0 z-50">
+      <Button
+        variant="ghost"
+        className="w-10 h-10 p-0 hover:bg-transparent"
+        onClick={() => navigate('/')}
+      >
+        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+          <FileText className="w-6 h-6 text-primary" />
+        </div>
+      </Button>
       <nav className="flex-1 w-full flex flex-col items-center space-y-2">
         {navigationItems.map((item) => (
           <Button
