@@ -13,18 +13,21 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
+
+type FinancialRecord = Database["public"]["Tables"]["financial_records"]["Insert"];
 
 interface IncomeExpenseData {
-  monthlyIncome: string;
-  employmentIncome: string;
-  otherIncome: string;
-  rentMortgage: string;
+  monthly_income: string;
+  employment_income: string;
+  other_income: string;
+  rent_mortgage: string;
   utilities: string;
   food: string;
   transportation: string;
   insurance: string;
-  medicalExpenses: string;
-  otherExpenses: string;
+  medical_expenses: string;
+  other_expenses: string;
   notes: string;
 }
 
@@ -32,16 +35,16 @@ export const IncomeExpenseForm = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<IncomeExpenseData>({
-    monthlyIncome: "",
-    employmentIncome: "",
-    otherIncome: "",
-    rentMortgage: "",
+    monthly_income: "",
+    employment_income: "",
+    other_income: "",
+    rent_mortgage: "",
     utilities: "",
     food: "",
     transportation: "",
     insurance: "",
-    medicalExpenses: "",
-    otherExpenses: "",
+    medical_expenses: "",
+    other_expenses: "",
     notes: "",
   });
 
@@ -60,15 +63,26 @@ export const IncomeExpenseForm = () => {
     setIsSubmitting(true);
 
     try {
+      // Convert string values to numbers for the database
+      const financialRecord: FinancialRecord = {
+        monthly_income: formData.monthly_income ? parseFloat(formData.monthly_income) : null,
+        employment_income: formData.employment_income ? parseFloat(formData.employment_income) : null,
+        other_income: formData.other_income ? parseFloat(formData.other_income) : null,
+        rent_mortgage: formData.rent_mortgage ? parseFloat(formData.rent_mortgage) : null,
+        utilities: formData.utilities ? parseFloat(formData.utilities) : null,
+        food: formData.food ? parseFloat(formData.food) : null,
+        transportation: formData.transportation ? parseFloat(formData.transportation) : null,
+        insurance: formData.insurance ? parseFloat(formData.insurance) : null,
+        medical_expenses: formData.medical_expenses ? parseFloat(formData.medical_expenses) : null,
+        other_expenses: formData.other_expenses ? parseFloat(formData.other_expenses) : null,
+        notes: formData.notes,
+        submission_date: new Date().toISOString(),
+        status: "pending_review",
+      };
+
       const { error } = await supabase
         .from("financial_records")
-        .insert([
-          {
-            ...formData,
-            submission_date: new Date().toISOString(),
-            status: "pending_review",
-          },
-        ]);
+        .insert([financialRecord]);
 
       if (error) throw error;
 
@@ -79,16 +93,16 @@ export const IncomeExpenseForm = () => {
 
       // Reset form
       setFormData({
-        monthlyIncome: "",
-        employmentIncome: "",
-        otherIncome: "",
-        rentMortgage: "",
+        monthly_income: "",
+        employment_income: "",
+        other_income: "",
+        rent_mortgage: "",
         utilities: "",
         food: "",
         transportation: "",
         insurance: "",
-        medicalExpenses: "",
-        otherExpenses: "",
+        medical_expenses: "",
+        other_expenses: "",
         notes: "",
       });
     } catch (error) {
@@ -115,37 +129,37 @@ export const IncomeExpenseForm = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="monthlyIncome">Total Monthly Income</Label>
+              <Label htmlFor="monthly_income">Total Monthly Income</Label>
               <Input
-                id="monthlyIncome"
-                name="monthlyIncome"
+                id="monthly_income"
+                name="monthly_income"
                 type="number"
                 placeholder="0.00"
-                value={formData.monthlyIncome}
+                value={formData.monthly_income}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="employmentIncome">Employment Income</Label>
+              <Label htmlFor="employment_income">Employment Income</Label>
               <Input
-                id="employmentIncome"
-                name="employmentIncome"
+                id="employment_income"
+                name="employment_income"
                 type="number"
                 placeholder="0.00"
-                value={formData.employmentIncome}
+                value={formData.employment_income}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="otherIncome">Other Income</Label>
+              <Label htmlFor="other_income">Other Income</Label>
               <Input
-                id="otherIncome"
-                name="otherIncome"
+                id="other_income"
+                name="other_income"
                 type="number"
                 placeholder="0.00"
-                value={formData.otherIncome}
+                value={formData.other_income}
                 onChange={handleChange}
               />
             </div>
@@ -163,13 +177,13 @@ export const IncomeExpenseForm = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="rentMortgage">Rent/Mortgage</Label>
+              <Label htmlFor="rent_mortgage">Rent/Mortgage</Label>
               <Input
-                id="rentMortgage"
-                name="rentMortgage"
+                id="rent_mortgage"
+                name="rent_mortgage"
                 type="number"
                 placeholder="0.00"
-                value={formData.rentMortgage}
+                value={formData.rent_mortgage}
                 onChange={handleChange}
                 required
               />
@@ -223,25 +237,25 @@ export const IncomeExpenseForm = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="medicalExpenses">Medical Expenses</Label>
+              <Label htmlFor="medical_expenses">Medical Expenses</Label>
               <Input
-                id="medicalExpenses"
-                name="medicalExpenses"
+                id="medical_expenses"
+                name="medical_expenses"
                 type="number"
                 placeholder="0.00"
-                value={formData.medicalExpenses}
+                value={formData.medical_expenses}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="otherExpenses">Other Expenses</Label>
+              <Label htmlFor="other_expenses">Other Expenses</Label>
               <Input
-                id="otherExpenses"
-                name="otherExpenses"
+                id="other_expenses"
+                name="other_expenses"
                 type="number"
                 placeholder="0.00"
-                value={formData.otherExpenses}
+                value={formData.other_expenses}
                 onChange={handleChange}
               />
             </div>

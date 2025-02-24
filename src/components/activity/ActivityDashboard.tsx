@@ -17,9 +17,12 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Database } from "@/integrations/supabase/types";
+
+type FinancialRecord = Database["public"]["Tables"]["financial_records"]["Row"];
 
 export const ActivityDashboard = () => {
-  const { data: financialRecords, isLoading } = useQuery({
+  const { data: financialRecords, isLoading } = useQuery<FinancialRecord[]>({
     queryKey: ["financial_records"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -59,13 +62,13 @@ export const ActivityDashboard = () => {
                   <Tooltip />
                   <Line
                     type="monotone"
-                    dataKey="monthlyIncome"
+                    dataKey="monthly_income"
                     stroke="#8884d8"
                     name="Income"
                   />
                   <Line
                     type="monotone"
-                    dataKey="totalExpenses"
+                    dataKey="total_expenses"
                     stroke="#82ca9d"
                     name="Expenses"
                   />
