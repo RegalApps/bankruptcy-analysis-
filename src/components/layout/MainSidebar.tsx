@@ -18,7 +18,7 @@ export const MainSidebar = () => {
     { icon: Users, label: "CRM", path: "/crm" },
     { icon: BrainCog, label: "Smart Income Expense", path: "/activity" },
     { icon: PieChart, label: "Analytics", path: "/analytics" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: Bell, label: "Notifications", path: "/notifications" },
   ];
 
   return (
@@ -76,10 +76,10 @@ export const MainSidebar = () => {
         <Button 
           variant="ghost"
           className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-accent/10 hover:text-accent"
-          onClick={() => navigate("/notifications")}
+          onClick={() => navigate("/settings")}
         >
-          <Bell className="h-5 w-5 text-muted-foreground" />
-          <span className="text-sm font-medium text-black dark:text-white">Notifications</span>
+          <Settings className="h-5 w-5 text-muted-foreground" />
+          <span className="text-sm font-medium text-black dark:text-white">Settings</span>
         </Button>
         
         <Button 
