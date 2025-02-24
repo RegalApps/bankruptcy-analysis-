@@ -1,6 +1,7 @@
 
 import { Search } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -22,6 +23,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ searchQuery, onSearchChang
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   useEffect(() => {
@@ -34,12 +36,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({ searchQuery, onSearchChang
 
       setIsLoading(true);
       try {
-        // Search directly in the documents table
         const { data, error } = await supabase
           .from('documents')
           .select('id, title, type')
           .or(`title.ilike.%${debouncedSearch}%, storage_path.ilike.%${debouncedSearch}%`)
-          .is('is_folder', false) // Only search for documents, not folders
+          .is('is_folder', false)
           .order('created_at', { ascending: false })
           .limit(10);
 
@@ -65,6 +66,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ searchQuery, onSearchChang
   const handleResultClick = (result: SearchResult) => {
     onSearchChange(result.title);
     setIsOpen(false);
+    navigate('/', { state: { selectedDocument: result.id } });
   };
 
   return (

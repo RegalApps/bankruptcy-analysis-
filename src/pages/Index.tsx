@@ -7,11 +7,19 @@ import { supabase } from "@/lib/supabase";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
 import { Footer } from "@/components/layout/Footer";
+import { useLocation } from "react-router-dom";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.selectedDocument) {
+      setSelectedDocument(location.state.selectedDocument);
+    }
+  }, [location]);
 
   useEffect(() => {
     console.log("Initializing auth state...");
