@@ -48,7 +48,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex">
       <MainSidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 pl-64">
         <MainHeader />
         <main className="flex-1">
           {selectedDocument ? (

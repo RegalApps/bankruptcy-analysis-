@@ -1,8 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Activity, Bell, FileText, Folder, Home, MessageCircle, PieChart, User } from "lucide-react";
+import { Activity, Bell, FileText, Home, MessageCircle, PieChart, Settings, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const MainSidebar = () => {
@@ -12,90 +11,77 @@ export const MainSidebar = () => {
   const isActivePath = (path: string) => location.pathname === path;
 
   const navigationItems = [
-    { icon: Home, path: "/", label: "Home" },
-    { icon: Folder, path: "/folders", label: "Folders" },
-    { icon: MessageCircle, path: "/con-branding", label: "Con & Branding" },
-    { icon: Activity, path: "/activity", label: "Activity" },
-    { icon: PieChart, path: "/analytics", label: "Analytics" },
+    { icon: Home, label: "Home", path: "/" },
+    { icon: FileText, label: "Documents", path: "/documents" },
+    { icon: MessageCircle, label: "Con & Branding", path: "/con-branding" },
+    { icon: Activity, label: "Activity", path: "/activity" },
+    { icon: PieChart, label: "Analytics", path: "/analytics" },
+    { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
   return (
-    <aside className="w-16 h-screen bg-background border-r flex flex-col items-center py-4 space-y-4 fixed left-0 top-0 z-50">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            className="w-10 h-10 p-0 hover:bg-transparent"
-            onClick={() => navigate('/')}
-          >
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-primary" />
+    <aside className="w-64 h-screen bg-background border-r flex flex-col fixed left-0 top-0 z-40">
+      {/* App Logo */}
+      <div className="p-4">
+        <Button
+          variant="ghost"
+          className="w-full justify-start px-4 py-6 hover:bg-transparent"
+          onClick={() => navigate('/')}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+              <FileText className="w-5 h-5 text-primary" />
             </div>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="right">
-          <p>Secure Files AI</p>
-        </TooltipContent>
-      </Tooltip>
+            <span className="font-semibold text-lg">Secure Files AI</span>
+          </div>
+        </Button>
+      </div>
 
-      <nav className="flex-1 w-full flex flex-col items-center space-y-2">
+      {/* Navigation Links */}
+      <nav className="flex-1 px-3 py-2 space-y-1">
         {navigationItems.map((item) => (
-          <Tooltip key={item.label}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "w-10 h-10",
-                  isActivePath(item.path) && "relative after:content-[''] after:absolute after:inset-0 after:rounded-md after:ring-2 after:ring-primary/50"
-                )}
-                onClick={() => navigate(item.path)}
-              >
-                <item.icon className={cn(
-                  "h-5 w-5",
-                  isActivePath(item.path) && "text-primary"
-                )} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>{item.label}</p>
-            </TooltipContent>
-          </Tooltip>
+          <Button
+            key={item.label}
+            variant="ghost"
+            className={cn(
+              "w-full justify-start gap-3 px-4 py-6 h-auto",
+              isActivePath(item.path) && "bg-secondary"
+            )}
+            onClick={() => navigate(item.path)}
+          >
+            <item.icon className={cn(
+              "h-5 w-5",
+              isActivePath(item.path) ? "text-foreground" : "text-muted-foreground"
+            )} />
+            <span className={cn(
+              "text-sm",
+              isActivePath(item.path) ? "text-foreground" : "text-muted-foreground"
+            )}>
+              {item.label}
+            </span>
+          </Button>
         ))}
       </nav>
 
-      <div className="mt-auto space-y-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="w-10 h-10"
-              onClick={() => navigate("/notifications")}
-            >
-              <Bell className="h-5 w-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <p>Notifications</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="w-10 h-10"
-              onClick={() => navigate("/profile")}
-            >
-              <User className="h-5 w-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <p>Profile</p>
-          </TooltipContent>
-        </Tooltip>
+      {/* Bottom Section */}
+      <div className="px-3 py-4 border-t">
+        <Button 
+          variant="ghost"
+          className="w-full justify-start gap-3 px-4 py-6 h-auto"
+          onClick={() => navigate("/notifications")}
+        >
+          <Bell className="h-5 w-5 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Notifications</span>
+        </Button>
+        
+        <Button 
+          variant="ghost"
+          className="w-full justify-start gap-3 px-4 py-6 h-auto"
+          onClick={() => navigate("/profile")}
+        >
+          <User className="h-5 w-5 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Profile</span>
+        </Button>
       </div>
     </aside>
   );
