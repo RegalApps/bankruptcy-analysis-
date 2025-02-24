@@ -6,11 +6,12 @@ import { toast } from 'sonner';
 
 export const useDocuments = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchDocuments = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('documents')
         .select('*')
@@ -25,7 +26,7 @@ export const useDocuments = () => {
       console.error('Error fetching documents:', error);
       toast.error('Failed to fetch documents');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -53,5 +54,11 @@ export const useDocuments = () => {
     };
   }, []);
 
-  return { documents, loading, fetchDocuments };
+  return { 
+    documents, 
+    isLoading, 
+    searchQuery, 
+    setSearchQuery,
+    fetchDocuments 
+  };
 };
