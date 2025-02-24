@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { ChevronDown, Grid, FolderPlus, FileText, Files, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, Grid, FolderPlus, FileText, Files, FolderPen, FilePen, Trash2 } from "lucide-react";
 
 interface ViewOptionsDropdownProps {
   onViewChange: (view: "all" | "uncategorized" | "folders") => void;
@@ -140,7 +140,11 @@ export const ViewOptionsDropdown = ({
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Selected {selectedItemType === 'folder' ? 'Folder' : 'File'} Actions</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setIsRenameDialogOpen(true)}>
-                <Pencil className="h-4 w-4 mr-2" />
+                {selectedItemType === 'folder' ? (
+                  <FolderPen className="h-4 w-4 mr-2" />
+                ) : (
+                  <FilePen className="h-4 w-4 mr-2" />
+                )}
                 Rename {selectedItemType === 'folder' ? 'Folder' : 'File'}
               </DropdownMenuItem>
               <DropdownMenuItem 
