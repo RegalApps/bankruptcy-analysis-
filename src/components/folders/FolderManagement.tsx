@@ -2,24 +2,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { FolderIcon } from "@/components/DocumentList/components/FolderIcon";
-import { FolderPlus, Grid, Tags, Tag, FileText, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Tags, Tag } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Document } from "@/components/DocumentList/types";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { FolderDialog } from "./components/FolderDialog";
+import { ViewOptionsDropdown } from "./components/ViewOptionsDropdown";
+import { FolderGrid } from "./components/FolderGrid";
+import { UncategorizedGrid } from "./components/UncategorizedGrid";
 
 interface FolderManagementProps {
   documents: Document[];
@@ -77,6 +68,10 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
     setIsDragging(false);
   };
 
+  const handleFolderSelect = (folderId: string) => {
+    setSelectedFolder(selectedFolder === folderId ? null : folderId);
+  };
+
   const folders = documents.filter(doc => doc.is_folder);
   const uncategorizedDocuments = documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
 
@@ -86,64 +81,16 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <h3 className="font-semibold text-xl">Document Management</h3>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  View Options
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                <DropdownMenuLabel>Document Views</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setActiveView("all")}>
-                  <Grid className="h-4 w-4 mr-2" />
-                  All Documents
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveView("folders")}>
-                  <FolderPlus className="h-4 w-4 mr-2" />
-                  Folder View
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveView("uncategorized")}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Uncategorized
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ViewOptionsDropdown onViewChange={setActiveView} />
           </div>
           <div className="flex gap-2">
-            <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gradient-button">
-                  <FolderPlus className="h-4 w-4 mr-2" />
-                  New Folder
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="glass-panel">
-                <DialogHeader>
-                  <DialogTitle>Create New Folder</DialogTitle>
-                  <DialogDescription>
-                    Enter a name for your new folder. You can drag and drop documents into it later.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <Input
-                    placeholder="Folder name"
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    className="glass-panel"
-                  />
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowFolderDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreateFolder} className="gradient-button">
-                    Create Folder
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <FolderDialog
+              showDialog={showFolderDialog}
+              setShowDialog={setShowFolderDialog}
+              folderName={newFolderName}
+              setFolderName={setNewFolderName}
+              onCreateFolder={handleCreateFolder}
+            />
             <Button variant="outline" size="sm">
               <Tag className="h-4 w-4 mr-2" />
               Add Meta Tags
@@ -162,77 +109,23 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
           </TabsList>
 
           <TabsContent value="folders">
-            <ScrollArea className="h-[400px]">
-              <div 
-                className={cn(
-                  "grid gap-4 md:grid-cols-2 lg:grid-cols-3",
-                  isDragging && "ring-2 ring-primary/50 rounded-lg p-4"
-                )}
-              >
-                {folders.map((folder) => {
-                  const folderDocuments = documents.filter(d => d.parent_folder_id === folder.id);
-                  const isSelected = selectedFolder === folder.id;
-                  
-                  return (
-                    <div
-                      key={folder.id}
-                      className={cn(
-                        "p-4 rounded-lg glass-panel hover:shadow-lg transition-all duration-200 card-highlight",
-                        isSelected && "ring-2 ring-primary"
-                      )}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setIsDragging(true);
-                      }}
-                      onDragLeave={() => setIsDragging(false)}
-                      onDrop={(e) => handleDocumentDrop(e, folder.id)}
-                      onClick={() => setSelectedFolder(isSelected ? null : folder.id)}
-                    >
-                      <div className="flex items-center space-x-4">
-                        <FolderIcon 
-                          variant="client" 
-                          isActive={isSelected}
-                          isOpen={isSelected}
-                        />
-                        <div>
-                          <h4 className="font-medium text-lg">{folder.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {folderDocuments.length} documents
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+            <FolderGrid
+              folders={folders}
+              documents={documents}
+              isDragging={isDragging}
+              selectedFolder={selectedFolder}
+              onFolderSelect={handleFolderSelect}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDocumentDrop}
+            />
           </TabsContent>
 
           <TabsContent value="uncategorized">
-            <ScrollArea className="h-[400px]">
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {uncategorizedDocuments.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center p-4 rounded-lg glass-panel hover:shadow-lg transition-all duration-200 card-highlight"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('documentId', doc.id);
-                    }}
-                  >
-                    <div className="p-2 rounded-md bg-primary/10 mr-3">
-                      <FileText className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">{doc.title}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {doc.type || 'Document'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+            <UncategorizedGrid documents={uncategorizedDocuments} />
           </TabsContent>
         </Tabs>
       </Card>
