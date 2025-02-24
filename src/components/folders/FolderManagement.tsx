@@ -22,6 +22,8 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [activeView, setActiveView] = useState<"all" | "uncategorized" | "folders">("all");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
@@ -42,6 +44,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
       setShowFolderDialog(false);
       setNewFolderName("");
       toast.success("Folder created successfully");
+      handleRefresh();
     } catch (error) {
       console.error('Error creating folder:', error);
       toast.error("Failed to create folder");
@@ -61,6 +64,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
 
       if (error) throw error;
       toast.success("Document moved successfully");
+      handleRefresh();
     } catch (error) {
       console.error('Error moving document:', error);
       toast.error("Failed to move document");
@@ -70,6 +74,16 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
 
   const handleFolderSelect = (folderId: string) => {
     setSelectedFolder(selectedFolder === folderId ? null : folderId);
+    setSelectedItemType("folder");
+  };
+
+  const handleDocumentSelect = (documentId: string) => {
+    setSelectedFolder(documentId);
+    setSelectedItemType("file");
+  };
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
   };
 
   const folders = documents.filter(doc => doc.is_folder);
@@ -81,7 +95,12 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <h3 className="font-semibold text-xl">Document Management</h3>
-            <ViewOptionsDropdown onViewChange={setActiveView} />
+            <ViewOptionsDropdown 
+              onViewChange={setActiveView}
+              selectedItemId={selectedFolder ?? undefined}
+              selectedItemType={selectedItemType}
+              onRefresh={handleRefresh}
+            />
           </div>
           <div className="flex gap-2">
             <FolderDialog
@@ -125,7 +144,10 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
           </TabsContent>
 
           <TabsContent value="uncategorized">
-            <UncategorizedGrid documents={uncategorizedDocuments} />
+            <UncategorizedGrid 
+              documents={uncategorizedDocuments}
+              onDocumentSelect={handleDocumentSelect}
+            />
           </TabsContent>
         </Tabs>
       </Card>

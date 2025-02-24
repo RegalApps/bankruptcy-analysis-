@@ -6,9 +6,10 @@ import { useNavigate } from "react-router-dom";
 
 interface UncategorizedGridProps {
   documents: Document[];
+  onDocumentSelect: (documentId: string) => void;
 }
 
-export const UncategorizedGrid = ({ documents }: UncategorizedGridProps) => {
+export const UncategorizedGrid = ({ documents, onDocumentSelect }: UncategorizedGridProps) => {
   const navigate = useNavigate();
 
   const handleDocumentDoubleClick = (documentId: string) => {
@@ -26,6 +27,7 @@ export const UncategorizedGrid = ({ documents }: UncategorizedGridProps) => {
             onDragStart={(e) => {
               e.dataTransfer.setData('documentId', doc.id);
             }}
+            onClick={() => onDocumentSelect(doc.id)}
             onDoubleClick={() => handleDocumentDoubleClick(doc.id)}
           >
             <div className="p-2 rounded-md bg-primary/10 mr-3">
