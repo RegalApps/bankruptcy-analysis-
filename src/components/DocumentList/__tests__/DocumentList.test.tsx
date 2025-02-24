@@ -1,15 +1,18 @@
 
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { DocumentList } from '../DocumentList';
 import { BrowserRouter } from 'react-router-dom';
 import { vi } from 'vitest';
+import type { Document } from '../types';
 
-const mockDocuments = [
+const mockDocuments: Document[] = [
   {
     id: '1',
     title: 'Test Document',
     type: 'pdf',
     created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(), // Added missing required field
     size: 1024,
     storage_path: 'test/path'
   }

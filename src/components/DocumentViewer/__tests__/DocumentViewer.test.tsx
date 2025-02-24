@@ -1,5 +1,6 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { DocumentViewer } from '../index';
 import { vi } from 'vitest';
 
@@ -19,6 +20,9 @@ const mockDocument = {
   title: 'Test Document',
   storage_path: 'test/path',
   type: 'pdf',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(), // Added missing required field
+  size: 1024,
   analysis: [{
     content: {
       extracted_info: {
