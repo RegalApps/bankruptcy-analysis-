@@ -1,130 +1,83 @@
 
-import { ValidationRule, ValidationError } from "../types.ts";
+import { ValidationError, ValidationRule, RiskIndicator } from '../types';
 
 export const validateFinancialRisk = (
   value: number,
-  threshold: number,
-  comparison: 'gt' | 'lt' | 'eq' | 'range',
-  range?: { min: number; max: number }
-): ValidationError | null => {
-  if (comparison === 'range' && range) {
-    if (value < range.min || value > range.max) {
-      return {
-        type: 'financial',
-        message: `Value ${value} is outside acceptable range (${range.min}-${range.max})`,
-        severity: 'high'
-      };
-    }
-  } else if (comparison === 'gt' && value <= threshold) {
-    return {
-      type: 'financial',
-      message: `Value ${value} is below minimum threshold ${threshold}`,
-      severity: 'medium'
-    };
-  } else if (comparison === 'lt' && value >= threshold) {
-    return {
-      type: 'financial',
-      message: `Value ${value} exceeds maximum threshold ${threshold}`,
-      severity: 'high'
-    };
-  } else if (comparison === 'eq' && Math.abs(value - threshold) > 0.01) {
-    return {
-      type: 'financial',
-      message: `Value ${value} does not match required amount ${threshold}`,
-      severity: 'medium'
-    };
+  indicator: RiskIndicator,
+  errors: ValidationError[]
+) => {
+  if (value > indicator.threshold) {
+    errors.push({
+      field: indicator.field,
+      type: 'warning',
+      message: `High financial risk detected: ${indicator.field} exceeds ${indicator.threshold}`,
+      code: 'HIGH_FINANCIAL_RISK'
+    });
   }
-  return null;
 };
 
 export const validateComplianceRisk = (
-  value: Date,
-  threshold: Date,
-  comparison: 'before' | 'after' | 'exact' | 'range',
-  range?: { start: Date; end: Date }
-): ValidationError | null => {
-  if (comparison === 'range' && range) {
-    if (value < range.start || value > range.end) {
-      return {
-        type: 'compliance',
-        message: `Date ${value.toISOString()} is outside compliance window`,
-        severity: 'high'
-      };
-    }
-  } else if (comparison === 'before' && value >= threshold) {
-    return {
-      type: 'compliance',
-      message: `Date ${value.toISOString()} is after deadline ${threshold.toISOString()}`,
-      severity: 'high'
-    };
-  } else if (comparison === 'after' && value <= threshold) {
-    return {
-      type: 'compliance',
-      message: `Date ${value.toISOString()} is before required date ${threshold.toISOString()}`,
-      severity: 'medium'
-    };
-  } else if (comparison === 'exact' && value.getTime() !== threshold.getTime()) {
-    return {
-      type: 'compliance',
-      message: `Date ${value.toISOString()} does not match required date ${threshold.toISOString()}`,
-      severity: 'medium'
-    };
+  value: any,
+  indicator: RiskIndicator,
+  errors: ValidationError[]
+) => {
+  // Add compliance validation logic
+  if (!value && indicator.required) {
+    errors.push({
+      field: indicator.field,
+      type: 'error',
+      message: `Missing required compliance field: ${indicator.field}`,
+      code: 'MISSING_COMPLIANCE_FIELD'
+    });
   }
-  return null;
 };
 
 export const validateLegalRisk = (
-  document: any,
-  rules: ValidationRule[]
-): ValidationError[] => {
-  const errors: ValidationError[] = [];
-
-  rules.forEach(rule => {
-    if (rule.required && !document[rule.field]) {
-      errors.push({
-        type: 'legal',
-        message: `Required field ${rule.field} is missing`,
-        severity: 'high'
-      });
-    }
-
-    if (rule.pattern && document[rule.field] && 
-        !rule.pattern.test(document[rule.field].toString())) {
-      errors.push({
-        type: 'legal',
-        message: `Field ${rule.field} does not match required format`,
-        severity: 'medium'
-      });
-    }
-
-    if (rule.crossValidation) {
-      const relatedValue = document[rule.crossValidation.relatedField];
-      if (!rule.crossValidation.validate(document[rule.field], relatedValue)) {
-        errors.push({
-          type: 'legal',
-          message: rule.crossValidation.errorMessage,
-          severity: 'high'
-        });
-      }
-    }
-  });
-
-  return errors;
+  value: any,
+  indicator: RiskIndicator,
+  errors: ValidationError[]
+) => {
+  // Add legal validation logic
+  if (indicator.pattern && !new RegExp(indicator.pattern).test(value)) {
+    errors.push({
+      field: indicator.field,
+      type: 'error',
+      message: `Invalid format for legal field: ${indicator.field}`,
+      code: 'INVALID_LEGAL_FORMAT'
+    });
+  }
 };
 
 export const validateOperationalRisk = (
-  document: any,
-  thresholds: Record<string, number>
+  value: any,
+  indicator: RiskIndicator,
+  errors: ValidationError[]
+) => {
+  // Add operational validation logic
+  if (indicator.maxLength && value.length > indicator.maxLength) {
+    errors.push({
+      field: indicator.field,
+      type: 'warning',
+      message: `Field exceeds maximum length: ${indicator.field}`,
+      code: 'FIELD_LENGTH_EXCEEDED'
+    });
+  }
+};
+
+export const validateFormField = (
+  field: string,
+  value: any,
+  rules: ValidationRule[]
 ): ValidationError[] => {
   const errors: ValidationError[] = [];
-
-  Object.entries(thresholds).forEach(([field, threshold]) => {
-    const value = document[field];
-    if (typeof value === 'number' && value > threshold) {
+  
+  rules.forEach(rule => {
+    if (!rule.validate(value)) {
       errors.push({
-        type: 'operational',
-        message: `${field} exceeds operational threshold`,
-        severity: 'medium'
+        field,
+        type: rule.errorType || 'error',
+        message: rule.errorMessage,
+        code: rule.errorCode
       });
     }
   });

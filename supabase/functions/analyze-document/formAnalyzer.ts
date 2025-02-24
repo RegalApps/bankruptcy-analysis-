@@ -1,177 +1,164 @@
 
-import { FormTemplate, FormField, formTemplates } from './formTemplates.ts';
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
+import { FormConfig, getFormConfig } from './formConfig';
+import { OSBFormTemplate } from './types';
+import { bankruptcyForms } from './templates/bankruptcyForms';
+import { proposalForms } from './templates/proposalForms';
+import { validationPatterns, customValidators } from './validation/patterns';
+import { validateFormField } from './validation/formValidation';
 
-interface AnalysisResult {
-  formNumber: string | null;
-  extractedFields: { [key: string]: any };
-  validationResults: { [key: string]: string[] };
-  confidenceScore: number;
-  status: 'success' | 'partial' | 'failed';
-}
-
-export class FormAnalyzer {
-  private supabase;
-
-  constructor() {
-    this.supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-  }
-
-  public async analyzeDocument(text: string): Promise<AnalysisResult> {
-    console.log('Starting document analysis...');
+export async function analyzeForm(formNumber: string, content: string) {
+  try {
+    console.log(`Analyzing form ${formNumber}`);
     
-    // Detect form number
-    const formNumber = this.detectFormNumber(text);
-    if (!formNumber) {
-      console.log('No form number detected');
-      return this.createFailedResult('Unable to detect form number');
-    }
-
-    const template = formTemplates[formNumber];
+    // Get form configuration and template
+    const config = getFormConfig(formNumber);
+    const template = getFormTemplate(formNumber);
+    
     if (!template) {
-      console.log(`No template found for form ${formNumber}`);
-      return this.createFailedResult(`No template found for form ${formNumber}`);
+      throw new Error(`No template found for form ${formNumber}`);
     }
 
-    // Extract fields based on template
-    const extractedFields = this.extractFields(text, template);
+    // Extract form fields
+    const extractedFields = await extractFormFields(content, template);
     
     // Validate extracted fields
-    const validationResults = this.validateFields(extractedFields, template);
+    const validationResults = validateFormFields(extractedFields, template, config);
     
-    // Calculate confidence score
-    const confidenceScore = this.calculateConfidenceScore(extractedFields, template);
-
-    const status = this.determineStatus(validationResults);
-
-    console.log('Analysis completed:', {
-      formNumber,
-      extractedFieldsCount: Object.keys(extractedFields).length,
-      status
-    });
+    // Analyze risks
+    const riskAssessment = assessRisks(extractedFields, template);
+    
+    // Generate summary
+    const summary = generateFormSummary(formNumber, extractedFields, validationResults, riskAssessment);
 
     return {
+      success: true,
       formNumber,
       extractedFields,
       validationResults,
-      confidenceScore,
-      status
+      riskAssessment,
+      summary
     };
-  }
 
-  private detectFormNumber(text: string): string | null {
-    const formPatterns = [
-      /form\s*(?:no\.|number|#)?\s*(\d+)/i,
-      /^(?:official\s+)?form\s*(\d+)/im,
-      /b\s*(\d+)/i
-    ];
-
-    for (const pattern of formPatterns) {
-      const match = text.match(pattern);
-      if (match && match[1]) {
-        const formNumber = match[1];
-        console.log('Detected form number:', formNumber);
-        return formNumber;
-      }
-    }
-
-    return null;
-  }
-
-  private extractFields(text: string, template: FormTemplate): { [key: string]: any } {
-    const extractedFields: { [key: string]: any } = {};
-    
-    for (const [fieldName, patterns] of Object.entries(template.fieldMappings)) {
-      for (const pattern of patterns) {
-        const regex = new RegExp(`${pattern}\\s*[:\\.]?\\s*([^\\n]+)`, 'i');
-        const match = text.match(regex);
-        
-        if (match && match[1]) {
-          extractedFields[fieldName] = match[1].trim();
-          console.log(`Extracted ${fieldName}:`, extractedFields[fieldName]);
-          break;
-        }
-      }
-    }
-
-    return extractedFields;
-  }
-
-  private validateFields(
-    extractedFields: { [key: string]: any },
-    template: FormTemplate
-  ): { [key: string]: string[] } {
-    const validationResults: { [key: string]: string[] } = {};
-
-    for (const field of template.requiredFields) {
-      const fieldValue = extractedFields[field.name];
-      const fieldRules = template.validationRules[field.name] || [];
-      
-      validationResults[field.name] = [];
-
-      if (field.required && !fieldValue) {
-        validationResults[field.name].push(`${field.name} is required`);
-      }
-
-      if (fieldValue && field.pattern) {
-        const regex = new RegExp(field.pattern);
-        if (!regex.test(fieldValue)) {
-          validationResults[field.name].push(`${field.name} format is invalid`);
-        }
-      }
-
-      // Additional validation based on field type
-      if (fieldValue) {
-        switch (field.type) {
-          case 'date':
-            if (isNaN(Date.parse(fieldValue))) {
-              validationResults[field.name].push(`${field.name} must be a valid date`);
-            }
-            break;
-          case 'number':
-          case 'currency':
-            if (isNaN(parseFloat(fieldValue))) {
-              validationResults[field.name].push(`${field.name} must be a valid number`);
-            }
-            break;
-        }
-      }
-    }
-
-    return validationResults;
-  }
-
-  private calculateConfidenceScore(
-    extractedFields: { [key: string]: any },
-    template: FormTemplate
-  ): number {
-    const requiredFieldsCount = template.requiredFields.length;
-    const extractedRequiredFields = template.requiredFields.filter(
-      field => extractedFields[field.name] !== undefined
-    ).length;
-
-    return (extractedRequiredFields / requiredFieldsCount) * 100;
-  }
-
-  private determineStatus(validationResults: { [key: string]: string[] }): 'success' | 'partial' | 'failed' {
-    const totalErrors = Object.values(validationResults)
-      .reduce((sum, errors) => sum + errors.length, 0);
-
-    if (totalErrors === 0) return 'success';
-    if (totalErrors < Object.keys(validationResults).length) return 'partial';
-    return 'failed';
-  }
-
-  private createFailedResult(message: string): AnalysisResult {
+  } catch (error) {
+    console.error(`Error analyzing form ${formNumber}:`, error);
     return {
-      formNumber: null,
-      extractedFields: {},
-      validationResults: { error: [message] },
-      confidenceScore: 0,
-      status: 'failed'
+      success: false,
+      error: error.message
     };
   }
+}
+
+function getFormTemplate(formNumber: string): OSBFormTemplate | null {
+  // Check all form template collections
+  return bankruptcyForms[formNumber] || 
+         proposalForms[formNumber] || 
+         null;
+}
+
+async function extractFormFields(content: string, template: OSBFormTemplate) {
+  const extractedFields: Record<string, any> = {};
+  
+  // Extract required fields based on template
+  for (const field of template.requiredFields) {
+    const fieldValue = await extractFieldValue(content, field.name);
+    if (fieldValue) {
+      extractedFields[field.name] = fieldValue;
+    }
+  }
+  
+  return extractedFields;
+}
+
+function validateFormFields(
+  fields: Record<string, any>,
+  template: OSBFormTemplate,
+  config: FormConfig
+) {
+  const errors = [];
+  
+  // Validate required fields
+  for (const field of template.requiredFields) {
+    if (field.required && !fields[field.name]) {
+      errors.push({
+        field: field.name,
+        type: 'error',
+        message: `Required field ${field.name} is missing`,
+        code: 'MISSING_REQUIRED_FIELD'
+      });
+    }
+  }
+  
+  // Apply custom validation rules
+  for (const [fieldName, value] of Object.entries(fields)) {
+    if (config.validationRules[fieldName]) {
+      const isValid = config.validationRules[fieldName](value);
+      if (!isValid) {
+        errors.push({
+          field: fieldName,
+          type: 'error',
+          message: `Invalid value for ${fieldName}`,
+          code: 'INVALID_FIELD_VALUE'
+        });
+      }
+    }
+  }
+  
+  return errors;
+}
+
+function assessRisks(
+  fields: Record<string, any>,
+  template: OSBFormTemplate
+) {
+  const risks = [];
+  
+  // Check risk indicators defined in template
+  for (const indicator of template.riskIndicators || []) {
+    const fieldValue = fields[indicator.field];
+    if (fieldValue) {
+      if (indicator.riskType === 'financial' && 
+          typeof fieldValue === 'number' && 
+          fieldValue > indicator.threshold) {
+        risks.push({
+          type: 'financial',
+          severity: indicator.severity,
+          description: `High financial value detected in ${indicator.field}`,
+          value: fieldValue
+        });
+      }
+    }
+  }
+  
+  return risks;
+}
+
+async function extractFieldValue(content: string, fieldName: string): Promise<string | null> {
+  // Use regex patterns to extract field values
+  // This is a simplified version - in reality, you'd want more sophisticated extraction
+  const patterns = {
+    debtorName: /Debtor(?:'s)?\s+Name:\s*([^\n]+)/i,
+    filingDate: /Filing\s+Date:\s*(\d{4}-\d{2}-\d{2})/i,
+    amount: /Amount:\s*\$?([\d,]+\.?\d*)/i
+  };
+
+  const pattern = patterns[fieldName];
+  if (!pattern) return null;
+
+  const match = content.match(pattern);
+  return match ? match[1].trim() : null;
+}
+
+function generateFormSummary(
+  formNumber: string,
+  fields: Record<string, any>,
+  validationResults: any[],
+  riskAssessment: any[]
+) {
+  return {
+    formNumber,
+    fieldsExtracted: Object.keys(fields).length,
+    validationErrors: validationResults.length,
+    risksIdentified: riskAssessment.length,
+    status: validationResults.length === 0 ? 'valid' : 'needs_review'
+  };
 }
