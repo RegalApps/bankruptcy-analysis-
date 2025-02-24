@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,6 +5,8 @@ import { Bell, Calendar, Clock, Users } from "lucide-react";
 import { ClientIntakeSection } from "@/components/crm/ClientIntakeSection";
 import { ClientDashboard } from "@/components/crm/ClientDashboard";
 import { IntelligentScheduling } from "@/components/crm/IntelligentScheduling";
+import { DocumentVault } from "@/components/crm/DocumentVault";
+import { AIWorkflow } from "@/components/crm/AIWorkflow";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 
@@ -76,6 +77,8 @@ export const CRMPage = () => {
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="intake">Client Intake</TabsTrigger>
               <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
+              <TabsTrigger value="documents">Document Vault</TabsTrigger>
+              <TabsTrigger value="workflow">AI Workflow</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-4">
               <ClientDashboard />
@@ -85,6 +88,12 @@ export const CRMPage = () => {
             </TabsContent>
             <TabsContent value="scheduling" className="space-y-4">
               <IntelligentScheduling />
+            </TabsContent>
+            <TabsContent value="documents" className="space-y-4">
+              <DocumentVault />
+            </TabsContent>
+            <TabsContent value="workflow" className="space-y-4">
+              <AIWorkflow />
             </TabsContent>
           </Tabs>
         </div>
