@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, Calendar, FileText, Users, VoiceCommand } from "lucide-react";
+import { Bell, Calendar, FileText, Users, Mic } from "lucide-react";
 import { ClientIntakeSection } from "@/components/crm/ClientIntakeSection";
 import { ClientDashboard } from "@/components/crm/ClientDashboard";
 import { DocumentManagement } from "@/components/crm/DocumentManagement";

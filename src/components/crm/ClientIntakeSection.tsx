@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { VoiceCommand } from "lucide-react";
+import { Mic } from "lucide-react";
 
 export const ClientIntakeSection = () => {
   return (
@@ -16,7 +16,7 @@ export const ClientIntakeSection = () => {
               Start a new client intake process or continue an existing one.
             </p>
             <Button className="gap-2">
-              <VoiceCommand className="h-4 w-4" />
+              <Mic className="h-4 w-4" />
               Start Voice Input
             </Button>
           </div>
