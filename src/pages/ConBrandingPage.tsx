@@ -33,7 +33,7 @@ interface ChatMessage {
 export const ConBrandingPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([{
     id: '1',
-    content: "Welcome to Secure Files AI Assistant. I can help you with document management, OSB regulations, BIA acts, and more. How can I assist you today?",
+    content: "Welcome to Secure Files Adaptive Future-forward Assistant. I can help you with document management, OSB regulations, BIA acts, and more. How can I assist you today?",
     type: 'assistant',
     timestamp: new Date()
   }]);
