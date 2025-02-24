@@ -5,12 +5,12 @@ import {
   LayoutDashboard, 
   FolderOpen, 
   Activity,
-  MessageCircle, // Changed for SAFA
+  MessageCircle, // For SAFA
   Bell, 
   Users,
   FileCheck,
   Settings,
-  BrainCog, // Changed for Smart Income & Expense
+  BrainCog, // For Smart Income & Expense
   UserCircle2
 } from "lucide-react";
 
