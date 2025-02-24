@@ -43,10 +43,10 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <Card className="col-span-2 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Folder Management</h3>
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold">Folder Management</h3>
+        <div className="flex gap-2">
           <Dialog open={showFolderDialog} onOpenChange={setShowFolderDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -78,74 +78,64 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
-        <ScrollArea className="h-[300px]">
-          <div 
-            className={cn(
-              "grid gap-4 md:grid-cols-2",
-              isDragging && "ring-2 ring-primary/50 rounded-lg p-4"
-            )}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setIsDragging(false);
-              // Handle drop logic here
-            }}
-          >
-            {Object.entries(documents.reduce((acc, doc) => {
-              if (doc.is_folder) {
-                acc[doc.title] = {
-                  id: doc.id,
-                  documents: documents.filter(d => d.parent_folder_id === doc.id)
-                };
-              }
-              return acc;
-            }, {} as Record<string, { id: string; documents: typeof documents }>)).map(([folderName, folder]) => (
-              <div
-                key={folder.id}
-                className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
-                draggable
-              >
-                <div className="flex items-center space-x-3">
-                  <FolderIcon variant="client" />
-                  <div>
-                    <h4 className="font-medium">{folderName}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {folder.documents.length} documents
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </Card>
-
-      <Card className="p-6">
-        <h3 className="font-semibold mb-4">Quick Actions</h3>
-        <div className="space-y-2">
-          <Button variant="outline" className="w-full justify-start">
-            <FolderPlus className="h-4 w-4 mr-2" />
-            Create New Folder
-          </Button>
-          <Button variant="outline" className="w-full justify-start">
-            <Grid className="h-4 w-4 mr-2" />
-            View All Documents
-          </Button>
-          <Button variant="outline" className="w-full justify-start">
+          <Button variant="outline" size="sm">
             <Tag className="h-4 w-4 mr-2" />
             Add Meta Tags
           </Button>
-          <Button variant="outline" className="w-full justify-start">
+          <Button variant="outline" size="sm">
             <Tags className="h-4 w-4 mr-2" />
-            Manage All Tags
+            Manage Tags
+          </Button>
+          <Button variant="outline" size="sm">
+            <Grid className="h-4 w-4 mr-2" />
+            View All
           </Button>
         </div>
-      </Card>
-    </div>
+      </div>
+      <ScrollArea className="h-[400px]">
+        <div 
+          className={cn(
+            "grid gap-4 md:grid-cols-2",
+            isDragging && "ring-2 ring-primary/50 rounded-lg p-4"
+          )}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            // Handle drop logic here
+          }}
+        >
+          {Object.entries(documents.reduce((acc, doc) => {
+            if (doc.is_folder) {
+              acc[doc.title] = {
+                id: doc.id,
+                documents: documents.filter(d => d.parent_folder_id === doc.id)
+              };
+            }
+            return acc;
+          }, {} as Record<string, { id: string; documents: typeof documents }>)).map(([folderName, folder]) => (
+            <div
+              key={folder.id}
+              className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+              draggable
+            >
+              <div className="flex items-center space-x-3">
+                <FolderIcon variant="client" />
+                <div>
+                  <h4 className="font-medium">{folderName}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {folder.documents.length} documents
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </Card>
   );
 };
