@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Activity, Bell, FileText, Folder, Home, PieChart, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -19,51 +20,81 @@ export const MainSidebar = () => {
 
   return (
     <aside className="w-16 h-screen bg-background border-r flex flex-col items-center py-4 space-y-4 fixed left-0 top-0 z-50">
-      <Button
-        variant="ghost"
-        className="w-10 h-10 p-0 hover:bg-transparent"
-        onClick={() => navigate('/')}
-      >
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-          <FileText className="w-6 h-6 text-primary" />
-        </div>
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            className="w-10 h-10 p-0 hover:bg-transparent"
+            onClick={() => navigate('/')}
+          >
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-primary" />
+            </div>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <p>Secure Files AI</p>
+        </TooltipContent>
+      </Tooltip>
+
       <nav className="flex-1 w-full flex flex-col items-center space-y-2">
         {navigationItems.map((item) => (
-          <Button
-            key={item.label}
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "w-10 h-10",
-              isActivePath(item.path) && "relative after:content-[''] after:absolute after:inset-0 after:rounded-md after:ring-2 after:ring-primary/50"
-            )}
-            onClick={() => navigate(item.path)}
-          >
-            <item.icon className={cn(
-              "h-5 w-5",
-              isActivePath(item.path) && "text-primary"
-            )} />
-          </Button>
+          <Tooltip key={item.label}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "w-10 h-10",
+                  isActivePath(item.path) && "relative after:content-[''] after:absolute after:inset-0 after:rounded-md after:ring-2 after:ring-primary/50"
+                )}
+                onClick={() => navigate(item.path)}
+              >
+                <item.icon className={cn(
+                  "h-5 w-5",
+                  isActivePath(item.path) && "text-primary"
+                )} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>{item.label}</p>
+            </TooltipContent>
+          </Tooltip>
         ))}
       </nav>
+
       <div className="mt-auto space-y-2">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="w-10 h-10"
-          onClick={() => navigate("/notifications")}
-        >
-          <Bell className="h-5 w-5" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="w-10 h-10"
-          onClick={() => navigate("/profile")}
-        >
-          <User className="h-5 w-5" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="w-10 h-10"
+              onClick={() => navigate("/notifications")}
+            >
+              <Bell className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Notifications</p>
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="w-10 h-10"
+              onClick={() => navigate("/profile")}
+            >
+              <User className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Profile</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
     </aside>
   );
