@@ -15,7 +15,7 @@ export const ActivityPage = () => {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto space-y-6">
             <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold">Financial Activity Management</h1>
+              <h1 className="text-3xl font-bold">Smart Income & Expense Management</h1>
             </div>
             
             <Tabs defaultValue="form" className="space-y-4">

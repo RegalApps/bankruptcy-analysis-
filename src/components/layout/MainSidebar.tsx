@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Activity, Bell, FileText, Home, MessageCircle, PieChart, Settings, User, Users } from "lucide-react";
+import { DollarSign, Bell, FileText, Home, MessageCircle, PieChart, Settings, User, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const MainSidebar = () => {
@@ -16,7 +16,7 @@ export const MainSidebar = () => {
     { icon: FileText, label: "Documents", path: "/documents" },
     { icon: MessageCircle, label: "SAFA", path: "/SAFA" },
     { icon: Users, label: "CRM", path: "/crm" },
-    { icon: Activity, label: "Activity", path: "/activity" },
+    { icon: DollarSign, label: "SmartIncomeExpense", path: "/activity" },
     { icon: PieChart, label: "Analytics", path: "/analytics" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
