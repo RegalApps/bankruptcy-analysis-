@@ -34,13 +34,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({ searchQuery, onSearchChang
 
       setIsLoading(true);
       try {
-        const { data, error } = await supabase.functions.invoke('smart-search', {
-          body: { query: debouncedSearch }
-        });
+        // Search directly in the documents table
+        const { data, error } = await supabase
+          .from('documents')
+          .select('id, title, type')
+          .or(`title.ilike.%${debouncedSearch}%, storage_path.ilike.%${debouncedSearch}%`)
+          .is('is_folder', false) // Only search for documents, not folders
+          .order('created_at', { ascending: false })
+          .limit(10);
 
         if (error) throw error;
 
-        setResults(data.results);
+        setResults(data || []);
         setIsOpen(true);
       } catch (error) {
         console.error('Search error:', error);
@@ -83,17 +88,23 @@ export const SearchBar: React.FC<SearchBarProps> = ({ searchQuery, onSearchChang
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">
         <div className="overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">
-          {results.map((result) => (
-            <button
-              key={result.id}
-              className="w-full px-4 py-2 text-left hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
-              onClick={() => handleResultClick(result)}
-            >
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <span>{result.title}</span>
-              <span className="text-xs text-muted-foreground ml-auto">{result.type}</span>
-            </button>
-          ))}
+          {results.length > 0 ? (
+            results.map((result) => (
+              <button
+                key={result.id}
+                className="w-full px-4 py-2 text-left hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                onClick={() => handleResultClick(result)}
+              >
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <span>{result.title}</span>
+                <span className="text-xs text-muted-foreground ml-auto">{result.type}</span>
+              </button>
+            ))
+          ) : (
+            <div className="px-4 py-2 text-sm text-muted-foreground">
+              No results found
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>
