@@ -13,7 +13,7 @@ export const MainSidebar = () => {
   const navigationItems = [
     { icon: Home, label: "Home", path: "/" },
     { icon: FileText, label: "Documents", path: "/documents" },
-    { icon: MessageCircle, label: "SAFA", path: "/con-branding" },
+    { icon: MessageCircle, label: "SAFA", path: "/SAFA" },
     { icon: Users, label: "CRM", path: "/crm" },
     { icon: Activity, label: "Activity", path: "/activity" },
     { icon: PieChart, label: "Analytics", path: "/analytics" },
