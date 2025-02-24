@@ -30,7 +30,7 @@ export const MainSidebar = () => {
         >
           <div className="flex items-center gap-3">
             <img 
-              src="/lovable-uploads/7111ec34-de13-4b7d-b821-5f804822ebc5.png" 
+              src="/lovable-uploads/b8620d24-fab6-4068-9af7-3e91ace7b559.png" 
               alt="Secure Files AI Logo" 
               className="w-8 h-8"
             />
