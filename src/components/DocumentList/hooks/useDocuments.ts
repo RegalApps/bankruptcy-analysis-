@@ -1,36 +1,45 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Document } from '../types';
 import { toast } from 'sonner';
 
 export const useDocuments = () => {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [state, setState] = useState({
+    documents: [] as Document[],
+    isLoading: true,
+    searchQuery: ''
+  });
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
+    setState(prev => ({ ...prev, isLoading: true }));
+    
     try {
-      setIsLoading(true);
       const { data, error } = await supabase
         .from('documents')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      setDocuments(data || []);
+      setState(prev => ({
+        ...prev,
+        documents: data || [],
+        isLoading: false
+      }));
     } catch (error) {
       console.error('Error fetching documents:', error);
       toast.error('Failed to fetch documents');
-    } finally {
-      setIsLoading(false);
+      setState(prev => ({ ...prev, isLoading: false }));
     }
-  };
+  }, []);
+
+  const setSearchQuery = useCallback((query: string) => {
+    setState(prev => ({ ...prev, searchQuery: query }));
+  }, []);
 
   useEffect(() => {
+    // Initial fetch
     fetchDocuments();
 
     // Set up real-time subscription
@@ -49,16 +58,17 @@ export const useDocuments = () => {
       )
       .subscribe();
 
+    // Cleanup subscription
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchDocuments]);
 
-  return { 
-    documents, 
-    isLoading, 
-    searchQuery, 
+  return {
+    documents: state.documents,
+    isLoading: state.isLoading,
+    searchQuery: state.searchQuery,
     setSearchQuery,
-    fetchDocuments 
+    fetchDocuments
   };
 };
