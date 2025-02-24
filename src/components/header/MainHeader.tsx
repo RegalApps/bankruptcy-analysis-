@@ -23,10 +23,12 @@ export const MainHeader = () => {
         <div className="w-64">
           <Button 
             variant="ghost" 
-            className="font-semibold text-xl p-0 hover:bg-transparent"
+            className="font-semibold text-xl p-0 hover:bg-transparent group"
             onClick={() => navigate('/')}
           >
-            Document Management
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Document Management
+            </span>
           </Button>
         </div>
         
@@ -42,12 +44,12 @@ export const MainHeader = () => {
         <div className="w-64 flex justify-end">
           <Dialog>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="gradient-button">
                 <Upload className="h-4 w-4 mr-2" />
                 Upload Document
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-xl">
+            <DialogContent className="glass-panel max-w-xl">
               <DialogHeader>
                 <DialogTitle>Upload New Document</DialogTitle>
               </DialogHeader>

@@ -20,7 +20,7 @@ export const MainSidebar = () => {
   ];
 
   return (
-    <aside className="w-64 h-screen bg-background border-r flex flex-col fixed left-0 top-0 z-40">
+    <aside className="w-64 h-screen sidebar-gradient border-r flex flex-col fixed left-0 top-0 z-40">
       {/* App Logo */}
       <div className="p-4">
         <Button
@@ -45,17 +45,18 @@ export const MainSidebar = () => {
             variant="ghost"
             className={cn(
               "w-full justify-start gap-3 px-4 py-6 h-auto",
-              isActivePath(item.path) && "bg-secondary"
+              "hover:bg-primary/5 transition-colors duration-200",
+              isActivePath(item.path) && "bg-primary/10 text-primary"
             )}
             onClick={() => navigate(item.path)}
           >
             <item.icon className={cn(
               "h-5 w-5",
-              isActivePath(item.path) ? "text-foreground" : "text-muted-foreground"
+              isActivePath(item.path) ? "text-primary" : "text-muted-foreground"
             )} />
             <span className={cn(
               "text-sm",
-              isActivePath(item.path) ? "text-foreground" : "text-muted-foreground"
+              isActivePath(item.path) ? "text-primary" : "text-muted-foreground"
             )}>
               {item.label}
             </span>
@@ -64,10 +65,10 @@ export const MainSidebar = () => {
       </nav>
 
       {/* Bottom Section */}
-      <div className="px-3 py-4 border-t">
+      <div className="px-3 py-4 border-t bg-card/50">
         <Button 
           variant="ghost"
-          className="w-full justify-start gap-3 px-4 py-6 h-auto"
+          className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-primary/5"
           onClick={() => navigate("/notifications")}
         >
           <Bell className="h-5 w-5 text-muted-foreground" />
@@ -76,7 +77,7 @@ export const MainSidebar = () => {
         
         <Button 
           variant="ghost"
-          className="w-full justify-start gap-3 px-4 py-6 h-auto"
+          className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-primary/5"
           onClick={() => navigate("/profile")}
         >
           <User className="h-5 w-5 text-muted-foreground" />
