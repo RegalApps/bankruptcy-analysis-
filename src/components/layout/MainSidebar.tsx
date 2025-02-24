@@ -7,8 +7,10 @@ import {
   Activity, 
   Bell, 
   Users,
-  FileCheck, // Added this for E-Filing
-  Settings 
+  FileCheck,
+  Settings,
+  Shield, // For SAFA
+  DollarSign // For Smart Income and Expense
 } from "lucide-react";
 
 export const MainSidebar = () => {
@@ -21,8 +23,9 @@ export const MainSidebar = () => {
   const links = [
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
     { name: "Documents", path: "/documents", icon: FolderOpen },
-    { name: "E-Filing", path: "/e-filing", icon: FileCheck }, // Added this line
-    { name: "Activity", path: "/activity", icon: Activity },
+    { name: "E-Filing", path: "/e-filing", icon: FileCheck },
+    { name: "Smart Income & Expense", path: "/activity", icon: DollarSign },
+    { name: "SAFA", path: "/SAFA", icon: Shield },
     { name: "Notifications", path: "/notifications", icon: Bell },
     { name: "CRM", path: "/crm", icon: Users },
     { name: "Settings", path: "/settings", icon: Settings },
