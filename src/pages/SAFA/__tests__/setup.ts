@@ -1,6 +1,7 @@
 
 import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';  // Add jest-dom matchers
 import logger from '@/utils/logger';
 
 // Mock Supabase client
@@ -23,10 +24,10 @@ beforeEach(() => {
   // Clear all mocks before each test
   vi.clearAllMocks();
   
-  // Mock console methods to use our logger
-  console.log = vi.fn((...args) => logger.info(...args));
-  console.error = vi.fn((...args) => logger.error(...args));
-  console.warn = vi.fn((...args) => logger.warn(...args));
+  // Mock console methods to use our logger with proper typing
+  console.log = vi.fn((message: string, ...args: unknown[]) => logger.info(message, ...args));
+  console.error = vi.fn((message: string, ...args: unknown[]) => logger.error(message, ...args));
+  console.warn = vi.fn((message: string, ...args: unknown[]) => logger.warn(message, ...args));
 });
 
 afterEach(() => {

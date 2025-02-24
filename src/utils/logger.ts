@@ -10,25 +10,25 @@ class Logger {
     this.isDevelopment = import.meta.env.MODE === 'development';
   }
 
-  private formatMessage(level: string, message: string, ...args: any[]): string {
+  private formatMessage(level: string, message: string, ...args: unknown[]): string {
     const timestamp = new Date().toISOString();
     return `${timestamp} [${level}]: ${message}`;
   }
 
-  info(message: string, ...args: any[]) {
-    const formattedMessage = this.formatMessage('INFO', message, ...args);
+  info(message: string, ...args: unknown[]): void {
+    const formattedMessage = this.formatMessage('INFO', message);
     console.info(formattedMessage, ...args);
   }
 
-  debug(message: string, ...args: any[]) {
+  debug(message: string, ...args: unknown[]): void {
     if (this.isDevelopment) {
-      const formattedMessage = this.formatMessage('DEBUG', message, ...args);
+      const formattedMessage = this.formatMessage('DEBUG', message);
       console.debug(formattedMessage, ...args);
     }
   }
 
-  error(message: string, ...args: any[]) {
-    const formattedMessage = this.formatMessage('ERROR', message, ...args);
+  error(message: string, ...args: unknown[]): void {
+    const formattedMessage = this.formatMessage('ERROR', message);
     console.error(formattedMessage, ...args);
     
     // In production, you might want to send errors to an error tracking service
@@ -38,8 +38,8 @@ class Logger {
     }
   }
 
-  warn(message: string, ...args: any[]) {
-    const formattedMessage = this.formatMessage('WARN', message, ...args);
+  warn(message: string, ...args: unknown[]): void {
+    const formattedMessage = this.formatMessage('WARN', message);
     console.warn(formattedMessage, ...args);
   }
 }
