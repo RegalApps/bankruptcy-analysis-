@@ -10,7 +10,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown, Grid, FolderPlus, FileText, FolderPen, FilePen, Trash2 } from "lucide-react";
+import { 
+  ChevronDown, 
+  Grid, 
+  FolderPlus, 
+  FileText, 
+  FolderPen, 
+  FilePen, 
+  Trash2,
+  Tool
+} from "lucide-react";
 import { RenameDialog } from "./dialogs/RenameDialog";
 import { DeleteDialog } from "./dialogs/DeleteDialog";
 import { documentService } from "./services/documentService";
@@ -31,34 +40,44 @@ export const ViewOptionsDropdown = ({
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [actionType, setActionType] = useState<"folder" | "file">("folder");
 
   const handleRename = async () => {
     if (!selectedItemId || !newName.trim()) return;
 
     try {
       await documentService.renameItem(selectedItemId, newName);
-      toast.success(`${selectedItemType === 'folder' ? 'Folder' : 'File'} renamed successfully`);
+      toast.success(`${actionType === 'folder' ? 'Folder' : 'File'} renamed successfully`);
       setIsRenameDialogOpen(false);
       setNewName("");
       if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error renaming:', error);
-      toast.error(`Failed to rename ${selectedItemType}`);
+      toast.error(`Failed to rename ${actionType}`);
     }
   };
 
   const handleDelete = async () => {
-    if (!selectedItemId || !selectedItemType) return;
+    if (!selectedItemId) return;
 
     try {
-      await documentService.deleteItem(selectedItemId, selectedItemType);
-      toast.success(`${selectedItemType === 'folder' ? 'Folder' : 'File'} deleted successfully`);
+      await documentService.deleteItem(selectedItemId, actionType);
+      toast.success(`${actionType === 'folder' ? 'Folder' : 'File'} deleted successfully`);
       setIsDeleteDialogOpen(false);
       if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error deleting:', error);
-      const errorMessage = error instanceof Error ? error.message : `Failed to delete ${selectedItemType}`;
+      const errorMessage = error instanceof Error ? error.message : `Failed to delete ${actionType}`;
       toast.error(errorMessage);
+    }
+  };
+
+  const handleToolAction = (action: 'rename' | 'delete', type: 'folder' | 'file') => {
+    setActionType(type);
+    if (action === 'rename') {
+      setIsRenameDialogOpen(true);
+    } else {
+      setIsDeleteDialogOpen(true);
     }
   };
 
@@ -87,34 +106,48 @@ export const ViewOptionsDropdown = ({
             Uncategorized
           </DropdownMenuItem>
 
-          {selectedItemId && selectedItemType && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Selected {selectedItemType === 'folder' ? 'Folder' : 'File'} Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setIsRenameDialogOpen(true)}>
-                {selectedItemType === 'folder' ? (
-                  <FolderPen className="h-4 w-4 mr-2" />
-                ) : (
-                  <FilePen className="h-4 w-4 mr-2" />
-                )}
-                Rename {selectedItemType === 'folder' ? 'Folder' : 'File'}
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setIsDeleteDialogOpen(true)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete {selectedItemType === 'folder' ? 'Folder' : 'File'}
-              </DropdownMenuItem>
-            </>
-          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>
+            <Tool className="h-4 w-4 inline mr-2" />
+            Tools
+          </DropdownMenuLabel>
+          
+          <DropdownMenuItem 
+            onClick={() => handleToolAction('rename', 'folder')}
+          >
+            <FolderPen className="h-4 w-4 mr-2" />
+            Rename Folder
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem 
+            onClick={() => handleToolAction('rename', 'file')}
+          >
+            <FilePen className="h-4 w-4 mr-2" />
+            Rename File
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem 
+            onClick={() => handleToolAction('delete', 'folder')}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Folder
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem 
+            onClick={() => handleToolAction('delete', 'file')}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete File
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <RenameDialog
         isOpen={isRenameDialogOpen}
         onOpenChange={setIsRenameDialogOpen}
-        itemType={selectedItemType || 'file'}
+        itemType={actionType}
         newName={newName}
         onNewNameChange={setNewName}
         onRename={handleRename}
@@ -123,7 +156,7 @@ export const ViewOptionsDropdown = ({
       <DeleteDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        itemType={selectedItemType || 'file'}
+        itemType={actionType}
         onDelete={handleDelete}
       />
     </>
