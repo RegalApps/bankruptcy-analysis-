@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Search, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -19,21 +19,9 @@ export const MainHeader = () => {
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="flex h-16 items-center px-6 gap-8">
-        <div className="w-64">
-          <Button 
-            variant="ghost" 
-            className="font-semibold text-xl p-0 hover:bg-transparent group"
-            onClick={() => navigate('/')}
-          >
-            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Document Management
-            </span>
-          </Button>
-        </div>
-        
+      <div className="flex h-16 items-center px-6 gap-4">
         <div className="flex-1 flex justify-center max-w-2xl mx-auto">
-          <div className="w-full max-w-md">
+          <div className="w-full">
             <SearchBar 
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
@@ -41,24 +29,22 @@ export const MainHeader = () => {
           </div>
         </div>
 
-        <div className="w-64 flex justify-end">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="gradient-button">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Document
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="glass-panel max-w-xl">
-              <DialogHeader>
-                <DialogTitle>Upload New Document</DialogTitle>
-              </DialogHeader>
-              <div className="p-4">
-                <FileUpload onUploadComplete={() => {}} />
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="gradient-button">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Document
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="glass-panel max-w-xl">
+            <DialogHeader>
+              <DialogTitle>Upload New Document</DialogTitle>
+            </DialogHeader>
+            <div className="p-4">
+              <FileUpload onUploadComplete={() => {}} />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </header>
   );
