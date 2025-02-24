@@ -1,7 +1,73 @@
+
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
+import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
+import { useEffect } from "react";
 
 export const ProfilePage = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch user preferences
+  const { data: preferences, isLoading } = useQuery({
+    queryKey: ['user-preferences'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Update preferences mutation
+  const updatePreferences = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: boolean }) => {
+      const { error } = await supabase
+        .from('user_preferences')
+        .update({ [key]: value })
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+      toast({
+        title: "Preferences updated",
+        description: `${variables.key === 'dark_mode' ? 'Theme' : 'Email notifications'} preference has been updated.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating preferences",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle theme changes
+  useEffect(() => {
+    if (preferences?.dark_mode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [preferences?.dark_mode]);
+
+  const handleThemeChange = (checked: boolean) => {
+    updatePreferences.mutate({ key: 'dark_mode', value: checked });
+  };
+
+  const handleNotificationsChange = (checked: boolean) => {
+    updatePreferences.mutate({ key: 'email_notifications', value: checked });
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
@@ -59,20 +125,22 @@ export const ProfilePage = () => {
                     <h3 className="font-medium">Email Notifications</h3>
                     <p className="text-sm text-muted-foreground">Receive email updates about your activity</p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
-                    <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
+                  <Switch
+                    checked={preferences?.email_notifications ?? false}
+                    onCheckedChange={handleNotificationsChange}
+                    disabled={isLoading || updatePreferences.isPending}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-medium">Dark Mode</h3>
                     <p className="text-sm text-muted-foreground">Toggle dark mode theme</p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
-                    <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
+                  <Switch
+                    checked={preferences?.dark_mode ?? false}
+                    onCheckedChange={handleThemeChange}
+                    disabled={isLoading || updatePreferences.isPending}
+                  />
                 </div>
               </div>
             </div>
