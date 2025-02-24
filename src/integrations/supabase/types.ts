@@ -386,6 +386,45 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_references: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          effective_date: string | null
+          id: string
+          last_updated: string | null
+          metadata: Json | null
+          reference_number: string | null
+          source_type: string
+          title: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string | null
+          effective_date?: string | null
+          id?: string
+          last_updated?: string | null
+          metadata?: Json | null
+          reference_number?: string | null
+          source_type: string
+          title: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          effective_date?: string | null
+          id?: string
+          last_updated?: string | null
+          metadata?: Json | null
+          reference_number?: string | null
+          source_type?: string
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -521,6 +560,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      training_data: {
+        Row: {
+          created_at: string | null
+          expected_output: string
+          id: string
+          input_text: string
+          is_validated: boolean | null
+          metadata: Json | null
+          module: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expected_output: string
+          id?: string
+          input_text: string
+          is_validated?: boolean | null
+          metadata?: Json | null
+          module: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expected_output?: string
+          id?: string
+          input_text?: string
+          is_validated?: boolean | null
+          metadata?: Json | null
+          module?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

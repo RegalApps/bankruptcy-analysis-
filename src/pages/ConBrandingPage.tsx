@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
@@ -103,7 +102,34 @@ export const ConBrandingPage = () => {
       module: 'document'
     };
     setMessages(prev => [...prev, assistantMessage]);
-  }, []);
+
+    try {
+      const response = await supabase.functions.invoke('process-ai-request', {
+        body: {
+          message: "Please analyze this document and provide a summary.",
+          module: 'document',
+          documentId: documentId
+        }
+      });
+
+      const analysisMessage: ChatMessage = {
+        id: Date.now().toString(),
+        content: response.data.response,
+        type: 'assistant',
+        timestamp: new Date(),
+        module: 'document'
+      };
+
+      setMessages(prev => [...prev, analysisMessage]);
+    } catch (error) {
+      console.error('Error analyzing document:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to analyze the document. Please try again."
+      });
+    }
+  }, [toast]);
 
   return (
     <div>
@@ -111,7 +137,6 @@ export const ConBrandingPage = () => {
       <div className="pl-16">
         <MainHeader />
         <div className="flex h-[calc(100vh-64px)]">
-          {/* Sidebar Navigation */}
           <aside className="w-64 border-r bg-muted/30 p-4 space-y-4">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold">Categories</h2>
@@ -160,7 +185,6 @@ export const ConBrandingPage = () => {
             </div>
           </aside>
 
-          {/* Main Chat Area */}
           <main className="flex-1 flex flex-col">
             <div className="flex-1 p-4">
               <ScrollArea className="h-full">
@@ -195,7 +219,6 @@ export const ConBrandingPage = () => {
               </ScrollArea>
             </div>
 
-            {/* Input Area */}
             <div className="border-t p-4">
               <div className="flex gap-2">
                 <Input 
