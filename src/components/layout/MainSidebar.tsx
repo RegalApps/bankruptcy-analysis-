@@ -58,8 +58,8 @@ export const MainSidebar = () => {
               isActivePath(item.path) ? "text-accent" : "text-muted-foreground group-hover:text-accent"
             )} />
             <span className={cn(
-              "text-sm",
-              isActivePath(item.path) ? "text-accent" : "text-muted-foreground"
+              "text-sm font-medium",
+              isActivePath(item.path) ? "text-accent" : "text-black dark:text-white"
             )}>
               {item.label}
             </span>
@@ -75,7 +75,7 @@ export const MainSidebar = () => {
           onClick={() => navigate("/notifications")}
         >
           <Bell className="h-5 w-5 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Notifications</span>
+          <span className="text-sm font-medium text-black dark:text-white">Notifications</span>
         </Button>
         
         <Button 
@@ -84,7 +84,7 @@ export const MainSidebar = () => {
           onClick={() => navigate("/profile")}
         >
           <User className="h-5 w-5 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Profile</span>
+          <span className="text-sm font-medium text-black dark:text-white">Profile</span>
         </Button>
       </div>
     </aside>
