@@ -3,6 +3,7 @@ import { ArrowRight, Info, CheckCircle, AlertTriangle, AlertOctagon } from "luci
 import { Alert, AlertDescription, AlertTitle } from "../../ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { Risk } from "./types";
+import { Button } from "../../ui/button";
 import { getSeverityBg, getSeverityColor, getSeverityIcon } from "./utils";
 
 interface RiskItemProps {
@@ -78,15 +79,24 @@ export const RiskItem = ({ risk, documentId }: RiskItemProps) => {
         </div>
       )}
 
-      {risk.regulation && (
+      {(risk.regulation || risk.reference) && (
         <div className="pl-8 pt-2 border-t">
           <Tooltip>
             <TooltipTrigger className="flex items-center text-sm text-muted-foreground">
               <Info className="h-4 w-4 mr-1" />
-              <span>Regulation Reference</span>
+              <span>Regulatory Reference</span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{risk.regulation}</p>
+              <p>{risk.regulation || risk.reference}</p>
+              {risk.reference && (
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-sm"
+                  onClick={() => window.open(risk.reference, '_blank')}
+                >
+                  View Reference
+                </Button>
+              )}
             </TooltipContent>
           </Tooltip>
         </div>

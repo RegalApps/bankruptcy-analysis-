@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 interface DocumentPreviewProps {
   storagePath: string;
@@ -58,25 +61,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       if (fetchError) throw fetchError;
 
-      // Create a new version
-      const { error: versionError } = await supabase
-        .from('document_versions')
-        .insert({
-          document_id: documents.id,
-          version_number: 1,
-          storage_path: storagePath,
-          is_current: true,
-          description: 'Initial analysis',
-          created_by: session.user.id
-        });
-
-      if (versionError) throw versionError;
-
-      // Call the analyze-document function
+      // Call the analyze-document function with regulatory validation
       const { data, error } = await supabase.functions.invoke('analyze-document', {
         body: { 
           documentText: cleanedText,
-          documentId: documents.id
+          documentId: documents.id,
+          includeRegulatory: true
         }
       });
 
@@ -84,7 +74,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       toast({
         title: "Analysis Complete",
-        description: "Document has been analyzed successfully"
+        description: "Document has been analyzed with regulatory compliance check"
       });
 
       if (onAnalysisComplete) {
@@ -103,36 +93,39 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   };
 
   return (
-    <div className="rounded-lg border bg-card p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium">Document Preview</h3>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={handleAnalyzeDocument}
-            disabled={analyzing}
-            className="text-sm text-primary hover:underline flex items-center gap-2"
-          >
-            {analyzing && <Loader2 className="h-4 w-4 animate-spin" />}
-            {analyzing ? 'Analyzing...' : 'Analyze Document'}
-          </button>
-          <a 
-            href={publicUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-primary hover:underline"
-          >
-            Open Document
-          </a>
-        </div>
-      </div>
-      
-      <div className="aspect-[3/4] w-full bg-muted rounded-lg">
-        <iframe
-          src={publicUrl}
-          className="w-full h-full rounded-lg"
-          title="Document Preview"
-        />
-      </div>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Document Preview</CardTitle>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={handleAnalyzeDocument}
+              disabled={analyzing}
+              className="text-sm flex items-center gap-2"
+            >
+              {analyzing && <Loader2 className="h-4 w-4 animate-spin" />}
+              {analyzing ? 'Analyzing...' : 'Analyze Document'}
+            </Button>
+            <a 
+              href={publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline"
+            >
+              Open Document
+            </a>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="aspect-[3/4] w-full bg-muted rounded-lg">
+            <iframe
+              src={publicUrl}
+              className="w-full h-full rounded-lg"
+              title="Document Preview"
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
