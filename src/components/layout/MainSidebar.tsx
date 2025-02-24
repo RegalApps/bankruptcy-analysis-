@@ -16,7 +16,7 @@ export const MainSidebar = () => {
     { icon: FileText, label: "Documents", path: "/documents" },
     { icon: MessageCircle, label: "SAFA", path: "/SAFA" },
     { icon: Users, label: "CRM", path: "/crm" },
-    { icon: BrainCog, label: "SmartIncomeExpense", path: "/activity" },
+    { icon: BrainCog, label: "Smart Income Expense", path: "/activity" },
     { icon: PieChart, label: "Analytics", path: "/analytics" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
