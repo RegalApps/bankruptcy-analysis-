@@ -3,9 +3,17 @@ import { FolderManagement } from "@/components/folders/FolderManagement";
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
+import { useState } from "react";
 
 export const FoldersPage = () => {
-  const { documents } = useDocuments();
+  const { documents, fetchDocuments } = useDocuments();
+  const [selectedItemId, setSelectedItemId] = useState<string | undefined>();
+  const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>();
+
+  const handleItemSelect = (id: string, type: "folder" | "file") => {
+    setSelectedItemId(id);
+    setSelectedItemType(type);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -13,7 +21,13 @@ export const FoldersPage = () => {
       <div className="pl-64">
         <MainHeader />
         <div className="p-6">
-          <FolderManagement documents={documents} />
+          <FolderManagement 
+            documents={documents ?? []}
+            selectedItemId={selectedItemId}
+            selectedItemType={selectedItemType}
+            onItemSelect={handleItemSelect}
+            onRefresh={fetchDocuments}
+          />
         </div>
       </div>
     </div>
