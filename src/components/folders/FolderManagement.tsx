@@ -1,29 +1,35 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Tags, Tag } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { Document } from "@/components/DocumentList/types";
+import { Tag, Tags } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { Document } from "@/components/DocumentList/types";
 import { FolderDialog } from "./components/FolderDialog";
 import { ViewOptionsDropdown } from "./components/ViewOptionsDropdown";
 import { FolderGrid } from "./components/FolderGrid";
 import { UncategorizedGrid } from "./components/UncategorizedGrid";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface FolderManagementProps {
   documents: Document[];
+  selectedItemId?: string;
+  selectedItemType?: "folder" | "file";
+  onItemSelect: (id: string, type: "folder" | "file") => void;
+  onRefresh?: () => void;
 }
 
-export const FolderManagement = ({ documents }: FolderManagementProps) => {
+export const FolderManagement = ({ 
+  documents,
+  selectedItemId,
+  selectedItemType,
+  onItemSelect,
+  onRefresh 
+}: FolderManagementProps) => {
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [activeView, setActiveView] = useState<"all" | "uncategorized" | "folders">("all");
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-  const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>();
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // Filter documents based on active view
   const getFilteredDocuments = () => {
@@ -57,7 +63,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
       setShowFolderDialog(false);
       setNewFolderName("");
       toast.success("Folder created successfully");
-      handleRefresh();
+      if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error creating folder:', error);
       toast.error("Failed to create folder");
@@ -77,7 +83,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
 
       if (error) throw error;
       toast.success("Document moved successfully");
-      handleRefresh();
+      if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error moving document:', error);
       toast.error("Failed to move document");
@@ -85,23 +91,9 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
     setIsDragging(false);
   };
 
-  const handleFolderSelect = (folderId: string) => {
-    setSelectedFolder(selectedFolder === folderId ? null : folderId);
-    setSelectedItemType("folder");
-  };
-
-  const handleDocumentSelect = (documentId: string) => {
-    setSelectedFolder(documentId);
-    setSelectedItemType("file");
-  };
-
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-  };
-
-  const filteredDocuments = getFilteredDocuments();
   const folders = documents.filter(doc => doc.is_folder);
   const uncategorizedDocuments = documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
+  const filteredDocuments = getFilteredDocuments();
 
   return (
     <div className="space-y-6">
@@ -111,9 +103,9 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
             <h3 className="font-semibold text-xl">Document Management</h3>
             <ViewOptionsDropdown 
               onViewChange={setActiveView}
-              selectedItemId={selectedFolder ?? undefined}
+              selectedItemId={selectedItemId}
               selectedItemType={selectedItemType}
-              onRefresh={handleRefresh}
+              onRefresh={onRefresh}
             />
           </div>
           <div className="flex gap-2">
@@ -146,8 +138,8 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
               folders={folders}
               documents={filteredDocuments}
               isDragging={isDragging}
-              selectedFolder={selectedFolder}
-              onFolderSelect={handleFolderSelect}
+              selectedFolder={selectedItemId}
+              onFolderSelect={(id) => onItemSelect(id, "folder")}
               onDragOver={(e) => {
                 e.preventDefault();
                 setIsDragging(true);
@@ -160,7 +152,7 @@ export const FolderManagement = ({ documents }: FolderManagementProps) => {
           <TabsContent value="uncategorized">
             <UncategorizedGrid 
               documents={uncategorizedDocuments}
-              onDocumentSelect={handleDocumentSelect}
+              onDocumentSelect={(id) => onItemSelect(id, "file")}
             />
           </TabsContent>
         </Tabs>
