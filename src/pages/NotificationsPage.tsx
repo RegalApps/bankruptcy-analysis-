@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { NotificationsSidebar } from "@/components/notifications/NotificationsSidebar";
 import { NotificationsList } from "@/components/notifications/NotificationsList";
-import type { DatabaseNotification, Notification, NotificationCategory } from "@/types/notifications";
-import { useParams } from "react-router-dom";
+import type { DatabaseNotification, Notification } from "@/types/notifications";
+import { useState } from "react";
 
 const mapDatabaseNotificationToNotification = (dbNotification: DatabaseNotification): Notification => {
   return {
@@ -30,7 +30,7 @@ const sampleNotifications: Notification[] = [
     title: "New File Uploaded",
     message: "Document 'Q4 Report.pdf' has been uploaded to your workspace",
     category: "file_activity",
-    created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+    created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     read: false,
     priority: "normal",
     metadata: { type: "upload" }
@@ -40,7 +40,7 @@ const sampleNotifications: Notification[] = [
     title: "Security Alert",
     message: "Unusual login attempt detected from new device",
     category: "security",
-    created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
+    created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
     read: false,
     priority: "high",
     metadata: { type: "access" }
@@ -50,7 +50,7 @@ const sampleNotifications: Notification[] = [
     title: "Task Completed",
     message: "John completed the document review task",
     category: "task",
-    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
+    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     read: true,
     priority: "normal",
     metadata: { type: "completed" }
@@ -60,7 +60,7 @@ const sampleNotifications: Notification[] = [
     title: "New Task Assigned",
     message: "You have been assigned to review the latest contract",
     category: "task",
-    created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(), // 1.5 hours ago
+    created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
     read: false,
     priority: "high",
     metadata: { type: "task_assigned" }
@@ -70,7 +70,7 @@ const sampleNotifications: Notification[] = [
     title: "Task Comment",
     message: "Sarah commented on your document review task",
     category: "task",
-    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 minutes ago
+    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     read: false,
     priority: "normal",
     metadata: { type: "comment" }
@@ -80,7 +80,7 @@ const sampleNotifications: Notification[] = [
     title: "Subscription Renewal",
     message: "Your subscription will renew in 7 days",
     category: "subscription",
-    created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 hours ago
+    created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
     read: false,
     priority: "normal",
     metadata: {}
@@ -90,7 +90,7 @@ const sampleNotifications: Notification[] = [
     title: "Meeting Reminder",
     message: "Team meeting starts in 15 minutes",
     category: "reminder",
-    created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(), // 4 hours ago
+    created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
     read: false,
     priority: "normal",
     metadata: {}
@@ -98,7 +98,7 @@ const sampleNotifications: Notification[] = [
 ];
 
 export const NotificationsPage = () => {
-  const { category } = useParams<{ category?: string }>();
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
 
   const { data: dbNotifications, isLoading } = useQuery({
     queryKey: ['notifications'],
@@ -118,8 +118,8 @@ export const NotificationsPage = () => {
   const allNotifications = [...(dbNotifications || []), ...sampleNotifications];
   
   // Filter notifications based on selected category
-  const filteredNotifications = category 
-    ? allNotifications.filter(n => n.category === category) 
+  const filteredNotifications = selectedCategory 
+    ? allNotifications.filter(n => n.category === selectedCategory) 
     : allNotifications;
 
   return (
@@ -129,7 +129,8 @@ export const NotificationsPage = () => {
         <MainHeader />
         <NotificationsSidebar 
           notifications={allNotifications} 
-          selectedCategory={category}
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
         />
         <main className="flex-1 overflow-hidden p-6">
           <div className="max-w-6xl mx-auto h-full">

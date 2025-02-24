@@ -2,25 +2,27 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { categoryConfig } from "@/lib/notifications/categoryConfig";
-import { useNavigate } from "react-router-dom";
 import type { Notification } from "@/types/notifications";
 
 interface NotificationsSidebarProps {
   notifications: Notification[] | undefined;
   selectedCategory?: string;
+  onSelectCategory: (category: string | undefined) => void;
 }
 
-export const NotificationsSidebar = ({ notifications, selectedCategory }: NotificationsSidebarProps) => {
-  const navigate = useNavigate();
-
+export const NotificationsSidebar = ({ 
+  notifications, 
+  selectedCategory,
+  onSelectCategory 
+}: NotificationsSidebarProps) => {
   return (
     <div className="w-full border-b mb-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex gap-2 overflow-x-auto pb-4 px-4">
+        <div className="flex gap-2 px-4 pb-4">
           <Button
             variant={!selectedCategory ? "default" : "ghost"}
             className="whitespace-nowrap"
-            onClick={() => navigate('/notifications')}
+            onClick={() => onSelectCategory(undefined)}
           >
             All Notifications
             <span className="ml-2 bg-primary-foreground/10 text-xs px-2 py-1 rounded-full">
@@ -35,7 +37,7 @@ export const NotificationsSidebar = ({ notifications, selectedCategory }: Notifi
                 key={key}
                 variant={selectedCategory === key ? "default" : "ghost"}
                 className="whitespace-nowrap"
-                onClick={() => navigate(`/notifications/${key}`)}
+                onClick={() => onSelectCategory(key)}
               >
                 <Icon className={cn("h-5 w-5 mr-2", config.color)} />
                 {config.label}
