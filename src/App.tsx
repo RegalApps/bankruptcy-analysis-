@@ -12,6 +12,7 @@ import { NotificationsPage } from "./pages/NotificationsPage";
 import { ConBrandingPage } from "./pages/ConBrandingPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { CRMPage } from "./pages/CRMPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App: React.FC = () => {
             <Route path="/SAFA" element={<ConBrandingPage />} />
             <Route path="/crm" element={<CRMPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
