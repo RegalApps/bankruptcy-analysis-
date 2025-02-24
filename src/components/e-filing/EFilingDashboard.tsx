@@ -1,6 +1,6 @@
 
 import { Card } from "@/components/ui/card";
-import { DocumentUpload } from "@/components/FileUpload";
+import { FileUpload } from "@/components/FileUpload"; // Fixed import name
 import { DocumentList } from "./DocumentList";
 import { DocumentDetails } from "./DocumentDetails";
 import { useEFiling } from "./context/EFilingContext";
@@ -19,7 +19,7 @@ export const EFilingDashboard = () => {
         <Card className="md:col-span-2 p-6">
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Documents</h2>
-            <DocumentUpload onUploadComplete={() => {}} />
+            <FileUpload onUploadComplete={() => {}} />
             <DocumentList />
           </div>
         </Card>
