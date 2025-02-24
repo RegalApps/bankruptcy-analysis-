@@ -12,11 +12,14 @@ const mockDocuments: Document[] = [
     title: 'Test Document',
     type: 'pdf',
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(), // Added missing required field
+    updated_at: new Date().toISOString(),
     size: 1024,
     storage_path: 'test/path'
   }
 ];
+
+// Mock function for document selection
+const mockOnDocumentSelect = vi.fn();
 
 describe('DocumentList', () => {
   beforeEach(() => {
@@ -26,7 +29,11 @@ describe('DocumentList', () => {
   it('renders document items with correct icons', () => {
     render(
       <BrowserRouter>
-        <DocumentList documents={mockDocuments} />
+        <DocumentList 
+          documents={mockDocuments}
+          searchQuery=""
+          onDocumentSelect={mockOnDocumentSelect}
+        />
       </BrowserRouter>
     );
 
@@ -36,7 +43,11 @@ describe('DocumentList', () => {
   it('displays file size in correct format', () => {
     render(
       <BrowserRouter>
-        <DocumentList documents={mockDocuments} />
+        <DocumentList 
+          documents={mockDocuments}
+          searchQuery=""
+          onDocumentSelect={mockOnDocumentSelect}
+        />
       </BrowserRouter>
     );
 
