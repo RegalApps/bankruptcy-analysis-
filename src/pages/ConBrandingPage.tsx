@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
@@ -52,18 +51,32 @@ export const ConBrandingPage = () => {
     setMessages(prev => [...prev, newMessage]);
     setInputMessage("");
 
-    // Placeholder for AI response - to be implemented with edge function
-    const assistantMessage: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      content: "I understand you're asking about " + activeModule + ". I'll help you with that.",
-      type: 'assistant',
-      timestamp: new Date(),
-      module: activeModule
-    };
+    try {
+      const response = await supabase.functions.invoke('process-ai-request', {
+        body: {
+          message: inputMessage,
+          module: activeModule,
+          documentId: null // We'll add document context handling later
+        }
+      });
 
-    setTimeout(() => {
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        content: response.data.response,
+        type: 'assistant',
+        timestamp: new Date(),
+        module: activeModule
+      };
+
       setMessages(prev => [...prev, assistantMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error('Error processing message:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process your request. Please try again."
+      });
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
