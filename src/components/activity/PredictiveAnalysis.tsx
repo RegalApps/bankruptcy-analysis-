@@ -1,4 +1,5 @@
 
+import React, { useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -119,7 +120,7 @@ export const PredictiveAnalysis = () => {
   };
 
   // Process anomalies and notify if found
-  const processedData = React.useMemo(() => {
+  const processedData = useMemo(() => {
     if (!financialRecords?.length) return [];
     
     const anomalies = detectAnomalies(financialRecords);
