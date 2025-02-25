@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { UserSettings } from "@/types/settings";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export const useSettings = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // General settings states
   const [timeZone, setTimeZone] = useState("UTC");
@@ -64,7 +66,11 @@ export const useSettings = () => {
   };
 
   const saveSettings = async (section: "general" | "security") => {
+    if (isSaving) return; // Prevent multiple simultaneous saves
+    
     setIsLoading(true);
+    setIsSaving(true);
+    
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) {
@@ -117,8 +123,12 @@ export const useSettings = () => {
       });
     } finally {
       setIsLoading(false);
+      setIsSaving(false);
     }
   };
+
+  // Debounced save function to prevent multiple rapid saves
+  const debouncedSaveSettings = useDebounce(saveSettings, 1000);
 
   useEffect(() => {
     loadSettings();
@@ -154,6 +164,6 @@ export const useSettings = () => {
       passwordExpiry,
       setPasswordExpiry,
     },
-    saveSettings,
+    saveSettings: debouncedSaveSettings,
   };
 };
