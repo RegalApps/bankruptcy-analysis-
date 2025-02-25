@@ -38,6 +38,7 @@ export const calculateForecast = (data: any[], alpha: number = 0.3) => {
     forecast[i] = alpha * data[i-1].surplus_income + (1 - alpha) * forecast[i-1];
   }
 
+  // Add 3 months forecast
   for (let i = 0; i < 3; i++) {
     forecast.push(alpha * forecast[forecast.length - 1] + 
                  (1 - alpha) * forecast[forecast.length - 2]);
