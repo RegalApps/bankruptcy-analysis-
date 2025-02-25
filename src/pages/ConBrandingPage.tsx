@@ -9,6 +9,7 @@ import { ChatMessage as ChatMessageType } from "./SAFA/types";
 import { ChatMessage } from "./SAFA/components/ChatMessage";
 import { ChatInput } from "./SAFA/components/ChatInput";
 import { Sidebar } from "./SAFA/components/Sidebar";
+import { ClientAssistantPanel } from "./SAFA/components/ClientConnect/ClientAssistantPanel";
 
 export const ConBrandingPage = () => {
   const [messages, setMessages] = useState<ChatMessageType[]>([{
@@ -20,6 +21,7 @@ export const ConBrandingPage = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [activeModule, setActiveModule] = useState<'document' | 'legal' | 'help' | 'client'>('document');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const { toast } = useToast();
 
   const handleSendMessage = async () => {
@@ -74,6 +76,18 @@ export const ConBrandingPage = () => {
     }
   };
 
+  const handleStartConversation = () => {
+    setShowChat(true);
+  };
+
+  const handleViewHistory = () => {
+    toast({
+      title: "Viewing Conversation History",
+      description: "Loading previous conversations...",
+    });
+    // Implement conversation history retrieval
+  };
+
   const handleFileUploadComplete = useCallback(async (documentId: string) => {
     const assistantMessage: ChatMessageType = {
       id: Date.now().toString(),
@@ -112,6 +126,36 @@ export const ConBrandingPage = () => {
     }
   }, [toast]);
 
+  const renderMainContent = () => {
+    if (activeModule === 'client' && !showChat) {
+      return (
+        <ClientAssistantPanel 
+          onStartConversation={handleStartConversation}
+          onViewHistory={handleViewHistory}
+        />
+      );
+    }
+
+    return (
+      <>
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4">
+            {messages.map((message) => (
+              <ChatMessage key={message.id} message={message} />
+            ))}
+          </div>
+        </ScrollArea>
+        <ChatInput 
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSendMessage={handleSendMessage}
+          handleKeyPress={handleKeyPress}
+          isProcessing={isProcessing}
+        />
+      </>
+    );
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
@@ -125,20 +169,7 @@ export const ConBrandingPage = () => {
               onUploadComplete={handleFileUploadComplete}
             />
             <main className="flex-1 flex flex-col overflow-hidden">
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {messages.map((message) => (
-                    <ChatMessage key={message.id} message={message} />
-                  ))}
-                </div>
-              </ScrollArea>
-              <ChatInput 
-                inputMessage={inputMessage}
-                setInputMessage={setInputMessage}
-                handleSendMessage={handleSendMessage}
-                handleKeyPress={handleKeyPress}
-                isProcessing={isProcessing}
-              />
+              {renderMainContent()}
             </main>
           </div>
         </div>
