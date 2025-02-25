@@ -16,7 +16,7 @@ export interface IntegrationProvider {
   name: string;
   description: string;
   icon: string;
-  category: 'communication' | 'compliance' | 'legal' | 'marketing';
+  category: 'communication' | 'compliance' | 'legal' | 'marketing' | 'document' | 'productivity';
   requiredFields: {
     name: string;
     label: string;

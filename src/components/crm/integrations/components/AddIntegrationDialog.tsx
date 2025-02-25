@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { IntegrationProvider } from "../types";
-import { AVAILABLE_INTEGRATIONS } from "../constants";
+import { AVAILABLE_INTEGRATIONS, INTEGRATION_FEATURES } from "../constants";
 import {
   Dialog,
   DialogContent,
