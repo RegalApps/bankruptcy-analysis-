@@ -7,23 +7,41 @@ import { Database } from "@/integrations/supabase/types";
 import { IncomeExpenseData } from "./types";
 import { IncomeSection } from "./form/IncomeSection";
 import { ExpensesSection } from "./form/ExpensesSection";
+import { ClientSelector } from "./form/ClientSelector";
+import { Client } from "./types";
 
 type FinancialRecord = Database["public"]["Tables"]["financial_records"]["Insert"];
 
 export const IncomeExpenseForm = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<IncomeExpenseData>({
     monthly_income: "",
     employment_income: "",
+    primary_salary: "",
+    overtime_bonuses: "",
     other_income: "",
+    freelance_income: "",
+    investment_income: "",
+    rental_income: "",
+    income_frequency: "monthly",
     rent_mortgage: "",
     utilities: "",
+    electricity: "",
+    gas: "",
+    water: "",
+    internet: "",
     food: "",
+    groceries: "",
+    dining_out: "",
     transportation: "",
+    fuel: "",
+    vehicle_maintenance: "",
     insurance: "",
     medical_expenses: "",
     other_expenses: "",
+    expense_frequency: "monthly",
     notes: "",
   });
 
@@ -37,12 +55,40 @@ export const IncomeExpenseForm = () => {
     }));
   };
 
+  const handleFrequencyChange = (type: 'income' | 'expense') => (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [`${type}_frequency`]: value,
+    }));
+  };
+
+  const handleClientSelect = (clientId: string) => {
+    // In a real application, you would fetch the client details from your backend
+    const client = {
+      id: clientId,
+      name: clientId === "1" ? "John Doe" : "Jane Smith",
+      status: "active" as const,
+      last_activity: "2024-03-10",
+    };
+    setSelectedClient(client);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedClient) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a client before submitting",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const financialRecord: FinancialRecord = {
+        client_id: selectedClient.id,
         monthly_income: formData.monthly_income ? parseFloat(formData.monthly_income) : null,
         employment_income: formData.employment_income ? parseFloat(formData.employment_income) : null,
         other_income: formData.other_income ? parseFloat(formData.other_income) : null,
@@ -69,19 +115,36 @@ export const IncomeExpenseForm = () => {
         description: "Financial data submitted successfully",
       });
 
+      // Reset form
       setFormData({
         monthly_income: "",
         employment_income: "",
+        primary_salary: "",
+        overtime_bonuses: "",
         other_income: "",
+        freelance_income: "",
+        investment_income: "",
+        rental_income: "",
+        income_frequency: "monthly",
         rent_mortgage: "",
         utilities: "",
+        electricity: "",
+        gas: "",
+        water: "",
+        internet: "",
         food: "",
+        groceries: "",
+        dining_out: "",
         transportation: "",
+        fuel: "",
+        vehicle_maintenance: "",
         insurance: "",
         medical_expenses: "",
         other_expenses: "",
+        expense_frequency: "monthly",
         notes: "",
       });
+      setSelectedClient(null);
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({
@@ -96,8 +159,20 @@ export const IncomeExpenseForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <IncomeSection formData={formData} onChange={handleChange} />
-      <ExpensesSection formData={formData} onChange={handleChange} />
+      <ClientSelector 
+        selectedClient={selectedClient}
+        onClientSelect={handleClientSelect}
+      />
+      <IncomeSection 
+        formData={formData} 
+        onChange={handleChange}
+        onFrequencyChange={handleFrequencyChange('income')}
+      />
+      <ExpensesSection 
+        formData={formData} 
+        onChange={handleChange}
+        onFrequencyChange={handleFrequencyChange('expense')}
+      />
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? "Submitting..." : "Submit Financial Data"}
       </Button>
