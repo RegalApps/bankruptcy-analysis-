@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FileText, Scale, BookOpen, Search, Upload, Users, Brain, MessageSquare, ScrollText, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { useConversations } from "../../SAFA/hooks/useConversations";
 
 interface SidebarProps {
   activeModule: 'document' | 'legal' | 'help' | 'client';
@@ -13,6 +15,14 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: SidebarProps) => {
+  const { handleSendMessage } = useConversations(activeModule);
+
+  const handleStartConsultation = () => {
+    setActiveModule('client');
+    // This will show the conversation interface
+    handleSendMessage("Hello, I'd like to start a consultation.");
+  };
+
   return (
     <aside className="w-64 border-r bg-muted/30 overflow-y-auto">
       <div className="p-4 space-y-4">
@@ -81,7 +91,12 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
                   <p className="text-sm text-muted-foreground">
                     Enhanced multimodal chatbot with voice, text, and sentiment analysis capabilities. Seamlessly integrates with CRM for real-time client updates and engagement tracking.
                   </p>
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={handleStartConsultation}
+                  >
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Start Consultation
                   </Button>
