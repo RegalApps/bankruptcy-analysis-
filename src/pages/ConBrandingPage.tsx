@@ -13,12 +13,12 @@ import { Sidebar } from "./SAFA/components/Sidebar";
 export const ConBrandingPage = () => {
   const [messages, setMessages] = useState<ChatMessageType[]>([{
     id: '1',
-    content: "Welcome to Secure Files Adaptive Future-forward Assistant. I can help you with document management, OSB regulations, BIA acts, and more. How can I assist you today?",
+    content: "Welcome to Secure Files Adaptive Future-forward Assistant. I can help you with document management, OSB regulations, BIA acts, client engagement, and more. How can I assist you today?",
     type: 'assistant',
     timestamp: new Date()
   }]);
   const [inputMessage, setInputMessage] = useState("");
-  const [activeModule, setActiveModule] = useState<'document' | 'legal' | 'help'>('document');
+  const [activeModule, setActiveModule] = useState<'document' | 'legal' | 'help' | 'client'>('document');
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 

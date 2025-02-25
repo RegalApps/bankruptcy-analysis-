@@ -4,11 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { FileText, Scale, BookOpen, Search, Upload } from "lucide-react";
+import { FileText, Scale, BookOpen, Search, Upload, Users, Brain } from "lucide-react";
 
 interface SidebarProps {
-  activeModule: 'document' | 'legal' | 'help';
-  setActiveModule: (module: 'document' | 'legal' | 'help') => void;
+  activeModule: 'document' | 'legal' | 'help' | 'client';
+  setActiveModule: (module: 'document' | 'legal' | 'help' | 'client') => void;
   onUploadComplete: (documentId: string) => Promise<void>;
 }
 
@@ -28,6 +28,10 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
                 <Scale className="mr-2 h-4 w-4" />
                 Legal & Regulatory
               </TabsTrigger>
+              <TabsTrigger value="client" className="w-full justify-start">
+                <Users className="mr-2 h-4 w-4" />
+                Client Connect
+              </TabsTrigger>
               <TabsTrigger value="help" className="w-full justify-start">
                 <BookOpen className="mr-2 h-4 w-4" />
                 Training & Help
@@ -37,6 +41,23 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
             <TabsContent value="document" className="mt-4">
               <Card className="p-4">
                 <FileUpload onUploadComplete={onUploadComplete} />
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="client" className="mt-4">
+              <Card className="p-4">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-primary" />
+                    <span className="font-medium">AI Assistant</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Enhanced multimodal chatbot with voice, text, and sentiment analysis capabilities.
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Start Conversation
+                  </Button>
+                </div>
               </Card>
             </TabsContent>
 

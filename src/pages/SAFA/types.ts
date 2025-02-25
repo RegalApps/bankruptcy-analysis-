@@ -4,5 +4,5 @@ export interface ChatMessage {
   content: string;
   type: 'user' | 'assistant';
   timestamp: Date;
-  module?: 'document' | 'legal' | 'help';
+  module?: 'document' | 'legal' | 'help' | 'client';
 }
