@@ -81,15 +81,10 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
                   <p className="text-sm text-muted-foreground">
                     Enhanced multimodal chatbot with voice, text, and sentiment analysis capabilities. Seamlessly integrates with CRM for real-time client updates and engagement tracking.
                   </p>
-                  <div className="space-y-2">
-                    <Button variant="outline" size="sm" className="w-full">
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Start Conversation
-                    </Button>
-                    <Button variant="ghost" size="sm" className="w-full">
-                      View Client History
-                    </Button>
-                  </div>
+                  <Button variant="outline" size="sm" className="w-full">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Start Consultation
+                  </Button>
                 </div>
               </Card>
             </TabsContent>
