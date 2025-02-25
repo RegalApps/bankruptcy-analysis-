@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { IntegrationProvider } from "../types";
 import { AVAILABLE_INTEGRATIONS } from "../constants";
@@ -40,16 +39,18 @@ export const AddIntegrationDialog = ({ onSetup, isLoading }: AddIntegrationDialo
           Add Integration
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Add New Integration</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="communication" className="mt-4">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-6 w-full">
             <TabsTrigger value="communication">Communication</TabsTrigger>
-            <TabsTrigger value="compliance">Compliance</TabsTrigger>
+            <TabsTrigger value="document">Document</TabsTrigger>
             <TabsTrigger value="legal">Legal</TabsTrigger>
-            <TabsTrigger value="marketing">Marketing</TabsTrigger>
+            <TabsTrigger value="productivity">Productivity</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="other">Other</TabsTrigger>
           </TabsList>
 
           {Object.entries(
@@ -77,9 +78,21 @@ export const AddIntegrationDialog = ({ onSetup, isLoading }: AddIntegrationDialo
                     )}
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mb-4">
                       {provider.description}
                     </p>
+                    {INTEGRATION_FEATURES[provider.id as keyof typeof INTEGRATION_FEATURES] && (
+                      <div className="text-xs text-muted-foreground">
+                        <strong>Key Features:</strong>
+                        <ul className="list-disc list-inside mt-1">
+                          {INTEGRATION_FEATURES[provider.id as keyof typeof INTEGRATION_FEATURES]
+                            .slice(0, 2)
+                            .map((feature, index) => (
+                              <li key={index}>{feature}</li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
