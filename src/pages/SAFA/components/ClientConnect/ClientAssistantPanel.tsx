@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Client } from "../../types/client";
 import { ClientOverview } from "./ClientOverview";
+import { ConversationView } from "../ConversationView";
+import { useConversations } from "../../hooks/useConversations";
 
 interface ClientAssistantPanelProps {
   onStartConversation: () => void;
@@ -20,7 +22,16 @@ export const ClientAssistantPanel = ({
 }: ClientAssistantPanelProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showConversation, setShowConversation] = useState(false);
+  const [inputMessage, setInputMessage] = useState("");
   const { toast } = useToast();
+  
+  const {
+    categoryMessages,
+    isProcessing,
+    handleSendMessage,
+    loadConversationHistory
+  } = useConversations("client");
 
   const handleStartConversation = async () => {
     if (!selectedClient) {
@@ -52,6 +63,7 @@ export const ClientAssistantPanel = ({
         .update({ last_interaction: new Date().toISOString() })
         .eq('id', selectedClient.id);
 
+      setShowConversation(true);
       onStartConversation();
     } catch (error) {
       console.error('Error starting conversation:', error);
@@ -107,8 +119,48 @@ export const ClientAssistantPanel = ({
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(inputMessage);
+      setInputMessage("");
+    }
+  };
+
+  const handleSend = () => {
+    handleSendMessage(inputMessage);
+    setInputMessage("");
+  };
+
   if (!selectedClient) {
     return <ClientOverview onSelectClient={setSelectedClient} />;
+  }
+
+  if (showConversation) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-3">
+            <Brain className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="text-lg font-semibold">Conversation with {selectedClient.name}</h2>
+              <p className="text-sm text-muted-foreground">AI Client Assistant</p>
+            </div>
+          </div>
+          <Button variant="outline" onClick={() => setShowConversation(false)}>
+            Back to Client
+          </Button>
+        </div>
+        <ConversationView
+          messages={categoryMessages.client}
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSendMessage={handleSend}
+          handleKeyPress={handleKeyPress}
+          isProcessing={isProcessing}
+        />
+      </div>
+    );
   }
 
   return (
