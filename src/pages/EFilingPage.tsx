@@ -41,9 +41,20 @@ export const EFilingPage = () => {
         <MainHeader />
         <main className="flex-1">
           <div className="container py-8">
-            <div className="flex items-center gap-2 mb-6">
-              <FileCheck className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-semibold">E-Filing</h1>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <FileCheck className="h-6 w-6 text-primary" />
+                <h1 className="text-2xl font-semibold">E-Filing</h1>
+              </div>
+              <Button 
+                size="lg"
+                disabled={!isValidated || !selectedDocument}
+                onClick={handleEFile}
+                className="gap-2"
+              >
+                E-File Document
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
             
             <div className="grid gap-6 lg:grid-cols-2">
@@ -67,22 +78,14 @@ export const EFilingPage = () => {
                 {isValidated && (
                   <Card>
                     <CardContent className="pt-6">
-                      <Alert className="mb-4">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Important Notice</AlertTitle>
+                      <Alert>
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <AlertTitle>Ready to E-File</AlertTitle>
                         <AlertDescription>
-                          You will be redirected to the official SSO login page to complete your e-filing.
-                          Please ensure you have reviewed all document details before proceeding.
+                          Document has passed all validation checks and is ready to be filed.
+                          Click the E-File button above to proceed with filing.
                         </AlertDescription>
                       </Alert>
-
-                      <Button 
-                        className="w-full"
-                        onClick={handleEFile}
-                      >
-                        Proceed to E-Filing
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
                     </CardContent>
                   </Card>
                 )}
