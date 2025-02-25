@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,18 +11,89 @@ import { ChatInput } from "./SAFA/components/ChatInput";
 import { Sidebar } from "./SAFA/components/Sidebar";
 import { ClientAssistantPanel } from "./SAFA/components/ClientConnect/ClientAssistantPanel";
 
-export const ConBrandingPage = () => {
-  const [messages, setMessages] = useState<ChatMessageType[]>([{
+const INITIAL_MESSAGES: Record<string, ChatMessageType[]> = {
+  document: [{
     id: '1',
-    content: "Welcome to Secure Files Adaptive Future-forward Assistant. I can help you with document management, OSB regulations, BIA acts, client engagement, and more. How can I assist you today?",
+    content: "Welcome to Document Management. I can help you analyze, organize, and manage your documents. How can I assist you today?",
     type: 'assistant',
-    timestamp: new Date()
-  }]);
+    timestamp: new Date(),
+    module: 'document'
+  }],
+  legal: [{
+    id: '1',
+    content: "Welcome to Legal Advisory. I can help you with OSB regulations, BIA acts, and legal compliance. How can I assist you?",
+    type: 'assistant',
+    timestamp: new Date(),
+    module: 'legal'
+  }],
+  help: [{
+    id: '1',
+    content: "Welcome to Training & Help. I can provide guidance on using the system and best practices. What would you like to learn about?",
+    type: 'assistant',
+    timestamp: new Date(),
+    module: 'help'
+  }],
+  client: [{
+    id: '1',
+    content: "Welcome to Client Connect. I can help you with client engagement and management. How can I assist you today?",
+    type: 'assistant',
+    timestamp: new Date(),
+    module: 'client'
+  }]
+};
+
+export const ConBrandingPage = () => {
+  const [categoryMessages, setCategoryMessages] = useState<Record<string, ChatMessageType[]>>(INITIAL_MESSAGES);
   const [inputMessage, setInputMessage] = useState("");
   const [activeModule, setActiveModule] = useState<'document' | 'legal' | 'help' | 'client'>('document');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Load existing conversations for the active module when it changes
+    loadConversationHistory(activeModule);
+  }, [activeModule]);
+
+  const loadConversationHistory = async (module: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('type', module)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0 && data[0].messages) {
+        setCategoryMessages(prev => ({
+          ...prev,
+          [module]: data[0].messages
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading conversation history:', error);
+    }
+  };
+
+  const saveConversation = async (module: string, messages: ChatMessageType[]) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .insert([
+          {
+            type: module,
+            messages: messages,
+            created_at: new Date().toISOString()
+          }
+        ]);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving conversation:', error);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isProcessing) return;
@@ -35,7 +106,11 @@ export const ConBrandingPage = () => {
       module: activeModule
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    const updatedMessages = [...(categoryMessages[activeModule] || []), newMessage];
+    setCategoryMessages(prev => ({
+      ...prev,
+      [activeModule]: updatedMessages
+    }));
     setInputMessage("");
     setIsProcessing(true);
 
@@ -56,7 +131,14 @@ export const ConBrandingPage = () => {
         module: activeModule
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      const finalMessages = [...updatedMessages, assistantMessage];
+      setCategoryMessages(prev => ({
+        ...prev,
+        [activeModule]: finalMessages
+      }));
+
+      // Save the updated conversation
+      await saveConversation(activeModule, finalMessages);
     } catch (error) {
       console.error('Error processing message:', error);
       toast({
@@ -77,14 +159,8 @@ export const ConBrandingPage = () => {
   };
 
   const handleStartConversation = () => {
-    setMessages([{
-      id: Date.now().toString(),
-      content: "Hello! I'm your AI Client Assistant. I can help you with client engagement, sentiment analysis, and CRM updates. How can I assist you today?",
-      type: 'assistant',
-      timestamp: new Date(),
-      module: 'client'
-    }]);
     setShowChat(true);
+    loadConversationHistory('client');
   };
 
   const handleViewHistory = async () => {
@@ -92,21 +168,21 @@ export const ConBrandingPage = () => {
       const { data, error } = await supabase
         .from('conversations')
         .select('*')
-        .eq('type', 'client_connect')
+        .eq('type', activeModule)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       toast({
         title: "Conversation History",
-        description: `Found ${data.length} previous conversations.`,
+        description: `Found ${data.length} previous conversations for ${activeModule} module.`,
       });
 
-      // You can implement a modal or side panel to show the conversation history
-      // For now, we'll just load the most recent conversation
       if (data && data.length > 0) {
-        const recentMessages = data[0].messages || [];
-        setMessages(recentMessages);
+        setCategoryMessages(prev => ({
+          ...prev,
+          [activeModule]: data[0].messages || INITIAL_MESSAGES[activeModule]
+        }));
         setShowChat(true);
       }
     } catch (error) {
@@ -127,7 +203,12 @@ export const ConBrandingPage = () => {
       timestamp: new Date(),
       module: 'document'
     };
-    setMessages(prev => [...prev, assistantMessage]);
+
+    const updatedMessages = [...(categoryMessages.document || []), assistantMessage];
+    setCategoryMessages(prev => ({
+      ...prev,
+      document: updatedMessages
+    }));
 
     try {
       const response = await supabase.functions.invoke('process-ai-request', {
@@ -146,7 +227,13 @@ export const ConBrandingPage = () => {
         module: 'document'
       };
 
-      setMessages(prev => [...prev, analysisMessage]);
+      const finalMessages = [...updatedMessages, analysisMessage];
+      setCategoryMessages(prev => ({
+        ...prev,
+        document: finalMessages
+      }));
+
+      await saveConversation('document', finalMessages);
     } catch (error) {
       console.error('Error analyzing document:', error);
       toast({
@@ -155,7 +242,7 @@ export const ConBrandingPage = () => {
         description: "Failed to analyze the document. Please try again."
       });
     }
-  }, [toast]);
+  }, [categoryMessages, toast]);
 
   const renderMainContent = () => {
     if (activeModule === 'client' && !showChat) {
@@ -171,7 +258,7 @@ export const ConBrandingPage = () => {
       <>
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-            {messages.map((message) => (
+            {(categoryMessages[activeModule] || []).map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
           </div>
@@ -196,7 +283,10 @@ export const ConBrandingPage = () => {
           <div className="flex h-full">
             <Sidebar 
               activeModule={activeModule}
-              setActiveModule={setActiveModule}
+              setActiveModule={(module) => {
+                setActiveModule(module);
+                setShowChat(module !== 'client');
+              }}
               onUploadComplete={handleFileUploadComplete}
             />
             <main className="flex-1 flex flex-col overflow-hidden">
