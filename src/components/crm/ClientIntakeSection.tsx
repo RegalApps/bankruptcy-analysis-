@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -8,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DocumentUpload } from "./DocumentUpload";
+import { IntelligentScheduling } from "./IntelligentScheduling";
+import { supabase } from "@/lib/supabase";
 import { 
   Mic, 
   User, 
@@ -27,6 +29,7 @@ export const ClientIntakeSection = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isRecording, setIsRecording] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [transcription, setTranscription] = useState("");
   const totalSteps = 4;
 
   // Basic form state
@@ -39,6 +42,43 @@ export const ClientIntakeSection = () => {
     businessType: "",
     notes: ""
   });
+
+  // Voice recognition setup
+  useEffect(() => {
+    let recognition: SpeechRecognition | null = null;
+    
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        
+        setTranscription(transcript);
+        
+        // Try to extract information from voice input
+        if (transcript.toLowerCase().includes('name is')) {
+          const name = transcript.split('name is')[1].trim();
+          setFormData(prev => ({ ...prev, fullName: name }));
+        }
+        // Add more voice input parsing logic here
+      };
+      
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsRecording(false);
+      };
+    }
+
+    return () => {
+      if (recognition) {
+        recognition.stop();
+      }
+    };
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -53,12 +93,25 @@ export const ClientIntakeSection = () => {
 
   const toggleVoiceRecording = () => {
     setIsRecording(!isRecording);
+    
     if (!isRecording) {
-      toast({
-        title: "Voice Input Active",
-        description: "Start speaking to fill out the form...",
-      });
+      if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.start();
+        toast({
+          title: "Voice Input Active",
+          description: "Start speaking to fill out the form...",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Voice recognition is not supported in your browser.",
+        });
+      }
     } else {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.stop();
       toast({
         title: "Voice Input Stopped",
         description: "Voice input has been paused.",
@@ -66,9 +119,43 @@ export const ClientIntakeSection = () => {
     }
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+    } else {
+      // Submit the final form data
+      try {
+        const { data, error } = await supabase.functions.invoke('process-client-intake', {
+          body: { formData, transcription }
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Success!",
+          description: "Client intake form submitted successfully.",
+        });
+
+        // Reset form
+        setFormData({
+          fullName: "",
+          companyName: "",
+          email: "",
+          phone: "",
+          address: "",
+          businessType: "",
+          notes: ""
+        });
+        setCurrentStep(1);
+        setProgress(0);
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to submit form. Please try again.",
+        });
+      }
     }
   };
 
@@ -107,7 +194,12 @@ export const ClientIntakeSection = () => {
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <span>New Client Intake</span>
-            <Button variant="ghost" size="sm" onClick={toggleVoiceRecording}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={toggleVoiceRecording}
+              className={isRecording ? "animate-pulse" : ""}
+            >
               {isRecording ? (
                 <PauseCircle className="h-5 w-5 text-red-500" />
               ) : (
@@ -129,6 +221,14 @@ export const ClientIntakeSection = () => {
 
             {renderBadges()}
             {renderAIAssistant()}
+
+            {isRecording && (
+              <div className="bg-slate-50 p-4 rounded-lg mb-4">
+                <p className="text-sm text-muted-foreground">
+                  Transcribing: {transcription}
+                </p>
+              </div>
+            )}
 
             <Tabs value={`step-${currentStep}`} className="space-y-4">
               <TabsList className="grid grid-cols-4 w-full">
@@ -211,42 +311,16 @@ export const ClientIntakeSection = () => {
               </TabsContent>
 
               <TabsContent value="step-3" className="space-y-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex flex-col items-center justify-center space-y-4 border-2 border-dashed border-gray-200 rounded-lg p-8">
-                      <Upload className="h-8 w-8 text-muted-foreground" />
-                      <div className="text-center space-y-2">
-                        <h3 className="font-medium">Upload Documents</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Drag and drop your files here or click to browse
-                        </p>
-                      </div>
-                      <Button variant="secondary">Select Files</Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <DocumentUpload onUploadComplete={(id) => {
+                  toast({
+                    title: "Document Uploaded",
+                    description: "Your document has been successfully uploaded.",
+                  });
+                }} />
               </TabsContent>
 
               <TabsContent value="step-4" className="space-y-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center space-y-4">
-                      <Calendar className="h-8 w-8 mx-auto text-primary" />
-                      <h3 className="font-medium">Schedule Initial Consultation</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Choose a convenient time for your first meeting
-                      </p>
-                      <Button className="w-full" onClick={() => {
-                        toast({
-                          title: "Success!",
-                          description: "Your consultation has been scheduled.",
-                        });
-                      }}>
-                        View Available Times
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <IntelligentScheduling />
               </TabsContent>
             </Tabs>
 
