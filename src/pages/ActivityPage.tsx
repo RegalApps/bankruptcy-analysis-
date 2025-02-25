@@ -6,7 +6,6 @@ import { IncomeExpenseForm } from "@/components/activity/IncomeExpenseForm";
 import { ActivityDashboard } from "@/components/activity/ActivityDashboard";
 import { DocumentUploadSection } from "@/components/activity/DocumentUploadSection";
 import { PredictiveAnalysis } from "@/components/activity/PredictiveAnalysis";
-import { PlaidLinkSection } from "@/components/activity/PlaidLinkSection";
 
 export const ActivityPage = () => {
   return (
@@ -19,8 +18,6 @@ export const ActivityPage = () => {
             <div className="flex justify-between items-center">
               <h1 className="text-3xl font-bold">Smart Income & Expense Management</h1>
             </div>
-            
-            <PlaidLinkSection />
             
             <Tabs defaultValue="form" className="space-y-4">
               <TabsList>
