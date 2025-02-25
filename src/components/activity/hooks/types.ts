@@ -1,6 +1,8 @@
 
 import { IncomeExpenseData, Client } from "../types";
 
+export { IncomeExpenseData, Client };
+
 export interface HistoricalData {
   currentPeriod: {
     totalIncome: number;
