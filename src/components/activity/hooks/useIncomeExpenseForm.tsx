@@ -1,116 +1,23 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { IncomeExpenseData } from "../types";
-import { Client } from "../types";
-import { Database } from "@/integrations/supabase/types";
+import { IncomeExpenseData, Client } from "../types";
+import { UseIncomeExpenseFormReturn } from "./types";
+import { initialFormData, initialHistoricalData } from "./initialState";
+import { 
+  fetchPreviousMonthData, 
+  submitFinancialRecord,
+  fetchHistoricalData 
+} from "./financialDataService";
 
-type FinancialRecord = Database["public"]["Tables"]["financial_records"]["Insert"];
-
-export const useIncomeExpenseForm = () => {
+export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
   const [previousMonthData, setPreviousMonthData] = useState<IncomeExpenseData | null>(null);
-  const [formData, setFormData] = useState<IncomeExpenseData>({
-    monthly_income: "",
-    employment_income: "",
-    primary_salary: "",
-    overtime_bonuses: "",
-    other_income: "",
-    freelance_income: "",
-    investment_income: "",
-    rental_income: "",
-    income_frequency: "monthly",
-    rent_mortgage: "",
-    utilities: "",
-    electricity: "",
-    gas: "",
-    water: "",
-    internet: "",
-    food: "",
-    groceries: "",
-    dining_out: "",
-    transportation: "",
-    fuel: "",
-    vehicle_maintenance: "",
-    insurance: "",
-    medical_expenses: "",
-    other_expenses: "",
-    expense_frequency: "monthly",
-    notes: "",
-  });
-
-  const [historicalData, setHistoricalData] = useState({
-    currentPeriod: {
-      totalIncome: 0,
-      totalExpenses: 0,
-      surplusIncome: 0,
-    },
-    previousPeriod: {
-      totalIncome: 0,
-      totalExpenses: 0,
-      surplusIncome: 0,
-    },
-  });
-
-  const fetchPreviousMonthData = async (clientId: string) => {
-    const lastMonth = new Date();
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const startOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
-    const endOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
-
-    try {
-      const { data, error } = await supabase
-        .from("financial_records")
-        .select("*")
-        .eq("user_id", clientId)
-        .gte("submission_date", startOfLastMonth.toISOString())
-        .lte("submission_date", endOfLastMonth.toISOString())
-        .order("submission_date", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) {
-        console.error("Error fetching previous month data:", error);
-        return;
-      }
-
-      if (data) {
-        setPreviousMonthData({
-          monthly_income: data.monthly_income?.toString() || "",
-          employment_income: data.employment_income?.toString() || "",
-          other_income: data.other_income?.toString() || "",
-          rent_mortgage: data.rent_mortgage?.toString() || "",
-          utilities: data.utilities?.toString() || "",
-          food: data.food?.toString() || "",
-          transportation: data.transportation?.toString() || "",
-          insurance: data.insurance?.toString() || "",
-          medical_expenses: data.medical_expenses?.toString() || "",
-          other_expenses: data.other_expenses?.toString() || "",
-          income_frequency: "monthly",
-          expense_frequency: "monthly",
-          notes: data.notes || "",
-          primary_salary: "",
-          overtime_bonuses: "",
-          freelance_income: "",
-          investment_income: "",
-          rental_income: "",
-          electricity: "",
-          gas: "",
-          water: "",
-          internet: "",
-          groceries: "",
-          dining_out: "",
-          fuel: "",
-          vehicle_maintenance: "",
-        });
-      }
-    } catch (error) {
-      console.error("Error in fetchPreviousMonthData:", error);
-    }
-  };
+  const [formData, setFormData] = useState<IncomeExpenseData>(initialFormData);
+  const [historicalData, setHistoricalData] = useState(initialHistoricalData);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -129,7 +36,7 @@ export const useIncomeExpenseForm = () => {
     }));
   };
 
-  const handleClientSelect = (clientId: string) => {
+  const handleClientSelect = async (clientId: string) => {
     const client = {
       id: clientId,
       name: clientId === "1" ? "John Doe" : "Jane Smith",
@@ -137,43 +44,20 @@ export const useIncomeExpenseForm = () => {
       last_activity: "2024-03-10",
     };
     setSelectedClient(client);
-    fetchPreviousMonthData(clientId);
+    const previousData = await fetchPreviousMonthData(clientId);
+    setPreviousMonthData(previousData);
   };
 
   useEffect(() => {
-    const fetchHistoricalData = async () => {
+    const loadHistoricalData = async () => {
       if (!selectedClient) return;
-
-      try {
-        const { data: records, error } = await supabase
-          .from("financial_records")
-          .select("*")
-          .eq("user_id", selectedClient.id)
-          .order("submission_date", { ascending: false })
-          .limit(2);
-
-        if (error) throw error;
-
-        if (records && records.length > 0) {
-          setHistoricalData({
-            currentPeriod: {
-              totalIncome: records[0].total_income || 0,
-              totalExpenses: records[0].total_expenses || 0,
-              surplusIncome: records[0].surplus_income || 0,
-            },
-            previousPeriod: {
-              totalIncome: records[1]?.total_income || 0,
-              totalExpenses: records[1]?.total_expenses || 0,
-              surplusIncome: records[1]?.surplus_income || 0,
-            },
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching historical data:", error);
+      const data = await fetchHistoricalData(selectedClient.id);
+      if (data) {
+        setHistoricalData(data);
       }
     };
 
-    fetchHistoricalData();
+    loadHistoricalData();
   }, [selectedClient]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -190,7 +74,7 @@ export const useIncomeExpenseForm = () => {
     setIsSubmitting(true);
 
     try {
-      const financialRecord: FinancialRecord = {
+      const financialRecord = {
         user_id: selectedClient.id,
         monthly_income: formData.monthly_income ? parseFloat(formData.monthly_income) : null,
         employment_income: formData.employment_income ? parseFloat(formData.employment_income) : null,
@@ -207,11 +91,7 @@ export const useIncomeExpenseForm = () => {
         status: "pending_review",
       };
 
-      const { data, error } = await supabase
-        .from("financial_records")
-        .insert([financialRecord])
-        .select()
-        .single();
+      const { data, error } = await submitFinancialRecord(financialRecord);
 
       if (error) throw error;
 
@@ -224,34 +104,7 @@ export const useIncomeExpenseForm = () => {
         description: "Financial data submitted successfully",
       });
 
-      setFormData({
-        monthly_income: "",
-        employment_income: "",
-        primary_salary: "",
-        overtime_bonuses: "",
-        other_income: "",
-        freelance_income: "",
-        investment_income: "",
-        rental_income: "",
-        income_frequency: "monthly",
-        rent_mortgage: "",
-        utilities: "",
-        electricity: "",
-        gas: "",
-        water: "",
-        internet: "",
-        food: "",
-        groceries: "",
-        dining_out: "",
-        transportation: "",
-        fuel: "",
-        vehicle_maintenance: "",
-        insurance: "",
-        medical_expenses: "",
-        other_expenses: "",
-        expense_frequency: "monthly",
-        notes: "",
-      });
+      setFormData(initialFormData);
       setSelectedClient(null);
     } catch (error) {
       console.error("Error submitting form:", error);
