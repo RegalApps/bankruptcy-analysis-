@@ -4,7 +4,9 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { ChatMessage } from "../types";
 
-const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
+type ModuleType = "document" | "legal" | "help" | "client";
+
+const INITIAL_MESSAGES: Record<ModuleType, ChatMessage[]> = {
   document: [{
     id: '1',
     content: "Welcome to Document Management. I can help you analyze, organize, and manage your documents. How can I assist you today?",
@@ -35,12 +37,12 @@ const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
   }]
 };
 
-export const useConversations = (activeModule: string) => {
-  const [categoryMessages, setCategoryMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_MESSAGES);
+export const useConversations = (activeModule: ModuleType) => {
+  const [categoryMessages, setCategoryMessages] = useState<Record<ModuleType, ChatMessage[]>>(INITIAL_MESSAGES);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  const loadConversationHistory = async (module: string) => {
+  const loadConversationHistory = async (module: ModuleType) => {
     try {
       const { data, error } = await supabase
         .from('conversations')
@@ -62,7 +64,7 @@ export const useConversations = (activeModule: string) => {
     }
   };
 
-  const saveConversation = async (module: string, messages: ChatMessage[]) => {
+  const saveConversation = async (module: ModuleType, messages: ChatMessage[]) => {
     try {
       const { error } = await supabase
         .from('conversations')

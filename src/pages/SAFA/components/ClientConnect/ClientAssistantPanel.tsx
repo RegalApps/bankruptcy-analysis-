@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, MessageSquare, History } from "lucide-react";
+import { Brain, MessageSquare, History, Mail, Phone } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
