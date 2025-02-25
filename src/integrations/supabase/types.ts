@@ -330,6 +330,47 @@ export type Database = {
           },
         ]
       }
+      financial_analysis: {
+        Row: {
+          anomaly_scores: Json | null
+          created_at: string | null
+          financial_record_id: string | null
+          id: string
+          ocr_verification_results: Json | null
+          predicted_trends: Json | null
+          updated_at: string | null
+          validation_results: Json | null
+        }
+        Insert: {
+          anomaly_scores?: Json | null
+          created_at?: string | null
+          financial_record_id?: string | null
+          id?: string
+          ocr_verification_results?: Json | null
+          predicted_trends?: Json | null
+          updated_at?: string | null
+          validation_results?: Json | null
+        }
+        Update: {
+          anomaly_scores?: Json | null
+          created_at?: string | null
+          financial_record_id?: string | null
+          id?: string
+          ocr_verification_results?: Json | null
+          predicted_trends?: Json | null
+          updated_at?: string | null
+          validation_results?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_analysis_financial_record_id_fkey"
+            columns: ["financial_record_id"]
+            isOneToOne: false
+            referencedRelation: "financial_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_documents: {
         Row: {
           document_type: string | null
