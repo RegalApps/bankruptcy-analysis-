@@ -1,1 +1,14 @@
+
 project_id = "plxuyxacefgttimodrbp"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[functions]
+[functions.analyze-financial-data]
+verify_jwt = true
+
+[functions.analyze-financial-ocr]
+verify_jwt = true
