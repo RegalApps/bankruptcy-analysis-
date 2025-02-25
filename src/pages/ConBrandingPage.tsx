@@ -77,15 +77,46 @@ export const ConBrandingPage = () => {
   };
 
   const handleStartConversation = () => {
+    setMessages([{
+      id: Date.now().toString(),
+      content: "Hello! I'm your AI Client Assistant. I can help you with client engagement, sentiment analysis, and CRM updates. How can I assist you today?",
+      type: 'assistant',
+      timestamp: new Date(),
+      module: 'client'
+    }]);
     setShowChat(true);
   };
 
-  const handleViewHistory = () => {
-    toast({
-      title: "Viewing Conversation History",
-      description: "Loading previous conversations...",
-    });
-    // Implement conversation history retrieval
+  const handleViewHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('type', 'client_connect')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      toast({
+        title: "Conversation History",
+        description: `Found ${data.length} previous conversations.`,
+      });
+
+      // You can implement a modal or side panel to show the conversation history
+      // For now, we'll just load the most recent conversation
+      if (data && data.length > 0) {
+        const recentMessages = data[0].messages || [];
+        setMessages(recentMessages);
+        setShowChat(true);
+      }
+    } catch (error) {
+      console.error('Error fetching history:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load conversation history."
+      });
+    }
   };
 
   const handleFileUploadComplete = useCallback(async (documentId: string) => {

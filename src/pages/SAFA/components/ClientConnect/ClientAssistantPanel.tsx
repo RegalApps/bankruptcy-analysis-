@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Brain, MessageSquare, History } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/lib/supabase";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClientAssistantPanelProps {
   onStartConversation: () => void;
@@ -13,6 +16,66 @@ export const ClientAssistantPanel = ({
   onStartConversation,
   onViewHistory
 }: ClientAssistantPanelProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleStartConversation = async () => {
+    setIsLoading(true);
+    try {
+      // Initialize conversation in database
+      const { error } = await supabase
+        .from('conversations')
+        .insert([
+          { 
+            type: 'client_connect',
+            status: 'active',
+            created_at: new Date().toISOString()
+          }
+        ]);
+
+      if (error) throw error;
+      
+      onStartConversation();
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to start conversation. Please try again."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleViewHistory = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch conversation history
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('type', 'client_connect')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      onViewHistory();
+      
+      // Store the conversation history in the application state
+      // This will be handled by the parent component through onViewHistory
+    } catch (error) {
+      console.error('Error fetching conversation history:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load conversation history. Please try again."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col p-6 space-y-6">
       <div className="flex items-center gap-3">
@@ -31,20 +94,22 @@ export const ClientAssistantPanel = ({
             <Button 
               size="lg" 
               className="w-full"
-              onClick={onStartConversation}
+              onClick={handleStartConversation}
+              disabled={isLoading}
             >
               <MessageSquare className="mr-2 h-5 w-5" />
-              Start Conversation
+              {isLoading ? "Starting..." : "Start Conversation"}
             </Button>
             
             <Button 
               variant="outline" 
               size="lg" 
               className="w-full"
-              onClick={onViewHistory}
+              onClick={handleViewHistory}
+              disabled={isLoading}
             >
               <History className="mr-2 h-5 w-5" />
-              View Conversation History
+              {isLoading ? "Loading..." : "View Conversation History"}
             </Button>
           </div>
         </div>
