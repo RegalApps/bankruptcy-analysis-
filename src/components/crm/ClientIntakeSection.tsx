@@ -1,24 +1,272 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mic } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Mic, 
+  User, 
+  Building2, 
+  Contact, 
+  Upload,
+  Calendar,
+  Trophy,
+  Bot,
+  ChevronRight,
+  PauseCircle
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export const ClientIntakeSection = () => {
+  const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isRecording, setIsRecording] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const totalSteps = 4;
+
+  // Basic form state
+  const [formData, setFormData] = useState({
+    fullName: "",
+    companyName: "",
+    email: "",
+    phone: "",
+    address: "",
+    businessType: "",
+    notes: ""
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Update progress based on filled fields
+    const filledFields = Object.values(formData).filter(val => val.length > 0).length;
+    setProgress((filledFields / Object.keys(formData).length) * 100);
+  };
+
+  const toggleVoiceRecording = () => {
+    setIsRecording(!isRecording);
+    if (!isRecording) {
+      toast({
+        title: "Voice Input Active",
+        description: "Start speaking to fill out the form...",
+      });
+    } else {
+      toast({
+        title: "Voice Input Stopped",
+        description: "Voice input has been paused.",
+      });
+    }
+  };
+
+  const handleNextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const renderBadges = () => (
+    <div className="flex gap-2 mb-4">
+      <Badge variant="secondary" className="bg-green-100 text-green-800">
+        Progress Badge
+      </Badge>
+      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+        Quick Learner
+      </Badge>
+      <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+        Detail Master
+      </Badge>
+    </div>
+  );
+
+  const renderAIAssistant = () => (
+    <div className="bg-slate-50 p-4 rounded-lg mb-4 flex items-start gap-3">
+      <Bot className="h-6 w-6 text-primary mt-1" />
+      <div>
+        <h4 className="font-medium mb-1">AI Assistant Tips</h4>
+        <p className="text-sm text-muted-foreground">
+          {currentStep === 1 && "Start with your basic information. You can use voice input for faster entry!"}
+          {currentStep === 2 && "Tell us about your business. This helps us tailor our services to your needs."}
+          {currentStep === 3 && "Upload any relevant documents that might help us understand your situation better."}
+          {currentStep === 4 && "Choose a time that works best for your initial consultation."}
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>New Client Intake</CardTitle>
+          <CardTitle className="flex justify-between items-center">
+            <span>New Client Intake</span>
+            <Button variant="ghost" size="sm" onClick={toggleVoiceRecording}>
+              {isRecording ? (
+                <PauseCircle className="h-5 w-5 text-red-500" />
+              ) : (
+                <Mic className="h-5 w-5" />
+              )}
+            </Button>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              Start a new client intake process or continue an existing one.
-            </p>
-            <Button className="gap-2">
-              <Mic className="h-4 w-4" />
-              Start Voice Input
-            </Button>
+          <div className="space-y-6">
+            {/* Progress Indicator */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Progress</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+              <Progress value={progress} className="h-2" />
+            </div>
+
+            {renderBadges()}
+            {renderAIAssistant()}
+
+            <Tabs value={`step-${currentStep}`} className="space-y-4">
+              <TabsList className="grid grid-cols-4 w-full">
+                <TabsTrigger value="step-1">Basic Info</TabsTrigger>
+                <TabsTrigger value="step-2">Business</TabsTrigger>
+                <TabsTrigger value="step-3">Documents</TabsTrigger>
+                <TabsTrigger value="step-4">Schedule</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="step-1" className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="step-2" className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="companyName">Company Name</Label>
+                    <Input
+                      id="companyName"
+                      name="companyName"
+                      value={formData.companyName}
+                      onChange={handleInputChange}
+                      placeholder="Enter company name"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="businessType">Business Type</Label>
+                    <Input
+                      id="businessType"
+                      name="businessType"
+                      value={formData.businessType}
+                      onChange={handleInputChange}
+                      placeholder="Enter business type"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="notes">Additional Notes</Label>
+                    <Textarea
+                      id="notes"
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleInputChange}
+                      placeholder="Any additional information..."
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="step-3" className="space-y-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col items-center justify-center space-y-4 border-2 border-dashed border-gray-200 rounded-lg p-8">
+                      <Upload className="h-8 w-8 text-muted-foreground" />
+                      <div className="text-center space-y-2">
+                        <h3 className="font-medium">Upload Documents</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Drag and drop your files here or click to browse
+                        </p>
+                      </div>
+                      <Button variant="secondary">Select Files</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="step-4" className="space-y-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center space-y-4">
+                      <Calendar className="h-8 w-8 mx-auto text-primary" />
+                      <h3 className="font-medium">Schedule Initial Consultation</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Choose a convenient time for your first meeting
+                      </p>
+                      <Button className="w-full" onClick={() => {
+                        toast({
+                          title: "Success!",
+                          description: "Your consultation has been scheduled.",
+                        });
+                      }}>
+                        View Available Times
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex justify-between pt-4">
+              <Button
+                variant="outline"
+                disabled={currentStep === 1}
+                onClick={() => setCurrentStep(currentStep - 1)}
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={handleNextStep}
+                disabled={currentStep === totalSteps}
+                className="gap-2"
+              >
+                {currentStep === totalSteps ? "Complete" : "Next"}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
