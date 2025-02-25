@@ -28,7 +28,16 @@ export const IntegrationsSection = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setActiveIntegrations(data || []);
+      
+      // Cast the data to match our APIIntegration interface
+      const typedIntegrations: APIIntegration[] = data?.map(integration => ({
+        ...integration,
+        metadata: integration.metadata as Record<string, any> ?? {},
+        settings: integration.settings as Record<string, any> ?? {},
+        last_sync_at: integration.last_sync_at ?? null,
+      })) ?? [];
+
+      setActiveIntegrations(typedIntegrations);
     } catch (error) {
       console.error('Error fetching integrations:', error);
       toast({
