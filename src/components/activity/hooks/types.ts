@@ -3,6 +3,8 @@ import { IncomeExpenseData, Client } from "../types";
 
 export type { IncomeExpenseData, Client };
 
+export type PeriodType = 'current' | 'previous';
+
 export interface HistoricalData {
   currentPeriod: {
     totalIncome: number;
@@ -23,8 +25,10 @@ export interface UseIncomeExpenseFormReturn {
   currentRecordId: string | null;
   historicalData: HistoricalData;
   previousMonthData: IncomeExpenseData | null;
+  selectedPeriod: PeriodType;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleFrequencyChange: (type: 'income' | 'expense') => (value: string) => void;
   handleClientSelect: (clientId: string) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
+  handlePeriodChange: (period: PeriodType) => void;
 }

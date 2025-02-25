@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { IncomeExpenseData, Client } from "../types";
-import { UseIncomeExpenseFormReturn } from "./types";
+import { UseIncomeExpenseFormReturn, PeriodType } from "./types";
 import { initialFormData, initialHistoricalData } from "./initialState";
 import { 
   fetchPreviousMonthData, 
@@ -18,6 +18,7 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
   const [previousMonthData, setPreviousMonthData] = useState<IncomeExpenseData | null>(null);
   const [formData, setFormData] = useState<IncomeExpenseData>(initialFormData);
   const [historicalData, setHistoricalData] = useState(initialHistoricalData);
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('current');
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -34,6 +35,10 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
       ...prev,
       [`${type}_frequency`]: value,
     }));
+  };
+
+  const handlePeriodChange = (period: PeriodType) => {
+    setSelectedPeriod(period);
   };
 
   const handleClientSelect = async (clientId: string) => {
@@ -74,6 +79,12 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
     setIsSubmitting(true);
 
     try {
+      // Calculate submission date based on selected period
+      const submissionDate = new Date();
+      if (selectedPeriod === 'previous') {
+        submissionDate.setMonth(submissionDate.getMonth() - 1);
+      }
+
       const financialRecord = {
         user_id: selectedClient.id,
         monthly_income: formData.monthly_income ? parseFloat(formData.monthly_income) : null,
@@ -87,8 +98,9 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
         medical_expenses: formData.medical_expenses ? parseFloat(formData.medical_expenses) : null,
         other_expenses: formData.other_expenses ? parseFloat(formData.other_expenses) : null,
         notes: formData.notes,
-        submission_date: new Date().toISOString(),
+        submission_date: submissionDate.toISOString(),
         status: "pending_review",
+        period_type: selectedPeriod,
       };
 
       const { data, error } = await submitFinancialRecord(financialRecord);
@@ -101,11 +113,12 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
 
       toast({
         title: "Success",
-        description: "Financial data submitted successfully",
+        description: `Financial data submitted successfully for ${selectedPeriod} month`,
       });
 
       setFormData(initialFormData);
       setSelectedClient(null);
+      setSelectedPeriod('current');
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({
@@ -125,9 +138,11 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
     currentRecordId,
     historicalData,
     previousMonthData,
+    selectedPeriod,
     handleChange,
     handleFrequencyChange,
     handleClientSelect,
     handleSubmit,
+    handlePeriodChange,
   };
 };
