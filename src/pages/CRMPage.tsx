@@ -8,7 +8,6 @@ import { ClientDashboard } from "@/components/crm/ClientDashboard";
 import { IntelligentScheduling } from "@/components/crm/IntelligentScheduling";
 import { DocumentVault } from "@/components/crm/DocumentVault";
 import { AIWorkflow } from "@/components/crm/AIWorkflow";
-import { IntegrationsSection } from "@/components/crm/integrations/IntegrationsSection";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 
@@ -81,7 +80,6 @@ export const CRMPage = () => {
               <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
               <TabsTrigger value="documents">Document Vault</TabsTrigger>
               <TabsTrigger value="workflow">AI Workflow</TabsTrigger>
-              <TabsTrigger value="integrations">Integrations</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="space-y-4">
               <ClientDashboard />
@@ -97,9 +95,6 @@ export const CRMPage = () => {
             </TabsContent>
             <TabsContent value="workflow" className="space-y-4">
               <AIWorkflow />
-            </TabsContent>
-            <TabsContent value="integrations" className="space-y-4">
-              <IntegrationsSection />
             </TabsContent>
           </Tabs>
         </div>
