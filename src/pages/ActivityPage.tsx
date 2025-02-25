@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IncomeExpenseForm } from "@/components/activity/IncomeExpenseForm";
 import { ActivityDashboard } from "@/components/activity/ActivityDashboard";
 import { DocumentUploadSection } from "@/components/activity/DocumentUploadSection";
+import { PredictiveAnalysis } from "@/components/activity/PredictiveAnalysis";
 
 export const ActivityPage = () => {
   return (
@@ -22,6 +23,7 @@ export const ActivityPage = () => {
               <TabsList>
                 <TabsTrigger value="form">Income & Expense Form</TabsTrigger>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="predictive">Predictive Analysis</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
               </TabsList>
 
@@ -31,6 +33,10 @@ export const ActivityPage = () => {
 
               <TabsContent value="dashboard">
                 <ActivityDashboard />
+              </TabsContent>
+
+              <TabsContent value="predictive">
+                <PredictiveAnalysis />
               </TabsContent>
 
               <TabsContent value="documents">
