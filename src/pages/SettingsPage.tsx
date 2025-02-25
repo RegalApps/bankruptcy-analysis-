@@ -8,9 +8,30 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+
+interface UserSettings {
+  timeZone: string;
+  language: string;
+  defaultCurrency: string;
+  autoSave: boolean;
+  compactView: boolean;
+  documentSync: boolean;
+  twoFactorEnabled: boolean;
+  sessionTimeout: string;
+  ipWhitelisting: boolean;
+  loginNotifications: boolean;
+  documentEncryption: boolean;
+  passwordExpiry: string;
+}
 
 export const SettingsPage = () => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // General settings states
   const [timeZone, setTimeZone] = useState("UTC");
   const [language, setLanguage] = useState("en");
   const [autoSave, setAutoSave] = useState(true);
@@ -18,12 +39,117 @@ export const SettingsPage = () => {
   const [documentSync, setDocumentSync] = useState(true);
   const [defaultCurrency, setDefaultCurrency] = useState("CAD");
 
+  // Security states
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState("30");
   const [ipWhitelisting, setIpWhitelisting] = useState(false);
   const [loginNotifications, setLoginNotifications] = useState(true);
   const [documentEncryption, setDocumentEncryption] = useState(true);
   const [passwordExpiry, setPasswordExpiry] = useState("90");
+
+  // Load settings on component mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        throw new Error("No authenticated user");
+      }
+
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', session.session.user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        // Update all state values with stored settings
+        setTimeZone(data.timeZone || "UTC");
+        setLanguage(data.language || "en");
+        setDefaultCurrency(data.defaultCurrency || "CAD");
+        setAutoSave(data.autoSave ?? true);
+        setCompactView(data.compactView ?? false);
+        setDocumentSync(data.documentSync ?? true);
+        setTwoFactorEnabled(data.twoFactorEnabled ?? false);
+        setSessionTimeout(data.sessionTimeout || "30");
+        setIpWhitelisting(data.ipWhitelisting ?? false);
+        setLoginNotifications(data.loginNotifications ?? true);
+        setDocumentEncryption(data.documentEncryption ?? true);
+        setPasswordExpiry(data.passwordExpiry || "90");
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load settings. Please try again.",
+      });
+    }
+  };
+
+  const saveSettings = async (section: "general" | "security") => {
+    setIsLoading(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        throw new Error("No authenticated user");
+      }
+
+      const settings: Partial<UserSettings> = section === "general" 
+        ? {
+            timeZone,
+            language,
+            defaultCurrency,
+            autoSave,
+            compactView,
+            documentSync,
+          }
+        : {
+            twoFactorEnabled,
+            sessionTimeout,
+            ipWhitelisting,
+            loginNotifications,
+            documentEncryption,
+            passwordExpiry,
+          };
+
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: session.session.user.id,
+          ...settings,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${section === "general" ? "General" : "Security"} settings saved successfully.`,
+      });
+
+      // Implement specific features based on new settings
+      if (section === "security" && twoFactorEnabled) {
+        // Here you would typically initiate 2FA setup
+        console.log("2FA enabled - setup required");
+      }
+
+    } catch (error) {
+      console.error(`Error saving ${section} settings:`, error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to save ${section} settings. Please try again.`,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -46,6 +172,7 @@ export const SettingsPage = () => {
                 <TabsTrigger value="security">Security</TabsTrigger>
               </TabsList>
 
+              {/* General Tab Content */}
               <TabsContent value="general">
                 <Card className="p-6">
                   <div className="space-y-8">
@@ -152,8 +279,11 @@ export const SettingsPage = () => {
 
                       {/* Save Button */}
                       <div className="mt-8 flex justify-end">
-                        <Button>
-                          Save Changes
+                        <Button 
+                          onClick={() => saveSettings("general")}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? "Saving..." : "Save Changes"}
                         </Button>
                       </div>
                     </div>
@@ -165,6 +295,7 @@ export const SettingsPage = () => {
                 <IntegrationsSection />
               </TabsContent>
 
+              {/* Security Tab Content */}
               <TabsContent value="security">
                 <Card className="p-6">
                   <div className="space-y-8">
@@ -285,8 +416,11 @@ export const SettingsPage = () => {
 
                       {/* Save Button */}
                       <div className="mt-8 flex justify-end">
-                        <Button>
-                          Save Security Settings
+                        <Button 
+                          onClick={() => saveSettings("security")}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? "Saving..." : "Save Security Settings"}
                         </Button>
                       </div>
                     </div>
