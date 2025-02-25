@@ -9,6 +9,9 @@ export interface APIIntegration {
   metadata: Record<string, any>;
   last_sync_at: string | null;
   settings: Record<string, any>;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface IntegrationProvider {
@@ -23,4 +26,20 @@ export interface IntegrationProvider {
     type: 'text' | 'password' | 'select';
     options?: string[];
   }[];
+}
+
+export type IntegrationAction = 
+  | 'setup'
+  | 'test'
+  | 'sync'
+  | 'delete'
+  | 'update'
+  | 'refresh'
+  | 'validate';
+
+export interface ProviderOperation {
+  provider: string;
+  action: IntegrationAction;
+  integrationId: string;
+  settings?: Record<string, any>;
 }
