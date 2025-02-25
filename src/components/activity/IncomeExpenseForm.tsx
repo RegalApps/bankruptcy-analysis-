@@ -14,6 +14,7 @@ export const IncomeExpenseForm = () => {
     selectedClient,
     currentRecordId,
     historicalData,
+    previousMonthData,
     handleChange,
     handleFrequencyChange,
     handleClientSelect,
@@ -44,6 +45,7 @@ export const IncomeExpenseForm = () => {
         formData={formData} 
         onChange={handleChange}
         onFrequencyChange={handleFrequencyChange('expense')}
+        previousMonthData={previousMonthData}
       />
       
       <DocumentUploadSection financialRecordId={currentRecordId} />

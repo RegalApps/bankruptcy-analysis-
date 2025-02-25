@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,7 @@ export const useIncomeExpenseForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
+  const [previousMonthData, setPreviousMonthData] = useState<IncomeExpenseData | null>(null);
   const [formData, setFormData] = useState<IncomeExpenseData>({
     monthly_income: "",
     employment_income: "",
@@ -55,6 +55,63 @@ export const useIncomeExpenseForm = () => {
     },
   });
 
+  const fetchPreviousMonthData = async (clientId: string) => {
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    const startOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
+    const endOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
+
+    try {
+      const { data, error } = await supabase
+        .from("financial_records")
+        .select("*")
+        .eq("user_id", clientId)
+        .gte("submission_date", startOfLastMonth.toISOString())
+        .lte("submission_date", endOfLastMonth.toISOString())
+        .order("submission_date", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error("Error fetching previous month data:", error);
+        return;
+      }
+
+      if (data) {
+        setPreviousMonthData({
+          monthly_income: data.monthly_income?.toString() || "",
+          employment_income: data.employment_income?.toString() || "",
+          other_income: data.other_income?.toString() || "",
+          rent_mortgage: data.rent_mortgage?.toString() || "",
+          utilities: data.utilities?.toString() || "",
+          food: data.food?.toString() || "",
+          transportation: data.transportation?.toString() || "",
+          insurance: data.insurance?.toString() || "",
+          medical_expenses: data.medical_expenses?.toString() || "",
+          other_expenses: data.other_expenses?.toString() || "",
+          income_frequency: "monthly",
+          expense_frequency: "monthly",
+          notes: data.notes || "",
+          primary_salary: "",
+          overtime_bonuses: "",
+          freelance_income: "",
+          investment_income: "",
+          rental_income: "",
+          electricity: "",
+          gas: "",
+          water: "",
+          internet: "",
+          groceries: "",
+          dining_out: "",
+          fuel: "",
+          vehicle_maintenance: "",
+        });
+      }
+    } catch (error) {
+      console.error("Error in fetchPreviousMonthData:", error);
+    }
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -80,6 +137,7 @@ export const useIncomeExpenseForm = () => {
       last_activity: "2024-03-10",
     };
     setSelectedClient(client);
+    fetchPreviousMonthData(clientId);
   };
 
   useEffect(() => {
@@ -213,6 +271,7 @@ export const useIncomeExpenseForm = () => {
     selectedClient,
     currentRecordId,
     historicalData,
+    previousMonthData,
     handleChange,
     handleFrequencyChange,
     handleClientSelect,
