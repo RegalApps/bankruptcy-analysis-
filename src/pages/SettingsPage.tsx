@@ -1,4 +1,3 @@
-
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,7 +16,7 @@ export const SettingsPage = () => {
   const [autoSave, setAutoSave] = useState(true);
   const [compactView, setCompactView] = useState(false);
   const [documentSync, setDocumentSync] = useState(true);
-  const [defaultCurrency, setDefaultCurrency] = useState("USD");
+  const [defaultCurrency, setDefaultCurrency] = useState("CAD");
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -86,10 +85,10 @@ export const SettingsPage = () => {
                                 <SelectValue placeholder="Select currency" />
                               </SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="CAD">CAD ($)</SelectItem>
                                 <SelectItem value="USD">USD ($)</SelectItem>
                                 <SelectItem value="EUR">EUR (€)</SelectItem>
                                 <SelectItem value="GBP">GBP (£)</SelectItem>
-                                <SelectItem value="CAD">CAD ($)</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
