@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
-import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
@@ -42,11 +41,12 @@ export const ProfilePage = () => {
     handlePreferencesUpdate
   } = usePreferences();
 
+  // Only update when debounced profile changes and we're not already updating
   useEffect(() => {
-    if (debouncedProfile && profile && !isUpdatingProfile) {
+    if (debouncedProfile && profile && !isUpdatingProfile && JSON.stringify(debouncedProfile) !== JSON.stringify(profile)) {
       updateProfile.mutate(debouncedProfile);
     }
-  }, [debouncedProfile]);
+  }, [debouncedProfile, profile, isUpdatingProfile]);
 
   const handleProfileChange = (field: keyof typeof profile, value: string) => {
     if (profile) {
@@ -181,7 +181,6 @@ export const ProfilePage = () => {
           )}
         </main>
       </div>
-      <Toaster />
     </div>
   );
 };
