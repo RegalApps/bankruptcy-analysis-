@@ -330,9 +330,59 @@ export type Database = {
           },
         ]
       }
+      financial_documents: {
+        Row: {
+          document_type: string | null
+          financial_record_id: string | null
+          id: string
+          metadata: Json | null
+          storage_path: string | null
+          title: string
+          upload_date: string | null
+          user_id: string | null
+        }
+        Insert: {
+          document_type?: string | null
+          financial_record_id?: string | null
+          id?: string
+          metadata?: Json | null
+          storage_path?: string | null
+          title: string
+          upload_date?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          document_type?: string | null
+          financial_record_id?: string | null
+          id?: string
+          metadata?: Json | null
+          storage_path?: string | null
+          title?: string
+          upload_date?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_documents_financial_record_id_fkey"
+            columns: ["financial_record_id"]
+            isOneToOne: false
+            referencedRelation: "financial_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "available_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_records: {
         Row: {
+          comparison_notes: string | null
           created_at: string | null
+          discrepancy_flags: Json | null
           employment_income: number | null
           food: number | null
           id: string
@@ -342,18 +392,22 @@ export type Database = {
           notes: string | null
           other_expenses: number | null
           other_income: number | null
+          period_type: string | null
           rent_mortgage: number | null
           status: string | null
           submission_date: string | null
           surplus_income: number | null
           total_expenses: number | null
+          total_income: number | null
           transportation: number | null
           updated_at: string | null
           user_id: string | null
           utilities: number | null
         }
         Insert: {
+          comparison_notes?: string | null
           created_at?: string | null
+          discrepancy_flags?: Json | null
           employment_income?: number | null
           food?: number | null
           id?: string
@@ -363,18 +417,22 @@ export type Database = {
           notes?: string | null
           other_expenses?: number | null
           other_income?: number | null
+          period_type?: string | null
           rent_mortgage?: number | null
           status?: string | null
           submission_date?: string | null
           surplus_income?: number | null
           total_expenses?: number | null
+          total_income?: number | null
           transportation?: number | null
           updated_at?: string | null
           user_id?: string | null
           utilities?: number | null
         }
         Update: {
+          comparison_notes?: string | null
           created_at?: string | null
+          discrepancy_flags?: Json | null
           employment_income?: number | null
           food?: number | null
           id?: string
@@ -384,11 +442,13 @@ export type Database = {
           notes?: string | null
           other_expenses?: number | null
           other_income?: number | null
+          period_type?: string | null
           rent_mortgage?: number | null
           status?: string | null
           submission_date?: string | null
           surplus_income?: number | null
           total_expenses?: number | null
+          total_income?: number | null
           transportation?: number | null
           updated_at?: string | null
           user_id?: string | null
