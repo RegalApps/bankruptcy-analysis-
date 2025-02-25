@@ -24,7 +24,6 @@ export const SettingsPage = () => {
               <TabsList className="w-full justify-start">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="integrations">Integrations</TabsTrigger>
-                <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 <TabsTrigger value="security">Security</TabsTrigger>
               </TabsList>
 
@@ -37,13 +36,6 @@ export const SettingsPage = () => {
 
               <TabsContent value="integrations">
                 <IntegrationsSection />
-              </TabsContent>
-
-              <TabsContent value="notifications">
-                <Card className="p-6">
-                  <h2 className="text-lg font-semibold mb-4">Notification Preferences</h2>
-                  {/* Notification settings content will go here */}
-                </Card>
               </TabsContent>
 
               <TabsContent value="security">
