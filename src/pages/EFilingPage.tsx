@@ -50,6 +50,7 @@ export const EFilingPage = () => {
                 size="lg"
                 disabled={!isValidated || !selectedDocument}
                 onClick={handleEFile}
+                className="gradient-button"
               >
                 E-File
               </Button>
