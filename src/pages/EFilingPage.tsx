@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileCheck, ArrowRight, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { FileCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -50,10 +50,8 @@ export const EFilingPage = () => {
                 size="lg"
                 disabled={!isValidated || !selectedDocument}
                 onClick={handleEFile}
-                className="gap-2"
               >
-                E-File Document
-                <ArrowRight className="h-4 w-4" />
+                E-File
               </Button>
             </div>
             
