@@ -1,4 +1,3 @@
-
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { Toaster } from "@/components/ui/toaster";
@@ -37,7 +36,8 @@ export const ProfilePage = () => {
     confirmPassword: '',
   });
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const debouncedProfile = useDebounce(profile, 500);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const debouncedProfile = useDebounce(profile, 1000);
 
   // Fetch user profile
   const { isLoading: isLoadingProfile } = useQuery({
@@ -75,6 +75,9 @@ export const ProfilePage = () => {
   // Update profile mutation
   const updateProfile = useMutation({
     mutationFn: async (updatedProfile: Partial<UserProfile>) => {
+      if (isUpdatingProfile) return; // Prevent multiple simultaneous updates
+      setIsUpdatingProfile(true);
+      
       const { error } = await supabase
         .from('profiles')
         .update(updatedProfile)
@@ -88,6 +91,7 @@ export const ProfilePage = () => {
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
+      setIsUpdatingProfile(false);
     },
     onError: (error) => {
       toast({
@@ -95,38 +99,13 @@ export const ProfilePage = () => {
         description: error.message,
         variant: "destructive",
       });
+      setIsUpdatingProfile(false);
     },
   });
 
-  // Update preferences mutation
-  const updatePreferences = useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: boolean }) => {
-      const { error } = await supabase
-        .from('user_preferences')
-        .update({ [key]: value })
-        .eq('user_id', profile?.id);
-
-      if (error) throw error;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
-      toast({
-        title: "Preferences updated",
-        description: `${variables.key === 'dark_mode' ? 'Theme' : 'Email notifications'} preference has been updated.`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error updating preferences",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Handle profile updates
+  // Effect to handle debounced profile updates
   useEffect(() => {
-    if (debouncedProfile && profile) {
+    if (debouncedProfile && profile && !isUpdatingProfile) {
       updateProfile.mutate(debouncedProfile);
     }
   }, [debouncedProfile]);
@@ -188,6 +167,29 @@ export const ProfilePage = () => {
   const handleAvatarUpload = (url: string) => {
     if (profile) {
       handleProfileChange('avatar_url', url);
+    }
+  };
+
+  const handlePreferencesUpdate = async ({ key, value }: { key: string; value: boolean }) => {
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .update({ [key]: value })
+        .eq('user_id', profile?.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+      toast({
+        title: "Preferences updated",
+        description: `${key === 'dark_mode' ? 'Theme' : 'Email notifications'} preference has been updated.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating preferences",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -309,11 +311,11 @@ export const ProfilePage = () => {
                     </div>
                     <Switch
                       checked={preferences?.email_notifications ?? false}
-                      onCheckedChange={(checked) => updatePreferences.mutate({
+                      onCheckedChange={(checked) => handlePreferencesUpdate({
                         key: 'email_notifications',
                         value: checked
                       })}
-                      disabled={isLoading || updatePreferences.isPending}
+                      disabled={isLoading}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -325,11 +327,11 @@ export const ProfilePage = () => {
                     </div>
                     <Switch
                       checked={preferences?.dark_mode ?? false}
-                      onCheckedChange={(checked) => updatePreferences.mutate({
+                      onCheckedChange={(checked) => handlePreferencesUpdate({
                         key: 'dark_mode',
                         value: checked
                       })}
-                      disabled={isLoading || updatePreferences.isPending}
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -342,3 +344,4 @@ export const ProfilePage = () => {
     </div>
   );
 };
+
