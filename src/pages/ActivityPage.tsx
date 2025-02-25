@@ -4,7 +4,6 @@ import { MainSidebar } from "@/components/layout/MainSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IncomeExpenseForm } from "@/components/activity/IncomeExpenseForm";
 import { ActivityDashboard } from "@/components/activity/ActivityDashboard";
-import { DocumentUploadSection } from "@/components/activity/DocumentUploadSection";
 import { PredictiveAnalysis } from "@/components/activity/PredictiveAnalysis";
 
 export const ActivityPage = () => {
@@ -24,7 +23,6 @@ export const ActivityPage = () => {
                 <TabsTrigger value="form">Income & Expense Form</TabsTrigger>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="predictive">Predictive Analysis</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
               </TabsList>
 
               <TabsContent value="form" className="space-y-4">
@@ -37,10 +35,6 @@ export const ActivityPage = () => {
 
               <TabsContent value="predictive">
                 <PredictiveAnalysis />
-              </TabsContent>
-
-              <TabsContent value="documents">
-                <DocumentUploadSection />
               </TabsContent>
             </Tabs>
           </div>
