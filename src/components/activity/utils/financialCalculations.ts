@@ -25,7 +25,8 @@ export const detectAnomalies = (data: any[]) => {
     const zScore = Math.abs((record.surplus_income - mean) / stdDev);
     return {
       ...record,
-      isAnomaly: zScore > 2
+      isAnomaly: zScore > 2,
+      severity: zScore > 3 ? 'high' : 'medium'
     };
   });
 };
@@ -38,8 +39,8 @@ export const calculateForecast = (data: any[], alpha: number = 0.3) => {
     forecast[i] = alpha * data[i-1].surplus_income + (1 - alpha) * forecast[i-1];
   }
 
-  // Add 3 months forecast
-  for (let i = 0; i < 3; i++) {
+  // Add 6 months forecast
+  for (let i = 0; i < 6; i++) {
     forecast.push(alpha * forecast[forecast.length - 1] + 
                  (1 - alpha) * forecast[forecast.length - 2]);
   }

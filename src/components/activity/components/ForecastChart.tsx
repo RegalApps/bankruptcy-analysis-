@@ -11,7 +11,7 @@ export const ForecastChart = ({ processedData, isLoading }: ForecastChartProps) 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Surplus Income Forecast</CardTitle>
+        <CardTitle>Surplus Income Forecast (6-Month Projection)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[400px]">
@@ -28,7 +28,10 @@ export const ForecastChart = ({ processedData, isLoading }: ForecastChartProps) 
                   tickFormatter={(date) => new Date(date).toLocaleDateString()}
                 />
                 <YAxis />
-                <Tooltip />
+                <Tooltip
+                  labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                  formatter={(value: number) => [`$${value.toFixed(2)}`, "Amount"]}
+                />
                 <Legend />
                 <Line
                   type="monotone"
@@ -36,6 +39,7 @@ export const ForecastChart = ({ processedData, isLoading }: ForecastChartProps) 
                   stroke="#8884d8"
                   name="Actual Surplus"
                   dot={(props: any) => {
+                    if (processedData[props.index]?.isForecast) return null;
                     const isAnomaly = processedData[props.index]?.isAnomaly;
                     return isAnomaly ? (
                       <circle
