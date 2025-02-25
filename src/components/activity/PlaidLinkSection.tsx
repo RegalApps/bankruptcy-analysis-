@@ -3,8 +3,20 @@ import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Bank } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+// Add Plaid types
+declare global {
+  interface Window {
+    Plaid: {
+      create: (config: any) => Promise<{
+        open: () => void;
+        exit: () => void;
+      }>;
+    };
+  }
+}
 
 export const PlaidLinkSection = () => {
   const [isLinking, setIsLinking] = useState(false);
@@ -53,7 +65,7 @@ export const PlaidLinkSection = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bank className="h-5 w-5" />
+          <CreditCard className="h-5 w-5" />
           Link Bank Account
         </CardTitle>
         <CardDescription>
