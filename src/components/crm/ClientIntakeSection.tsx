@@ -1,39 +1,31 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { DocumentUpload } from "./DocumentUpload";
-import { IntelligentScheduling } from "./IntelligentScheduling";
-import { supabase } from "@/lib/supabase";
 import { 
   Mic, 
-  User, 
-  Building2, 
-  Contact, 
-  Upload,
-  Calendar,
-  Trophy,
   Bot,
   ChevronRight,
   PauseCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useVoiceRecognition } from "@/hooks/useVoiceRecognition";
+import { FormSteps } from "./FormSteps";
+import { FormData } from "./types";
+import { supabase } from "@/lib/supabase";
 
 export const ClientIntakeSection = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isRecording, setIsRecording] = useState(false);
   const [progress, setProgress] = useState(0);
   const [transcription, setTranscription] = useState("");
   const totalSteps = 4;
 
   // Basic form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     fullName: "",
     companyName: "",
     email: "",
@@ -43,42 +35,17 @@ export const ClientIntakeSection = () => {
     notes: ""
   });
 
-  // Voice recognition setup
-  useEffect(() => {
-    let recognition: SpeechRecognition | null = null;
+  const handleTranscriptionUpdate = (text: string) => {
+    setTranscription(text);
     
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      
-      recognition.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0].transcript)
-          .join('');
-        
-        setTranscription(transcript);
-        
-        // Try to extract information from voice input
-        if (transcript.toLowerCase().includes('name is')) {
-          const name = transcript.split('name is')[1].trim();
-          setFormData(prev => ({ ...prev, fullName: name }));
-        }
-        // Add more voice input parsing logic here
-      };
-      
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        setIsRecording(false);
-      };
+    // Try to extract information from voice input
+    if (text.toLowerCase().includes('name is')) {
+      const name = text.split('name is')[1].trim();
+      setFormData(prev => ({ ...prev, fullName: name }));
     }
+  };
 
-    return () => {
-      if (recognition) {
-        recognition.stop();
-      }
-    };
-  }, []);
+  const { isRecording, toggleRecording } = useVoiceRecognition(handleTranscriptionUpdate);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -89,34 +56,6 @@ export const ClientIntakeSection = () => {
     // Update progress based on filled fields
     const filledFields = Object.values(formData).filter(val => val.length > 0).length;
     setProgress((filledFields / Object.keys(formData).length) * 100);
-  };
-
-  const toggleVoiceRecording = () => {
-    setIsRecording(!isRecording);
-    
-    if (!isRecording) {
-      if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.start();
-        toast({
-          title: "Voice Input Active",
-          description: "Start speaking to fill out the form...",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Voice recognition is not supported in your browser.",
-        });
-      }
-    } else {
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.stop();
-      toast({
-        title: "Voice Input Stopped",
-        description: "Voice input has been paused.",
-      });
-    }
   };
 
   const handleNextStep = async () => {
@@ -197,7 +136,7 @@ export const ClientIntakeSection = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={toggleVoiceRecording}
+              onClick={toggleRecording}
               className={isRecording ? "animate-pulse" : ""}
             >
               {isRecording ? (
@@ -210,7 +149,6 @@ export const ClientIntakeSection = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {/* Progress Indicator */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Progress</span>
@@ -238,90 +176,11 @@ export const ClientIntakeSection = () => {
                 <TabsTrigger value="step-4">Schedule</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="step-1" className="space-y-4">
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder="Enter your phone number"
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="step-2" className="space-y-4">
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="companyName">Company Name</Label>
-                    <Input
-                      id="companyName"
-                      name="companyName"
-                      value={formData.companyName}
-                      onChange={handleInputChange}
-                      placeholder="Enter company name"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="businessType">Business Type</Label>
-                    <Input
-                      id="businessType"
-                      name="businessType"
-                      value={formData.businessType}
-                      onChange={handleInputChange}
-                      placeholder="Enter business type"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="notes">Additional Notes</Label>
-                    <Textarea
-                      id="notes"
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      placeholder="Any additional information..."
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="step-3" className="space-y-4">
-                <DocumentUpload onUploadComplete={(id) => {
-                  toast({
-                    title: "Document Uploaded",
-                    description: "Your document has been successfully uploaded.",
-                  });
-                }} />
-              </TabsContent>
-
-              <TabsContent value="step-4" className="space-y-4">
-                <IntelligentScheduling />
-              </TabsContent>
+              <FormSteps 
+                currentStep={currentStep}
+                formData={formData}
+                handleInputChange={handleInputChange}
+              />
             </Tabs>
 
             <div className="flex justify-between pt-4">
