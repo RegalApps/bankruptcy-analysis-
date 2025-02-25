@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileCheck, ArrowRight, AlertTriangle } from "lucide-react";
+import { FileCheck, ArrowRight, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
 import { Footer } from "@/components/layout/Footer";
