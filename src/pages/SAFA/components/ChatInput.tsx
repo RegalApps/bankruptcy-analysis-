@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, HelpCircle, Filter } from "lucide-react";
+import { Send } from "lucide-react";
 
 interface ChatInputProps {
   inputMessage: string;
@@ -35,16 +35,6 @@ export const ChatInput = ({
           disabled={isProcessing}
         >
           <Send className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="mt-2 flex gap-2">
-        <Button variant="outline" size="sm">
-          <HelpCircle className="mr-2 h-4 w-4" />
-          Help Topics
-        </Button>
-        <Button variant="outline" size="sm">
-          <Filter className="mr-2 h-4 w-4" />
-          Filters
         </Button>
       </div>
     </div>
