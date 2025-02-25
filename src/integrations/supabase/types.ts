@@ -9,6 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_integrations: {
+        Row: {
+          api_key: string
+          created_at: string | null
+          id: string
+          last_sync_at: string | null
+          metadata: Json | null
+          provider_name: string
+          settings: Json | null
+          status: Database["public"]["Enums"]["integration_status"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          api_key: string
+          created_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          provider_name: string
+          settings?: Json | null
+          status?: Database["public"]["Enums"]["integration_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          api_key?: string
+          created_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          provider_name?: string
+          settings?: Json | null
+          status?: Database["public"]["Enums"]["integration_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_integrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "available_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -947,7 +994,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      integration_status: "active" | "inactive" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never
