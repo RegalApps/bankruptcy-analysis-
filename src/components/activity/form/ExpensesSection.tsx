@@ -10,13 +10,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ExpensesSectionProps {
   formData: IncomeExpenseData;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onFrequencyChange: (value: string) => void;
 }
 
-export const ExpensesSection = ({ formData, onChange }: ExpensesSectionProps) => {
+export const ExpensesSection = ({ formData, onChange, onFrequencyChange }: ExpensesSectionProps) => {
   return (
     <Card>
       <CardHeader>
@@ -81,6 +89,21 @@ export const ExpensesSection = ({ formData, onChange }: ExpensesSectionProps) =>
             onChange={onChange}
           />
         </div>
+
+        <div className="space-y-2">
+          <Label>Expense Frequency</Label>
+          <Select onValueChange={onFrequencyChange} value={formData.expense_frequency}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select frequency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="bi-monthly">Bi-Monthly</SelectItem>
+              <SelectItem value="one-time">One-Time</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="notes">Additional Notes</Label>
           <Textarea

@@ -88,7 +88,7 @@ export const IncomeExpenseForm = () => {
 
     try {
       const financialRecord: FinancialRecord = {
-        client_id: selectedClient.id,
+        user_id: selectedClient.id, // Changed from client_id to user_id
         monthly_income: formData.monthly_income ? parseFloat(formData.monthly_income) : null,
         employment_income: formData.employment_income ? parseFloat(formData.employment_income) : null,
         other_income: formData.other_income ? parseFloat(formData.other_income) : null,
