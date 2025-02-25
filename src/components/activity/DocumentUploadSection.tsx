@@ -124,9 +124,9 @@ export const DocumentUploadSection = () => {
                 <span className="font-medium">{client.title}</span>
               </div>
               <FileUpload onUploadComplete={handleUploadComplete} />
-            </div>
+            </TabsContent>
           ))}
-        </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
