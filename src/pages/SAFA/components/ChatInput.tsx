@@ -21,16 +21,16 @@ export const ChatInput = ({
   return (
     <div className="border-t p-4">
       <div className="flex gap-2">
-        <Input 
+        <Input
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyPress}
-          placeholder="Ask about document management, OSB, BIA acts, and more..." 
-          className="flex-1"
+          placeholder="Type your message..."
           disabled={isProcessing}
+          className="flex-1"
         />
         <Button 
-          size="icon" 
+          size="icon"
           onClick={handleSendMessage}
           disabled={isProcessing}
         >
