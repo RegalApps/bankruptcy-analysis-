@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { APIIntegration, IntegrationProvider } from "./types";
 import { IntegrationCard } from "./components/IntegrationCard";
 import { AddIntegrationDialog } from "./components/AddIntegrationDialog";
@@ -17,9 +17,15 @@ export const IntegrationsSection = () => {
 
   const fetchIntegrations = async () => {
     try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        throw new Error("Not authenticated");
+      }
+
       const { data, error } = await supabase
         .from('api_integrations')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setActiveIntegrations(data || []);
@@ -39,20 +45,39 @@ export const IntegrationsSection = () => {
   ) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        throw new Error("Not authenticated");
+      }
+
+      // First, store the integration in our database
+      const { data: integration, error: dbError } = await supabase
         .from('api_integrations')
         .insert({
           provider_name: provider.id,
           api_key: formData.api_key,
-          status: 'pending',
-          settings: formData
+          settings: formData,
+          user_id: session.session.user.id,
+          status: 'pending'
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
-      setActiveIntegrations([...activeIntegrations, data]);
+      // Then, call our edge function to handle the API-specific setup
+      const response = await supabase.functions.invoke('handle-integration', {
+        body: {
+          provider: provider.id,
+          action: 'setup',
+          integrationId: integration.id,
+        },
+      });
+
+      if (response.error) throw response.error;
+
+      await fetchIntegrations();
+
       toast({
         title: "Integration Added",
         description: `${provider.name} has been successfully integrated.`,
