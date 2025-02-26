@@ -1,4 +1,3 @@
-
 import { FileUpload } from "@/components/FileUpload";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,12 +14,13 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: SidebarProps) => {
-  const { handleSendMessage } = useConversations(activeModule);
+  const { categoryMessages, handleSendMessage, isProcessing } = useConversations(activeModule);
+  const [showConversation, setShowConversation] = useState(false);
 
-  const handleStartConsultation = () => {
+  const handleStartConsultation = async () => {
     setActiveModule('client');
-    // This will show the conversation interface
-    handleSendMessage("Hello, I'd like to start a consultation.");
+    setShowConversation(true);
+    await handleSendMessage("Hello, I'd like to start a consultation.");
   };
 
   return (
@@ -96,9 +96,10 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
                     size="sm" 
                     className="w-full"
                     onClick={handleStartConsultation}
+                    disabled={isProcessing}
                   >
                     <MessageSquare className="mr-2 h-4 w-4" />
-                    Start Consultation
+                    {isProcessing ? "Starting..." : "Start Consultation"}
                   </Button>
                 </div>
               </Card>
