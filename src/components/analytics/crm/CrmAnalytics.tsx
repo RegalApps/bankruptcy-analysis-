@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CrmMetricsGrid } from "./CrmMetricsGrid";
 import {
@@ -49,18 +48,25 @@ export const CrmAnalytics = ({
                 <BarChart 
                   data={leadConversion} 
                   layout="vertical"
-                  margin={{ left: 120 }} // Increased left margin for y-axis labels
+                  margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
+                  <XAxis 
+                    type="number"
+                    tickFormatter={(value) => `${value}`}
+                  />
                   <YAxis 
                     dataKey="name" 
                     type="category"
-                    width={100} // Fixed width for the y-axis
-                    tick={{ fontSize: 12 }} // Adjusted font size
+                    width={90}
+                    tick={{ fontSize: 12 }}
                   />
                   <Tooltip />
-                  <Bar dataKey="value" fill={COLORS.success[0]} />
+                  <Bar 
+                    dataKey="value" 
+                    fill={COLORS.success[0]}
+                    barSize={30}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
