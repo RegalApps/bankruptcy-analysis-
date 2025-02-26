@@ -153,8 +153,8 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
       </aside>
 
       {showConversation && (
-        <div className="flex-1 ml-64">
-          <div className="h-full p-6">
+        <div className="fixed inset-0 left-64 overflow-hidden">
+          <div className="h-full w-full">
             <div className="flex flex-col h-full bg-background rounded-lg border">
               <div className="flex items-center gap-2 p-4 border-b">
                 <ScrollText className="h-6 w-6 text-primary" />
