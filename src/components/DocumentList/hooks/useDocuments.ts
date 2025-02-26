@@ -69,6 +69,6 @@ export const useDocuments = () => {
     isLoading: state.isLoading,
     searchQuery: state.searchQuery,
     setSearchQuery,
-    fetchDocuments
+    refetch: fetchDocuments // Expose fetchDocuments as refetch
   };
 };
