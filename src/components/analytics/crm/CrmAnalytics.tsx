@@ -46,10 +46,19 @@ export const CrmAnalytics = ({
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={leadConversion} layout="vertical">
+                <BarChart 
+                  data={leadConversion} 
+                  layout="vertical"
+                  margin={{ left: 120 }} // Increased left margin for y-axis labels
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category"
+                    width={100} // Fixed width for the y-axis
+                    tick={{ fontSize: 12 }} // Adjusted font size
+                  />
                   <Tooltip />
                   <Bar dataKey="value" fill={COLORS.success[0]} />
                 </BarChart>
