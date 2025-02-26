@@ -101,7 +101,7 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
                   <p className="text-sm text-muted-foreground">
                     Enhanced multimodal chatbot with voice, text, and sentiment analysis capabilities. Seamlessly integrates with CRM for real-time client updates and engagement tracking.
                   </p>
-                  {!showConversation ? (
+                  {!showConversation && (
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -112,43 +112,50 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
                       <MessageSquare className="mr-2 h-4 w-4" />
                       {isProcessing ? "Starting..." : "Start Consultation"}
                     </Button>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto">
-                        {categoryMessages.client.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`mb-4 ${
-                              message.type === 'assistant' ? 'bg-muted/30' : 'bg-primary/5'
-                            } p-3 rounded-lg`}
-                          >
-                            <p className="text-sm">{message.content}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={inputMessage}
-                          onChange={(e) => setInputMessage(e.target.value)}
-                          onKeyDown={handleKeyPress}
-                          placeholder="Type your message..."
-                          className="flex-1"
-                        />
-                        <Button 
-                          size="icon"
-                          onClick={() => {
-                            handleSendMessage(inputMessage);
-                            setInputMessage("");
-                          }}
-                          disabled={isProcessing}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
                   )}
                 </div>
               </Card>
+              {showConversation && (
+                <Card className="fixed top-0 right-0 w-3/4 h-full p-6 bg-background border-l">
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center gap-2 mb-6">
+                      <ScrollText className="h-6 w-6 text-primary" />
+                      <h2 className="text-2xl font-semibold">AI Client Assistant</h2>
+                    </div>
+                    <div className="flex-1 overflow-y-auto mb-6 space-y-4">
+                      {categoryMessages.client.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`${
+                            message.type === 'assistant' ? 'bg-muted/30' : 'bg-primary/5'
+                          } p-4 rounded-lg`}
+                        >
+                          <p className="text-base">{message.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                        placeholder="Type your message..."
+                        className="flex-1"
+                      />
+                      <Button 
+                        size="icon"
+                        onClick={() => {
+                          handleSendMessage(inputMessage);
+                          setInputMessage("");
+                        }}
+                        disabled={isProcessing}
+                      >
+                        <MessageSquare className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="help" className="mt-4">
