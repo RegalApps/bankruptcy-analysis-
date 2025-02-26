@@ -26,6 +26,18 @@ export const DocumentManagementPage = () => {
     try {
       setIsUploading(true);
 
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please log in to upload documents"
+        });
+        return;
+      }
+
       // Validate file type and size
       if (!file.type.match('application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
         toast({
@@ -51,7 +63,7 @@ export const DocumentManagementPage = () => {
       const filePath = fileName;
 
       // Upload file to storage
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -76,6 +88,7 @@ export const DocumentManagementPage = () => {
           size: file.size,
           storage_path: filePath,
           url: publicUrl,
+          user_id: session.user.id, // Set the user_id
           ai_processing_status: 'pending'
         });
 
