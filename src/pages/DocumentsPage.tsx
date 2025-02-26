@@ -6,7 +6,7 @@ import { FolderManagement } from "@/components/folders/FolderManagement";
 import { useState } from "react";
 
 export const DocumentsPage = () => {
-  const { documents, fetchDocuments } = useDocuments();
+  const { documents, refetch } = useDocuments();
   const [selectedItemId, setSelectedItemId] = useState<string | undefined>();
   const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>();
 
@@ -26,7 +26,7 @@ export const DocumentsPage = () => {
             selectedItemId={selectedItemId}
             selectedItemType={selectedItemType}
             onItemSelect={handleItemSelect}
-            onRefresh={fetchDocuments}
+            onRefresh={refetch}
           />
         </main>
       </div>
