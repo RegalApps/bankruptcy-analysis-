@@ -2,7 +2,7 @@ import { FileUpload } from "@/components/FileUpload";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { FileText, Scale, BookOpen, Search, Upload, Users, MessageSquare, UploadCloud } from "lucide-react";
 import { useState } from "react";
 import { useConversations } from "../../SAFA/hooks/useConversations";
@@ -45,14 +45,14 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
         return (
           <div className="flex-1">
             <div className="h-full p-6">
-              <Card className="h-full">
+              <Card className="h-full flex flex-col">
                 <CardHeader className="border-b bg-muted/30">
                   <div className="flex items-center gap-2">
                     <FileText className="h-6 w-6 text-primary" />
                     <CardTitle>Document Analysis</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="p-6 flex-1 overflow-y-auto">
                   <div className="space-y-6">
                     <div className="text-center space-y-2">
                       <h3 className="font-medium">Upload Document for Analysis</h3>
@@ -73,8 +73,38 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
                         </div>
                       </div>
                     </div>
+                    <div className="space-y-4">
+                      {categoryMessages.document.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`${
+                            message.type === 'assistant' ? 'bg-muted/30' : 'bg-primary/5'
+                          } p-4 rounded-lg`}
+                        >
+                          <p className="text-base">{message.content}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
+                <CardFooter className="p-4 border-t mt-auto">
+                  <div className="flex items-center gap-3 w-full">
+                    <Input
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Ask about your document..."
+                      className="flex-1"
+                    />
+                    <Button 
+                      size="icon"
+                      onClick={handleMessageSend}
+                      disabled={isProcessing}
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </CardFooter>
               </Card>
             </div>
           </div>
