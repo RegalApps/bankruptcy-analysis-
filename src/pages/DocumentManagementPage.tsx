@@ -20,6 +20,26 @@ export const DocumentManagementPage = () => {
     navigate('/', { state: { selectedDocument: documentId } });
   };
 
+  const triggerDocumentAnalysis = async (documentId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('analyze-document', {
+        body: { documentId }
+      });
+
+      if (error) {
+        console.error('Error triggering document analysis:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Failed to trigger document analysis:', error);
+      toast({
+        variant: "destructive",
+        title: "Analysis Error",
+        description: "Failed to analyze document. Please try again later."
+      });
+    }
+  };
+
   const handleFileUpload = async (file: File) => {
     if (isUploading) return;
 
@@ -80,7 +100,7 @@ export const DocumentManagementPage = () => {
         .getPublicUrl(filePath);
 
       // Create document record in database
-      const { error: dbError } = await supabase
+      const { data: documentData, error: dbError } = await supabase
         .from('documents')
         .insert({
           title: file.name,
@@ -88,9 +108,11 @@ export const DocumentManagementPage = () => {
           size: file.size,
           storage_path: filePath,
           url: publicUrl,
-          user_id: session.user.id, // Set the user_id
+          user_id: session.user.id,
           ai_processing_status: 'pending'
-        });
+        })
+        .select('id')
+        .single();
 
       if (dbError) {
         // If database insert fails, delete the uploaded file
@@ -100,9 +122,14 @@ export const DocumentManagementPage = () => {
         throw dbError;
       }
 
+      // Trigger document analysis
+      if (documentData) {
+        await triggerDocumentAnalysis(documentData.id);
+      }
+
       toast({
         title: "Success",
-        description: "Document uploaded successfully"
+        description: "Document uploaded successfully and analysis started"
       });
 
       refetch(); // Refresh the documents list
