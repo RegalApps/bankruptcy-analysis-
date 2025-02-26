@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CrmMetricsGrid } from "./CrmMetricsGrid";
 import {
@@ -42,30 +43,31 @@ export const CrmAnalytics = ({
           <CardHeader>
             <CardTitle>Lead Conversion Funnel</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="h-[400px]"> {/* Increased height */}
+            <div className="h-full w-full"> {/* Use full height and width */}
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
                   data={leadConversion} 
                   layout="vertical"
-                  margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+                  margin={{ top: 20, right: 40, left: 100, bottom: 20 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     type="number"
                     tickFormatter={(value) => `${value}`}
+                    domain={[0, 'dataMax + 50']}
                   />
                   <YAxis 
                     dataKey="name" 
                     type="category"
                     width={90}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 13 }}
                   />
                   <Tooltip />
                   <Bar 
                     dataKey="value" 
                     fill={COLORS.success[0]}
-                    barSize={30}
+                    barSize={40}
                   />
                 </BarChart>
               </ResponsiveContainer>
