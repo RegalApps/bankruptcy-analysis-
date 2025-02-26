@@ -112,6 +112,12 @@ export const AnalyticsPage = () => {
               <CrmAnalytics 
                 leadConversion={crmMetrics.leadConversion}
                 featureUsage={crmMetrics.featureUsage}
+                salesRepRevenue={crmMetrics.salesRepRevenue}
+                churnRate={crmMetrics.churnRate}
+                customerAcquisitionCost={crmMetrics.customerAcquisitionCost}
+                monthlyRevenue={crmMetrics.monthlyRevenue}
+                salesCycle={crmMetrics.salesCycle}
+                npsScore={crmMetrics.npsScore}
               />
             </TabsContent>
           </Tabs>
