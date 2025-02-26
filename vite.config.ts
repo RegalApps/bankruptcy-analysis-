@@ -18,19 +18,26 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-    },
+    }
   },
   optimizeDeps: {
-    include: ['pdfjs-dist/build/pdf.worker.min.js']
+    include: ['pdfjs-dist/build/pdf.worker.min.js'],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis'
+      }
+    }
   },
   build: {
     commonjsOptions: {
-      include: [/pdfjs-dist/]
+      include: [/pdfjs-dist/, /@tanstack\/react-query/],
+      transformMixedEsModules: true
     },
     rollupOptions: {
       output: {
         manualChunks: {
-          pdfworker: ['pdfjs-dist/build/pdf.worker.min.js']
+          pdfworker: ['pdfjs-dist/build/pdf.worker.min.js'],
+          'react-query': ['@tanstack/react-query']
         }
       }
     }
