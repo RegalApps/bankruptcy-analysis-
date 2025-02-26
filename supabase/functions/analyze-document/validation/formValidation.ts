@@ -1,5 +1,5 @@
 
-import { ValidationError, ValidationRule, RiskIndicator } from '../types';
+import { ValidationError, ValidationRule, RiskIndicator } from '../types.ts';
 
 export const validateFinancialRisk = (
   value: number,
@@ -83,4 +83,13 @@ export const validateFormField = (
   });
 
   return errors;
+};
+
+export const validateForm = async (text: string, documentType: string) => {
+  // Add form validation implementation
+  return {
+    status: 'compliant',
+    details: [],
+    references: []
+  };
 };
