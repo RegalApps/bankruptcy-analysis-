@@ -1,164 +1,206 @@
+import { analyzeRisks } from "./riskAnalyzer.ts";
+import { validateForm } from "./validation/formValidation.ts";
 
-import { FormConfig, getFormConfig } from './formConfig';
-import { OSBFormTemplate } from './types';
-import { bankruptcyForms } from './templates/bankruptcyForms';
-import { proposalForms } from './templates/proposalForms';
-import { validationPatterns, customValidators } from './validation/patterns';
-import { validateFormField } from './validation/formValidation';
+export async function processDocument(text: string, includeRegulatory: boolean = true) {
+  console.log('Processing document text length:', text.length);
 
-export async function analyzeForm(formNumber: string, content: string) {
-  try {
-    console.log(`Analyzing form ${formNumber}`);
-    
-    // Get form configuration and template
-    const config = getFormConfig(formNumber);
-    const template = getFormTemplate(formNumber);
-    
-    if (!template) {
-      throw new Error(`No template found for form ${formNumber}`);
-    }
-
-    // Extract form fields
-    const extractedFields = await extractFormFields(content, template);
-    
-    // Validate extracted fields
-    const validationResults = validateFormFields(extractedFields, template, config);
-    
-    // Analyze risks
-    const riskAssessment = assessRisks(extractedFields, template);
-    
-    // Generate summary
-    const summary = generateFormSummary(formNumber, extractedFields, validationResults, riskAssessment);
-
-    return {
-      success: true,
-      formNumber,
-      extractedFields,
-      validationResults,
-      riskAssessment,
-      summary
-    };
-
-  } catch (error) {
-    console.error(`Error analyzing form ${formNumber}:`, error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-}
-
-function getFormTemplate(formNumber: string): OSBFormTemplate | null {
-  // Check all form template collections
-  return bankruptcyForms[formNumber] || 
-         proposalForms[formNumber] || 
-         null;
-}
-
-async function extractFormFields(content: string, template: OSBFormTemplate) {
-  const extractedFields: Record<string, any> = {};
+  // Extract basic document info
+  const documentType = extractDocumentType(text);
+  const formNumber = extractFormNumber(text);
+  const clientInfo = extractClientInfo(text);
+  const trusteeInfo = extractTrusteeInfo(text);
   
-  // Extract required fields based on template
-  for (const field of template.requiredFields) {
-    const fieldValue = await extractFieldValue(content, field.name);
-    if (fieldValue) {
-      extractedFields[field.name] = fieldValue;
-    }
-  }
+  // Extract dates and numbers
+  const dateSigned = extractDate(text, /Dated:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i);
+  const bankruptcyDate = extractDate(text, /Date of Bankruptcy:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i);
+  const estateNumber = extractEstateNumber(text);
   
-  return extractedFields;
-}
-
-function validateFormFields(
-  fields: Record<string, any>,
-  template: OSBFormTemplate,
-  config: FormConfig
-) {
-  const errors = [];
+  // Extract location info
+  const district = extractDistrict(text);
+  const divisionNumber = extractDivisionNumber(text);
+  const courtNumber = extractCourtNumber(text);
   
-  // Validate required fields
-  for (const field of template.requiredFields) {
-    if (field.required && !fields[field.name]) {
-      errors.push({
-        field: field.name,
-        type: 'error',
-        message: `Required field ${field.name} is missing`,
-        code: 'MISSING_REQUIRED_FIELD'
-      });
-    }
-  }
-  
-  // Apply custom validation rules
-  for (const [fieldName, value] of Object.entries(fields)) {
-    if (config.validationRules[fieldName]) {
-      const isValid = config.validationRules[fieldName](value);
-      if (!isValid) {
-        errors.push({
-          field: fieldName,
-          type: 'error',
-          message: `Invalid value for ${fieldName}`,
-          code: 'INVALID_FIELD_VALUE'
-        });
-      }
-    }
-  }
-  
-  return errors;
-}
+  // Extract additional info
+  const meetingInfo = extractMeetingInfo(text);
+  const chairInfo = extractChairInfo(text);
+  const securityInfo = extractSecurityInfo(text);
+  const officialReceiver = extractOfficialReceiver(text);
 
-function assessRisks(
-  fields: Record<string, any>,
-  template: OSBFormTemplate
-) {
-  const risks = [];
-  
-  // Check risk indicators defined in template
-  for (const indicator of template.riskIndicators || []) {
-    const fieldValue = fields[indicator.field];
-    if (fieldValue) {
-      if (indicator.riskType === 'financial' && 
-          typeof fieldValue === 'number' && 
-          fieldValue > indicator.threshold) {
-        risks.push({
-          type: 'financial',
-          severity: indicator.severity,
-          description: `High financial value detected in ${indicator.field}`,
-          value: fieldValue
-        });
-      }
-    }
-  }
-  
-  return risks;
-}
+  // Generate summary
+  const summary = await generateDocumentSummary(text);
 
-async function extractFieldValue(content: string, fieldName: string): Promise<string | null> {
-  // Use regex patterns to extract field values
-  // This is a simplified version - in reality, you'd want more sophisticated extraction
-  const patterns = {
-    debtorName: /Debtor(?:'s)?\s+Name:\s*([^\n]+)/i,
-    filingDate: /Filing\s+Date:\s*(\d{4}-\d{2}-\d{2})/i,
-    amount: /Amount:\s*\$?([\d,]+\.?\d*)/i
-  };
+  // Analyze risks and compliance
+  const riskAnalysis = await analyzeRisks(text, documentType);
+  const validationResults = await validateForm(text, documentType);
 
-  const pattern = patterns[fieldName];
-  if (!pattern) return null;
-
-  const match = content.match(pattern);
-  return match ? match[1].trim() : null;
-}
-
-function generateFormSummary(
-  formNumber: string,
-  fields: Record<string, any>,
-  validationResults: any[],
-  riskAssessment: any[]
-) {
   return {
+    documentType,
     formNumber,
-    fieldsExtracted: Object.keys(fields).length,
-    validationErrors: validationResults.length,
-    risksIdentified: riskAssessment.length,
-    status: validationResults.length === 0 ? 'valid' : 'needs_review'
+    clientInfo,
+    trusteeInfo,
+    dateSigned,
+    bankruptcyDate,
+    estateNumber,
+    district,
+    divisionNumber,
+    courtNumber,
+    meetingInfo,
+    chairInfo,
+    securityInfo,
+    officialReceiver,
+    summary,
+    risks: riskAnalysis,
+    regulatoryCompliance: validationResults
   };
+}
+
+function extractDocumentType(text: string): string {
+  const bankruptcyPattern = /bankruptcy|bankrupt/i;
+  const proposalPattern = /proposal|consumer proposal/i;
+  const courtPattern = /court order|court filing/i;
+  const meetingPattern = /meeting of creditors|creditors meeting/i;
+  const securityPattern = /security agreement|collateral/i;
+
+  if (bankruptcyPattern.test(text)) return "bankruptcy";
+  if (proposalPattern.test(text)) return "proposal";
+  if (courtPattern.test(text)) return "court";
+  if (meetingPattern.test(text)) return "meeting";
+  if (securityPattern.test(text)) return "security";
+  
+  return "other";
+}
+
+function extractFormNumber(text: string): string {
+  const match = text.match(/Form\s+(\d+)/i);
+  return match ? match[1] : '';
+}
+
+function extractClientInfo(text: string) {
+  const namePattern = /(?:Client|Debtor)(?:'s)?\s*Name:?\s*([^\n\r]+)/i;
+  const addressPattern = /(?:Client|Debtor)(?:'s)?\s*Address:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
+  const phonePattern = /(?:Client|Debtor)(?:'s)?\s*(?:Phone|Tel):?\s*([\d\-\(\)\s\.]+)/i;
+
+  const name = text.match(namePattern)?.[1]?.trim() || '';
+  const address = text.match(addressPattern)?.[1]?.trim() || '';
+  const phone = text.match(phonePattern)?.[1]?.trim() || '';
+
+  return {
+    name,
+    address,
+    phone
+  };
+}
+
+function extractTrusteeInfo(text: string) {
+  const namePattern = /(?:Trustee|Licensed\s+Insolvency\s+Trustee)(?:'s)?\s*Name:?\s*([^\n\r]+)/i;
+  const addressPattern = /(?:Trustee|Licensed\s+Insolvency\s+Trustee)(?:'s)?\s*Address:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
+  const phonePattern = /(?:Trustee|Licensed\s+Insolvency\s+Trustee)(?:'s)?\s*(?:Phone|Tel):?\s*([\d\-\(\)\s\.]+)/i;
+
+  const name = text.match(namePattern)?.[1]?.trim() || '';
+  const address = text.match(addressPattern)?.[1]?.trim() || '';
+  const phone = text.match(phonePattern)?.[1]?.trim() || '';
+
+  return {
+    name,
+    address,
+    phone
+  };
+}
+
+function extractDate(text: string, pattern: RegExp): string {
+  const match = text.match(pattern);
+  return match ? match[1] : '';
+}
+
+function extractEstateNumber(text: string): string {
+  const match = text.match(/Estate No\.?:?\s*(\d+)/i);
+  return match ? match[1] : '';
+}
+
+function extractDistrict(text: string): string {
+  const match = text.match(/District(?:\s+of)?:?\s*([^\n\r]+)/i);
+  return match ? match[1].trim() : '';
+}
+
+function extractDivisionNumber(text: string): string {
+  const match = text.match(/Division No\.?:?\s*(\d+)/i);
+  return match ? match[1] : '';
+}
+
+function extractCourtNumber(text: string): string {
+  const match = text.match(/Court No\.?:?\s*(\d+)/i);
+  return match ? match[1] : '';
+}
+
+function extractMeetingInfo(text: string): string {
+  const pattern = /Meeting of Creditors:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
+  const match = text.match(pattern);
+  return match ? match[1].trim() : '';
+}
+
+function extractChairInfo(text: string): string {
+  const pattern = /Chair(?:person)?:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
+  const match = text.match(pattern);
+  return match ? match[1].trim() : '';
+}
+
+function extractSecurityInfo(text: string): string {
+  const pattern = /Security Information:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
+  const match = text.match(pattern);
+  return match ? match[1].trim() : '';
+}
+
+function extractOfficialReceiver(text: string): string {
+  const pattern = /Official Receiver:?\s*([^\n\r]+)/i;
+  const match = text.match(pattern);
+  return match ? match[1].trim() : '';
+}
+
+async function generateDocumentSummary(text: string): Promise<string> {
+  // Extract key information
+  const type = extractDocumentType(text);
+  const client = extractClientInfo(text);
+  const trustee = extractTrusteeInfo(text);
+  const estateNo = extractEstateNumber(text);
+  
+  // Generate a concise summary
+  let summary = `This is a ${type} document`;
+  
+  if (client.name) {
+    summary += ` for ${client.name}`;
+  }
+  
+  if (trustee.name) {
+    summary += `, handled by Licensed Insolvency Trustee ${trustee.name}`;
+  }
+  
+  if (estateNo) {
+    summary += ` (Estate No. ${estateNo})`;
+  }
+  
+  summary += '. ';
+  
+  // Add additional context based on document type
+  switch (type) {
+    case 'bankruptcy':
+      const bankruptcyDate = extractDate(text, /Date of Bankruptcy:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i);
+      if (bankruptcyDate) {
+        summary += `The bankruptcy was filed on ${bankruptcyDate}. `;
+      }
+      break;
+    case 'meeting':
+      const meetingInfo = extractMeetingInfo(text);
+      if (meetingInfo) {
+        summary += `A meeting of creditors is scheduled: ${meetingInfo}. `;
+      }
+      break;
+    case 'court':
+      const courtNo = extractCourtNumber(text);
+      if (courtNo) {
+        summary += `This is related to court filing number ${courtNo}. `;
+      }
+      break;
+  }
+  
+  return summary.trim();
 }

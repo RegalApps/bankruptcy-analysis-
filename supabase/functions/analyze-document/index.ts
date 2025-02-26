@@ -1,117 +1,108 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { processDocument } from "./formAnalyzer.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface AnalysisResult {
-  formNumber: string;
-  extractedFields: Record<string, any>;
-  validationResults: ValidationError[];
-  confidenceScore: number;
-  status: 'success' | 'partial' | 'failed';
-}
-
-interface ValidationError {
-  field: string;
-  type: 'error' | 'warning';
-  message: string;
-  code: string;
-}
-
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { documentText, documentId } = await req.json();
+    const { documentText, documentId, includeRegulatory = true } = await req.json();
+    console.log('Analyzing document:', { documentId, textLength: documentText?.length });
 
-    if (!documentText || !documentId) {
-      throw new Error('Missing required parameters');
+    if (!documentText) {
+      throw new Error('No document text provided');
     }
 
-    console.log('Starting document analysis for document:', documentId);
+    // Process the document text
+    const analysis = await processDocument(documentText, includeRegulatory);
+    console.log('Analysis results:', analysis);
 
-    // Initialize Supabase client
-    const supabase = createClient(
+    // Create the comprehensive analysis object
+    const analysisContent = {
+      extracted_info: {
+        ...analysis.extractedInfo,
+        type: analysis.documentType,
+        clientName: analysis.clientInfo?.name,
+        clientAddress: analysis.clientInfo?.address,
+        trusteeName: analysis.trusteeInfo?.name,
+        trusteeAddress: analysis.trusteeInfo?.address,
+        formNumber: analysis.formNumber,
+        dateSigned: analysis.dateSigned,
+        estateNumber: analysis.estateNumber,
+        district: analysis.district,
+        divisionNumber: analysis.divisionNumber,
+        courtNumber: analysis.courtNumber,
+        meetingOfCreditors: analysis.meetingInfo,
+        chairInfo: analysis.chairInfo,
+        securityInfo: analysis.securityInfo,
+        dateBankruptcy: analysis.bankruptcyDate,
+        officialReceiver: analysis.officialReceiver,
+        summary: analysis.summary
+      },
+      risks: analysis.risks.map(risk => ({
+        type: risk.type,
+        description: risk.description,
+        severity: risk.severity,
+        regulation: risk.regulation,
+        impact: risk.impact,
+        requiredAction: risk.requiredAction,
+        solution: risk.solution,
+        reference: risk.reference
+      })),
+      regulatoryCompliance: analysis.regulatoryCompliance ? {
+        status: analysis.regulatoryCompliance.status,
+        details: analysis.regulatoryCompliance.details,
+        references: analysis.regulatoryCompliance.references
+      } : undefined
+    };
+
+    // Update the document analysis in the database
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Use OpenAI to analyze the document content
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('Missing OpenAI API key');
-    }
-
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a document analysis assistant. Analyze the document content and extract key information.'
-          },
-          {
-            role: 'user',
-            content: documentText
-          }
-        ],
-      }),
-    });
-
-    const aiData = await aiResponse.json();
-    const analysis = aiData.choices[0].message.content;
-
-    // Save analysis results
-    const { error: analysisError } = await supabase
+    const { error: upsertError } = await supabaseClient
       .from('document_analysis')
       .upsert({
         document_id: documentId,
-        content: analysis,
-        status: 'completed',
-        analyzed_at: new Date().toISOString()
+        content: analysisContent,
+        updated_at: new Date().toISOString()
       });
 
-    if (analysisError) throw analysisError;
-
-    const result: AnalysisResult = {
-      formNumber: '1', // Default form number
-      extractedFields: {
-        analysis,
-        documentId
-      },
-      validationResults: [],
-      confidenceScore: 100,
-      status: 'success'
-    };
-
-    console.log('Analysis completed successfully');
+    if (upsertError) {
+      console.error('Error updating document analysis:', upsertError);
+      throw upsertError;
+    }
 
     return new Response(
-      JSON.stringify({ 
-        message: 'Analysis completed',
-        result 
+      JSON.stringify({
+        success: true,
+        analysis: analysisContent
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
 
   } catch (error) {
     console.error('Error in analyze-document function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({
+        error: error.message || 'An error occurred during document analysis'
+      }),
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }
