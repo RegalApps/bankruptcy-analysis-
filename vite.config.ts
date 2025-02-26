@@ -18,14 +18,13 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "react/jsx-runtime": "react/jsx-runtime.js"
     }
   },
   optimizeDeps: {
     include: [
       '@tanstack/react-query',
       'react',
-      'react/jsx-runtime'
+      'react-dom'
     ],
     esbuildOptions: {
       define: {
@@ -37,15 +36,6 @@ export default defineConfig(({ mode }) => ({
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true
-    },
-    rollupOptions: {
-      external: ['react/jsx-runtime'],
-      output: {
-        manualChunks: {
-          'react-query': ['@tanstack/react-query'],
-          'react-vendor': ['react', 'react-dom']
-        }
-      }
     }
   }
 }));

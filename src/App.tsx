@@ -16,30 +16,40 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { EFilingPage } from "./pages/EFilingPage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/documents" element={<DocumentsPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/activity" element={<ActivityPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/SAFA" element={<ConBrandingPage />} />
-            <Route path="/crm" element={<CRMPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/e-filing" element={<EFilingPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-        <SonnerToaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/documents" element={<DocumentsPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/activity" element={<ActivityPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/SAFA" element={<ConBrandingPage />} />
+              <Route path="/crm" element={<CRMPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/e-filing" element={<EFilingPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+          <SonnerToaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 };
 
