@@ -29,16 +29,54 @@ const documentMetrics = {
 
 const crmMetrics = {
   leadConversion: [
-    { name: "Leads", value: 400 },
-    { name: "Qualified", value: 300 },
-    { name: "Proposals", value: 200 },
-    { name: "Closed", value: 100 },
+    { name: "Total Leads", value: 400 },
+    { name: "Marketing Qualified", value: 300 },
+    { name: "Sales Qualified", value: 200 },
+    { name: "Opportunities", value: 150 },
+    { name: "Closed Won", value: 100 }
   ],
   featureUsage: [
     { name: "Document Management", value: 35 },
     { name: "Task Creation", value: 25 },
-    { name: "Collaboration", value: 20 },
-    { name: "Analytics", value: 20 },
+    { name: "Client Communication", value: 20 },
+    { name: "Analytics", value: 20 }
+  ],
+  salesRepRevenue: [
+    { name: "John Doe", revenue: 120000 },
+    { name: "Jane Smith", revenue: 150000 },
+    { name: "Bob Johnson", revenue: 90000 },
+    { name: "Alice Brown", revenue: 180000 }
+  ],
+  churnRate: [
+    { date: "Jan", rate: 2.1 },
+    { date: "Feb", rate: 1.8 },
+    { date: "Mar", rate: 2.2 },
+    { date: "Apr", rate: 1.6 },
+    { date: "May", rate: 1.4 }
+  ],
+  customerAcquisitionCost: [
+    { period: "Q1", cost: 500 },
+    { period: "Q2", cost: 450 },
+    { period: "Q3", cost: 480 },
+    { period: "Q4", cost: 420 }
+  ],
+  monthlyRevenue: [
+    { date: "Jan", revenue: 50000, projected: 48000 },
+    { date: "Feb", revenue: 55000, projected: 52000 },
+    { date: "Mar", revenue: 58000, projected: 56000 },
+    { date: "Apr", revenue: 62000, projected: 60000 }
+  ],
+  salesCycle: [
+    { date: "Jan", days: 45 },
+    { date: "Feb", days: 42 },
+    { date: "Mar", days: 38 },
+    { date: "Apr", days: 35 }
+  ],
+  npsScore: [
+    { period: "Q1", score: 65 },
+    { period: "Q2", score: 68 },
+    { period: "Q3", score: 72 },
+    { period: "Q4", score: 75 }
   ]
 };
 
