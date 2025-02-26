@@ -13,6 +13,7 @@ export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
   const navigate = useNavigate();
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   const handleDocumentDoubleClick = (documentId: string) => {
@@ -20,7 +21,11 @@ export const DocumentManagementPage = () => {
   };
 
   const handleFileUpload = async (file: File) => {
+    if (isUploading) return;
+
     try {
+      setIsUploading(true);
+
       // Validate file type and size
       if (!file.type.match('application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
         toast({
@@ -40,15 +45,27 @@ export const DocumentManagementPage = () => {
         return;
       }
 
+      // Create a unique file path
       const fileExt = file.name.split('.').pop();
-      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = fileName;
 
       // Upload file to storage
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data } = await supabase.storage
         .from('documents')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
 
       // Create document record in database
       const { error: dbError } = await supabase
@@ -58,10 +75,17 @@ export const DocumentManagementPage = () => {
           type: file.type,
           size: file.size,
           storage_path: filePath,
+          url: publicUrl,
           ai_processing_status: 'pending'
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        // If database insert fails, delete the uploaded file
+        await supabase.storage
+          .from('documents')
+          .remove([filePath]);
+        throw dbError;
+      }
 
       toast({
         title: "Success",
@@ -74,8 +98,10 @@ export const DocumentManagementPage = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to upload document"
+        description: "Failed to upload document. Please try again."
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -129,13 +155,13 @@ export const DocumentManagementPage = () => {
           >
             <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">
-              Drag and drop your documents here
+              {isUploading ? 'Uploading...' : 'Drag and drop your documents here'}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
               or click to browse your files
             </p>
-            <Button variant="outline">
-              Browse Files
+            <Button variant="outline" disabled={isUploading}>
+              {isUploading ? 'Uploading...' : 'Browse Files'}
             </Button>
           </div>
         </CardContent>
