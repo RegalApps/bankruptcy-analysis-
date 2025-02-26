@@ -1,11 +1,13 @@
+
 import { FileUpload } from "@/components/FileUpload";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { FileText, Scale, BookOpen, Search, Upload, Users, Brain, MessageSquare, ScrollText, AlertCircle } from "lucide-react";
+import { FileText, Scale, BookOpen, Search, Upload, Users, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { useConversations } from "../../SAFA/hooks/useConversations";
+import { ClientConversation } from "./ClientConnect/ClientConversation";
+import { ModuleCard } from "./ModuleContent/ModuleCard";
 
 interface SidebarProps {
   activeModule: 'document' | 'legal' | 'help' | 'client';
@@ -30,6 +32,11 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
       handleSendMessage(inputMessage);
       setInputMessage("");
     }
+  };
+
+  const handleMessageSend = () => {
+    handleSendMessage(inputMessage);
+    setInputMessage("");
   };
 
   return (
@@ -59,49 +66,35 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
               </TabsList>
 
               <TabsContent value="document" className="mt-4">
-                <Card className="p-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <ScrollText className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Document Analysis Tool</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Upload documents for comprehensive analysis including client details, risk assessment, and detailed solutions with references to Canadian insolvency regulations.
-                    </p>
-                    <FileUpload onUploadComplete={onUploadComplete} />
-                  </div>
-                </Card>
+                <ModuleCard
+                  icon={FileText}
+                  title="Document Analysis Tool"
+                  description="Upload documents for comprehensive analysis including client details, risk assessment, and detailed solutions with references to Canadian insolvency regulations."
+                  actions={<FileUpload onUploadComplete={onUploadComplete} />}
+                />
               </TabsContent>
 
               <TabsContent value="legal" className="mt-4">
-                <Card className="p-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Legal Advisory</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Ask questions about Canadian insolvency laws, BIA regulations, OSB guidelines, and receive expert guidance based on current legal framework.
-                    </p>
+                <ModuleCard
+                  icon={Scale}
+                  title="Legal Advisory"
+                  description="Ask questions about Canadian insolvency laws, BIA regulations, OSB guidelines, and receive expert guidance based on current legal framework."
+                  actions={
                     <Button variant="outline" size="sm" className="w-full">
                       <MessageSquare className="mr-2 h-4 w-4" />
                       Start Legal Consultation
                     </Button>
-                  </div>
-                </Card>
+                  }
+                />
               </TabsContent>
 
               <TabsContent value="client" className="mt-4">
-                <Card className="p-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <ScrollText className="h-5 w-5 text-primary" />
-                      <span className="font-medium">AI Client Assistant</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Enhanced multimodal chatbot with voice, text, and sentiment analysis capabilities. Seamlessly integrates with CRM for real-time client updates and engagement tracking.
-                    </p>
-                    {!showConversation && (
+                <ModuleCard
+                  icon={Users}
+                  title="AI Client Assistant"
+                  description="Enhanced multimodal chatbot with voice, text, and sentiment analysis capabilities. Seamlessly integrates with CRM for real-time client updates and engagement tracking."
+                  actions={
+                    !showConversation && (
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -112,21 +105,17 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
                         <MessageSquare className="mr-2 h-4 w-4" />
                         {isProcessing ? "Starting..." : "Start Consultation"}
                       </Button>
-                    )}
-                  </div>
-                </Card>
+                    )
+                  }
+                />
               </TabsContent>
 
               <TabsContent value="help" className="mt-4">
-                <Card className="p-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Training & Support</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Access application guidance, contribute training data, and help improve the AI's understanding of Canadian insolvency practices.
-                    </p>
+                <ModuleCard
+                  icon={BookOpen}
+                  title="Training & Support"
+                  description="Access application guidance, contribute training data, and help improve the AI's understanding of Canadian insolvency practices."
+                  actions={
                     <div className="space-y-2">
                       <Button variant="outline" size="sm" className="w-full">
                         <Upload className="mr-2 h-4 w-4" />
@@ -136,8 +125,8 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
                         View Documentation
                       </Button>
                     </div>
-                  </div>
-                </Card>
+                  }
+                />
               </TabsContent>
             </Tabs>
           </div>
@@ -153,49 +142,14 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
       </aside>
 
       {showConversation && (
-        <div className="fixed inset-0 left-64 overflow-hidden">
-          <div className="h-full w-full">
-            <div className="flex flex-col h-full bg-background rounded-lg border">
-              <div className="flex items-center gap-2 p-4 border-b">
-                <ScrollText className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-semibold">AI Client Assistant</h2>
-              </div>
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {categoryMessages.client.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`${
-                      message.type === 'assistant' ? 'bg-muted/30' : 'bg-primary/5'
-                    } p-4 rounded-lg`}
-                  >
-                    <p className="text-base">{message.content}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="p-4 border-t">
-                <div className="flex items-center gap-3">
-                  <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder="Type your message..."
-                    className="flex-1"
-                  />
-                  <Button 
-                    size="icon"
-                    onClick={() => {
-                      handleSendMessage(inputMessage);
-                      setInputMessage("");
-                    }}
-                    disabled={isProcessing}
-                  >
-                    <MessageSquare className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ClientConversation
+          messages={categoryMessages.client}
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSendMessage={handleMessageSend}
+          handleKeyPress={handleKeyPress}
+          isProcessing={isProcessing}
+        />
       )}
     </>
   );
