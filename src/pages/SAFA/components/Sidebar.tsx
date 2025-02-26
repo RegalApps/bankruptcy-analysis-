@@ -39,6 +39,126 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
     setInputMessage("");
   };
 
+  const renderModuleContent = () => {
+    switch (activeModule) {
+      case 'document':
+        return (
+          <div className="flex-1">
+            <div className="h-full p-6">
+              <div className="flex flex-col h-full bg-background rounded-lg border">
+                <div className="flex items-center gap-2 p-4 border-b">
+                  <FileText className="h-6 w-6 text-primary" />
+                  <h2 className="text-2xl font-semibold">Document Analysis</h2>
+                </div>
+                <div className="p-6">
+                  <FileUpload onUploadComplete={onUploadComplete} />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'legal':
+        return (
+          <div className="flex-1">
+            <div className="h-full p-6">
+              <div className="flex flex-col h-full bg-background rounded-lg border">
+                <div className="flex items-center gap-2 p-4 border-b">
+                  <Scale className="h-6 w-6 text-primary" />
+                  <h2 className="text-2xl font-semibold">Legal & Regulatory</h2>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  {categoryMessages.legal.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`${
+                        message.type === 'assistant' ? 'bg-muted/30' : 'bg-primary/5'
+                      } p-4 rounded-lg`}
+                    >
+                      <p className="text-base">{message.content}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-4 border-t">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Ask about legal & regulatory matters..."
+                      className="flex-1"
+                    />
+                    <Button 
+                      size="icon"
+                      onClick={handleMessageSend}
+                      disabled={isProcessing}
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'help':
+        return (
+          <div className="flex-1">
+            <div className="h-full p-6">
+              <div className="flex flex-col h-full bg-background rounded-lg border">
+                <div className="flex items-center gap-2 p-4 border-b">
+                  <BookOpen className="h-6 w-6 text-primary" />
+                  <h2 className="text-2xl font-semibold">Training & Help</h2>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  {categoryMessages.help.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`${
+                        message.type === 'assistant' ? 'bg-muted/30' : 'bg-primary/5'
+                      } p-4 rounded-lg`}
+                    >
+                      <p className="text-base">{message.content}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-4 border-t">
+                  <div className="flex items-center gap-3">
+                    <Input
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      placeholder="Ask for help or guidance..."
+                      className="flex-1"
+                    />
+                    <Button 
+                      size="icon"
+                      onClick={handleMessageSend}
+                      disabled={isProcessing}
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'client':
+        return showConversation && (
+          <ClientConversation
+            messages={categoryMessages.client}
+            inputMessage={inputMessage}
+            setInputMessage={setInputMessage}
+            handleSendMessage={handleMessageSend}
+            handleKeyPress={handleKeyPress}
+            isProcessing={isProcessing}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="flex h-full">
       <aside className="w-64 border-r bg-muted/30 overflow-y-auto h-full">
@@ -141,16 +261,7 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
         </div>
       </aside>
 
-      {showConversation && (
-        <ClientConversation
-          messages={categoryMessages.client}
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          handleSendMessage={handleMessageSend}
-          handleKeyPress={handleKeyPress}
-          isProcessing={isProcessing}
-        />
-      )}
+      {renderModuleContent()}
     </div>
   );
 };
