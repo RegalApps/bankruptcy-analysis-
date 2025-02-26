@@ -40,7 +40,7 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
   };
 
   return (
-    <>
+    <div className="flex h-full">
       <aside className="w-64 border-r bg-muted/30 overflow-y-auto h-full">
         <div className="p-4 space-y-4">
           <div className="space-y-2">
@@ -151,6 +151,6 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
           isProcessing={isProcessing}
         />
       )}
-    </>
+    </div>
   );
 };
