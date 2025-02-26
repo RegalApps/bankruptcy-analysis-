@@ -11,17 +11,25 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    react({
+      jsxRuntime: 'automatic'
+    }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "react/jsx-runtime": "react/jsx-runtime.js"
     }
   },
   optimizeDeps: {
-    include: ['pdfjs-dist/build/pdf.worker.min.js'],
+    include: [
+      'pdfjs-dist/build/pdf.worker.min.js',
+      '@tanstack/react-query',
+      'react',
+      'react/jsx-runtime'
+    ],
     esbuildOptions: {
       define: {
         global: 'globalThis'
@@ -30,14 +38,16 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     commonjsOptions: {
-      include: [/pdfjs-dist/, /@tanstack\/react-query/],
+      include: [/node_modules/],
       transformMixedEsModules: true
     },
     rollupOptions: {
+      external: ['react/jsx-runtime'],
       output: {
         manualChunks: {
           pdfworker: ['pdfjs-dist/build/pdf.worker.min.js'],
-          'react-query': ['@tanstack/react-query']
+          'react-query': ['@tanstack/react-query'],
+          'react-vendor': ['react', 'react-dom']
         }
       }
     }
