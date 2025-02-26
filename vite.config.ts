@@ -23,7 +23,6 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: [
-      'pdfjs-dist/build/pdf.worker.min.js',
       '@tanstack/react-query',
       'react',
       'react/jsx-runtime'
@@ -43,7 +42,6 @@ export default defineConfig(({ mode }) => ({
       external: ['react/jsx-runtime'],
       output: {
         manualChunks: {
-          pdfworker: ['pdfjs-dist/build/pdf.worker.min.js'],
           'react-query': ['@tanstack/react-query'],
           'react-vendor': ['react', 'react-dom']
         }
