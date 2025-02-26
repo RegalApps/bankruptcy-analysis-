@@ -30,7 +30,7 @@ const INITIAL_MESSAGES: Record<ModuleType, ChatMessage[]> = {
   }],
   client: [{
     id: '1',
-    content: "Welcome to Client Connect. I can help you with client engagement and management. How can I assist you today?",
+    content: "Welcome to AI Client Assistant and enhanced multimodal chatbot with voice, text, and sentiment analysis capabilities. Seamlessly integrates with CRM for real-time client updates and engagement tracking",
     type: 'assistant',
     timestamp: new Date(),
     module: 'client'
