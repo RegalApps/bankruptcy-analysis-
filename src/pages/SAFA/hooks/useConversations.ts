@@ -47,7 +47,7 @@ export const useConversations = (activeModule: ModuleType) => {
       const { data, error } = await supabase
         .from('conversations')
         .select('*')
-        .eq('type', module)
+        .eq('module', module)
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -64,24 +64,10 @@ export const useConversations = (activeModule: ModuleType) => {
     }
   };
 
-  const saveConversation = async (module: ModuleType, messages: ChatMessage[]) => {
-    try {
-      const { error } = await supabase
-        .from('conversations')
-        .insert([{
-          type: module,
-          messages: messages,
-          created_at: new Date().toISOString()
-        }]);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error saving conversation:', error);
-    }
-  };
-
   const handleSendMessage = async (inputMessage: string) => {
     if (!inputMessage.trim() || isProcessing) return;
+
+    setIsProcessing(true);
 
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -91,12 +77,11 @@ export const useConversations = (activeModule: ModuleType) => {
       module: activeModule
     };
 
-    const updatedMessages = [...(categoryMessages[activeModule] || []), newMessage];
+    const updatedMessages = [...categoryMessages[activeModule], newMessage];
     setCategoryMessages(prev => ({
       ...prev,
       [activeModule]: updatedMessages
     }));
-    setIsProcessing(true);
 
     try {
       const response = await supabase.functions.invoke('process-ai-request', {
@@ -109,7 +94,7 @@ export const useConversations = (activeModule: ModuleType) => {
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: response.data.response,
+        content: response.data.response || "I understand. How can I assist you further?",
         type: 'assistant',
         timestamp: new Date(),
         module: activeModule
@@ -121,7 +106,8 @@ export const useConversations = (activeModule: ModuleType) => {
         [activeModule]: finalMessages
       }));
 
-      await saveConversation(activeModule, finalMessages);
+      // Store messages in local storage instead of database for now
+      localStorage.setItem(`${activeModule}_messages`, JSON.stringify(finalMessages));
     } catch (error) {
       console.error('Error processing message:', error);
       toast({
@@ -135,7 +121,16 @@ export const useConversations = (activeModule: ModuleType) => {
   };
 
   useEffect(() => {
-    loadConversationHistory(activeModule);
+    // Load messages from localStorage on module change
+    const savedMessages = localStorage.getItem(`${activeModule}_messages`);
+    if (savedMessages) {
+      setCategoryMessages(prev => ({
+        ...prev,
+        [activeModule]: JSON.parse(savedMessages)
+      }));
+    } else {
+      loadConversationHistory(activeModule);
+    }
   }, [activeModule]);
 
   return {
