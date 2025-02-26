@@ -1,9 +1,9 @@
-
 import { FileUpload } from "@/components/FileUpload";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { FileText, Scale, BookOpen, Search, Upload, Users, MessageSquare } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText, Scale, BookOpen, Search, Upload, Users, MessageSquare, UploadCloud } from "lucide-react";
 import { useState } from "react";
 import { useConversations } from "../../SAFA/hooks/useConversations";
 import { ClientConversation } from "./ClientConnect/ClientConversation";
@@ -45,15 +45,37 @@ export const Sidebar = ({ activeModule, setActiveModule, onUploadComplete }: Sid
         return (
           <div className="flex-1">
             <div className="h-full p-6">
-              <div className="flex flex-col h-full bg-background rounded-lg border">
-                <div className="flex items-center gap-2 p-4 border-b">
-                  <FileText className="h-6 w-6 text-primary" />
-                  <h2 className="text-2xl font-semibold">Document Analysis</h2>
-                </div>
-                <div className="p-6">
-                  <FileUpload onUploadComplete={onUploadComplete} />
-                </div>
-              </div>
+              <Card className="h-full">
+                <CardHeader className="border-b bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-6 w-6 text-primary" />
+                    <CardTitle>Document Analysis</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    <div className="text-center space-y-2">
+                      <h3 className="font-medium">Upload Document for Analysis</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Support for PDF, DOC, DOCX formats up to 10MB
+                      </p>
+                    </div>
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 transition-colors hover:border-primary/50">
+                      <div className="flex flex-col items-center justify-center gap-4">
+                        <div className="rounded-full bg-primary/10 p-4">
+                          <UploadCloud className="h-8 w-8 text-primary" />
+                        </div>
+                        <div className="text-center space-y-2">
+                          <FileUpload onUploadComplete={onUploadComplete} />
+                          <p className="text-xs text-muted-foreground">
+                            Your document will be analyzed for key information and risk factors
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         );
