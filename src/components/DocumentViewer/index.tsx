@@ -67,7 +67,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           
           <DocumentDetails
             documentId={document.id}
-            formType={extractedInfo.formType}
+            formType={extractedInfo.type}
             clientName={extractedInfo.clientName}
             trusteeName={extractedInfo.trusteeName}
             dateSigned={extractedInfo.dateSigned}
