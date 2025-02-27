@@ -96,11 +96,8 @@ export const RiskItem: React.FC<RiskItemProps> = ({ risk, documentId }) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <CreateTaskButton 
-                  documentId={documentId} 
-                  title={`Address risk: ${risk.type}`}
-                  description={`${risk.description}\n\nRequired action: ${risk.requiredAction || 'Review and address the identified risk.'}`}
-                  priority={risk.severity === 'high' ? 'high' : 
-                           risk.severity === 'medium' ? 'medium' : 'low'}
+                  documentId={documentId}
+                  risk={risk}
                 />
               </TooltipTrigger>
               <TooltipContent>

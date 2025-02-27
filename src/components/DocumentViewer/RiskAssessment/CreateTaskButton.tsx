@@ -6,12 +6,39 @@ import { Risk } from "./types";
 import { useCreateTask } from "./useCreateTask";
 
 interface CreateTaskButtonProps {
-  risk: Risk;
   documentId: string;
+  title?: string;
+  description?: string;
+  priority?: 'high' | 'medium' | 'low';
+  risk?: Risk;
 }
 
-export const CreateTaskButton = ({ risk, documentId }: CreateTaskButtonProps) => {
+export const CreateTaskButton = ({ 
+  documentId, 
+  title, 
+  description, 
+  priority,
+  risk 
+}: CreateTaskButtonProps) => {
   const { handleCreateTask } = useCreateTask(documentId);
+  
+  const handleClick = () => {
+    if (risk) {
+      handleCreateTask(risk);
+    } else if (title && description) {
+      // Create a custom risk object from the provided props
+      const customRisk: Risk = {
+        type: title,
+        description: description,
+        severity: priority || 'medium',
+        regulation: '',
+        impact: '',
+        requiredAction: '',
+        solution: ''
+      };
+      handleCreateTask(customRisk);
+    }
+  };
 
   return (
     <Popover>
@@ -32,7 +59,7 @@ export const CreateTaskButton = ({ risk, documentId }: CreateTaskButtonProps) =>
             <li>Medium: 5 days</li>
             <li>Low: 7 days</li>
           </ul>
-          <Button className="w-full mt-2" onClick={() => handleCreateTask(risk)}>
+          <Button className="w-full mt-2" onClick={handleClick}>
             Confirm Task Creation
           </Button>
         </div>
