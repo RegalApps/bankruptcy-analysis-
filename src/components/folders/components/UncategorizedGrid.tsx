@@ -37,6 +37,9 @@ export const UncategorizedGrid = ({ documents, onDocumentSelect }: Uncategorized
               <h4 className="font-medium">{doc.title}</h4>
               <p className="text-sm text-muted-foreground">
                 {doc.type || 'Document'}
+                {doc.metadata?.client_name && (
+                  <span className="ml-1">- {doc.metadata.client_name}</span>
+                )}
               </p>
             </div>
           </div>

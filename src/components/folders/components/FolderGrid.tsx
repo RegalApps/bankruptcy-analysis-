@@ -2,7 +2,9 @@
 import { Document } from "@/components/DocumentList/types";
 import { FolderIcon } from "@/components/DocumentList/components/FolderIcon";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface FolderGridProps {
   folders: Document[];
@@ -25,6 +27,12 @@ export const FolderGrid = ({
   onDragLeave,
   onDrop,
 }: FolderGridProps) => {
+  const navigate = useNavigate();
+
+  const handleDocumentDoubleClick = (documentId: string) => {
+    navigate('/', { state: { selectedDocument: documentId } });
+  };
+
   return (
     <ScrollArea className="h-[400px]">
       <div 
@@ -62,6 +70,35 @@ export const FolderGrid = ({
                   </p>
                 </div>
               </div>
+              
+              {isSelected && folderDocuments.length > 0 && (
+                <div className="mt-4 pl-8 space-y-2 border-l-2 border-muted">
+                  {folderDocuments.map(doc => (
+                    <div 
+                      key={doc.id}
+                      className="flex items-center p-2 rounded hover:bg-muted cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Handle document selection within folder
+                      }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        handleDocumentDoubleClick(doc.id);
+                      }}
+                    >
+                      <FileText className="h-4 w-4 mr-2 text-primary" />
+                      <div>
+                        <p className="text-sm font-medium">{doc.title}</p>
+                        {doc.metadata?.client_name && (
+                          <p className="text-xs text-muted-foreground">
+                            Client: {doc.metadata.client_name}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
