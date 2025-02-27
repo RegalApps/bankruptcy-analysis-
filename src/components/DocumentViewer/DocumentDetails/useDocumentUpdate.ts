@@ -4,14 +4,14 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
 export const useDocumentUpdate = (documentId: string) => {
-  const [updating, setUpdating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  const handleSaveUpdate = async (editedValues: Record<string, string>) => {
-    if (updating) return false;
+  const saveDocumentDetails = async (editedValues: Record<string, string>) => {
+    if (isSaving) return false;
     
     try {
-      setUpdating(true);
+      setIsSaving(true);
 
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -80,9 +80,9 @@ export const useDocumentUpdate = (documentId: string) => {
       });
       return false;
     } finally {
-      setUpdating(false);
+      setIsSaving(false);
     }
   };
 
-  return { handleSaveUpdate, updating };
+  return { saveDocumentDetails, isSaving };
 };

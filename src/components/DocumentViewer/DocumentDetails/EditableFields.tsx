@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { EditableField } from "./types";
 import { Pencil, Save, X } from "lucide-react";
+import { EditableField } from "./types";
 
 interface EditableFieldsProps {
   fields: Record<string, string | undefined>;
@@ -19,7 +19,6 @@ export const EditableFields = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
 
-  // Initialize edited values when entering edit mode
   const handleStartEdit = () => {
     const initialValues: Record<string, string> = {};
     Object.entries(fields).forEach(([key, value]) => {
@@ -43,26 +42,19 @@ export const EditableFields = ({
     }
   };
 
-  // Map fields to a format for rendering
   const fieldsList: EditableField[] = Object.entries(fields)
-    .map(([key, value]) => {
-      // Create a proper label from the key (e.g., "formType" -> "Form Type")
-      const label = key
-        .replace(/([A-Z])/g, ' $1') // Insert a space before all caps
-        .replace(/^./, (str) => str.toUpperCase()); // Uppercase first character
-      
-      return {
-        key,
-        label,
-        value,
-        showForTypes: ['*'] // Show for all types by default
-      };
-    })
-    .filter(field => field.value || isEditing); // Only show fields with values or when editing
+    .map(([key, value]) => ({
+      key,
+      label: key
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, str => str.toUpperCase()),
+      value,
+      showForTypes: ['*']
+    }))
+    .filter(field => field.value || isEditing);
 
   return (
     <div className="space-y-4">
-      {/* Edit/Save/Cancel buttons */}
       <div className="flex justify-end space-x-2">
         {!isEditing ? (
           <Button
@@ -98,11 +90,12 @@ export const EditableFields = ({
         )}
       </div>
 
-      {/* Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {fieldsList.map((field) => (
           <div key={field.key} className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">{field.label}:</label>
+            <label className="text-sm font-medium text-muted-foreground">
+              {field.label}:
+            </label>
             {isEditing ? (
               <Input
                 value={editedValues[field.key] || ''}

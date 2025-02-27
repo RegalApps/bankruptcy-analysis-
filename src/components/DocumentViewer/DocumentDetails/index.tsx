@@ -42,7 +42,7 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   officialReceiver,
   summary
 }) => {
-  const { handleSaveUpdate, updating } = useDocumentUpdate(documentId);
+  const { saveDocumentDetails, isSaving } = useDocumentUpdate(documentId);
 
   logger.debug('DocumentDetails Props:', {
     formType,
@@ -73,8 +73,8 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
             dateBankruptcy,
             officialReceiver
           }}
-          onSave={handleSaveUpdate}
-          isLoading={updating}
+          onSave={saveDocumentDetails}
+          isLoading={isSaving}
         />
       </div>
 
