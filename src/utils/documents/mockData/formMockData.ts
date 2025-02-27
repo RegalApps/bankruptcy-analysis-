@@ -79,7 +79,7 @@ export const getMockForm66Data = (): AnalysisResult => {
   return {
     extracted_info: {
       formNumber: "Form 66",
-      clientName: "the information typed here",
+      clientName: "John Smith", // Example of a name extracted from "to: John Smith"
       clientAddress: "123 Example Street, Toronto, ON M5V 2T6",
       clientPhone: "(416) 555-0123",
       clientEmail: "client@example.com",
@@ -92,18 +92,18 @@ export const getMockForm66Data = (): AnalysisResult => {
       totalDebts: "$75,000",
       totalAssets: "$35,000",
       monthlyIncome: "$4,800",
-      summary: "This is a Consumer Proposal (Form 66) for the specified client. The proposal was processed using OCR extraction and validated against BIA requirements. The document includes client details, trustee information, and proposal terms."
+      summary: "This is a Consumer Proposal (Form 66) for John Smith. The system detected the client name following the 'to:' field in the document. The proposal includes standard consumer proposal elements including debt information and trustee details."
     },
     risks: [
       {
-        type: "Debtor Information Verification",
-        description: "Additional verification required for debtor's current contact information and employment status.",
+        type: "Client Name Verification",
+        description: "Verify that the extracted client name from 'to:' field matches other instances of the name in the document.",
         severity: "medium",
         regulation: "BIA Section 66.13 - Requirements for consumer proposals; OSB Directive 6R3 - Consumer Proposal Administration",
-        impact: "May delay creditor notifications and proposal administration",
-        requiredAction: "Verify and update debtor contact information within 5 business days",
-        solution: "Implement automated contact information verification system",
-        deadline: "5 days"
+        impact: "Inconsistent client information may cause processing delays",
+        requiredAction: "Cross-reference client name with other document sections within 2 business days",
+        solution: "Implement AI pattern recognition to cross-validate client name across multiple document sections",
+        deadline: "2 days"
       },
       {
         type: "Meeting Details Documentation",

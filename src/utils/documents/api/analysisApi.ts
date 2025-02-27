@@ -10,7 +10,14 @@ export const triggerDocumentAnalysis = async (documentId: string) => {
         documentId, 
         includeRegulatory: true,
         includeClientExtraction: true,
-        extractionMode: 'comprehensive'
+        extractionMode: 'comprehensive',
+        extractionPatterns: {
+          // Add specific patterns for Form 66
+          form66: {
+            clientName: "(?:to:|TO:|To:)\\s*([\\w\\s\\.\\-']+)",
+            // Add other Form 66 specific patterns as needed
+          }
+        }
       }
     });
 
