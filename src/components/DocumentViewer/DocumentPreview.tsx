@@ -165,14 +165,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           </CardTitle>
           <div className="flex items-center gap-4">
             <Button
-              onClick={handleAnalyzeDocument}
-              disabled={analyzing}
-              className="text-sm flex items-center gap-2"
-            >
-              {analyzing && <Loader2 className="h-4 w-4 animate-spin" />}
-              {analyzing ? 'Analyzing...' : 'Analyze Document'}
-            </Button>
-            <Button
               variant="outline" 
               size="sm"
               asChild
