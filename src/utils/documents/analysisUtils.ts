@@ -19,6 +19,7 @@ export interface AnalysisResult {
     impact: string;
     requiredAction: string;
     solution: string;
+    deadline: string;
   }>;
   regulatory_compliance: {
     status: string;
@@ -30,7 +31,7 @@ export interface AnalysisResult {
 export const triggerDocumentAnalysis = async (documentId: string) => {
   try {
     const { error } = await supabase.functions.invoke('analyze-document', {
-      body: { documentId }
+      body: { documentId, includeRegulatory: true }
     });
 
     if (error) {
@@ -44,7 +45,7 @@ export const triggerDocumentAnalysis = async (documentId: string) => {
 };
 
 export const performMockAnalysis = (): AnalysisResult => {
-  // Mock data for demonstration
+  // Mock data for Form 76 analysis
   return {
     extracted_info: {
       formNumber: "Form 76",
@@ -62,7 +63,8 @@ export const performMockAnalysis = (): AnalysisResult => {
         regulation: "BIA Reference: Section 158(a) requires a debtor to disclose full financial affairs to the trustee. Directive Reference: OSB Directive No. 6R3 states the requirement to file a Statement of Affairs.",
         impact: "May delay the bankruptcy process and lead to rejection of filing.",
         requiredAction: "Submit complete financial disclosure within 5 days.",
-        solution: "Attach a Statement of Affairs with required financial details."
+        solution: "Attach a Statement of Affairs with required financial details.",
+        deadline: "5 days"
       },
       {
         type: "Lack of Required Signatures",
@@ -71,7 +73,8 @@ export const performMockAnalysis = (): AnalysisResult => {
         regulation: "BIA Reference: Section 50.4(8) mandates signatures for formal insolvency proceedings. Directive Reference: OSB Form Guidelines state that official documents must have authenticated signatures.",
         impact: "Document may be considered invalid without proper signatures.",
         requiredAction: "Obtain signatures before next trustee meeting.",
-        solution: "Use digital signing (e.g., DocuSign API integration)."
+        solution: "Use digital signing (e.g., DocuSign API integration).",
+        deadline: "3 days"
       },
       {
         type: "No Creditor Information Provided",
@@ -80,7 +83,8 @@ export const performMockAnalysis = (): AnalysisResult => {
         regulation: "BIA Reference: Section 158(c) states that a debtor must disclose all creditors and amounts owed. Directive Reference: OSB Directive No. 11 outlines creditor claim procedures.",
         impact: "Creditors may not be properly notified of proceedings.",
         requiredAction: "Submit creditor details within 3 days.",
-        solution: "Use OCR and AI-driven form processing to extract financial details from bank statements."
+        solution: "Use OCR and AI-driven form processing to extract financial details from bank statements.",
+        deadline: "3 days"
       },
       {
         type: "No Mention of Assets or Exemptions",
@@ -89,7 +93,8 @@ export const performMockAnalysis = (): AnalysisResult => {
         regulation: "BIA Reference: Section 67(1) discusses the division of assets under bankruptcy. Directive Reference: OSB Directive No. 11R2 details asset disclosure requirements.",
         impact: "May result in improper handling of debtor assets.",
         requiredAction: "Disclose assets before initial bankruptcy assessment.",
-        solution: "Automate asset tracking through the CRM system."
+        solution: "Automate asset tracking through the CRM system.",
+        deadline: "7 days"
       }
     ],
     regulatory_compliance: {

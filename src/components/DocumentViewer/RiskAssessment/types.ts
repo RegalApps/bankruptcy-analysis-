@@ -8,6 +8,7 @@ export interface Risk {
   solution?: string;
   regulation?: string;
   reference?: string;
+  deadline?: string;
 }
 
 export interface RiskAssessmentProps {

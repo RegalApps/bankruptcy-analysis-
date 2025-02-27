@@ -6,7 +6,8 @@ import {
   CheckCircle, 
   ChevronDown, 
   ChevronUp, 
-  Shield 
+  Shield,
+  Clock
 } from "lucide-react";
 import { getSeverityColor, getSeverityBg } from "./utils";
 import { Risk } from "./types";
@@ -80,6 +81,16 @@ export const RiskItem: React.FC<RiskItemProps> = ({ risk, documentId }) => {
             <div className="space-y-1">
               <h5 className="text-xs font-medium text-muted-foreground">Required Action:</h5>
               <p className="text-xs">{risk.requiredAction}</p>
+            </div>
+          )}
+          
+          {risk.deadline && (
+            <div className="space-y-1">
+              <h5 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Deadline:
+              </h5>
+              <p className="text-xs">{risk.deadline}</p>
             </div>
           )}
           
