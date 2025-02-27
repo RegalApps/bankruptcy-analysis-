@@ -7,7 +7,9 @@ import {
   ChevronDown, 
   ChevronUp, 
   Shield,
-  Clock
+  Clock,
+  BookOpen,
+  ScrollText
 } from "lucide-react";
 import { getSeverityColor, getSeverityBg } from "./utils";
 import { Risk } from "./types";
@@ -36,6 +38,8 @@ export const RiskItem: React.FC<RiskItemProps> = ({ risk, documentId }) => {
     }
   };
 
+  const hasBiaCompliance = risk.biaReference || risk.directiveReference;
+
   return (
     <div className={`border rounded-lg overflow-hidden ${getSeverityBg(risk.severity)}`}>
       <div 
@@ -55,6 +59,11 @@ export const RiskItem: React.FC<RiskItemProps> = ({ risk, documentId }) => {
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getSeverityColor(risk.severity)} bg-background/80`}>
             {risk.severity.toUpperCase()}
           </span>
+          {hasBiaCompliance && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+              BIA
+            </span>
+          )}
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </div>
       </div>
@@ -63,7 +72,33 @@ export const RiskItem: React.FC<RiskItemProps> = ({ risk, documentId }) => {
         <div className="p-3 pt-0 border-t border-background/20 space-y-3">
           <p className="text-sm">{risk.description}</p>
           
-          {risk.regulation && (
+          {(risk.biaReference || risk.biaDescription) && (
+            <div className="space-y-1">
+              <h5 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <BookOpen className="h-3 w-3" />
+                BIA Reference:
+              </h5>
+              <p className="text-xs bg-background/50 p-2 rounded">
+                <span className="font-semibold">{risk.biaReference}</span>
+                {risk.biaDescription && ` - ${risk.biaDescription}`}
+              </p>
+            </div>
+          )}
+          
+          {(risk.directiveReference || risk.directiveDescription) && (
+            <div className="space-y-1">
+              <h5 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <ScrollText className="h-3 w-3" />
+                OSB Directive:
+              </h5>
+              <p className="text-xs bg-background/50 p-2 rounded">
+                <span className="font-semibold">{risk.directiveReference}</span>
+                {risk.directiveDescription && ` - ${risk.directiveDescription}`}
+              </p>
+            </div>
+          )}
+          
+          {risk.regulation && !risk.biaReference && (
             <div className="space-y-1">
               <h5 className="text-xs font-medium text-muted-foreground">Regulation:</h5>
               <p className="text-xs bg-background/50 p-2 rounded">{risk.regulation}</p>

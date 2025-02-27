@@ -8,6 +8,7 @@ import { TaskManager } from "./TaskManager";
 import { VersionTab } from "./VersionTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentDetails } from "./DocumentDetails";
+import { RiskAssessment } from "./RiskAssessment";
 import logger from "@/utils/logger";
 
 interface DocumentViewerProps {
@@ -63,6 +64,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           officialReceiver={extractedInfo.officialReceiver}
           summary={extractedInfo.summary}
         />
+        
+        {analysis?.risks && (
+          <RiskAssessment 
+            risks={analysis.risks} 
+            documentId={document.id} 
+          />
+        )}
       </div>
 
       <div className="lg:col-span-6">

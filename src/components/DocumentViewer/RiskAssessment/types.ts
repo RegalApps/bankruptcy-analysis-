@@ -9,6 +9,10 @@ export interface Risk {
   regulation?: string;
   reference?: string;
   deadline?: string;
+  biaReference?: string;
+  biaDescription?: string;
+  directiveReference?: string;
+  directiveDescription?: string;
 }
 
 export interface RiskAssessmentProps {
