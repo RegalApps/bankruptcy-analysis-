@@ -61,7 +61,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           securityInfo={extractedInfo.securityInfo}
           dateBankruptcy={extractedInfo.dateBankruptcy}
           officialReceiver={extractedInfo.officialReceiver}
-          summary={analysis?.summary}
+          summary={extractedInfo.summary}
         />
       </div>
 
