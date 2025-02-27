@@ -1,12 +1,13 @@
 
-import { useEffect } from "react";
-import { FileText, RotateCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FileText, RotateCw, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AnalysisProgress } from "./components/AnalysisProgress";
 import { ErrorDisplay } from "./components/ErrorDisplay";
 import { useDocumentAnalysis } from "./hooks/useDocumentAnalysis";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DocumentPreviewProps {
   storagePath: string;
@@ -17,6 +18,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   storagePath,
   onAnalysisComplete 
 }) => {
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const {
     analyzing,
     error,
@@ -78,11 +80,16 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   }, [storagePath, analyzing, error, setSession, handleAnalyzeDocument]);
 
   const handleRefreshPreview = () => {
+    setPreviewError(null);
     // Force reload the iframe
     const iframe = document.querySelector('iframe');
     if (iframe && iframe.src) {
       iframe.src = `${iframe.src}?refresh=${new Date().getTime()}`;
     }
+  };
+
+  const handleIframeError = () => {
+    setPreviewError("There was an issue loading the document preview.");
   };
 
   return (
@@ -104,7 +111,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               Refresh
             </Button>
             <Button
-              variant="outline" 
+              variant="default" 
               size="sm"
               asChild
             >
@@ -112,22 +119,48 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 href={publicUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm"
+                className="text-sm flex items-center"
               >
+                <ExternalLink className="h-4 w-4 mr-2" />
                 Open Document
               </a>
             </Button>
           </div>
         </CardHeader>
         <CardContent>
+          {previewError ? (
+            <Alert className="mb-4">
+              <AlertDescription className="flex flex-col gap-4">
+                <p>{previewError}</p>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button variant="outline" size="sm" onClick={handleRefreshPreview}>
+                    Try Again
+                  </Button>
+                  <Button variant="default" size="sm" asChild>
+                    <a 
+                      href={publicUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open Document Externally
+                    </a>
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+          
           <div className="aspect-[3/4] w-full bg-muted rounded-lg overflow-hidden">
-            <iframe
-              src={`${publicUrl}#toolbar=0&view=FitH`}
+            <object
+              data={publicUrl}
+              type="application/pdf"
               className="w-full h-full rounded-lg"
-              title="Document Preview"
-              sandbox="allow-same-origin allow-scripts allow-forms"
-              loading="lazy"
-            />
+              onError={handleIframeError}
+            >
+              <p>
+                Unable to display PDF. <a href={publicUrl} target="_blank" rel="noopener noreferrer">Download</a> instead.
+              </p>
+            </object>
           </div>
           
           {analyzing && (
