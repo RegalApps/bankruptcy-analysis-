@@ -79,7 +79,7 @@ export const FolderGrid = ({
                       className="flex items-center p-2 rounded hover:bg-muted cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Handle document selection within folder
+                        // Single click selects the document
                       }}
                       onDoubleClick={(e) => {
                         e.stopPropagation();

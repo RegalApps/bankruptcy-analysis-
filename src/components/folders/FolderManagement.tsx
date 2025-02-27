@@ -98,11 +98,20 @@ export const FolderManagement = ({
   const uncategorizedDocuments = documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
   const filteredDocuments = getFilteredDocuments();
 
-  // Create a handler that calls the onOpenDocument prop if it exists
+  // Handler for opening a document - uses the onOpenDocument prop if provided
   const handleOpenDocument = (documentId: string) => {
     if (onOpenDocument) {
       onOpenDocument(documentId);
     }
+  };
+
+  // Handler for document selection
+  const handleDocumentSelect = (documentId: string) => {
+    onItemSelect(documentId, "file");
+    
+    // If the user wants to immediately open the document on select,
+    // uncomment the following line:
+    // if (onOpenDocument) onOpenDocument(documentId);
   };
 
   return (
@@ -162,7 +171,7 @@ export const FolderManagement = ({
           <TabsContent value="uncategorized">
             <UncategorizedGrid 
               documents={uncategorizedDocuments}
-              onDocumentSelect={(id) => onItemSelect(id, "file")}
+              onDocumentSelect={handleDocumentSelect}
             />
           </TabsContent>
         </Tabs>
