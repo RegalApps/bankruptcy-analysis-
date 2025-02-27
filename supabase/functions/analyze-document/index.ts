@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { processDocument } from "./formAnalyzer.ts";
 
 const corsHeaders = {
@@ -15,97 +14,55 @@ serve(async (req) => {
   }
 
   try {
-    const { documentText, documentId, includeRegulatory = true } = await req.json();
-    console.log('Analyzing document:', { documentId, textLength: documentText?.length });
+    const { documentText, documentId, includeRegulatory } = await req.json();
 
     if (!documentText) {
-      throw new Error('No document text provided');
+      return new Response(
+        JSON.stringify({ error: 'No document text provided' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+    console.log('Received document text length:', documentText.length);
+    console.log('Document sample:', documentText.substring(0, 200));
 
-    // Process the document text
-    const analysis = await processDocument(documentText, includeRegulatory);
-    console.log('Analysis results:', analysis);
+    // Process the document using formAnalyzer
+    const analysisResults = await processDocument(documentText, includeRegulatory);
+    console.log('Analysis completed:', JSON.stringify(analysisResults, null, 2));
 
-    // Create the comprehensive analysis object
-    const analysisContent = {
-      extracted_info: {
-        ...analysis.extractedInfo,
-        type: analysis.documentType,
-        clientName: analysis.clientInfo?.name,
-        clientAddress: analysis.clientInfo?.address,
-        trusteeName: analysis.trusteeInfo?.name,
-        trusteeAddress: analysis.trusteeInfo?.address,
-        formNumber: analysis.formNumber,
-        dateSigned: analysis.dateSigned,
-        estateNumber: analysis.estateNumber,
-        district: analysis.district,
-        divisionNumber: analysis.divisionNumber,
-        courtNumber: analysis.courtNumber,
-        meetingOfCreditors: analysis.meetingInfo,
-        chairInfo: analysis.chairInfo,
-        securityInfo: analysis.securityInfo,
-        dateBankruptcy: analysis.bankruptcyDate,
-        officialReceiver: analysis.officialReceiver,
-        summary: analysis.summary
-      },
-      risks: analysis.risks.map(risk => ({
-        type: risk.type,
-        description: risk.description,
-        severity: risk.severity,
-        regulation: risk.regulation,
-        impact: risk.impact,
-        requiredAction: risk.requiredAction,
-        solution: risk.solution
-      })),
-      regulatoryCompliance: analysis.regulatoryCompliance
-    };
-
-    // Update the document analysis in the database
-    const { error: upsertError } = await supabaseClient
+    // Store analysis results in database
+    const { data, error } = await supabase
       .from('document_analysis')
-      .upsert({
+      .insert({
         document_id: documentId,
-        content: analysisContent,
-        updated_at: new Date().toISOString()
-      });
+        content: analysisResults
+      })
+      .select()
+      .single();
 
-    if (upsertError) {
-      console.error('Error updating document analysis:', upsertError);
-      throw upsertError;
+    if (error) {
+      console.error('Error storing analysis:', error);
+      throw error;
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        analysis: analysisContent
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
+      JSON.stringify(analysisResults),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
 
   } catch (error) {
     console.error('Error in analyze-document function:', error);
+    
     return new Response(
-      JSON.stringify({
-        error: error.message || 'An error occurred during document analysis'
-      }),
-      {
+      JSON.stringify({ error: error.message || 'Internal server error' }),
+      { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
