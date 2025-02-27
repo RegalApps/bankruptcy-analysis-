@@ -3,15 +3,15 @@ import { useState } from 'react';
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
-export const useDocumentUpdate = (documentId: string, formType: string) => {
-  const [isSaving, setIsSaving] = useState(false);
+export const useDocumentUpdate = (documentId: string) => {
+  const [updating, setUpdating] = useState(false);
   const { toast } = useToast();
 
-  const saveDocumentDetails = async (editedValues: Record<string, string>) => {
-    if (isSaving) return;
+  const handleSaveUpdate = async (editedValues: Record<string, string>) => {
+    if (updating) return false;
     
     try {
-      setIsSaving(true);
+      setUpdating(true);
 
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -33,7 +33,7 @@ export const useDocumentUpdate = (documentId: string, formType: string) => {
         extracted_info: {
           ...(existingAnalysis?.content?.extracted_info || {}),
           ...editedValues,
-          type: formType
+          type: editedValues.formType || existingAnalysis?.content?.extracted_info?.type || 'unknown'
         }
       };
 
@@ -80,9 +80,9 @@ export const useDocumentUpdate = (documentId: string, formType: string) => {
       });
       return false;
     } finally {
-      setIsSaving(false);
+      setUpdating(false);
     }
   };
 
-  return { saveDocumentDetails, isSaving };
+  return { handleSaveUpdate, updating };
 };
