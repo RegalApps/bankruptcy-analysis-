@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "@supabase/supabase-js";
 import { processDocument } from "./formAnalyzer.ts";
 
 const corsHeaders = {
@@ -21,6 +21,18 @@ serve(async (req) => {
     if (!documentText) {
       throw new Error('No document text provided');
     }
+
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
 
     // Process the document text
     const analysis = await processDocument(documentText, includeRegulatory);
@@ -55,22 +67,12 @@ serve(async (req) => {
         regulation: risk.regulation,
         impact: risk.impact,
         requiredAction: risk.requiredAction,
-        solution: risk.solution,
-        reference: risk.reference
+        solution: risk.solution
       })),
-      regulatoryCompliance: analysis.regulatoryCompliance ? {
-        status: analysis.regulatoryCompliance.status,
-        details: analysis.regulatoryCompliance.details,
-        references: analysis.regulatoryCompliance.references
-      } : undefined
+      regulatoryCompliance: analysis.regulatoryCompliance
     };
 
     // Update the document analysis in the database
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
     const { error: upsertError } = await supabaseClient
       .from('document_analysis')
       .upsert({
@@ -91,6 +93,7 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     );
 

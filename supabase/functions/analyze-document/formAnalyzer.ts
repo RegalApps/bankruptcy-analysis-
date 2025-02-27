@@ -1,36 +1,51 @@
+
 import { analyzeRisks } from "./riskAnalyzer.ts";
 import { validateForm } from "./validation/formValidation.ts";
 
 export async function processDocument(text: string, includeRegulatory: boolean = true) {
   console.log('Processing document text length:', text.length);
 
-  // Extract basic document info
-  const documentType = extractDocumentType(text);
-  const formNumber = extractFormNumber(text);
-  const clientInfo = extractClientInfo(text);
-  const trusteeInfo = extractTrusteeInfo(text);
-  
-  // Extract dates and numbers
-  const dateSigned = extractDate(text, /Dated:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i);
-  const bankruptcyDate = extractDate(text, /Date of Bankruptcy:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i);
-  const estateNumber = extractEstateNumber(text);
-  
-  // Extract location info
-  const district = extractDistrict(text);
-  const divisionNumber = extractDivisionNumber(text);
-  const courtNumber = extractCourtNumber(text);
-  
-  // Extract additional info
-  const meetingInfo = extractMeetingInfo(text);
-  const chairInfo = extractChairInfo(text);
-  const securityInfo = extractSecurityInfo(text);
-  const officialReceiver = extractOfficialReceiver(text);
+  // Regular expressions for extracting information
+  const formNumberRegex = /Form\s*(?:No\.?)?\s*(\d+)/i;
+  const clientNameRegex = /(?:Debtor|Client):\s*([^\n]+)/i;
+  const trusteeNameRegex = /(?:Licensed\s+Insolvency\s+)?Trustee:\s*([^\n]+)/i;
+  const estateNumberRegex = /Estate\s*(?:No\.?)?\s*(\d+)/i;
+  const dateSignedRegex = /(?:Date[d]?|Signed):\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i;
+  const bankruptcyDateRegex = /Date\s+of\s+Bankruptcy:\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i;
+  const districtRegex = /District(?:\s+of)?:\s*([^\n]+)/i;
+  const divisionNumberRegex = /Division\s*(?:No\.?)?\s*(\d+)/i;
+  const courtNumberRegex = /Court\s*(?:No\.?)?\s*(\d+)/i;
+
+  // Extract information using regex
+  const formNumber = (text.match(formNumberRegex) || [])[1] || '';
+  const clientName = (text.match(clientNameRegex) || [])[1] || '';
+  const trusteeName = (text.match(trusteeNameRegex) || [])[1] || '';
+  const estateNumber = (text.match(estateNumberRegex) || [])[1] || '';
+  const dateSigned = (text.match(dateSignedRegex) || [])[1] || '';
+  const bankruptcyDate = (text.match(bankruptcyDateRegex) || [])[1] || '';
+  const district = (text.match(districtRegex) || [])[1] || '';
+  const divisionNumber = (text.match(divisionNumberRegex) || [])[1] || '';
+  const courtNumber = (text.match(courtNumberRegex) || [])[1] || '';
+
+  // Determine document type based on content
+  const documentType = determineDocumentType(text);
+
+  // Extract client and trustee info
+  const clientInfo = {
+    name: clientName?.trim(),
+    address: extractAddress(text, clientName)
+  };
+
+  const trusteeInfo = {
+    name: trusteeName?.trim(),
+    address: extractAddress(text, trusteeName)
+  };
 
   // Generate summary
-  const summary = await generateDocumentSummary(text);
+  const summary = generateSummary(text, documentType);
 
-  // Analyze risks and compliance
-  const riskAnalysis = await analyzeRisks(text, documentType);
+  // Analyze risks and validate form
+  const risks = await analyzeRisks(text, documentType);
   const validationResults = await validateForm(text, documentType);
 
   return {
@@ -44,163 +59,69 @@ export async function processDocument(text: string, includeRegulatory: boolean =
     district,
     divisionNumber,
     courtNumber,
-    meetingInfo,
-    chairInfo,
-    securityInfo,
-    officialReceiver,
+    meetingInfo: extractMeetingInfo(text),
+    chairInfo: extractChairInfo(text),
+    securityInfo: extractSecurityInfo(text),
+    officialReceiver: extractOfficialReceiver(text),
     summary,
-    risks: riskAnalysis,
+    risks,
     regulatoryCompliance: validationResults
   };
 }
 
-function extractDocumentType(text: string): string {
-  const bankruptcyPattern = /bankruptcy|bankrupt/i;
-  const proposalPattern = /proposal|consumer proposal/i;
-  const courtPattern = /court order|court filing/i;
-  const meetingPattern = /meeting of creditors|creditors meeting/i;
-  const securityPattern = /security agreement|collateral/i;
+function determineDocumentType(text: string): string {
+  const lowerText = text.toLowerCase();
+  if (lowerText.includes('bankruptcy') || lowerText.includes('bankrupt')) return 'bankruptcy';
+  if (lowerText.includes('proposal')) return 'proposal';
+  if (lowerText.includes('receivership')) return 'receivership';
+  if (lowerText.includes('court')) return 'court';
+  return 'general';
+}
 
-  if (bankruptcyPattern.test(text)) return "bankruptcy";
-  if (proposalPattern.test(text)) return "proposal";
-  if (courtPattern.test(text)) return "court";
-  if (meetingPattern.test(text)) return "meeting";
-  if (securityPattern.test(text)) return "security";
+function extractAddress(text: string, name: string): string {
+  if (!name) return '';
+  const nameIndex = text.indexOf(name);
+  if (nameIndex === -1) return '';
   
-  return "other";
-}
-
-function extractFormNumber(text: string): string {
-  const match = text.match(/Form\s+(\d+)/i);
-  return match ? match[1] : '';
-}
-
-function extractClientInfo(text: string) {
-  const namePattern = /(?:Client|Debtor)(?:'s)?\s*Name:?\s*([^\n\r]+)/i;
-  const addressPattern = /(?:Client|Debtor)(?:'s)?\s*Address:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
-  const phonePattern = /(?:Client|Debtor)(?:'s)?\s*(?:Phone|Tel):?\s*([\d\-\(\)\s\.]+)/i;
-
-  const name = text.match(namePattern)?.[1]?.trim() || '';
-  const address = text.match(addressPattern)?.[1]?.trim() || '';
-  const phone = text.match(phonePattern)?.[1]?.trim() || '';
-
-  return {
-    name,
-    address,
-    phone
-  };
-}
-
-function extractTrusteeInfo(text: string) {
-  const namePattern = /(?:Trustee|Licensed\s+Insolvency\s+Trustee)(?:'s)?\s*Name:?\s*([^\n\r]+)/i;
-  const addressPattern = /(?:Trustee|Licensed\s+Insolvency\s+Trustee)(?:'s)?\s*Address:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
-  const phonePattern = /(?:Trustee|Licensed\s+Insolvency\s+Trustee)(?:'s)?\s*(?:Phone|Tel):?\s*([\d\-\(\)\s\.]+)/i;
-
-  const name = text.match(namePattern)?.[1]?.trim() || '';
-  const address = text.match(addressPattern)?.[1]?.trim() || '';
-  const phone = text.match(phonePattern)?.[1]?.trim() || '';
-
-  return {
-    name,
-    address,
-    phone
-  };
-}
-
-function extractDate(text: string, pattern: RegExp): string {
-  const match = text.match(pattern);
-  return match ? match[1] : '';
-}
-
-function extractEstateNumber(text: string): string {
-  const match = text.match(/Estate No\.?:?\s*(\d+)/i);
-  return match ? match[1] : '';
-}
-
-function extractDistrict(text: string): string {
-  const match = text.match(/District(?:\s+of)?:?\s*([^\n\r]+)/i);
-  return match ? match[1].trim() : '';
-}
-
-function extractDivisionNumber(text: string): string {
-  const match = text.match(/Division No\.?:?\s*(\d+)/i);
-  return match ? match[1] : '';
-}
-
-function extractCourtNumber(text: string): string {
-  const match = text.match(/Court No\.?:?\s*(\d+)/i);
-  return match ? match[1] : '';
+  const addressSection = text.substring(nameIndex + name.length, nameIndex + 200);
+  const lines = addressSection.split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !line.includes('Estate No') && !line.includes('Date'));
+  
+  return lines.slice(0, 3).join(', ');
 }
 
 function extractMeetingInfo(text: string): string {
-  const pattern = /Meeting of Creditors:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
-  const match = text.match(pattern);
-  return match ? match[1].trim() : '';
+  const meetingRegex = /Meeting of Creditors[:\s]*([^\n]+)/i;
+  return (text.match(meetingRegex) || [])[1] || '';
 }
 
 function extractChairInfo(text: string): string {
-  const pattern = /Chair(?:person)?:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
-  const match = text.match(pattern);
-  return match ? match[1].trim() : '';
+  const chairRegex = /Chair(?:person)?[:\s]*([^\n]+)/i;
+  return (text.match(chairRegex) || [])[1] || '';
 }
 
 function extractSecurityInfo(text: string): string {
-  const pattern = /Security Information:?\s*([^\n\r]+(?:\n[^\n\r]+)*)/i;
-  const match = text.match(pattern);
-  return match ? match[1].trim() : '';
+  const securityRegex = /Security[:\s]*([^\n]+)/i;
+  return (text.match(securityRegex) || [])[1] || '';
 }
 
 function extractOfficialReceiver(text: string): string {
-  const pattern = /Official Receiver:?\s*([^\n\r]+)/i;
-  const match = text.match(pattern);
-  return match ? match[1].trim() : '';
+  const receiverRegex = /Official\s+Receiver[:\s]*([^\n]+)/i;
+  return (text.match(receiverRegex) || [])[1] || '';
 }
 
-async function generateDocumentSummary(text: string): Promise<string> {
-  // Extract key information
-  const type = extractDocumentType(text);
-  const client = extractClientInfo(text);
-  const trustee = extractTrusteeInfo(text);
-  const estateNo = extractEstateNumber(text);
+function generateSummary(text: string, documentType: string): string {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const relevantSentences = sentences
+    .filter(s => {
+      const lower = s.toLowerCase();
+      return lower.includes(documentType) ||
+             lower.includes('estate') ||
+             lower.includes('creditor') ||
+             lower.includes('trustee');
+    })
+    .slice(0, 3);
   
-  // Generate a concise summary
-  let summary = `This is a ${type} document`;
-  
-  if (client.name) {
-    summary += ` for ${client.name}`;
-  }
-  
-  if (trustee.name) {
-    summary += `, handled by Licensed Insolvency Trustee ${trustee.name}`;
-  }
-  
-  if (estateNo) {
-    summary += ` (Estate No. ${estateNo})`;
-  }
-  
-  summary += '. ';
-  
-  // Add additional context based on document type
-  switch (type) {
-    case 'bankruptcy':
-      const bankruptcyDate = extractDate(text, /Date of Bankruptcy:?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i);
-      if (bankruptcyDate) {
-        summary += `The bankruptcy was filed on ${bankruptcyDate}. `;
-      }
-      break;
-    case 'meeting':
-      const meetingInfo = extractMeetingInfo(text);
-      if (meetingInfo) {
-        summary += `A meeting of creditors is scheduled: ${meetingInfo}. `;
-      }
-      break;
-    case 'court':
-      const courtNo = extractCourtNumber(text);
-      if (courtNo) {
-        summary += `This is related to court filing number ${courtNo}. `;
-      }
-      break;
-  }
-  
-  return summary.trim();
+  return relevantSentences.join('. ') + '.';
 }
