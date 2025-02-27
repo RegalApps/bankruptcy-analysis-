@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
 import { Footer } from "@/components/layout/Footer";
-import { useLocation, Navigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -25,12 +25,17 @@ const Index = () => {
     console.log("Initializing auth state...");
     setIsLoading(true);
     
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("Session state:", session);
       setSession(session);
       setIsLoading(false);
+    }).catch(error => {
+      console.error("Error fetching session:", error);
+      setIsLoading(false);
     });
 
+    // Subscribe to auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -50,7 +55,7 @@ const Index = () => {
     );
   }
 
-  // If no session is found, redirect to auth page with a message
+  // If no session is found, redirect to auth page
   if (!session) {
     return <Auth />;
   }
