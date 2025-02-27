@@ -72,7 +72,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       const documentText = await extractTextFromPdf(publicUrl);
       console.log('Document text extracted successfully, length:', documentText.length);
 
-      if (!documentText) {
+      if (!documentText || documentText.trim().length === 0) {
         throw new Error('No text could be extracted from the document');
       }
 
@@ -81,10 +81,13 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         .from('documents')
         .select('id')
         .eq('storage_path', storagePath)
-        .single();
+        .maybeSingle();
 
       if (fetchError) throw fetchError;
+      if (!documents) throw new Error('Document record not found');
 
+      console.log('Calling analyze-document with document ID:', documents.id);
+      
       // Call the analyze-document function with regulatory validation
       const { data, error } = await supabase.functions.invoke('analyze-document', {
         body: { 
