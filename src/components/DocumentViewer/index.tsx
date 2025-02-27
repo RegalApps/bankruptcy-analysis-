@@ -7,6 +7,7 @@ import { LoadingState } from "./LoadingState";
 import { TaskManager } from "./TaskManager";
 import { VersionTab } from "./VersionTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DocumentDetails } from "./DocumentDetails";
 import logger from "@/utils/logger";
 
 interface DocumentViewerProps {
@@ -32,6 +33,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
   const analysis = document.analysis?.[0]?.content;
   logger.debug('Analysis content:', analysis);
+  
+  // Extract document fields from analysis for DocumentDetails
+  const extractedInfo = analysis?.extracted_info || {};
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -39,6 +43,25 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         <Sidebar 
           document={document}
           onDeadlineUpdated={fetchDocumentDetails} 
+        />
+        
+        <DocumentDetails
+          documentId={document.id}
+          formType={extractedInfo.type}
+          clientName={extractedInfo.clientName}
+          trusteeName={extractedInfo.trusteeName}
+          dateSigned={extractedInfo.dateSigned}
+          formNumber={extractedInfo.formNumber}
+          estateNumber={extractedInfo.estateNumber}
+          district={extractedInfo.district}
+          divisionNumber={extractedInfo.divisionNumber}
+          courtNumber={extractedInfo.courtNumber}
+          meetingOfCreditors={extractedInfo.meetingOfCreditors}
+          chairInfo={extractedInfo.chairInfo}
+          securityInfo={extractedInfo.securityInfo}
+          dateBankruptcy={extractedInfo.dateBankruptcy}
+          officialReceiver={extractedInfo.officialReceiver}
+          summary={analysis?.summary}
         />
       </div>
 
