@@ -102,11 +102,15 @@ export const uploadDocument = async (file: File) => {
       formType = 'bankruptcy';
     } else if (documentText.toLowerCase().includes('consumer proposal') || 
               file.name.toLowerCase().includes('consumer proposal') ||
-              file.name.toLowerCase().includes('form 66')) {
+              file.name.toLowerCase().includes('form 66') ||
+              file.name.toLowerCase().includes('f66') ||
+              file.name.includes('66')) {
       formType = 'consumer proposal';
     } else if (documentText.toLowerCase().includes('notice of intention') || 
               file.name.toLowerCase().includes('notice of intention') ||
-              file.name.toLowerCase().includes('form 65')) {
+              file.name.toLowerCase().includes('form 65') ||
+              file.name.toLowerCase().includes('f65') ||
+              file.name.includes('65')) {
       formType = 'notice of intention';
     }
     

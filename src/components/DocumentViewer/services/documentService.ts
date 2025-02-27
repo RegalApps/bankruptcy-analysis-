@@ -69,3 +69,34 @@ export const subscribeToDocumentUpdates = (
     supabase.removeChannel(channel);
   };
 };
+
+/**
+ * Triggers document analysis based on document content and title
+ */
+export const triggerAnalysisForDocument = async (documentId: string, formNumber?: string, formType?: string) => {
+  try {
+    console.log(`Triggering analysis for document ID: ${documentId}, Form: ${formNumber}, Type: ${formType}`);
+    
+    const { data, error } = await supabase.functions.invoke('analyze-document', {
+      body: { 
+        documentId,
+        formNumber,
+        formType,
+        forceReanalysis: true, // Force fresh analysis regardless of existing data
+        includeRegulatory: true,
+        includeClientExtraction: true,
+        extractionMode: 'comprehensive'
+      }
+    });
+
+    if (error) {
+      console.error('Error triggering document analysis:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Failed to trigger document analysis:', error);
+    throw error;
+  }
+};
