@@ -1,104 +1,113 @@
 
-import { ArrowRight, Info, CheckCircle, AlertTriangle, AlertOctagon } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "../../ui/alert";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
+import React, { useState } from "react";
+import { 
+  AlertTriangle, 
+  AlertOctagon, 
+  CheckCircle, 
+  ChevronDown, 
+  ChevronUp, 
+  Shield 
+} from "lucide-react";
+import { getSeverityColor, getSeverityBg } from "./utils";
 import { Risk } from "./types";
-import { Button } from "../../ui/button";
-import { getSeverityBg, getSeverityColor, getSeverityIcon } from "./utils";
+import { Button } from "@/components/ui/button";
+import { CreateTaskButton } from "./CreateTaskButton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface RiskItemProps {
   risk: Risk;
   documentId: string;
 }
 
-export const RiskItem = ({ risk, documentId }: RiskItemProps) => {
+export const RiskItem: React.FC<RiskItemProps> = ({ risk, documentId }) => {
+  const [expanded, setExpanded] = useState(false);
+  
   const getIcon = () => {
-    switch (getSeverityIcon(risk.severity)) {
-      case 'CheckCircle':
-        return <CheckCircle className="h-5 w-5" />;
-      case 'AlertTriangle':
-        return <AlertTriangle className="h-5 w-5" />;
-      case 'AlertOctagon':
-        return <AlertOctagon className="h-5 w-5" />;
+    switch (risk.severity) {
+      case 'high':
+        return <AlertOctagon className={`h-5 w-5 text-red-500`} />;
+      case 'medium':
+        return <AlertTriangle className={`h-5 w-5 text-yellow-500`} />;
+      case 'low':
+        return <CheckCircle className={`h-5 w-5 text-green-500`} />;
       default:
-        return <Info className="h-5 w-5" />;
+        return <Shield className={`h-5 w-5 text-gray-500`} />;
     }
   };
 
   return (
-    <div className={`space-y-3 p-4 rounded-lg border ${getSeverityBg(risk.severity)}`}>
-      <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-3 flex-1">
-          <div className={`${getSeverityColor(risk.severity)} mt-0.5 flex-shrink-0`}>
-            {getIcon()}
+    <div className={`border rounded-lg overflow-hidden ${getSeverityBg(risk.severity)}`}>
+      <div 
+        className="flex items-center justify-between p-3 cursor-pointer"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-3">
+          {getIcon()}
+          <div>
+            <h4 className="font-medium text-sm">{risk.type}</h4>
+            <p className="text-xs text-muted-foreground line-clamp-1">
+              {risk.description}
+            </p>
           </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium">{risk.type}</h4>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${getSeverityBg(risk.severity)} ${getSeverityColor(risk.severity)}`}>
-                {risk.severity.toUpperCase()}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">{risk.description}</p>
-          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getSeverityColor(risk.severity)} bg-background/80`}>
+            {risk.severity.toUpperCase()}
+          </span>
+          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </div>
       </div>
-
-      {risk.impact && (
-        <div className="pl-8">
-          <div className="text-sm space-y-1">
-            <p className="font-medium">Impact:</p>
-            <Alert variant="destructive" className="bg-opacity-50">
-              <AlertTitle>Potential Impact</AlertTitle>
-              <AlertDescription>{risk.impact}</AlertDescription>
-            </Alert>
-          </div>
-        </div>
-      )}
-
-      {risk.requiredAction && (
-        <div className="pl-8">
-          <div className="text-sm space-y-1">
-            <p className="font-medium">Required Action:</p>
-            <div className="flex items-start">
-              <ArrowRight className="h-4 w-4 mt-0.5 mr-1 flex-shrink-0" />
-              <p className="text-muted-foreground">{risk.requiredAction}</p>
+      
+      {expanded && (
+        <div className="p-3 pt-0 border-t border-background/20 space-y-3">
+          <p className="text-sm">{risk.description}</p>
+          
+          {risk.regulation && (
+            <div className="space-y-1">
+              <h5 className="text-xs font-medium text-muted-foreground">Regulation:</h5>
+              <p className="text-xs bg-background/50 p-2 rounded">{risk.regulation}</p>
             </div>
-          </div>
-        </div>
-      )}
-
-      {risk.solution && (
-        <div className="pl-8 mt-2">
-          <div className="text-sm space-y-1">
-            <p className="font-medium">Recommended Solution:</p>
-            <div className="p-3 bg-background rounded border">
-              <p className="whitespace-pre-wrap text-muted-foreground">{risk.solution}</p>
+          )}
+          
+          {risk.impact && (
+            <div className="space-y-1">
+              <h5 className="text-xs font-medium text-muted-foreground">Impact:</h5>
+              <p className="text-xs">{risk.impact}</p>
             </div>
+          )}
+          
+          {risk.requiredAction && (
+            <div className="space-y-1">
+              <h5 className="text-xs font-medium text-muted-foreground">Required Action:</h5>
+              <p className="text-xs">{risk.requiredAction}</p>
+            </div>
+          )}
+          
+          {risk.solution && (
+            <div className="space-y-1">
+              <h5 className="text-xs font-medium text-muted-foreground">Recommended Solution:</h5>
+              <div className="text-xs bg-background/50 p-2 rounded">
+                {risk.solution}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-end gap-2 mt-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <CreateTaskButton 
+                  documentId={documentId} 
+                  title={`Address risk: ${risk.type}`}
+                  description={`${risk.description}\n\nRequired action: ${risk.requiredAction || 'Review and address the identified risk.'}`}
+                  priority={risk.severity === 'high' ? 'high' : 
+                           risk.severity === 'medium' ? 'medium' : 'low'}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Create a task for this risk</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-        </div>
-      )}
-
-      {(risk.regulation || risk.reference) && (
-        <div className="pl-8 pt-2 border-t">
-          <Tooltip>
-            <TooltipTrigger className="flex items-center text-sm text-muted-foreground">
-              <Info className="h-4 w-4 mr-1" />
-              <span>Regulatory Reference</span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{risk.regulation || risk.reference}</p>
-              {risk.reference && (
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-sm"
-                  onClick={() => window.open(risk.reference, '_blank')}
-                >
-                  View Reference
-                </Button>
-              )}
-            </TooltipContent>
-          </Tooltip>
         </div>
       )}
     </div>
