@@ -1,9 +1,11 @@
 
 import { analyzeRisks } from "./riskAnalyzer.ts";
 import { validateForm } from "./validation/formValidation.ts";
+import { Risk, ExtractedInfo } from "./types.ts";
 
 export async function processDocument(text: string, includeRegulatory: boolean = true) {
   console.log('Processing document text length:', text.length);
+  console.log('Document text sample:', text.substring(0, 500)); // Log sample of text for debugging
 
   // Enhanced regex patterns with multiple variations
   const formNumberRegex = /(?:Form|FORM)\s*(?:No\.?|NUMBER|#)?\s*(\d+)/i;
@@ -33,6 +35,17 @@ export async function processDocument(text: string, includeRegulatory: boolean =
   const divisionNumber = (normalizedText.match(divisionNumberRegex) || [])[1] || '';
   const courtNumber = (normalizedText.match(courtNumberRegex) || [])[1] || '';
 
+  console.log('Extracted basic fields:', {
+    formNumber,
+    clientName,
+    trusteeName,
+    estateNumber,
+    dateSigned
+  });
+
+  const documentType = determineDocumentType(normalizedText);
+  console.log('Determined document type:', documentType);
+
   // Extract addresses with better context awareness
   const clientInfo = {
     name: clientName?.trim(),
@@ -44,29 +57,40 @@ export async function processDocument(text: string, includeRegulatory: boolean =
     address: extractAddress(normalizedText, trusteeName, 'trustee')
   };
 
+  console.log('Extracted info:', { clientInfo, trusteeInfo });
+
   // Generate comprehensive summary
-  const summary = generateSummary(normalizedText, determineDocumentType(normalizedText));
+  const summary = generateSummary(normalizedText, documentType);
 
   // Analyze risks and validate form
-  const risks = await analyzeRisks(normalizedText, determineDocumentType(normalizedText));
-  const validationResults = await validateForm(normalizedText, determineDocumentType(normalizedText));
+  const risks = await analyzeRisks(normalizedText, documentType);
+  console.log('Analyzed risks:', risks);
 
-  return {
-    documentType: determineDocumentType(normalizedText),
+  const validationResults = await validateForm(normalizedText, documentType);
+
+  const extractedInfo: ExtractedInfo = {
+    type: documentType,
+    clientName: clientInfo.name,
+    clientAddress: clientInfo.address,
+    trusteeName: trusteeInfo.name,
+    trusteeAddress: trusteeInfo.address,
     formNumber,
-    clientInfo,
-    trusteeInfo,
     dateSigned,
-    bankruptcyDate,
     estateNumber,
     district,
     divisionNumber,
     courtNumber,
-    meetingInfo: extractMeetingInfo(normalizedText),
+    meetingOfCreditors: extractMeetingInfo(normalizedText),
     chairInfo: extractChairInfo(normalizedText),
     securityInfo: extractSecurityInfo(normalizedText),
+    dateBankruptcy: bankruptcyDate,
     officialReceiver: extractOfficialReceiver(normalizedText),
-    summary,
+    summary
+  };
+
+  return {
+    documentType,
+    extractedInfo,
     risks,
     regulatoryCompliance: validationResults
   };
