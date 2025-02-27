@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import * as pdfjs from 'pdfjs-dist';
+import { extractTextFromPdf } from "@/utils/documents/pdfUtils";
 
 interface DocumentPreviewProps {
   storagePath: string;
@@ -28,52 +28,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
-
-    // Initialize PDF.js worker
-    const workerSrc = `//cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
-    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
   }, [storagePath]);
-
-  const extractTextFromPdf = async (url: string): Promise<string> => {
-    try {
-      console.log('Starting PDF text extraction from:', url);
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
-      }
-      
-      const arrayBuffer = await response.arrayBuffer();
-      console.log('PDF fetched, arrayBuffer size:', arrayBuffer.byteLength);
-      
-      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
-      const pdf = await loadingTask.promise;
-      console.log('PDF loaded, pages:', pdf.numPages);
-      
-      let fullText = '';
-      for (let i = 1; i <= pdf.numPages; i++) {
-        console.log(`Processing page ${i} of ${pdf.numPages}`);
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(' ');
-        fullText += pageText + '\n';
-      }
-      
-      console.log('Text extraction complete. Length:', fullText.length);
-      if (fullText.length < 100) {
-        console.log('Warning: Extracted text is very short. Full text:', fullText);
-      } else {
-        console.log('Sample text:', fullText.substring(0, 200) + '...');
-      }
-      
-      return fullText;
-    } catch (error: any) {
-      console.error('PDF extraction error:', error);
-      throw new Error(`Failed to extract text from PDF: ${error.message}`);
-    }
-  };
 
   const handleAnalyzeDocument = async () => {
     setError(null);
