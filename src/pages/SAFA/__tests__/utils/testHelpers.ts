@@ -1,5 +1,6 @@
 
 import { vi } from 'vitest';
+import { User, Session } from '@supabase/supabase-js';
 
 export const waitForAsync = () => new Promise(resolve => setTimeout(resolve, 0));
 
@@ -32,11 +33,53 @@ export const mockSession = {
   expires_at: Math.floor(Date.now() / 1000) + 3600
 };
 
-// Stubs for helpers used in other test files - implement with proper signatures
-export const createMockMessage = vi.fn(() => ({}));
-export const logTestResult = vi.fn((testName, passed, error) => {});
-export const mockAIResponse = vi.fn((type, content) => {});
-export const simulateChat = vi.fn(async () => {});
-export const mockDocumentUpload = vi.fn(() => {});
-export const verifyToastNotification = vi.fn(() => {});
-export const createMockFile = vi.fn(() => {});
+// Helper functions with correct parameter signatures
+export const createMockMessage = vi.fn((content: string) => ({
+  id: 'msg-' + Math.random().toString(36).substring(2, 9),
+  content,
+  timestamp: new Date().toISOString(),
+  sender: 'user'
+}));
+
+export const logTestResult = vi.fn((testName: string, passed: boolean, error?: Error) => {
+  if (passed) {
+    console.log(`✅ Test Passed: ${testName}`);
+  } else {
+    console.error(`❌ Test Failed: ${testName}`, error);
+  }
+});
+
+export const mockAIResponse = vi.fn((type: string, content: string) => {
+  return {
+    text: content,
+    type,
+    timestamp: new Date().toISOString()
+  };
+});
+
+export const simulateChat = vi.fn(async (screen: any, message: string) => {
+  const input = screen.getByPlaceholderText(/Ask about document management/i);
+  fireEvent.change(input, { target: { value: message } });
+  
+  const sendButton = screen.getByRole('button', { name: '' });
+  fireEvent.click(sendButton);
+  
+  await waitForAsync();
+});
+
+export const mockDocumentUpload = vi.fn((success: boolean) => {
+  // Mock implementation based on success parameter
+  return success;
+});
+
+export const verifyToastNotification = vi.fn((screen: any, textPattern: RegExp) => {
+  expect(screen.getByText(textPattern)).toBeInTheDocument();
+});
+
+export const createMockFile = vi.fn(() => {
+  return new File(['test content'], 'test.pdf', { type: 'application/pdf' });
+});
+
+// Add missing imports needed by the helper functions
+import { fireEvent } from '@testing-library/react';
+import { expect } from 'vitest';
