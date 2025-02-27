@@ -15,17 +15,23 @@ export {
 export type { AnalysisResult };
 
 export const performMockAnalysis = (formNumber = '76', formType = 'bankruptcy'): AnalysisResult => {
-  // Get form number from the title or default to 76
-  const formNum = formNumber || '76';
+  // Normalize form number and type for consistent comparison
+  const formNum = String(formNumber).trim();
   const formTypeLower = formType.toLowerCase();
   
-  // Choose the right mock data based on form number
-  if (formNum === '66' || formTypeLower.includes('consumer proposal')) {
+  // More precise form type detection
+  if (formNum === '66' || 
+      formTypeLower.includes('consumer proposal') || 
+      formTypeLower.includes('form 66')) {
+    console.log('Detected Form 66 - Returning Consumer Proposal data');
     return getMockForm66Data();
-  } else if (formNum === '65' || formTypeLower.includes('notice of intention')) {
+  } else if (formNum === '65' || 
+            formTypeLower.includes('notice of intention') || 
+            formTypeLower.includes('form 65')) {
+    console.log('Detected Form 65 - Returning Notice of Intention data');
     return getMockForm65Data();
   } else {
-    // Default to Form 76 for bankruptcy
+    console.log('Defaulting to Form 76 - Returning Bankruptcy data');
     return getMockForm76Data();
   }
 };
