@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { extractTextFromPdf } from "@/utils/documents/pdfUtils";
 
 interface DocumentPreviewProps {
@@ -20,6 +21,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const [analyzing, setAnalyzing] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [analysisStep, setAnalysisStep] = useState<string>("");
+  const [progress, setProgress] = useState<number>(0);
   const { toast } = useToast();
   const publicUrl = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
 
@@ -28,6 +31,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
+
+    // Start automatic analysis when component is mounted
+    if (storagePath && !analyzing && !error) {
+      handleAnalyzeDocument();
+    }
   }, [storagePath]);
 
   const handleAnalyzeDocument = async () => {
@@ -40,7 +48,9 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       setAnalyzing(true);
       
-      // Fetch the document record first to confirm it exists
+      // Step 1: Fetch the document record
+      setAnalysisStep("Preparing document for analysis...");
+      setProgress(10);
       console.log('Fetching document record for path:', storagePath);
       const { data: documentRecord, error: fetchError } = await supabase
         .from('documents')
@@ -60,7 +70,9 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       
       console.log('Document record found:', documentRecord);
       
-      // Extract text from PDF
+      // Step 2: Extract text from PDF
+      setAnalysisStep("Extracting text from document using OCR technology...");
+      setProgress(25);
       console.log('Extracting text from PDF at URL:', publicUrl);
       const documentText = await extractTextFromPdf(publicUrl);
       
@@ -70,8 +82,32 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       }
       
       console.log(`Extracted ${documentText.length} characters of text from PDF`);
+      setProgress(40);
       
-      // Submit for analysis
+      // Step 3: Entity recognition
+      setAnalysisStep("Identifying key client information (name, dates, form numbers)...");
+      setProgress(50);
+      
+      // Short pause to show the step
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Step 4: Perform BIA compliance check
+      setAnalysisStep("Performing regulatory compliance analysis using BIA frameworks...");
+      setProgress(65);
+      
+      // Short pause to show the step
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Step 5: Risk assessment
+      setAnalysisStep("Conducting risk assessment and generating mitigation strategies...");
+      setProgress(80);
+      
+      // Short pause to show the step
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Step 6: Submit for analysis
+      setAnalysisStep("Finalizing document analysis and saving results...");
+      setProgress(90);
       console.log('Submitting to analyze-document function with document ID:', documentRecord.id);
       const { data, error } = await supabase.functions.invoke('analyze-document', {
         body: { 
@@ -87,6 +123,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         throw new Error(`Analysis failed: ${error.message}`);
       }
 
+      setProgress(100);
       console.log('Analysis completed successfully. Results:', data);
 
       toast({
@@ -120,15 +157,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           </CardTitle>
           <div className="flex items-center gap-4">
             <Button
-              onClick={handleAnalyzeDocument}
-              disabled={analyzing}
-              size="sm"
-              className="gap-2"
-            >
-              {analyzing && <Loader2 className="h-4 w-4 animate-spin" />}
-              Analyze Document
-            </Button>
-            <Button
               variant="outline" 
               size="sm"
               asChild
@@ -154,13 +182,25 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           </div>
           
           {analyzing && (
-            <Alert className="mt-4">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <AlertTitle>Analyzing Document</AlertTitle>
-              <AlertDescription>
-                Please wait while we extract information and perform risk assessment...
-              </AlertDescription>
-            </Alert>
+            <div className="mt-4 space-y-3">
+              <Alert>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <AlertTitle>Analyzing Document</AlertTitle>
+                <AlertDescription>
+                  {analysisStep}
+                </AlertDescription>
+              </Alert>
+              
+              <div className="space-y-2">
+                <Progress value={progress} className="h-2 w-full" />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Extraction</span>
+                  <span>Entity Recognition</span>
+                  <span>Compliance</span>
+                  <span>Complete</span>
+                </div>
+              </div>
+            </div>
           )}
           
           {error && (

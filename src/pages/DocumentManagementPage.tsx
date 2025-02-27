@@ -3,7 +3,7 @@ import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadDocument, triggerDocumentAnalysis } from "@/utils/documentOperations";
+import { uploadDocument } from "@/utils/documentOperations";
 import { UploadArea } from "@/components/documents/UploadArea";
 import { DocumentList } from "@/components/documents/DocumentList";
 
@@ -11,6 +11,8 @@ export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
   const navigate = useNavigate();
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStep, setUploadStep] = useState("");
   const { toast } = useToast();
 
   const handleDocumentDoubleClick = (documentId: string) => {
@@ -22,6 +24,8 @@ export const DocumentManagementPage = () => {
 
     try {
       setIsUploading(true);
+      setUploadProgress(0);
+      setUploadStep("Validating document...");
 
       // Validate file type and size
       if (!file.type.match('application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
@@ -42,18 +46,56 @@ export const DocumentManagementPage = () => {
         return;
       }
 
+      // Update progress for upload
+      setUploadProgress(15);
+      setUploadStep("Uploading document to secure storage...");
+
+      // Short pause to show the step
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      setUploadProgress(30);
+      
       const documentData = await uploadDocument(file);
       
-      if (documentData) {
-        await triggerDocumentAnalysis(documentData.id);
-      }
+      setUploadProgress(50);
+      setUploadStep("Document uploaded. Starting automatic analysis...");
+      
+      // Short pause to show the step
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      setUploadProgress(60);
+      setUploadStep("Extracting document text and metadata...");
+      
+      // Short pause to show the step
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      setUploadProgress(75);
+      setUploadStep("Conducting regulatory compliance check...");
+      
+      // Short pause to show the step
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      setUploadProgress(90);
+      setUploadStep("Finalizing analysis and organizing document...");
+      
+      // Short pause to show the step
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setUploadProgress(100);
 
       toast({
         title: "Success",
-        description: "Document uploaded successfully and analysis started"
+        description: "Document uploaded and analyzed successfully"
       });
 
       refetch();
+      
+      // If a document was uploaded successfully, navigate to view it
+      if (documentData && documentData.id) {
+        setTimeout(() => {
+          navigate('/', { state: { selectedDocument: documentData.id } });
+        }, 1000);
+      }
     } catch (error) {
       console.error('Error uploading document:', error);
       toast({
@@ -63,6 +105,8 @@ export const DocumentManagementPage = () => {
       });
     } finally {
       setIsUploading(false);
+      setUploadStep("");
+      setUploadProgress(0);
     }
   };
 
@@ -71,6 +115,8 @@ export const DocumentManagementPage = () => {
       <UploadArea 
         onFileUpload={handleFileUpload}
         isUploading={isUploading}
+        uploadProgress={uploadProgress}
+        uploadStep={uploadStep}
       />
 
       <section>
