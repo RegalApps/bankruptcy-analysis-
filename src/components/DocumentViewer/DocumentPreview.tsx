@@ -18,8 +18,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   onAnalysisComplete 
 }) => {
   const [analyzing, setAnalyzing] = useState(false);
-  const [extractedText, setExtractedText] = useState<string>('');
   const [session, setSession] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const publicUrl = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
 
@@ -32,16 +32,27 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     // Initialize PDF.js worker
     const workerSrc = `//cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
     pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-  }, []);
+  }, [storagePath]);
 
   const extractTextFromPdf = async (url: string): Promise<string> => {
     try {
+      console.log('Starting PDF text extraction from:', url);
       const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+      }
+      
       const arrayBuffer = await response.arrayBuffer();
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      console.log('PDF fetched, arrayBuffer size:', arrayBuffer.byteLength);
+      
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      console.log('PDF loaded, pages:', pdf.numPages);
       
       let fullText = '';
       for (let i = 1; i <= pdf.numPages; i++) {
+        console.log(`Processing page ${i} of ${pdf.numPages}`);
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
@@ -50,16 +61,23 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         fullText += pageText + '\n';
       }
       
-      console.log('Extracted text length:', fullText.length);
-      console.log('Sample text:', fullText.substring(0, 200));
+      console.log('Text extraction complete. Length:', fullText.length);
+      if (fullText.length < 100) {
+        console.log('Warning: Extracted text is very short. Full text:', fullText);
+      } else {
+        console.log('Sample text:', fullText.substring(0, 200) + '...');
+      }
+      
       return fullText;
-    } catch (error) {
-      console.error('Error extracting text from PDF:', error);
-      throw new Error('Failed to extract text from PDF');
+    } catch (error: any) {
+      console.error('PDF extraction error:', error);
+      throw new Error(`Failed to extract text from PDF: ${error.message}`);
     }
   };
 
   const handleAnalyzeDocument = async () => {
+    setError(null);
+    
     try {
       if (!session) {
         throw new Error('You must be logged in to analyze documents');
@@ -67,42 +85,54 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       setAnalyzing(true);
       
-      // First, get the document text content
-      console.log('Attempting to fetch document from URL:', publicUrl);
-      const documentText = await extractTextFromPdf(publicUrl);
-      console.log('Document text extracted successfully, length:', documentText.length);
-
-      if (!documentText || documentText.trim().length === 0) {
-        throw new Error('No text could be extracted from the document');
-      }
-
-      // Get the document record
-      const { data: documents, error: fetchError } = await supabase
+      // Fetch the document record first to confirm it exists
+      console.log('Fetching document record for path:', storagePath);
+      const { data: documentRecord, error: fetchError } = await supabase
         .from('documents')
-        .select('id')
+        .select('id, title')
         .eq('storage_path', storagePath)
         .maybeSingle();
 
-      if (fetchError) throw fetchError;
-      if (!documents) throw new Error('Document record not found');
-
-      console.log('Calling analyze-document with document ID:', documents.id);
+      if (fetchError) {
+        console.error('Error fetching document record:', fetchError);
+        throw fetchError;
+      }
       
-      // Call the analyze-document function with regulatory validation
+      if (!documentRecord) {
+        console.error('Document record not found for path:', storagePath);
+        throw new Error('Document record not found in database');
+      }
+      
+      console.log('Document record found:', documentRecord);
+      
+      // Extract text from PDF
+      console.log('Extracting text from PDF at URL:', publicUrl);
+      const documentText = await extractTextFromPdf(publicUrl);
+      
+      if (!documentText || documentText.trim().length < 50) {
+        console.error('Insufficient text extracted from document. Length:', documentText?.length || 0);
+        throw new Error('Could not extract sufficient text from the document');
+      }
+      
+      console.log(`Extracted ${documentText.length} characters of text from PDF`);
+      
+      // Submit for analysis
+      console.log('Submitting to analyze-document function with document ID:', documentRecord.id);
       const { data, error } = await supabase.functions.invoke('analyze-document', {
         body: { 
-          documentText,
-          documentId: documents.id,
-          includeRegulatory: true
+          documentText: documentText,
+          documentId: documentRecord.id,
+          includeRegulatory: true,
+          title: documentRecord.title
         }
       });
 
       if (error) {
-        console.error('Analysis error:', error);
-        throw error;
+        console.error('Analysis function error:', error);
+        throw new Error(`Analysis failed: ${error.message}`);
       }
 
-      console.log('Analysis results:', data);
+      console.log('Analysis completed successfully. Results:', data);
 
       toast({
         title: "Analysis Complete",
@@ -113,7 +143,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         onAnalysisComplete();
       }
     } catch (error: any) {
-      console.error('Error analyzing document:', error);
+      console.error('Document analysis failed:', error);
+      setError(error.message || 'An unknown error occurred');
       toast({
         variant: "destructive",
         title: "Analysis Failed",
@@ -165,6 +196,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               title="Document Preview"
             />
           </div>
+          
           {analyzing && (
             <Alert className="mt-4">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -172,6 +204,14 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               <AlertDescription>
                 Please wait while we extract information and perform risk assessment...
               </AlertDescription>
+            </Alert>
+          )}
+          
+          {error && (
+            <Alert className="mt-4" variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Analysis Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
         </CardContent>
