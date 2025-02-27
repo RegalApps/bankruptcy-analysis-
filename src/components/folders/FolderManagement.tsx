@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,6 +18,7 @@ interface FolderManagementProps {
   selectedItemType?: "folder" | "file";
   onItemSelect: (id: string, type: "folder" | "file") => void;
   onRefresh?: () => void;
+  onOpenDocument?: (documentId: string) => void;
 }
 
 export const FolderManagement = ({ 
@@ -24,7 +26,8 @@ export const FolderManagement = ({
   selectedItemId,
   selectedItemType,
   onItemSelect,
-  onRefresh 
+  onRefresh,
+  onOpenDocument 
 }: FolderManagementProps) => {
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -94,6 +97,13 @@ export const FolderManagement = ({
   const folders = documents.filter(doc => doc.is_folder);
   const uncategorizedDocuments = documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
   const filteredDocuments = getFilteredDocuments();
+
+  // Create a handler that calls the onOpenDocument prop if it exists
+  const handleOpenDocument = (documentId: string) => {
+    if (onOpenDocument) {
+      onOpenDocument(documentId);
+    }
+  };
 
   return (
     <div className="space-y-6">
