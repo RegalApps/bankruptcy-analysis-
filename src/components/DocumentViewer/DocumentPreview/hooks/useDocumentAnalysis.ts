@@ -63,17 +63,17 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
       // Step 3: Entity recognition
       setAnalysisStep("Identifying key client information (name, dates, form numbers)...");
       setProgress(50);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Step 4: Perform BIA compliance check
-      setAnalysisStep("Performing regulatory compliance analysis using BIA frameworks...");
+      // Step 4: Perform regulatory compliance check
+      setAnalysisStep("Performing regulatory compliance analysis using frameworks...");
       setProgress(65);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Step 5: Risk assessment
       setAnalysisStep("Conducting risk assessment and generating mitigation strategies...");
       setProgress(80);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Step 6: Submit for analysis
       setAnalysisStep("Finalizing document analysis and saving results...");
@@ -84,7 +84,9 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
           documentText: documentText,
           documentId: documentRecord.id,
           includeRegulatory: true,
-          title: documentRecord.title
+          includeClientExtraction: true, // Enable client detail extraction
+          title: documentRecord.title,
+          extractionMode: 'comprehensive' // Enhanced extraction mode
         }
       });
 
@@ -98,7 +100,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
 
       toast({
         title: "Analysis Complete",
-        description: "Document has been analyzed with regulatory compliance check"
+        description: "Document has been analyzed with client details extraction"
       });
 
       if (onAnalysisComplete) {

@@ -44,23 +44,32 @@ export const useDocumentViewer = (documentId: string) => {
             analysisContent = JSON.parse(analysisContent);
           }
 
-          // Ensure extracted info has all required fields
+          // Ensure extracted info has all required fields with better defaults and formatting
           const extractedInfo = {
             // Client Information
             clientName: analysisContent.extracted_info?.clientName || '',
             clientAddress: analysisContent.extracted_info?.clientAddress || '',
             clientPhone: analysisContent.extracted_info?.clientPhone || '',
-            clientId: analysisContent.extracted_info?.clientId || '',
+            clientId: analysisContent.extracted_info?.clientId || analysisContent.extracted_info?.caseNumber || '',
+            clientEmail: analysisContent.extracted_info?.clientEmail || '',
             
             // Document Details
-            formNumber: analysisContent.extracted_info?.formNumber || document.title.match(/Form\s+(\d+)/)?.[1] || '',
-            formType: analysisContent.extracted_info?.type || document.type || '',
-            dateSigned: analysisContent.extracted_info?.dateSigned || '',
+            formNumber: analysisContent.extracted_info?.formNumber || 
+                       document.title.match(/Form\s+(\d+)/)?.[1] || 
+                       document.title.match(/F(\d+)/)?.[1] || '',
+            formType: analysisContent.extracted_info?.type || 
+                     analysisContent.extracted_info?.formType || 
+                     (document.title.toLowerCase().includes('bankruptcy') ? 'bankruptcy' : 
+                      document.title.toLowerCase().includes('proposal') ? 'proposal' : '') || '',
+            dateSigned: analysisContent.extracted_info?.dateSigned || 
+                       analysisContent.extracted_info?.dateOfFiling || '',
             
             // Trustee Information
-            trusteeName: analysisContent.extracted_info?.trusteeName || '',
+            trusteeName: analysisContent.extracted_info?.trusteeName || 
+                        analysisContent.extracted_info?.insolvencyTrustee || '',
             trusteeAddress: analysisContent.extracted_info?.trusteeAddress || '',
             trusteePhone: analysisContent.extracted_info?.trusteePhone || '',
+            trusteeEmail: analysisContent.extracted_info?.trusteeEmail || '',
             
             // Case Information
             estateNumber: analysisContent.extracted_info?.estateNumber || '',
@@ -72,14 +81,20 @@ export const useDocumentViewer = (documentId: string) => {
             meetingOfCreditors: analysisContent.extracted_info?.meetingOfCreditors || '',
             chairInfo: analysisContent.extracted_info?.chairInfo || '',
             securityInfo: analysisContent.extracted_info?.securityInfo || '',
-            dateBankruptcy: analysisContent.extracted_info?.dateBankruptcy || '',
+            dateBankruptcy: analysisContent.extracted_info?.dateBankruptcy || 
+                           analysisContent.extracted_info?.dateOfBankruptcy || '',
             officialReceiver: analysisContent.extracted_info?.officialReceiver || '',
+            
+            // Financial Information
+            totalDebts: analysisContent.extracted_info?.totalDebts || '',
+            totalAssets: analysisContent.extracted_info?.totalAssets || '',
+            monthlyIncome: analysisContent.extracted_info?.monthlyIncome || '',
             
             // Document Summary
             summary: analysisContent.extracted_info?.summary || '',
           };
 
-          // Ensure risks are properly formatted
+          // Ensure risks are properly formatted and enhanced
           const risks = (analysisContent.risks || []).map((risk: any) => ({
             type: risk.type || 'Unknown Risk',
             description: risk.description || '',
@@ -88,6 +103,7 @@ export const useDocumentViewer = (documentId: string) => {
             impact: risk.impact || '',
             requiredAction: risk.requiredAction || '',
             solution: risk.solution || '',
+            deadline: risk.deadline || '7 days',
           }));
 
           console.log("Processed analysis content:", { extractedInfo, risks });
@@ -95,7 +111,12 @@ export const useDocumentViewer = (documentId: string) => {
           processedAnalysis = [{
             content: {
               extracted_info: extractedInfo,
-              risks: risks
+              risks: risks,
+              regulatory_compliance: analysisContent.regulatory_compliance || {
+                status: 'pending',
+                details: 'Regulatory compliance check pending',
+                references: []
+              }
             }
           }];
         } catch (e) {

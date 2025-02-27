@@ -10,6 +10,15 @@ export interface AnalysisResult {
     trusteeName: string;
     type: string;
     summary: string;
+    clientAddress?: string;
+    clientPhone?: string;
+    clientEmail?: string;
+    trusteeAddress?: string;
+    trusteePhone?: string;
+    trusteeEmail?: string;
+    totalDebts?: string;
+    totalAssets?: string;
+    monthlyIncome?: string;
   };
   risks: Array<{
     type: string;
@@ -31,7 +40,12 @@ export interface AnalysisResult {
 export const triggerDocumentAnalysis = async (documentId: string) => {
   try {
     const { error } = await supabase.functions.invoke('analyze-document', {
-      body: { documentId, includeRegulatory: true }
+      body: { 
+        documentId, 
+        includeRegulatory: true,
+        includeClientExtraction: true,
+        extractionMode: 'comprehensive'
+      }
     });
 
     if (error) {
@@ -45,15 +59,24 @@ export const triggerDocumentAnalysis = async (documentId: string) => {
 };
 
 export const performMockAnalysis = (): AnalysisResult => {
-  // Mock data for Form 76 analysis
+  // Enhanced mock data for Form 76 analysis with more detailed client information
   return {
     extracted_info: {
       formNumber: "Form 76",
       clientName: "Reginald Dickerson",
+      clientAddress: "123 Main Street, Toronto, ON M4C 1B5",
+      clientPhone: "(416) 555-1234",
+      clientEmail: "reginald.dickerson@example.com",
       dateSigned: "February 22, 2025",
       trusteeName: "Gradey Henderson",
+      trusteeAddress: "456 Bay Street, Suite 1200, Toronto, ON M5H 2R8",
+      trusteePhone: "(416) 555-9876",
+      trusteeEmail: "g.henderson@trustee-firm.ca",
       type: "bankruptcy",
-      summary: "This is a bankruptcy form (Form 76) for Reginald Dickerson. The form was submitted on February 22, 2025. The trustee assigned to this case is Gradey Henderson."
+      totalDebts: "$45,000",
+      totalAssets: "$12,500",
+      monthlyIncome: "$3,200",
+      summary: "This is a bankruptcy form (Form 76) for Reginald Dickerson. The form was submitted on February 22, 2025. The trustee assigned to this case is Gradey Henderson. The client has total debts of $45,000 and total assets valued at $12,500."
     },
     risks: [
       {
@@ -146,4 +169,51 @@ export const updateDocumentStatus = async (
   }
   
   logger.info(`Document status updated to ${status} for document ID:`, documentId);
+};
+
+export const createClientIfNotExists = async (clientInfo: any) => {
+  if (!clientInfo?.clientName) {
+    return null;
+  }
+  
+  try {
+    // Check if client already exists
+    const { data: existingClients, error: checkError } = await supabase
+      .from('clients')
+      .select('id')
+      .ilike('name', clientInfo.clientName)
+      .limit(1);
+      
+    if (checkError) throw checkError;
+    
+    // If client exists, return their ID
+    if (existingClients && existingClients.length > 0) {
+      return existingClients[0].id;
+    }
+    
+    // Create new client
+    const { data: newClient, error } = await supabase
+      .from('clients')
+      .insert({
+        name: clientInfo.clientName,
+        email: clientInfo.clientEmail || null,
+        phone: clientInfo.clientPhone || null,
+        metadata: {
+          address: clientInfo.clientAddress || null,
+          totalDebts: clientInfo.totalDebts || null,
+          totalAssets: clientInfo.totalAssets || null,
+          monthlyIncome: clientInfo.monthlyIncome || null
+        }
+      })
+      .select('id')
+      .single();
+      
+    if (error) throw error;
+    
+    logger.info(`Created new client with ID: ${newClient.id}`);
+    return newClient.id;
+  } catch (error) {
+    logger.error('Error creating client:', error);
+    return null;
+  }
 };
