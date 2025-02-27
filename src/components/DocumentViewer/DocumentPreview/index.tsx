@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { FileText } from "lucide-react";
+import { FileText, RotateCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,14 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     };
   }, [storagePath, analyzing, error, setSession, handleAnalyzeDocument]);
 
+  const handleRefreshPreview = () => {
+    // Force reload the iframe
+    const iframe = document.querySelector('iframe');
+    if (iframe && iframe.src) {
+      iframe.src = `${iframe.src}?refresh=${new Date().getTime()}`;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -86,6 +94,15 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             Document Preview
           </CardTitle>
           <div className="flex items-center gap-4">
+            <Button
+              variant="outline" 
+              size="sm"
+              onClick={handleRefreshPreview}
+              title="Refresh preview"
+            >
+              <RotateCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
             <Button
               variant="outline" 
               size="sm"
@@ -105,9 +122,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         <CardContent>
           <div className="aspect-[3/4] w-full bg-muted rounded-lg overflow-hidden">
             <iframe
-              src={publicUrl}
+              src={`${publicUrl}#toolbar=0&view=FitH`}
               className="w-full h-full rounded-lg"
               title="Document Preview"
+              sandbox="allow-same-origin allow-scripts allow-forms"
+              loading="lazy"
             />
           </div>
           
