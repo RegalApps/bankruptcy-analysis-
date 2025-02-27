@@ -28,28 +28,26 @@ const queryClient = new QueryClient({
 
 const App: React.FC = () => {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/documents" element={<DocumentsPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/activity" element={<ActivityPage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/SAFA" element={<ConBrandingPage />} />
-              <Route path="/crm" element={<CRMPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/e-filing" element={<EFilingPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/documents" element={<DocumentsPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/activity" element={<ActivityPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/SAFA" element={<ConBrandingPage />} />
+            <Route path="/crm" element={<CRMPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/e-filing" element={<EFilingPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
           <SonnerToaster />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 };
 

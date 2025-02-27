@@ -20,7 +20,9 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
 
   React.useEffect(() => {
     const checkAuthStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data } = await supabase.auth.getSession();
+      const session = data?.session;
+      
       setIsAuthError(!session && (
         error.toLowerCase().includes('session') ||
         error.toLowerCase().includes('login') ||
@@ -31,7 +33,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
     checkAuthStatus();
   }, [error]);
 
-  const handleRetry = async () => {
+  const handleRetry = () => {
     if (isAuthError) {
       // Redirect to auth page if it's an auth error
       navigate('/');
