@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
 import { Footer } from "@/components/layout/Footer";
-import { useLocation } from "react-router-dom";
+import { useLocation, Navigate } from "react-router-dom";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -50,6 +50,7 @@ const Index = () => {
     );
   }
 
+  // If no session is found, redirect to auth page with a message
   if (!session) {
     return <Auth />;
   }
