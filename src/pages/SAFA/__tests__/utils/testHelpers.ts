@@ -1,104 +1,29 @@
 
 import { vi } from 'vitest';
-import { expect } from 'vitest';
-import { fireEvent } from '@testing-library/react';
-import { supabase } from '@/lib/supabase';
-import logger from '@/utils/logger';
-import { ChatMessage } from '../../types';
 
-// Helper to create mock chat messages
-export const createMockMessage = (
-  content: string,
-  type: 'user' | 'assistant' = 'user',
-  module?: 'document' | 'legal' | 'help'
-): ChatMessage => ({
-  id: Date.now().toString(),
-  content,
-  type,
-  timestamp: new Date(),
-  module
+export const waitForAsync = () => new Promise(resolve => setTimeout(resolve, 0));
+
+export const mockErrorResponse = (message: string) => ({
+  code: 'custom_error',
+  status: 400,
+  message,
+  __isAuthError: true
 });
 
-// Mock file for testing uploads
-export const createMockFile = (name: string = 'test.pdf', type: string = 'application/pdf'): File => {
-  return new File(['test'], name, { type });
-};
-
-// Helper to wait for async operations
-export const waitForAsync = async () => {
-  await new Promise(resolve => setTimeout(resolve, 0));
-};
-
-// Log test results
-export const logTestResult = (testName: string, passed: boolean, error?: Error) => {
-  if (passed) {
-    logger.info(`✅ Test passed: ${testName}`);
-  } else {
-    logger.error(`❌ Test failed: ${testName}`, error);
-  }
-};
-
-// Mock AI responses for different scenarios
-export const mockAIResponse = (type: 'document' | 'legal' | 'help', customResponse?: string) => {
-  const responses = {
-    document: "I've analyzed the document and extracted the following metadata...",
-    legal: "According to the OSB Act, section 1.1...",
-    help: "Here are the steps to perform this operation..."
-  };
-
-  vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-    data: {
-      response: customResponse || responses[type]
-    },
-    error: null
-  });
-};
-
-// Mock document upload
-export const mockDocumentUpload = (success = true) => {
-  if (success) {
-    vi.mocked(supabase.storage.from).mockReturnValue({
-      upload: vi.fn().mockResolvedValue({ data: { path: 'test.pdf' }, error: null }),
-      getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'test-url' } })
-    } as any);
-  } else {
-    vi.mocked(supabase.storage.from).mockReturnValue({
-      upload: vi.fn().mockRejectedValue(new Error('Upload failed')),
-      getPublicUrl: vi.fn().mockReturnValue({ data: null, error: new Error('URL generation failed') })
-    } as any);
-  }
-};
-
-// Simulate user interaction with chat
-export const simulateChat = async (screen: any, message: string) => {
-  const input = screen.getByPlaceholderText(/Ask about document management/i);
-  fireEvent.change(input, { target: { value: message } });
-  const sendButton = screen.getByRole('button', { name: '' });
-  fireEvent.click(sendButton);
-  await waitForAsync();
-};
-
-// Mock error responses
-export const mockErrorResponse = (errorMessage: string) => {
-  vi.mocked(supabase.functions.invoke).mockRejectedValueOnce(new Error(errorMessage));
-};
-
-// Verify toast notifications
-export const verifyToastNotification = (screen: any, messagePattern: RegExp | string) => {
-  if (messagePattern instanceof RegExp) {
-    expect(screen.getByRole('alert').textContent).toMatch(messagePattern);
-  } else {
-    expect(screen.getByRole('alert')).toHaveTextContent(messagePattern);
-  }
-};
-
-// Mock document analysis response
-export const mockDocumentAnalysis = (metadata: Record<string, any>) => {
-  vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({
-    data: {
-      metadata,
-      success: true
-    },
-    error: null
-  });
+export const mockSession = {
+  user: {
+    id: 'test-user',
+    email: 'test@example.com',
+    app_metadata: { provider: 'email' },
+    user_metadata: { full_name: 'Test User' },
+    aud: 'authenticated',
+    created_at: '2023-01-01T00:00:00Z',
+    role: 'authenticated',
+    identities: []
+  },
+  access_token: 'valid-token',
+  refresh_token: 'valid-refresh-token',
+  expires_in: 3600,
+  token_type: 'bearer',
+  expires_at: Math.floor(Date.now() / 1000) + 3600
 };

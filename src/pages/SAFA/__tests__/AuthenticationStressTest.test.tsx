@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { supabase } from '@/lib/supabase';
 import { Auth } from '@/components/Auth';
 import { DocumentPreview } from '@/components/DocumentViewer/DocumentPreview';
-import { mockErrorResponse, waitForAsync } from './utils/testHelpers';
+import { mockErrorResponse, waitForAsync, mockSession } from './utils/testHelpers';
 
 // Mock the supabase client
 vi.mock('@/lib/supabase', () => ({
@@ -50,13 +50,8 @@ describe('Authentication Stress Tests', () => {
   // 1. Test Basic Authentication
   describe('Basic Authentication', () => {
     test('successful login with correct credentials', async () => {
-      const mockSession = {
-        user: { id: 'test-user', email: 'test@example.com' },
-        access_token: 'valid-token'
-      };
-      
       vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
-        data: { session: mockSession },
+        data: { session: mockSession, user: mockSession.user },
         error: null
       });
 
@@ -81,8 +76,8 @@ describe('Authentication Stress Tests', () => {
 
     test('failed login with incorrect credentials', async () => {
       vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
-        data: { session: null },
-        error: new Error('Invalid login credentials')
+        data: { session: null, user: null },
+        error: mockErrorResponse('Invalid login credentials')
       });
 
       render(<Auth />);
@@ -102,15 +97,9 @@ describe('Authentication Stress Tests', () => {
     });
 
     test('handles expired session', async () => {
-      // First mock a successful login
-      const mockSession = {
-        user: { id: 'test-user', email: 'test@example.com' },
-        access_token: 'expired-token'
-      };
-      
       vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({
         data: { session: null },
-        error: new Error('Token expired')
+        error: mockErrorResponse('Token expired')
       });
 
       render(<DocumentPreview storagePath="test-path" />);
@@ -128,8 +117,8 @@ describe('Authentication Stress Tests', () => {
       
       for (let i = 0; i < attempts; i++) {
         vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
-          data: { session: null },
-          error: new Error('Invalid login credentials')
+          data: { session: null, user: null },
+          error: mockErrorResponse('Invalid login credentials')
         });
 
         render(<Auth />);
@@ -157,13 +146,13 @@ describe('Authentication Stress Tests', () => {
     test('handles session expiry during document analysis', async () => {
       // Mock initial session
       vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({
-        data: { session: { user: { id: 'test-user' } } },
+        data: { session: mockSession },
         error: null
       });
 
       // Mock session expiry during analysis
       vi.mocked(supabase.functions.invoke).mockRejectedValueOnce(
-        new Error('Session expired')
+        mockErrorResponse('Session expired')
       );
 
       render(<DocumentPreview storagePath="test-path" />);
@@ -203,15 +192,15 @@ describe('Authentication Stress Tests', () => {
     test('retry button works when authenticated', async () => {
       // Mock authenticated session
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: { user: { id: 'test-user' } } },
+        data: { session: mockSession },
         error: null
       });
 
       // Mock first analysis attempt to fail
       vi.mocked(supabase.functions.invoke)
-        .mockRejectedValueOnce(new Error('Analysis failed'))
+        .mockRejectedValueOnce(mockErrorResponse('Analysis failed'))
         // Second attempt succeeds
-        .mockResolvedValueOnce({ data: { success: true } });
+        .mockResolvedValueOnce({ data: { success: true }, error: null });
 
       render(<DocumentPreview storagePath="test-path" />);
 
@@ -233,7 +222,7 @@ describe('Authentication Stress Tests', () => {
       // Mock expired session
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: null },
-        error: new Error('No session')
+        error: mockErrorResponse('No session')
       });
 
       render(<DocumentPreview storagePath="test-path" />);
