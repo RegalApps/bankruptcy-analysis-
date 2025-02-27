@@ -26,23 +26,64 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const { toast } = useToast();
   const publicUrl = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
 
+  // Fetch session on component mount and start analysis when ready
   useEffect(() => {
     console.log('DocumentPreview mounted with storagePath:', storagePath);
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    
+    let mounted = true;
+    const initializeComponent = async () => {
+      try {
+        // Get the current session
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        console.log("Current auth session in DocumentPreview:", currentSession);
+        
+        if (currentSession) {
+          setSession(currentSession);
+          
+          // If we have a session and there's a storage path but we're not already analyzing
+          // and there's no error, start the analysis
+          if (storagePath && !analyzing && !error) {
+            // Small delay to ensure the session state is updated
+            setTimeout(() => {
+              if (mounted) handleAnalyzeDocument(currentSession);
+            }, 100);
+          }
+        } else {
+          setError("No active session found. Please sign in again.");
+        }
+      } catch (err) {
+        console.error("Error fetching session:", err);
+        if (mounted) {
+          setError("Authentication error. Please refresh and try again.");
+        }
+      }
+    };
+    
+    initializeComponent();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, updatedSession) => {
+      if (mounted) {
+        console.log("Auth state changed in DocumentPreview:", updatedSession);
+        setSession(updatedSession);
+      }
     });
-
-    // Start automatic analysis when component is mounted
-    if (storagePath && !analyzing && !error) {
-      handleAnalyzeDocument();
-    }
+    
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [storagePath]);
 
-  const handleAnalyzeDocument = async () => {
+  const handleAnalyzeDocument = async (currentSession = session) => {
     setError(null);
     
     try {
-      if (!session) {
+      if (!currentSession) {
+        console.error("No session available for document analysis");
         throw new Error('You must be logged in to analyze documents');
       }
 
@@ -147,6 +188,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   };
 
+  // Function for manual analysis if automatic fails
+  const triggerManualAnalysis = () => {
+    handleAnalyzeDocument();
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -208,6 +254,14 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Analysis Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
+              <Button 
+                onClick={triggerManualAnalysis} 
+                className="mt-2" 
+                variant="outline" 
+                size="sm"
+              >
+                Try Analysis Again
+              </Button>
             </Alert>
           )}
         </CardContent>
