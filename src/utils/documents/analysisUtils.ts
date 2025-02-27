@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import logger from "@/utils/logger";
 
@@ -150,65 +149,65 @@ const getMockForm76Data = (): AnalysisResult => {
 };
 
 const getMockForm66Data = (): AnalysisResult => {
-  // Mock data for Form 66 (Consumer Proposal)
+  // Enhanced mock data for Form 66 (Consumer Proposal) analysis
   return {
     extracted_info: {
       formNumber: "Form 66",
-      clientName: "Emily Cartwright",
-      clientAddress: "87 Riverside Drive, Vancouver, BC V6G 1A2",
-      clientPhone: "(604) 555-7890",
-      clientEmail: "e.cartwright@email.com",
-      dateSigned: "March 15, 2025",
-      trusteeName: "Patrick Wilkinson",
-      trusteeAddress: "1200 West Georgia Street, Suite 800, Vancouver, BC V6E 4R2",
-      trusteePhone: "(604) 555-2345",
-      trusteeEmail: "p.wilkinson@trustee-partners.ca",
+      clientName: "the information typed here",
+      clientAddress: "123 Example Street, Toronto, ON M5V 2T6",
+      clientPhone: "(416) 555-0123",
+      clientEmail: "client@example.com",
+      dateSigned: new Date().toISOString().split('T')[0],
+      trusteeName: "Licensed Insolvency Trustee Name",
+      trusteeAddress: "456 Business Ave, Suite 800, Toronto, ON M5H 2N2",
+      trusteePhone: "(416) 555-9876",
+      trusteeEmail: "trustee@firm.ca",
       type: "consumer proposal",
-      totalDebts: "$62,500",
-      totalAssets: "$28,000",
-      monthlyIncome: "$4,100",
-      summary: "This is a consumer proposal (Form 66) for Emily Cartwright. The proposal was filed on March 15, 2025, with Patrick Wilkinson as the administrator. The client's total debts are $62,500 with assets of $28,000. The proposed monthly payment is $850 for 60 months."
+      totalDebts: "$75,000",
+      totalAssets: "$35,000",
+      monthlyIncome: "$4,800",
+      summary: "This is a Consumer Proposal (Form 66) for the specified client. The proposal was processed using OCR extraction and validated against BIA requirements. The document includes client details, trustee information, and proposal terms."
     },
     risks: [
       {
-        type: "Incomplete Proposal Terms",
-        description: "The proposal does not clearly outline all required payment terms and conditions.",
-        severity: "high",
-        regulation: "BIA Reference: Section 66.13(2) requires specific terms for proposals. Directive Reference: OSB Directive No. 5R3 outlines required proposal content.",
-        impact: "Creditors may reject the proposal due to unclear terms.",
-        requiredAction: "Submit complete proposal terms within 10 days.",
-        solution: "Implement a proposal template with mandatory fields for all required terms.",
-        deadline: "10 days"
-      },
-      {
-        type: "Missing Creditor Classifications",
-        description: "Creditors are not properly classified according to their status and security.",
+        type: "Debtor Information Verification",
+        description: "Additional verification required for debtor's current contact information and employment status.",
         severity: "medium",
-        regulation: "BIA Reference: Section 66.11 discusses classification of creditors. Directive Reference: OSB Directive No. 5R3 details creditor classification requirements.",
-        impact: "May complicate the voting process and lead to disputes.",
-        requiredAction: "Properly classify all creditors before the creditors' meeting.",
-        solution: "Use AI-assisted creditor classification based on claim documentation.",
-        deadline: "15 days"
+        regulation: "BIA Section 66.13 - Requirements for consumer proposals; OSB Directive 6R3 - Consumer Proposal Administration",
+        impact: "May delay creditor notifications and proposal administration",
+        requiredAction: "Verify and update debtor contact information within 5 business days",
+        solution: "Implement automated contact information verification system",
+        deadline: "5 days"
       },
       {
-        type: "Cash Flow Sustainability Issues",
-        description: "The proposed payments may not be sustainable given the client's income and expenses.",
+        type: "Meeting Details Documentation",
+        description: "Meeting of creditors details require additional documentation and confirmation",
         severity: "high",
-        regulation: "BIA Reference: Section 66.12(5) requires administrator assessment of proposal viability. Directive Reference: OSB Directive No. 6R2 on assessment standards.",
-        impact: "High risk of proposal failure and conversion to bankruptcy.",
-        requiredAction: "Conduct a detailed budget assessment with the client.",
-        solution: "Implement budget monitoring tools with automated alerts for potential sustainability issues.",
+        regulation: "BIA Section 66.15 - Meeting of creditors; OSB Directive 6R3 Section 7 - Meeting of Creditors",
+        impact: "Could affect creditors' ability to participate in the proposal process",
+        requiredAction: "Document and confirm meeting details before creditor notification",
+        solution: "Use digital scheduling system with automated notifications",
+        deadline: "3 days"
+      },
+      {
+        type: "Statement of Income Verification",
+        description: "Current income statement requires supporting documentation",
+        severity: "high",
+        regulation: "BIA Section 66.12 - Required information in consumer proposals; OSB Directive 6R3 Section 4",
+        impact: "May affect proposal viability assessment",
+        requiredAction: "Submit complete income verification within 7 days",
+        solution: "Implement automated income verification system with banking integration",
         deadline: "7 days"
       }
     ],
     regulatory_compliance: {
       status: "requires_review",
-      details: "This consumer proposal requires review to ensure compliance with BIA requirements for proposal content, creditor classification, and financial sustainability.",
+      details: "Consumer proposal requires verification of key elements under BIA Section 66.13 and OSB Directive 6R3",
       references: [
-        "BIA Section 66.13(2) - Required proposal content",
-        "OSB Directive No. 5R3 - Consumer proposal requirements",
-        "BIA Section 66.12(5) - Administrator's assessment duties",
-        "OSB Directive No. 6R2 - Assessment standards"
+        "BIA Section 66.13 - Consumer Proposal Requirements",
+        "OSB Directive 6R3 - Consumer Proposal Administration",
+        "BIA Section 66.15 - Meeting of Creditors Requirements",
+        "OSB Directive 6R3 Section 4 - Required Documentation"
       ]
     }
   };
