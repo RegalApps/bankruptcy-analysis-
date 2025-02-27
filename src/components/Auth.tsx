@@ -109,7 +109,7 @@ export const Auth = () => {
           <div className="flex items-center gap-2">
             <img 
               src="/lovable-uploads/01eb992b-a293-4ef9-a5ff-fa81da6a95ed.png" 
-              alt="SecureFile AI" 
+              alt="SecureFiles AI" 
               className="h-12"
             />
           </div>
@@ -117,7 +117,7 @@ export const Auth = () => {
 
         <div className="w-full max-w-md mx-auto space-y-8 rounded-lg border bg-card p-8 shadow-lg">
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-primary">Access to FileSecure AI</h1>
+            <h1 className="text-2xl font-bold text-primary">Access to SecureFiles AI</h1>
             <p className="text-sm text-muted-foreground">
               {isSignUp ? 'Create a new account to continue' : 'Sign in to your account'}
             </p>
