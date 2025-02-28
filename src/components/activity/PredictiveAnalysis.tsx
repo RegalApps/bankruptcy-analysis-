@@ -1,11 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { User2 } from "lucide-react";
-import { ClientSelector } from "./form/ClientSelector";
 import { Client } from "./types";
 import { MetricsGrid } from "./components/MetricsGrid";
 import { ForecastChart } from "./components/ForecastChart";
@@ -14,8 +12,11 @@ import { PredictiveHeader } from "./components/PredictiveHeader";
 import { usePredictiveData } from "./hooks/usePredictiveData";
 import { NoClientSelected } from "./components/NoClientSelected";
 
-export const PredictiveAnalysis = () => {
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+interface PredictiveAnalysisProps {
+  selectedClient: Client | null;
+}
+
+export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Add to console to track issues
@@ -26,8 +27,16 @@ export const PredictiveAnalysis = () => {
     metrics, 
     isLoading, 
     lastRefreshed,
-    financialRecords
+    financialRecords,
+    setSelectedClient: updateSelectedClient
   } = usePredictiveData(selectedClient, refreshTrigger);
+  
+  // Update the hook's selected client when the prop changes
+  useEffect(() => {
+    if (selectedClient) {
+      updateSelectedClient(selectedClient);
+    }
+  }, [selectedClient, updateSelectedClient]);
   
   const handleManualRefresh = () => {
     if (!selectedClient) return;
@@ -36,41 +45,9 @@ export const PredictiveAnalysis = () => {
     setRefreshTrigger(prev => prev + 1);
     toast.success(`Refreshing prediction data for ${selectedClient.name}...`);
   };
-  
-  const handleClientSelect = (clientId: string) => {
-    console.log("PredictiveAnalysis - Client selected:", clientId);
-    
-    // Reset metrics and last refreshed time when changing clients
-    const client = {
-      id: clientId,
-      name: clientId === "1" ? "John Doe" : "Reginald Dickerson",
-      status: "active" as const,
-      last_activity: "2024-03-10",
-    };
-    
-    setSelectedClient(client);
-    toast.success(`Selected client for predictive analysis: ${client.name}`);
-    
-    // Trigger data refresh for the new client
-    setRefreshTrigger(prev => prev + 1);
-  };
 
   return (
     <div className="space-y-6">
-      {/* Client Selection Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Predictive Financial Analysis</CardTitle>
-          <CardDescription>Select a client to view predictive financial analysis</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ClientSelector 
-            selectedClient={selectedClient}
-            onClientSelect={handleClientSelect}
-          />
-        </CardContent>
-      </Card>
-      
       {/* Show this when no client is selected */}
       {!selectedClient && <NoClientSelected />}
       

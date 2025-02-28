@@ -1,12 +1,35 @@
 
+import { useState } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IncomeExpenseForm } from "@/components/activity/IncomeExpenseForm";
 import { ActivityDashboard } from "@/components/activity/ActivityDashboard";
 import { PredictiveAnalysis } from "@/components/activity/PredictiveAnalysis";
+import { ClientSelector } from "@/components/activity/form/ClientSelector";
+import { Client } from "@/components/activity/types";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 export const ActivityPage = () => {
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [activeTab, setActiveTab] = useState("form");
+
+  // Handle client selection for all tabs
+  const handleClientSelect = (clientId: string) => {
+    console.log("ActivityPage - Client selected:", clientId);
+    
+    const client = {
+      id: clientId,
+      name: clientId === "1" ? "John Doe" : "Reginald Dickerson",
+      status: "active" as const,
+      last_activity: "2024-03-10",
+    };
+    
+    setSelectedClient(client);
+    toast.success(`Selected client: ${client.name}`);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
@@ -18,7 +41,26 @@ export const ActivityPage = () => {
               <h1 className="text-3xl font-bold">Smart Income & Expense Management</h1>
             </div>
             
-            <Tabs defaultValue="form" className="space-y-4">
+            {/* Global Client Selection Card */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Client Information</CardTitle>
+                <CardDescription>Select a client to manage their financial data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ClientSelector 
+                  selectedClient={selectedClient}
+                  onClientSelect={handleClientSelect}
+                />
+              </CardContent>
+            </Card>
+            
+            <Tabs 
+              defaultValue="form" 
+              className="space-y-4"
+              value={activeTab}
+              onValueChange={setActiveTab}
+            >
               <TabsList>
                 <TabsTrigger value="form">Income & Expense Form</TabsTrigger>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -26,15 +68,15 @@ export const ActivityPage = () => {
               </TabsList>
 
               <TabsContent value="form" className="space-y-4">
-                <IncomeExpenseForm />
+                <IncomeExpenseForm selectedClient={selectedClient} />
               </TabsContent>
 
               <TabsContent value="dashboard">
-                <ActivityDashboard />
+                <ActivityDashboard selectedClient={selectedClient} />
               </TabsContent>
 
               <TabsContent value="predictive">
-                <PredictiveAnalysis />
+                <PredictiveAnalysis selectedClient={selectedClient} />
               </TabsContent>
             </Tabs>
           </div>

@@ -1,12 +1,13 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Client } from "../types";
 import { processForecastData, calculateFinancialMetrics } from "../utils/forecastingUtils";
 
-export const usePredictiveData = (selectedClient: Client | null, refreshTrigger: number) => {
+export const usePredictiveData = (initialClient: Client | null, refreshTrigger: number) => {
+  const [selectedClient, setSelectedClient] = useState<Client | null>(initialClient);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
   // Query for financial records
@@ -178,6 +179,7 @@ export const usePredictiveData = (selectedClient: Client | null, refreshTrigger:
     metrics,
     isLoading,
     lastRefreshed,
-    refetch
+    refetch,
+    setSelectedClient
   };
 };

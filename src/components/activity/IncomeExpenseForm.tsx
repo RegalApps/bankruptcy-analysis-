@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { IncomeSection } from "./form/IncomeSection";
 import { ExpensesSection } from "./form/ExpensesSection";
-import { ClientSelector } from "./form/ClientSelector";
 import { HistoricalComparison } from "./components/HistoricalComparison";
 import { DocumentUploadSection } from "./components/DocumentUploadSection";
 import { useIncomeExpenseForm } from "./hooks/useIncomeExpenseForm";
@@ -12,12 +11,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { Client } from "./types";
+import { User2 } from "lucide-react";
 
-export const IncomeExpenseForm = () => {
+interface IncomeExpenseFormProps {
+  selectedClient: Client | null;
+}
+
+export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) => {
   const {
     formData,
     isSubmitting,
-    selectedClient,
     currentRecordId,
     historicalData,
     previousMonthData,
@@ -25,17 +29,24 @@ export const IncomeExpenseForm = () => {
     isDataLoading,
     handleChange,
     handleFrequencyChange,
-    handleClientSelect,
     handleSubmit,
     handlePeriodChange,
-  } = useIncomeExpenseForm();
+    setSelectedClient,
+  } = useIncomeExpenseForm(selectedClient);
 
-  // Display toast notification to encourage user to select a client
+  // Update the form's selected client when the prop changes
+  useEffect(() => {
+    if (selectedClient) {
+      setSelectedClient(selectedClient);
+    }
+  }, [selectedClient, setSelectedClient]);
+
+  // Display toast notification to encourage user to select a client if none selected
   useEffect(() => {
     if (!selectedClient) {
       const timer = setTimeout(() => {
         toast.info("Select a client to begin", {
-          description: "Choose a client to see their financial data",
+          description: "Choose a client above to see their financial data",
           duration: 5000,
         });
       }, 2000);
@@ -44,13 +55,22 @@ export const IncomeExpenseForm = () => {
     }
   }, [selectedClient]);
 
+  if (!selectedClient) {
+    return (
+      <Card className="py-12">
+        <CardContent className="flex flex-col items-center justify-center text-center space-y-4">
+          <User2 className="h-12 w-12 text-muted-foreground" />
+          <h3 className="text-lg font-medium">No Client Selected</h3>
+          <p className="text-muted-foreground max-w-md">
+            Please select a client above to begin entering financial data.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <ClientSelector 
-        selectedClient={selectedClient}
-        onClientSelect={handleClientSelect}
-      />
-      
       {isDataLoading ? (
         <div className="space-y-4">
           <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -59,12 +79,10 @@ export const IncomeExpenseForm = () => {
         </div>
       ) : (
         <>
-          {selectedClient && (
-            <HistoricalComparison
-              currentPeriod={historicalData.currentPeriod}
-              previousPeriod={historicalData.previousPeriod}
-            />
-          )}
+          <HistoricalComparison
+            currentPeriod={historicalData.currentPeriod}
+            previousPeriod={historicalData.previousPeriod}
+          />
 
           <Card>
             <CardHeader>
