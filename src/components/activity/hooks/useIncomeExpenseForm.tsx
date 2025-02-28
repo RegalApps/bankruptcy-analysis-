@@ -2,12 +2,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { initialFormState } from "./initialState";
+import { initialFormData } from "./initialState";
 import { IncomeExpenseData, Client } from "../types";
 
 export const useIncomeExpenseForm = (initialClient: Client | null) => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(initialClient);
-  const [formData, setFormData] = useState<IncomeExpenseData>(initialFormState);
+  const [formData, setFormData] = useState<IncomeExpenseData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<'current' | 'previous'>('current');
@@ -64,7 +64,7 @@ export const useIncomeExpenseForm = (initialClient: Client | null) => {
           setCurrentRecordId(record.id);
           
           const newFormData = {
-            ...initialFormState,
+            ...initialFormData,
             monthly_income: String(record.monthly_income || ''),
             employment_income: String(record.employment_income || ''),
             other_income: String(record.other_income || ''),
@@ -151,7 +151,7 @@ export const useIncomeExpenseForm = (initialClient: Client | null) => {
     setSelectedPeriod(period);
     
     // Reset form to prevent mixing data
-    setFormData(initialFormState);
+    setFormData(initialFormData);
     setCurrentRecordId(null);
   }, []);
   
