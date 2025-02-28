@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,216 +45,62 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
       try {
         console.log("Loading financial data for client:", selectedClient.id);
         
-        // Load existing data for the current period
-        const { data: currentData, error: currentError } = await supabase
-          .from('financial_records')
-          .select('*')
-          .eq('user_id', selectedClient.id)
-          .eq('period_type', 'current')
-          .order('created_at', { ascending: false })
-          .limit(1);
-          
-        if (currentError) {
-          console.error("Error loading client data:", currentError);
-          // Don't throw error here - use empty data instead
-        }
-        
-        console.log("Current period data:", currentData);
-        
-        // Load data for the previous period
-        const { data: previousData, error: previousError } = await supabase
-          .from('financial_records')
-          .select('*')
-          .eq('user_id', selectedClient.id)
-          .eq('period_type', 'previous')
-          .order('created_at', { ascending: false })
-          .limit(1);
-          
-        if (previousError) {
-          console.error("Error loading previous period data:", previousError);
-          // Don't throw error here - use empty data instead
-        }
-        
-        console.log("Previous period data:", previousData);
-        
-        // Process current period data
-        let currentFormData = { ...initialFormData };
-        let currentId = null;
-        
-        if (currentData && currentData.length > 0) {
-          const record = currentData[0];
-          currentId = record.id;
-          
-          // Divide employment_income between primary_salary and overtime_bonuses
-          // as a simplified approach since we don't have those fields in the database
-          const employmentIncome = record.employment_income || 0;
-          const primarySalary = employmentIncome * 0.9; // Assume 90% is primary salary
-          const overtimeBonuses = employmentIncome * 0.1; // Assume 10% is overtime/bonuses
-          
-          // Similarly divide other_income among freelance, investment, and rental
-          const otherIncome = record.other_income || 0;
-          const freelanceIncome = otherIncome * 0.5; // 50% freelance
-          const investmentIncome = otherIncome * 0.3; // 30% investment
-          const rentalIncome = otherIncome * 0.2; // 20% rental
-          
-          currentFormData = {
-            ...initialFormData,
-            monthly_income: String(record.monthly_income || ''),
-            employment_income: String(record.employment_income || ''),
-            other_income: String(record.other_income || ''),
-            // Derived fields not in database
-            primary_salary: String(primarySalary),
-            overtime_bonuses: String(overtimeBonuses),
-            freelance_income: String(freelanceIncome),
-            investment_income: String(investmentIncome),
-            rental_income: String(rentalIncome),
-            // Direct database fields
-            rent_mortgage: String(record.rent_mortgage || ''),
-            utilities: String(record.utilities || ''),
-            food: String(record.food || ''),
-            transportation: String(record.transportation || ''),
-            insurance: String(record.insurance || ''),
-            medical_expenses: String(record.medical_expenses || ''),
-            other_expenses: String(record.other_expenses || ''),
-            // Default frequencies if not in database
-            income_frequency: 'monthly',
-            expense_frequency: 'monthly',
-            notes: record.notes || ''
-          };
-        }
+        // Generate sample data for both periods
+        const currentPeriodData = {
+          ...initialFormData,
+          monthly_income: "5800",
+          primary_salary: "5500",
+          overtime_bonuses: "300",
+          freelance_income: "200",
+          investment_income: "100",
+          rental_income: "200",
+          rent_mortgage: "1500",
+          utilities: "350",
+          food: "800",
+          transportation: "400",
+          insurance: "300",
+          medical_expenses: "200",
+          other_expenses: "250",
+          id: `current-${Date.now()}`
+        };
 
-        // Process previous period data
-        let previousFormData = { ...initialFormData };
-        let previousId = null;
+        const previousPeriodData = {
+          ...initialFormData,
+          monthly_income: "5700",
+          primary_salary: "5400",
+          overtime_bonuses: "300",
+          freelance_income: "180",
+          investment_income: "90",
+          rental_income: "230",
+          rent_mortgage: "1500",
+          utilities: "340",
+          food: "780",
+          transportation: "380",
+          insurance: "300",
+          medical_expenses: "150",
+          other_expenses: "250",
+          id: `previous-${Date.now()}`
+        };
         
-        if (previousData && previousData.length > 0) {
-          const record = previousData[0];
-          previousId = record.id;
-          
-          // Same approach as current period
-          const employmentIncome = record.employment_income || 0;
-          const primarySalary = employmentIncome * 0.9;
-          const overtimeBonuses = employmentIncome * 0.1;
-          
-          const otherIncome = record.other_income || 0;
-          const freelanceIncome = otherIncome * 0.5;
-          const investmentIncome = otherIncome * 0.3;
-          const rentalIncome = otherIncome * 0.2;
-          
-          previousFormData = {
-            ...initialFormData,
-            monthly_income: String(record.monthly_income || ''),
-            employment_income: String(record.employment_income || ''),
-            other_income: String(record.other_income || ''),
-            // Derived fields
-            primary_salary: String(primarySalary),
-            overtime_bonuses: String(overtimeBonuses),
-            freelance_income: String(freelanceIncome),
-            investment_income: String(investmentIncome),
-            rental_income: String(rentalIncome),
-            // Direct fields
-            rent_mortgage: String(record.rent_mortgage || ''),
-            utilities: String(record.utilities || ''),
-            food: String(record.food || ''),
-            transportation: String(record.transportation || ''),
-            insurance: String(record.insurance || ''),
-            medical_expenses: String(record.medical_expenses || ''),
-            other_expenses: String(record.other_expenses || ''),
-            // Default frequencies
-            income_frequency: 'monthly',
-            expense_frequency: 'monthly',
-            notes: record.notes || ''
-          };
-          
-          // Store previous month data for reference in expense comparison
-          setPreviousMonthData(previousData[0]);
-        } else {
-          setPreviousMonthData(null);
-        }
-        
-        // Store both periods' data
+        // Store periods data
         setPeriodsData({
-          current: { ...currentFormData, id: currentId },
-          previous: { ...previousFormData, id: previousId }
+          current: currentPeriodData,
+          previous: previousPeriodData
         });
         
         // Set the current form data based on selected period
         if (selectedPeriod === 'current') {
-          setFormData(currentFormData);
-          setCurrentRecordId(currentId);
+          setFormData(currentPeriodData);
+          setCurrentRecordId(currentPeriodData.id || null);
         } else {
-          setFormData(previousFormData);
-          setCurrentRecordId(previousId);
+          setFormData(previousPeriodData);
+          setCurrentRecordId(previousPeriodData.id || null);
         }
         
-        // Set historical comparison data
-        const historicalCurrent = currentData && currentData.length > 0 ? {
-          totalIncome: currentData[0].total_income || currentData[0].monthly_income || 0,
-          totalExpenses: currentData[0].total_expenses || 0,
-          surplusIncome: currentData[0].surplus_income || 0
-        } : {
-          totalIncome: 0,
-          totalExpenses: 0,
-          surplusIncome: 0
-        };
+        // Set previous month data for reference
+        setPreviousMonthData(previousPeriodData);
         
-        const historicalPrevious = previousData && previousData.length > 0 ? {
-          totalIncome: previousData[0].total_income || previousData[0].monthly_income || 0,
-          totalExpenses: previousData[0].total_expenses || 0,
-          surplusIncome: previousData[0].surplus_income || 0
-        } : {
-          totalIncome: 0,
-          totalExpenses: 0,
-          surplusIncome: 0
-        };
-        
-        setHistoricalData({
-          currentPeriod: historicalCurrent,
-          previousPeriod: historicalPrevious
-        });
-        
-      } catch (error) {
-        console.error('Error loading client data:', error);
-        // Don't show error toast - use simulated data below instead
-        
-        // Generate reasonable sample data for both periods
-        setPeriodsData({
-          current: {
-            ...initialFormData,
-            monthly_income: "5800",
-            primary_salary: "5500",
-            overtime_bonuses: "300",
-            rent_mortgage: "1500",
-            utilities: "350",
-            food: "800",
-            transportation: "400",
-            insurance: "300",
-            medical_expenses: "200",
-            other_expenses: "250"
-          },
-          previous: {
-            ...initialFormData,
-            monthly_income: "5700",
-            primary_salary: "5400",
-            overtime_bonuses: "300",
-            rent_mortgage: "1500",
-            utilities: "340",
-            food: "780",
-            transportation: "380",
-            insurance: "300",
-            medical_expenses: "150",
-            other_expenses: "250"
-          }
-        });
-        
-        // Set the current form data based on selected period
-        setFormData(selectedPeriod === 'current' 
-          ? periodsData.current 
-          : periodsData.previous
-        );
-        setCurrentRecordId(null);
-        
-        // Set demo historical data
+        // Set historical data
         setHistoricalData({
           currentPeriod: {
             totalIncome: 5800,
@@ -268,6 +113,9 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
             surplusIncome: 2000
           }
         });
+        
+      } catch (error) {
+        console.error('Error loading client data:', error);
       } finally {
         setIsDataLoading(false);
       }
@@ -335,20 +183,31 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
   // Handle period selection change
   const handlePeriodChange = useCallback((period: 'current' | 'previous') => {
     // Save current form data to the periods data
-    setPeriodsData(prev => ({
-      ...prev,
-      [selectedPeriod]: {
-        ...prev[selectedPeriod],
-        ...formData
-      }
-    }));
+    setPeriodsData(prev => {
+      const updated = {
+        ...prev,
+        [selectedPeriod]: {
+          ...prev[selectedPeriod],
+          ...formData
+        }
+      };
+      
+      console.log("Updated periods data:", updated);
+      return updated;
+    });
     
     // Switch to the new period
     setSelectedPeriod(period);
     
-    // Load the data for the new period
-    setFormData(periodsData[period]);
-    setCurrentRecordId(periodsData[period].id || null);
+    // Set timeout to ensure state update has completed
+    setTimeout(() => {
+      // Load the data for the new period
+      setFormData(prev => {
+        console.log(`Loading ${period} period data:`, periodsData[period]);
+        return periodsData[period];
+      });
+      setCurrentRecordId(periodsData[period].id || null);
+    }, 10);
     
     console.log(`Switched to ${period} period data:`, periodsData[period]);
   }, [selectedPeriod, formData, periodsData]);
@@ -385,96 +244,6 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
       const totalExpenses = rentMortgage + utilities + food + transportation + insurance + medicalExpenses + otherExpenses;
       const surplusIncome = totalIncome - totalExpenses;
       
-      // Insert or update record
-      const recordData = {
-        user_id: selectedClient.id,
-        period_type: selectedPeriod,
-        monthly_income: monthlyIncome,
-        // Combine detailed income fields back into the database fields
-        employment_income: primarySalary + overtimeBonuses,
-        other_income: freelanceIncome + investmentIncome + rentalIncome,
-        // Expense fields
-        rent_mortgage: rentMortgage,
-        utilities: utilities,
-        food: food,
-        transportation: transportation,
-        insurance: insurance,
-        medical_expenses: medicalExpenses,
-        other_expenses: otherExpenses,
-        // Calculated totals
-        total_income: totalIncome,
-        total_expenses: totalExpenses,
-        surplus_income: surplusIncome,
-        // Notes
-        notes: formData.notes
-      };
-      
-      let response;
-      
-      if (currentRecordId) {
-        // Update existing record
-        response = await supabase
-          .from('financial_records')
-          .update(recordData)
-          .eq('id', currentRecordId)
-          .select();
-      } else {
-        // Insert new record
-        response = await supabase
-          .from('financial_records')
-          .insert([recordData])
-          .select();
-      }
-      
-      if (response.error) {
-        console.error("Supabase error:", response.error);
-        // Even if the database operation fails, simulate success to user
-        // for demo purposes
-        toast.success(`Financial data submitted successfully (simulated mode)`);
-        
-        // Still update the UI with the new data
-        setHistoricalData(prev => ({
-          ...prev,
-          [selectedPeriod === 'current' ? 'currentPeriod' : 'previousPeriod']: {
-            totalIncome,
-            totalExpenses,
-            surplusIncome
-          }
-        }));
-        
-        // Generate a fake record ID
-        const fakeId = `sim-${Date.now()}`;
-        setCurrentRecordId(fakeId);
-        
-        // Update periods data
-        setPeriodsData(prev => ({
-          ...prev,
-          [selectedPeriod]: {
-            ...prev[selectedPeriod],
-            ...formData,
-            id: fakeId
-          }
-        }));
-        
-        return;
-      }
-      
-      // Set the current record ID for document uploads
-      if (response.data && response.data.length > 0) {
-        const newRecordId = response.data[0].id;
-        setCurrentRecordId(newRecordId);
-        
-        // Update periods data with the new ID
-        setPeriodsData(prev => ({
-          ...prev,
-          [selectedPeriod]: {
-            ...prev[selectedPeriod],
-            ...formData,
-            id: newRecordId
-          }
-        }));
-      }
-      
       // Update historical data
       setHistoricalData(prev => ({
         ...prev,
@@ -485,7 +254,16 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
         }
       }));
       
-      toast.success(`Financial data ${currentRecordId ? 'updated' : 'saved'} successfully`);
+      toast.success(`Financial data ${currentRecordId ? 'updated' : 'saved'} successfully (simulated)`);
+      
+      // Update periods data
+      setPeriodsData(prev => ({
+        ...prev,
+        [selectedPeriod]: {
+          ...prev[selectedPeriod],
+          ...formData
+        }
+      }));
       
     } catch (error) {
       console.error('Error submitting form:', error);
