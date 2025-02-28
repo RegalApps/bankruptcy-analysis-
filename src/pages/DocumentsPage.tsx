@@ -15,14 +15,10 @@ export const DocumentsPage = () => {
   const handleItemSelect = (id: string, type: "folder" | "file") => {
     setSelectedItemId(id);
     setSelectedItemType(type);
-    
-    // If double-clicking a file, navigate to the document viewer
-    if (type === "file") {
-      // We don't navigate here, just select. Double-click in components will handle navigation
-    }
   };
 
   const handleOpenDocument = (documentId: string) => {
+    // Navigate to the home page with the selected document ID in the state
     navigate('/', { state: { selectedDocument: documentId } });
   };
 

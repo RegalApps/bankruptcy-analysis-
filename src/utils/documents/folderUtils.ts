@@ -10,7 +10,7 @@ export const createFolderIfNotExists = async (
   parentFolderId?: string
 ): Promise<string> => {
   try {
-    // Check if folder already exists
+    // Check if folder already exists with the same name and parent folder
     const { data: existingFolders } = await supabase
       .from('documents')
       .select('id')
@@ -18,6 +18,7 @@ export const createFolderIfNotExists = async (
       .eq('is_folder', true)
       .eq('folder_type', folderType)
       .eq('user_id', userId)
+      .eq('parent_folder_id', parentFolderId || null)
       .maybeSingle();
     
     if (existingFolders) {
@@ -61,7 +62,7 @@ export const organizeDocumentIntoFolders = async (
   formNumber: string
 ): Promise<void> => {
   try {
-    if (clientName && formNumber) {
+    if (clientName) {
       // First create a client folder
       const clientFolderId = await createFolderIfNotExists(
         clientName, 
