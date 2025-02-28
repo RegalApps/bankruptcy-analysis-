@@ -1,4 +1,3 @@
-
 import { Document } from "@/components/DocumentList/types";
 import { FolderIcon } from "@/components/DocumentList/components/FolderIcon";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -51,12 +50,32 @@ export const FolderGrid = ({
     return folders.filter(folder => folder.parent_folder_id === parentFolderId);
   };
 
-  // Get top-level client folders (those without a parent or with folder_type 'client')
-  const clientFolders = folders.filter(folder => 
-    folder.folder_type === 'client' || (!folder.parent_folder_id && !folder.folder_type)
-  );
+  // Get top-level client folders without duplicates
+  const getUniqueClientFolders = () => {
+    // Get all client folders
+    const allClientFolders = folders.filter(folder => 
+      folder.folder_type === 'client' || (!folder.parent_folder_id && !folder.folder_type)
+    );
+    
+    // Create a Map to deduplicate by title
+    const uniqueFoldersByTitle = new Map();
+    
+    // For each client folder, keep the most recently updated one
+    allClientFolders.forEach(folder => {
+      const existingFolder = uniqueFoldersByTitle.get(folder.title);
+      
+      // If we don't have this folder title yet, or this folder is newer than the one we have
+      if (!existingFolder || new Date(folder.updated_at) > new Date(existingFolder.updated_at)) {
+        uniqueFoldersByTitle.set(folder.title, folder);
+      }
+    });
+    
+    // Convert Map values back to array
+    return Array.from(uniqueFoldersByTitle.values());
+  };
 
-  console.log("Client folders:", clientFolders.map(f => f.title));
+  const clientFolders = getUniqueClientFolders();
+  console.log("Unique client folders:", clientFolders.map(f => f.title));
 
   return (
     <ScrollArea className="h-[400px]">
