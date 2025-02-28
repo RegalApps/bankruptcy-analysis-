@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Client } from "./types";
@@ -27,16 +27,8 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
     metrics, 
     isLoading, 
     lastRefreshed,
-    financialRecords,
-    setSelectedClient: updateSelectedClient
+    financialRecords
   } = usePredictiveData(selectedClient, refreshTrigger);
-  
-  // Update the hook's selected client when the prop changes
-  useEffect(() => {
-    if (selectedClient) {
-      updateSelectedClient(selectedClient);
-    }
-  }, [selectedClient, updateSelectedClient]);
   
   const handleManualRefresh = () => {
     if (!selectedClient) return;

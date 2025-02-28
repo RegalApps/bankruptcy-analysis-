@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,8 +15,7 @@ export type FinancialMetrics = {
   riskLevel: string;
 };
 
-export const useFinancialData = (initialClient: Client | null) => {
-  const [selectedClient, setSelectedClient] = useState<Client | null>(initialClient);
+export const useFinancialData = (selectedClient: Client | null) => {
   const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
 
   // Query for financial records
@@ -194,7 +193,6 @@ export const useFinancialData = (initialClient: Client | null) => {
     metrics,
     excelDocuments,
     isLoading,
-    error,
-    setSelectedClient
+    error
   };
 };

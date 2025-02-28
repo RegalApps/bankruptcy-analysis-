@@ -20,16 +20,8 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     metrics, 
     chartData, 
     excelDocuments,
-    isLoading,
-    setSelectedClient
+    isLoading
   } = useFinancialData(selectedClient);
-
-  // Update the hook's selected client when the prop changes
-  useEffect(() => {
-    if (selectedClient) {
-      setSelectedClient(selectedClient);
-    }
-  }, [selectedClient, setSelectedClient]);
 
   return (
     <div className="space-y-6">
