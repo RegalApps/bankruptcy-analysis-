@@ -88,7 +88,7 @@ export const fetchLatestExcelData = async (clientId: string): Promise<IncomeExpe
     }
     
     // Look for Excel files in documents table
-    const { data: excelDocs, error: docsError } = await supabase
+    let { data: excelDocs, error: docsError } = await supabase
       .from("documents")
       .select("*")
       .or(`title.ilike.%${clientName}%,metadata->>client_name.ilike.%${clientName}%`)
