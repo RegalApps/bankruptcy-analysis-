@@ -70,25 +70,54 @@ export const organizeDocumentIntoFolders = async (
         userId
       );
       
-      // Then create a form folder inside the client folder
-      const formFolderName = `${formNumber} - Documents`;
-      const formFolderId = await createFolderIfNotExists(
-        formFolderName,
-        'form',
-        userId,
-        clientFolderId
-      );
+      // Check if the document is an Excel file (for income and expense sheets)
+      const { data: document } = await supabase
+        .from('documents')
+        .select('title, type, storage_path')
+        .eq('id', documentId)
+        .single();
       
-      // Move the document into the form folder
+      const isExcelFile = 
+        document?.type?.includes('excel') || 
+        document?.storage_path?.endsWith('.xlsx') || 
+        document?.storage_path?.endsWith('.xls');
+      
+      let targetFolderId;
+      
+      if (isExcelFile) {
+        // For Excel files, create an "Income and Expense Sheet" folder
+        const incomeExpenseFolderId = await createFolderIfNotExists(
+          "Income and Expense Sheet",
+          'financial',
+          userId,
+          clientFolderId
+        );
+        
+        targetFolderId = incomeExpenseFolderId;
+        logger.info(`Excel file detected, organizing into Income and Expense Sheet folder`);
+      } else {
+        // For other documents, create a form folder as usual
+        const formFolderName = `${formNumber} - Documents`;
+        const formFolderId = await createFolderIfNotExists(
+          formFolderName,
+          'form',
+          userId,
+          clientFolderId
+        );
+        
+        targetFolderId = formFolderId;
+      }
+      
+      // Move the document into the appropriate folder
       const { error: moveError } = await supabase
         .from('documents')
-        .update({ parent_folder_id: formFolderId })
+        .update({ parent_folder_id: targetFolderId })
         .eq('id', documentId);
       
       if (moveError) {
         logger.error('Error moving document to folder:', moveError);
       } else {
-        logger.info(`Document moved to folder structure: ${clientName} > ${formFolderName}`);
+        logger.info(`Document moved to folder for client: ${clientName}`);
       }
     } else {
       logger.warn('Could not create folder structure: missing client name or form number');

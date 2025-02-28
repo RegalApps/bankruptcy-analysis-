@@ -2,7 +2,7 @@
 import { Document } from "@/components/DocumentList/types";
 import { FolderIcon } from "@/components/DocumentList/components/FolderIcon";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, ChevronRight, ChevronDown } from "lucide-react";
+import { FileText, ChevronRight, ChevronDown, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -108,6 +108,18 @@ export const FolderGrid = ({
     return Array.from(uniqueFoldersByTitle.values());
   };
 
+  // Get the icon based on file type
+  const getFileIcon = (doc: Document) => {
+    const isExcel = 
+      doc.type?.includes('excel') || 
+      doc.storage_path?.endsWith('.xlsx') || 
+      doc.storage_path?.endsWith('.xls');
+      
+    return isExcel ? 
+      <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" /> : 
+      <FileText className="h-4 w-4 mr-2 text-primary" />;
+  };
+
   const clientFolders = getUniqueClientFolders();
   console.log("Unique client folders:", clientFolders.map(f => f.title));
 
@@ -170,6 +182,11 @@ export const FolderGrid = ({
                         const isFormSelected = selectedFolder === formFolder.id;
                         const isFormExpanded = expandedFolders.has(formFolder.id);
 
+                        // Special handling for Income and Expense Sheet folder
+                        const isFinancialFolder = formFolder.folder_type === 'financial' || 
+                                               formFolder.title === 'Income and Expense Sheet';
+                        const folderVariant = isFinancialFolder ? "financial" : "form";
+
                         return (
                           <div 
                             key={formFolder.id}
@@ -188,36 +205,50 @@ export const FolderGrid = ({
                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
                               )}
                               <FolderIcon 
-                                variant="form"
+                                variant={folderVariant as any}
                                 isActive={isFormSelected}
                                 isOpen={isFormExpanded}
                               />
-                              <h5 className="font-medium">{formFolder.title}</h5>
+                              <h5 className="font-medium">
+                                {formFolder.title}
+                                {isFinancialFolder && 
+                                  <span className="ml-1 text-xs text-green-600 font-normal">
+                                    (Excel)
+                                  </span>
+                                }
+                              </h5>
                             </div>
 
                             {isFormExpanded && formDocs.length > 0 && (
                               <div className="ml-8 pl-4 mt-1 space-y-1 border-l-2 border-muted py-1">
-                                {formDocs.map(doc => (
-                                  <div 
-                                    key={doc.id}
-                                    className="flex items-center p-2 rounded hover:bg-muted cursor-pointer"
-                                    onClick={(e) => handleDocumentClick(doc.id, e)}
-                                    onDoubleClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDocumentDoubleClick(doc.id);
-                                    }}
-                                  >
-                                    <FileText className="h-4 w-4 mr-2 text-primary" />
-                                    <div>
-                                      <p className="text-sm font-medium">{doc.title}</p>
-                                      {doc.metadata?.client_name && (
-                                        <p className="text-xs text-muted-foreground">
-                                          Client: {doc.metadata.client_name}
-                                        </p>
-                                      )}
+                                {formDocs.map(doc => {
+                                  const isExcelFile = 
+                                    doc.type?.includes('excel') || 
+                                    doc.storage_path?.endsWith('.xlsx') || 
+                                    doc.storage_path?.endsWith('.xls');
+                                    
+                                  return (
+                                    <div 
+                                      key={doc.id}
+                                      className="flex items-center p-2 rounded hover:bg-muted cursor-pointer"
+                                      onClick={(e) => handleDocumentClick(doc.id, e)}
+                                      onDoubleClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDocumentDoubleClick(doc.id);
+                                      }}
+                                    >
+                                      {getFileIcon(doc)}
+                                      <div>
+                                        <p className="text-sm font-medium">{doc.title}</p>
+                                        {doc.metadata?.client_name && (
+                                          <p className="text-xs text-muted-foreground">
+                                            Client: {doc.metadata.client_name}
+                                          </p>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
@@ -237,7 +268,7 @@ export const FolderGrid = ({
                                 handleDocumentDoubleClick(doc.id);
                               }}
                             >
-                              <FileText className="h-4 w-4 mr-2 text-primary" />
+                              {getFileIcon(doc)}
                               <div>
                                 <p className="text-sm font-medium">{doc.title}</p>
                                 {doc.metadata?.client_name && (

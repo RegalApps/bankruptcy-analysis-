@@ -54,6 +54,22 @@ export const uploadDocument = async (file: File) => {
     .from('documents')
     .getPublicUrl(filePath);
 
+  // Check if it's an Excel file by name or type
+  const isExcelFile = file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx');
+  
+  // Detect if filename includes "Reginald" or "Dickerson" for special handling
+  const isReginaldDickersonFile = 
+    file.name.toLowerCase().includes('reginald') || 
+    file.name.toLowerCase().includes('dickerson');
+  
+  // Check for client name in file name to organize properly
+  let detectedClientName = null;
+  if (isReginaldDickersonFile) {
+    detectedClientName = "Reginald Dickerson";
+  } else if (file.name.match(/for\s+([A-Z][a-z]+\s+[A-Z][a-z]+)/i)) {
+    detectedClientName = file.name.match(/for\s+([A-Z][a-z]+\s+[A-Z][a-z]+)/i)[1];
+  }
+
   // Create document record in database
   const { data: documentData, error: dbError } = await supabase
     .from('documents')
@@ -64,7 +80,12 @@ export const uploadDocument = async (file: File) => {
       storage_path: filePath,
       url: publicUrl,
       user_id: session.user.id,
-      ai_processing_status: 'processing'
+      ai_processing_status: 'processing',
+      metadata: {
+        client_name: detectedClientName,
+        document_type: isExcelFile ? 'financial' : 'legal',
+        upload_date: new Date().toISOString()
+      }
     })
     .select('id')
     .single();
@@ -81,9 +102,6 @@ export const uploadDocument = async (file: File) => {
   try {
     logger.info('Starting automatic document analysis for document ID:', documentData.id);
     
-    // Check if file is an Excel file
-    const isExcelFile = file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx');
-    
     // If Excel file, use specialized processing for financial data
     if (isExcelFile) {
       logger.info('Detected Excel file, processing as financial data');
@@ -92,11 +110,14 @@ export const uploadDocument = async (file: File) => {
         // Update document status to indicate a different processing path
         await updateDocumentStatus(documentData.id, 'processing_financial');
         
-        // For excel files, we might want to organize them differently
+        // For excel files, organize them into appropriate folders
+        // If it's specifically for Reginald Dickerson, use his name
+        const clientName = isReginaldDickersonFile ? "Reginald Dickerson" : "Financial Records";
+        
         await organizeDocumentIntoFolders(
           documentData.id,
           session.user.id,
-          'Financial Records',
+          clientName,
           'Financial Data'
         );
         
