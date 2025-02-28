@@ -1,72 +1,47 @@
 
-import { useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Client } from "../types";
-import { UserCircle, Clock } from "lucide-react";
 
 interface ClientSelectorProps {
   selectedClient: Client | null;
   onClientSelect: (clientId: string) => void;
+  availableClients?: Client[];
 }
 
-const mockClients: Client[] = [
-  { id: "1", name: "John Doe", status: "active", last_activity: "2024-03-10" },
-  { id: "2", name: "Reginald Dickerson", status: "active", last_activity: "2024-05-28" },
-];
+export const ClientSelector = ({ selectedClient, onClientSelect, availableClients }: ClientSelectorProps) => {
+  // Default available clients if none provided
+  const clients = availableClients || [
+    {
+      id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      name: "John Doe",
+      status: "active",
+      last_activity: "2024-03-15",
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      name: "Reginald Dickerson",
+      status: "active",
+      last_activity: "2024-03-12",
+    },
+  ];
 
-export const ClientSelector = ({ selectedClient, onClientSelect }: ClientSelectorProps) => {
   return (
-    <div className="mb-6">
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">
-          Select Client
-        </label>
-        <Select 
-          onValueChange={onClientSelect} 
-          value={selectedClient?.id || ""}
-          defaultValue=""
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Choose a client..." />
-          </SelectTrigger>
-          <SelectContent>
-            {mockClients.map((client) => (
-              <SelectItem key={client.id} value={client.id}>
-                {client.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {selectedClient && (
-        <div className="bg-muted p-4 rounded-md space-y-2 mt-4">
-          <div className="flex items-center gap-2">
-            <UserCircle className="h-5 w-5 text-primary" />
-            <span className="font-medium">{selectedClient.name}</span>
-            <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-              selectedClient.status === 'active' 
-                ? 'bg-green-100 text-green-700' 
-                : 'bg-gray-100 text-gray-700'
-            }`}>
-              {selectedClient.status}
-            </span>
-          </div>
-          {selectedClient.last_activity && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>Last activity: {selectedClient.last_activity}</span>
-            </div>
-          )}
-        </div>
-      )}
+    <div className="w-full">
+      <Select
+        value={selectedClient?.id}
+        onValueChange={onClientSelect}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select a client" />
+        </SelectTrigger>
+        <SelectContent>
+          {clients.map((client) => (
+            <SelectItem key={client.id} value={client.id}>
+              {client.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

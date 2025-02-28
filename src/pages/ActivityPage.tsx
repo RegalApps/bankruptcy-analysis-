@@ -11,6 +11,22 @@ import { Client } from "@/components/activity/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
+// Valid UUID format mockup
+const MOCK_CLIENTS = [
+  {
+    id: "f47ac10b-58cc-4372-a567-0e02b2c3d479", // Valid UUID format
+    name: "John Doe",
+    status: "active" as const,
+    last_activity: "2024-03-10",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440000", // Valid UUID format
+    name: "Reginald Dickerson",
+    status: "active" as const,
+    last_activity: "2024-03-12",
+  }
+];
+
 export const ActivityPage = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState("form");
@@ -19,12 +35,12 @@ export const ActivityPage = () => {
   const handleClientSelect = (clientId: string) => {
     console.log("ActivityPage - Client selected:", clientId);
     
-    // Create mock client objects for demonstration
-    const client = {
+    // Find the mock client by ID
+    const client = MOCK_CLIENTS.find(c => c.id === clientId) || {
       id: clientId,
-      name: clientId === "1" ? "John Doe" : "Reginald Dickerson",
+      name: "Unknown Client",
       status: "active" as const,
-      last_activity: "2024-03-10",
+      last_activity: "2024-03-15",
     };
     
     setSelectedClient(client);
@@ -52,6 +68,7 @@ export const ActivityPage = () => {
                 <ClientSelector 
                   selectedClient={selectedClient}
                   onClientSelect={handleClientSelect}
+                  availableClients={MOCK_CLIENTS}
                 />
               </CardContent>
             </Card>

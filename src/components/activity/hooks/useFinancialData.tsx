@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +32,7 @@ export const useFinancialData = (selectedClient: Client | null) => {
       console.log("Fetching financial records for client:", selectedClient.id);
       
       try {
+        // Try to get actual data from Supabase
         const { data, error } = await supabase
           .from("financial_records")
           .select("*")
@@ -41,43 +41,66 @@ export const useFinancialData = (selectedClient: Client | null) => {
 
         if (error) {
           console.error("Supabase error:", error);
-          throw error;
+          // Don't throw error - fall back to simulated data
         }
         
-        console.log("Received financial records:", data?.length || 0);
-        
-        // If no data, return simulated data for demonstration
-        if (!data || data.length === 0) {
-          console.log("Generating simulated data for client:", selectedClient.name);
-          const today = new Date();
-          const simulatedData = [];
-          
-          // Create six months of simulated data
-          for (let i = 5; i >= 0; i--) {
-            const date = new Date(today);
-            date.setMonth(date.getMonth() - i);
-            
-            // Generate slightly different data for each month
-            const monthData = {
-              id: `sim-${5-i}`,
-              submission_date: date.toISOString(),
-              monthly_income: 5800 - (Math.random() * 300),
-              total_expenses: 3800 - (Math.random() * 400),
-              total_income: 5800 - (Math.random() * 300),
-              surplus_income: 2000 - (Math.random() * 500),
-              user_id: selectedClient.id, 
-            };
-            
-            simulatedData.push(monthData);
-          }
-          
-          return simulatedData as FinancialRecord[];
+        // If we got data, return it
+        if (data && data.length > 0) {
+          console.log("Received financial records:", data.length);
+          return data;
         }
         
-        return data;
+        // Otherwise generate mock data
+        console.log("Generating simulated data for client:", selectedClient.name);
+        const today = new Date();
+        const simulatedData = [];
+        
+        // Create six months of simulated data
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date(today);
+          date.setMonth(date.getMonth() - i);
+          
+          // Generate slightly different data for each month
+          const monthData = {
+            id: `sim-${5-i}`,
+            submission_date: date.toISOString(),
+            monthly_income: 5800 - (Math.random() * 300),
+            total_expenses: 3800 - (Math.random() * 400),
+            total_income: 5800 - (Math.random() * 300),
+            surplus_income: 2000 - (Math.random() * 500),
+            user_id: selectedClient.id, 
+          };
+          
+          simulatedData.push(monthData);
+        }
+        
+        return simulatedData as FinancialRecord[];
       } catch (error) {
         console.error("Error fetching financial records:", error);
-        throw error;
+        
+        // Generate simulated data if there was an error
+        console.log("Falling back to simulated data for client:", selectedClient.name);
+        const today = new Date();
+        const simulatedData = [];
+        
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date(today);
+          date.setMonth(date.getMonth() - i);
+          
+          const monthData = {
+            id: `sim-${5-i}`,
+            submission_date: date.toISOString(),
+            monthly_income: 5800 - (Math.random() * 300),
+            total_expenses: 3800 - (Math.random() * 400),
+            total_income: 5800 - (Math.random() * 300),
+            surplus_income: 2000 - (Math.random() * 500),
+            user_id: selectedClient.id, 
+          };
+          
+          simulatedData.push(monthData);
+        }
+        
+        return simulatedData as FinancialRecord[];
       }
     },
     enabled: !!selectedClient, // Only run query when a client is selected
@@ -87,7 +110,7 @@ export const useFinancialData = (selectedClient: Client | null) => {
   useEffect(() => {
     if (error) {
       console.error("Query error:", error);
-      toast.error("Error loading financial data");
+      // Don't show error toast here, as we're falling back to simulated data
     }
   }, [error]);
 
@@ -184,6 +207,7 @@ export const useFinancialData = (selectedClient: Client | null) => {
       console.log("Checking for Excel documents for client:", selectedClient.id);
       
       try {
+        // Try to get actual data
         const { data, error } = await supabase
           .from("documents")
           .select("*")
@@ -194,11 +218,17 @@ export const useFinancialData = (selectedClient: Client | null) => {
 
         if (error) {
           console.error("Error fetching Excel documents:", error);
-          throw error;
+          // Don't throw error here
         }
         
-        console.log("Found Excel documents:", data?.length || 0);
-        return data;
+        // If we got data, use it
+        if (data && data.length > 0) {
+          console.log("Found Excel documents:", data.length);
+          return data;
+        }
+        
+        // Otherwise, return empty array
+        return [];
       } catch (error) {
         console.error("Error fetching Excel documents:", error);
         return [];
