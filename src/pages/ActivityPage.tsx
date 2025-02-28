@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +19,7 @@ export const ActivityPage = () => {
   const handleClientSelect = (clientId: string) => {
     console.log("ActivityPage - Client selected:", clientId);
     
+    // Create mock client objects for demonstration
     const client = {
       id: clientId,
       name: clientId === "1" ? "John Doe" : "Reginald Dickerson",

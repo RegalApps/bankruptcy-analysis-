@@ -31,48 +31,53 @@ export const useFinancialData = (selectedClient: Client | null) => {
       
       console.log("Fetching financial records for client:", selectedClient.id);
       
-      const { data, error } = await supabase
-        .from("financial_records")
-        .select("*")
-        .eq("user_id", selectedClient.id)
-        .order("submission_date", { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from("financial_records")
+          .select("*")
+          .eq("user_id", selectedClient.id)
+          .order("submission_date", { ascending: true });
 
-      if (error) {
-        console.error("Supabase error:", error);
-        throw error;
-      }
-      
-      console.log("Received financial records:", data?.length || 0);
-      
-      // If no data, return simulated data for demonstration
-      if (!data || data.length === 0) {
-        console.log("Generating simulated data for client:", selectedClient.name);
-        const today = new Date();
-        const simulatedData = [];
-        
-        // Create six months of simulated data
-        for (let i = 5; i >= 0; i--) {
-          const date = new Date(today);
-          date.setMonth(date.getMonth() - i);
-          
-          // Generate slightly different data for each month
-          const monthData = {
-            id: `sim-${5-i}`,
-            submission_date: date.toISOString(),
-            monthly_income: 5800 - (Math.random() * 300),
-            total_expenses: 3800 - (Math.random() * 400),
-            total_income: 5800 - (Math.random() * 300),
-            surplus_income: 2000 - (Math.random() * 500),
-            user_id: selectedClient.id, 
-          };
-          
-          simulatedData.push(monthData);
+        if (error) {
+          console.error("Supabase error:", error);
+          throw error;
         }
         
-        return simulatedData as FinancialRecord[];
+        console.log("Received financial records:", data?.length || 0);
+        
+        // If no data, return simulated data for demonstration
+        if (!data || data.length === 0) {
+          console.log("Generating simulated data for client:", selectedClient.name);
+          const today = new Date();
+          const simulatedData = [];
+          
+          // Create six months of simulated data
+          for (let i = 5; i >= 0; i--) {
+            const date = new Date(today);
+            date.setMonth(date.getMonth() - i);
+            
+            // Generate slightly different data for each month
+            const monthData = {
+              id: `sim-${5-i}`,
+              submission_date: date.toISOString(),
+              monthly_income: 5800 - (Math.random() * 300),
+              total_expenses: 3800 - (Math.random() * 400),
+              total_income: 5800 - (Math.random() * 300),
+              surplus_income: 2000 - (Math.random() * 500),
+              user_id: selectedClient.id, 
+            };
+            
+            simulatedData.push(monthData);
+          }
+          
+          return simulatedData as FinancialRecord[];
+        }
+        
+        return data;
+      } catch (error) {
+        console.error("Error fetching financial records:", error);
+        throw error;
       }
-      
-      return data;
     },
     enabled: !!selectedClient, // Only run query when a client is selected
   });
@@ -160,21 +165,26 @@ export const useFinancialData = (selectedClient: Client | null) => {
       
       console.log("Checking for Excel documents for client:", selectedClient.id);
       
-      const { data, error } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("user_id", selectedClient.id)
-        .or("type.eq.application/vnd.ms-excel,type.eq.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,storage_path.ilike.%.xls,storage_path.ilike.%.xlsx")
-        .order("created_at", { ascending: false })
-        .limit(3);
+      try {
+        const { data, error } = await supabase
+          .from("documents")
+          .select("*")
+          .eq("user_id", selectedClient.id)
+          .or("type.eq.application/vnd.ms-excel,type.eq.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,storage_path.ilike.%.xls,storage_path.ilike.%.xlsx")
+          .order("created_at", { ascending: false })
+          .limit(3);
 
-      if (error) {
+        if (error) {
+          console.error("Error fetching Excel documents:", error);
+          throw error;
+        }
+        
+        console.log("Found Excel documents:", data?.length || 0);
+        return data;
+      } catch (error) {
         console.error("Error fetching Excel documents:", error);
-        throw error;
+        return [];
       }
-      
-      console.log("Found Excel documents:", data?.length || 0);
-      return data;
     },
     enabled: !!selectedClient, // Only run when client is selected
   });

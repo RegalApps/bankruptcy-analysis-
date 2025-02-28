@@ -5,8 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { initialFormData } from "./initialState";
 import { IncomeExpenseData, Client } from "../types";
 
-export const useIncomeExpenseForm = (initialClient: Client | null) => {
-  const [selectedClient, setSelectedClient] = useState<Client | null>(initialClient);
+export const useIncomeExpenseForm = (selectedClient: Client | null) => {
   const [formData, setFormData] = useState<IncomeExpenseData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
@@ -36,6 +35,8 @@ export const useIncomeExpenseForm = (initialClient: Client | null) => {
       setIsDataLoading(true);
       
       try {
+        console.log("Loading financial data for client:", selectedClient.id);
+        
         // Load existing data for the current period
         const { data: currentData, error: currentError } = await supabase
           .from('financial_records')
@@ -45,7 +46,12 @@ export const useIncomeExpenseForm = (initialClient: Client | null) => {
           .order('created_at', { ascending: false })
           .limit(1);
           
-        if (currentError) throw currentError;
+        if (currentError) {
+          console.error("Error loading client data:", currentError);
+          throw currentError;
+        }
+        
+        console.log("Current period data:", currentData);
         
         // Load data for the previous period
         const { data: previousData, error: previousError } = await supabase
@@ -56,7 +62,12 @@ export const useIncomeExpenseForm = (initialClient: Client | null) => {
           .order('created_at', { ascending: false })
           .limit(1);
           
-        if (previousError) throw previousError;
+        if (previousError) {
+          console.error("Error loading previous period data:", previousError);
+          throw previousError;
+        }
+        
+        console.log("Previous period data:", previousData);
         
         // Update form state if we have current period data
         if (currentData && currentData.length > 0) {
@@ -79,6 +90,10 @@ export const useIncomeExpenseForm = (initialClient: Client | null) => {
           };
           
           setFormData(newFormData);
+        } else {
+          // Reset form if no data
+          setFormData(initialFormData);
+          setCurrentRecordId(null);
         }
         
         // Set historical comparison data
@@ -110,6 +125,8 @@ export const useIncomeExpenseForm = (initialClient: Client | null) => {
         // Store previous month data for reference
         if (previousData && previousData.length > 0) {
           setPreviousMonthData(previousData[0]);
+        } else {
+          setPreviousMonthData(null);
         }
         
       } catch (error) {
@@ -253,7 +270,6 @@ export const useIncomeExpenseForm = (initialClient: Client | null) => {
   return {
     formData,
     isSubmitting,
-    selectedClient,
     currentRecordId,
     historicalData,
     previousMonthData,
@@ -263,6 +279,5 @@ export const useIncomeExpenseForm = (initialClient: Client | null) => {
     handleFrequencyChange,
     handleSubmit,
     handlePeriodChange,
-    setSelectedClient,
   };
 };

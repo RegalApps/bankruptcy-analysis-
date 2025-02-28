@@ -31,15 +31,7 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
     handleFrequencyChange,
     handleSubmit,
     handlePeriodChange,
-    setSelectedClient,
   } = useIncomeExpenseForm(selectedClient);
-
-  // Update the form's selected client when the prop changes
-  useEffect(() => {
-    if (selectedClient) {
-      setSelectedClient(selectedClient);
-    }
-  }, [selectedClient, setSelectedClient]);
 
   // Display toast notification to encourage user to select a client if none selected
   useEffect(() => {

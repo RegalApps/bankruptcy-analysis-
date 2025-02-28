@@ -1,5 +1,4 @@
 
-import { useEffect } from "react";
 import { Client } from "./types";
 import { useFinancialData } from "./hooks/useFinancialData";
 import { NoClientSelected } from "./components/NoClientSelected";
