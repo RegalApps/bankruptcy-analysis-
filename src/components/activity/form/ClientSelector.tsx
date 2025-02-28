@@ -18,7 +18,7 @@ interface ClientSelectorProps {
 
 const mockClients: Client[] = [
   { id: "1", name: "John Doe", status: "active", last_activity: "2024-03-10" },
-  { id: "2", name: "Jane Smith", status: "active", last_activity: "2024-03-09" },
+  { id: "2", name: "Reginald Dickerson", status: "active", last_activity: "2024-05-28" },
 ];
 
 export const ClientSelector = ({ selectedClient, onClientSelect }: ClientSelectorProps) => {
