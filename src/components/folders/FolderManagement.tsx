@@ -33,6 +33,7 @@ export const FolderManagement = ({
   const [newFolderName, setNewFolderName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [activeView, setActiveView] = useState<"all" | "uncategorized" | "folders">("all");
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
 
   // Filter documents based on active view
   const getFilteredDocuments = () => {
@@ -94,9 +95,25 @@ export const FolderManagement = ({
     setIsDragging(false);
   };
 
+  const handleFolderSelect = (folderId: string) => {
+    setSelectedFolder(folderId);
+    onItemSelect(folderId, "folder");
+  };
+
+  // Organize documents into proper structure
   const folders = documents.filter(doc => doc.is_folder);
   const uncategorizedDocuments = documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
   const filteredDocuments = getFilteredDocuments();
+  
+  // Log to help debug the folder structure
+  console.log('All documents:', documents);
+  console.log('Folders:', folders);
+  console.log('Folder structure:', folders.map(f => ({
+    id: f.id,
+    title: f.title,
+    type: f.folder_type,
+    parent_id: f.parent_folder_id
+  })));
 
   // Handler for opening a document - uses the onOpenDocument prop if provided
   const handleOpenDocument = (documentId: string) => {
@@ -108,10 +125,6 @@ export const FolderManagement = ({
   // Handler for document selection
   const handleDocumentSelect = (documentId: string) => {
     onItemSelect(documentId, "file");
-    
-    // If the user wants to immediately open the document on select,
-    // uncomment the following line:
-    // if (onOpenDocument) onOpenDocument(documentId);
   };
 
   return (
@@ -128,6 +141,13 @@ export const FolderManagement = ({
             />
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => setShowFolderDialog(true)}
+            >
+              + New Folder
+            </Button>
             <FolderDialog
               showDialog={showFolderDialog}
               setShowDialog={setShowFolderDialog}
@@ -155,10 +175,10 @@ export const FolderManagement = ({
           <TabsContent value="folders">
             <FolderGrid
               folders={folders}
-              documents={filteredDocuments}
+              documents={documents}
               isDragging={isDragging}
-              selectedFolder={selectedItemId}
-              onFolderSelect={(id) => onItemSelect(id, "folder")}
+              selectedFolder={selectedFolder}
+              onFolderSelect={handleFolderSelect}
               onDragOver={(e) => {
                 e.preventDefault();
                 setIsDragging(true);
