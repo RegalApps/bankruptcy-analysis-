@@ -17,10 +17,11 @@ export const AIWorkflow = () => {
   const [progressValue, setProgressValue] = useState(0);
 
   const handleClientSelect = (clientId: string) => {
+    // Create a client object with properly typed status ("active" | "inactive")
     const client = {
       id: clientId,
       name: clientId === "f47ac10b-58cc-4372-a567-0e02b2c3d479" ? "John Doe" : "Reginald Dickerson",
-      status: "active",
+      status: "active" as const, // Explicitly typed as "active" literal
       last_activity: "2024-03-15",
     };
     setSelectedClient(client);

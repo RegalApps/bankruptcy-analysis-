@@ -6,4 +6,5 @@ export interface FormData {
   companyName: string;
   businessType: string;
   notes: string;
+  address: string;
 }
