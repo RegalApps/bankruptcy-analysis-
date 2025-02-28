@@ -1,6 +1,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { mergeClientFolders } from "@/utils/documents/mergeClientFolders";
 
 export const documentService = {
   async renameItem(itemId: string, newName: string) {
@@ -47,5 +48,17 @@ export const documentService = {
       .eq('id', itemId);
 
     if (error) throw error;
+  },
+
+  async mergeClientFolders(clientName: string) {
+    try {
+      const user = await supabase.auth.getUser();
+      if (user.error) throw user.error;
+      
+      return await mergeClientFolders(clientName, user.data.user?.id || '');
+    } catch (error) {
+      console.error('Error in mergeClientFolders service:', error);
+      throw error;
+    }
   }
 };

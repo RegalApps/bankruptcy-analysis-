@@ -18,10 +18,12 @@ import {
   FolderPen, 
   FilePen, 
   Trash2,
-  Settings // Replaced 'Tool' with 'Settings'
+  Settings,
+  FolderSync
 } from "lucide-react";
 import { RenameDialog } from "./dialogs/RenameDialog";
 import { DeleteDialog } from "./dialogs/DeleteDialog";
+import { MergeDialog } from "./dialogs/MergeDialog"; // New import
 import { documentService } from "./services/documentService";
 
 interface ViewOptionsDropdownProps {
@@ -39,7 +41,9 @@ export const ViewOptionsDropdown = ({
 }: ViewOptionsDropdownProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false); // New state
   const [newName, setNewName] = useState("");
+  const [clientName, setClientName] = useState(""); // New state for client name
   const [actionType, setActionType] = useState<"folder" | "file">("folder");
 
   const handleRename = async () => {
@@ -72,12 +76,32 @@ export const ViewOptionsDropdown = ({
     }
   };
 
-  const handleToolAction = (action: 'rename' | 'delete', type: 'folder' | 'file') => {
-    setActionType(type);
+  const handleMerge = async () => {
+    if (!clientName.trim()) return;
+
+    try {
+      const success = await documentService.mergeClientFolders(clientName);
+      if (success) {
+        toast.success(`Folders for client "${clientName}" merged successfully`);
+        setIsMergeDialogOpen(false);
+        setClientName("");
+        if (onRefresh) onRefresh();
+      }
+    } catch (error) {
+      console.error('Error merging folders:', error);
+      toast.error("Failed to merge folders");
+    }
+  };
+
+  const handleToolAction = (action: 'rename' | 'delete' | 'merge', type?: 'folder' | 'file') => {
     if (action === 'rename') {
+      setActionType(type || 'folder');
       setIsRenameDialogOpen(true);
-    } else {
+    } else if (action === 'delete') {
+      setActionType(type || 'folder');
       setIsDeleteDialogOpen(true);
+    } else if (action === 'merge') {
+      setIsMergeDialogOpen(true);
     }
   };
 
@@ -126,6 +150,14 @@ export const ViewOptionsDropdown = ({
             Rename File
           </DropdownMenuItem>
           
+          {/* New Merge Folders option */}
+          <DropdownMenuItem 
+            onClick={() => handleToolAction('merge')}
+          >
+            <FolderSync className="h-4 w-4 mr-2" />
+            Merge Client Folders
+          </DropdownMenuItem>
+          
           <DropdownMenuItem 
             onClick={() => handleToolAction('delete', 'folder')}
             className="text-destructive focus:text-destructive"
@@ -158,6 +190,15 @@ export const ViewOptionsDropdown = ({
         onOpenChange={setIsDeleteDialogOpen}
         itemType={actionType}
         onDelete={handleDelete}
+      />
+
+      {/* New MergeDialog component */}
+      <MergeDialog
+        isOpen={isMergeDialogOpen}
+        onOpenChange={setIsMergeDialogOpen}
+        clientName={clientName}
+        onClientNameChange={setClientName}
+        onMerge={handleMerge}
       />
     </>
   );
