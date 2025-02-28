@@ -89,13 +89,26 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
       };
       setSelectedClient(client);
       
+      // Reset form data first to avoid old data displayed for a moment
+      setFormData(initialFormData);
+      
       // First, check for Excel data from uploaded files for this client
       const excelData = await fetchLatestExcelData(clientId);
       
       if (excelData) {
         console.log("Found Excel data for client", client.name, excelData);
-        setFormData(excelData);
-        setCurrentMonthData(excelData);
+        
+        // Ensure all required form fields are populated from Excel data
+        const completeExcelData: IncomeExpenseData = {
+          ...initialFormData, // Start with all fields initialized
+          ...excelData, // Apply Excel data
+          // Ensure frequencies are set if missing
+          income_frequency: excelData.income_frequency || 'monthly',
+          expense_frequency: excelData.expense_frequency || 'monthly',
+        };
+        
+        setFormData(completeExcelData);
+        setCurrentMonthData(completeExcelData);
         
         // Show a toast notification to inform the user that data has been loaded from Excel
         sonnerToast.success("Excel Data Loaded", {
@@ -105,33 +118,105 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
         
         // Also fetch previous month data for comparison
         const previousData = await fetchPreviousMonthData(clientId);
-        setPreviousMonthData(previousData);
+        
+        if (previousData) {
+          // Ensure previous month data has all needed fields as well
+          const completePreviousData: IncomeExpenseData = {
+            ...initialFormData,
+            ...previousData,
+            income_frequency: previousData.income_frequency || 'monthly',
+            expense_frequency: previousData.expense_frequency || 'monthly',
+          };
+          
+          setPreviousMonthData(completePreviousData);
+        } else {
+          // Create simulated previous month data with slight differences
+          const simulatedPrevious = { ...completeExcelData };
+          
+          // Adjust values to simulate previous month (slightly lower values)
+          Object.keys(simulatedPrevious).forEach(key => {
+            const field = key as keyof IncomeExpenseData;
+            const valueStr = simulatedPrevious[field] as string;
+            
+            if (typeof valueStr === 'string' && !isNaN(Number(valueStr))) {
+              const value = parseFloat(valueStr);
+              // Reduce value by 2-5% for previous month
+              const adjustment = value * (0.02 + Math.random() * 0.03);
+              simulatedPrevious[field] = (value - adjustment).toFixed(2) as any;
+            }
+          });
+          
+          // Add a note about simulation
+          simulatedPrevious.notes = "Simulated previous month data based on current Excel data";
+          
+          setPreviousMonthData(simulatedPrevious);
+        }
       } else {
         // If no Excel data, fallback to previous month data
         console.log("No Excel data found, loading previous month data");
         const previousData = await fetchPreviousMonthData(clientId);
-        setPreviousMonthData(previousData);
         
-        // If we have previous month data, make a modified copy for current month
         if (previousData) {
+          // Ensure previous month data has all needed fields
+          const completePreviousData: IncomeExpenseData = {
+            ...initialFormData,
+            ...previousData,
+            income_frequency: previousData.income_frequency || 'monthly',
+            expense_frequency: previousData.expense_frequency || 'monthly',
+          };
+          
+          setPreviousMonthData(completePreviousData);
+          
+          // If we have previous month data, make a modified copy for current month
           // Create a modified version of previous month data with slight adjustments
-          const currentData = {...previousData};
+          const currentData = {...completePreviousData};
+          
           // Adjust some values for current month (for demo purposes)
-          const adjustFields = ['monthly_income', 'rent_mortgage', 'utilities', 'food'];
-          adjustFields.forEach(field => {
-            const value = parseFloat(previousData[field as keyof IncomeExpenseData] as string) || 0;
-            // Add or subtract a small percentage to create some variation
-            const adjustment = value * (Math.random() * 0.1 - 0.05); // +/- 5%
-            currentData[field as keyof IncomeExpenseData] = (value + adjustment).toFixed(2) as any;
+          Object.keys(currentData).forEach(key => {
+            const field = key as keyof IncomeExpenseData;
+            const valueStr = currentData[field] as string;
+            
+            if (typeof valueStr === 'string' && !isNaN(Number(valueStr))) {
+              const value = parseFloat(valueStr);
+              // Add 2-8% for current month
+              const adjustment = value * (0.02 + Math.random() * 0.06);
+              currentData[field] = (value + adjustment).toFixed(2) as any;
+            }
           });
+          
+          currentData.notes = "Estimated data based on previous month trends";
+          
           setCurrentMonthData(currentData);
           
           // Set form data to whichever period is selected
           if (selectedPeriod === 'current') {
             setFormData(currentData);
           } else {
-            setFormData(previousData);
+            setFormData(completePreviousData);
           }
+        } else {
+          // If no previous data either, create default data for the selected client
+          const defaultData = generateDefaultClientData(clientId);
+          setFormData(defaultData);
+          setCurrentMonthData(defaultData);
+          
+          // Create slightly different data for previous month
+          const defaultPreviousData = { ...defaultData };
+          
+          // Reduce values by 3-6% for previous month
+          Object.keys(defaultPreviousData).forEach(key => {
+            const field = key as keyof IncomeExpenseData;
+            const valueStr = defaultPreviousData[field] as string;
+            
+            if (typeof valueStr === 'string' && !isNaN(Number(valueStr))) {
+              const value = parseFloat(valueStr);
+              const adjustment = value * (0.03 + Math.random() * 0.03);
+              defaultPreviousData[field] = (value - adjustment).toFixed(2) as any;
+            }
+          });
+          
+          defaultPreviousData.notes = "Default data for previous month";
+          setPreviousMonthData(defaultPreviousData);
         }
       }
       
@@ -149,6 +234,69 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
       });
     } finally {
       setIsDataLoading(false);
+    }
+  };
+
+  // Helper function to generate default data based on client ID
+  const generateDefaultClientData = (clientId: string): IncomeExpenseData => {
+    if (clientId === "2") { // Reginald Dickerson
+      return {
+        monthly_income: "5800.00",
+        employment_income: "4500.00",
+        primary_salary: "4500.00",
+        overtime_bonuses: "300.00",
+        other_income: "1000.00",
+        freelance_income: "500.00",
+        investment_income: "300.00",
+        rental_income: "200.00",
+        income_frequency: "monthly",
+        rent_mortgage: "1600.00",
+        utilities: "380.00",
+        electricity: "150.00",
+        gas: "80.00",
+        water: "70.00",
+        internet: "80.00",
+        food: "750.00",
+        groceries: "500.00",
+        dining_out: "250.00",
+        transportation: "420.00",
+        fuel: "300.00",
+        vehicle_maintenance: "120.00",
+        insurance: "280.00",
+        medical_expenses: "150.00",
+        other_expenses: "200.00",
+        expense_frequency: "monthly",
+        notes: "Default financial data for Reginald Dickerson"
+      };
+    } else { // Default for John Doe or others
+      return {
+        monthly_income: "4200.00",
+        employment_income: "3700.00",
+        primary_salary: "3500.00",
+        overtime_bonuses: "200.00",
+        other_income: "500.00",
+        freelance_income: "300.00",
+        investment_income: "100.00",
+        rental_income: "100.00",
+        income_frequency: "monthly",
+        rent_mortgage: "1200.00",
+        utilities: "250.00",
+        electricity: "100.00",
+        gas: "50.00",
+        water: "50.00",
+        internet: "50.00",
+        food: "600.00",
+        groceries: "400.00",
+        dining_out: "200.00",
+        transportation: "300.00",
+        fuel: "200.00",
+        vehicle_maintenance: "100.00",
+        insurance: "200.00",
+        medical_expenses: "100.00",
+        other_expenses: "150.00",
+        expense_frequency: "monthly",
+        notes: "Default financial data"
+      };
     }
   };
 
