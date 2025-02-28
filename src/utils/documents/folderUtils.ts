@@ -152,7 +152,7 @@ export const organizeDocumentIntoFolders = async (
       let targetFolderId;
       
       if (isExcelFile) {
-        // For Excel files, create an "Income and Expense Sheet" folder
+        // For Excel files, create an "Income and Expense Sheet" folder under the client folder
         const incomeExpenseFolderId = await createFolderIfNotExists(
           "Income and Expense Sheet",
           'financial',
@@ -161,7 +161,7 @@ export const organizeDocumentIntoFolders = async (
         );
         
         targetFolderId = incomeExpenseFolderId;
-        logger.info(`Excel file detected, organizing into Income and Expense Sheet folder`);
+        logger.info(`Excel file detected, organizing into Income and Expense Sheet folder for client ${clientName}`);
       } else {
         // For other documents, create a form folder as usual
         const formFolderName = `${formNumber} - Documents`;
@@ -178,7 +178,10 @@ export const organizeDocumentIntoFolders = async (
       // Move the document into the appropriate folder
       const { error: moveError } = await supabase
         .from('documents')
-        .update({ parent_folder_id: targetFolderId })
+        .update({ 
+          parent_folder_id: targetFolderId,
+          metadata: { ...document?.metadata, client_name: clientName }  // Add client name to metadata
+        })
         .eq('id', documentId);
       
       if (moveError) {
