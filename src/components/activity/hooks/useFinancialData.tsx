@@ -17,6 +17,7 @@ export type FinancialMetrics = {
 
 export const useFinancialData = (selectedClient: Client | null) => {
   const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
+  const [lastDataUpdate, setLastDataUpdate] = useState<Date | null>(null);
 
   // Query for financial records
   const { 
@@ -107,6 +108,11 @@ export const useFinancialData = (selectedClient: Client | null) => {
         },
         (payload) => {
           console.log('Financial records changed, refreshing data', payload);
+          setLastDataUpdate(new Date());
+          toast.info("Financial data updated in real-time", {
+            description: "Dashboard is refreshing with the latest data",
+            duration: 3000,
+          });
           refetch();
         }
       )
@@ -151,11 +157,23 @@ export const useFinancialData = (selectedClient: Client | null) => {
       
       console.log("Setting new metrics:", newMetrics);
       setMetrics(newMetrics);
+      
+      // If this is a refresh after a change, notify other components
+      if (lastDataUpdate) {
+        console.log("Notifying other components of data update");
+        const updateEvent = new CustomEvent('metrics-updated', { 
+          detail: { 
+            clientId: selectedClient?.id,
+            metrics: newMetrics
+          } 
+        });
+        window.dispatchEvent(updateEvent);
+      }
     } else {
       console.log("No financial records to calculate metrics");
       setMetrics(null);
     }
-  }, [financialRecords]);
+  }, [financialRecords, lastDataUpdate, selectedClient]);
 
   // Query for Excel documents
   const { data: excelDocuments } = useQuery({
@@ -203,6 +221,7 @@ export const useFinancialData = (selectedClient: Client | null) => {
     metrics,
     excelDocuments,
     isLoading,
-    error
+    error,
+    refetch
   };
 };

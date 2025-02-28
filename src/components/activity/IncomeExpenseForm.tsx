@@ -9,16 +9,19 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Client } from "./types";
-import { User2 } from "lucide-react";
+import { AlertCircle, User2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface IncomeExpenseFormProps {
   selectedClient: Client | null;
 }
 
 export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) => {
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  
   const {
     formData,
     isSubmitting,
@@ -47,6 +50,24 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
     }
   }, [selectedClient]);
 
+  // Custom submit handler to dispatch custom event
+  const onSubmitForm = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+    await handleSubmit(e);
+    setFormSubmitted(true);
+    
+    // Dispatch custom event to notify other components
+    if (selectedClient) {
+      console.log("Form submitted - Dispatching update event");
+      const updateEvent = new CustomEvent('financial-data-updated', { 
+        detail: { clientId: selectedClient.id } 
+      });
+      window.dispatchEvent(updateEvent);
+    }
+    
+    // Reset the submitted state after a delay
+    setTimeout(() => setFormSubmitted(false), 3000);
+  };
+
   if (!selectedClient) {
     return (
       <Card className="py-12">
@@ -62,7 +83,24 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={onSubmitForm} className="space-y-6">
+      {/* Real-time update notice */}
+      <Alert className="bg-blue-50 border-blue-200">
+        <AlertCircle className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          Financial data is synced in real-time. After submitting, the dashboard and predictive analysis will update automatically.
+        </AlertDescription>
+      </Alert>
+      
+      {formSubmitted && (
+        <Alert className="bg-green-50 border-green-200">
+          <AlertCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            Data submitted successfully! Other tabs will update automatically.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {isDataLoading ? (
         <div className="space-y-4">
           <Skeleton className="h-[200px] w-full rounded-lg" />
