@@ -13,9 +13,12 @@ import {
   calculateForecast
 } from "./utils/financialCalculations";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 export const PredictiveAnalysis = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   
   const { data: financialRecords, isLoading, refetch } = useQuery({
     queryKey: ["financial_records_prediction", refreshTrigger],
@@ -26,6 +29,37 @@ export const PredictiveAnalysis = () => {
         .order("submission_date", { ascending: true });
 
       if (error) throw error;
+      
+      // If no data, return simulated data for demonstration
+      if (!data || data.length === 0) {
+        const today = new Date();
+        const simulatedData = [];
+        
+        // Create six months of simulated data
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date(today);
+          date.setMonth(date.getMonth() - i);
+          
+          // Generate slightly different data for each month
+          const variance = Math.random() * 0.2 - 0.1; // -10% to +10%
+          
+          const monthData = {
+            id: `sim-${5-i}`,
+            submission_date: date.toISOString(),
+            monthly_income: 5800 * (1 + variance * 0.5),
+            total_expenses: 3800 * (1 + variance),
+            total_income: 5800 * (1 + variance * 0.5),
+            surplus_income: 2000 * (1 + variance),
+            user_id: "2", // Reginald Dickerson
+          };
+          
+          simulatedData.push(monthData);
+        }
+        
+        return simulatedData;
+      }
+      
+      setLastRefreshed(new Date());
       return data;
     },
   });
@@ -34,8 +68,11 @@ export const PredictiveAnalysis = () => {
     if (!financialRecords?.length) return null;
 
     const latestRecord = financialRecords[financialRecords.length - 1];
-    const surplusIncome = latestRecord.monthly_income - latestRecord.total_expenses;
-    const surplusPercentage = ((surplusIncome / latestRecord.monthly_income) * 100).toFixed(1);
+    const surplusIncome = latestRecord.surplus_income || 
+                         (latestRecord.monthly_income - latestRecord.total_expenses) || 0;
+                         
+    const totalIncome = latestRecord.total_income || latestRecord.monthly_income || 0;
+    const surplusPercentage = ((surplusIncome / totalIncome) * 100).toFixed(1);
 
     const seasonalityScore = financialRecords.length >= 12 ? 
       calculateSeasonalityScore(financialRecords) : null;
@@ -173,9 +210,28 @@ export const PredictiveAnalysis = () => {
   }, [refetch]);
 
   const metrics = calculateMetrics();
+  
+  const handleManualRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+    toast.success("Refreshing prediction data...");
+  };
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-lg font-semibold mb-1">Financial Predictive Analysis</h2>
+          <p className="text-sm text-muted-foreground">
+            Updated {lastRefreshed.toLocaleTimeString()} ({(Date.now() - lastRefreshed.getTime()) < 60000 ? 'Just now' : 
+              `${Math.floor((Date.now() - lastRefreshed.getTime()) / 60000)} minutes ago`})
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleManualRefresh}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Analysis
+        </Button>
+      </div>
+      
       {isLoading ? (
         <>
           <Skeleton className="h-[120px] w-full rounded-lg" />
