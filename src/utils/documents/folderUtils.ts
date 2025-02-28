@@ -140,7 +140,7 @@ export const organizeDocumentIntoFolders = async (
       // Check if the document is an Excel file (for income and expense sheets)
       const { data: document } = await supabase
         .from('documents')
-        .select('title, type, storage_path')
+        .select('title, type, storage_path, metadata')
         .eq('id', documentId)
         .single();
       
