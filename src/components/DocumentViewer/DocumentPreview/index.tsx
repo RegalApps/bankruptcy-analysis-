@@ -8,14 +8,17 @@ import { AnalysisProgress } from "./components/AnalysisProgress";
 import { ErrorDisplay } from "./components/ErrorDisplay";
 import { useDocumentAnalysis } from "./hooks/useDocumentAnalysis";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ExcelPreview } from "../ExcelPreview";
 
 interface DocumentPreviewProps {
   storagePath: string;
+  title?: string;
   onAnalysisComplete?: () => void;
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ 
   storagePath,
+  title,
   onAnalysisComplete 
 }) => {
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -29,6 +32,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
   const publicUrl = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
+  
+  const isExcelFile = 
+    storagePath?.endsWith('.xlsx') || 
+    storagePath?.endsWith('.xls') ||
+    title?.endsWith('.xlsx') || 
+    title?.endsWith('.xls');
 
   // Fetch session on component mount and start analysis when ready
   useEffect(() => {
@@ -49,7 +58,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           
           // If we have a session and there's a storage path but we're not already analyzing
           // and there's no error, start the analysis
-          if (storagePath && !analyzing && !error) {
+          if (storagePath && !analyzing && !error && !isExcelFile) {
             // Small delay to ensure the session state is updated
             setTimeout(() => {
               if (mounted) handleAnalyzeDocument(currentSession);
@@ -77,7 +86,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [storagePath, analyzing, error, setSession, handleAnalyzeDocument]);
+  }, [storagePath, analyzing, error, setSession, handleAnalyzeDocument, isExcelFile]);
 
   const handleRefreshPreview = () => {
     setPreviewError(null);
@@ -92,6 +101,10 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     setPreviewError("There was an issue loading the document preview.");
   };
 
+  if (isExcelFile) {
+    return <ExcelPreview storagePath={storagePath} title={title} />;
+  }
+  
   return (
     <div className="space-y-4">
       <Card>

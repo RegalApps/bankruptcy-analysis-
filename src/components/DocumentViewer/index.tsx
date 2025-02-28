@@ -51,6 +51,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           <TabsContent value="preview">
             <DocumentPreview 
               storagePath={document.storage_path} 
+              title={document.title}
               onAnalysisComplete={fetchDocumentDetails}
             />
           </TabsContent>
