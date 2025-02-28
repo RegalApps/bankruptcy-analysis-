@@ -99,7 +99,7 @@ export const ExpensesSection = ({
   };
 
   const currentTotal = calculateTotalExpenses(formData);
-  const previousTotal = previousMonthData ? calculateTotalExpenses(previousMonthData) : null;
+  const previousTotal = previousMonthData ? calculateTotalExpenses(previousMonthData as any) : null;
   const totalChange = previousTotal ? ((currentTotal - previousTotal) / previousTotal) * 100 : null;
 
   return (
