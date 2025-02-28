@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,8 +11,31 @@ import { DocumentVault } from "@/components/crm/DocumentVault";
 import { AIWorkflow } from "@/components/crm/AIWorkflow";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FormSteps } from "@/components/crm/FormSteps";
 
 export const CRMPage = () => {
+  const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    companyName: "",
+    businessType: "",
+    notes: ""
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const openClientDialog = () => {
+    setCurrentStep(1);
+    setIsClientDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen flex">
       <MainSidebar />
@@ -31,7 +55,7 @@ export const CRMPage = () => {
                 <Bell className="h-4 w-4" />
                 Notifications
               </Button>
-              <Button className="gap-2">
+              <Button className="gap-2" onClick={openClientDialog}>
                 <Users className="h-4 w-4" />
                 Add New Client
               </Button>
@@ -99,6 +123,54 @@ export const CRMPage = () => {
           </Tabs>
         </div>
       </div>
+
+      {/* Add New Client Dialog */}
+      <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Add New Client</DialogTitle>
+          </DialogHeader>
+          <Tabs value={`step-${currentStep}`} className="mt-4">
+            <TabsList className="grid grid-cols-4 w-full">
+              <TabsTrigger value="step-1" onClick={() => setCurrentStep(1)}>Personal</TabsTrigger>
+              <TabsTrigger value="step-2" onClick={() => setCurrentStep(2)}>Business</TabsTrigger>
+              <TabsTrigger value="step-3" onClick={() => setCurrentStep(3)}>Documents</TabsTrigger>
+              <TabsTrigger value="step-4" onClick={() => setCurrentStep(4)}>Schedule</TabsTrigger>
+            </TabsList>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (currentStep < 4) {
+                setCurrentStep(prev => prev + 1);
+              } else {
+                // Handle final submission
+                setIsClientDialogOpen(false);
+              }
+            }}>
+              <FormSteps 
+                currentStep={currentStep} 
+                formData={formData}
+                handleInputChange={handleInputChange}
+              />
+              
+              <div className="flex justify-between mt-6">
+                {currentStep > 1 && (
+                  <Button type="button" variant="outline" onClick={() => setCurrentStep(prev => prev - 1)}>
+                    Previous
+                  </Button>
+                )}
+                <div className="ml-auto">
+                  {currentStep < 4 ? (
+                    <Button type="submit">Continue</Button>
+                  ) : (
+                    <Button type="submit">Complete</Button>
+                  )}
+                </div>
+              </div>
+            </form>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
