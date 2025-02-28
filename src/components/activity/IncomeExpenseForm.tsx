@@ -10,6 +10,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export const IncomeExpenseForm = () => {
   const {
@@ -27,6 +29,20 @@ export const IncomeExpenseForm = () => {
     handleSubmit,
     handlePeriodChange,
   } = useIncomeExpenseForm();
+
+  // Display toast notification to encourage user to select a client
+  useEffect(() => {
+    if (!selectedClient) {
+      const timer = setTimeout(() => {
+        toast.info("Select a client to begin", {
+          description: "Choose a client to see their financial data",
+          duration: 5000,
+        });
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [selectedClient]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

@@ -24,7 +24,7 @@ interface ExpensesSectionProps {
   formData: IncomeExpenseData;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onFrequencyChange: (value: string) => void;
-  previousMonthData?: IncomeExpenseData;
+  previousMonthData?: IncomeExpenseData | null;
 }
 
 const ExpenseField = ({ 
@@ -118,7 +118,7 @@ export const ExpensesSection = ({
               currentValue={formData[field.id as keyof IncomeExpenseData] as string}
               previousValue={previousMonthData?.[field.id as keyof IncomeExpenseData] as string}
               onChange={onChange}
-              required={field.required}
+              required={field.required !== false}
             />
           ))}
         </div>
@@ -143,7 +143,7 @@ export const ExpensesSection = ({
 
         <div className="space-y-2">
           <Label>Expense Frequency</Label>
-          <Select onValueChange={onFrequencyChange} value={formData.expense_frequency}>
+          <Select onValueChange={onFrequencyChange} value={formData.expense_frequency || 'monthly'}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select frequency" />
             </SelectTrigger>
@@ -161,7 +161,7 @@ export const ExpensesSection = ({
             id="notes"
             name="notes"
             placeholder="Add any relevant notes or comments"
-            value={formData.notes}
+            value={formData.notes || ''}
             onChange={onChange}
           />
         </div>

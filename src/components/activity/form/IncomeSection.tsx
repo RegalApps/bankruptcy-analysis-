@@ -24,6 +24,9 @@ interface IncomeSectionProps {
 }
 
 export const IncomeSection = ({ formData, onChange, onFrequencyChange }: IncomeSectionProps) => {
+  // Calculate total monthly income to display
+  const totalMonthlyIncome = parseFloat(formData.monthly_income || "0").toFixed(2);
+  
   return (
     <Card>
       <CardHeader>
@@ -105,9 +108,17 @@ export const IncomeSection = ({ formData, onChange, onFrequencyChange }: IncomeS
           </div>
         </div>
 
+        <div className="mt-4 p-4 bg-muted rounded-lg">
+          <div className="flex justify-between items-center">
+            <div>
+              <h4 className="font-semibold">Total Monthly Income: ${totalMonthlyIncome}</h4>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label>Income Frequency</Label>
-          <Select onValueChange={onFrequencyChange} value={formData.income_frequency}>
+          <Select onValueChange={onFrequencyChange} value={formData.income_frequency || 'monthly'}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select frequency" />
             </SelectTrigger>
