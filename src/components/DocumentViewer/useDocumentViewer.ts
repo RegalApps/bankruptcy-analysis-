@@ -1,9 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 import { DocumentDetails } from "./types";
-import { fetchDocument, subscribeToDocumentUpdates, triggerAnalysisForDocument } from "./services/documentService";
-import { processAnalysisContent, detectFormNumber, detectFormType } from "./utils/documentProcessingUtils";
 
 export const useDocumentViewer = (documentId: string) => {
   const [document, setDocument] = useState<DocumentDetails | null>(null);
@@ -12,45 +11,133 @@ export const useDocumentViewer = (documentId: string) => {
 
   const fetchDocumentDetails = async () => {
     try {
-      const documentData = await fetchDocument(documentId);
-      
-      if (!documentData) {
+      const { data: document, error: docError } = await supabase
+        .from('documents')
+        .select(`
+          *,
+          analysis:document_analysis(content),
+          comments:document_comments(id, content, created_at, user_id)
+        `)
+        .eq('id', documentId)
+        .maybeSingle();
+
+      if (docError) throw docError;
+      if (!document) {
         toast({
           variant: "destructive",
           title: "Error",
           description: "Document not found"
         });
-        setLoading(false);
         return;
       }
       
-      console.log("Raw document data:", documentData);
+      console.log("Raw document data:", document);
 
-      // Process the document data with our utility
-      const processedDocument = processAnalysisContent(documentData);
+      // Process the analysis content
+      let processedAnalysis = null;
+      if (document?.analysis?.[0]?.content) {
+        try {
+          let analysisContent = document.analysis[0].content;
+          
+          // Handle both string and object content
+          if (typeof analysisContent === 'string') {
+            analysisContent = JSON.parse(analysisContent);
+          }
+
+          // Ensure extracted info has all required fields with better defaults and formatting
+          const extractedInfo = {
+            // Client Information
+            clientName: analysisContent.extracted_info?.clientName || '',
+            clientAddress: analysisContent.extracted_info?.clientAddress || '',
+            clientPhone: analysisContent.extracted_info?.clientPhone || '',
+            clientId: analysisContent.extracted_info?.clientId || analysisContent.extracted_info?.caseNumber || '',
+            clientEmail: analysisContent.extracted_info?.clientEmail || '',
+            
+            // Document Details
+            formNumber: analysisContent.extracted_info?.formNumber || 
+                       document.title.match(/Form\s+(\d+)/)?.[1] || 
+                       document.title.match(/F(\d+)/)?.[1] || '',
+            formType: analysisContent.extracted_info?.type || 
+                     analysisContent.extracted_info?.formType || 
+                     (document.title.toLowerCase().includes('bankruptcy') ? 'bankruptcy' : 
+                      document.title.toLowerCase().includes('proposal') ? 'proposal' : '') || '',
+            dateSigned: analysisContent.extracted_info?.dateSigned || 
+                       analysisContent.extracted_info?.dateOfFiling || '',
+            
+            // Trustee Information
+            trusteeName: analysisContent.extracted_info?.trusteeName || 
+                        analysisContent.extracted_info?.insolvencyTrustee || '',
+            trusteeAddress: analysisContent.extracted_info?.trusteeAddress || '',
+            trusteePhone: analysisContent.extracted_info?.trusteePhone || '',
+            trusteeEmail: analysisContent.extracted_info?.trusteeEmail || '',
+            
+            // Case Information
+            estateNumber: analysisContent.extracted_info?.estateNumber || '',
+            district: analysisContent.extracted_info?.district || '',
+            divisionNumber: analysisContent.extracted_info?.divisionNumber || '',
+            courtNumber: analysisContent.extracted_info?.courtNumber || '',
+            
+            // Additional Details
+            meetingOfCreditors: analysisContent.extracted_info?.meetingOfCreditors || '',
+            chairInfo: analysisContent.extracted_info?.chairInfo || '',
+            securityInfo: analysisContent.extracted_info?.securityInfo || '',
+            dateBankruptcy: analysisContent.extracted_info?.dateBankruptcy || 
+                           analysisContent.extracted_info?.dateOfBankruptcy || '',
+            officialReceiver: analysisContent.extracted_info?.officialReceiver || '',
+            
+            // Financial Information
+            totalDebts: analysisContent.extracted_info?.totalDebts || '',
+            totalAssets: analysisContent.extracted_info?.totalAssets || '',
+            monthlyIncome: analysisContent.extracted_info?.monthlyIncome || '',
+            
+            // Document Summary
+            summary: analysisContent.extracted_info?.summary || '',
+          };
+
+          // Ensure risks are properly formatted and enhanced
+          const risks = (analysisContent.risks || []).map((risk: any) => ({
+            type: risk.type || 'Unknown Risk',
+            description: risk.description || '',
+            severity: risk.severity || 'medium',
+            regulation: risk.regulation || '',
+            impact: risk.impact || '',
+            requiredAction: risk.requiredAction || '',
+            solution: risk.solution || '',
+            deadline: risk.deadline || '7 days',
+          }));
+
+          console.log("Processed analysis content:", { extractedInfo, risks });
+
+          processedAnalysis = [{
+            content: {
+              extracted_info: extractedInfo,
+              risks: risks,
+              regulatory_compliance: analysisContent.regulatory_compliance || {
+                status: 'pending',
+                details: 'Regulatory compliance check pending',
+                references: []
+              }
+            }
+          }];
+        } catch (e) {
+          console.error('Error processing analysis content:', e);
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "Could not process document analysis"
+          });
+        }
+      }
+
+      // Set the document with processed analysis
+      const processedDocument = {
+        ...document,
+        analysis: processedAnalysis
+      };
       
       console.log('Final processed document:', processedDocument);
 
       setDocument(processedDocument);
-      
-      // If analysis is missing or processing is still pending, trigger analysis
-      if (!documentData.analysis?.length || 
-          documentData.ai_processing_status === 'pending' ||
-          documentData.ai_processing_status === 'processing') {
-        console.log("Document needs analysis, triggering it now");
-        const formNumber = detectFormNumber(documentData);
-        const formType = detectFormType(documentData);
-        
-        try {
-          await triggerAnalysisForDocument(documentId, formNumber, formType);
-          toast({
-            title: "Analysis Started",
-            description: "Document analysis has been initiated"
-          });
-        } catch (analyzeError) {
-          console.error("Failed to trigger analysis:", analyzeError);
-        }
-      }
     } catch (error: any) {
       console.error('Error fetching document details:', error);
       toast({
@@ -62,56 +149,52 @@ export const useDocumentViewer = (documentId: string) => {
       setLoading(false);
     }
   };
-  
-  // Function to manually re-analyze the document
-  const reanalyzeDocument = async () => {
-    if (!document) return;
-    
-    try {
-      setLoading(true);
-      toast({
-        title: "Reanalyzing Document",
-        description: "Starting fresh analysis of your document"
-      });
-      
-      const formNumber = detectFormNumber(document);
-      const formType = detectFormType(document);
-      
-      await triggerAnalysisForDocument(documentId, formNumber, formType);
-      
-      // Fetch updated document after analysis is triggered
-      await fetchDocumentDetails();
-      
-      toast({
-        title: "Analysis Complete",
-        description: "Document has been reanalyzed successfully"
-      });
-    } catch (error: any) {
-      console.error('Error reanalyzing document:', error);
-      toast({
-        variant: "destructive",
-        title: "Analysis Failed",
-        description: error.message || "Failed to reanalyze document"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchDocumentDetails();
 
-    // Set up real-time subscription and get cleanup function
-    const unsubscribe = subscribeToDocumentUpdates(documentId, fetchDocumentDetails);
+    const channelName = `document_updates_${documentId}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'document_analysis',
+          filter: `document_id=eq.${documentId}`
+        },
+        async (payload) => {
+          console.log("Analysis update detected:", payload);
+          await fetchDocumentDetails();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'document_comments',
+          filter: `document_id=eq.${documentId}`
+        },
+        async (payload) => {
+          console.log("Comment update detected:", payload);
+          await fetchDocumentDetails();
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Subscription status for ${channelName}:`, status);
+      });
 
-    // Clean up subscription when component unmounts
-    return unsubscribe;
+    return () => {
+      console.log("Cleaning up real-time subscription for channel:", channelName);
+      supabase.removeChannel(channel);
+    };
   }, [documentId]);
 
   return {
     document,
     loading,
-    fetchDocumentDetails,
-    reanalyzeDocument
+    fetchDocumentDetails
   };
 };
