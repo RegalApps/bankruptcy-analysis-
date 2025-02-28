@@ -7,10 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Document } from "@/components/DocumentList/types";
 import { FolderDialog } from "./components/FolderDialog";
 import { ViewOptionsDropdown } from "./components/ViewOptionsDropdown";
-import { FolderGrid } from "./components/FolderGrid";
-import { UncategorizedGrid } from "./components/UncategorizedGrid";
-import { supabase } from "@/lib/supabase";
+import { FolderTab } from "./components/tabs/FolderTab";
+import { UncategorizedTab } from "./components/tabs/UncategorizedTab";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 interface FolderManagementProps {
   documents: Document[];
@@ -103,30 +103,7 @@ export const FolderManagement = ({
   // Organize documents into proper structure
   const folders = documents.filter(doc => doc.is_folder);
   const uncategorizedDocuments = documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
-  const filteredDocuments = getFilteredDocuments();
   
-  // Log to help debug the folder structure
-  console.log('All documents:', documents);
-  console.log('Folders:', folders);
-  console.log('Folder structure:', folders.map(f => ({
-    id: f.id,
-    title: f.title,
-    type: f.folder_type,
-    parent_id: f.parent_folder_id
-  })));
-
-  // Handler for opening a document - uses the onOpenDocument prop if provided
-  const handleOpenDocument = (documentId: string) => {
-    if (onOpenDocument) {
-      onOpenDocument(documentId);
-    }
-  };
-
-  // Handler for document selection
-  const handleDocumentSelect = (documentId: string) => {
-    onItemSelect(documentId, "file");
-  };
-
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -140,30 +117,13 @@ export const FolderManagement = ({
               onRefresh={onRefresh}
             />
           </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="default" 
-              size="sm"
-              onClick={() => setShowFolderDialog(true)}
-            >
-              + New Folder
-            </Button>
-            <FolderDialog
-              showDialog={showFolderDialog}
-              setShowDialog={setShowFolderDialog}
-              folderName={newFolderName}
-              setFolderName={setNewFolderName}
-              onCreateFolder={handleCreateFolder}
-            />
-            <Button variant="outline" size="sm">
-              <Tag className="h-4 w-4 mr-2" />
-              Add Meta Tags
-            </Button>
-            <Button variant="outline" size="sm">
-              <Tags className="h-4 w-4 mr-2" />
-              Manage Tags
-            </Button>
-          </div>
+          <FolderActionButtons 
+            setShowFolderDialog={setShowFolderDialog}
+            showFolderDialog={showFolderDialog}
+            newFolderName={newFolderName}
+            setNewFolderName={setNewFolderName}
+            onCreateFolder={handleCreateFolder}
+          />
         </div>
 
         <Tabs defaultValue="folders" className="mt-6">
@@ -173,7 +133,7 @@ export const FolderManagement = ({
           </TabsList>
 
           <TabsContent value="folders">
-            <FolderGrid
+            <FolderTab
               folders={folders}
               documents={documents}
               isDragging={isDragging}
@@ -185,17 +145,63 @@ export const FolderManagement = ({
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDocumentDrop}
+              onOpenDocument={onOpenDocument}
             />
           </TabsContent>
 
           <TabsContent value="uncategorized">
-            <UncategorizedGrid 
+            <UncategorizedTab 
               documents={uncategorizedDocuments}
-              onDocumentSelect={handleDocumentSelect}
+              onDocumentSelect={documentId => onItemSelect(documentId, "file")}
+              onOpenDocument={onOpenDocument}
             />
           </TabsContent>
         </Tabs>
       </Card>
+    </div>
+  );
+};
+
+// Folder action buttons component
+interface FolderActionButtonsProps {
+  setShowFolderDialog: (show: boolean) => void;
+  showFolderDialog: boolean;
+  newFolderName: string;
+  setNewFolderName: (name: string) => void;
+  onCreateFolder: () => void;
+}
+
+const FolderActionButtons = ({
+  setShowFolderDialog,
+  showFolderDialog,
+  newFolderName,
+  setNewFolderName,
+  onCreateFolder
+}: FolderActionButtonsProps) => {
+  return (
+    <div className="flex gap-2">
+      <Button 
+        variant="default" 
+        size="sm"
+        onClick={() => setShowFolderDialog(true)}
+      >
+        + New Folder
+      </Button>
+      <FolderDialog
+        showDialog={showFolderDialog}
+        setShowDialog={setShowFolderDialog}
+        folderName={newFolderName}
+        setFolderName={setNewFolderName}
+        onCreateFolder={onCreateFolder}
+      />
+      <Button variant="outline" size="sm">
+        <Tag className="h-4 w-4 mr-2" />
+        Add Meta Tags
+      </Button>
+      <Button variant="outline" size="sm">
+        <Tags className="h-4 w-4 mr-2" />
+        Manage Tags
+      </Button>
     </div>
   );
 };

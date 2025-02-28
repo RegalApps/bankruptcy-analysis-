@@ -7,13 +7,22 @@ import { useNavigate } from "react-router-dom";
 interface UncategorizedGridProps {
   documents: Document[];
   onDocumentSelect: (documentId: string) => void;
+  onOpenDocument?: (documentId: string) => void;
 }
 
-export const UncategorizedGrid = ({ documents, onDocumentSelect }: UncategorizedGridProps) => {
+export const UncategorizedGrid = ({ 
+  documents, 
+  onDocumentSelect,
+  onOpenDocument 
+}: UncategorizedGridProps) => {
   const navigate = useNavigate();
 
   const handleDocumentDoubleClick = (documentId: string) => {
-    navigate('/', { state: { selectedDocument: documentId } });
+    if (onOpenDocument) {
+      onOpenDocument(documentId);
+    } else {
+      navigate('/', { state: { selectedDocument: documentId } });
+    }
   };
 
   return (
