@@ -55,7 +55,7 @@ export const DocumentUpload = () => {
             type="file"
             className="hidden"
             onChange={handleUpload}
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.doc,.docx,.xls,.xlsx"
           />
         </label>
       </Button>

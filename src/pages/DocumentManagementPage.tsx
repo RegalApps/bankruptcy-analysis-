@@ -28,11 +28,21 @@ export const DocumentManagementPage = () => {
       setUploadStep("Validating document...");
 
       // Validate file type and size
-      if (!file.type.match('application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+      const validTypes = [
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ];
+      
+      if (!validTypes.includes(file.type) && 
+          !file.name.endsWith('.xlsx') && 
+          !file.name.endsWith('.xls')) {
         toast({
           variant: "destructive",
           title: "Invalid file type",
-          description: "Please upload a PDF or Word document"
+          description: "Please upload a PDF, Word, or Excel document"
         });
         return;
       }
@@ -58,25 +68,46 @@ export const DocumentManagementPage = () => {
       const documentData = await uploadDocument(file);
       
       setUploadProgress(50);
-      setUploadStep("Document uploaded. Starting automatic analysis...");
+      
+      // Different message for Excel files
+      if (file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
+        setUploadStep("Processing financial data from Excel...");
+      } else {
+        setUploadStep("Document uploaded. Starting automatic analysis...");
+      }
       
       // Short pause to show the step
       await new Promise(resolve => setTimeout(resolve, 800));
       
       setUploadProgress(60);
-      setUploadStep("Extracting document text and metadata...");
+      
+      if (file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
+        setUploadStep("Extracting financial records from Excel...");
+      } else {
+        setUploadStep("Extracting document text and metadata...");
+      }
       
       // Short pause to show the step
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       setUploadProgress(75);
-      setUploadStep("Conducting regulatory compliance check...");
+      
+      if (file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
+        setUploadStep("Processing income and expense data...");
+      } else {
+        setUploadStep("Conducting regulatory compliance check...");
+      }
       
       // Short pause to show the step
       await new Promise(resolve => setTimeout(resolve, 1200));
       
       setUploadProgress(90);
-      setUploadStep("Finalizing analysis and organizing document...");
+      
+      if (file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
+        setUploadStep("Finalizing financial data processing...");
+      } else {
+        setUploadStep("Finalizing analysis and organizing document...");
+      }
       
       // Short pause to show the step
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -85,7 +116,9 @@ export const DocumentManagementPage = () => {
 
       toast({
         title: "Success",
-        description: "Document uploaded and analyzed successfully"
+        description: file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')
+          ? "Excel file uploaded and processed successfully"
+          : "Document uploaded and analyzed successfully"
       });
 
       refetch();

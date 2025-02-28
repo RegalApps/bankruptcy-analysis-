@@ -49,7 +49,7 @@ export const UploadArea = ({ onFileUpload, isUploading, uploadProgress = 0, uplo
           type="file"
           id="file-upload"
           className="hidden"
-          accept=".pdf,.doc,.docx"
+          accept=".pdf,.doc,.docx,.xls,.xlsx"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) {
@@ -87,6 +87,9 @@ export const UploadArea = ({ onFileUpload, isUploading, uploadProgress = 0, uplo
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
               or click to browse your files
+            </p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Supports PDF, Word, and Excel files up to 10MB
             </p>
             <Button variant="outline">
               Browse Files

@@ -81,7 +81,48 @@ export const uploadDocument = async (file: File) => {
   try {
     logger.info('Starting automatic document analysis for document ID:', documentData.id);
     
-    // Extract text from the uploaded PDF
+    // Check if file is an Excel file
+    const isExcelFile = file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx');
+    
+    // If Excel file, use specialized processing for financial data
+    if (isExcelFile) {
+      logger.info('Detected Excel file, processing as financial data');
+      
+      try {
+        // Update document status to indicate a different processing path
+        await updateDocumentStatus(documentData.id, 'processing_financial');
+        
+        // For excel files, we might want to organize them differently
+        await organizeDocumentIntoFolders(
+          documentData.id,
+          session.user.id,
+          'Financial Records',
+          'Financial Data'
+        );
+        
+        // Update document status to complete
+        await updateDocumentStatus(documentData.id, 'complete');
+        
+        toast({
+          title: "Financial Document Uploaded",
+          description: "Excel file was uploaded successfully and ready for income/expense processing."
+        });
+        
+      } catch (error) {
+        logger.error('Error processing Excel file:', error);
+        await updateDocumentStatus(documentData.id, 'failed');
+        
+        toast({
+          variant: "destructive",
+          title: "Processing Failed",
+          description: "Failed to process Excel file: " + (error instanceof Error ? error.message : "Unknown error")
+        });
+      }
+      
+      return documentData;
+    }
+    
+    // For PDF and other document types, extract text and proceed with normal processing
     const documentText = await extractTextFromPdf(publicUrl);
     
     if (!documentText || documentText.trim().length < 50) {

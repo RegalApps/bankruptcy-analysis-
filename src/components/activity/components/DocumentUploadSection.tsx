@@ -52,6 +52,9 @@ export const DocumentUploadSection = ({ financialRecordId }: DocumentUploadSecti
         <CardTitle>Supporting Documents</CardTitle>
       </CardHeader>
       <CardContent>
+        <p className="text-sm text-muted-foreground mb-4">
+          Upload PDF, Word, or Excel files containing your financial information
+        </p>
         <FileUpload onUploadComplete={handleUploadComplete} />
       </CardContent>
     </Card>
