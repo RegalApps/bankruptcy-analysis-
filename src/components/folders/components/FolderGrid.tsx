@@ -1,10 +1,11 @@
+
 import { Document } from "@/components/DocumentList/types";
 import { FolderIcon } from "@/components/DocumentList/components/FolderIcon";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText } from "lucide-react";
+import { FileText, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface FolderGridProps {
   folders: Document[];
@@ -28,16 +29,49 @@ export const FolderGrid = ({
   onDrop,
 }: FolderGridProps) => {
   const navigate = useNavigate();
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     console.log("FolderGrid render with folders:", folders.length);
     console.log("Documents:", documents.length);
     console.log("Selected folder:", selectedFolder);
+    
+    // When a folder is selected, automatically expand it
+    if (selectedFolder) {
+      setExpandedFolders(prev => {
+        const newSet = new Set(prev);
+        newSet.add(selectedFolder);
+        return newSet;
+      });
+    }
   }, [folders, documents, selectedFolder]);
 
   const handleDocumentDoubleClick = (documentId: string) => {
     console.log("Document double-clicked:", documentId);
     navigate('/', { state: { selectedDocument: documentId } });
+  };
+
+  const handleDocumentClick = (documentId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log("Document clicked:", documentId);
+    // You could add selection highlighting here
+  };
+
+  // Toggle folder expansion
+  const toggleFolderExpansion = (folderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    setExpandedFolders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(folderId)) {
+        newSet.delete(folderId);
+      } else {
+        newSet.add(folderId);
+      }
+      return newSet;
+    });
+    
+    onFolderSelect(folderId);
   };
 
   // Get all documents for a specific folder
@@ -88,6 +122,7 @@ export const FolderGrid = ({
         {clientFolders.length > 0 ? (
           clientFolders.map((clientFolder) => {
             const isClientSelected = selectedFolder === clientFolder.id;
+            const isClientExpanded = expandedFolders.has(clientFolder.id);
             
             // Get form folders that belong to this client folder
             const formFolders = getSubFolders(clientFolder.id);
@@ -96,20 +131,27 @@ export const FolderGrid = ({
             return (
               <div
                 key={clientFolder.id}
-                className={cn(
-                  "p-4 rounded-lg glass-panel hover:shadow-lg transition-all duration-200 card-highlight border",
-                  isClientSelected && "ring-2 ring-primary"
-                )}
+                className="p-4 rounded-lg glass-panel hover:shadow-lg transition-all duration-200 card-highlight border border-muted"
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={(e) => onDrop(e, clientFolder.id)}
-                onClick={() => onFolderSelect(clientFolder.id)}
               >
-                <div className="flex items-center space-x-4">
+                <div 
+                  className={cn(
+                    "flex items-center space-x-4 cursor-pointer p-2 rounded-md",
+                    isClientSelected && "bg-muted/50"
+                  )}
+                  onClick={(e) => toggleFolderExpansion(clientFolder.id, e)}
+                >
+                  {isClientExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
                   <FolderIcon 
                     variant="client" 
                     isActive={isClientSelected}
-                    isOpen={isClientSelected}
+                    isOpen={isClientExpanded}
                   />
                   <div>
                     <h4 className="font-medium text-lg">{clientFolder.title}</h4>
@@ -119,44 +161,47 @@ export const FolderGrid = ({
                   </div>
                 </div>
                 
-                {isClientSelected && (
-                  <div className="mt-4 pl-8 space-y-4 border-l-2 border-muted">
+                {isClientExpanded && (
+                  <div className="mt-2 pl-12 space-y-2 border-l-2 border-muted py-2">
                     {formFolders.length > 0 ? (
                       formFolders.map(formFolder => {
                         const formDocs = getFolderDocuments(formFolder.id);
                         console.log(`Documents for ${formFolder.title}:`, formDocs.map(d => d.title));
                         const isFormSelected = selectedFolder === formFolder.id;
+                        const isFormExpanded = expandedFolders.has(formFolder.id);
 
                         return (
                           <div 
                             key={formFolder.id}
-                            className={cn(
-                              "p-3 rounded-lg hover:bg-muted/50 cursor-pointer",
-                              isFormSelected && "bg-muted"
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onFolderSelect(formFolder.id);
-                            }}
+                            className="mb-3"
                           >
-                            <div className="flex items-center space-x-3 mb-2">
+                            <div 
+                              className={cn(
+                                "flex items-center space-x-2 p-2 rounded-md cursor-pointer",
+                                isFormSelected && "bg-muted/50"
+                              )}
+                              onClick={(e) => toggleFolderExpansion(formFolder.id, e)}
+                            >
+                              {isFormExpanded ? (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              )}
                               <FolderIcon 
                                 variant="form"
                                 isActive={isFormSelected}
-                                isOpen={isFormSelected}
+                                isOpen={isFormExpanded}
                               />
                               <h5 className="font-medium">{formFolder.title}</h5>
                             </div>
 
-                            {isFormSelected && formDocs.length > 0 && (
-                              <div className="ml-6 mt-2 space-y-2">
+                            {isFormExpanded && formDocs.length > 0 && (
+                              <div className="ml-8 pl-4 mt-1 space-y-1 border-l-2 border-muted py-1">
                                 {formDocs.map(doc => (
                                   <div 
                                     key={doc.id}
                                     className="flex items-center p-2 rounded hover:bg-muted cursor-pointer"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                    }}
+                                    onClick={(e) => handleDocumentClick(doc.id, e)}
                                     onDoubleClick={(e) => {
                                       e.stopPropagation();
                                       handleDocumentDoubleClick(doc.id);
@@ -180,12 +225,13 @@ export const FolderGrid = ({
                       })
                     ) : (
                       // Show documents directly under client folder if no form folders exist
-                      <div className="p-3">
+                      <div>
                         {getFolderDocuments(clientFolder.id).length > 0 ? (
                           getFolderDocuments(clientFolder.id).map(doc => (
                             <div 
                               key={doc.id}
                               className="flex items-center p-2 rounded hover:bg-muted cursor-pointer"
+                              onClick={(e) => handleDocumentClick(doc.id, e)}
                               onDoubleClick={(e) => {
                                 e.stopPropagation();
                                 handleDocumentDoubleClick(doc.id);
@@ -203,7 +249,7 @@ export const FolderGrid = ({
                             </div>
                           ))
                         ) : (
-                          <p className="text-sm text-muted-foreground">No documents yet</p>
+                          <p className="text-sm text-muted-foreground py-2">No documents yet</p>
                         )}
                       </div>
                     )}
