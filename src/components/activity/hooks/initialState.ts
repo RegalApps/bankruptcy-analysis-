@@ -1,5 +1,6 @@
 
-import { IncomeExpenseData, HistoricalData } from "./types";
+import { IncomeExpenseData } from "../types";
+import { HistoricalData } from "./types";
 
 export const initialFormData: IncomeExpenseData = {
   monthly_income: "",
