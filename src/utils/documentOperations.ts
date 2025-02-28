@@ -46,7 +46,21 @@ export const uploadDocument = async (file: File) => {
 
     // Organize document into appropriate folders
     if (documentData) {
-      await organizeDocumentIntoFolders(documentData);
+      // Getting the current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      
+      // Extract client name and form number from metadata or file name if available
+      // For now using placeholder values that would be extracted in a real scenario
+      const clientName = documentData.title.split('-')[0]?.trim() || 'Untitled Client';
+      const formNumber = documentData.type?.includes('excel') ? 'Income Statement' : 'Form-100';
+      
+      await organizeDocumentIntoFolders(
+        documentData.id,
+        userId || '',
+        clientName,
+        formNumber
+      );
     }
 
     return documentData;
