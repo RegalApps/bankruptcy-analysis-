@@ -23,7 +23,8 @@ export const CRMPage = () => {
     phone: "",
     companyName: "",
     businessType: "",
-    notes: ""
+    notes: "",
+    address: "" // Added the missing address property here
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
