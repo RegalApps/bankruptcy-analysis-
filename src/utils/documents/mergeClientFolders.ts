@@ -1,91 +1,112 @@
 
 import { supabase } from "@/lib/supabase";
 import logger from "@/utils/logger";
-import { toast } from "sonner";
+import { createFolderIfNotExists } from "./folder-utils";
 
 export const mergeClientFolders = async (clientName: string, userId: string): Promise<boolean> => {
   try {
-    if (!clientName) {
-      toast.error("Client name is required");
-      return false;
+    if (!clientName.trim()) {
+      throw new Error("Client name cannot be empty");
     }
 
-    logger.info(`Attempting to merge folders for client: ${clientName}`);
-    
-    // Find all folders with the client name
+    // Search for client folders containing the client name
     const { data: clientFolders, error: fetchError } = await supabase
       .from('documents')
       .select('id, title, folder_type')
-      .eq('user_id', userId)
       .eq('is_folder', true)
-      .ilike('title', clientName)
-      .order('created_at', { ascending: true });
+      .eq('user_id', userId)
+      .ilike('title', `%${clientName}%`);
     
-    if (fetchError) {
-      logger.error(`Error fetching client folders for ${clientName}:`, fetchError);
-      toast.error("Error fetching client folders");
+    if (fetchError) throw fetchError;
+    
+    if (!clientFolders || clientFolders.length <= 1) {
+      // No folders to merge or only one folder found
+      logger.info(`No folders to merge for client: ${clientName}`);
       return false;
     }
     
-    if (!clientFolders || clientFolders.length <= 1) {
-      logger.info(`No duplicate folders found for client ${clientName}`);
-      toast.info("No duplicate folders found");
-      return true; // No duplicates to merge
-    }
+    logger.info(`Found ${clientFolders.length} folders matching client: ${clientName}`);
     
-    // Use the first folder as the primary client folder
-    const primaryFolder = clientFolders[0];
-    const duplicateFolders = clientFolders.slice(1);
+    // Create a standard client folder
+    const standardizedName = clientName.trim();
+    const targetFolderId = await createFolderIfNotExists(
+      standardizedName,
+      'client',
+      userId
+    );
     
-    logger.info(`Primary folder: ${primaryFolder.title} (${primaryFolder.id})`);
-    logger.info(`Found ${duplicateFolders.length} duplicate folders to merge`);
-    
-    // For each duplicate folder
-    for (const folder of duplicateFolders) {
-      // 1. Find all direct children (documents and subfolders)
-      const { data: children, error: childrenError } = await supabase
+    // Move all documents from each folder to the target folder
+    for (const folder of clientFolders) {
+      if (folder.id === targetFolderId) continue; // Skip the target folder itself
+      
+      // Get all subfolders in this client folder
+      const { data: subfolders } = await supabase
         .from('documents')
-        .select('id, is_folder')
+        .select('id, title, folder_type')
+        .eq('is_folder', true)
         .eq('parent_folder_id', folder.id);
       
-      if (childrenError) {
-        logger.error(`Error fetching children for folder ${folder.id}:`, childrenError);
+      // For each subfolder, create or find the corresponding subfolder in the target
+      if (subfolders && subfolders.length > 0) {
+        for (const subfolder of subfolders) {
+          // Create or find equivalent subfolder in target
+          const newSubfolderId = await createFolderIfNotExists(
+            subfolder.title,
+            subfolder.folder_type || 'form',
+            userId,
+            targetFolderId
+          );
+          
+          // Move documents from old subfolder to new subfolder
+          const { error: moveSubfolderDocsError } = await supabase
+            .from('documents')
+            .update({ parent_folder_id: newSubfolderId })
+            .eq('parent_folder_id', subfolder.id)
+            .eq('is_folder', false);
+          
+          if (moveSubfolderDocsError) {
+            logger.error(`Error moving documents from subfolder ${subfolder.id} to ${newSubfolderId}:`, moveSubfolderDocsError);
+          }
+          
+          // Delete the now-empty subfolder
+          const { error: deleteSubfolderError } = await supabase
+            .from('documents')
+            .delete()
+            .eq('id', subfolder.id);
+          
+          if (deleteSubfolderError) {
+            logger.error(`Error deleting empty subfolder ${subfolder.id}:`, deleteSubfolderError);
+          }
+        }
+      }
+      
+      // Move top-level documents directly to the target folder
+      const { error: moveDocsError } = await supabase
+        .from('documents')
+        .update({ parent_folder_id: targetFolderId })
+        .eq('parent_folder_id', folder.id)
+        .eq('is_folder', false);
+      
+      if (moveDocsError) {
+        logger.error(`Error moving documents from folder ${folder.id} to ${targetFolderId}:`, moveDocsError);
         continue;
       }
       
-      if (children && children.length > 0) {
-        // 2. Move all children to the primary folder
-        const { error: moveError } = await supabase
-          .from('documents')
-          .update({ parent_folder_id: primaryFolder.id })
-          .eq('parent_folder_id', folder.id);
-        
-        if (moveError) {
-          logger.error(`Error moving children from folder ${folder.id} to ${primaryFolder.id}:`, moveError);
-          continue;
-        }
-        
-        logger.info(`Moved ${children.length} items from folder ${folder.id} to ${primaryFolder.id}`);
-      }
-      
-      // 3. Delete the now-empty duplicate folder
-      const { error: deleteError } = await supabase
+      // Delete the now-empty source folder
+      const { error: deleteFolderError } = await supabase
         .from('documents')
         .delete()
         .eq('id', folder.id);
       
-      if (deleteError) {
-        logger.error(`Error deleting duplicate folder ${folder.id}:`, deleteError);
-      } else {
-        logger.info(`Deleted duplicate folder ${folder.id}`);
+      if (deleteFolderError) {
+        logger.error(`Error deleting empty folder ${folder.id}:`, deleteFolderError);
       }
     }
     
-    toast.success(`Successfully merged folders for ${clientName}`);
+    logger.info(`Successfully merged folders for client: ${clientName}`);
     return true;
   } catch (error) {
     logger.error('Error merging client folders:', error);
-    toast.error("Failed to merge client folders");
-    return false;
+    throw error;
   }
 };
