@@ -7,8 +7,10 @@ import { initialFormData, initialHistoricalData } from "./initialState";
 import { 
   fetchPreviousMonthData, 
   submitFinancialRecord,
-  fetchHistoricalData 
+  fetchHistoricalData,
+  fetchLatestExcelData 
 } from "./financialDataService";
+import { toast as sonnerToast } from "sonner";
 
 export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
   const { toast } = useToast();
@@ -19,6 +21,7 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
   const [formData, setFormData] = useState<IncomeExpenseData>(initialFormData);
   const [historicalData, setHistoricalData] = useState(initialHistoricalData);
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('current');
+  const [isDataLoading, setIsDataLoading] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -42,15 +45,51 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
   };
 
   const handleClientSelect = async (clientId: string) => {
-    const client = {
-      id: clientId,
-      name: clientId === "1" ? "John Doe" : "Jane Smith",
-      status: "active" as const,
-      last_activity: "2024-03-10",
-    };
-    setSelectedClient(client);
-    const previousData = await fetchPreviousMonthData(clientId);
-    setPreviousMonthData(previousData);
+    setIsDataLoading(true);
+    try {
+      // Define client
+      const client = {
+        id: clientId,
+        name: clientId === "1" ? "John Doe" : "Reginald Dickerson",
+        status: "active" as const,
+        last_activity: "2024-03-10",
+      };
+      setSelectedClient(client);
+      
+      // First, check for Excel data from uploaded files for this client
+      const excelData = await fetchLatestExcelData(clientId);
+      
+      if (excelData) {
+        console.log("Found Excel data for client", client.name, excelData);
+        setFormData(excelData);
+        
+        // Show a toast notification to inform the user that data has been loaded from Excel
+        sonnerToast.success("Excel Data Loaded", {
+          description: `Financial data loaded from the uploaded Excel file for ${client.name}`,
+          duration: 5000,
+        });
+      } else {
+        // If no Excel data, fallback to previous month data
+        console.log("No Excel data found, loading previous month data");
+        const previousData = await fetchPreviousMonthData(clientId);
+        setPreviousMonthData(previousData);
+      }
+      
+      // Load historical data regardless of source
+      const historicalDataResult = await fetchHistoricalData(clientId);
+      if (historicalDataResult) {
+        setHistoricalData(historicalDataResult);
+      }
+    } catch (error) {
+      console.error("Error loading client data:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load client financial data",
+      });
+    } finally {
+      setIsDataLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -85,6 +124,18 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
         submissionDate.setMonth(submissionDate.getMonth() - 1);
       }
 
+      // Calculate total income and expenses for better analytics
+      const monthlyIncome = parseFloat(formData.monthly_income || "0");
+      
+      const expenses = [
+        "rent_mortgage", "utilities", "food", "transportation", 
+        "insurance", "medical_expenses", "other_expenses"
+      ].reduce((total, field) => {
+        return total + (parseFloat(formData[field as keyof IncomeExpenseData] as string) || 0);
+      }, 0);
+
+      const surplusIncome = monthlyIncome - expenses;
+
       const financialRecord = {
         user_id: selectedClient.id,
         monthly_income: formData.monthly_income ? parseFloat(formData.monthly_income) : null,
@@ -101,6 +152,10 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
         submission_date: submissionDate.toISOString(),
         status: "pending_review",
         period_type: selectedPeriod,
+        // Add calculated totals
+        total_income: monthlyIncome,
+        total_expenses: expenses,
+        surplus_income: surplusIncome
       };
 
       const { data, error } = await submitFinancialRecord(financialRecord);
@@ -116,9 +171,16 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
         description: `Financial data submitted successfully for ${selectedPeriod} month`,
       });
 
+      // Clear form after submission
       setFormData(initialFormData);
       setSelectedClient(null);
       setSelectedPeriod('current');
+      
+      // Refresh historical data for the client after submission
+      const updatedHistoricalData = await fetchHistoricalData(selectedClient.id);
+      if (updatedHistoricalData) {
+        setHistoricalData(updatedHistoricalData);
+      }
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({
@@ -139,6 +201,7 @@ export const useIncomeExpenseForm = (): UseIncomeExpenseFormReturn => {
     historicalData,
     previousMonthData,
     selectedPeriod,
+    isDataLoading,
     handleChange,
     handleFrequencyChange,
     handleClientSelect,

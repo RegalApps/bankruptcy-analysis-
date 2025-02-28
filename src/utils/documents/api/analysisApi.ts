@@ -54,7 +54,7 @@ export const saveAnalysisResults = async (
 
 export const updateDocumentStatus = async (
   documentId: string, 
-  status: 'processing' | 'complete' | 'failed'
+  status: 'processing' | 'processing_financial' | 'complete' | 'failed'
 ) => {
   const { error } = await supabase
     .from('documents')

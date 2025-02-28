@@ -1,5 +1,5 @@
 
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,10 +12,13 @@ import {
   detectAnomalies,
   calculateForecast
 } from "./utils/financialCalculations";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const PredictiveAnalysis = () => {
-  const { data: financialRecords, isLoading } = useQuery({
-    queryKey: ["financial_records_prediction"],
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  const { data: financialRecords, isLoading, refetch } = useQuery({
+    queryKey: ["financial_records_prediction", refreshTrigger],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financial_records")
@@ -113,6 +116,7 @@ export const PredictiveAnalysis = () => {
           toast.info('New financial record detected. Updating analysis...', {
             duration: 3000,
           });
+          setRefreshTrigger(prev => prev + 1);
         }
       )
       .subscribe();
@@ -122,16 +126,72 @@ export const PredictiveAnalysis = () => {
     };
   }, []);
 
+  // Also listen for document uploads which might contain Excel data
+  useEffect(() => {
+    const channel = supabase
+      .channel('documents_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'documents'
+        },
+        (payload: any) => {
+          // Check if it's an Excel file
+          const isExcel = 
+            payload.new.type?.includes('excel') || 
+            payload.new.storage_path?.endsWith('.xlsx') || 
+            payload.new.storage_path?.endsWith('.xls');
+            
+          if (isExcel) {
+            toast.info('New Excel financial data detected. Analysis will update shortly...', {
+              duration: 3000,
+            });
+            
+            // Schedule a refresh after a short delay to allow processing
+            setTimeout(() => {
+              setRefreshTrigger(prev => prev + 1);
+            }, 2000);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Set up polling for financial records in case real-time subscriptions miss something
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 15000); // Poll every 15 seconds
+    
+    return () => clearInterval(interval);
+  }, [refetch]);
+
   const metrics = calculateMetrics();
 
   return (
     <div className="space-y-6">
-      <MetricsGrid metrics={metrics} />
-      <ForecastChart processedData={processedData} isLoading={isLoading} />
-      <AnalysisAlerts 
-        riskLevel={metrics?.riskLevel || ''} 
-        seasonalityScore={metrics?.seasonalityScore || null} 
-      />
+      {isLoading ? (
+        <>
+          <Skeleton className="h-[120px] w-full rounded-lg" />
+          <Skeleton className="h-[400px] w-full rounded-lg" />
+          <Skeleton className="h-[200px] w-full rounded-lg" />
+        </>
+      ) : (
+        <>
+          <MetricsGrid metrics={metrics} />
+          <ForecastChart processedData={processedData} isLoading={isLoading} />
+          <AnalysisAlerts 
+            riskLevel={metrics?.riskLevel || ''} 
+            seasonalityScore={metrics?.seasonalityScore || null} 
+          />
+        </>
+      )}
     </div>
   );
 };
