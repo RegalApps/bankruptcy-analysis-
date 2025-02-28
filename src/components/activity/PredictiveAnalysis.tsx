@@ -24,10 +24,15 @@ export const PredictiveAnalysis = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   
-  const { data: financialRecords, isLoading, refetch } = useQuery({
+  // Add to console to track issues
+  console.log("PredictiveAnalysis - Current selected client:", selectedClient);
+  
+  const { data: financialRecords, isLoading, error, refetch } = useQuery({
     queryKey: ["financial_records_prediction", selectedClient?.id, refreshTrigger],
     queryFn: async () => {
       if (!selectedClient) return [];
+      
+      console.log("PredictiveAnalysis - Fetching financial records for client:", selectedClient.id);
       
       const { data, error } = await supabase
         .from("financial_records")
@@ -35,10 +40,16 @@ export const PredictiveAnalysis = () => {
         .eq("user_id", selectedClient.id)
         .order("submission_date", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
+      console.log("PredictiveAnalysis - Received financial records:", data?.length || 0);
       
       // If no data, return simulated data for demonstration
       if (!data || data.length === 0) {
+        console.log("PredictiveAnalysis - Generating simulated data for client:", selectedClient.name);
         const today = new Date();
         const simulatedData = [];
         
@@ -63,6 +74,7 @@ export const PredictiveAnalysis = () => {
           simulatedData.push(monthData);
         }
         
+        setLastRefreshed(new Date());
         return simulatedData;
       }
       
@@ -72,9 +84,19 @@ export const PredictiveAnalysis = () => {
     enabled: !!selectedClient, // Only run query when client is selected
   });
 
+  // Log any errors for debugging
+  useEffect(() => {
+    if (error) {
+      console.error("PredictiveAnalysis - Query error:", error);
+      toast.error("Error loading predictive analysis data");
+    }
+  }, [error]);
+
   const calculateMetrics = () => {
     if (!financialRecords?.length) return null;
 
+    console.log("PredictiveAnalysis - Calculating metrics from records:", financialRecords.length);
+    
     const latestRecord = financialRecords[financialRecords.length - 1];
     const surplusIncome = latestRecord.surplus_income || 
                          (latestRecord.monthly_income - latestRecord.total_expenses) || 0;
@@ -111,6 +133,8 @@ export const PredictiveAnalysis = () => {
 
   const processedData = useMemo(() => {
     if (!financialRecords?.length) return [];
+    
+    console.log("PredictiveAnalysis - Processing data for forecast and anomalies");
     
     const anomalies = detectAnomalies(financialRecords);
     const forecast = calculateForecast(financialRecords);
@@ -155,8 +179,10 @@ export const PredictiveAnalysis = () => {
   useEffect(() => {
     if (!selectedClient) return;
     
+    console.log("PredictiveAnalysis - Setting up real-time subscription for client:", selectedClient.id);
+    
     const channel = supabase
-      .channel('financial_records_changes')
+      .channel('financial_records_predictive_changes')
       .on(
         'postgres_changes',
         {
@@ -166,6 +192,7 @@ export const PredictiveAnalysis = () => {
           filter: `user_id=eq.${selectedClient.id}`
         },
         (payload) => {
+          console.log("PredictiveAnalysis - New financial record detected:", payload);
           toast.info(`New financial record detected for ${selectedClient.name}. Updating analysis...`, {
             duration: 3000,
           });
@@ -183,8 +210,10 @@ export const PredictiveAnalysis = () => {
   useEffect(() => {
     if (!selectedClient) return;
     
+    console.log("PredictiveAnalysis - Setting up documents change subscription for client:", selectedClient.id);
+    
     const channel = supabase
-      .channel('documents_changes')
+      .channel('documents_predictive_changes')
       .on(
         'postgres_changes',
         {
@@ -201,6 +230,7 @@ export const PredictiveAnalysis = () => {
             payload.new.storage_path?.endsWith('.xls');
             
           if (isExcel) {
+            console.log("PredictiveAnalysis - New Excel document detected:", payload.new);
             toast.info(`New Excel financial data detected for ${selectedClient.name}. Analysis will update shortly...`, {
               duration: 3000,
             });
@@ -223,6 +253,8 @@ export const PredictiveAnalysis = () => {
   useEffect(() => {
     if (!selectedClient) return;
     
+    console.log("PredictiveAnalysis - Setting up polling for client:", selectedClient.id);
+    
     const interval = setInterval(() => {
       refetch();
     }, 15000); // Poll every 15 seconds
@@ -235,11 +267,14 @@ export const PredictiveAnalysis = () => {
   const handleManualRefresh = () => {
     if (!selectedClient) return;
     
+    console.log("PredictiveAnalysis - Manual refresh triggered for client:", selectedClient.id);
     setRefreshTrigger(prev => prev + 1);
     toast.success(`Refreshing prediction data for ${selectedClient.name}...`);
   };
   
   const handleClientSelect = (clientId: string) => {
+    console.log("PredictiveAnalysis - Client selected:", clientId);
+    
     // Reset metrics and last refreshed time when changing clients
     setLastRefreshed(null);
     
@@ -251,6 +286,7 @@ export const PredictiveAnalysis = () => {
     };
     
     setSelectedClient(client);
+    toast.success(`Selected client for predictive analysis: ${client.name}`);
     
     // Trigger data refresh for the new client
     setRefreshTrigger(prev => prev + 1);
@@ -302,7 +338,7 @@ export const PredictiveAnalysis = () => {
                 )}
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={handleManualRefresh}>
+            <Button variant="outline" size="sm" onClick={handleManualRefresh} disabled={isLoading}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh Analysis
             </Button>
@@ -315,14 +351,31 @@ export const PredictiveAnalysis = () => {
               <Skeleton className="h-[200px] w-full rounded-lg" />
             </>
           ) : (
-            <>
-              <MetricsGrid metrics={metrics} />
-              <ForecastChart processedData={processedData} isLoading={isLoading} />
-              <AnalysisAlerts 
-                riskLevel={metrics?.riskLevel || ''} 
-                seasonalityScore={metrics?.seasonalityScore || null} 
-              />
-            </>
+            financialRecords && financialRecords.length > 0 ? (
+              <>
+                <MetricsGrid metrics={metrics} />
+                <ForecastChart processedData={processedData} isLoading={isLoading} />
+                <AnalysisAlerts 
+                  riskLevel={metrics?.riskLevel || ''} 
+                  seasonalityScore={metrics?.seasonalityScore || null} 
+                />
+              </>
+            ) : (
+              <Card>
+                <CardContent className="py-8">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <p className="text-muted-foreground">No financial records found for this client.</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={handleManualRefresh}
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )
           )}
         </>
       )}

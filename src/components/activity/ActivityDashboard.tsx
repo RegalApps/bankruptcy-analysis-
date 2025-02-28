@@ -25,6 +25,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileSpreadsheet, User2 } from "lucide-react";
 import { ClientSelector } from "./form/ClientSelector";
 import { Client } from "./types";
+import { toast } from "sonner";
 
 type FinancialRecord = Database["public"]["Tables"]["financial_records"]["Row"];
 
@@ -37,10 +38,15 @@ export const ActivityDashboard = () => {
     riskLevel: string;
   } | null>(null);
 
-  const { data: financialRecords, isLoading, refetch } = useQuery<FinancialRecord[]>({
+  // Add to console to track issues
+  console.log("Current selected client:", selectedClient);
+
+  const { data: financialRecords, isLoading, error, refetch } = useQuery<FinancialRecord[]>({
     queryKey: ["financial_records", selectedClient?.id],
     queryFn: async () => {
       if (!selectedClient) return [];
+      
+      console.log("Fetching financial records for client:", selectedClient.id);
       
       const { data, error } = await supabase
         .from("financial_records")
@@ -48,10 +54,16 @@ export const ActivityDashboard = () => {
         .eq("user_id", selectedClient.id)
         .order("submission_date", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+      
+      console.log("Received financial records:", data?.length || 0);
       
       // If no data, return simulated data for demonstration
       if (!data || data.length === 0) {
+        console.log("Generating simulated data for client:", selectedClient.name);
         const today = new Date();
         const simulatedData = [];
         
@@ -82,10 +94,19 @@ export const ActivityDashboard = () => {
     enabled: !!selectedClient, // Only run query when a client is selected
   });
 
+  // Log any errors for debugging
+  useEffect(() => {
+    if (error) {
+      console.error("Query error:", error);
+      toast.error("Error loading financial data");
+    }
+  }, [error]);
+
   // Setup real-time subscription to financial_records table
   useEffect(() => {
     if (!selectedClient) return;
     
+    console.log("Setting up real-time subscription for client:", selectedClient.id);
     const channel = supabase
       .channel('financial_records_changes')
       .on(
@@ -96,8 +117,8 @@ export const ActivityDashboard = () => {
           table: 'financial_records',
           filter: `user_id=eq.${selectedClient.id}`
         },
-        () => {
-          console.log('Financial records changed, refreshing data');
+        (payload) => {
+          console.log('Financial records changed, refreshing data', payload);
           refetch();
         }
       )
@@ -111,6 +132,7 @@ export const ActivityDashboard = () => {
   // Calculate metrics from financial data
   useEffect(() => {
     if (financialRecords && financialRecords.length > 0) {
+      console.log("Calculating metrics from financial records:", financialRecords.length);
       const currentRecord = financialRecords[financialRecords.length - 1];
       const previousRecord = financialRecords.length > 1 ? financialRecords[financialRecords.length - 2] : null;
       
@@ -132,19 +154,25 @@ export const ActivityDashboard = () => {
         riskLevel = "Medium";
       }
       
-      setMetrics({
+      const newMetrics = {
         currentSurplus: currentSurplus.toFixed(0),
         surplusPercentage: surplusPercentage.toString(),
         monthlyTrend,
         riskLevel
-      });
+      };
+      
+      console.log("Setting new metrics:", newMetrics);
+      setMetrics(newMetrics);
     } else {
+      console.log("No financial records to calculate metrics");
       setMetrics(null);
     }
   }, [financialRecords]);
 
   // Handle client selection
   const handleClientSelect = (clientId: string) => {
+    console.log("Client selected:", clientId);
+    
     // Reset metrics when changing clients
     setMetrics(null);
     
@@ -156,6 +184,7 @@ export const ActivityDashboard = () => {
     };
     
     setSelectedClient(client);
+    toast.success(`Selected client: ${client.name}`);
   };
 
   // Process chart data
@@ -172,6 +201,8 @@ export const ActivityDashboard = () => {
     queryFn: async () => {
       if (!selectedClient) return [];
       
+      console.log("Checking for Excel documents for client:", selectedClient.id);
+      
       const { data, error } = await supabase
         .from("documents")
         .select("*")
@@ -180,7 +211,12 @@ export const ActivityDashboard = () => {
         .order("created_at", { ascending: false })
         .limit(3);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching Excel documents:", error);
+        throw error;
+      }
+      
+      console.log("Found Excel documents:", data?.length || 0);
       return data;
     },
     enabled: !!selectedClient, // Only run when client is selected
@@ -218,69 +254,79 @@ export const ActivityDashboard = () => {
       {/* Show dashboard content only when client is selected */}
       {selectedClient && (
         <>
-          {metrics && <MetricsGrid metrics={metrics} />}
-          
-          {excelDocuments && excelDocuments.length > 0 && (
-            <Alert className="bg-green-50 border-green-200">
-              <FileSpreadsheet className="h-5 w-5 text-green-600" />
-              <AlertDescription className="flex justify-between items-center">
-                <span>Found {excelDocuments.length} Excel document{excelDocuments.length !== 1 ? 's' : ''} with financial data for {selectedClient.name}.</span>
-              </AlertDescription>
-            </Alert>
+          {isLoading ? (
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex justify-center items-center h-24">
+                    <p>Loading financial data for {selectedClient.name}...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <>
+              {metrics && <MetricsGrid metrics={metrics} />}
+              
+              {excelDocuments && excelDocuments.length > 0 && (
+                <Alert className="bg-green-50 border-green-200">
+                  <FileSpreadsheet className="h-5 w-5 text-green-600" />
+                  <AlertDescription className="flex justify-between items-center">
+                    <span>Found {excelDocuments.length} Excel document{excelDocuments.length !== 1 ? 's' : ''} with financial data for {selectedClient.name}.</span>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Income vs Expenses Overview</CardTitle>
+                  <CardDescription>Monthly financial trends for {selectedClient.name}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[400px]">
+                    {chartData.length === 0 ? (
+                      <div className="flex items-center justify-center h-full">
+                        <p>No financial data available for this client</p>
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="date"
+                          />
+                          <YAxis />
+                          <Tooltip formatter={(value) => [`$${value}`, undefined]} />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="Income"
+                            stroke="#8884d8"
+                            name="Income"
+                            strokeWidth={2}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="Expenses"
+                            stroke="#82ca9d"
+                            name="Expenses"
+                            strokeWidth={2}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="Surplus"
+                            stroke="#ff7300"
+                            name="Surplus"
+                            strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Income vs Expenses Overview</CardTitle>
-              <CardDescription>Monthly financial trends for {selectedClient.name}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <p>Loading financial data...</p>
-                  </div>
-                ) : chartData.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <p>No financial data available for this client</p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="date"
-                      />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [`$${value}`, undefined]} />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="Income"
-                        stroke="#8884d8"
-                        name="Income"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="Expenses"
-                        stroke="#82ca9d"
-                        name="Expenses"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="Surplus"
-                        stroke="#ff7300"
-                        name="Surplus"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </>
       )}
     </div>
