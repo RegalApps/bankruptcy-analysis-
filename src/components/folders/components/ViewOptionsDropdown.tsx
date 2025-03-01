@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { 
   ChevronDown, 
@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { RenameDialog } from "./dialogs/RenameDialog";
 import { DeleteDialog } from "./dialogs/DeleteDialog";
-import { MergeDialog } from "./dialogs/MergeDialog"; // New import
+import { MergeDialog } from "./dialogs/MergeDialog"; 
 import { documentService } from "./services/documentService";
 
 interface ViewOptionsDropdownProps {
@@ -39,14 +39,19 @@ export const ViewOptionsDropdown = ({
   onViewChange, 
   selectedItemId,
   selectedItemType,
-  onRefresh 
+  onRefresh,
+  updateMergeableClientFolders,
+  updateHighlightMergeTargets 
 }: ViewOptionsDropdownProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false); // New state
+  const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
-  const [clientName, setClientName] = useState(""); // New state for client name
+  const [clientName, setClientName] = useState("");
   const [actionType, setActionType] = useState<"folder" | "file">("folder");
+  const [isMerging, setIsMerging] = useState(false);
+  const [mergeableClientFolders, setMergeableClientFolders] = useState<Record<string, string[]>>({});
+  const [folderNames, setFolderNames] = useState<Record<string, string>>({});
 
   const handleRename = async () => {
     if (!selectedItemId || !newName.trim()) return;
@@ -81,6 +86,7 @@ export const ViewOptionsDropdown = ({
   const handleMerge = async () => {
     if (!clientName.trim()) return;
 
+    setIsMerging(true);
     try {
       const success = await documentService.mergeClientFolders(clientName);
       if (success) {
@@ -92,6 +98,8 @@ export const ViewOptionsDropdown = ({
     } catch (error) {
       console.error('Error merging folders:', error);
       toast.error("Failed to merge folders");
+    } finally {
+      setIsMerging(false);
     }
   };
 
@@ -105,6 +113,50 @@ export const ViewOptionsDropdown = ({
     } else if (action === 'merge') {
       setIsMergeDialogOpen(true);
     }
+  };
+
+  const handlePreviewMerge = async (searchClientName: string) => {
+    if (!searchClientName.trim()) {
+      if (updateMergeableClientFolders) {
+        updateMergeableClientFolders({});
+      }
+      return;
+    }
+    
+    try {
+      const { mergeableClientFolders: mergeables, folderNames: names } = 
+        await documentService.findMergeableFolders(searchClientName);
+      
+      setMergeableClientFolders(mergeables);
+      setFolderNames(names);
+      
+      if (updateMergeableClientFolders) {
+        updateMergeableClientFolders(mergeables);
+      }
+      
+      // Enable highlight mode only when we have found mergeable folders
+      if (updateHighlightMergeTargets) {
+        updateHighlightMergeTargets(Object.keys(mergeables).length > 0);
+      }
+    } catch (error) {
+      console.error('Error finding mergeable folders:', error);
+    }
+  };
+  
+  const handleCancelPreview = () => {
+    if (updateMergeableClientFolders) {
+      updateMergeableClientFolders({});
+    }
+    if (updateHighlightMergeTargets) {
+      updateHighlightMergeTargets(false);
+    }
+  };
+
+  // Determine if tools should be disabled based on selection
+  const isFileActionDisabled = (actionType: 'folder' | 'file') => {
+    if (!selectedItemId) return true;
+    if (selectedItemType !== actionType) return true;
+    return false;
   };
 
   return (
@@ -140,6 +192,8 @@ export const ViewOptionsDropdown = ({
           
           <DropdownMenuItem 
             onClick={() => handleToolAction('rename', 'folder')}
+            disabled={isFileActionDisabled('folder')}
+            className={isFileActionDisabled('folder') ? "opacity-50 cursor-not-allowed" : ""}
           >
             <FolderPen className="h-4 w-4 mr-2" />
             Rename Folder
@@ -147,12 +201,13 @@ export const ViewOptionsDropdown = ({
           
           <DropdownMenuItem 
             onClick={() => handleToolAction('rename', 'file')}
+            disabled={isFileActionDisabled('file')}
+            className={isFileActionDisabled('file') ? "opacity-50 cursor-not-allowed" : ""}
           >
             <FilePen className="h-4 w-4 mr-2" />
             Rename File
           </DropdownMenuItem>
           
-          {/* New Merge Folders option */}
           <DropdownMenuItem 
             onClick={() => handleToolAction('merge')}
           >
@@ -162,7 +217,8 @@ export const ViewOptionsDropdown = ({
           
           <DropdownMenuItem 
             onClick={() => handleToolAction('delete', 'folder')}
-            className="text-destructive focus:text-destructive"
+            disabled={isFileActionDisabled('folder')}
+            className={`${isFileActionDisabled('folder') ? "opacity-50 cursor-not-allowed" : ""} text-destructive focus:text-destructive`}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete Folder
@@ -170,7 +226,8 @@ export const ViewOptionsDropdown = ({
           
           <DropdownMenuItem 
             onClick={() => handleToolAction('delete', 'file')}
-            className="text-destructive focus:text-destructive"
+            disabled={isFileActionDisabled('file')}
+            className={`${isFileActionDisabled('file') ? "opacity-50 cursor-not-allowed" : ""} text-destructive focus:text-destructive`}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete File
@@ -194,13 +251,17 @@ export const ViewOptionsDropdown = ({
         onDelete={handleDelete}
       />
 
-      {/* New MergeDialog component */}
       <MergeDialog
         isOpen={isMergeDialogOpen}
         onOpenChange={setIsMergeDialogOpen}
         clientName={clientName}
         onClientNameChange={setClientName}
         onMerge={handleMerge}
+        mergeableClientFolders={mergeableClientFolders}
+        onPreviewMerge={handlePreviewMerge}
+        onCancelPreview={handleCancelPreview}
+        isMerging={isMerging}
+        folderNames={folderNames}
       />
     </>
   );

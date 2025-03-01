@@ -60,5 +60,66 @@ export const documentService = {
       console.error('Error in mergeClientFolders service:', error);
       throw error;
     }
+  },
+
+  async findMergeableFolders(clientName: string) {
+    try {
+      // Get all folder documents that match the client name pattern
+      const { data: folders, error } = await supabase
+        .from('documents')
+        .select('id, title, folder_type, parent_folder_id')
+        .eq('is_folder', true)
+        .ilike('title', `%${clientName}%`);
+      
+      if (error) throw error;
+      
+      if (!folders || folders.length <= 1) {
+        return { mergeableClientFolders: {}, folderNames: {} };
+      }
+      
+      // Group similar folders
+      const clientFolderGroups: Record<string, string[]> = {};
+      const folderNames: Record<string, string> = {};
+      
+      // First, create a map of folder names for easy lookup
+      folders.forEach(folder => {
+        folderNames[folder.id] = folder.title;
+      });
+      
+      // Then, organize folders into mergeable groups
+      folders.forEach(mainFolder => {
+        if (!clientFolderGroups[mainFolder.id]) {
+          const similarFolders = folders.filter(otherFolder => 
+            otherFolder.id !== mainFolder.id && 
+            this.areSimilarClientFolders(mainFolder.title, otherFolder.title)
+          ).map(folder => folder.id);
+          
+          if (similarFolders.length > 0) {
+            clientFolderGroups[mainFolder.id] = similarFolders;
+          }
+        }
+      });
+      
+      return { 
+        mergeableClientFolders: clientFolderGroups,
+        folderNames
+      };
+    } catch (error) {
+      console.error('Error finding mergeable folders:', error);
+      throw error;
+    }
+  },
+  
+  // Helper function to determine if two folder names are for the same client
+  areSimilarClientFolders(name1: string, name2: string) {
+    const simplifiedName1 = name1.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const simplifiedName2 = name2.toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    // Check if the names are similar (this can be improved with more sophisticated algorithms)
+    // For now, we check if they share a common substring of at least 5 characters
+    return (
+      simplifiedName1.includes(simplifiedName2.substring(0, 5)) || 
+      simplifiedName2.includes(simplifiedName1.substring(0, 5))
+    );
   }
 };
