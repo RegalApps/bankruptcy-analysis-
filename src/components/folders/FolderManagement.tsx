@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -34,8 +33,9 @@ export const FolderManagement = ({
   const [isDragging, setIsDragging] = useState(false);
   const [activeView, setActiveView] = useState<"all" | "uncategorized" | "folders">("all");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [mergeableClientFolders, setMergeableClientFolders] = useState<Record<string, string[]>>({});
+  const [highlightMergeTargets, setHighlightMergeTargets] = useState(false);
 
-  // Filter documents based on active view
   const getFilteredDocuments = () => {
     switch (activeView) {
       case "folders":
@@ -100,7 +100,20 @@ export const FolderManagement = ({
     onItemSelect(folderId, "folder");
   };
 
-  // Organize documents into proper structure
+  const handleDocumentOpen = (documentId: string) => {
+    if (onOpenDocument) {
+      onOpenDocument(documentId);
+    }
+  };
+
+  const updateMergeableClientFolders = (mergeables: Record<string, string[]>) => {
+    setMergeableClientFolders(mergeables);
+  };
+
+  const updateHighlightMergeTargets = (highlight: boolean) => {
+    setHighlightMergeTargets(highlight);
+  };
+
   const folders = documents.filter(doc => doc.is_folder);
   const uncategorizedDocuments = documents.filter(doc => !doc.is_folder && !doc.parent_folder_id);
   
@@ -115,6 +128,8 @@ export const FolderManagement = ({
               selectedItemId={selectedItemId}
               selectedItemType={selectedItemType}
               onRefresh={onRefresh}
+              updateMergeableClientFolders={updateMergeableClientFolders}
+              updateHighlightMergeTargets={updateHighlightMergeTargets}
             />
           </div>
           <FolderActionButtons 
@@ -145,7 +160,9 @@ export const FolderManagement = ({
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDocumentDrop}
-              onOpenDocument={onOpenDocument}
+              onOpenDocument={handleDocumentOpen}
+              mergeableClientFolders={mergeableClientFolders}
+              highlightMergeTargets={highlightMergeTargets}
             />
           </TabsContent>
 
@@ -153,7 +170,7 @@ export const FolderManagement = ({
             <UncategorizedTab 
               documents={uncategorizedDocuments}
               onDocumentSelect={documentId => onItemSelect(documentId, "file")}
-              onOpenDocument={onOpenDocument}
+              onOpenDocument={handleDocumentOpen}
             />
           </TabsContent>
         </Tabs>
@@ -162,7 +179,6 @@ export const FolderManagement = ({
   );
 };
 
-// Folder action buttons component
 interface FolderActionButtonsProps {
   setShowFolderDialog: (show: boolean) => void;
   showFolderDialog: boolean;

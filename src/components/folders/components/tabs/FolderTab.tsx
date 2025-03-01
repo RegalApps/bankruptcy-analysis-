@@ -12,6 +12,8 @@ interface FolderTabProps {
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent, folderId: string) => void;
   onOpenDocument?: (documentId: string) => void;
+  mergeableClientFolders?: Record<string, string[]>;
+  highlightMergeTargets?: boolean;
 }
 
 export const FolderTab = ({
@@ -23,7 +25,9 @@ export const FolderTab = ({
   onDragOver,
   onDragLeave,
   onDrop,
-  onOpenDocument
+  onOpenDocument,
+  mergeableClientFolders = {},
+  highlightMergeTargets = false
 }: FolderTabProps) => {
   // Log to help debug the folder structure
   console.log('All documents:', documents);
@@ -46,6 +50,8 @@ export const FolderTab = ({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       onOpenDocument={onOpenDocument}
+      mergeableClientFolders={mergeableClientFolders}
+      highlightMergeTargets={highlightMergeTargets}
     />
   );
 };

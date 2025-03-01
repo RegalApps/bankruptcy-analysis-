@@ -31,6 +31,8 @@ interface ViewOptionsDropdownProps {
   selectedItemId?: string;
   selectedItemType?: "folder" | "file";
   onRefresh?: () => void;
+  updateMergeableClientFolders?: (mergeables: Record<string, string[]>) => void;
+  updateHighlightMergeTargets?: (highlight: boolean) => void;
 }
 
 export const ViewOptionsDropdown = ({ 

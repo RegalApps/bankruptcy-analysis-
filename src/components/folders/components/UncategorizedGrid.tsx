@@ -2,7 +2,6 @@
 import { Document } from "@/components/DocumentList/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface UncategorizedGridProps {
   documents: Document[];
@@ -15,13 +14,9 @@ export const UncategorizedGrid = ({
   onDocumentSelect,
   onOpenDocument 
 }: UncategorizedGridProps) => {
-  const navigate = useNavigate();
-
   const handleDocumentDoubleClick = (documentId: string) => {
     if (onOpenDocument) {
       onOpenDocument(documentId);
-    } else {
-      navigate('/', { state: { selectedDocument: documentId } });
     }
   };
 
