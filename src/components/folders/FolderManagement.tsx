@@ -74,6 +74,9 @@ export const FolderManagement = ({
             newFolderName={newFolderName}
             setNewFolderName={setNewFolderName}
             onCreateFolder={handleCreateFolder}
+            folders={folders}
+            onFolderSelect={handleFolderSelect}
+            selectedFolderId={selectedFolder}
           />
         </div>
 

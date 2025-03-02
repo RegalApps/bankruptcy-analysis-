@@ -2,6 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Tag, Tags } from "lucide-react";
 import { FolderDialog } from "./FolderDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 
 interface FolderActionButtonsProps {
   setShowFolderDialog: (show: boolean) => void;
@@ -9,6 +11,9 @@ interface FolderActionButtonsProps {
   newFolderName: string;
   setNewFolderName: (name: string) => void;
   onCreateFolder: () => void;
+  folders?: { id: string; title: string }[];
+  onFolderSelect?: (folderId: string) => void;
+  selectedFolderId?: string;
 }
 
 export const FolderActionButtons = ({
@@ -16,10 +21,13 @@ export const FolderActionButtons = ({
   showFolderDialog,
   newFolderName,
   setNewFolderName,
-  onCreateFolder
+  onCreateFolder,
+  folders = [],
+  onFolderSelect,
+  selectedFolderId
 }: FolderActionButtonsProps) => {
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 items-center">
       <Button 
         variant="default" 
         size="sm"
@@ -27,6 +35,26 @@ export const FolderActionButtons = ({
       >
         + New Folder
       </Button>
+      
+      {folders.length > 0 && onFolderSelect && (
+        <Select 
+          value={selectedFolderId || ""} 
+          onValueChange={(value) => onFolderSelect(value)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select a folder" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">No folder selected</SelectItem>
+            {folders.map(folder => (
+              <SelectItem key={folder.id} value={folder.id}>
+                {folder.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      
       <FolderDialog
         showDialog={showFolderDialog}
         setShowDialog={setShowFolderDialog}
@@ -34,10 +62,12 @@ export const FolderActionButtons = ({
         setFolderName={setNewFolderName}
         onCreateFolder={onCreateFolder}
       />
+      
       <Button variant="outline" size="sm">
         <Tag className="h-4 w-4 mr-2" />
         Add Meta Tags
       </Button>
+      
       <Button variant="outline" size="sm">
         <Tags className="h-4 w-4 mr-2" />
         Manage Tags

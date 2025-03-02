@@ -13,6 +13,21 @@ export const documentService = {
     if (error) throw error;
   },
 
+  async getItemName(itemId: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('documents')
+      .select('title')
+      .eq('id', itemId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching item name:', error);
+      return null;
+    }
+
+    return data?.title || null;
+  },
+
   async deleteItem(itemId: string, itemType: "folder" | "file") {
     // Check if folder is empty
     if (itemType === 'folder') {

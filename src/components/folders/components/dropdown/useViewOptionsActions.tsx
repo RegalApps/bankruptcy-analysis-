@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { documentService } from "../services/documentService";
 
@@ -7,12 +7,16 @@ interface ViewOptionsActionsProps {
   onRefresh?: () => void;
   updateMergeableClientFolders?: (mergeables: Record<string, string[]>) => void;
   updateHighlightMergeTargets?: (highlight: boolean) => void;
+  selectedItemId?: string;
+  selectedItemType?: "folder" | "file";
 }
 
 export const useViewOptionsActions = ({
   onRefresh,
   updateMergeableClientFolders,
-  updateHighlightMergeTargets
+  updateHighlightMergeTargets,
+  selectedItemId,
+  selectedItemType
 }: ViewOptionsActionsProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -24,11 +28,18 @@ export const useViewOptionsActions = ({
   const [mergeableClientFolders, setMergeableClientFolders] = useState<Record<string, string[]>>({});
   const [folderNames, setFolderNames] = useState<Record<string, string>>({});
 
-  const handleRename = async (selectedItemId?: string) => {
-    if (!selectedItemId || !newName.trim()) return;
+  // When selected item changes, update the action type
+  useEffect(() => {
+    if (selectedItemType) {
+      setActionType(selectedItemType);
+    }
+  }, [selectedItemType]);
+
+  const handleRename = async (itemId?: string) => {
+    if (!itemId || !newName.trim()) return;
 
     try {
-      await documentService.renameItem(selectedItemId, newName);
+      await documentService.renameItem(itemId, newName);
       toast.success(`${actionType === 'folder' ? 'Folder' : 'File'} renamed successfully`);
       setIsRenameDialogOpen(false);
       setNewName("");
@@ -39,11 +50,11 @@ export const useViewOptionsActions = ({
     }
   };
 
-  const handleDelete = async (selectedItemId?: string) => {
-    if (!selectedItemId) return;
+  const handleDelete = async (itemId?: string) => {
+    if (!itemId) return;
 
     try {
-      await documentService.deleteItem(selectedItemId, actionType);
+      await documentService.deleteItem(itemId, actionType);
       toast.success(`${actionType === 'folder' ? 'Folder' : 'File'} deleted successfully`);
       setIsDeleteDialogOpen(false);
       if (onRefresh) onRefresh();
@@ -76,10 +87,26 @@ export const useViewOptionsActions = ({
 
   const handleToolAction = (action: 'rename' | 'delete' | 'merge', type?: 'folder' | 'file') => {
     if (action === 'rename') {
-      setActionType(type || 'folder');
-      setIsRenameDialogOpen(true);
+      const effectiveType = type || selectedItemType || 'folder';
+      setActionType(effectiveType);
+      if (selectedItemId) {
+        // Pre-load the current name if we have it
+        documentService.getItemName(selectedItemId)
+          .then(name => {
+            if (name) setNewName(name);
+            setIsRenameDialogOpen(true);
+          })
+          .catch(err => {
+            console.error("Failed to get item name:", err);
+            setNewName("");
+            setIsRenameDialogOpen(true);
+          });
+      } else {
+        setNewName("");
+        setIsRenameDialogOpen(true);
+      }
     } else if (action === 'delete') {
-      setActionType(type || 'folder');
+      setActionType(type || selectedItemType || 'folder');
       setIsDeleteDialogOpen(true);
     } else if (action === 'merge') {
       setIsMergeDialogOpen(true);
@@ -87,9 +114,13 @@ export const useViewOptionsActions = ({
   };
 
   // Determine if tools should be disabled based on selection
-  const isFileActionDisabled = (actionType: 'folder' | 'file', selectedItemId?: string, selectedItemType?: 'folder' | 'file') => {
-    if (!selectedItemId) return true;
-    if (selectedItemType !== actionType) return true;
+  const isFileActionDisabled = (
+    actionType: 'folder' | 'file', 
+    itemId?: string, 
+    itemType?: 'folder' | 'file'
+  ) => {
+    if (!itemId) return true;
+    if (itemType !== actionType) return true;
     return false;
   };
 

@@ -45,7 +45,13 @@ export const ViewOptionsDropdown = ({
     folderNames, setFolderNames,
     handleRename, handleDelete, handleMerge, 
     handleToolAction, isFileActionDisabled
-  } = useViewOptionsActions({ onRefresh, updateMergeableClientFolders, updateHighlightMergeTargets });
+  } = useViewOptionsActions({ 
+    onRefresh, 
+    updateMergeableClientFolders, 
+    updateHighlightMergeTargets,
+    selectedItemId,
+    selectedItemType
+  });
 
   const {
     handleClientNameChange,
