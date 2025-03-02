@@ -8,23 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { 
-  ChevronDown, 
-  Grid, 
-  FolderPlus, 
-  FileText, 
-  FolderPen, 
-  FilePen, 
-  Trash2,
-  Settings,
-  FolderSync
-} from "lucide-react";
+import { ChevronDown, Settings } from "lucide-react";
 import { RenameDialog } from "./dialogs/RenameDialog";
 import { DeleteDialog } from "./dialogs/DeleteDialog";
 import { MergeDialog } from "./dialogs/MergeDialog"; 
-import { documentService } from "./services/documentService";
+import { ViewsSection } from "./dropdown/ViewsSection";
+import { ToolsSection } from "./dropdown/ToolsSection";
+import { useViewOptionsActions } from "./dropdown/useViewOptionsActions";
+import { useMergeFoldersHandler } from "./dropdown/MergeFoldersHandler";
 
 interface ViewOptionsDropdownProps {
   onViewChange: (view: "all" | "uncategorized" | "folders") => void;
@@ -43,121 +34,38 @@ export const ViewOptionsDropdown = ({
   updateMergeableClientFolders,
   updateHighlightMergeTargets 
 }: ViewOptionsDropdownProps) => {
-  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [clientName, setClientName] = useState("");
-  const [actionType, setActionType] = useState<"folder" | "file">("folder");
-  const [isMerging, setIsMerging] = useState(false);
-  const [mergeableClientFolders, setMergeableClientFolders] = useState<Record<string, string[]>>({});
-  const [folderNames, setFolderNames] = useState<Record<string, string>>({});
+  const {
+    isRenameDialogOpen, setIsRenameDialogOpen,
+    isDeleteDialogOpen, setIsDeleteDialogOpen,
+    isMergeDialogOpen, setIsMergeDialogOpen,
+    newName, setNewName,
+    clientName, setClientName,
+    actionType, isMerging,
+    mergeableClientFolders, setMergeableClientFolders,
+    folderNames, setFolderNames,
+    handleRename, handleDelete, handleMerge, 
+    handleToolAction, isFileActionDisabled
+  } = useViewOptionsActions({ onRefresh, updateMergeableClientFolders, updateHighlightMergeTargets });
 
-  const handleRename = async () => {
-    if (!selectedItemId || !newName.trim()) return;
+  const {
+    handleClientNameChange,
+    handlePreviewMerge,
+    handleCancelPreview
+  } = useMergeFoldersHandler({
+    clientName,
+    setMergeableClientFolders,
+    setFolderNames,
+    updateMergeableClientFolders,
+    updateHighlightMergeTargets
+  });
 
-    try {
-      await documentService.renameItem(selectedItemId, newName);
-      toast.success(`${actionType === 'folder' ? 'Folder' : 'File'} renamed successfully`);
-      setIsRenameDialogOpen(false);
-      setNewName("");
-      if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error('Error renaming:', error);
-      toast.error(`Failed to rename ${actionType}`);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedItemId) return;
-
-    try {
-      await documentService.deleteItem(selectedItemId, actionType);
-      toast.success(`${actionType === 'folder' ? 'Folder' : 'File'} deleted successfully`);
-      setIsDeleteDialogOpen(false);
-      if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error('Error deleting:', error);
-      const errorMessage = error instanceof Error ? error.message : `Failed to delete ${actionType}`;
-      toast.error(errorMessage);
-    }
-  };
-
-  const handleMerge = async () => {
-    if (!clientName.trim()) return;
-
-    setIsMerging(true);
-    try {
-      const success = await documentService.mergeClientFolders(clientName);
-      if (success) {
-        toast.success(`Folders for client "${clientName}" merged successfully`);
-        setIsMergeDialogOpen(false);
-        setClientName("");
-        if (onRefresh) onRefresh();
-      }
-    } catch (error) {
-      console.error('Error merging folders:', error);
-      toast.error("Failed to merge folders");
-    } finally {
-      setIsMerging(false);
-    }
-  };
-
-  const handleToolAction = (action: 'rename' | 'delete' | 'merge', type?: 'folder' | 'file') => {
-    if (action === 'rename') {
-      setActionType(type || 'folder');
-      setIsRenameDialogOpen(true);
-    } else if (action === 'delete') {
-      setActionType(type || 'folder');
-      setIsDeleteDialogOpen(true);
-    } else if (action === 'merge') {
-      setIsMergeDialogOpen(true);
-    }
-  };
-
-  const handlePreviewMerge = async (searchClientName: string) => {
-    if (!searchClientName.trim()) {
-      if (updateMergeableClientFolders) {
-        updateMergeableClientFolders({});
-      }
-      return;
-    }
-    
-    try {
-      const { mergeableClientFolders: mergeables, folderNames: names } = 
-        await documentService.findMergeableFolders(searchClientName);
-      
-      setMergeableClientFolders(mergeables);
-      setFolderNames(names);
-      
-      if (updateMergeableClientFolders) {
-        updateMergeableClientFolders(mergeables);
-      }
-      
-      // Enable highlight mode only when we have found mergeable folders
-      if (updateHighlightMergeTargets) {
-        updateHighlightMergeTargets(Object.keys(mergeables).length > 0);
-      }
-    } catch (error) {
-      console.error('Error finding mergeable folders:', error);
-    }
-  };
+  // Create specific handlers for the current item
+  const onRename = () => handleRename(selectedItemId);
+  const onDelete = () => handleDelete(selectedItemId);
   
-  const handleCancelPreview = () => {
-    if (updateMergeableClientFolders) {
-      updateMergeableClientFolders({});
-    }
-    if (updateHighlightMergeTargets) {
-      updateHighlightMergeTargets(false);
-    }
-  };
-
-  // Determine if tools should be disabled based on selection
-  const isFileActionDisabled = (actionType: 'folder' | 'file') => {
-    if (!selectedItemId) return true;
-    if (selectedItemType !== actionType) return true;
-    return false;
-  };
+  // Check if file actions should be disabled for current selection
+  const checkIsFileActionDisabled = (actionType: 'folder' | 'file') => 
+    isFileActionDisabled(actionType, selectedItemId, selectedItemType);
 
   return (
     <>
@@ -171,67 +79,19 @@ export const ViewOptionsDropdown = ({
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>Document Views</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onViewChange("all")} role="button">
-            <Grid className="h-4 w-4 mr-2" />
-            All Documents
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onViewChange("folders")} role="button">
-            <FolderPlus className="h-4 w-4 mr-2" />
-            Folder View
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onViewChange("uncategorized")} role="button">
-            <FileText className="h-4 w-4 mr-2" />
-            Uncategorized
-          </DropdownMenuItem>
-
+          
+          <ViewsSection onViewChange={onViewChange} />
+          
           <DropdownMenuSeparator />
           <DropdownMenuLabel>
             <Settings className="h-4 w-4 inline mr-2" />
             Tools
           </DropdownMenuLabel>
           
-          <DropdownMenuItem 
-            onClick={() => handleToolAction('rename', 'folder')}
-            disabled={isFileActionDisabled('folder')}
-            className={isFileActionDisabled('folder') ? "opacity-50 cursor-not-allowed" : ""}
-          >
-            <FolderPen className="h-4 w-4 mr-2" />
-            Rename Folder
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => handleToolAction('rename', 'file')}
-            disabled={isFileActionDisabled('file')}
-            className={isFileActionDisabled('file') ? "opacity-50 cursor-not-allowed" : ""}
-          >
-            <FilePen className="h-4 w-4 mr-2" />
-            Rename File
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => handleToolAction('merge')}
-          >
-            <FolderSync className="h-4 w-4 mr-2" />
-            Merge Client Folders
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => handleToolAction('delete', 'folder')}
-            disabled={isFileActionDisabled('folder')}
-            className={`${isFileActionDisabled('folder') ? "opacity-50 cursor-not-allowed" : ""} text-destructive focus:text-destructive`}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Folder
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => handleToolAction('delete', 'file')}
-            disabled={isFileActionDisabled('file')}
-            className={`${isFileActionDisabled('file') ? "opacity-50 cursor-not-allowed" : ""} text-destructive focus:text-destructive`}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete File
-          </DropdownMenuItem>
+          <ToolsSection 
+            handleToolAction={handleToolAction}
+            isFileActionDisabled={checkIsFileActionDisabled}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -241,14 +101,14 @@ export const ViewOptionsDropdown = ({
         itemType={actionType}
         newName={newName}
         onNewNameChange={setNewName}
-        onRename={handleRename}
+        onRename={onRename}
       />
 
       <DeleteDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         itemType={actionType}
-        onDelete={handleDelete}
+        onDelete={onDelete}
       />
 
       <MergeDialog
