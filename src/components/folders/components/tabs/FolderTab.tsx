@@ -29,21 +29,6 @@ export const FolderTab = ({
   mergeableClientFolders = {},
   highlightMergeTargets = false
 }: FolderTabProps) => {
-  // Debug logging
-  console.log('All documents:', documents);
-  console.log('Folders:', folders);
-  console.log('Mergeable folders:', mergeableClientFolders);
-  console.log('Highlight merge targets:', highlightMergeTargets);
-  
-  if (highlightMergeTargets) {
-    console.log('Folders that can be merged:',
-      folders.filter(f => 
-        Object.keys(mergeableClientFolders).includes(f.id) || 
-        Object.values(mergeableClientFolders).flat().includes(f.id)
-      ).map(f => f.title)
-    );
-  }
-
   return (
     <FolderGrid
       folders={folders}
