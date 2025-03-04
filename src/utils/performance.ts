@@ -1,5 +1,6 @@
 
-import { toast } from "@/components/ui/use-toast";
+import React from "react";
+import { toast } from "@/hooks/use-toast";
 
 interface PerformanceMetrics {
   pageLoadTime: number;
@@ -67,15 +68,16 @@ export const measurePagePerformance = (): Promise<PerformanceMetrics> => {
 export const showPerformanceToast = async (pageName: string) => {
   const metrics = await measurePagePerformance();
   
+  // Create the description content as a string instead of JSX
+  const description = `
+    Page load: ${metrics.pageLoadTime.toFixed(0)}ms
+    First paint: ${metrics.firstPaint.toFixed(0)}ms
+    Full render: ${metrics.fullRender.toFixed(0)}ms
+  `;
+  
   toast({
     title: `${pageName} Performance`,
-    description: (
-      <div className="space-y-1 mt-2">
-        <div className="text-xs">Page load: {metrics.pageLoadTime.toFixed(0)}ms</div>
-        <div className="text-xs">First paint: {metrics.firstPaint.toFixed(0)}ms</div>
-        <div className="text-xs">Full render: {metrics.fullRender.toFixed(0)}ms</div>
-      </div>
-    ),
+    description: description,
     duration: 5000,
   });
 };
