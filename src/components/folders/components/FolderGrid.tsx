@@ -3,6 +3,8 @@ import { Document } from "@/components/DocumentList/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 import { FolderCard } from "./FolderCard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface FolderGridProps {
   folders: Document[];
@@ -46,26 +48,41 @@ export const FolderGrid = ({
   };
 
   return (
-    <ScrollArea className="h-[400px]">
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {folders.map((folder) => (
-          <FolderCard
-            key={folder.id}
-            folder={folder}
-            isExpanded={expandedFolder === folder.id}
-            isSelected={selectedFolder === folder.id}
-            isDragging={isDragging}
-            isPartOfMergeGroup={isPartOfMergeGroup(folder.id)}
-            documents={documents}
-            onFolderSelect={onFolderSelect}
-            onFolderDoubleClick={handleFolderDoubleClick}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            onOpenDocument={onOpenDocument}
-          />
-        ))}
-      </div>
-    </ScrollArea>
+    <div className="space-y-4">
+      {folders.length === 0 ? (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            No folders found. Create a new folder to organize your documents.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <div className="text-sm text-muted-foreground mb-2">
+          <span className="font-medium">Tip:</span> Click on a folder to select it, double-click to expand and see documents
+        </div>
+      )}
+      
+      <ScrollArea className="h-[400px]">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {folders.map((folder) => (
+            <FolderCard
+              key={folder.id}
+              folder={folder}
+              isExpanded={expandedFolder === folder.id}
+              isSelected={selectedFolder === folder.id}
+              isDragging={isDragging}
+              isPartOfMergeGroup={isPartOfMergeGroup(folder.id)}
+              documents={documents}
+              onFolderSelect={onFolderSelect}
+              onFolderDoubleClick={handleFolderDoubleClick}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+              onOpenDocument={onOpenDocument}
+            />
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
   );
 };
