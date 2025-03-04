@@ -38,14 +38,14 @@ export const FolderActionButtons = ({
       
       {folders.length > 0 && onFolderSelect && (
         <Select 
-          value={selectedFolderId || ""} 
+          value={selectedFolderId || undefined} 
           onValueChange={(value) => onFolderSelect(value)}
         >
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select a folder" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">No folder selected</SelectItem>
+            {/* Removed the empty value SelectItem that was causing the error */}
             {folders.map(folder => (
               <SelectItem key={folder.id} value={folder.id}>
                 {folder.title}

@@ -8,6 +8,7 @@ import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocation } from "react-router-dom";
+import { showPerformanceToast } from "@/utils/performance";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -20,6 +21,11 @@ const Index = () => {
       setSelectedDocument(location.state.selectedDocument);
     }
   }, [location]);
+
+  useEffect(() => {
+    // Measure and show performance metrics when the page loads
+    showPerformanceToast("Home Page");
+  }, []);
 
   useEffect(() => {
     console.log("Initializing auth state...");

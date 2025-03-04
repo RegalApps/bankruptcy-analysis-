@@ -8,6 +8,8 @@ import { TaskManager } from "./TaskManager";
 import { VersionTab } from "./VersionTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import logger from "@/utils/logger";
+import { useEffect } from "react";
+import { showPerformanceToast } from "@/utils/performance";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -15,6 +17,13 @@ interface DocumentViewerProps {
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) => {
   const { document, loading, fetchDocumentDetails } = useDocumentViewer(documentId);
+
+  useEffect(() => {
+    // Measure and show performance metrics when the document viewer loads
+    if (!loading && document) {
+      showPerformanceToast("Document Viewer");
+    }
+  }, [loading, document]);
 
   logger.debug('Document data in DocumentViewer:', document);
 
