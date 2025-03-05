@@ -6,14 +6,12 @@ import { FolderManagement } from "@/components/folders/FolderManagement";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { showPerformanceToast } from "@/utils/performance";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { AlertCircle, FolderTree, Info, MessageSquareText } from "lucide-react";
+import { AlertCircle, MessageSquareText } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FolderNavigationBreadcrumb } from "@/components/folders/components/FolderNavigationBreadcrumb";
-import { RecentDocuments } from "@/components/folders/components/RecentDocuments";
 
 export const DocumentsPage = () => {
-  const { documents, isLoading, error, refetch } = useDocuments();
+  const { documents, isLoading, refetch } = useDocuments();
   const [selectedItemId, setSelectedItemId] = useState<string | undefined>();
   const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>();
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -45,7 +43,7 @@ export const DocumentsPage = () => {
     }
   };
 
-  if (error) {
+  if (!documents) {
     return (
       <div className="flex h-screen overflow-hidden bg-background">
         <MainSidebar />
@@ -89,14 +87,6 @@ export const DocumentsPage = () => {
             currentFolderId={currentFolderId}
             onNavigate={handleFolderNavigate}
           />
-          
-          {/* Recent documents section */}
-          {!currentFolderId && (
-            <RecentDocuments 
-              documents={documents || []}
-              onOpenDocument={handleOpenDocument}
-            />
-          )}
           
           {/* Main folder management component */}
           <FolderManagement 
