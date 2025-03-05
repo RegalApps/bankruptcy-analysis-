@@ -36,6 +36,38 @@ export const processExcelData = async (
     const extractedClientName = extractClientNameFromWorksheet(worksheet, storagePath);
     setClientName(extractedClientName);
 
+    // Create notification if client name is detected
+    if (documentId && extractedClientName) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.functions.invoke('handle-notifications', {
+            body: {
+              action: 'create',
+              userId: user.id,
+              notification: {
+                title: 'Client Identified',
+                message: `Client "${extractedClientName}" identified in financial data`,
+                type: 'info',
+                category: 'file_activity',
+                priority: 'normal',
+                action_url: `/documents/${documentId}`,
+                metadata: {
+                  documentId,
+                  clientName: extractedClientName,
+                  documentType: 'excel',
+                  detectedAt: new Date().toISOString()
+                }
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error creating client detection notification:", error);
+        // Continue processing even if notification fails
+      }
+    }
+
     // Update metadata with client name immediately
     if (documentId && extractedClientName) {
       await supabase

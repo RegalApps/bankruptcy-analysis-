@@ -70,6 +70,28 @@ export const useCreateTask = (documentId: string) => {
         }
       });
 
+      // Add a second notification for task deadline
+      await supabase.functions.invoke('handle-notifications', {
+        body: {
+          action: 'create',
+          userId: user.id,
+          notification: {
+            title: 'Task Deadline Reminder',
+            message: `Task "${risk.type}" is due in ${dueDays} days`,
+            type: 'reminder',
+            category: 'reminder',
+            priority: risk.severity === 'high' ? 'high' : 'normal',
+            action_url: `/documents/${documentId}`,
+            metadata: {
+              documentId,
+              taskId: taskData?.id,
+              dueDate: dueDate.toISOString(),
+              remainingDays: dueDays
+            }
+          }
+        }
+      });
+
       return taskData;
     } catch (error) {
       console.error('Error creating task:', error);

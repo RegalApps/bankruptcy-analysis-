@@ -58,6 +58,29 @@ export const ExcelPreview: React.FC<ExcelPreviewProps> = ({
             clientName,
             "Excel"
           );
+          
+          // Create notification about Excel file processing
+          await supabase.functions.invoke('handle-notifications', {
+            body: {
+              action: 'create',
+              userId: user.id,
+              notification: {
+                title: 'Financial Data Processed',
+                message: `Excel data for client "${clientName}" has been processed`,
+                type: 'info',
+                category: 'file_activity',
+                priority: 'normal',
+                action_url: `/documents/${documentId}`,
+                metadata: {
+                  documentId,
+                  clientName,
+                  documentType: 'excel',
+                  processedAt: new Date().toISOString()
+                }
+              }
+            }
+          });
+          
         } catch (err) {
           console.error("Error organizing Excel file:", err);
         }

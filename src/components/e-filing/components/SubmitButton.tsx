@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface SubmitButtonProps {
   isAnalyzing: boolean;
@@ -13,10 +14,44 @@ export const SubmitButton = ({
   overallStatus, 
   onValidationComplete 
 }: SubmitButtonProps) => {
+  const handleClick = async () => {
+    onValidationComplete(overallStatus === 'passed');
+    
+    // Only create notification if validation is passed
+    if (overallStatus === 'passed') {
+      try {
+        const userData = await supabase.auth.getUser();
+        if (userData.data.user) {
+          await supabase.functions.invoke('handle-notifications', {
+            body: {
+              action: 'create',
+              userId: userData.data.user.id,
+              notification: {
+                title: 'Document Validated Successfully',
+                message: 'Your document has passed validation and is ready for e-filing',
+                type: 'success',
+                category: 'file_activity',
+                priority: 'normal',
+                action_url: '/e-filing',
+                metadata: {
+                  validationStatus: 'passed',
+                  timestamp: new Date().toISOString()
+                }
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error creating validation notification:', error);
+        // Continue with the process even if notification fails
+      }
+    }
+  };
+  
   return (
     <Button 
       className="w-full mt-6"
-      onClick={() => onValidationComplete(overallStatus === 'passed')}
+      onClick={handleClick}
       disabled={isAnalyzing || overallStatus === 'failed'}
     >
       {isAnalyzing ? (

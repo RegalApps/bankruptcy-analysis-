@@ -21,15 +21,44 @@ export const DocumentUpload = () => {
 
       if (uploadError) throw uploadError;
 
-      const { error: dbError } = await supabase
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      const { data: documentData, error: dbError } = await supabase
         .from('documents')
         .insert({
           title: file.name,
           file_path: filePath,
-          status: 'pending'
-        });
+          status: 'pending',
+          user_id: user?.id
+        })
+        .select()
+        .single();
 
       if (dbError) throw dbError;
+
+      // Create notification for document upload
+      await supabase.functions.invoke('handle-notifications', {
+        body: {
+          action: 'create',
+          userId: user?.id,
+          notification: {
+            title: 'Document Uploaded',
+            message: `"${file.name}" has been uploaded successfully`,
+            type: 'info',
+            category: 'file_activity',
+            priority: 'normal',
+            action_url: `/documents/${documentData.id}`,
+            metadata: {
+              documentId: documentData.id,
+              fileName: file.name,
+              fileSize: file.size,
+              uploadedAt: new Date().toISOString()
+            }
+          }
+        }
+      });
 
       toast({
         title: "Success",

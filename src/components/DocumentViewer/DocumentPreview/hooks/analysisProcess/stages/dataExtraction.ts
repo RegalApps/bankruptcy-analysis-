@@ -29,4 +29,33 @@ export const dataExtraction = async (
     
   // Update document status
   await updateAnalysisStatus(documentRecord, 'data_extraction', 'classification_completed');
+  
+  // Create notification about data extraction phase
+  try {
+    const userData = await supabase.auth.getUser();
+    if (userData.data.user) {
+      await supabase.functions.invoke('handle-notifications', {
+        body: {
+          action: 'create',
+          userId: userData.data.user.id,
+          notification: {
+            title: 'Document Data Extraction',
+            message: `Data extraction for "${documentRecord.title}" is now complete`,
+            type: 'info',
+            category: 'file_activity',
+            priority: 'normal',
+            action_url: `/documents/${documentRecord.id}`,
+            metadata: {
+              documentId: documentRecord.id,
+              phase: 'data_extraction',
+              completed: new Date().toISOString()
+            }
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error creating notification for data extraction:", error);
+    // Continue with the process even if notification creation fails
+  }
 };

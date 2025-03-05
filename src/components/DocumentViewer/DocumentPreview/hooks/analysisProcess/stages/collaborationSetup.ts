@@ -8,7 +8,7 @@ export const collaborationSetup = async (
   documentRecord: DocumentRecord,
   documentText: string,
   isForm76: boolean,
-  context: AnalysisProcessProps & { isForm76: boolean }
+  context: AnalysisProcessProps & { isForm76?: boolean }
 ) => {
   const { setProcessingStage, setProgress } = context;
   

@@ -101,6 +101,34 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
         setUploadStep("Performing document analysis and risk assessment...");
       }
 
+      // Create notification for document upload
+      try {
+        await supabase.functions.invoke('handle-notifications', {
+          body: {
+            action: 'create',
+            userId: user.id,
+            notification: {
+              title: 'Document Upload Started',
+              message: `"${file.name}" has been uploaded and is being processed`,
+              type: 'info',
+              category: 'file_activity',
+              priority: 'normal',
+              action_url: `/documents/${documentData.id}`,
+              metadata: {
+                documentId: documentData.id,
+                fileName: file.name,
+                fileType: isForm76 ? 'form-76' : (file.type.includes('excel') ? 'excel' : 'document'),
+                processingStage: 'upload_complete',
+                uploadedAt: new Date().toISOString()
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Error creating notification:", error);
+        // Continue processing even if notification fails
+      }
+
       // Trigger document analysis using the edge function
       const { error: analysisError } = await supabase.functions.invoke('analyze-document', {
         body: { 
@@ -125,6 +153,32 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
 
       setUploadProgress(100);
       setUploadStep("Upload complete!");
+
+      // Create notification for successful processing
+      try {
+        await supabase.functions.invoke('handle-notifications', {
+          body: {
+            action: 'create',
+            userId: user.id,
+            notification: {
+              title: 'Document Processing Complete',
+              message: `"${file.name}" has been fully processed`,
+              type: 'success',
+              category: 'file_activity',
+              priority: 'normal',
+              action_url: `/documents/${documentData.id}`,
+              metadata: {
+                documentId: documentData.id,
+                fileName: file.name,
+                processingStage: 'complete',
+                completedAt: new Date().toISOString()
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Error creating completion notification:", error);
+      }
 
       toast({
         title: "Success",
