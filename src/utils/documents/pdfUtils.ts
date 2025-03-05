@@ -88,9 +88,9 @@ const fallbackExtraction = async (url: string): Promise<string> => {
   try {
     console.log('Using fallback extraction method for:', url);
     
-    // Try with a direct fetch first
-    const fetchOptions = { 
-      cache: 'no-store',
+    // Try with a direct fetch first - fix the RequestInit type issue
+    const fetchOptions: RequestInit = { 
+      cache: 'no-store' as RequestCache,
       headers: { 'Cache-Control': 'no-cache' }
     };
     
