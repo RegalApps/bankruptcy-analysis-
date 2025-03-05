@@ -29,7 +29,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
       console.log('Fetching document record for path:', storagePath);
       const { data: documentRecord, error: fetchError } = await supabase
         .from('documents')
-        .select('id, title')
+        .select('id, title, metadata')
         .eq('storage_path', storagePath)
         .maybeSingle();
 
@@ -61,31 +61,43 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
       setProgress(40);
       
       // Step 3: Entity recognition - detect if it's Form 76
-      setAnalysisStep("Identifying Form 76 information and client details...");
+      setAnalysisStep("Identifying document type and client details...");
       setProgress(50);
-      const isForm76 = documentText.toLowerCase().includes('form 76') || 
-                       documentText.toLowerCase().includes('f76') ||
-                       documentRecord.title.toLowerCase().includes('form 76') ||
-                       documentRecord.title.toLowerCase().includes('f76');
+      
+      // Check if the document is a Form 76 from metadata or content
+      const metadata = documentRecord.metadata || {};
+      const isForm76 = 
+        metadata.formType === 'form-76' ||
+        documentRecord.title.toLowerCase().includes('form 76') || 
+        documentRecord.title.toLowerCase().includes('f76') ||
+        documentText.toLowerCase().includes('form 76') ||
+        documentText.toLowerCase().includes('f76');
                       
       console.log('Is document Form 76:', isForm76);
       
       // Step 4: Perform regulatory compliance check
-      setAnalysisStep("Performing regulatory compliance analysis for Form 76...");
+      setAnalysisStep(isForm76 
+        ? "Performing regulatory compliance analysis for Form 76..." 
+        : "Analyzing document content and regulatory compliance...");
       setProgress(65);
       
       // Step 5: Risk assessment
-      setAnalysisStep("Conducting risk assessment for Form 76 and generating mitigation strategies...");
+      setAnalysisStep(isForm76
+        ? "Conducting risk assessment for Form 76 and generating mitigation strategies..."
+        : "Performing risk assessment and extracting key document information...");
       setProgress(80);
       
-      // Step 6: Submit for analysis with Form 76 specific processing
-      setAnalysisStep("Finalizing Form 76 analysis and organizing document structure...");
+      // Step 6: Submit for analysis
+      setAnalysisStep(isForm76
+        ? "Finalizing Form 76 analysis and organizing document structure..."
+        : "Finalizing document analysis and organization...");
       setProgress(90);
       console.log('Submitting to analyze-document function with document ID:', documentRecord.id);
+      
       const { data, error } = await supabase.functions.invoke('analyze-document', {
         body: { 
-          documentText: documentText,
           documentId: documentRecord.id,
+          documentText: documentText,
           includeRegulatory: true,
           includeClientExtraction: true,
           title: documentRecord.title,

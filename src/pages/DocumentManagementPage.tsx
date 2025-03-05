@@ -63,12 +63,14 @@ export const DocumentManagementPage = () => {
 
       // Update progress for upload
       setUploadProgress(15);
-      setUploadStep("Uploading document to secure storage...");
+      setUploadStep("Preparing to upload document...");
+      
+      setTimeout(() => {
+        setUploadProgress(25);
+        setUploadStep("Uploading document to secure storage...");
+      }, 500);
       
       // Actual upload process starts
-      setUploadProgress(25);
-      
-      // Upload document data
       const documentData = await uploadDocument(file);
       
       setUploadProgress(50);
@@ -144,9 +146,11 @@ export const DocumentManagementPage = () => {
         description: error instanceof Error ? error.message : "Failed to upload document. Please try again."
       });
     } finally {
-      setIsUploading(false);
-      setUploadStep("");
-      setUploadProgress(0);
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadStep("");
+        setUploadProgress(0);
+      }, 2000);
     }
   };
 

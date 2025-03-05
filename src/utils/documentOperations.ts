@@ -8,11 +8,15 @@ import logger from '@/utils/logger';
  */
 export const uploadDocument = async (file: File) => {
   try {
+    logger.info(`Starting document upload process for: ${file.name}`);
+    
     // First upload the file to storage
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
     const filePath = `${fileName}`;
 
+    logger.info(`Uploading file to storage path: ${filePath}`);
+    
     // Upload file to Supabase storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('documents')
@@ -23,6 +27,8 @@ export const uploadDocument = async (file: File) => {
       throw uploadError;
     }
 
+    logger.info('File uploaded successfully to storage');
+    
     // Get the public URL for the uploaded file
     const { data: urlData } = supabase.storage
       .from('documents')
@@ -33,9 +39,12 @@ export const uploadDocument = async (file: File) => {
                     file.name.toLowerCase().includes('f76') || 
                     file.name.toLowerCase().includes('form76');
     
+    logger.info(`Document identified as Form 76: ${isForm76}`);
+    
     // Get user ID for the document ownership
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      logger.error('User not authenticated');
       throw new Error('User not authenticated. Please sign in again.');
     }
 
@@ -50,10 +59,12 @@ export const uploadDocument = async (file: File) => {
         storage_path: filePath,
         is_folder: false,
         user_id: user.id, // Add user_id field to fix RLS policy
+        ai_processing_status: 'pending',
         metadata: {
           formType: isForm76 ? 'form-76' : null,
           uploadDate: new Date().toISOString(),
-          client_name: isForm76 ? extractClientName(file.name) : 'Untitled Client'
+          client_name: isForm76 ? extractClientName(file.name) : 'Untitled Client',
+          ocr_status: 'pending'
         }
       })
       .select()
@@ -64,6 +75,26 @@ export const uploadDocument = async (file: File) => {
       throw documentError;
     }
 
+    logger.info(`Document record created with ID: ${documentData.id}`);
+    
+    // Trigger document analysis using the edge function
+    logger.info('Triggering document analysis process');
+    const { error: analysisError } = await supabase.functions.invoke('analyze-document', {
+      body: { 
+        documentId: documentData.id,
+        includeRegulatory: true,
+        includeClientExtraction: true,
+        title: file.name,
+        extractionMode: 'comprehensive',
+        formType: isForm76 ? 'form-76' : 'unknown'
+      }
+    });
+
+    if (analysisError) {
+      logger.error('Error triggering analysis:', analysisError);
+      // Continue anyway, the analysis might be running in the background
+    }
+    
     // Organize document into appropriate folders
     if (documentData) {
       // Extract client name and form number from metadata or file name
