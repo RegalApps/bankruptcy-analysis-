@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { organizeDocumentIntoFolders } from "@/utils/documents/folder-utils";
 
 export const ExcelPreview: React.FC<ExcelPreviewProps> = ({ 
   storagePath,

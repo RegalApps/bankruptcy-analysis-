@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExcelData } from '../types';
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
 
 export const useExcelPreview = (storagePath: string) => {
   const [data, setData] = useState<ExcelData | null>(null);
@@ -182,7 +182,6 @@ export const useExcelPreview = (storagePath: string) => {
     }
   }, [storagePath, toast]);
 
-  // Helper function to extract client name from worksheet
   const extractClientNameFromWorksheet = (worksheet: any): string | null => {
     try {
       // Convert just the first few rows to check for client name
@@ -224,7 +223,6 @@ export const useExcelPreview = (storagePath: string) => {
     }
   };
 
-  // Background function to organize document into folders
   const organizeFolder = async (documentId: string, userId: string, clientName: string) => {
     try {
       // Get document metadata

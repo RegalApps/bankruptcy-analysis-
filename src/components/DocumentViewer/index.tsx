@@ -83,10 +83,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
               />
             </TabsContent>
             <TabsContent value="analysis" className="mt-6">
-              <AnalysisPanel documentId={documentId} />
+              <AnalysisPanel document={document} onDeadlineUpdated={handleRefresh} />
             </TabsContent>
             <TabsContent value="collaboration" className="mt-6">
-              <CollaborationPanel documentId={documentId} />
+              <CollaborationPanel document={document} onCommentAdded={handleRefresh} />
             </TabsContent>
           </Tabs>
         </div>
