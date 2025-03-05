@@ -3,7 +3,7 @@ import { useState } from "react";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FolderItem } from "./components/FolderItem";
+import { FolderList } from "./components/FolderList";
 import { EmptyFolderState } from "./components/EmptyFolderState";
 import { useFolderDragDrop } from "./hooks/useFolderDragDrop";
 
@@ -53,24 +53,21 @@ export function FolderNavigation({
     <ScrollArea className="h-[calc(100vh-10rem)]">
       <div className="pr-4">
         {folders.length > 0 ? (
-          folders.map(folder => (
-            <FolderItem
-              key={folder.id}
-              folder={folder}
-              documents={documents}
-              onFolderSelect={onFolderSelect}
-              onDocumentSelect={onDocumentSelect}
-              onDocumentOpen={onDocumentOpen}
-              selectedFolderId={selectedFolderId}
-              expandedFolders={expandedFolders}
-              toggleFolder={toggleFolder}
-              handleDragStart={handleDragStart}
-              handleDragOver={handleDragOver}
-              handleDragLeave={handleDragLeave}
-              handleDrop={handleDrop}
-              dragOverFolder={dragOverFolder}
-            />
-          ))
+          <FolderList
+            folders={folders}
+            documents={documents}
+            onFolderSelect={onFolderSelect}
+            onDocumentSelect={onDocumentSelect}
+            onDocumentOpen={onDocumentOpen}
+            selectedFolderId={selectedFolderId}
+            expandedFolders={expandedFolders}
+            toggleFolder={toggleFolder}
+            handleDragStart={handleDragStart}
+            handleDragOver={handleDragOver}
+            handleDragLeave={handleDragLeave}
+            handleDrop={handleDrop}
+            dragOverFolder={dragOverFolder}
+          />
         ) : (
           <EmptyFolderState />
         )}
