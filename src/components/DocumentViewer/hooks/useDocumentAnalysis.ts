@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { useAnalysisProcess } from "./analysisProcess/useAnalysisProcess";
-import { AnalysisProcessProps } from "./analysisProcess/types";
+import { useAnalysisProcess } from "../DocumentPreview/hooks/analysisProcess/useAnalysisProcess";
+import { AnalysisProcessProps } from "../DocumentPreview/hooks/analysisProcess/types";
 
 export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: () => void) => {
   const [analyzing, setAnalyzing] = useState(false);
