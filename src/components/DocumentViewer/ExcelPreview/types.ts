@@ -11,6 +11,8 @@ export interface ExcelData {
 
 export interface ExcelTableProps {
   data: ExcelData;
+  enableSorting?: boolean;
+  enableFiltering?: boolean;
 }
 
 export interface ExcelHeaderActionsProps {
