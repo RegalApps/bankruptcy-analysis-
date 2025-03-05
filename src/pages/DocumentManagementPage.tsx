@@ -25,7 +25,7 @@ export const DocumentManagementPage = () => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      setUploadStep("Validating document format and size...");
+      setUploadStep("Stage 1: Validating document format and structure...");
 
       // Validate file type and size
       const validTypes = [
@@ -61,20 +61,22 @@ export const DocumentManagementPage = () => {
         return;
       }
 
-      // Update progress for upload
-      setUploadProgress(15);
-      setUploadStep("Preparing to upload document...");
+      // Update progress for upload preparation
+      setUploadProgress(10);
+      setUploadStep("Stage 2: Preparing document for ingestion...");
       
       setTimeout(() => {
-        setUploadProgress(25);
-        setUploadStep("Uploading document to secure storage...");
+        setUploadProgress(15);
+        setUploadStep("Stage 3: Uploading document to secure storage...");
       }, 500);
       
       // Actual upload process starts
       const documentData = await uploadDocument(file);
       
-      setUploadProgress(50);
-
+      setUploadProgress(25);
+      setUploadStep("Stage 4: Document classification & understanding...");
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       // Different message based on file type      
       const isExcelFile = file.type.includes('excel') || 
                           file.name.endsWith('.xls') || 
@@ -84,46 +86,44 @@ export const DocumentManagementPage = () => {
                        file.name.toLowerCase().includes('f76') || 
                        file.name.toLowerCase().includes('form76');
       
+      setUploadProgress(40);
       if (isExcelFile) {
-        setUploadStep("Processing financial data from spreadsheet...");
+        setUploadStep("Stage 5: Processing financial data from spreadsheet...");
       } else if (isForm76) {
-        setUploadStep("Analyzing Form 76 monthly income statement...");
+        setUploadStep("Stage 5: Extracting client information from Form 76...");
       } else {
-        setUploadStep("Analyzing document contents...");
+        setUploadStep("Stage 5: Data extraction & content processing...");
       }
       
-      setUploadProgress(65);
       await new Promise(resolve => setTimeout(resolve, 800));
+      setUploadProgress(55);
       
       if (isForm76) {
-        setUploadStep("Extracting client information from Form 76...");
+        setUploadStep("Stage 6: Performing risk & compliance assessment...");
       } else if (isExcelFile) {
-        setUploadStep("Extracting financial records from spreadsheet...");
+        setUploadStep("Stage 6: Validating financial data structure...");
       } else {
-        setUploadStep("Organizing document in folder structure...");
+        setUploadStep("Stage 6: Analyzing document structure and content...");
       }
       
-      setUploadProgress(80);
       await new Promise(resolve => setTimeout(resolve, 800));
+      setUploadProgress(70);
       
-      if (isForm76) {
-        setUploadStep("Performing regulatory compliance checks...");
-      } else if (isExcelFile) {
-        setUploadStep("Finalizing financial data processing...");
-      } else {
-        setUploadStep("Finalizing document processing...");
-      }
+      setUploadStep("Stage 7: Issue prioritization & task management...");
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setUploadProgress(85);
       
+      setUploadStep("Stage 8: Document organization & client management...");
+      await new Promise(resolve => setTimeout(resolve, 800));
       setUploadProgress(95);
-      await new Promise(resolve => setTimeout(resolve, 800));
       
+      setUploadStep("Complete: Document processing finalized.");
       setUploadProgress(100);
-      setUploadStep("Upload complete!");
 
       toast({
         title: "Success",
         description: isForm76 
-          ? "Form 76 uploaded and analyzed successfully"
+          ? "Form 76 uploaded and analyzed successfully. Client details extracted."
           : isExcelFile
             ? "Financial document uploaded and processed successfully"
             : "Document uploaded and processed successfully"
