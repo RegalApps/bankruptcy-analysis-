@@ -80,6 +80,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
                 storagePath={document.storage_path} 
                 title={document.title}
                 onAnalysisComplete={handleAnalysisComplete}
+                documentId={documentId}
               />
             </TabsContent>
             <TabsContent value="analysis" className="mt-6">

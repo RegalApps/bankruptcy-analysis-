@@ -1,12 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, AlertTriangle, RefreshCw } from "lucide-react";
+import { FileText, AlertTriangle, RefreshCw, FileSearch } from "lucide-react";
 import { ExcelPreview } from "../ExcelPreview";
 import { AnalysisProgress } from "./components/AnalysisProgress";
 import { ErrorDisplay } from "./components/ErrorDisplay";
 import { DocumentObject } from "./components/DocumentObject";
 import { PreviewControls } from "./components/PreviewControls";
 import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
+import { DocumentDiagnostics } from "./components/DocumentDiagnostics";
 import { usePreviewState } from "./hooks/usePreviewState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingState } from "../LoadingState";
@@ -16,12 +17,14 @@ interface DocumentPreviewProps {
   storagePath: string;
   title?: string;
   onAnalysisComplete?: () => void;
+  documentId?: string;
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ 
   storagePath,
   title,
-  onAnalysisComplete 
+  onAnalysisComplete,
+  documentId 
 }) => {
   const {
     previewError,
@@ -38,7 +41,9 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     handleIframeError,
     handleAnalyzeDocument,
     bypassAnalysis,
-    setBypassAnalysis
+    setBypassAnalysis,
+    diagnosticsMode,
+    toggleDiagnosticsMode
   } = usePreviewState(storagePath, title, onAnalysisComplete);
 
   if (!storagePath) {
@@ -80,6 +85,17 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 Skip Processing
               </Button>
             )}
+            {documentId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleDiagnosticsMode}
+                className="gap-1"
+              >
+                <FileSearch className="h-4 w-4" />
+                {diagnosticsMode ? "Hide Diagnostics" : "Diagnostics"}
+              </Button>
+            )}
             <PreviewControls 
               publicUrl={publicUrl} 
               onRefresh={handleRefreshPreview} 
@@ -87,6 +103,16 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           </div>
         </CardHeader>
         <CardContent>
+          {diagnosticsMode && documentId && (
+            <div className="mb-6 p-4 border rounded-lg bg-muted/20">
+              <h3 className="text-sm font-medium mb-3">Document Diagnostics</h3>
+              <DocumentDiagnostics 
+                documentId={documentId}
+                onDiagnosticsComplete={handleRefreshPreview}
+              />
+            </div>
+          )}
+          
           {loading && !analyzing && !bypassAnalysis ? (
             <div className="p-6 flex flex-col items-center justify-center gap-4">
               <LoadingState size="medium" message="Loading document..." />
@@ -113,12 +139,25 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               <AlertDescription>
                 The document file could not be found in storage. It may have been deleted or moved.
               </AlertDescription>
+              {documentId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleDiagnosticsMode}
+                  className="mt-3 gap-2"
+                >
+                  <FileSearch className="h-4 w-4" />
+                  Run Diagnostics
+                </Button>
+              )}
             </Alert>
           ) : previewError ? (
             <PreviewErrorAlert 
               error={previewError}
               onRefresh={handleRefreshPreview}
               publicUrl={publicUrl}
+              documentId={documentId}
+              onRunDiagnostics={toggleDiagnosticsMode}
             />
           ) : null}
           

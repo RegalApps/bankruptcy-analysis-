@@ -2,18 +2,22 @@
 import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Download, RefreshCcw } from "lucide-react";
+import { AlertTriangle, Download, RefreshCcw, FileSearch } from "lucide-react";
 
 interface PreviewErrorAlertProps {
   error: string;
   onRefresh: () => void;
   publicUrl: string;
+  documentId?: string;
+  onRunDiagnostics?: () => void;
 }
 
 export const PreviewErrorAlert: React.FC<PreviewErrorAlertProps> = ({
   error,
   onRefresh,
-  publicUrl
+  publicUrl,
+  documentId,
+  onRunDiagnostics
 }) => {
   return (
     <Alert className="mb-4" variant="destructive">
@@ -29,16 +33,31 @@ export const PreviewErrorAlert: React.FC<PreviewErrorAlertProps> = ({
             <RefreshCcw className="h-4 w-4" />
             Try Again
           </Button>
-          <Button variant="default" size="sm" asChild className="gap-2">
-            <a 
-              href={publicUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+          
+          {publicUrl && (
+            <Button variant="default" size="sm" asChild className="gap-2">
+              <a 
+                href={publicUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Download className="h-4 w-4" />
+                Download Document
+              </a>
+            </Button>
+          )}
+          
+          {documentId && onRunDiagnostics && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onRunDiagnostics} 
+              className="gap-2"
             >
-              <Download className="h-4 w-4" />
-              Download Document
-            </a>
-          </Button>
+              <FileSearch className="h-4 w-4" />
+              Run Diagnostics
+            </Button>
+          )}
         </div>
       </AlertDescription>
     </Alert>

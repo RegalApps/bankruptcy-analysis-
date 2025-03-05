@@ -7,6 +7,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
   const [fileExists, setFileExists] = useState<boolean>(true);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [diagnosticsMode, setDiagnosticsMode] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Determine if the file is an Excel file
@@ -22,6 +23,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
       if (!storagePath) return;
       
       setLoading(true);
+      console.log(`Checking file existence for path: ${storagePath}`);
       
       try {
         // Check if file exists in storage
@@ -41,6 +43,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
         // If file exists, get public URL
         const url = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
         setPublicUrl(url);
+        console.log(`File exists, public URL: ${url}`);
         
         // Keep loading true until the object onLoad event fires
       } catch (err) {
@@ -68,6 +71,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
       if (!storagePath) return;
       
       try {
+        console.log(`Re-checking file existence for path: ${storagePath}`);
         const { data, error } = await supabase.storage
           .from('documents')
           .download(storagePath);
@@ -104,6 +108,10 @@ export const useFileOperations = (storagePath: string, title?: string) => {
     setLoading(false);
   };
 
+  const toggleDiagnosticsMode = () => {
+    setDiagnosticsMode(prev => !prev);
+  };
+
   return {
     publicUrl,
     fileExists,
@@ -113,6 +121,8 @@ export const useFileOperations = (storagePath: string, title?: string) => {
     setLoading,
     setPreviewError,
     handleRefreshPreview,
-    handleIframeError
+    handleIframeError,
+    diagnosticsMode,
+    toggleDiagnosticsMode
   };
 };
