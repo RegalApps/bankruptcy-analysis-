@@ -55,6 +55,7 @@ export interface MentionData {
 export interface ThreadedCommentProps {
   comment: Comment;
   allComments?: Comment[];
+  replies?: Comment[];
   currentUser: any;
   userProfile: Profile;
   onReply: (parentId: string) => void;

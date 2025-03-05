@@ -59,12 +59,12 @@ export const useCreateTask = (documentId: string) => {
             type: 'info',
             priority: risk.severity === 'high' ? 'high' : 'normal',
             action_url: `/documents/${documentId}`,
+            category: 'task',
             metadata: {
               documentId,
               riskType: risk.type,
               severity: risk.severity,
-              taskId: taskData?.id,
-              category: 'task'
+              taskId: taskData?.id
             }
           }
         }
@@ -81,12 +81,12 @@ export const useCreateTask = (documentId: string) => {
             type: 'reminder',
             priority: risk.severity === 'high' ? 'high' : 'normal',
             action_url: `/documents/${documentId}`,
+            category: 'reminder',
             metadata: {
               documentId,
               taskId: taskData?.id,
               dueDate: dueDate.toISOString(),
-              remainingDays: dueDays,
-              category: 'reminder'
+              remainingDays: dueDays
             }
           }
         }
