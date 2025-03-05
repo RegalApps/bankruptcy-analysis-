@@ -44,3 +44,63 @@ export interface FolderTabProps {
   userRole: UserRole;
   folderPermissions?: FolderPermissionRule[];
 }
+
+export interface FolderDragItem {
+  id: string;
+  type: 'folder' | 'document';
+}
+
+export interface DragAndDropResult {
+  success: boolean;
+  message?: string;
+  error?: any;
+}
+
+export interface FolderOperationResult {
+  success: boolean;
+  message: string;
+  folderId?: string;
+  error?: any;
+}
+
+// Utility functions for folder operations
+
+export const getFolderPermission = (
+  folderId: string,
+  userRole: UserRole,
+  folderPermissions?: FolderPermissionRule[]
+): FolderPermission => {
+  // Admin has full access to all folders
+  if (userRole === 'admin') return 'full';
+  
+  // Manager has edit access by default
+  if (userRole === 'manager') return 'edit';
+  
+  // Check specific folder permissions
+  const folderPermission = folderPermissions?.find(fp => fp.folderId === folderId);
+  if (folderPermission) return folderPermission.permission;
+  
+  // Default permissions based on role
+  if (userRole === 'reviewer') return 'view';
+  
+  // Restricted users have no access by default
+  return 'none';
+};
+
+export const canUserEditFolder = (
+  folderId: string,
+  userRole: UserRole,
+  folderPermissions?: FolderPermissionRule[]
+): boolean => {
+  const permission = getFolderPermission(folderId, userRole, folderPermissions);
+  return permission === 'full' || permission === 'edit';
+};
+
+export const canUserViewFolder = (
+  folderId: string,
+  userRole: UserRole,
+  folderPermissions?: FolderPermissionRule[]
+): boolean => {
+  const permission = getFolderPermission(folderId, userRole, folderPermissions);
+  return permission !== 'none';
+};
