@@ -1,5 +1,5 @@
 
-import { useDocumentAnalysis } from "../useDocumentAnalysis";
+import { useDocumentAnalysis } from "../../../hooks/useDocumentAnalysis";
 import { useFileOperations } from "./useFileOperations";
 import { useAnalysisInitialization } from "./useAnalysisInitialization";
 import { useRealtimeSubscriptions } from "./useRealtimeSubscriptions";
@@ -27,6 +27,7 @@ export const usePreviewState = (
     error,
     analysisStep,
     progress,
+    processingStage,
     setSession,
     handleAnalyzeDocument
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
@@ -61,6 +62,7 @@ export const usePreviewState = (
     error,
     analysisStep,
     progress,
+    processingStage,
     loading,
     handleRefreshPreview,
     handleIframeError,

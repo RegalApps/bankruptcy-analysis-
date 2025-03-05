@@ -1,101 +1,183 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { ExcelData } from '../types';
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import logger from "@/utils/logger";
-import { ExcelData } from "../types";
-
-export const useExcelPreview = (storagePath: string, title?: string) => {
-  const [loading, setLoading] = useState(true);
+export const useExcelPreview = (storagePath: string) => {
+  const [data, setData] = useState<ExcelData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [excelData, setExcelData] = useState<ExcelData>({ headers: [], rows: [] });
+  const [publicUrl, setPublicUrl] = useState<string>('');
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
   
-  const publicUrl = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
-  
-  const fetchExcelPreview = async () => {
-    setLoading(true);
-    setError(null);
-    
+  const fetchExcelData = useCallback(async () => {
+    if (!storagePath) {
+      setError('No storage path provided');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // For demonstration purposes, we'll generate a simulated Excel preview
-      // In a real app, you could use a backend service to extract actual Excel data
+      setLoading(true);
+      setLoadingProgress(10);
+      setError(null);
       
-      // Generate fake headers and data based on file name
-      const isFinancial = title?.toLowerCase().includes('financial') || 
-                         title?.toLowerCase().includes('income') || 
-                         title?.toLowerCase().includes('expense');
-      
-      const isReginaldDickerson = title?.toLowerCase().includes('reginald') || 
-                               title?.toLowerCase().includes('dickerson');
-                               
-      // Generate headers based on document type
-      let simulatedHeaders: string[] = [];
-      let simulatedData: any[][] = [];
-      
-      if (isFinancial) {
-        simulatedHeaders = ['Category', 'January', 'February', 'March', 'April', 'May', 'June'];
+      // Get public URL for the file
+      const { data: urlData } = supabase.storage.from('documents').getPublicUrl(storagePath);
+      setPublicUrl(urlData.publicUrl);
+      setLoadingProgress(30);
+
+      // Performance optimization: Check if we have a cached version of this data
+      const { data: cachedData, error: cacheError } = await supabase
+        .from('document_metadata')
+        .select('extracted_metadata')
+        .eq('document_id', storagePath.split('/').pop()?.split('.')[0])
+        .maybeSingle();
         
-        if (isReginaldDickerson) {
-          simulatedData = [
-            ['Salary', '$4,500', '$4,500', '$4,500', '$4,800', '$4,800', '$4,800'],
-            ['Bonus', '$0', '$300', '$0', '$0', '$500', '$0'],
-            ['Investment Income', '$100', '$120', '$95', '$105', '$110', '$125'],
-            ['Rent', '$1,600', '$1,600', '$1,600', '$1,600', '$1,600', '$1,600'],
-            ['Utilities', '$380', '$350', '$320', '$290', '$310', '$340'],
-            ['Food', '$750', '$720', '$780', '$710', '$800', '$730'],
-            ['Transportation', '$420', '$410', '$430', '$450', '$440', '$460'],
-            ['Insurance', '$280', '$280', '$280', '$280', '$280', '$280'],
-            ['Medical', '$150', '$0', '$220', '$0', '$100', '$0'],
-            ['Other Expenses', '$200', '$180', '$230', '$190', '$210', '$195'],
-            ['Net Income', '$820', '$1,380', '$735', '$1,385', '$1,470', '$1,320']
-          ];
-        } else {
-          simulatedData = [
-            ['Salary', '$3,500', '$3,500', '$3,500', '$3,500', '$3,700', '$3,700'],
-            ['Bonus', '$0', '$200', '$0', '$0', '$0', '$300'],
-            ['Other Income', '$300', '$300', '$300', '$300', '$300', '$300'],
-            ['Rent', '$1,200', '$1,200', '$1,200', '$1,200', '$1,300', '$1,300'],
-            ['Utilities', '$250', '$240', '$230', '$200', '$210', '$220'],
-            ['Food', '$600', '$580', '$620', '$590', '$630', '$600'],
-            ['Transportation', '$300', '$320', '$290', '$310', '$320', '$330'],
-            ['Insurance', '$200', '$200', '$200', '$200', '$200', '$200'],
-            ['Medical', '$100', '$0', '$150', '$0', '$80', '$0'],
-            ['Other Expenses', '$150', '$140', '$160', '$140', '$170', '$160'],
-            ['Net Income', '$1,000', '$1,320', '$950', '$1,160', '$1,090', '$1,490']
-          ];
-        }
-      } else {
-        simulatedHeaders = ['Item', 'Quantity', 'Unit Price', 'Total'];
-        simulatedData = [
-          ['Product A', '5', '$10.00', '$50.00'],
-          ['Product B', '3', '$15.00', '$45.00'],
-          ['Product C', '2', '$25.00', '$50.00'],
-          ['Product D', '1', '$30.00', '$30.00'],
-          ['Product E', '4', '$12.50', '$50.00'],
-          ['Total', '', '', '$225.00']
-        ];
+      // If we have valid cached Excel data, use it
+      if (!cacheError && cachedData?.extracted_metadata?.excel_data) {
+        console.log('Using cached Excel data');
+        setData(cachedData.extracted_metadata.excel_data);
+        setLoading(false);
+        setLoadingProgress(100);
+        return;
       }
       
-      setExcelData({
-        headers: simulatedHeaders,
-        rows: simulatedData
-      });
-    } catch (err) {
-      logger.error('Error generating Excel preview:', err);
-      setError('Could not generate preview for this Excel file');
+      // Otherwise proceed with fetching and parsing the Excel file
+      setLoadingProgress(40);
+      
+      // Fetch the file
+      const { data: fileData, error: fetchError } = await supabase.storage
+        .from('documents')
+        .download(storagePath);
+
+      if (fetchError) {
+        throw new Error(`Failed to download file: ${fetchError.message}`);
+      }
+      
+      setLoadingProgress(60);
+      
+      // Use dynamic import for excel parser to reduce initial load time
+      const XLSX = await import('xlsx');
+      const arrayBuffer = await fileData.arrayBuffer();
+      
+      setLoadingProgress(75);
+      
+      // Parse Excel data
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      
+      // Convert to JSON with headers
+      const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      // For large files, process rows in batches to avoid freezing the UI
+      if (rawJson.length > 1000) {
+        // Extract headers
+        const headers = rawJson[0] as string[];
+        
+        // Initial data with headers and first batch of rows
+        const initialBatchSize = 100;
+        const initialRows = rawJson.slice(1, initialBatchSize + 1) as any[][];
+        
+        setData({
+          headers,
+          rows: initialRows
+        });
+        
+        // Load the rest of the rows in batches
+        let currentRow = initialBatchSize + 1;
+        const batchSize = 500;
+        
+        const loadNextBatch = () => {
+          if (currentRow >= rawJson.length) {
+            setLoadingProgress(100);
+            return;
+          }
+          
+          const nextBatch = rawJson.slice(currentRow, currentRow + batchSize) as any[][];
+          currentRow += batchSize;
+          
+          setData(prevData => {
+            if (!prevData) return {
+              headers,
+              rows: nextBatch
+            };
+            
+            return {
+              headers: prevData.headers,
+              rows: [...prevData.rows, ...nextBatch]
+            };
+          });
+          
+          const progress = Math.min(75 + Math.floor((currentRow / rawJson.length) * 25), 100);
+          setLoadingProgress(progress);
+          
+          // Load next batch on next animation frame to keep UI responsive
+          if (currentRow < rawJson.length) {
+            window.requestAnimationFrame(loadNextBatch);
+          }
+        };
+        
+        // Start loading batches
+        window.requestAnimationFrame(loadNextBatch);
+      } else {
+        // For smaller files, process all at once
+        const headers = rawJson[0] as string[];
+        const rows = rawJson.slice(1) as any[][];
+        
+        setData({
+          headers,
+          rows
+        });
+        setLoadingProgress(100);
+      }
+      
+      // Cache the processed data for future use
+      if (storagePath.includes('/')) {
+        const documentId = storagePath.split('/').pop()?.split('.')[0];
+        
+        if (documentId) {
+          // Try to cache the Excel data for future use
+          const { error: metadataError } = await supabase
+            .from('document_metadata')
+            .upsert({
+              document_id: documentId,
+              extracted_metadata: {
+                excel_data: {
+                  headers: rawJson[0],
+                  rows: rawJson.slice(1, 1000) // Only cache first 1000 rows to avoid size limits
+                },
+                last_processed: new Date().toISOString()
+              }
+            });
+            
+          if (metadataError) {
+            console.error('Failed to cache Excel data:', metadataError);
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error('Error parsing Excel file:', err);
+      setError(err.message || 'Failed to load Excel file');
     } finally {
       setLoading(false);
     }
-  };
-  
+  }, [storagePath]);
+
+  const handleRefresh = useCallback(() => {
+    fetchExcelData();
+  }, [fetchExcelData]);
+
   useEffect(() => {
-    fetchExcelPreview();
-  }, [storagePath, title]);
-  
+    fetchExcelData();
+  }, [fetchExcelData]);
+
   return {
+    data,
     loading,
     error,
-    excelData,
     publicUrl,
-    fetchExcelPreview
+    loadingProgress,
+    handleRefresh
   };
 };

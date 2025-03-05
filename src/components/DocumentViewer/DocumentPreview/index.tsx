@@ -31,6 +31,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     error,
     analysisStep,
     progress,
+    processingStage,
     loading,
     handleRefreshPreview,
     handleIframeError,
@@ -103,6 +104,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             <AnalysisProgress
               analysisStep={analysisStep}
               progress={progress}
+              processingStage={processingStage}
             />
           )}
           
