@@ -1,8 +1,6 @@
 
-import React from "react";
-import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
+import { FileDigit } from "lucide-react";
 
 interface AnalysisProgressProps {
   analysisStep: string;
@@ -14,24 +12,28 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
   progress
 }) => {
   return (
-    <div className="mt-4 space-y-3">
-      <Alert>
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <AlertTitle>Analyzing Document</AlertTitle>
-        <AlertDescription>
-          {analysisStep}
-        </AlertDescription>
-      </Alert>
-      
-      <div className="space-y-2">
-        <Progress value={progress} className="h-2 w-full" />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>Extraction</span>
-          <span>Entity Recognition</span>
-          <span>Compliance</span>
-          <span>Complete</span>
+    <div className="bg-muted/30 border rounded-lg p-6 my-4 flex flex-col items-center">
+      <div className="flex items-center justify-center mb-4">
+        <div className="animate-pulse bg-primary/20 p-3 rounded-full">
+          <FileDigit className="h-8 w-8 text-primary" />
         </div>
       </div>
+      
+      <h3 className="text-lg font-medium text-center mb-2">
+        Document Analysis in Progress
+      </h3>
+      
+      <p className="text-sm text-muted-foreground text-center mb-4">
+        {analysisStep}
+      </p>
+      
+      <div className="w-full max-w-md mb-2">
+        <Progress value={progress} className="h-2" />
+      </div>
+      
+      <p className="text-xs text-muted-foreground">
+        {progress}% complete
+      </p>
     </div>
   );
 };

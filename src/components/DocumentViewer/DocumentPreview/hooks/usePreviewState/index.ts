@@ -15,6 +15,8 @@ export const usePreviewState = (
     fileExists,
     isExcelFile,
     previewError,
+    loading,
+    setLoading,
     setPreviewError,
     handleRefreshPreview,
     handleIframeError
@@ -59,6 +61,7 @@ export const usePreviewState = (
     error,
     analysisStep,
     progress,
+    loading,
     handleRefreshPreview,
     handleIframeError,
     handleAnalyzeDocument

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +6,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
   const [publicUrl, setPublicUrl] = useState<string>('');
   const [fileExists, setFileExists] = useState<boolean>(true);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
   // Determine if the file is an Excel file
@@ -21,6 +21,8 @@ export const useFileOperations = (storagePath: string, title?: string) => {
     const checkFileExistence = async () => {
       if (!storagePath) return;
       
+      setLoading(true);
+      
       try {
         // Check if file exists in storage
         const { data, error } = await supabase.storage
@@ -31,6 +33,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
           console.error('File existence check error:', error);
           setFileExists(false);
           setPreviewError(`Unable to access the document. ${error.message}`);
+          setLoading(false);
           return;
         }
         
@@ -38,10 +41,13 @@ export const useFileOperations = (storagePath: string, title?: string) => {
         // If file exists, get public URL
         const url = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
         setPublicUrl(url);
+        
+        // Keep loading true until the object onLoad event fires
       } catch (err) {
         console.error('Error checking file existence:', err);
         setFileExists(false);
         setPreviewError('Document appears to be missing from storage.');
+        setLoading(false);
       }
     };
     
@@ -50,6 +56,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
 
   const handleRefreshPreview = () => {
     setPreviewError(null);
+    setLoading(true);
     // Force reload the iframe
     const iframe = document.querySelector('iframe');
     if (iframe && iframe.src) {
@@ -69,6 +76,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
           console.error('File refresh check error:', error);
           setFileExists(false);
           setPreviewError(`Document still unavailable. ${error.message}`);
+          setLoading(false);
           return;
         }
         
@@ -84,6 +92,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
       } catch (err) {
         console.error('Error during refresh:', err);
         setPreviewError('Could not refresh the document. It may have been deleted.');
+        setLoading(false);
       }
     };
     
@@ -92,6 +101,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
 
   const handleIframeError = () => {
     setPreviewError("There was an issue loading the document preview. The file may be corrupted or in an unsupported format.");
+    setLoading(false);
   };
 
   return {
@@ -99,6 +109,8 @@ export const useFileOperations = (storagePath: string, title?: string) => {
     fileExists,
     isExcelFile,
     previewError,
+    loading,
+    setLoading,
     setPreviewError,
     handleRefreshPreview,
     handleIframeError

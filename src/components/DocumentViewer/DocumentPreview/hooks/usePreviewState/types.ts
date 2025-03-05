@@ -1,6 +1,4 @@
 
-import { Session } from "@supabase/supabase-js";
-
 export interface PreviewStateProps {
   storagePath: string;
   title?: string;
@@ -17,7 +15,8 @@ export interface PreviewState {
   error: string | null;
   analysisStep: string;
   progress: number;
+  loading: boolean;
   handleRefreshPreview: () => void;
   handleIframeError: () => void;
-  handleAnalyzeDocument: (session?: Session | null) => void;
+  handleAnalyzeDocument: () => void;
 }

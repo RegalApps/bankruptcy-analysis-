@@ -9,6 +9,7 @@ import { PreviewControls } from "./components/PreviewControls";
 import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
 import { usePreviewState } from "./hooks/usePreviewState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingState } from "../LoadingState";
 
 interface DocumentPreviewProps {
   storagePath: string;
@@ -30,6 +31,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     error,
     analysisStep,
     progress,
+    loading,
     handleRefreshPreview,
     handleIframeError,
     handleAnalyzeDocument
@@ -69,6 +71,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           />
         </CardHeader>
         <CardContent>
+          {loading && !analyzing && (
+            <div className="p-6 flex justify-center">
+              <LoadingState />
+            </div>
+          )}
+          
           {!fileExists ? (
             <Alert variant="destructive" className="mb-4">
               <AlertTriangle className="h-4 w-4" />
