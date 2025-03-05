@@ -1,14 +1,15 @@
 
 import { useState, useEffect } from "react";
 import { FolderNavigation } from "./FolderNavigation";
-import { FolderHeader } from "./FolderHeader";
+import { Card, CardContent } from "@/components/ui/card";
 import { Document } from "@/components/DocumentList/types";
 import { FolderStructure, UserRole } from "@/types/folders";
-import { Card, CardContent } from "@/components/ui/card";
 import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
 import { useFolderPermissions } from "./hooks/useFolderPermissions";
 import { FolderRecommendationAlert } from "./FolderRecommendationAlert";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
@@ -24,7 +25,6 @@ export const EnhancedFolderTab = ({
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | undefined>();
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
-  const [searchQuery, setSearchQuery] = useState("");
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [recommendation, setRecommendation] = useState<{
     documentId: string;
@@ -166,13 +166,6 @@ export const EnhancedFolderTab = ({
     }
   };
 
-  // Handle search filtering
-  const filteredFolders = searchQuery.trim() === "" 
-    ? folders 
-    : folders.filter(folder => 
-        folder.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-
   return (
     <Card className="h-full">
       <CardContent className="p-4 h-full">
@@ -186,19 +179,21 @@ export const EnhancedFolderTab = ({
           />
         )}
         
-        {/* Folder Header with Search */}
-        <FolderHeader 
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          folders={folders}
-          documents={documents}
-          userRole={userRole}
-          onRefresh={onRefresh}
-        />
+        {/* Simple header with refresh button */}
+        <div className="flex justify-end mb-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onRefresh}
+            title="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
         
         {/* Folder Navigation */}
         <FolderNavigation 
-          folders={filteredFolders}
+          folders={folders}
           documents={documents}
           onFolderSelect={handleFolderSelect}
           onDocumentSelect={handleDocumentSelect}
