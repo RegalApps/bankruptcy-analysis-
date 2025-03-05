@@ -15,6 +15,7 @@ export const useAnalysisProcess = ({
   setAnalysisStep,
   setProgress,
   setError,
+  setProcessingStage,
   toast,
   onAnalysisComplete
 }: AnalysisProcessProps) => {
@@ -23,17 +24,17 @@ export const useAnalysisProcess = ({
     try {
       // Step 1: Document Ingestion
       const documentRecord = await documentIngestion(storagePath, { 
-        setAnalysisStep, setProgress, setError, toast, onAnalysisComplete 
+        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
       });
       
       // Step 2: Document Classification & Understanding
       const { documentText, isForm76 } = await documentClassification(documentRecord, { 
-        setAnalysisStep, setProgress, setError, toast, onAnalysisComplete 
+        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
       });
       
       // Enhanced context with form type information
       const enhancedContext = { 
-        setAnalysisStep, setProgress, setError, toast, onAnalysisComplete, isForm76 
+        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete, isForm76 
       };
       
       // Step 3: Data Extraction & Content Processing

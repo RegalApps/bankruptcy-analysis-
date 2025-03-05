@@ -3,7 +3,7 @@ export interface AnalysisProcessProps {
   setAnalysisStep: (step: string) => void;
   setProgress: (progress: number) => void;
   setError: (error: string | null) => void;
-  setProcessingStage?: (stage: string) => void;
+  setProcessingStage: (stage: string) => void;
   toast: any;
   onAnalysisComplete?: () => void;
 }
