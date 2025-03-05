@@ -1,7 +1,9 @@
 
 import { supabase } from "@/lib/supabase";
 import logger from "@/utils/logger";
-import { createFolderIfNotExists } from "./folder-utils";
+
+// Import directly from the createFolder file
+import { createFolderIfNotExists } from "@/utils/documents/folder-utils/createFolder";
 
 export const mergeClientFolders = async (clientName: string, userId: string): Promise<boolean> => {
   try {
