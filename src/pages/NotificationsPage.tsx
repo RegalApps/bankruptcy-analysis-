@@ -1,7 +1,7 @@
 
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { NotificationsSidebar } from "@/components/notifications/NotificationsSidebar";
 import { NotificationsList } from "@/components/notifications/NotificationsList";
