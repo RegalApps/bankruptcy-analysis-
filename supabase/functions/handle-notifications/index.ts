@@ -79,6 +79,35 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    if (action === 'folderRecommendation') {
+      // Create a notification for folder recommendation
+      const { data, error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title: 'Folder Recommendation',
+          message: notification.message || 'AI has suggested a folder for your document',
+          type: 'info',
+          priority: 'normal',
+          action_url: notification.action_url,
+          icon: 'folder-tree', // Use a folder icon
+          metadata: {
+            category: 'file_activity',
+            documentId: notification.documentId,
+            recommendedFolderId: notification.recommendedFolderId,
+            suggestedPath: notification.suggestedPath
+          }
+        })
+        .select();
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, notification: data[0] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     throw new Error('Invalid action');
 

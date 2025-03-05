@@ -2,15 +2,15 @@
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
-import { FolderManagement } from "@/components/folders/FolderManagement";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { showPerformanceToast } from "@/utils/performance";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { FolderTree } from "lucide-react";
+import { EnhancedFolderTab } from "@/components/folders/enhanced/EnhancedFolderTab";
 
 export const DocumentsPage = () => {
-  const { documents, refetch } = useDocuments();
+  const { documents, refetch, isLoading } = useDocuments();
   const [selectedItemId, setSelectedItemId] = useState<string | undefined>();
   const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>();
   const navigate = useNavigate();
@@ -59,13 +59,10 @@ export const DocumentsPage = () => {
             </BreadcrumbList>
           </Breadcrumb>
           
-          <FolderManagement 
-            documents={documents ?? []} 
-            selectedItemId={selectedItemId}
-            selectedItemType={selectedItemType}
-            onItemSelect={handleItemSelect}
+          <EnhancedFolderTab 
+            documents={documents ?? []}
+            onDocumentOpen={handleOpenDocument}
             onRefresh={refetch}
-            onOpenDocument={handleOpenDocument}
           />
         </main>
       </div>
