@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -8,6 +8,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [diagnosticsMode, setDiagnosticsMode] = useState<boolean>(false);
+  const [networkError, setNetworkError] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Determine if the file is an Excel file
@@ -23,6 +24,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
       if (!storagePath) return;
       
       setLoading(true);
+      setNetworkError(false);
       console.log(`Checking file existence for path: ${storagePath}`);
       
       try {
@@ -34,7 +36,15 @@ export const useFileOperations = (storagePath: string, title?: string) => {
         if (error) {
           console.error('File existence check error:', error);
           setFileExists(false);
-          setPreviewError(`Unable to access the document. ${error.message}`);
+          
+          // Differentiate between network and file errors
+          if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            setNetworkError(true);
+            setPreviewError(`Network connection error. Please check your internet connection and try again.`);
+          } else {
+            setPreviewError(`Unable to access the document. ${error.message}`);
+          }
+          
           setLoading(false);
           return;
         }
@@ -46,10 +56,17 @@ export const useFileOperations = (storagePath: string, title?: string) => {
         console.log(`File exists, public URL: ${url}`);
         
         // Keep loading true until the object onLoad event fires
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error checking file existence:', err);
         setFileExists(false);
-        setPreviewError('Document appears to be missing from storage.');
+        
+        if (err.message?.includes('Failed to fetch') || err.message?.includes('network')) {
+          setNetworkError(true);
+          setPreviewError('Network connection error. Please check your internet connection.');
+        } else {
+          setPreviewError('Document appears to be missing from storage.');
+        }
+        
         setLoading(false);
       }
     };
@@ -57,9 +74,11 @@ export const useFileOperations = (storagePath: string, title?: string) => {
     checkFileExistence();
   }, [storagePath]);
 
-  const handleRefreshPreview = () => {
+  const handleRefreshPreview = useCallback(() => {
     setPreviewError(null);
     setLoading(true);
+    setNetworkError(false);
+    
     // Force reload the iframe
     const iframe = document.querySelector('iframe');
     if (iframe && iframe.src) {
@@ -72,6 +91,10 @@ export const useFileOperations = (storagePath: string, title?: string) => {
       
       try {
         console.log(`Re-checking file existence for path: ${storagePath}`);
+        
+        // Wait a moment before retrying to allow for network recovery
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         const { data, error } = await supabase.storage
           .from('documents')
           .download(storagePath);
@@ -79,7 +102,14 @@ export const useFileOperations = (storagePath: string, title?: string) => {
         if (error) {
           console.error('File refresh check error:', error);
           setFileExists(false);
-          setPreviewError(`Document still unavailable. ${error.message}`);
+          
+          if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            setNetworkError(true);
+            setPreviewError(`Network connection error. Please try again when your connection is stable.`);
+          } else {
+            setPreviewError(`Document still unavailable. ${error.message}`);
+          }
+          
           setLoading(false);
           return;
         }
@@ -93,24 +123,31 @@ export const useFileOperations = (storagePath: string, title?: string) => {
           description: "Document preview has been refreshed",
           duration: 2000
         });
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error during refresh:', err);
-        setPreviewError('Could not refresh the document. It may have been deleted.');
+        
+        if (err.message?.includes('Failed to fetch') || err.message?.includes('network')) {
+          setNetworkError(true);
+          setPreviewError('Network connection error. Please check your internet connection.');
+        } else {
+          setPreviewError('Could not refresh the document. It may have been deleted.');
+        }
+        
         setLoading(false);
       }
     };
     
     checkFileAgain();
-  };
+  }, [storagePath, toast]);
 
-  const handleIframeError = () => {
+  const handleIframeError = useCallback(() => {
     setPreviewError("There was an issue loading the document preview. The file may be corrupted or in an unsupported format.");
     setLoading(false);
-  };
+  }, []);
 
-  const toggleDiagnosticsMode = () => {
+  const toggleDiagnosticsMode = useCallback(() => {
     setDiagnosticsMode(prev => !prev);
-  };
+  }, []);
 
   return {
     publicUrl,
@@ -118,6 +155,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
     isExcelFile,
     previewError,
     loading,
+    networkError,
     setLoading,
     setPreviewError,
     handleRefreshPreview,
