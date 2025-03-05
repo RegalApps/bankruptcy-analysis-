@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { FileText, AlertTriangle } from "lucide-react";
 import { ExcelPreview } from "../ExcelPreview";
 import { AnalysisProgress } from "./components/AnalysisProgress";
 import { ErrorDisplay } from "./components/ErrorDisplay";
@@ -8,6 +8,7 @@ import { DocumentObject } from "./components/DocumentObject";
 import { PreviewControls } from "./components/PreviewControls";
 import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
 import { usePreviewState } from "./hooks/usePreviewState";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DocumentPreviewProps {
   storagePath: string;
@@ -24,6 +25,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     previewError,
     publicUrl,
     isExcelFile,
+    fileExists,
     analyzing,
     error,
     analysisStep,
@@ -32,6 +34,22 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     handleIframeError,
     handleAnalyzeDocument
   } = usePreviewState(storagePath, title, onAnalysisComplete);
+
+  if (!storagePath) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Document Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>No document storage path provided.</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isExcelFile) {
     return <ExcelPreview storagePath={storagePath} title={title} />;
@@ -51,7 +69,14 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           />
         </CardHeader>
         <CardContent>
-          {previewError ? (
+          {!fileExists ? (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                The document file could not be found in storage. It may have been deleted or moved.
+              </AlertDescription>
+            </Alert>
+          ) : previewError ? (
             <PreviewErrorAlert 
               error={previewError}
               onRefresh={handleRefreshPreview}
@@ -59,10 +84,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             />
           ) : null}
           
-          <DocumentObject 
-            publicUrl={publicUrl} 
-            onError={handleIframeError} 
-          />
+          {fileExists && publicUrl && (
+            <DocumentObject 
+              publicUrl={publicUrl} 
+              onError={handleIframeError} 
+            />
+          )}
           
           {analyzing && (
             <AnalysisProgress

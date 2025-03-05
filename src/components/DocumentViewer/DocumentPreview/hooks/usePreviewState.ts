@@ -17,7 +17,40 @@ export const usePreviewState = (storagePath: string, title?: string, onAnalysisC
     handleAnalyzeDocument
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
   
-  const publicUrl = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
+  // Check if the file exists in storage before trying to get public URL
+  const [publicUrl, setPublicUrl] = useState<string>('');
+  const [fileExists, setFileExists] = useState<boolean>(true);
+  
+  useEffect(() => {
+    const checkFileExistence = async () => {
+      if (!storagePath) return;
+      
+      try {
+        // Check if file exists in storage
+        const { data, error } = await supabase.storage
+          .from('documents')
+          .download(storagePath);
+        
+        if (error) {
+          console.error('File existence check error:', error);
+          setFileExists(false);
+          setPreviewError(`Unable to access the document. ${error.message}`);
+          return;
+        }
+        
+        setFileExists(true);
+        // If file exists, get public URL
+        const url = supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl;
+        setPublicUrl(url);
+      } catch (err) {
+        console.error('Error checking file existence:', err);
+        setFileExists(false);
+        setPreviewError('Document appears to be missing from storage.');
+      }
+    };
+    
+    checkFileExistence();
+  }, [storagePath]);
   
   const isExcelFile = 
     storagePath?.endsWith('.xlsx') || 
@@ -28,6 +61,11 @@ export const usePreviewState = (storagePath: string, title?: string, onAnalysisC
   // Fetch session on component mount and start analysis when ready
   useEffect(() => {
     console.log('DocumentPreview mounted with storagePath:', storagePath);
+    
+    if (!fileExists) {
+      console.error('File does not exist, skipping analysis');
+      return;
+    }
     
     let mounted = true;
     const initializeComponent = async () => {
@@ -44,11 +82,17 @@ export const usePreviewState = (storagePath: string, title?: string, onAnalysisC
           
           // Check document status to determine if analysis is needed
           if (storagePath && !isExcelFile) {
-            const { data: document } = await supabase
+            const { data: document, error: docError } = await supabase
               .from('documents')
               .select('ai_processing_status, metadata')
               .eq('storage_path', storagePath)
               .maybeSingle();
+              
+            if (docError) {
+              console.error('Error fetching document record:', docError);
+              setPreviewError(`Database error: ${docError.message}`);
+              return;
+            }
               
             if (document) {
               const shouldStartAnalysis = 
@@ -72,7 +116,7 @@ export const usePreviewState = (storagePath: string, title?: string, onAnalysisC
               }
             } else {
               // If no document record found, show error
-              setPreviewError("Document record not found. It may have been deleted.");
+              setPreviewError("Document record not found in the database. It may have been deleted.");
             }
           }
         } else {
@@ -119,7 +163,7 @@ export const usePreviewState = (storagePath: string, title?: string, onAnalysisC
       subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
-  }, [storagePath, analyzing, error, setSession, handleAnalyzeDocument, isExcelFile, onAnalysisComplete, toast]);
+  }, [storagePath, analyzing, error, setSession, handleAnalyzeDocument, isExcelFile, onAnalysisComplete, toast, fileExists]);
 
   const handleRefreshPreview = () => {
     setPreviewError(null);
@@ -128,10 +172,43 @@ export const usePreviewState = (storagePath: string, title?: string, onAnalysisC
     if (iframe && iframe.src) {
       iframe.src = `${iframe.src}?refresh=${new Date().getTime()}`;
     }
+    
+    // Re-check file existence
+    const checkFileAgain = async () => {
+      if (!storagePath) return;
+      
+      try {
+        const { data, error } = await supabase.storage
+          .from('documents')
+          .download(storagePath);
+        
+        if (error) {
+          console.error('File refresh check error:', error);
+          setFileExists(false);
+          setPreviewError(`Document still unavailable. ${error.message}`);
+          return;
+        }
+        
+        setFileExists(true);
+        // Update the URL with a cache-busting parameter
+        const url = `${supabase.storage.from('documents').getPublicUrl(storagePath).data.publicUrl}?t=${Date.now()}`;
+        setPublicUrl(url);
+        toast({
+          title: "Preview Refreshed",
+          description: "Document preview has been refreshed",
+          duration: 2000
+        });
+      } catch (err) {
+        console.error('Error during refresh:', err);
+        setPreviewError('Could not refresh the document. It may have been deleted.');
+      }
+    };
+    
+    checkFileAgain();
   };
 
   const handleIframeError = () => {
-    setPreviewError("There was an issue loading the document preview.");
+    setPreviewError("There was an issue loading the document preview. The file may be corrupted or in an unsupported format.");
   };
 
   return {
@@ -139,6 +216,7 @@ export const usePreviewState = (storagePath: string, title?: string, onAnalysisC
     setPreviewError,
     publicUrl,
     isExcelFile,
+    fileExists,
     analyzing,
     error,
     analysisStep,
