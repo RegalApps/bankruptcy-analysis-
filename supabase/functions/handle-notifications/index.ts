@@ -22,6 +22,7 @@ serve(async (req) => {
 
     if (action === 'create') {
       // Create a new notification - ensure we use correct field names from DB schema
+      // The `type` field is required by DB schema, but category is stored in metadata
       const { data, error } = await supabase
         .from('notifications')
         .insert({

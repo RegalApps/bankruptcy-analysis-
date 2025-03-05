@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { MessageSquare, AlertCircle } from 'lucide-react';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Comment, CommentsProps, Profile } from './types';
 import { EnhancedCommentInput } from './EnhancedCommentInput';
@@ -81,18 +81,25 @@ export const EnhancedComments: React.FC<CommentsProps> = ({
       // If there are mentions, send notifications
       if (mentions && mentions.length > 0) {
         for (const userId of mentions) {
-          await supabase.from('notifications').insert([{
-            user_id: userId,
-            title: 'You were mentioned in a comment',
-            message: `${userProfile?.full_name || 'Someone'} mentioned you in a comment`,
-            category: 'task',
-            priority: 'normal',
-            action_url: `/documents/${documentId}`,
-            metadata: {
-              type: 'mention',
-              document_id: documentId
+          // Call the handle-notifications function with correct structure
+          await supabase.functions.invoke('handle-notifications', {
+            body: {
+              action: 'create',
+              userId: userId,
+              notification: {
+                title: 'You were mentioned in a comment',
+                message: `${userProfile?.full_name || 'Someone'} mentioned you in a comment`,
+                type: 'info', // Required field for database
+                priority: 'normal',
+                action_url: `/documents/${documentId}`,
+                category: 'task', // Will be stored in metadata
+                metadata: {
+                  type: 'mention',
+                  document_id: documentId
+                }
+              }
             }
-          }]);
+          });
         }
       }
       
@@ -258,20 +265,27 @@ export const EnhancedComments: React.FC<CommentsProps> = ({
             No comments yet. Start the conversation!
           </p>
         ) : (
-          rootComments.map(comment => (
-            <ThreadedComment
-              key={comment.id}
-              comment={comment}
-              allComments={comments}
-              currentUser={currentUser}
-              userProfile={userProfile as Profile}
-              onReply={setReplyToId}
-              onEdit={handleEditComment}
-              onDelete={handleDeleteComment}
-              onResolve={handleResolveComment}
-              isSubmitting={isSubmitting}
-            />
-          ))
+          rootComments.map(comment => {
+            // Find all replies for this comment
+            const replies = comments.filter(c => c.parent_id === comment.id);
+            
+            return (
+              <ThreadedComment
+                key={comment.id}
+                comment={comment}
+                allComments={comments}
+                replies={replies}
+                currentUser={currentUser}
+                userProfile={userProfile as Profile}
+                onReply={setReplyToId}
+                onEdit={handleEditComment}
+                onDelete={handleDeleteComment}
+                onResolve={handleResolveComment}
+                isSubmitting={isSubmitting}
+                onSubmit={handleAddComment}
+              />
+            );
+          })
         )}
       </div>
     </div>
