@@ -18,8 +18,8 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
         className="w-full h-full rounded-lg"
         onError={onError}
       >
-        <p>
-          Unable to display PDF. <a href={publicUrl} target="_blank" rel="noopener noreferrer">Download</a> instead.
+        <p className="p-4 text-center">
+          Unable to display PDF. <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">Download</a> instead.
         </p>
       </object>
     </div>

@@ -1,8 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { FolderPlus } from "lucide-react";
 
 interface FolderDialogProps {
   showDialog: boolean;
@@ -21,12 +20,6 @@ export const FolderDialog = ({
 }: FolderDialogProps) => {
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gradient-button">
-          <FolderPlus className="h-4 w-4 mr-2" />
-          New Folder
-        </Button>
-      </DialogTrigger>
       <DialogContent className="glass-panel">
         <DialogHeader>
           <DialogTitle>Create New Folder</DialogTitle>
