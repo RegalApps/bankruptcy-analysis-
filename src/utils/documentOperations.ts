@@ -27,6 +27,11 @@ export const uploadDocument = async (file: File) => {
       .from('documents')
       .getPublicUrl(filePath);
 
+    // Try to detect if this is Form 76 from the filename
+    const isForm76 = file.name.toLowerCase().includes('form 76') || 
+                    file.name.toLowerCase().includes('f76') || 
+                    file.name.toLowerCase().includes('form76');
+    
     // Create a record in the documents table
     const { data: documentData, error: documentError } = await supabase
       .from('documents')
@@ -35,7 +40,12 @@ export const uploadDocument = async (file: File) => {
         type: file.type,
         size: file.size,
         url: urlData.publicUrl,
-        is_folder: false
+        storage_path: filePath,
+        is_folder: false,
+        metadata: {
+          formType: isForm76 ? 'form-76' : null,
+          uploadDate: new Date().toISOString()
+        }
       })
       .select()
       .single();
@@ -50,10 +60,17 @@ export const uploadDocument = async (file: File) => {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
       
-      // Extract client name and form number from metadata or file name if available
-      // For now using placeholder values that would be extracted in a real scenario
-      const clientName = documentData.title.split('-')[0]?.trim() || 'Untitled Client';
-      const formNumber = documentData.type?.includes('excel') ? 'Income Statement' : 'Form-100';
+      // Extract client name and form number from metadata or file name
+      let clientName = 'Untitled Client';
+      let formNumber = isForm76 ? 'Form-76' : 'General Document';
+      
+      // If it's a Form 76, try to extract client name from the filename
+      if (isForm76) {
+        const nameMatch = file.name.match(/form[- ]?76[- ]?(.+?)(?:\.|$)/i);
+        if (nameMatch && nameMatch[1]) {
+          clientName = nameMatch[1].trim();
+        }
+      }
       
       await organizeDocumentIntoFolders(
         documentData.id,

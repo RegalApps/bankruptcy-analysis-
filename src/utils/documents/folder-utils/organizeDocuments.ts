@@ -20,6 +20,7 @@ export const organizeDocumentIntoFolders = async (
       );
       
       // Check if the document is an Excel file (for income and expense sheets)
+      // or if it's Form 76 (for financial assessments)
       const { data: document } = await supabase
         .from('documents')
         .select('title, type, storage_path, metadata')
@@ -30,6 +31,11 @@ export const organizeDocumentIntoFolders = async (
         document?.type?.includes('excel') || 
         document?.storage_path?.endsWith('.xlsx') || 
         document?.storage_path?.endsWith('.xls');
+      
+      const isForm76 = 
+        formNumber === 'Form-76' || 
+        document?.metadata?.formType === 'form-76' ||
+        document?.title?.toLowerCase().includes('form 76');
       
       let targetFolderId;
       
@@ -44,6 +50,17 @@ export const organizeDocumentIntoFolders = async (
         
         targetFolderId = incomeExpenseFolderId;
         logger.info(`Excel file detected, organizing into Income and Expense Sheet folder for client ${clientName}`);
+      } else if (isForm76) {
+        // For Form 76, create a dedicated Form 76 folder under the client folder
+        const form76FolderId = await createFolderIfNotExists(
+          "Form 76 - Monthly Income Statement",
+          'financial',
+          userId,
+          clientFolderId
+        );
+        
+        targetFolderId = form76FolderId;
+        logger.info(`Form 76 detected, organizing into Form 76 folder for client ${clientName}`);
       } else {
         // For other documents, create a form folder as usual
         const formFolderName = `${formNumber} - Documents`;
@@ -62,7 +79,12 @@ export const organizeDocumentIntoFolders = async (
         .from('documents')
         .update({ 
           parent_folder_id: targetFolderId,
-          metadata: { ...document?.metadata, client_name: clientName }  // Add client name to metadata
+          metadata: { 
+            ...document?.metadata, 
+            client_name: clientName,
+            form_number: formNumber,
+            is_form_76: isForm76
+          }
         })
         .eq('id', documentId);
       

@@ -60,23 +60,26 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
       console.log(`Extracted ${documentText.length} characters of text from PDF`);
       setProgress(40);
       
-      // Step 3: Entity recognition
-      setAnalysisStep("Identifying key client information (name, dates, form numbers)...");
+      // Step 3: Entity recognition - detect if it's Form 76
+      setAnalysisStep("Identifying Form 76 information and client details...");
       setProgress(50);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const isForm76 = documentText.toLowerCase().includes('form 76') || 
+                       documentText.toLowerCase().includes('f76') ||
+                       documentRecord.title.toLowerCase().includes('form 76') ||
+                       documentRecord.title.toLowerCase().includes('f76');
+                      
+      console.log('Is document Form 76:', isForm76);
       
       // Step 4: Perform regulatory compliance check
-      setAnalysisStep("Performing regulatory compliance analysis using frameworks...");
+      setAnalysisStep("Performing regulatory compliance analysis for Form 76...");
       setProgress(65);
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Step 5: Risk assessment
-      setAnalysisStep("Conducting risk assessment and generating mitigation strategies...");
+      setAnalysisStep("Conducting risk assessment for Form 76 and generating mitigation strategies...");
       setProgress(80);
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Step 6: Submit for analysis
-      setAnalysisStep("Finalizing document analysis and saving results...");
+      // Step 6: Submit for analysis with Form 76 specific processing
+      setAnalysisStep("Finalizing Form 76 analysis and organizing document structure...");
       setProgress(90);
       console.log('Submitting to analyze-document function with document ID:', documentRecord.id);
       const { data, error } = await supabase.functions.invoke('analyze-document', {
@@ -84,9 +87,10 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
           documentText: documentText,
           documentId: documentRecord.id,
           includeRegulatory: true,
-          includeClientExtraction: true, // Enable client detail extraction
+          includeClientExtraction: true,
           title: documentRecord.title,
-          extractionMode: 'comprehensive' // Enhanced extraction mode
+          extractionMode: 'comprehensive',
+          formType: isForm76 ? 'form-76' : 'unknown'
         }
       });
 
@@ -100,7 +104,9 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
 
       toast({
         title: "Analysis Complete",
-        description: "Document has been analyzed with client details extraction"
+        description: isForm76 ? 
+          "Form 76 has been analyzed with client details extraction" : 
+          "Document has been analyzed with client details extraction"
       });
 
       if (onAnalysisComplete) {
