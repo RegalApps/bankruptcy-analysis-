@@ -2,61 +2,52 @@
 import { DocumentRecord } from "../types";
 
 /**
- * Determines if a document is a Form 76 based on metadata and content
- * Enhanced with additional checks and better pattern matching
+ * Enhanced detection of Form 76 documents
+ * Uses multiple methods to increase detection reliability
  */
 export const isForm76 = (documentRecord: DocumentRecord, documentText: string): boolean => {
-  const metadata = documentRecord.metadata || {};
+  console.log("Checking if document is Form 76...");
   
-  // Check in metadata first
-  if (metadata.formType === 'form-76' || metadata.formNumber === '76') {
-    console.log('Form 76 identified from metadata');
-    return true;
-  }
+  // Method 1: Check the document title
+  const titleIndicatesForm76 = 
+    documentRecord.title?.toLowerCase().includes('form 76') ||
+    documentRecord.title?.toLowerCase().includes('f76') ||
+    documentRecord.title?.toLowerCase().includes('statement of affairs');
   
-  // Check in title with more flexible patterns
-  const titleLower = documentRecord.title.toLowerCase();
-  if (
-    titleLower.includes('form 76') || 
-    titleLower.includes('form76') || 
-    titleLower.includes('f76') || 
-    titleLower.match(/\bf\s*76\b/) || // match f 76 with potential spaces
-    titleLower.match(/\bform\s*76\b/) // match form 76 with potential spaces
-  ) {
-    console.log('Form 76 identified from title');
-    return true;
-  }
+  // Method 2: Check document type if available
+  const metadataIndicatesForm76 = 
+    documentRecord.metadata?.formType === 'form-76' ||
+    documentRecord.metadata?.formNumber === '76';
   
-  // If we have document text, check there too with more flexible patterns
-  if (documentText) {
-    const textLower = documentText.toLowerCase();
-    if (
-      textLower.includes('form 76') || 
-      textLower.includes('form76') || 
-      textLower.includes('f76') ||
-      textLower.match(/\bf\s*76\b/) || // match f 76 with potential spaces
-      textLower.match(/\bform\s*76\b/) || // match form 76 with potential spaces
-      textLower.includes('statement of affairs') || 
-      (textLower.includes('monthly income') && textLower.includes('bankruptcy'))
-    ) {
-      console.log('Form 76 identified from document text');
-      return true;
-    }
-  }
+  // Method 3: Check text content
+  // More thorough text analysis with multiple patterns
+  const textPatterns = [
+    /\bf(?:orm)?\s*76\b/i,
+    /\bstatement\s+of\s+affairs\b/i,
+    /\bassets\s+and\s+liabilities\b/i,
+    /\baffidavit\s+of\s+the\s+bankrupt\b/i
+  ];
   
-  // Additional check for filename pattern if available in metadata
-  if (metadata.original_filename) {
-    const filenameLower = String(metadata.original_filename).toLowerCase();
-    if (
-      filenameLower.includes('form76') || 
-      filenameLower.includes('form 76') || 
-      filenameLower.includes('f76')
-    ) {
-      console.log('Form 76 identified from original filename');
-      return true;
-    }
-  }
+  const textIndicatesForm76 = textPatterns.some(pattern => pattern.test(documentText));
   
-  console.log('Not identified as Form 76');
-  return false;
+  // Method 4: Check for typical Form 76 sections
+  const hasForm76Sections = 
+    documentText.includes('PART A – ASSETS') ||
+    documentText.includes('PART B – LIABILITIES') ||
+    documentText.includes('PART C – INCOME') ||
+    documentText.includes('PART D – MONTHLY EXPENSES');
+  
+  // Log all detection results for debugging
+  console.log({
+    titleIndicatesForm76,
+    metadataIndicatesForm76,
+    textIndicatesForm76,
+    hasForm76Sections
+  });
+  
+  // Document is Form 76 if any method indicates it is
+  const result = titleIndicatesForm76 || metadataIndicatesForm76 || textIndicatesForm76 || hasForm76Sections;
+  
+  console.log(`Form 76 detection result: ${result}`);
+  return result;
 };

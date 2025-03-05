@@ -1,98 +1,91 @@
 
 import * as pdfjs from 'pdfjs-dist';
-import logger from "@/utils/logger";
 
-// Create a simple cache for PDF text extraction
-const textExtractionCache = new Map<string, { text: string, timestamp: number }>();
-const CACHE_EXPIRY = 60 * 60 * 1000; // 1 hour in milliseconds
+// Set the worker source
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
+/**
+ * Extracts text from a PDF document
+ * @param url URL of the PDF document
+ * @returns Promise resolving to the extracted text
+ */
 export const extractTextFromPdf = async (url: string): Promise<string> => {
+  console.log(`Starting PDF text extraction from: ${url}`);
+  
   try {
-    // Check cache first
-    const now = Date.now();
-    const cachedResult = textExtractionCache.get(url);
+    // Load the PDF document
+    const loadingTask = pdfjs.getDocument(url);
     
-    if (cachedResult && (now - cachedResult.timestamp < CACHE_EXPIRY)) {
-      logger.info('Using cached PDF text for:', url);
-      return cachedResult.text;
-    }
-    
-    logger.info('Starting PDF text extraction from:', url);
-    const startTime = performance.now();
-    
-    // Add additional logging and validation
-    if (!url || typeof url !== 'string' || !url.trim()) {
-      throw new Error('Invalid PDF URL provided');
-    }
-    
-    logger.info('Fetching PDF from:', url);
-    const response = await fetch(url, {
-      cache: 'no-store', // Prevent caching issues
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
+    // Add a reasonable timeout to avoid hanging
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('PDF loading timeout after 30s')), 30000);
     });
     
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unable to get error details');
-      logger.error(`Failed to fetch PDF: ${response.status} ${response.statusText}. Details: ${errorText}`);
-      throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+    // Race between loading and timeout
+    const pdf = await Promise.race([loadingTask.promise, timeoutPromise]);
+    
+    // Get the total number of pages
+    const numPages = pdf.numPages;
+    console.log(`PDF loaded with ${numPages} pages`);
+    
+    let fullText = '';
+    
+    // Extract text from each page
+    for (let i = 1; i <= numPages; i++) {
+      try {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+        fullText += pageText + ' ';
+        
+        console.log(`Extracted text from page ${i}/${numPages} (${pageText.length} chars)`);
+      } catch (pageError) {
+        console.error(`Error extracting text from page ${i}:`, pageError);
+        // Continue with other pages even if one fails
+      }
     }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    logger.info('PDF fetched, arrayBuffer size:', arrayBuffer.byteLength);
-    
-    if (arrayBuffer.byteLength === 0) {
-      throw new Error('PDF file is empty');
-    }
-    
-    // Initialize PDF.js worker if not already initialized
-    if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-      const workerSrc = `//cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
-      pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-    }
-    
-    const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
-    logger.info('PDF loaded, pages:', pdf.numPages);
-    
-    // Process pages in parallel for better performance
-    const pagePromises = [];
-    for (let i = 1; i <= pdf.numPages; i++) {
-      pagePromises.push(extractPageText(pdf, i));
-    }
-    
-    const pageTexts = await Promise.all(pagePromises);
-    const fullText = pageTexts.join('\n');
-    
-    const endTime = performance.now();
-    logger.info(`Text extraction complete. Length: ${fullText.length}, Time: ${(endTime - startTime).toFixed(0)}ms`);
     
     if (fullText.trim().length === 0) {
-      logger.warn('Extracted text is empty');
+      throw new Error('Extracted text is empty - possible OCR required');
     }
-    
-    // Cache the result
-    textExtractionCache.set(url, { text: fullText, timestamp: now });
     
     return fullText;
   } catch (error: any) {
-    logger.error('PDF extraction error:', error);
-    throw new Error(`Failed to extract text from PDF: ${error.message}`);
+    console.error('PDF text extraction error:', error);
+    
+    // Check if we need to use a fallback method
+    if (error.message?.includes('timeout') || error.name === 'MissingPDFException') {
+      console.log('Attempting fallback extraction method...');
+      return await fallbackExtraction(url);
+    }
+    
+    throw new Error(`Failed to extract text from PDF: ${error.message || error}`);
   }
 };
 
-async function extractPageText(pdf: any, pageNum: number): Promise<string> {
+/**
+ * Fallback extraction method using a simpler approach
+ */
+const fallbackExtraction = async (url: string): Promise<string> => {
   try {
-    logger.debug(`Processing page ${pageNum} of ${pdf.numPages}`);
-    const page = await pdf.getPage(pageNum);
-    const textContent = await page.getTextContent();
-    return textContent.items
-      .map((item: any) => item.str)
-      .join(' ');
-  } catch (error) {
-    logger.error(`Error extracting text from page ${pageNum}:`, error);
-    return '';
+    // Simple fetch and basic extraction
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+    
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map((item: any) => item.str).join(' ') + ' ';
+    }
+    
+    return text;
+  } catch (error: any) {
+    console.error('Fallback extraction failed:', error);
+    // Return a minimal string to prevent complete failure
+    return 'PDF text extraction failed. Please check document format.';
   }
-}
+};
