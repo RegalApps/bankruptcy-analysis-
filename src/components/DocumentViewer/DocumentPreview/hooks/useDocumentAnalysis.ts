@@ -1,11 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  useAnalysisProcess,
-  AnalysisProcessProps
-} from "./analysisProcess/useAnalysisProcess";
+import { useAnalysisProcess } from "./analysisProcess/useAnalysisProcess";
+import { AnalysisProcessProps } from "./analysisProcess/types";
 
 export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: () => void) => {
   const [analyzing, setAnalyzing] = useState(false);
@@ -51,10 +48,8 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
     }
   };
 
-  // When mounted, check if analysis is needed but not yet started
   useEffect(() => {
     if (session && storagePath && !analyzing) {
-      // Check current document status
       const checkDocumentStatus = async () => {
         try {
           const { data: document } = await supabase
@@ -67,7 +62,6 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
              (document.ai_processing_status === 'pending' || 
               document.ai_processing_status === 'failed' ||
               document.metadata?.processing_steps_completed?.length < 8)) {
-            // If pending or failed, restart analysis
             console.log('Document needs analysis, current status:', document.ai_processing_status);
             handleAnalyzeDocument(session);
           }
