@@ -177,21 +177,17 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           </div>
           
           {analyzing && (
-            <div className="mt-4">
-              <AnalysisProgress
-                analysisStep={analysisStep}
-                progress={progress}
-              />
-            </div>
+            <AnalysisProgress
+              analysisStep={analysisStep}
+              progress={progress}
+            />
           )}
           
           {error && (
-            <div className="mt-4">
-              <ErrorDisplay
-                error={error}
-                onRetry={() => handleAnalyzeDocument()}
-              />
-            </div>
+            <ErrorDisplay
+              error={error}
+              onRetry={() => handleAnalyzeDocument()}
+            />
           )}
         </CardContent>
       </Card>

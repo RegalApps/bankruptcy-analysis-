@@ -1,10 +1,8 @@
 
 import { Document } from "@/components/DocumentList/types";
 import { cn } from "@/lib/utils";
-import { FileText, Tag } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
 
 interface FolderDocumentListProps {
   documents: Document[];
@@ -46,22 +44,13 @@ interface DocumentItemProps {
 
 const DocumentItem = ({ document, onOpenDocument }: DocumentItemProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const documentTags = document.metadata?.tags || [];
-  
-  // Format the date for display
-  let dateDisplay = "";
-  if (document.updated_at) {
-    dateDisplay = `Updated ${formatDistanceToNow(new Date(document.updated_at), { addSuffix: true })}`;
-  } else if (document.created_at) {
-    dateDisplay = `Created ${formatDistanceToNow(new Date(document.created_at), { addSuffix: true })}`;
-  }
   
   return (
     <div 
       className={cn(
-        "text-sm p-3 rounded-md cursor-pointer flex flex-col",
+        "text-sm p-2 rounded-md cursor-pointer flex items-center",
         "border border-transparent transition-all duration-200",
-        isHovered ? "bg-accent/10 border-accent/20" : "hover:bg-accent/5"
+        isHovered && "bg-accent/10 border-accent/20"
       )}
       onClick={(e) => {
         e.stopPropagation();
@@ -77,40 +66,11 @@ const DocumentItem = ({ document, onOpenDocument }: DocumentItemProps) => {
         }
       }}
     >
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center">
-          <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
-          <span className="truncate flex-1 font-medium">{document.title}</span>
-        </div>
-        
-        {isHovered && (
-          <span className="text-xs text-primary ml-2 whitespace-nowrap">Open Document</span>
-        )}
-      </div>
-      
-      <div className="flex items-center justify-between mt-1 pl-6">
-        <div className="flex items-center">
-          {documentTags.length > 0 && (
-            <div className="flex items-center mr-2">
-              <Tag className="h-3 w-3 text-muted-foreground mr-1" />
-              <div className="flex space-x-1">
-                {documentTags.slice(0, 2).map(tag => (
-                  <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0 h-5">
-                    {tag}
-                  </Badge>
-                ))}
-                {documentTags.length > 2 && (
-                  <span className="text-xs text-muted-foreground">+{documentTags.length - 2}</span>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {dateDisplay && (
-          <span className="text-xs text-muted-foreground">{dateDisplay}</span>
-        )}
-      </div>
+      <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+      <span className="truncate flex-1">{document.title}</span>
+      {isHovered && (
+        <span className="text-xs text-primary ml-2">Open</span>
+      )}
     </div>
   );
 };

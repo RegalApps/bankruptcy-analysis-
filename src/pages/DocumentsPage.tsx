@@ -6,15 +6,13 @@ import { FolderManagement } from "@/components/folders/FolderManagement";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { showPerformanceToast } from "@/utils/performance";
-import { AlertCircle, MessageSquareText } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FolderNavigationBreadcrumb } from "@/components/folders/components/FolderNavigationBreadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { FolderTree } from "lucide-react";
 
 export const DocumentsPage = () => {
-  const { documents, isLoading, refetch } = useDocuments();
+  const { documents, refetch } = useDocuments();
   const [selectedItemId, setSelectedItemId] = useState<string | undefined>();
   const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>();
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,35 +30,8 @@ export const DocumentsPage = () => {
     navigate('/', { state: { selectedDocument: documentId } });
   };
 
-  const handleFolderNavigate = (folderId: string | null) => {
-    setCurrentFolderId(folderId);
-    if (folderId) {
-      setSelectedItemId(folderId);
-      setSelectedItemType("folder");
-    } else {
-      setSelectedItemId(undefined);
-      setSelectedItemType(undefined);
-    }
-  };
-
-  if (!documents) {
-    return (
-      <div className="flex h-screen overflow-hidden bg-background">
-        <MainSidebar />
-        <div className="flex-1 flex flex-col pl-64">
-          <MainHeader />
-          <main className="flex-1 overflow-y-auto p-6">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Error loading documents. Please try again later.
-              </AlertDescription>
-            </Alert>
-          </main>
-        </div>
-      </div>
-    );
-  }
+  // Find selected item title
+  const selectedItem = documents?.find(doc => doc.id === selectedItemId);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -68,36 +39,33 @@ export const DocumentsPage = () => {
       <div className="flex-1 flex flex-col pl-64">
         <MainHeader />
         <main className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">Document Management</h1>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => refetch()}
-                className="text-sm text-primary hover:underline flex items-center"
-              >
-                <MessageSquareText className="h-4 w-4 mr-1" />
-                Get help organizing documents
-              </button>
-            </div>
-          </div>
+          {/* Navigation breadcrumb */}
+          <Breadcrumb className="mb-4">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/documents">
+                  <FolderTree className="h-4 w-4 mr-1" />
+                  Documents
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {selectedItem && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink>{selectedItem.title}</BreadcrumbLink>
+                  </BreadcrumbItem>
+                </>
+              )}
+            </BreadcrumbList>
+          </Breadcrumb>
           
-          {/* Document navigation */}
-          <FolderNavigationBreadcrumb 
-            documents={documents || []}
-            currentFolderId={currentFolderId}
-            onNavigate={handleFolderNavigate}
-          />
-          
-          {/* Main folder management component */}
           <FolderManagement 
-            documents={documents || []} 
+            documents={documents ?? []} 
             selectedItemId={selectedItemId}
             selectedItemType={selectedItemType}
             onItemSelect={handleItemSelect}
             onRefresh={refetch}
             onOpenDocument={handleOpenDocument}
-            currentFolderId={currentFolderId}
-            onFolderNavigate={handleFolderNavigate}
           />
         </main>
       </div>
