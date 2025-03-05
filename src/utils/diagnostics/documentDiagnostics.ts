@@ -1,9 +1,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
-import { Logger } from "@/utils/logger";
-
-const logger = new Logger("DocumentDiagnostics");
+import logger from "@/utils/logger";
 
 /**
  * Comprehensive document diagnostic utility that tests various aspects of document processing
@@ -53,14 +51,9 @@ export const runDocumentDiagnostics = async (documentId: string): Promise<{
     
     try {
       // Check if file exists by trying to get its metadata
-      const { data: fileData, error: fileError } = await supabase.storage
+      const { data: fileData } = await supabase.storage
         .from('documents')
         .getPublicUrl(storagePath);
-      
-      if (fileError) {
-        errors.push(`Storage error: ${fileError.message}`);
-        return { success: false, results, errors };
-      }
       
       results.storage = {
         publicUrl: fileData.publicUrl,
