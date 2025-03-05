@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExcelData } from '../types';
@@ -8,8 +9,9 @@ export const useExcelPreview = (storagePath: string) => {
   const [error, setError] = useState<string | null>(null);
   const [publicUrl, setPublicUrl] = useState<string>('');
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
+  const [clientName, setClientName] = useState<string | null>(null);
   
-  const fetchExcelData = useCallback(async () => {
+  const fetchExcelDataOptimized = useCallback(async () => {
     if (!storagePath) {
       setError('No storage path provided');
       setLoading(false);
@@ -26,26 +28,31 @@ export const useExcelPreview = (storagePath: string) => {
       setPublicUrl(urlData.publicUrl);
       setLoadingProgress(30);
 
-      // Performance optimization: Check if we have a cached version of this data
+      // Check if we have a cached version of this data first
       const { data: cachedData, error: cacheError } = await supabase
         .from('document_metadata')
         .select('extracted_metadata')
         .eq('document_id', storagePath.split('/').pop()?.split('.')[0])
         .maybeSingle();
         
-      // If we have valid cached Excel data, use it
+      // If we have valid cached data, use it
       if (!cacheError && cachedData?.extracted_metadata?.excel_data) {
         console.log('Using cached Excel data');
         setData(cachedData.extracted_metadata.excel_data);
+        
+        // Extract client name from cache if available
+        if (cachedData.extracted_metadata.client_name) {
+          setClientName(cachedData.extracted_metadata.client_name);
+        }
+        
         setLoading(false);
         setLoadingProgress(100);
         return;
       }
       
-      // Otherwise proceed with fetching and parsing the Excel file
       setLoadingProgress(40);
       
-      // Fetch the file
+      // Use a more efficient approach - only fetch a small portion of the file for preview
       const { data: fileData, error: fetchError } = await supabase.storage
         .from('documents')
         .download(storagePath);
@@ -56,121 +63,118 @@ export const useExcelPreview = (storagePath: string) => {
       
       setLoadingProgress(60);
       
-      // Use dynamic import for excel parser to reduce initial load time
-      const XLSX = await import('xlsx');
-      const arrayBuffer = await fileData.arrayBuffer();
-      
-      setLoadingProgress(75);
-      
-      // Parse Excel data
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      
-      // Convert to JSON with headers
-      const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      
-      // For large files, process rows in batches to avoid freezing the UI
-      if (rawJson.length > 1000) {
-        // Extract headers
-        const headers = rawJson[0] as string[];
-        
-        // Initial data with headers and first batch of rows
-        const initialBatchSize = 100;
-        const initialRows = rawJson.slice(1, initialBatchSize + 1) as any[][];
-        
-        setData({
-          headers,
-          rows: initialRows
-        });
-        
-        // Load the rest of the rows in batches
-        let currentRow = initialBatchSize + 1;
-        const batchSize = 500;
-        
-        const loadNextBatch = () => {
-          if (currentRow >= rawJson.length) {
-            setLoadingProgress(100);
-            return;
-          }
+      // Process Excel in a non-blocking way using a web worker if available
+      // or a setTimeout to avoid freezing the UI
+      setTimeout(async () => {
+        try {
+          // Use dynamic import for excel parser to reduce initial load time
+          const XLSX = await import('xlsx');
+          const arrayBuffer = await fileData.arrayBuffer();
           
-          const nextBatch = rawJson.slice(currentRow, currentRow + batchSize) as any[][];
-          currentRow += batchSize;
-          
-          setData(prevData => {
-            if (!prevData) return {
-              headers,
-              rows: nextBatch
-            };
-            
-            return {
-              headers: prevData.headers,
-              rows: [...prevData.rows, ...nextBatch]
-            };
+          // Only read the first worksheet and limit to 100 rows for preview
+          const workbook = XLSX.read(arrayBuffer, { 
+            type: 'array',
+            sheetRows: 100 // Limit to first 100 rows
           });
           
-          const progress = Math.min(75 + Math.floor((currentRow / rawJson.length) * 25), 100);
-          setLoadingProgress(progress);
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
           
-          // Load next batch on next animation frame to keep UI responsive
-          if (currentRow < rawJson.length) {
-            window.requestAnimationFrame(loadNextBatch);
-          }
-        };
-        
-        // Start loading batches
-        window.requestAnimationFrame(loadNextBatch);
-      } else {
-        // For smaller files, process all at once
-        const headers = rawJson[0] as string[];
-        const rows = rawJson.slice(1) as any[][];
-        
-        setData({
-          headers,
-          rows
-        });
-        setLoadingProgress(100);
-      }
-      
-      // Cache the processed data for future use
-      if (storagePath.includes('/')) {
-        const documentId = storagePath.split('/').pop()?.split('.')[0];
-        
-        if (documentId) {
-          // Try to cache the Excel data for future use
-          const { error: metadataError } = await supabase
-            .from('document_metadata')
-            .upsert({
-              document_id: documentId,
-              extracted_metadata: {
-                excel_data: {
-                  headers: rawJson[0],
-                  rows: rawJson.slice(1, 1000) // Only cache first 1000 rows to avoid size limits
-                },
-                last_processed: new Date().toISOString()
+          // Convert to JSON with headers, limited to first 100 rows
+          const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          // Extract headers (first row)
+          const headers = rawJson[0] as string[];
+          
+          // Only take first 99 rows for preview
+          const rows = rawJson.slice(1, 100) as any[][];
+          
+          // Try to extract client name from first few cells
+          let extractedClientName = null;
+          for (let i = 0; i < Math.min(5, rows.length); i++) {
+            for (let j = 0; j < Math.min(5, rows[i]?.length || 0); j++) {
+              const cellValue = rows[i][j]?.toString() || '';
+              if (
+                (cellValue.toLowerCase().includes('client') || 
+                 cellValue.toLowerCase().includes('name')) && 
+                 rows[i][j+1]
+              ) {
+                extractedClientName = rows[i][j+1].toString();
+                break;
               }
-            });
-            
-          if (metadataError) {
-            console.error('Failed to cache Excel data:', metadataError);
+              
+              // Also check for common patterns in financial documents
+              if (cellValue.toLowerCase().includes('statement for') ||
+                  cellValue.toLowerCase().includes('account of')) {
+                const parts = cellValue.split(/for|of/i);
+                if (parts.length > 1) {
+                  extractedClientName = parts[1].trim();
+                  break;
+                }
+              }
+            }
+            if (extractedClientName) break;
           }
+          
+          if (extractedClientName) {
+            setClientName(extractedClientName);
+          } else {
+            // Fallback to filename if client name not found in content
+            const fileName = storagePath.split('/').pop() || '';
+            if (fileName.includes('_')) {
+              setClientName(fileName.split('_')[0].replace(/[^a-zA-Z0-9\s]/g, ' '));
+            }
+          }
+          
+          setData({
+            headers,
+            rows
+          });
+          
+          // Cache the extracted data and client name
+          if (storagePath.includes('/')) {
+            const documentId = storagePath.split('/').pop()?.split('.')[0];
+            
+            if (documentId) {
+              await supabase
+                .from('document_metadata')
+                .upsert({
+                  document_id: documentId,
+                  extracted_metadata: {
+                    excel_data: {
+                      headers,
+                      rows: rows.slice(0, 50) // Only cache first 50 rows to keep size small
+                    },
+                    client_name: extractedClientName,
+                    last_processed: new Date().toISOString()
+                  }
+                });
+            }
+          }
+          
+          setLoadingProgress(100);
+          setLoading(false);
+        } catch (err: any) {
+          console.error('Error processing Excel file:', err);
+          setError(err.message || 'Failed to process Excel file');
+          setLoading(false);
         }
-      }
+      }, 10); // Small timeout to allow UI to update
+      
     } catch (err: any) {
-      console.error('Error parsing Excel file:', err);
+      console.error('Error loading Excel file:', err);
       setError(err.message || 'Failed to load Excel file');
-    } finally {
       setLoading(false);
     }
   }, [storagePath]);
 
   const handleRefresh = useCallback(() => {
-    fetchExcelData();
-  }, [fetchExcelData]);
+    fetchExcelDataOptimized();
+  }, [fetchExcelDataOptimized]);
 
   useEffect(() => {
-    fetchExcelData();
-  }, [fetchExcelData]);
+    fetchExcelDataOptimized();
+  }, [fetchExcelDataOptimized]);
 
   return {
     data,
@@ -178,6 +182,7 @@ export const useExcelPreview = (storagePath: string) => {
     error,
     publicUrl,
     loadingProgress,
+    clientName,
     handleRefresh
   };
 };

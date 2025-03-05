@@ -4,6 +4,54 @@ import logger from "@/utils/logger";
 import { createFolderIfNotExists } from "./createFolder";
 import { mergeFinancialFolders } from "./mergeFinancialFolders";
 
+// Use background task for Excel processing
+const processExcelFileInBackground = async (
+  documentId: string,
+  userId: string,
+  clientName: string
+) => {
+  try {
+    // Create specialized folder for Excel files
+    const clientFolderId = await createFolderIfNotExists(
+      clientName, 
+      'client', 
+      userId
+    );
+    
+    // Create an "Income and Expense Sheet" folder
+    const folderType = 'Income and Expense Sheet';
+    const incomeExpenseFolderId = await createFolderIfNotExists(
+      folderType,
+      'financial',
+      userId,
+      clientFolderId
+    );
+    
+    // Move the document 
+    await supabase
+      .from('documents')
+      .update({ 
+        parent_folder_id: incomeExpenseFolderId,
+        metadata: { 
+          client_name: clientName,
+          folder_type: folderType,
+          processing_complete: true
+        }
+      })
+      .eq('id', documentId);
+      
+    logger.info(`Excel file ${documentId} processed and moved to folder ${incomeExpenseFolderId} for client: ${clientName}`);
+    
+    // Run the merge process with low priority
+    setTimeout(async () => {
+      await mergeFinancialFolders(userId);
+    }, 5000);
+    
+  } catch (error) {
+    logger.error('Error in background Excel processing:', error);
+  }
+};
+
 export const organizeDocumentIntoFolders = async (
   documentId: string,
   userId: string,
@@ -18,17 +66,7 @@ export const organizeDocumentIntoFolders = async (
 
     logger.info(`Starting folder organization for client: ${clientName}, document: ${documentId}`);
     
-    // First create a client folder
-    const clientFolderId = await createFolderIfNotExists(
-      clientName, 
-      'client', 
-      userId
-    );
-    
-    logger.info(`Client folder created/found with ID: ${clientFolderId}`);
-    
-    // Check if the document is an Excel file (for income and expense sheets)
-    // or if it's Form 76 (for financial assessments)
+    // Check if the document is an Excel file
     const { data: document, error: fetchError } = await supabase
       .from('documents')
       .select('title, type, storage_path, metadata')
@@ -50,22 +88,42 @@ export const organizeDocumentIntoFolders = async (
       document?.metadata?.formType === 'form-76' ||
       document?.title?.toLowerCase().includes('form 76');
     
+    // For Excel files, process in background to avoid blocking 
+    if (isExcelFile) {
+      // Just update metadata immediately so UI can proceed
+      await supabase
+        .from('documents')
+        .update({ 
+          metadata: { 
+            ...document?.metadata,
+            client_name: clientName,
+            processing_started: true
+          }
+        })
+        .eq('id', documentId);
+      
+      // Process the rest in background
+      setTimeout(() => {
+        processExcelFileInBackground(documentId, userId, clientName);
+      }, 100);
+      
+      return;
+    }
+    
+    // For non-Excel files, continue with normal processing
+    // First create a client folder
+    const clientFolderId = await createFolderIfNotExists(
+      clientName, 
+      'client', 
+      userId
+    );
+    
+    logger.info(`Client folder created/found with ID: ${clientFolderId}`);
+    
     let targetFolderId;
     let folderType;
     
-    if (isExcelFile) {
-      // For Excel files, create an "Income and Expense Sheet" folder under the client folder
-      folderType = 'Income and Expense Sheet';
-      const incomeExpenseFolderId = await createFolderIfNotExists(
-        folderType,
-        'financial',
-        userId,
-        clientFolderId
-      );
-      
-      targetFolderId = incomeExpenseFolderId;
-      logger.info(`Excel file detected, organizing into Income and Expense Sheet folder for client ${clientName}`);
-    } else if (isForm76) {
+    if (isForm76) {
       // For Form 76, create a dedicated Form 76 folder under the client folder
       folderType = 'Form 76 - Monthly Income Statement';
       const form76FolderId = await createFolderIfNotExists(
