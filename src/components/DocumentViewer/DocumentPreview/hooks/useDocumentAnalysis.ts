@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -10,12 +11,14 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
   const [error, setError] = useState<string | null>(null);
   const [analysisStep, setAnalysisStep] = useState<string>("");
   const [progress, setProgress] = useState<number>(0);
+  const [processingStage, setProcessingStage] = useState<string>("");
   const { toast } = useToast();
 
   const analysisProcessProps: AnalysisProcessProps = {
     setAnalysisStep,
     setProgress,
     setError,
+    setProcessingStage,
     toast,
     onAnalysisComplete
   };
@@ -79,6 +82,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
     error,
     analysisStep,
     progress,
+    processingStage,
     setSession,
     handleAnalyzeDocument
   };
