@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, AlertTriangle, RefreshCw, FileSearch } from "lucide-react";
+import { FileText, AlertTriangle, FileSearch } from "lucide-react";
 import { ExcelPreview } from "../ExcelPreview";
 import { AnalysisProgress } from "./components/AnalysisProgress";
 import { ErrorDisplay } from "./components/ErrorDisplay";
@@ -10,7 +10,6 @@ import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
 import { DocumentDiagnostics } from "./components/DocumentDiagnostics";
 import { usePreviewState } from "./hooks/usePreviewState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LoadingState } from "../LoadingState";
 import { Button } from "@/components/ui/button";
 
 interface DocumentPreviewProps {
@@ -40,8 +39,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     handleRefreshPreview,
     handleIframeError,
     handleAnalyzeDocument,
-    bypassAnalysis,
-    setBypassAnalysis,
     diagnosticsMode,
     toggleDiagnosticsMode
   } = usePreviewState(storagePath, title, onAnalysisComplete);
@@ -75,16 +72,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             Document Preview
           </CardTitle>
           <div className="flex items-center gap-2">
-            {loading && !analyzing && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setBypassAnalysis(true)}
-                className="text-xs"
-              >
-                Skip Processing
-              </Button>
-            )}
             {documentId && (
               <Button
                 variant="ghost"
@@ -112,26 +99,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               />
             </div>
           )}
-          
-          {loading && !analyzing && !bypassAnalysis ? (
-            <div className="p-6 flex flex-col items-center justify-center gap-4">
-              <LoadingState size="medium" message="Loading document..." />
-              <p className="text-sm text-muted-foreground mt-2">
-                {isExcelFile ? 
-                  "Processing Excel file data. This may take a moment for large files." : 
-                  "Loading document preview and analysis data..."}
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleRefreshPreview}
-                className="mt-4"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Preview
-              </Button>
-            </div>
-          ) : null}
           
           {!fileExists ? (
             <Alert variant="destructive" className="mb-4">
@@ -161,7 +128,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             />
           ) : null}
           
-          {(fileExists && publicUrl && (!loading || bypassAnalysis)) && (
+          {(fileExists && publicUrl) && (
             <DocumentObject 
               publicUrl={publicUrl} 
               onError={handleIframeError} 

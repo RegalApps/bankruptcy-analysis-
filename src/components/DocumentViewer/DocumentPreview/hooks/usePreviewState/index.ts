@@ -4,14 +4,14 @@ import { useDocumentAnalysis } from "../../../hooks/useDocumentAnalysis";
 import { useFileOperations } from "./useFileOperations";
 import { useAnalysisInitialization } from "./useAnalysisInitialization";
 import { useRealtimeSubscriptions } from "./useRealtimeSubscriptions";
-import { PreviewStateProps, PreviewState } from "./types";
+import { PreviewState } from "./types";
 
 export const usePreviewState = (
   storagePath: string, 
   title?: string, 
   onAnalysisComplete?: () => void
 ): PreviewState => {
-  const [bypassAnalysis, setBypassAnalysis] = useState(false);
+  const [diagnosticsMode, setDiagnosticsMode] = useState(false);
   
   const {
     publicUrl,
@@ -35,7 +35,7 @@ export const usePreviewState = (
     handleAnalyzeDocument
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
-  // Initialize analysis when component mounts, unless we're bypassing
+  // Initialize analysis when component mounts
   useAnalysisInitialization({
     storagePath,
     fileExists,
@@ -46,7 +46,7 @@ export const usePreviewState = (
     handleAnalyzeDocument,
     setPreviewError,
     onAnalysisComplete,
-    bypassAnalysis
+    bypassAnalysis: false
   });
 
   // Set up real-time subscriptions
@@ -55,6 +55,10 @@ export const usePreviewState = (
     setSession,
     onAnalysisComplete
   });
+
+  const toggleDiagnosticsMode = () => {
+    setDiagnosticsMode(prev => !prev);
+  };
 
   return {
     previewError,
@@ -68,10 +72,10 @@ export const usePreviewState = (
     progress,
     processingStage,
     loading,
-    bypassAnalysis,
-    setBypassAnalysis,
     handleRefreshPreview,
     handleIframeError,
-    handleAnalyzeDocument
+    handleAnalyzeDocument,
+    diagnosticsMode,
+    toggleDiagnosticsMode
   };
 };

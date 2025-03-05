@@ -1,6 +1,6 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, FileSearch, RotateCw, ExternalLink } from "lucide-react";
+import { AlertCircle, FileSearch, RotateCw, ExternalLink, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -47,16 +47,16 @@ export const PreviewErrorAlert = ({
         
         <div className="text-sm opacity-80 mt-2">
           {isNetworkError && (
-            <p>This appears to be a network connectivity issue. Please check your internet connection and try again.</p>
+            <p>Check your internet connection and try again. The document server may be temporarily unavailable.</p>
           )}
           {isFormatError && (
-            <p>The document may be in an unsupported format or corrupted. Try converting it to a standard PDF format.</p>
+            <p>This document may be in an unsupported format. Try downloading it directly to view with a compatible application.</p>
           )}
           {isDatabaseError && (
-            <p>There was a problem accessing document data. This may be a temporary server issue.</p>
+            <p>There was a problem accessing the document data. This is likely a temporary server issue.</p>
           )}
           {!isNetworkError && !isFormatError && !isDatabaseError && (
-            <p>An unexpected error occurred while loading the document. Please try refreshing or run diagnostics.</p>
+            <p>An unexpected error occurred. Try refreshing the preview or downloading the document directly.</p>
           )}
         </div>
         
@@ -68,7 +68,7 @@ export const PreviewErrorAlert = ({
             className="gap-2"
           >
             <RotateCw className="h-4 w-4" />
-            Refresh Document
+            Refresh
           </Button>
           
           {documentId && onRunDiagnostics && (
@@ -79,20 +79,39 @@ export const PreviewErrorAlert = ({
               className="gap-2"
             >
               <FileSearch className="h-4 w-4" />
-              Run Diagnostics
+              Diagnostics
             </Button>
           )}
           
           {publicUrl && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => window.open(publicUrl, '_blank')}
-              className="gap-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Open Directly
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(publicUrl, '_blank')}
+                className="gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = publicUrl;
+                  link.download = publicUrl.split('/').pop() || 'document';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </Button>
+            </>
           )}
         </div>
       </AlertDescription>
