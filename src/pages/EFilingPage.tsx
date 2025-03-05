@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileCheck, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { FileCheck } from "lucide-react";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -9,7 +9,7 @@ import { RiskAssessment } from "@/components/e-filing/RiskAssessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Document } from "@/components/DocumentList/types";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ValidationStatusAlert } from "@/components/e-filing/components/ValidationStatusAlert";
 import { toast } from "sonner";
 
 export const EFilingPage = () => {
@@ -77,14 +77,7 @@ export const EFilingPage = () => {
                 {isValidated && (
                   <Card>
                     <CardContent className="pt-6">
-                      <Alert>
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        <AlertTitle>Ready to E-File</AlertTitle>
-                        <AlertDescription>
-                          Document has passed all validation checks and is ready to be filed.
-                          Click the E-File button above to proceed with filing.
-                        </AlertDescription>
-                      </Alert>
+                      <ValidationStatusAlert isValid={isValidated} />
                     </CardContent>
                   </Card>
                 )}
