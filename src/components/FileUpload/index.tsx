@@ -24,6 +24,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
         return;
       }
 
+      // Get user ID for document ownership
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "You must be logged in to upload documents"
+        });
+        return;
+      }
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
@@ -33,6 +44,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
 
       if (uploadError) throw uploadError;
 
+      // Create database record with user_id
       const { data: documentData, error: documentError } = await supabase
         .from('documents')
         .insert({
@@ -40,6 +52,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
           type: file.type,
           size: file.size,
           storage_path: filePath,
+          user_id: user.id, // Add user_id field to fix RLS policy
           ai_processing_status: 'pending'
         })
         .select()

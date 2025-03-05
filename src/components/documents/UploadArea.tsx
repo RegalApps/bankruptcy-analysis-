@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, FileType, Check } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 
@@ -35,6 +35,47 @@ export const UploadArea = ({ onFileUpload, isUploading, uploadProgress = 0, uplo
     setIsDragging(false);
   };
 
+  const getProgressBarSteps = () => {
+    // Different steps based on progress
+    if (uploadProgress < 25) {
+      return (
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span className="font-medium text-primary">Validation</span>
+          <span>Upload</span>
+          <span>Processing</span>
+          <span>Complete</span>
+        </div>
+      );
+    } else if (uploadProgress < 50) {
+      return (
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span className="text-primary">✓ Validation</span>
+          <span className="font-medium text-primary">Upload</span>
+          <span>Processing</span>
+          <span>Complete</span>
+        </div>
+      );
+    } else if (uploadProgress < 95) {
+      return (
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span className="text-primary">✓ Validation</span>
+          <span className="text-primary">✓ Upload</span>
+          <span className="font-medium text-primary">Processing</span>
+          <span>Complete</span>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span className="text-primary">✓ Validation</span>
+          <span className="text-primary">✓ Upload</span>
+          <span className="text-primary">✓ Processing</span>
+          <span className="font-medium text-primary">Complete</span>
+        </div>
+      );
+    }
+  };
+
   return (
     <Card 
       className={`border-2 border-dashed transition-colors ${
@@ -59,21 +100,27 @@ export const UploadArea = ({ onFileUpload, isUploading, uploadProgress = 0, uplo
         />
         {isUploading ? (
           <div className="w-full space-y-6">
-            <Upload className="h-12 w-12 mx-auto text-primary mb-4 animate-pulse" />
+            {uploadProgress === 100 ? (
+              <Check className="h-12 w-12 mx-auto text-green-500 mb-4" />
+            ) : (
+              <Upload className="h-12 w-12 mx-auto text-primary mb-4 animate-pulse" />
+            )}
+            
             <h3 className="text-lg font-medium mb-2">
-              Processing Document...
+              {uploadProgress === 100 ? "Upload Complete!" : "Processing Document..."}
             </h3>
+            
             <p className="text-sm text-muted-foreground mb-4">
               {uploadStep}
             </p>
+            
             <div className="space-y-2 max-w-md mx-auto">
-              <Progress value={uploadProgress} className="h-2 w-full" />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Upload</span>
-                <span>Extraction</span>
-                <span>Analysis</span>
-                <span>Complete</span>
-              </div>
+              <Progress 
+                value={uploadProgress} 
+                className={`h-2 w-full ${uploadProgress === 100 ? 'bg-green-200' : ''}`} 
+              />
+              
+              {getProgressBarSteps()}
             </div>
           </div>
         ) : (
@@ -88,9 +135,20 @@ export const UploadArea = ({ onFileUpload, isUploading, uploadProgress = 0, uplo
             <p className="text-sm text-muted-foreground mb-4">
               or click to browse your files
             </p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Supports PDF, Word, and Excel files up to 10MB
-            </p>
+            <div className="flex flex-wrap justify-center gap-2 mb-4">
+              <div className="flex items-center space-x-1 text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                <FileType size={12} />
+                <span>PDF</span>
+              </div>
+              <div className="flex items-center space-x-1 text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                <FileType size={12} />
+                <span>Word</span>
+              </div>
+              <div className="flex items-center space-x-1 text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                <FileType size={12} />
+                <span>Excel</span>
+              </div>
+            </div>
             <Button variant="outline">
               Browse Files
             </Button>

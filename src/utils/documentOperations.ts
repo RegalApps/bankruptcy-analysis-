@@ -19,6 +19,7 @@ export const uploadDocument = async (file: File) => {
       .upload(filePath, file);
 
     if (uploadError) {
+      logger.error('Storage upload error:', uploadError);
       throw uploadError;
     }
 
@@ -32,7 +33,13 @@ export const uploadDocument = async (file: File) => {
                     file.name.toLowerCase().includes('f76') || 
                     file.name.toLowerCase().includes('form76');
     
-    // Create a record in the documents table
+    // Get user ID for the document ownership
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated. Please sign in again.');
+    }
+
+    // Create a record in the documents table with user_id
     const { data: documentData, error: documentError } = await supabase
       .from('documents')
       .insert({
@@ -42,39 +49,32 @@ export const uploadDocument = async (file: File) => {
         url: urlData.publicUrl,
         storage_path: filePath,
         is_folder: false,
+        user_id: user.id, // Add user_id field to fix RLS policy
         metadata: {
           formType: isForm76 ? 'form-76' : null,
-          uploadDate: new Date().toISOString()
+          uploadDate: new Date().toISOString(),
+          client_name: isForm76 ? extractClientName(file.name) : 'Untitled Client'
         }
       })
       .select()
       .single();
 
     if (documentError) {
+      logger.error('Database insert error:', documentError);
       throw documentError;
     }
 
     // Organize document into appropriate folders
     if (documentData) {
-      // Getting the current user ID
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id;
-      
       // Extract client name and form number from metadata or file name
-      let clientName = 'Untitled Client';
+      let clientName = documentData.metadata?.client_name || 'Untitled Client';
       let formNumber = isForm76 ? 'Form-76' : 'General Document';
       
-      // If it's a Form 76, try to extract client name from the filename
-      if (isForm76) {
-        const nameMatch = file.name.match(/form[- ]?76[- ]?(.+?)(?:\.|$)/i);
-        if (nameMatch && nameMatch[1]) {
-          clientName = nameMatch[1].trim();
-        }
-      }
+      logger.info(`Organizing document for client: ${clientName}, form type: ${formNumber}`);
       
       await organizeDocumentIntoFolders(
         documentData.id,
-        userId || '',
+        user.id,
         clientName,
         formNumber
       );
@@ -86,3 +86,12 @@ export const uploadDocument = async (file: File) => {
     throw error;
   }
 };
+
+// Function to extract client name from Form 76 filename
+function extractClientName(filename: string): string {
+  const nameMatch = filename.match(/form[- ]?76[- ]?(.+?)(?:\.|$)/i);
+  if (nameMatch && nameMatch[1]) {
+    return nameMatch[1].trim();
+  }
+  return 'Untitled Client';
+}

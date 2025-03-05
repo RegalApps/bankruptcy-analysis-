@@ -25,7 +25,7 @@ export const DocumentManagementPage = () => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      setUploadStep("Validating document...");
+      setUploadStep("Validating document format and size...");
 
       // Validate file type and size
       const validTypes = [
@@ -38,12 +38,16 @@ export const DocumentManagementPage = () => {
       
       if (!validTypes.includes(file.type) && 
           !file.name.endsWith('.xlsx') && 
-          !file.name.endsWith('.xls')) {
+          !file.name.endsWith('.xls') &&
+          !file.name.endsWith('.pdf') &&
+          !file.name.endsWith('.doc') &&
+          !file.name.endsWith('.docx')) {
         toast({
           variant: "destructive",
           title: "Invalid file type",
           description: "Please upload a PDF, Word, or Excel document"
         });
+        setIsUploading(false);
         return;
       }
 
@@ -53,74 +57,77 @@ export const DocumentManagementPage = () => {
           title: "File too large",
           description: "File size should be less than 10MB"
         });
+        setIsUploading(false);
         return;
       }
 
       // Update progress for upload
       setUploadProgress(15);
       setUploadStep("Uploading document to secure storage...");
-
-      // Short pause to show the step
-      await new Promise(resolve => setTimeout(resolve, 800));
       
-      setUploadProgress(30);
+      // Actual upload process starts
+      setUploadProgress(25);
       
+      // Upload document data
       const documentData = await uploadDocument(file);
       
       setUploadProgress(50);
+
+      // Different message based on file type      
+      const isExcelFile = file.type.includes('excel') || 
+                          file.name.endsWith('.xls') || 
+                          file.name.endsWith('.xlsx');
+                          
+      const isForm76 = file.name.toLowerCase().includes('form 76') || 
+                       file.name.toLowerCase().includes('f76') || 
+                       file.name.toLowerCase().includes('form76');
       
-      // Different message for Excel files
-      if (file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
-        setUploadStep("Processing financial data from Excel...");
+      if (isExcelFile) {
+        setUploadStep("Processing financial data from spreadsheet...");
+      } else if (isForm76) {
+        setUploadStep("Analyzing Form 76 monthly income statement...");
       } else {
-        setUploadStep("Document uploaded. Starting automatic analysis...");
+        setUploadStep("Analyzing document contents...");
       }
       
-      // Short pause to show the step
+      setUploadProgress(65);
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      setUploadProgress(60);
-      
-      if (file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
-        setUploadStep("Extracting financial records from Excel...");
+      if (isForm76) {
+        setUploadStep("Extracting client information from Form 76...");
+      } else if (isExcelFile) {
+        setUploadStep("Extracting financial records from spreadsheet...");
       } else {
-        setUploadStep("Extracting document text and metadata...");
+        setUploadStep("Organizing document in folder structure...");
       }
       
-      // Short pause to show the step
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      setUploadProgress(80);
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      setUploadProgress(75);
-      
-      if (file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
-        setUploadStep("Processing income and expense data...");
-      } else {
-        setUploadStep("Conducting regulatory compliance check...");
-      }
-      
-      // Short pause to show the step
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      setUploadProgress(90);
-      
-      if (file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
+      if (isForm76) {
+        setUploadStep("Performing regulatory compliance checks...");
+      } else if (isExcelFile) {
         setUploadStep("Finalizing financial data processing...");
       } else {
-        setUploadStep("Finalizing analysis and organizing document...");
+        setUploadStep("Finalizing document processing...");
       }
       
-      // Short pause to show the step
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setUploadProgress(95);
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       setUploadProgress(100);
+      setUploadStep("Upload complete!");
 
       toast({
         title: "Success",
-        description: file.type.includes('excel') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')
-          ? "Excel file uploaded and processed successfully"
-          : "Document uploaded and analyzed successfully"
+        description: isForm76 
+          ? "Form 76 uploaded and analyzed successfully"
+          : isExcelFile
+            ? "Financial document uploaded and processed successfully"
+            : "Document uploaded and processed successfully"
       });
 
+      // Refresh document list
       refetch();
       
       // If a document was uploaded successfully, navigate to view it
@@ -133,7 +140,7 @@ export const DocumentManagementPage = () => {
       console.error('Error uploading document:', error);
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Upload Failed",
         description: error instanceof Error ? error.message : "Failed to upload document. Please try again."
       });
     } finally {
