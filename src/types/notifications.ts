@@ -20,11 +20,10 @@ export interface DatabaseNotification {
   id: string;
   title: string;
   message: string;
-  type: string;
+  category: NotificationCategory;
   created_at: string;
   read: boolean;
   user_id: string;
-  category?: NotificationCategory;
   priority?: string;
   action_url?: string;
   icon?: string;

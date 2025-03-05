@@ -31,6 +31,7 @@ serve(async (req) => {
           category: notification.category || 'file_activity',
           priority: notification.priority || 'normal',
           action_url: notification.action_url,
+          icon: notification.icon,
           metadata: notification.metadata || {},
           read: false
         })

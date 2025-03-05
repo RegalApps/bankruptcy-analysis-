@@ -1,212 +1,203 @@
 
-import { useState } from 'react';
-import { CornerDownRight, Edit, Trash2, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { EnhancedCommentInput } from './EnhancedCommentInput';
-import { CommentItemProps, Comment } from './types';
+import React, { useState } from 'react';
+import { CommentItemProps } from './types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Reply, Edit2, Trash2, Check, X, MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { formatDistance } from 'date-fns';
+import { CommentInput } from './CommentInput';
 
-export const ThreadedComment = ({
+export const ThreadedComment: React.FC<CommentItemProps> = ({
   comment,
-  allComments = [],
+  allComments,
   currentUser,
   userProfile,
   onReply,
   onEdit,
   onDelete,
   onResolve,
-  isSubmitting
-}: CommentItemProps) => {
+  isSubmitting,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(comment.content);
-  const [showReplyInput, setShowReplyInput] = useState(false);
-  
-  // Find replies to this comment
-  const replies = allComments.filter(c => c.parent_id === comment.id);
-  
-  const isOwnComment = currentUser && comment.user_id === currentUser.id;
-  const canEdit = isOwnComment;
-  const canDelete = isOwnComment;
-  
-  const formattedDate = comment.created_at 
-    ? formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })
-    : 'just now';
+  const [editedContent, setEditedContent] = useState(comment.content);
+  const [isReplying, setIsReplying] = useState(false);
 
   const handleSaveEdit = async () => {
-    await onEdit(comment.id, editContent);
+    if (editedContent.trim() === comment.content.trim()) {
+      setIsEditing(false);
+      return;
+    }
+
+    await onEdit(comment.id, editedContent);
     setIsEditing(false);
   };
 
-  const handleToggleReply = () => {
-    setShowReplyInput(!showReplyInput);
-    if (!showReplyInput) {
-      onReply(comment.id);
-    }
+  const handleCancelEdit = () => {
+    setEditedContent(comment.content);
+    setIsEditing(false);
   };
 
-  const handleResolve = () => {
-    onResolve(comment.id, !comment.is_resolved);
+  const handleReply = () => {
+    setIsReplying(true);
   };
 
-  // Format content to highlight mentions
-  const formatContent = (content: string) => {
-    return content.replace(/@([a-zA-Z0-9 ]+)/g, '<span class="text-primary font-medium">@$1</span>');
+  const handleCancelReply = () => {
+    setIsReplying(false);
   };
+
+  const handleSubmitReply = async (content: string) => {
+    // The parent component will handle the reply
+    onReply(comment.id);
+    setIsReplying(false);
+  };
+
+  const handleToggleResolved = async () => {
+    await onResolve(comment.id, !comment.is_resolved);
+  };
+
+  const isOwnComment = currentUser?.id === comment.user_id;
+  const formattedDate = comment.created_at
+    ? formatDistance(new Date(comment.created_at), new Date(), { addSuffix: true })
+    : '';
+
+  // Find child comments (replies to this comment)
+  const childComments = allComments?.filter(c => c.parent_id === comment.id) || [];
 
   return (
-    <div className={`p-3 rounded-md border ${comment.is_resolved ? 'bg-green-50 border-green-100' : 'bg-card'}`}>
-      <div className="flex items-start gap-2">
-        <Avatar className="h-8 w-8 mt-1">
-          <AvatarFallback>{userProfile?.full_name?.charAt(0) || 'U'}</AvatarFallback>
-          {userProfile?.avatar_url && (
-            <AvatarImage src={userProfile.avatar_url} alt={userProfile.full_name} />
-          )}
+    <div className={`p-4 rounded-lg border ${comment.is_resolved ? 'bg-green-50 border-green-200' : 'bg-card border-border'}`}>
+      <div className="flex items-start gap-3">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={userProfile?.avatar_url || ''} alt={userProfile?.full_name || 'User'} />
+          <AvatarFallback>
+            {userProfile?.full_name
+              ? userProfile.full_name
+                  .split(' ')
+                  .map(name => name[0])
+                  .join('')
+                  .toUpperCase()
+              : 'U'}
+          </AvatarFallback>
         </Avatar>
-        
-        <div className="flex-1 space-y-1">
-          <div className="flex justify-between items-start">
-            <div>
+
+        <div className="flex-1 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <p className="text-sm font-medium">{userProfile?.full_name || 'User'}</p>
               <p className="text-xs text-muted-foreground">{formattedDate}</p>
+              {comment.is_resolved && (
+                <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-800">
+                  Resolved
+                </span>
+              )}
             </div>
-            
-            {comment.is_resolved && (
-              <span className="inline-flex items-center text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Resolved
-              </span>
-            )}
+
+            <div className="flex items-center gap-1">
+              {isOwnComment && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDelete(comment.id)}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleToggleResolved}>
+                      <Check className="h-4 w-4 mr-2" />
+                      {comment.is_resolved ? 'Mark as Unresolved' : 'Mark as Resolved'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </div>
-          
+
           {isEditing ? (
             <div className="space-y-2">
               <textarea
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                className="w-full p-2 text-sm border rounded-md"
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                className="w-full min-h-[100px] p-2 text-sm border rounded-md"
+                placeholder="Edit your comment..."
               />
-              <div className="flex gap-2 justify-end">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setIsEditing(false)}
-                >
-                  Cancel
+              <div className="flex justify-end gap-2">
+                <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                  <X className="h-4 w-4 mr-1" /> Cancel
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleSaveEdit}
-                  disabled={!editContent.trim() || isSubmitting}
-                >
-                  Save
+                <Button size="sm" onClick={handleSaveEdit} disabled={isSubmitting}>
+                  <Check className="h-4 w-4 mr-1" /> Save
                 </Button>
               </div>
             </div>
           ) : (
-            <div 
-              className="text-sm"
-              dangerouslySetInnerHTML={{ __html: formatContent(comment.content) }}
-            />
+            <>
+              <p className="text-sm">{comment.content}</p>
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={handleReply}
+                >
+                  <Reply className="h-3 w-3 mr-1" /> Reply
+                </Button>
+                {!isOwnComment && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={handleToggleResolved}
+                  >
+                    <Check className="h-3 w-3 mr-1" />
+                    {comment.is_resolved ? 'Mark as Unresolved' : 'Mark as Resolved'}
+                  </Button>
+                )}
+              </div>
+            </>
           )}
-          
-          <div className="flex gap-2 mt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={handleToggleReply}
-            >
-              <MessageSquare className="h-3 w-3 mr-1" />
-              Reply
-            </Button>
-            
-            {canEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => setIsEditing(true)}
-                disabled={isEditing}
-              >
-                <Edit className="h-3 w-3 mr-1" />
-                Edit
-              </Button>
-            )}
-            
-            {canDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                onClick={() => onDelete(comment.id)}
-                disabled={isSubmitting}
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Delete
-              </Button>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`h-7 px-2 text-xs ${comment.is_resolved ? 'text-red-600' : 'text-green-600'}`}
-              onClick={handleResolve}
-              disabled={isSubmitting}
-            >
-              {comment.is_resolved ? (
-                <>
-                  <XCircle className="h-3 w-3 mr-1" />
-                  Unresolve
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Resolve
-                </>
-              )}
-            </Button>
-          </div>
-          
-          {/* Show reply form if requested */}
-          {showReplyInput && (
-            <div className="mt-2 pl-4 border-l-2 border-muted">
-              <EnhancedCommentInput
+
+          {isReplying && (
+            <div className="mt-3">
+              <CommentInput
                 currentUser={currentUser}
                 userProfile={userProfile}
-                onSubmit={(content, _, mentions) => {
-                  onSubmit(content, comment.id, mentions);
-                  setShowReplyInput(false);
-                  return Promise.resolve();
-                }}
+                onSubmit={handleSubmitReply}
                 isSubmitting={isSubmitting}
                 parentId={comment.id}
-                onCancel={() => setShowReplyInput(false)}
+                onCancel={handleCancelReply}
                 placeholder="Write a reply..."
               />
             </div>
           )}
-          
-          {/* Show replies */}
-          {replies.length > 0 && (
-            <div className="mt-3 pl-4 border-l-2 border-muted space-y-3">
-              {replies.map(reply => (
-                <div key={reply.id} className="flex items-start gap-2">
-                  <CornerDownRight className="h-4 w-4 text-muted-foreground" />
-                  <ThreadedComment
-                    comment={reply}
-                    allComments={allComments}
-                    currentUser={currentUser}
-                    userProfile={userProfile}
-                    onReply={onReply}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onResolve={onResolve}
-                    isSubmitting={isSubmitting}
-                  />
-                </div>
+
+          {/* Render child comments */}
+          {childComments.length > 0 && (
+            <div className="pl-4 border-l border-border mt-4 space-y-4">
+              {childComments.map((childComment) => (
+                <ThreadedComment
+                  key={childComment.id}
+                  comment={childComment}
+                  allComments={allComments}
+                  currentUser={currentUser}
+                  userProfile={userProfile}
+                  onReply={onReply}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onResolve={onResolve}
+                  isSubmitting={isSubmitting}
+                />
               ))}
             </div>
           )}

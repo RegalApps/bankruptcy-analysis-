@@ -4,9 +4,9 @@ export interface Comment {
   content: string;
   created_at: string;
   user_id: string;
+  document_id: string;
   parent_id?: string;
   mentions?: string[];
-  document_id: string;
   is_resolved?: boolean;
 }
 

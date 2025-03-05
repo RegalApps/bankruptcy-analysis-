@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { DocumentDetails } from "./types";
+import { Comment } from "./Comments/types";
 
 interface CollaborationPanelProps {
   document: DocumentDetails;
@@ -46,6 +47,12 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
     }
   };
 
+  // Ensure document.comments has document_id property
+  const typedComments: Comment[] = document.comments ? document.comments.map(comment => ({
+    ...comment,
+    document_id: document.id
+  })) : [];
+
   return (
     <div className="rounded-lg border bg-card p-6">
       <div className="flex items-center space-x-2 mb-4">
@@ -54,7 +61,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
       </div>
 
       <div className="space-y-4">
-        {document.comments && document.comments.map((comment) => (
+        {typedComments.map((comment) => (
           <div key={comment.id} className="p-3 rounded-md bg-muted">
             <p className="text-sm">{comment.content}</p>
             <p className="text-xs text-muted-foreground mt-1">
