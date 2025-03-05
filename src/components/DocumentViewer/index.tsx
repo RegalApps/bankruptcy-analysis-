@@ -1,85 +1,98 @@
 
-import { useDocumentViewer } from "./hooks/useDocumentViewer";
+import { useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentPreview } from "./DocumentPreview";
+import { AnalysisPanel } from "./AnalysisPanel";
+import { useDocumentViewer } from "./hooks/useDocumentViewer";
 import { Sidebar } from "./Sidebar";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { LoadingState } from "./LoadingState";
-import { TaskManager } from "./TaskManager";
-import { VersionTab } from "./VersionTab";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import logger from "@/utils/logger";
-import { useEffect } from "react";
-import { showPerformanceToast } from "@/utils/performance";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 interface DocumentViewerProps {
   documentId: string;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) => {
-  const { document, loading, fetchDocumentDetails } = useDocumentViewer(documentId);
+  const { document, loading, loadingError, handleRefresh } = useDocumentViewer(documentId);
 
   useEffect(() => {
-    // Measure and show performance metrics when the document viewer loads
-    if (!loading && document) {
-      showPerformanceToast("Document Viewer");
+    if (document) {
+      console.log("Document data loaded:", document);
     }
-  }, [loading, document]);
+  }, [document]);
 
-  logger.debug('Document data in DocumentViewer:', document);
+  // Function to handle document analysis completion
+  const handleAnalysisComplete = () => {
+    handleRefresh();
+  };
 
   if (loading) {
-    return <LoadingState size="large" message="Loading document details..." />;
-  }
-
-  if (!document) {
     return (
-      <div className="text-center p-8">
-        <p className="text-muted-foreground">Document not found</p>
+      <div className="py-12 flex flex-col items-center justify-center gap-4">
+        <LoadingState size="large" message="Loading document details..." />
+        <p className="text-muted-foreground mt-2">
+          This may take a moment for large documents or during initial processing.
+        </p>
       </div>
     );
   }
 
-  const analysis = document.analysis?.[0]?.content;
-  logger.debug('Analysis content:', analysis);
+  if (loadingError) {
+    return (
+      <div className="py-12 flex flex-col items-center justify-center gap-4">
+        <div className="max-w-md mx-auto text-center p-6 bg-muted rounded-lg">
+          <h3 className="text-lg font-medium mb-3">Document Loading Error</h3>
+          <p className="text-muted-foreground mb-6">{loadingError}</p>
+          <Button onClick={handleRefresh}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry Loading
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!document) {
+    return (
+      <div className="py-12 text-center">
+        <h3 className="text-lg font-medium">Document Not Found</h3>
+        <p className="text-muted-foreground mt-2">
+          The requested document could not be found or has been deleted.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div className="lg:col-span-3 space-y-6">
-        <Sidebar 
-          document={document}
-          onDeadlineUpdated={fetchDocumentDetails} 
-        />
-      </div>
-
-      <div className="lg:col-span-6">
-        <Tabs defaultValue="preview">
-          <TabsList>
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-            <TabsTrigger value="versions">Versions</TabsTrigger>
-          </TabsList>
-          <TabsContent value="preview">
-            <DocumentPreview 
-              storagePath={document.storage_path} 
-              title={document.title}
-              onAnalysisComplete={fetchDocumentDetails}
-            />
-          </TabsContent>
-          <TabsContent value="versions">
-            <VersionTab documentId={document.id} />
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      <div className="lg:col-span-3 space-y-6">
-        <CollaborationPanel 
-          document={document}
-          onCommentAdded={fetchDocumentDetails}
-        />
-        <TaskManager
-          documentId={document.id}
-          tasks={document.tasks || []}
-          onTaskUpdate={fetchDocumentDetails}
-        />
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <Tabs defaultValue="preview" className="w-full">
+            <TabsList>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
+              <TabsTrigger value="analysis">Analysis</TabsTrigger>
+              <TabsTrigger value="collaboration">Collaboration</TabsTrigger>
+            </TabsList>
+            <TabsContent value="preview" className="mt-6">
+              <DocumentPreview 
+                storagePath={document.storage_path} 
+                title={document.title}
+                onAnalysisComplete={handleAnalysisComplete}
+              />
+            </TabsContent>
+            <TabsContent value="analysis" className="mt-6">
+              <AnalysisPanel documentId={documentId} />
+            </TabsContent>
+            <TabsContent value="collaboration" className="mt-6">
+              <CollaborationPanel documentId={documentId} />
+            </TabsContent>
+          </Tabs>
+        </div>
+        <div className="md:col-span-1">
+          <Sidebar document={document} onDeadlineUpdated={handleRefresh} />
+        </div>
       </div>
     </div>
   );

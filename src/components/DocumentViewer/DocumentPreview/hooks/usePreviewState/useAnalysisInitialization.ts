@@ -14,6 +14,7 @@ interface AnalysisInitializationProps {
   handleAnalyzeDocument: (session: Session | null) => void;
   setPreviewError: (error: string | null) => void;
   onAnalysisComplete?: () => void;
+  bypassAnalysis?: boolean;
 }
 
 export const useAnalysisInitialization = ({
@@ -25,16 +26,22 @@ export const useAnalysisInitialization = ({
   setSession,
   handleAnalyzeDocument,
   setPreviewError,
-  onAnalysisComplete
+  onAnalysisComplete,
+  bypassAnalysis = false
 }: AnalysisInitializationProps) => {
   const { toast } = useToast();
 
   // Fetch session on component mount and start analysis when ready
   useEffect(() => {
-    console.log('DocumentPreview mounted with storagePath:', storagePath);
+    console.log('DocumentPreview mounted with storagePath:', storagePath, 'bypassAnalysis:', bypassAnalysis);
     
     if (!fileExists) {
       console.error('File does not exist, skipping analysis');
+      return;
+    }
+    
+    if (bypassAnalysis) {
+      console.log('Bypassing analysis due to user preference');
       return;
     }
     
@@ -51,8 +58,14 @@ export const useAnalysisInitialization = ({
         if (currentSession) {
           setSession(currentSession);
           
+          // Skip analysis for Excel files
+          if (isExcelFile) {
+            console.log('Skipping analysis for Excel file');
+            return;
+          }
+          
           // Check document status to determine if analysis is needed
-          if (storagePath && !isExcelFile) {
+          if (storagePath) {
             const { data: document, error: docError } = await supabase
               .from('documents')
               .select('ai_processing_status, metadata')
@@ -104,5 +117,5 @@ export const useAnalysisInitialization = ({
     return () => {
       mounted = false;
     };
-  }, [storagePath, analyzing, error, setSession, handleAnalyzeDocument, isExcelFile, onAnalysisComplete, toast, fileExists, setPreviewError]);
+  }, [storagePath, analyzing, error, setSession, handleAnalyzeDocument, isExcelFile, onAnalysisComplete, toast, fileExists, setPreviewError, bypassAnalysis]);
 };

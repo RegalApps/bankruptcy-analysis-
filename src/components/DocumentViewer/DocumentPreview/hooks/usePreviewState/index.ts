@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useDocumentAnalysis } from "../../../hooks/useDocumentAnalysis";
 import { useFileOperations } from "./useFileOperations";
 import { useAnalysisInitialization } from "./useAnalysisInitialization";
@@ -10,6 +11,8 @@ export const usePreviewState = (
   title?: string, 
   onAnalysisComplete?: () => void
 ): PreviewState => {
+  const [bypassAnalysis, setBypassAnalysis] = useState(false);
+  
   const {
     publicUrl,
     fileExists,
@@ -32,7 +35,7 @@ export const usePreviewState = (
     handleAnalyzeDocument
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
-  // Initialize analysis when component mounts
+  // Initialize analysis when component mounts, unless we're bypassing
   useAnalysisInitialization({
     storagePath,
     fileExists,
@@ -42,7 +45,8 @@ export const usePreviewState = (
     setSession,
     handleAnalyzeDocument,
     setPreviewError,
-    onAnalysisComplete
+    onAnalysisComplete,
+    bypassAnalysis
   });
 
   // Set up real-time subscriptions
@@ -64,6 +68,8 @@ export const usePreviewState = (
     progress,
     processingStage,
     loading,
+    bypassAnalysis,
+    setBypassAnalysis,
     handleRefreshPreview,
     handleIframeError,
     handleAnalyzeDocument

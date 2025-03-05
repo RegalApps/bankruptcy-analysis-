@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExcelData } from '../types';
+import { useToast } from '@/hooks/use-toast';
 
 export const useExcelPreview = (storagePath: string) => {
   const [data, setData] = useState<ExcelData | null>(null);
@@ -10,6 +11,7 @@ export const useExcelPreview = (storagePath: string) => {
   const [publicUrl, setPublicUrl] = useState<string>('');
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [clientName, setClientName] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const fetchExcelDataOptimized = useCallback(async () => {
     if (!storagePath) {
@@ -26,13 +28,28 @@ export const useExcelPreview = (storagePath: string) => {
       // Get public URL for the file
       const { data: urlData } = supabase.storage.from('documents').getPublicUrl(storagePath);
       setPublicUrl(urlData.publicUrl);
-      setLoadingProgress(30);
+      setLoadingProgress(20);
+
+      // Important: Update document metadata immediately with processing started flag
+      // This allows other parts of the app to know we're working on this
+      const documentId = storagePath.split('/').pop()?.split('.')[0];
+      if (documentId) {
+        await supabase
+          .from('documents')
+          .update({ 
+            metadata: { 
+              excel_processing_started: true,
+              last_processing_attempt: new Date().toISOString()
+            }
+          })
+          .eq('id', documentId);
+      }
 
       // Check if we have a cached version of this data first
       const { data: cachedData, error: cacheError } = await supabase
         .from('document_metadata')
         .select('extracted_metadata')
-        .eq('document_id', storagePath.split('/').pop()?.split('.')[0])
+        .eq('document_id', documentId)
         .maybeSingle();
         
       // If we have valid cached data, use it
@@ -50,7 +67,7 @@ export const useExcelPreview = (storagePath: string) => {
         return;
       }
       
-      setLoadingProgress(40);
+      setLoadingProgress(30);
       
       // Use a more efficient approach - only fetch a small portion of the file for preview
       const { data: fileData, error: fetchError } = await supabase.storage
@@ -61,27 +78,65 @@ export const useExcelPreview = (storagePath: string) => {
         throw new Error(`Failed to download file: ${fetchError.message}`);
       }
       
-      setLoadingProgress(60);
+      setLoadingProgress(40);
       
-      // Process Excel in a non-blocking way using a web worker if available
-      // or a setTimeout to avoid freezing the UI
+      // Process Excel in a non-blocking way using setTimeout
+      // This allows the UI to remain responsive while we process the file
       setTimeout(async () => {
         try {
           // Use dynamic import for excel parser to reduce initial load time
           const XLSX = await import('xlsx');
           const arrayBuffer = await fileData.arrayBuffer();
           
-          // Only read the first worksheet and limit to 100 rows for preview
+          // Only read the first worksheet and limit to 10 rows for client name extraction
+          // This is much faster than processing the entire file
           const workbook = XLSX.read(arrayBuffer, { 
             type: 'array',
-            sheetRows: 100 // Limit to first 100 rows
+            sheetRows: 10 // Limit initial read to just 10 rows for fast client name extraction
           });
           
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           
-          // Convert to JSON with headers, limited to first 100 rows
-          const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          // Extract client name from the first few cells (quick scan)
+          let extractedClientName = extractClientNameFromWorksheet(worksheet);
+          setClientName(extractedClientName);
+
+          // Update metadata with client name immediately
+          if (documentId && extractedClientName) {
+            await supabase
+              .from('document_metadata')
+              .upsert({
+                document_id: documentId,
+                extracted_metadata: {
+                  client_name: extractedClientName,
+                  last_processed: new Date().toISOString()
+                }
+              });
+              
+            // Start folder organization in the background
+            if (extractedClientName) {
+              const { data: { user } } = await supabase.auth.getUser();
+              
+              if (user) {
+                console.log('Starting background folder organization for client:', extractedClientName);
+                // This is done in the background and doesn't block UI
+                organizeFolder(documentId, user.id, extractedClientName);
+              }
+            }
+          }
+          
+          setLoadingProgress(60);
+          
+          // Now load a bit more data for the preview (up to 100 rows)
+          // This second pass is just for display purposes
+          const fullWorkbook = XLSX.read(arrayBuffer, { 
+            type: 'array',
+            sheetRows: 100 // Limit to first 100 rows for preview
+          });
+          
+          const fullWorksheet = fullWorkbook.Sheets[sheetName];
+          const rawJson = XLSX.utils.sheet_to_json(fullWorksheet, { header: 1 });
           
           // Extract headers (first row)
           const headers = rawJson[0] as string[];
@@ -89,67 +144,26 @@ export const useExcelPreview = (storagePath: string) => {
           // Only take first 99 rows for preview
           const rows = rawJson.slice(1, 100) as any[][];
           
-          // Try to extract client name from first few cells
-          let extractedClientName = null;
-          for (let i = 0; i < Math.min(5, rows.length); i++) {
-            for (let j = 0; j < Math.min(5, rows[i]?.length || 0); j++) {
-              const cellValue = rows[i][j]?.toString() || '';
-              if (
-                (cellValue.toLowerCase().includes('client') || 
-                 cellValue.toLowerCase().includes('name')) && 
-                 rows[i][j+1]
-              ) {
-                extractedClientName = rows[i][j+1].toString();
-                break;
-              }
-              
-              // Also check for common patterns in financial documents
-              if (cellValue.toLowerCase().includes('statement for') ||
-                  cellValue.toLowerCase().includes('account of')) {
-                const parts = cellValue.split(/for|of/i);
-                if (parts.length > 1) {
-                  extractedClientName = parts[1].trim();
-                  break;
-                }
-              }
-            }
-            if (extractedClientName) break;
-          }
-          
-          if (extractedClientName) {
-            setClientName(extractedClientName);
-          } else {
-            // Fallback to filename if client name not found in content
-            const fileName = storagePath.split('/').pop() || '';
-            if (fileName.includes('_')) {
-              setClientName(fileName.split('_')[0].replace(/[^a-zA-Z0-9\s]/g, ' '));
-            }
-          }
-          
           setData({
             headers,
             rows
           });
           
-          // Cache the extracted data and client name
-          if (storagePath.includes('/')) {
-            const documentId = storagePath.split('/').pop()?.split('.')[0];
-            
-            if (documentId) {
-              await supabase
-                .from('document_metadata')
-                .upsert({
-                  document_id: documentId,
-                  extracted_metadata: {
-                    excel_data: {
-                      headers,
-                      rows: rows.slice(0, 50) // Only cache first 50 rows to keep size small
-                    },
-                    client_name: extractedClientName,
-                    last_processed: new Date().toISOString()
-                  }
-                });
-            }
+          // Cache the extracted data
+          if (documentId) {
+            await supabase
+              .from('document_metadata')
+              .upsert({
+                document_id: documentId,
+                extracted_metadata: {
+                  excel_data: {
+                    headers,
+                    rows: rows.slice(0, 50) // Only cache first 50 rows to keep size small
+                  },
+                  client_name: extractedClientName,
+                  last_processed: new Date().toISOString()
+                }
+              });
           }
           
           setLoadingProgress(100);
@@ -166,7 +180,76 @@ export const useExcelPreview = (storagePath: string) => {
       setError(err.message || 'Failed to load Excel file');
       setLoading(false);
     }
-  }, [storagePath]);
+  }, [storagePath, toast]);
+
+  // Helper function to extract client name from worksheet
+  const extractClientNameFromWorksheet = (worksheet: any): string | null => {
+    try {
+      // Convert just the first few rows to check for client name
+      const smallJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      // Search for client name in first few rows
+      for (let i = 0; i < Math.min(5, smallJson.length); i++) {
+        const row = smallJson[i] as any[];
+        if (!row) continue;
+        
+        for (let j = 0; j < Math.min(5, row.length); j++) {
+          const cellValue = row[j]?.toString()?.toLowerCase() || '';
+          
+          // Check for client label
+          if ((cellValue.includes('client') || cellValue.includes('name')) && row[j+1]) {
+            return row[j+1].toString();
+          }
+          
+          // Check for statement patterns
+          if (cellValue.includes('statement for') || cellValue.includes('account of')) {
+            const parts = cellValue.split(/for|of/i);
+            if (parts.length > 1) {
+              return parts[1].trim();
+            }
+          }
+        }
+      }
+      
+      // Fallback to filename if client name not found in content
+      const fileName = storagePath.split('/').pop() || '';
+      if (fileName.includes('_')) {
+        return fileName.split('_')[0].replace(/[^a-zA-Z0-9\s]/g, ' ');
+      }
+      
+      return null;
+    } catch (e) {
+      console.error('Error extracting client name:', e);
+      return null;
+    }
+  };
+
+  // Background function to organize document into folders
+  const organizeFolder = async (documentId: string, userId: string, clientName: string) => {
+    try {
+      // Get document metadata
+      const { data: doc } = await supabase
+        .from('documents')
+        .select('metadata')
+        .eq('id', documentId)
+        .single();
+        
+      // Skip if already organized
+      if (doc?.metadata?.processing_complete) return;
+      
+      // Do folder organization
+      await supabase.functions.invoke('organize-document', {
+        body: { 
+          documentId,
+          userId,
+          clientName,
+          documentType: "Excel"
+        }
+      });
+    } catch (error) {
+      console.error('Error in background folder organization:', error);
+    }
+  };
 
   const handleRefresh = useCallback(() => {
     fetchExcelDataOptimized();

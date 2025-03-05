@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, RefreshCw } from "lucide-react";
 import { ExcelTable } from "./components/ExcelTable";
 import { ExcelHeaderActions } from "./components/ExcelHeaderActions";
 import { ExcelErrorDisplay } from "./components/ExcelErrorDisplay";
@@ -8,9 +8,9 @@ import { ExcelLoadingSkeleton } from "./components/ExcelLoadingSkeleton";
 import { useExcelPreview } from "./hooks/useExcelPreview";
 import { ExcelPreviewProps } from "./types";
 import { Badge } from "@/components/ui/badge";
-import { organizeDocumentIntoFolders } from "@/utils/documents/folder-utils/organizeDocuments";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
 
 export const ExcelPreview: React.FC<ExcelPreviewProps> = ({ 
   storagePath,
@@ -47,6 +47,8 @@ export const ExcelPreview: React.FC<ExcelPreviewProps> = ({
             .single();
             
           if (doc?.metadata?.processing_complete) return;
+          
+          console.log(`Organizing Excel file for client: ${clientName}`);
           
           // Organize the document
           await organizeDocumentIntoFolders(
@@ -90,7 +92,22 @@ export const ExcelPreview: React.FC<ExcelPreviewProps> = ({
       
       <CardContent>
         {loading ? (
-          <ExcelLoadingSkeleton progress={loadingProgress} />
+          <div className="space-y-4">
+            <ExcelLoadingSkeleton progress={loadingProgress} />
+            {loadingProgress > 40 && loadingProgress < 90 && (
+              <div className="text-center text-sm text-muted-foreground">
+                <p>Extracting data and detecting client information...</p>
+              </div>
+            )}
+            {loadingProgress === 0 && (
+              <div className="flex justify-center mt-4">
+                <Button variant="outline" size="sm" onClick={handleRefresh}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Reload
+                </Button>
+              </div>
+            )}
+          </div>
         ) : error ? (
           <ExcelErrorDisplay 
             error={error} 
