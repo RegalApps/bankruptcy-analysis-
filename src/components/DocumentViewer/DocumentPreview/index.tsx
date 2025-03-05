@@ -73,7 +73,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         <CardContent>
           {loading && !analyzing && (
             <div className="p-6 flex justify-center">
-              <LoadingState />
+              <LoadingState size="medium" message="Loading document..." />
             </div>
           )}
           

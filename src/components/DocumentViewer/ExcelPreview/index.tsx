@@ -21,7 +21,7 @@ export const ExcelPreview: React.FC<ExcelPreviewProps> = ({ storagePath, title }
   };
   
   if (loading) {
-    return <ExcelLoadingSkeleton />;
+    return <ExcelLoadingSkeleton size="medium" />;
   }
   
   if (error) {

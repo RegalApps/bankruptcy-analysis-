@@ -1,3 +1,4 @@
+
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
 import { DocumentPreview } from "./DocumentPreview";
 import { Sidebar } from "./Sidebar";
@@ -27,7 +28,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   logger.debug('Document data in DocumentViewer:', document);
 
   if (loading) {
-    return <LoadingState />;
+    return <LoadingState size="large" message="Loading document details..." />;
   }
 
   if (!document) {
