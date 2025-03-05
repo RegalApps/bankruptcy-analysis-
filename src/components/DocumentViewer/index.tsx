@@ -43,7 +43,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   logger.debug('Analysis content:', analysis);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      {/* Sidebar */}
       <div className="lg:col-span-3 space-y-6">
         <Sidebar 
           document={document}
@@ -51,6 +52,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         />
       </div>
 
+      {/* Document preview */}
       <div className="lg:col-span-6">
         <Tabs defaultValue="preview">
           <TabsList>
@@ -70,6 +72,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         </Tabs>
       </div>
 
+      {/* Right sidebar - collaboration and tasks */}
       <div className="lg:col-span-3 space-y-6">
         <CollaborationPanel 
           document={document}

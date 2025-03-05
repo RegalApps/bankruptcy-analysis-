@@ -8,7 +8,6 @@ import { FolderTab } from "./components/tabs/FolderTab";
 import { UncategorizedTab } from "./components/tabs/UncategorizedTab";
 import { FolderActionButtons } from "./components/FolderActionButtons";
 import { useFolderManagement } from "./hooks/useFolderManagement";
-import { SearchFilter } from "./components/SearchFilter";
 import { TagsManager } from "./components/TagsManager";
 import { Loader2 } from "lucide-react";
 
@@ -92,12 +91,8 @@ export const FolderManagement = ({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            {/* Left sidebar with filters and tags */}
+            {/* Left sidebar with tags */}
             <div className="lg:col-span-1 space-y-6">
-              <SearchFilter 
-                onSearchChange={setSearchQuery}
-              />
-              
               <TagsManager 
                 tags={allTags}
                 selectedTag={selectedTag || undefined}
