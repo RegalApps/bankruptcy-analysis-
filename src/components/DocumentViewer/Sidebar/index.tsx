@@ -6,6 +6,8 @@ import { DeadlineManager } from "../DeadlineManager";
 import { DocumentDetails as DocumentDetailsType } from "../types";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { FileText, AlertTriangle, Calendar } from "lucide-react";
 import logger from "@/utils/logger";
 
 interface SidebarProps {
@@ -22,23 +24,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   logger.debug('Risks in Sidebar:', risks);
   logger.debug('Full document data:', document);
 
-  if (!extractedInfo && risks.length === 0) {
-    return (
-      <Card className="p-6 h-full">
-        <DocumentHeader title={document.title} type={document.type} />
-        <div className="text-center py-4 text-muted-foreground">
-          <p>No analysis data available.</p>
-          <p className="text-sm mt-2">Try clicking "Analyze Document" in the preview panel.</p>
-        </div>
-      </Card>
-    );
-  }
-
   return (
     <Card className="h-full">
-      <ScrollArea className="h-[calc(100vh-2rem)] px-6">
-        <DocumentHeader title={document.title} type={document.type} />
-        <div className="space-y-6 py-4">
+      <ScrollArea className="h-[calc(100vh-2rem)] p-4">
+        <div className="space-y-6">
+          <DocumentHeader title={document.title} type={document.type} />
+          
+          <div className="p-4 rounded-md bg-muted/50">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="h-5 w-5 text-primary" />
+              <h3 className="font-medium">Document Summary</h3>
+            </div>
+            {extractedInfo?.summary ? (
+              <p className="text-sm text-muted-foreground">{extractedInfo.summary}</p>
+            ) : (
+              <div className="text-center py-2">
+                <p className="text-sm text-muted-foreground">No summary available</p>
+                <p className="text-xs mt-1">Try analyzing the document to generate a summary</p>
+              </div>
+            )}
+          </div>
+          
+          <Separator />
+          
           <DocumentDetails
             documentId={document.id}
             formType={extractedInfo?.type ?? document.type}
@@ -58,14 +66,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
             summary={extractedInfo?.summary}
           />
           
-          <div className="my-6">
+          <Separator />
+          
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <h3 className="font-medium">Risk Assessment</h3>
+            </div>
             <RiskAssessment 
               risks={risks} 
               documentId={document.id}
             />
           </div>
-
-          <div className="my-6">
+          
+          <Separator />
+          
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-blue-500" />
+              <h3 className="font-medium">Deadlines & Compliance</h3>
+            </div>
             <DeadlineManager 
               document={document} 
               onDeadlineUpdated={onDeadlineUpdated}

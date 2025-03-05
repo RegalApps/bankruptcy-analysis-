@@ -1,9 +1,12 @@
 
+import { ReactNode } from 'react';
+
 export interface EditableField {
   label: string;
   key: string;
   value: string | undefined;
   showForTypes: string[];
+  icon?: ReactNode;
 }
 
 export interface DocumentDetailsProps {

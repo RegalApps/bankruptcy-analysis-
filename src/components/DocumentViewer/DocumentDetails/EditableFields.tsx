@@ -18,10 +18,13 @@ export const EditableFields = ({
   isSaving
 }: EditableFieldsProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-4">
       {fields.filter(field => field.value || isEditing).map((field) => (
         <div key={field.key} className="space-y-2">
-          <label className="text-sm text-muted-foreground">{field.label}:</label>
+          <div className="flex items-center gap-2">
+            {field.icon}
+            <label className="text-sm text-muted-foreground">{field.label}:</label>
+          </div>
           {isEditing ? (
             <Input
               value={editedValues[field.key] || ''}
@@ -33,7 +36,7 @@ export const EditableFields = ({
               disabled={isSaving}
             />
           ) : (
-            <p className="text-sm">{field.value}</p>
+            <p className="text-sm pl-6">{field.value || 'Not available'}</p>
           )}
         </div>
       ))}

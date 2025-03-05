@@ -1,11 +1,12 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X, FileText, User, Calendar, Building } from "lucide-react";
 import { DocumentDetailsProps, EditableField } from "./types";
 import { useDocumentUpdate } from "./useDocumentUpdate";
 import { DocumentSummary } from "./DocumentSummary";
 import { EditableFields } from "./EditableFields";
+import { Badge } from "@/components/ui/badge";
 
 export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   clientName,
@@ -30,19 +31,97 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   const { saveDocumentDetails, isSaving } = useDocumentUpdate(documentId, formType);
 
   const fields: EditableField[] = [
-    { label: "Form Number", key: "formNumber", value: formNumber || '', showForTypes: ['all'] },
-    { label: "Client/Debtor Name", key: "clientName", value: clientName || '', showForTypes: ['all'] },
-    { label: "Licensed Insolvency Trustee", key: "trusteeName", value: trusteeName || '', showForTypes: ['all'] },
-    { label: "Estate Number", key: "estateNumber", value: estateNumber || '', showForTypes: ['bankruptcy', 'proposal'] },
-    { label: "District", key: "district", value: district || '', showForTypes: ['bankruptcy', 'proposal'] },
-    { label: "Division Number", key: "divisionNumber", value: divisionNumber || '', showForTypes: ['bankruptcy', 'proposal'] },
-    { label: "Court Number", key: "courtNumber", value: courtNumber || '', showForTypes: ['bankruptcy', 'proposal', 'court'] },
-    { label: "Meeting of Creditors", key: "meetingOfCreditors", value: meetingOfCreditors || '', showForTypes: ['bankruptcy', 'proposal', 'meeting'] },
-    { label: "Chair Information", key: "chairInfo", value: chairInfo || '', showForTypes: ['meeting'] },
-    { label: "Security Information", key: "securityInfo", value: securityInfo || '', showForTypes: ['security'] },
-    { label: "Date of Bankruptcy", key: "dateBankruptcy", value: dateBankruptcy || '', showForTypes: ['bankruptcy'] },
-    { label: "Date Signed", key: "dateSigned", value: dateSigned || '', showForTypes: ['all'] },
-    { label: "Official Receiver", key: "officialReceiver", value: officialReceiver || '', showForTypes: ['bankruptcy', 'proposal'] }
+    { 
+      label: "Form Number", 
+      key: "formNumber", 
+      value: formNumber || '', 
+      showForTypes: ['all'],
+      icon: <FileText className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Client/Debtor Name", 
+      key: "clientName", 
+      value: clientName || '', 
+      showForTypes: ['all'],
+      icon: <User className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Licensed Insolvency Trustee", 
+      key: "trusteeName", 
+      value: trusteeName || '', 
+      showForTypes: ['all'],
+      icon: <User className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Estate Number", 
+      key: "estateNumber", 
+      value: estateNumber || '', 
+      showForTypes: ['bankruptcy', 'proposal'],
+      icon: <FileText className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "District", 
+      key: "district", 
+      value: district || '', 
+      showForTypes: ['bankruptcy', 'proposal'],
+      icon: <Building className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Division Number", 
+      key: "divisionNumber", 
+      value: divisionNumber || '', 
+      showForTypes: ['bankruptcy', 'proposal'],
+      icon: <FileText className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Court Number", 
+      key: "courtNumber", 
+      value: courtNumber || '', 
+      showForTypes: ['bankruptcy', 'proposal', 'court'],
+      icon: <Building className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Meeting of Creditors", 
+      key: "meetingOfCreditors", 
+      value: meetingOfCreditors || '', 
+      showForTypes: ['bankruptcy', 'proposal', 'meeting'],
+      icon: <Calendar className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Chair Information", 
+      key: "chairInfo", 
+      value: chairInfo || '', 
+      showForTypes: ['meeting'],
+      icon: <User className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Security Information", 
+      key: "securityInfo", 
+      value: securityInfo || '', 
+      showForTypes: ['security'],
+      icon: <FileText className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Date of Bankruptcy", 
+      key: "dateBankruptcy", 
+      value: dateBankruptcy || '', 
+      showForTypes: ['bankruptcy'],
+      icon: <Calendar className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Date Signed", 
+      key: "dateSigned", 
+      value: dateSigned || '', 
+      showForTypes: ['all'],
+      icon: <Calendar className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Official Receiver", 
+      key: "officialReceiver", 
+      value: officialReceiver || '', 
+      showForTypes: ['bankruptcy', 'proposal'],
+      icon: <User className="h-4 w-4 text-muted-foreground" />
+    }
   ];
 
   const handleEdit = () => {
@@ -76,9 +155,17 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
     : fields;
 
   return (
-    <div className="p-4 rounded-md bg-muted">
+    <div className="rounded-md bg-muted/50 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium">Document Details</h3>
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-primary" />
+          <h3 className="font-medium">Document Details</h3>
+          {formType && (
+            <Badge variant="outline" className="ml-2 text-xs">
+              {formType}
+            </Badge>
+          )}
+        </div>
         {!isEditing ? (
           <Button variant="ghost" size="sm" onClick={handleEdit}>
             <Pencil className="h-4 w-4 mr-2" />

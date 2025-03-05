@@ -8,7 +8,7 @@ import { Sidebar } from "./Sidebar";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { LoadingState } from "./LoadingState";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Home } from "lucide-react";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -66,16 +66,24 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Tabs defaultValue="preview" className="w-full">
-            <TabsList>
-              <TabsTrigger value="preview">Preview</TabsTrigger>
+    <div className="h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+        {/* Left Panel - Risk & Compliance */}
+        <div className="lg:col-span-1 h-full">
+          <Sidebar document={document} onDeadlineUpdated={handleRefresh} />
+        </div>
+        
+        {/* Center and Right Panels */}
+        <div className="lg:col-span-3 h-full">
+          <Tabs defaultValue="preview" className="w-full h-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="preview">Document Preview</TabsTrigger>
               <TabsTrigger value="analysis">Analysis</TabsTrigger>
               <TabsTrigger value="collaboration">Collaboration</TabsTrigger>
             </TabsList>
-            <TabsContent value="preview" className="mt-6">
+            
+            {/* Center Panel - Document Viewer */}
+            <TabsContent value="preview" className="h-[calc(100vh-12rem)]">
               <DocumentPreview 
                 storagePath={document.storage_path} 
                 title={document.title}
@@ -83,16 +91,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
                 documentId={documentId}
               />
             </TabsContent>
-            <TabsContent value="analysis" className="mt-6">
+            
+            <TabsContent value="analysis" className="h-[calc(100vh-12rem)]">
               <AnalysisPanel document={document} onDeadlineUpdated={handleRefresh} />
             </TabsContent>
-            <TabsContent value="collaboration" className="mt-6">
+            
+            {/* Right Panel - Collaboration & Tasks */}
+            <TabsContent value="collaboration" className="h-[calc(100vh-12rem)]">
               <CollaborationPanel document={document} onCommentAdded={handleRefresh} />
             </TabsContent>
           </Tabs>
-        </div>
-        <div className="md:col-span-1">
-          <Sidebar document={document} onDeadlineUpdated={handleRefresh} />
         </div>
       </div>
     </div>
