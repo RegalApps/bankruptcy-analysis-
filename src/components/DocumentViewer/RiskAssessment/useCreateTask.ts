@@ -57,7 +57,6 @@ export const useCreateTask = (documentId: string) => {
             title: 'Task Created from Risk Assessment',
             message: `Task for document "${document.title}" created: ${risk.type}`,
             type: 'info',
-            category: 'task',
             priority: risk.severity === 'high' ? 'high' : 'normal',
             action_url: `/documents/${documentId}`,
             metadata: {
@@ -80,7 +79,6 @@ export const useCreateTask = (documentId: string) => {
             title: 'Task Deadline Reminder',
             message: `Task "${risk.type}" is due in ${dueDays} days`,
             type: 'reminder',
-            category: 'reminder',
             priority: risk.severity === 'high' ? 'high' : 'normal',
             action_url: `/documents/${documentId}`,
             metadata: {

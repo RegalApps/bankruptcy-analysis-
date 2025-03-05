@@ -1,4 +1,3 @@
-
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { supabase } from "@/lib/supabase";

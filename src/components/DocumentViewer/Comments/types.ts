@@ -62,4 +62,5 @@ export interface ThreadedCommentProps {
   onDelete: (id: string) => Promise<void>;
   onResolve: (id: string, resolved: boolean) => Promise<void>;
   isSubmitting: boolean;
+  onSubmit?: (content: string, parentId?: string, mentions?: string[]) => Promise<void>;
 }

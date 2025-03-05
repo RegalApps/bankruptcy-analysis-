@@ -21,7 +21,7 @@ serve(async (req) => {
     const { action, notification, userId } = await req.json();
 
     if (action === 'create') {
-      // Create a new notification
+      // Create a new notification - ensure we use correct field names from DB schema
       const { data, error } = await supabase
         .from('notifications')
         .insert({
@@ -32,9 +32,9 @@ serve(async (req) => {
           priority: notification.priority || 'normal',
           action_url: notification.action_url,
           icon: notification.icon,
-          // Store the category in the metadata since it might not exist directly in DB schema
+          // Store the category in metadata since it's not a direct column
           metadata: {
-            ...notification.metadata || {},
+            ...(notification.metadata || {}),
             category: notification.category || 'file_activity'
           }
         })

@@ -1,30 +1,14 @@
 
-// This is a new file we need to create or update to fix the missing onSubmit error
 import React, { useState } from 'react';
-import { Comment, Profile } from './types';
+import { Comment, Profile, ThreadedCommentProps } from './types';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Trash2, Edit2, MessageSquare, CheckCircle } from 'lucide-react';
 import { CommentInput } from './CommentInput';
 
-interface ThreadedCommentProps {
-  comment: Comment;
-  replies?: Comment[];
-  currentUser: any;
-  userProfile: Profile;
-  onEdit: (id: string, content: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-  onReply: (parentId: string) => void;
-  onResolve: (id: string, resolved: boolean) => Promise<void>;
-  onSubmit: (content: string, parentId?: string, mentions?: string[]) => Promise<void>;
-  isSubmitting: boolean;
-  depth?: number;
-  showReplyInput?: boolean;
-}
-
 export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
   comment,
-  replies = [],
+  allComments = [],
   currentUser,
   userProfile,
   onEdit,
@@ -33,16 +17,13 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
   onResolve,
   onSubmit,
   isSubmitting,
-  depth = 0,
-  showReplyInput = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showReplies, setShowReplies] = useState(true);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
   
   const isCommentOwner = currentUser?.id === comment.user_id;
-  const hasReplies = replies.length > 0;
-  const maxDepth = 3;
+  const hasReplies = allComments.filter(c => c.parent_id === comment.id).length > 0;
   
   const handleReplyClick = () => {
     if (replyingToId === comment.id) {
@@ -69,6 +50,8 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
   const handleResolveToggle = () => {
     onResolve(comment.id, !comment.is_resolved);
   };
+
+  const replies = allComments.filter(c => c.parent_id === comment.id);
   
   return (
     <div className={`border-l-2 pl-4 mb-4 ${
@@ -156,7 +139,7 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
         </div>
       )}
       
-      {replyingToId === comment.id && (
+      {replyingToId === comment.id && onSubmit && (
         <div className="mt-3 pl-4">
           <CommentInput
             currentUser={currentUser}
@@ -174,12 +157,12 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
       )}
       
       {hasReplies && showReplies && (
-        <div className={`mt-3 ${depth < maxDepth ? 'pl-2' : 'pl-0'}`}>
+        <div className="mt-3 pl-2">
           {replies.map(reply => (
             <ThreadedComment
               key={reply.id}
               comment={reply}
-              replies={[]} // We're not supporting nested replies past this level
+              allComments={allComments}
               currentUser={currentUser}
               userProfile={userProfile}
               onEdit={onEdit}
@@ -188,7 +171,6 @@ export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
               onResolve={onResolve}
               onSubmit={onSubmit}
               isSubmitting={isSubmitting}
-              depth={depth + 1}
             />
           ))}
         </div>
