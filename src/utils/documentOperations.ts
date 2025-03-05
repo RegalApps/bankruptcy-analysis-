@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 
 // Function to extract client name from Form 76 filename
@@ -18,7 +19,10 @@ export const uploadDocument = async (file: File) => {
     }
 
     const fileExt = file.name.split('.').pop();
-    const filePath = `${crypto.randomUUID()}.${fileExt}`;
+    const uniqueId = crypto.randomUUID();
+    const filePath = `${uniqueId}.${fileExt}`;
+
+    console.log(`Uploading file: ${filePath}`);
 
     // Create upload options with onUploadProgress callback
     const uploadOptions = {
@@ -30,7 +34,12 @@ export const uploadDocument = async (file: File) => {
       .from('documents')
       .upload(filePath, file, uploadOptions);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError);
+      throw uploadError;
+    }
+
+    console.log("File uploaded successfully to storage path:", filePath);
 
     // Try to detect if this is Form 76 from the filename
     const isForm76 = file.name.toLowerCase().includes('form 76') ||
@@ -44,20 +53,27 @@ export const uploadDocument = async (file: File) => {
         title: file.name,
         type: file.type,
         size: file.size,
-        storage_path: filePath,
+        storage_path: filePath, // Explicitly set the storage path
         user_id: user.id, // Add user_id field to fix RLS policy
         ai_processing_status: 'pending',
         metadata: {
           formType: isForm76 ? 'form-76' : null,
           uploadDate: new Date().toISOString(),
           client_name: isForm76 ? extractClientName(file.name) : 'Untitled Client',
-          ocr_status: 'pending'
+          ocr_status: 'pending',
+          upload_id: uniqueId
         }
       })
       .select()
       .single();
 
-    if (documentError) throw documentError;
+    if (documentError) {
+      console.error("Database insert error:", documentError);
+      throw documentError;
+    }
+
+    console.log("Document record created with ID:", documentData.id);
+    console.log("Document storage_path set to:", filePath);
 
     return documentData;
   } catch (error) {

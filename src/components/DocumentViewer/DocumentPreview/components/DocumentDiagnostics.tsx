@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,10 +44,6 @@ export const DocumentDiagnostics = ({ documentId, onDiagnosticsComplete }: Docum
       setResults(diagnosticResults.results);
       setErrors(diagnosticResults.errors);
       
-      if (onDiagnosticsComplete) {
-        onDiagnosticsComplete();
-      }
-      
       toast({
         title: diagnosticResults.success ? "Diagnostics Completed" : "Issues Detected",
         description: diagnosticResults.success 
@@ -56,6 +51,12 @@ export const DocumentDiagnostics = ({ documentId, onDiagnosticsComplete }: Docum
           : `Found ${diagnosticResults.errors.length} issue(s)`,
         variant: diagnosticResults.success ? "default" : "destructive"
       });
+      
+      if (diagnosticResults.errors.some(err => err.includes('storage_path'))) {
+        await attemptRepair();
+      } else if (onDiagnosticsComplete) {
+        onDiagnosticsComplete();
+      }
     } catch (error: any) {
       setErrors([`Diagnostics failed: ${error.message}`]);
       

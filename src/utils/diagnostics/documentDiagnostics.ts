@@ -46,6 +46,18 @@ export const runDocumentDiagnostics = async (documentId: string): Promise<{
     const storagePath = document.storage_path;
     if (!storagePath) {
       errors.push('Document record is missing storage_path');
+      
+      // Try to find if there are any files in storage that might match this document
+      const { data: storageFiles } = await supabase.storage
+        .from('documents')
+        .list();
+        
+      if (storageFiles && storageFiles.length > 0) {
+        results.potentialMatchingFiles = storageFiles
+          .filter(file => file.name.includes(document.id.substring(0, 8)))
+          .map(file => file.name);
+      }
+      
       return { success: false, results, errors };
     }
     
@@ -173,8 +185,33 @@ export const repairDocumentIssues = async (documentId: string): Promise<{
       }
       
       // Check for storage path issues
-      if (!document.storage_path || diagErrors.some(e => e.includes('storage_path'))) {
-        errors.push(`Cannot repair: Missing or invalid storage path`);
+      if (!document.storage_path) {
+        // Try to repair storage path issue
+        // Look in uploads to find a matching file
+        const { data: possibleUploads } = await supabase.storage
+          .from('documents')
+          .list();
+          
+        if (possibleUploads && possibleUploads.length > 0) {
+          // See if any file has a name that includes part of the document ID
+          const matchingFile = possibleUploads.find(file => 
+            file.name.includes(document.id.substring(0, 8)) ||
+            (document.title && file.name.includes(document.title.substring(0, 8)))
+          );
+          
+          if (matchingFile) {
+            await supabase
+              .from('documents')
+              .update({ storage_path: matchingFile.name })
+              .eq('id', documentId);
+              
+            actions.push(`Fixed missing storage_path with likely match: ${matchingFile.name}`);
+          } else {
+            errors.push(`Cannot repair: Could not find a matching file in storage`);
+          }
+        } else {
+          errors.push(`Cannot repair: Missing storage path and no files found in bucket`);
+        }
       }
     } else {
       actions.push(`No issues detected that require repair`);
