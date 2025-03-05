@@ -22,11 +22,11 @@ export const documentClassification = async (
   }
   
   // Get the public URL with better error handling
-  const { data: urlData, error: urlError } = supabase.storage.from('documents').getPublicUrl(documentRecord.storage_path);
+  const { data: urlData } = supabase.storage.from('documents').getPublicUrl(documentRecord.storage_path);
   
-  if (urlError || !urlData?.publicUrl) {
-    console.error('Failed to get public URL:', urlError);
-    throw new Error(`Failed to get document URL: ${urlError?.message || 'Unknown error'}`);
+  if (!urlData?.publicUrl) {
+    console.error('Failed to get public URL');
+    throw new Error('Failed to get document URL: Unable to obtain public URL');
   }
   
   const publicUrl = urlData.publicUrl;
