@@ -15,3 +15,8 @@ export interface RiskAssessmentProps {
   risks: Risk[];
   documentId: string;
 }
+
+export interface RiskItemProps {
+  risk: Risk;
+  documentId: string;
+}
