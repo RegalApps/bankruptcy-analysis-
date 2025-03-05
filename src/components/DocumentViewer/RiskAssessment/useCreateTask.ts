@@ -14,12 +14,14 @@ export const useCreateTask = (documentId: string) => {
       } = await supabase.auth.getUser();
 
       if (userError) throw userError;
+      if (!user) throw new Error("User not authenticated");
 
       const dueDays = risk.severity === 'high' ? 2 : risk.severity === 'medium' ? 5 : 7;
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + dueDays);
 
-      const { error: taskError } = await supabase
+      // Insert the task
+      const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .insert({
           title: `Resolve ${risk.severity} risk: ${risk.type}`,
@@ -31,14 +33,44 @@ export const useCreateTask = (documentId: string) => {
           solution: risk.solution,
           due_date: dueDate.toISOString(),
           status: 'pending'
-        });
+        })
+        .select()
+        .single();
 
       if (taskError) throw taskError;
 
-      toast({
-        title: "Task Created",
-        description: `Created task for risk: ${risk.type}`,
+      // Get document information for the notification
+      const { data: document, error: docError } = await supabase
+        .from('documents')
+        .select('title')
+        .eq('id', documentId)
+        .single();
+
+      if (docError) throw docError;
+
+      // Create notification for the task
+      await supabase.functions.invoke('handle-notifications', {
+        body: {
+          action: 'create',
+          userId: user.id,
+          notification: {
+            title: 'Task Created from Risk Assessment',
+            message: `Task for document "${document.title}" created: ${risk.type}`,
+            type: 'info',
+            category: 'task',
+            priority: risk.severity === 'high' ? 'high' : 'normal',
+            action_url: `/documents/${documentId}`,
+            metadata: {
+              documentId,
+              riskType: risk.type,
+              severity: risk.severity,
+              taskId: taskData?.id
+            }
+          }
+        }
       });
+
+      return taskData;
     } catch (error) {
       console.error('Error creating task:', error);
       toast({
@@ -46,6 +78,7 @@ export const useCreateTask = (documentId: string) => {
         title: "Error",
         description: "Failed to create task"
       });
+      return null;
     }
   };
 

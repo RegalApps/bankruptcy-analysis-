@@ -28,12 +28,13 @@ serve(async (req) => {
           user_id: userId,
           title: notification.title,
           message: notification.message,
-          type: notification.type || 'info', // Using type field to match schema
-          category: notification.category || 'file_activity',
+          type: notification.type || 'info', // Required field for the database schema
           priority: notification.priority || 'normal',
           action_url: notification.action_url,
           icon: notification.icon,
-          metadata: notification.metadata || {}
+          metadata: notification.metadata || {},
+          // Store the category in the metadata since it might not exist in the database
+          ...(notification.category && { metadata: { ...notification.metadata, category: notification.category } })
         })
         .select();
 

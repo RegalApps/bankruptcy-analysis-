@@ -4,6 +4,8 @@ import { Button } from "../../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import { Risk } from "./types";
 import { useCreateTask } from "./useCreateTask";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateTaskButtonProps {
   documentId: string;
@@ -21,10 +23,51 @@ export const CreateTaskButton = ({
   risk 
 }: CreateTaskButtonProps) => {
   const { handleCreateTask } = useCreateTask(documentId);
+  const { toast } = useToast();
   
-  const handleClick = () => {
+  const createNotification = async (taskTitle: string, severity: string) => {
+    try {
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) return;
+      
+      // Call the handle-notifications edge function
+      const { error } = await supabase.functions.invoke('handle-notifications', {
+        body: {
+          action: 'create',
+          userId: user.data.user.id,
+          notification: {
+            title: 'New Task Created',
+            message: `Task "${taskTitle}" has been created with ${severity} priority`,
+            type: 'info',
+            category: 'task',
+            priority: severity === 'high' ? 'high' : 'normal',
+            action_url: `/documents/${documentId}`,
+            metadata: {
+              documentId,
+              taskType: severity,
+              created: new Date().toISOString()
+            }
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Failed to create notification:', error);
+      }
+    } catch (error) {
+      console.error('Error creating notification:', error);
+    }
+  };
+  
+  const handleClick = async () => {
     if (risk) {
-      handleCreateTask(risk);
+      await handleCreateTask(risk);
+      await createNotification(risk.type, risk.severity);
+      
+      toast({
+        title: "Task Created",
+        description: `Created task for risk: ${risk.type}`,
+      });
     } else if (title && description) {
       // Create a custom risk object from the provided props
       const customRisk: Risk = {
@@ -36,7 +79,13 @@ export const CreateTaskButton = ({
         requiredAction: '',
         solution: ''
       };
-      handleCreateTask(customRisk);
+      await handleCreateTask(customRisk);
+      await createNotification(title, priority || 'medium');
+      
+      toast({
+        title: "Task Created",
+        description: `Created task: ${title}`,
+      });
     }
   };
 

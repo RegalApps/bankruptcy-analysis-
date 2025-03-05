@@ -7,21 +7,21 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  category: NotificationCategory;
+  type: string; // Required to match database schema
   created_at: string;
   read: boolean;
   priority: string;
   action_url?: string;
   icon?: string;
   metadata: Record<string, any>;
-  type: string; // Required to match database schema
+  category: NotificationCategory; // Derived from metadata if not in DB
 }
 
 export interface DatabaseNotification {
   id: string;
   title: string;
   message: string;
-  category: NotificationCategory;
+  type: string; // Required to match database schema
   created_at: string;
   read: boolean;
   user_id: string;
@@ -29,7 +29,7 @@ export interface DatabaseNotification {
   action_url?: string;
   icon?: string;
   metadata?: Record<string, any>;
-  type: string; // Required to match database schema
+  category?: NotificationCategory; // Derived from metadata
 }
 
 export interface CategoryConfig {

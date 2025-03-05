@@ -5,15 +5,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { NotificationsSidebar } from "@/components/notifications/NotificationsSidebar";
 import { NotificationsList } from "@/components/notifications/NotificationsList";
-import type { DatabaseNotification, Notification } from "@/types/notifications";
+import type { DatabaseNotification, Notification, NotificationCategory } from "@/types/notifications";
 import { useState } from "react";
 
 const mapDatabaseNotificationToNotification = (dbNotification: DatabaseNotification): Notification => {
+  // Extract category from metadata if it exists, otherwise use a default
+  const category = (dbNotification.metadata?.category as NotificationCategory) || 
+                  dbNotification.category || 
+                  'file_activity';
+  
   return {
     id: dbNotification.id,
     title: dbNotification.title,
     message: dbNotification.message,
-    category: (dbNotification.category as Notification["category"]) || 'file_activity',
+    category: category,
     created_at: dbNotification.created_at,
     read: dbNotification.read,
     priority: dbNotification.priority || 'normal',
@@ -118,6 +123,7 @@ export const NotificationsPage = () => {
 
       if (error) throw error;
       
+      // Properly cast and map database notifications to the UI notification format
       return (data as unknown as DatabaseNotification[]).map(mapDatabaseNotificationToNotification);
     },
   });

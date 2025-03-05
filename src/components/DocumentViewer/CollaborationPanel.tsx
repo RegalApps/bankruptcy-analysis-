@@ -53,8 +53,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
     content: comment.content,
     created_at: comment.created_at,
     user_id: comment.user_id,
-    document_id: document.id,
-    // Add any missing required properties with default values
+    document_id: document.id, // Add document_id since it's required
     parent_id: undefined,
     mentions: [],
     is_resolved: false
