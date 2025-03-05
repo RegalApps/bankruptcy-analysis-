@@ -14,7 +14,7 @@ export interface Notification {
   action_url?: string;
   icon?: string;
   metadata: Record<string, any>;
-  type: string; // Added to match database schema
+  type: string; // Required to match database schema
 }
 
 export interface DatabaseNotification {
@@ -29,7 +29,7 @@ export interface DatabaseNotification {
   action_url?: string;
   icon?: string;
   metadata?: Record<string, any>;
-  type: string; // Added to match database schema
+  type: string; // Required to match database schema
 }
 
 export interface CategoryConfig {

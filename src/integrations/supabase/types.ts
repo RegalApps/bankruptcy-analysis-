@@ -335,6 +335,9 @@ export type Database = {
           created_at: string | null
           document_id: string | null
           id: string
+          is_resolved: boolean | null
+          mentions: string[] | null
+          parent_id: string | null
           user_id: string
         }
         Insert: {
@@ -342,6 +345,9 @@ export type Database = {
           created_at?: string | null
           document_id?: string | null
           id?: string
+          is_resolved?: boolean | null
+          mentions?: string[] | null
+          parent_id?: string | null
           user_id: string
         }
         Update: {
@@ -349,6 +355,9 @@ export type Database = {
           created_at?: string | null
           document_id?: string | null
           id?: string
+          is_resolved?: boolean | null
+          mentions?: string[] | null
+          parent_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -357,6 +366,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "document_comments"
             referencedColumns: ["id"]
           },
         ]
@@ -842,27 +858,39 @@ export type Database = {
       }
       notifications: {
         Row: {
+          action_url: string | null
           created_at: string | null
+          icon: string | null
           id: string
           message: string
+          metadata: Json | null
+          priority: string | null
           read: boolean | null
           title: string
           type: string
           user_id: string | null
         }
         Insert: {
+          action_url?: string | null
           created_at?: string | null
+          icon?: string | null
           id?: string
           message: string
+          metadata?: Json | null
+          priority?: string | null
           read?: boolean | null
           title: string
           type: string
           user_id?: string | null
         }
         Update: {
+          action_url?: string | null
           created_at?: string | null
+          icon?: string | null
           id?: string
           message?: string
+          metadata?: Json | null
+          priority?: string | null
           read?: boolean | null
           title?: string
           type?: string

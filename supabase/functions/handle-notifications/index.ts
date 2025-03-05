@@ -28,13 +28,12 @@ serve(async (req) => {
           user_id: userId,
           title: notification.title,
           message: notification.message,
+          type: notification.type || 'info', // Using type field to match schema
           category: notification.category || 'file_activity',
           priority: notification.priority || 'normal',
           action_url: notification.action_url,
           icon: notification.icon,
-          metadata: notification.metadata || {},
-          read: false,
-          type: notification.type || 'info' // Adding type field to match schema
+          metadata: notification.metadata || {}
         })
         .select();
 

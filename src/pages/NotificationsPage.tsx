@@ -1,3 +1,4 @@
+
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,7 +56,8 @@ const sampleNotifications: Notification[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     read: true,
     priority: "normal",
-    metadata: { type: "completed" }
+    metadata: { type: "completed" },
+    type: "info"
   },
   {
     id: "4",
@@ -65,7 +67,8 @@ const sampleNotifications: Notification[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
     read: false,
     priority: "high",
-    metadata: { type: "task_assigned" }
+    metadata: { type: "task_assigned" },
+    type: "info"
   },
   {
     id: "5",
@@ -75,7 +78,8 @@ const sampleNotifications: Notification[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     read: false,
     priority: "normal",
-    metadata: { type: "comment" }
+    metadata: { type: "comment" },
+    type: "info"
   },
   {
     id: "6",
@@ -85,7 +89,8 @@ const sampleNotifications: Notification[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
     read: false,
     priority: "normal",
-    metadata: {}
+    metadata: {},
+    type: "info"
   },
   {
     id: "7",
@@ -95,7 +100,8 @@ const sampleNotifications: Notification[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
     read: false,
     priority: "normal",
-    metadata: {}
+    metadata: {},
+    type: "info"
   }
 ];
 
