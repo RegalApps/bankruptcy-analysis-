@@ -1,4 +1,3 @@
-
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +19,7 @@ const mapDatabaseNotificationToNotification = (dbNotification: DatabaseNotificat
     action_url: dbNotification.action_url,
     icon: dbNotification.icon,
     metadata: dbNotification.metadata || {},
+    type: dbNotification.type || 'info',
   };
 };
 
@@ -33,7 +33,8 @@ const sampleNotifications: Notification[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     read: false,
     priority: "normal",
-    metadata: { type: "upload" }
+    metadata: { type: "upload" },
+    type: "info"
   },
   {
     id: "2",
@@ -43,7 +44,8 @@ const sampleNotifications: Notification[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
     read: false,
     priority: "high",
-    metadata: { type: "access" }
+    metadata: { type: "access" },
+    type: "warning"
   },
   {
     id: "3",
@@ -110,7 +112,7 @@ export const NotificationsPage = () => {
 
       if (error) throw error;
       
-      return (data as DatabaseNotification[]).map(mapDatabaseNotificationToNotification);
+      return (data as unknown as DatabaseNotification[]).map(mapDatabaseNotificationToNotification);
     },
   });
 

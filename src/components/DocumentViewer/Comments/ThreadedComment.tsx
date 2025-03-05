@@ -1,208 +1,198 @@
 
+// This is a new file we need to create or update to fix the missing onSubmit error
 import React, { useState } from 'react';
-import { CommentItemProps } from './types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Reply, Edit2, Trash2, Check, X, MoreVertical } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { formatDistance } from 'date-fns';
+import { Comment, Profile } from './types';
+import { formatDistanceToNow } from 'date-fns';
+import { Button } from "@/components/ui/button";
+import { Trash2, Edit2, MessageSquare, CheckCircle } from 'lucide-react';
 import { CommentInput } from './CommentInput';
 
-export const ThreadedComment: React.FC<CommentItemProps> = ({
+interface ThreadedCommentProps {
+  comment: Comment;
+  replies?: Comment[];
+  currentUser: any;
+  userProfile: Profile;
+  onEdit: (id: string, content: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+  onReply: (parentId: string) => void;
+  onResolve: (id: string, resolved: boolean) => Promise<void>;
+  onSubmit: (content: string, parentId?: string, mentions?: string[]) => Promise<void>;
+  isSubmitting: boolean;
+  depth?: number;
+  showReplyInput?: boolean;
+}
+
+export const ThreadedComment: React.FC<ThreadedCommentProps> = ({
   comment,
-  allComments,
+  replies = [],
   currentUser,
   userProfile,
-  onReply,
   onEdit,
   onDelete,
+  onReply,
   onResolve,
+  onSubmit,
   isSubmitting,
+  depth = 0,
+  showReplyInput = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(comment.content);
-  const [isReplying, setIsReplying] = useState(false);
-
-  const handleSaveEdit = async () => {
-    if (editedContent.trim() === comment.content.trim()) {
-      setIsEditing(false);
-      return;
+  const [showReplies, setShowReplies] = useState(true);
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  
+  const isCommentOwner = currentUser?.id === comment.user_id;
+  const hasReplies = replies.length > 0;
+  const maxDepth = 3;
+  
+  const handleReplyClick = () => {
+    if (replyingToId === comment.id) {
+      setReplyingToId(null);
+    } else {
+      setReplyingToId(comment.id);
+      onReply(comment.id);
     }
+  };
 
-    await onEdit(comment.id, editedContent);
+  const handleEditStart = () => {
+    setIsEditing(true);
+  };
+
+  const handleEditCancel = () => {
     setIsEditing(false);
   };
 
-  const handleCancelEdit = () => {
-    setEditedContent(comment.content);
+  const handleEditSubmit = async (content: string) => {
+    await onEdit(comment.id, content);
     setIsEditing(false);
   };
 
-  const handleReply = () => {
-    setIsReplying(true);
+  const handleResolveToggle = () => {
+    onResolve(comment.id, !comment.is_resolved);
   };
-
-  const handleCancelReply = () => {
-    setIsReplying(false);
-  };
-
-  const handleSubmitReply = async (content: string) => {
-    // The parent component will handle the reply
-    onReply(comment.id);
-    setIsReplying(false);
-  };
-
-  const handleToggleResolved = async () => {
-    await onResolve(comment.id, !comment.is_resolved);
-  };
-
-  const isOwnComment = currentUser?.id === comment.user_id;
-  const formattedDate = comment.created_at
-    ? formatDistance(new Date(comment.created_at), new Date(), { addSuffix: true })
-    : '';
-
-  // Find child comments (replies to this comment)
-  const childComments = allComments?.filter(c => c.parent_id === comment.id) || [];
-
+  
   return (
-    <div className={`p-4 rounded-lg border ${comment.is_resolved ? 'bg-green-50 border-green-200' : 'bg-card border-border'}`}>
-      <div className="flex items-start gap-3">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={userProfile?.avatar_url || ''} alt={userProfile?.full_name || 'User'} />
-          <AvatarFallback>
-            {userProfile?.full_name
-              ? userProfile.full_name
-                  .split(' ')
-                  .map(name => name[0])
-                  .join('')
-                  .toUpperCase()
-              : 'U'}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="flex-1 space-y-1.5">
-          <div className="flex items-center justify-between">
+    <div className={`border-l-2 pl-4 mb-4 ${
+      comment.is_resolved ? 'border-green-400 bg-green-50/30' : 'border-gray-200'
+    }`}>
+      {isEditing ? (
+        <CommentInput
+          currentUser={currentUser}
+          userProfile={userProfile}
+          onSubmit={async (content) => handleEditSubmit(content)}
+          isSubmitting={isSubmitting}
+          onCancel={handleEditCancel}
+          initialValue={comment.content}
+        />
+      ) : (
+        <div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium">{userProfile?.full_name || 'User'}</p>
-              <p className="text-xs text-muted-foreground">{formattedDate}</p>
+              <span className="font-medium text-foreground">{userProfile?.full_name || 'User'}</span>
+              <span>{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
               {comment.is_resolved && (
-                <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-800">
+                <span className="flex items-center text-green-600">
+                  <CheckCircle className="h-3 w-3 mr-1" />
                   Resolved
                 </span>
               )}
             </div>
-
-            <div className="flex items-center gap-1">
-              {isOwnComment && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                      <Edit2 className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDelete(comment.id)}>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleToggleResolved}>
-                      <Check className="h-4 w-4 mr-2" />
-                      {comment.is_resolved ? 'Mark as Unresolved' : 'Mark as Resolved'}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+            <div className="flex gap-2">
+              {isCommentOwner && (
+                <>
+                  <button
+                    onClick={handleEditStart}
+                    className="text-blue-500 hover:text-blue-700"
+                    aria-label="Edit comment"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(comment.id)}
+                    className="text-red-500 hover:text-red-700"
+                    aria-label="Delete comment"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </>
               )}
+              <button
+                onClick={handleResolveToggle}
+                className={`${
+                  comment.is_resolved ? 'text-green-600' : 'text-gray-400'
+                } hover:text-green-700`}
+                aria-label={comment.is_resolved ? "Mark as unresolved" : "Mark as resolved"}
+              >
+                <CheckCircle className="h-3.5 w-3.5" />
+              </button>
             </div>
           </div>
-
-          {isEditing ? (
-            <div className="space-y-2">
-              <textarea
-                value={editedContent}
-                onChange={(e) => setEditedContent(e.target.value)}
-                className="w-full min-h-[100px] p-2 text-sm border rounded-md"
-                placeholder="Edit your comment..."
-              />
-              <div className="flex justify-end gap-2">
-                <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                  <X className="h-4 w-4 mr-1" /> Cancel
-                </Button>
-                <Button size="sm" onClick={handleSaveEdit} disabled={isSubmitting}>
-                  <Check className="h-4 w-4 mr-1" /> Save
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <p className="text-sm">{comment.content}</p>
-              <div className="flex items-center gap-2 pt-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={handleReply}
-                >
-                  <Reply className="h-3 w-3 mr-1" /> Reply
-                </Button>
-                {!isOwnComment && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={handleToggleResolved}
-                  >
-                    <Check className="h-3 w-3 mr-1" />
-                    {comment.is_resolved ? 'Mark as Unresolved' : 'Mark as Resolved'}
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-
-          {isReplying && (
-            <div className="mt-3">
-              <CommentInput
-                currentUser={currentUser}
-                userProfile={userProfile}
-                onSubmit={handleSubmitReply}
-                isSubmitting={isSubmitting}
-                parentId={comment.id}
-                onCancel={handleCancelReply}
-                placeholder="Write a reply..."
-              />
-            </div>
-          )}
-
-          {/* Render child comments */}
-          {childComments.length > 0 && (
-            <div className="pl-4 border-l border-border mt-4 space-y-4">
-              {childComments.map((childComment) => (
-                <ThreadedComment
-                  key={childComment.id}
-                  comment={childComment}
-                  allComments={allComments}
-                  currentUser={currentUser}
-                  userProfile={userProfile}
-                  onReply={onReply}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onResolve={onResolve}
-                  isSubmitting={isSubmitting}
-                />
-              ))}
-            </div>
-          )}
+          
+          <div className="mt-1 text-sm">
+            {comment.content}
+          </div>
+          
+          <div className="mt-2 flex items-center gap-2">
+            <Button
+              onClick={handleReplyClick}
+              variant="ghost"
+              size="sm"
+              className="text-xs h-6 px-2 py-0 gap-1"
+            >
+              <MessageSquare className="h-3 w-3" />
+              Reply
+            </Button>
+            
+            {hasReplies && (
+              <Button
+                onClick={() => setShowReplies(!showReplies)}
+                variant="ghost"
+                size="sm"
+                className="text-xs h-6 px-2 py-0"
+              >
+                {showReplies ? 'Hide replies' : `Show ${replies.length} replies`}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+      
+      {replyingToId === comment.id && (
+        <div className="mt-3 pl-4">
+          <CommentInput
+            currentUser={currentUser}
+            userProfile={userProfile}
+            onSubmit={async (content, _, mentions) => {
+              await onSubmit(content, comment.id, mentions);
+              setReplyingToId(null);
+            }}
+            isSubmitting={isSubmitting}
+            parentId={comment.id}
+            onCancel={() => setReplyingToId(null)}
+            placeholder="Write a reply..."
+          />
+        </div>
+      )}
+      
+      {hasReplies && showReplies && (
+        <div className={`mt-3 ${depth < maxDepth ? 'pl-2' : 'pl-0'}`}>
+          {replies.map(reply => (
+            <ThreadedComment
+              key={reply.id}
+              comment={reply}
+              replies={[]} // We're not supporting nested replies past this level
+              currentUser={currentUser}
+              userProfile={userProfile}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onReply={onReply}
+              onResolve={onResolve}
+              onSubmit={onSubmit}
+              isSubmitting={isSubmitting}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

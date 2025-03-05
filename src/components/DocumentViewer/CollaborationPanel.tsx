@@ -47,10 +47,17 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
     }
   };
 
-  // Ensure document.comments has document_id property
+  // Properly map document comments to Comment type with all required properties
   const typedComments: Comment[] = document.comments ? document.comments.map(comment => ({
-    ...comment,
-    document_id: document.id
+    id: comment.id,
+    content: comment.content,
+    created_at: comment.created_at,
+    user_id: comment.user_id,
+    document_id: document.id,
+    // Add any missing required properties with default values
+    parent_id: undefined,
+    mentions: [],
+    is_resolved: false
   })) : [];
 
   return (

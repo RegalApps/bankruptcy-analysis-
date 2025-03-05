@@ -33,7 +33,8 @@ serve(async (req) => {
           action_url: notification.action_url,
           icon: notification.icon,
           metadata: notification.metadata || {},
-          read: false
+          read: false,
+          type: notification.type || 'info' // Adding type field to match schema
         })
         .select();
 
