@@ -1,5 +1,4 @@
-
-import { useDocumentViewer } from "./useDocumentViewer";
+import { useDocumentViewer } from "./hooks/useDocumentViewer";
 import { DocumentPreview } from "./DocumentPreview";
 import { Sidebar } from "./Sidebar";
 import { CollaborationPanel } from "./CollaborationPanel";

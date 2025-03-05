@@ -39,7 +39,7 @@ export const uploadDocument = async (file: File) => {
       file.name.toLowerCase().includes('form 76') || 
       file.name.toLowerCase().includes('f76') || 
       file.name.toLowerCase().includes('form76') ||
-      file.name.toLowerCase().includes('form-76') ||
+      file.name.toLowerCase().includes('form-76') || 
       file.name.toLowerCase().includes('monthly income');
     
     logger.info(`Document identified as Form 76: ${isForm76}`);
