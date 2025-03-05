@@ -14,7 +14,7 @@ export interface Notification {
   action_url?: string;
   icon?: string;
   metadata: Record<string, any>;
-  category: NotificationCategory; // Derived from metadata if not in DB
+  category: NotificationCategory; // Category for UI organization
 }
 
 export interface DatabaseNotification {
@@ -29,7 +29,6 @@ export interface DatabaseNotification {
   action_url?: string;
   icon?: string;
   metadata?: Record<string, any>;
-  category?: NotificationCategory; // Derived from metadata
 }
 
 export interface CategoryConfig {

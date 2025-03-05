@@ -54,7 +54,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
     created_at: comment.created_at,
     user_id: comment.user_id,
     document_id: document.id,
-    parent_id: null,
+    parent_id: undefined,
     mentions: [],
     is_resolved: false
   })) : [];

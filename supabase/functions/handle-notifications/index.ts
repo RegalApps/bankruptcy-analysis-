@@ -32,9 +32,11 @@ serve(async (req) => {
           priority: notification.priority || 'normal',
           action_url: notification.action_url,
           icon: notification.icon,
-          metadata: notification.metadata || {},
-          // Store the category in the metadata since it might not exist in the database
-          ...(notification.category && { metadata: { ...notification.metadata, category: notification.category } })
+          // Store the category in the metadata since it might not exist directly in DB schema
+          metadata: {
+            ...notification.metadata || {},
+            category: notification.category || 'file_activity'
+          }
         })
         .select();
 

@@ -47,7 +47,8 @@ export const collaborationSetup = async (
             metadata: {
               documentId: documentRecord.id,
               analysisType: isForm76 ? 'form-76' : 'standard',
-              completed: new Date().toISOString()
+              completed: new Date().toISOString(),
+              category: 'file_activity'
             }
           }
         }

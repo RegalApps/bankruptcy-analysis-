@@ -39,6 +39,19 @@ export const useDocumentRealtime = (
           await onUpdate();
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `metadata->>'documentId'=eq.${documentId}`
+        },
+        async (payload) => {
+          console.log("Notification update detected for document:", payload);
+          await onUpdate();
+        }
+      )
       .subscribe((status) => {
         console.log(`Subscription status for ${channelName}:`, status);
       });

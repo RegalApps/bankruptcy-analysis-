@@ -11,7 +11,6 @@ import { useState } from "react";
 const mapDatabaseNotificationToNotification = (dbNotification: DatabaseNotification): Notification => {
   // Extract category from metadata if it exists, otherwise use a default
   const category = (dbNotification.metadata?.category as NotificationCategory) || 
-                  dbNotification.category || 
                   'file_activity';
   
   return {

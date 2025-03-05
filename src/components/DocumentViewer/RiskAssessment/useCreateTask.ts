@@ -64,7 +64,8 @@ export const useCreateTask = (documentId: string) => {
               documentId,
               riskType: risk.type,
               severity: risk.severity,
-              taskId: taskData?.id
+              taskId: taskData?.id,
+              category: 'task'
             }
           }
         }
@@ -86,7 +87,8 @@ export const useCreateTask = (documentId: string) => {
               documentId,
               taskId: taskData?.id,
               dueDate: dueDate.toISOString(),
-              remainingDays: dueDays
+              remainingDays: dueDays,
+              category: 'reminder'
             }
           }
         }
