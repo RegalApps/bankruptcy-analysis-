@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 interface DocumentObjectProps {
   publicUrl: string;
@@ -37,6 +37,9 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
     onError();
   };
 
+  // Try an alternative viewer after multiple failures
+  const useAlternativeViewer = loadAttempts >= 2 && !contentLoaded;
+
   return (
     <div className="aspect-[3/4] w-full bg-muted rounded-lg overflow-hidden relative">
       {loading && (
@@ -58,17 +61,38 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
         </Alert>
       )}
       
-      <object
-        data={publicUrl}
-        type="application/pdf"
-        className="w-full h-full rounded-lg"
-        onLoad={handleLoad}
-        onError={handleError}
-      >
-        <p className="p-4 text-center">
-          Unable to display PDF. <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">Download</a> instead.
-        </p>
-      </object>
+      {useAlternativeViewer ? (
+        <div className="p-4">
+          <div className="p-4 text-center border rounded-lg">
+            <h3 className="font-medium mb-2">Standard viewer failed to load document</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              We're having trouble displaying this document in the standard viewer.
+            </p>
+            <div className="space-y-2">
+              <Button asChild variant="default" className="w-full">
+                <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                  Open in New Tab
+                </a>
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => setLoadAttempts(0)}>
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <object
+          data={publicUrl}
+          type="application/pdf"
+          className="w-full h-full rounded-lg"
+          onLoad={handleLoad}
+          onError={handleError}
+        >
+          <p className="p-4 text-center">
+            Unable to display PDF. <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">Download</a> instead.
+          </p>
+        </object>
+      )}
     </div>
   );
 };

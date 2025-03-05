@@ -20,14 +20,32 @@ export const extractTextFromPdf = async (url: string): Promise<string> => {
     logger.info('Starting PDF text extraction from:', url);
     const startTime = performance.now();
     
-    const response = await fetch(url);
+    // Add additional logging and validation
+    if (!url || typeof url !== 'string' || !url.trim()) {
+      throw new Error('Invalid PDF URL provided');
+    }
+    
+    logger.info('Fetching PDF from:', url);
+    const response = await fetch(url, {
+      cache: 'no-store', // Prevent caching issues
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
     
     if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unable to get error details');
+      logger.error(`Failed to fetch PDF: ${response.status} ${response.statusText}. Details: ${errorText}`);
       throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
     }
     
     const arrayBuffer = await response.arrayBuffer();
     logger.info('PDF fetched, arrayBuffer size:', arrayBuffer.byteLength);
+    
+    if (arrayBuffer.byteLength === 0) {
+      throw new Error('PDF file is empty');
+    }
     
     // Initialize PDF.js worker if not already initialized
     if (!pdfjs.GlobalWorkerOptions.workerSrc) {
@@ -50,6 +68,10 @@ export const extractTextFromPdf = async (url: string): Promise<string> => {
     
     const endTime = performance.now();
     logger.info(`Text extraction complete. Length: ${fullText.length}, Time: ${(endTime - startTime).toFixed(0)}ms`);
+    
+    if (fullText.trim().length === 0) {
+      logger.warn('Extracted text is empty');
+    }
     
     // Cache the result
     textExtractionCache.set(url, { text: fullText, timestamp: now });
