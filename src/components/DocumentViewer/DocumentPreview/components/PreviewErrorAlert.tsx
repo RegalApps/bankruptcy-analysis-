@@ -1,8 +1,8 @@
 
-import React from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, FileSearch, RotateCw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Download, RefreshCcw, FileSearch, Database, WifiOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface PreviewErrorAlertProps {
   error: string;
@@ -12,79 +12,86 @@ interface PreviewErrorAlertProps {
   onRunDiagnostics?: () => void;
 }
 
-export const PreviewErrorAlert: React.FC<PreviewErrorAlertProps> = ({
+export const PreviewErrorAlert = ({
   error,
   onRefresh,
   publicUrl,
   documentId,
   onRunDiagnostics
-}) => {
-  // Determine if it's a database or network error
-  const isDatabaseError = error.toLowerCase().includes('database') || error.toLowerCase().includes('failed to fetch');
-  const isNetworkError = error.toLowerCase().includes('network') || error.toLowerCase().includes('connection') || error.toLowerCase().includes('failed to fetch');
-  
+}: PreviewErrorAlertProps) => {
+  // Identify the error type to provide more contextual help
+  const isNetworkError = error.includes('network') || 
+                         error.includes('connection') || 
+                         error.includes('Failed to fetch');
+                         
+  const isFormatError = error.includes('format') || 
+                        error.includes('unsupported') || 
+                        error.includes('corrupted');
+                        
+  const isDatabaseError = error.includes('Database error') || 
+                          error.includes('SQL');
+
   return (
-    <Alert className="mb-4" variant="destructive">
-      {isDatabaseError ? <Database className="h-5 w-5" /> : 
-       isNetworkError ? <WifiOff className="h-5 w-5" /> : 
-       <AlertTriangle className="h-5 w-5" />}
-       
-      <AlertTitle className="font-semibold mb-1">
-        {isDatabaseError ? "Database Connection Error" : 
-         isNetworkError ? "Network Connection Error" : 
-         "Preview Error"}
-      </AlertTitle>
-      
-      <AlertDescription className="flex flex-col gap-4">
-        <p>{error}</p>
+    <Alert variant="destructive" className="mb-4">
+      <AlertCircle className="h-4 w-4" />
+      <AlertDescription className="space-y-4">
+        <div>
+          <span className="font-medium">Error: </span>{error}
+        </div>
         
-        {isDatabaseError && (
-          <p className="text-sm text-muted-foreground">
-            There was a problem connecting to the database. This is usually a temporary issue. 
-            Please try again in a few moments.
-          </p>
-        )}
+        <div className="flex flex-wrap gap-2 mt-1">
+          {isNetworkError && <Badge variant="outline">Network Issue</Badge>}
+          {isFormatError && <Badge variant="outline">Format Problem</Badge>}
+          {isDatabaseError && <Badge variant="outline">Database Error</Badge>}
+        </div>
         
-        {isNetworkError && !isDatabaseError && (
-          <p className="text-sm text-muted-foreground">
-            There was a problem with your network connection. Please check your internet connection and try again.
-          </p>
-        )}
+        <div className="text-sm opacity-80 mt-2">
+          {isNetworkError && (
+            <p>This appears to be a network connectivity issue. Please check your internet connection and try again.</p>
+          )}
+          {isFormatError && (
+            <p>The document may be in an unsupported format or corrupted. Try converting it to a standard PDF format.</p>
+          )}
+          {isDatabaseError && (
+            <p>There was a problem accessing document data. This may be a temporary server issue.</p>
+          )}
+          {!isNetworkError && !isFormatError && !isDatabaseError && (
+            <p>An unexpected error occurred while loading the document. Please try refreshing or run diagnostics.</p>
+          )}
+        </div>
         
-        {!isDatabaseError && !isNetworkError && (
-          <p className="text-sm text-muted-foreground">
-            This could be due to an unsupported file format, a corrupted file, or temporary server issues.
-          </p>
-        )}
-        
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button variant="outline" size="sm" onClick={onRefresh} className="gap-2">
-            <RefreshCcw className="h-4 w-4" />
-            Try Again
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onRefresh}
+            className="gap-2"
+          >
+            <RotateCw className="h-4 w-4" />
+            Refresh Document
           </Button>
           
-          {publicUrl && (
-            <Button variant="default" size="sm" asChild className="gap-2">
-              <a 
-                href={publicUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Download className="h-4 w-4" />
-                Download Document
-              </a>
-            </Button>
-          )}
-          
           {documentId && onRunDiagnostics && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onRunDiagnostics} 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRunDiagnostics}
               className="gap-2"
             >
               <FileSearch className="h-4 w-4" />
               Run Diagnostics
+            </Button>
+          )}
+          
+          {publicUrl && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open(publicUrl, '_blank')}
+              className="gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open Directly
             </Button>
           )}
         </div>

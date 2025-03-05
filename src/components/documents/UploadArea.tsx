@@ -1,9 +1,9 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileType, Check } from "lucide-react";
+import { Upload, FileType, Check, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface UploadAreaProps {
   onFileUpload: (file: File) => Promise<void>;
@@ -14,6 +14,36 @@ interface UploadAreaProps {
 
 export const UploadArea = ({ onFileUpload, isUploading, uploadProgress = 0, uploadStep = "" }: UploadAreaProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<number | null>(null);
+
+  // Track elapsed time for better user feedback during upload
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (isUploading) {
+      timer = setInterval(() => {
+        setElapsedSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      setElapsedSeconds(0);
+      setEstimatedTimeRemaining(null);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isUploading]);
+  
+  // Calculate estimated time remaining based on progress
+  useEffect(() => {
+    if (isUploading && uploadProgress > 5 && uploadProgress < 95) {
+      const totalEstimatedSeconds = (elapsedSeconds / uploadProgress) * 100;
+      const remaining = Math.max(Math.round(totalEstimatedSeconds - elapsedSeconds), 1);
+      setEstimatedTimeRemaining(remaining);
+    } else if (uploadProgress >= 95) {
+      setEstimatedTimeRemaining(null);
+    }
+  }, [uploadProgress, elapsedSeconds, isUploading]);
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
@@ -33,6 +63,14 @@ export const UploadArea = ({ onFileUpload, isUploading, uploadProgress = 0, uplo
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+  };
+
+  // Format the time remaining
+  const formatTimeRemaining = (seconds: number): string => {
+    if (seconds < 60) return `${seconds} sec`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds} min`;
   };
 
   const getProgressBarSteps = () => {
@@ -103,7 +141,12 @@ export const UploadArea = ({ onFileUpload, isUploading, uploadProgress = 0, uplo
             {uploadProgress === 100 ? (
               <Check className="h-12 w-12 mx-auto text-green-500 mb-4" />
             ) : (
-              <Upload className="h-12 w-12 mx-auto text-primary mb-4 animate-pulse" />
+              <div className="relative mx-auto h-12 w-12 mb-4">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-medium">
+                  {uploadProgress}%
+                </span>
+              </div>
             )}
             
             <h3 className="text-lg font-medium mb-2">
@@ -121,6 +164,30 @@ export const UploadArea = ({ onFileUpload, isUploading, uploadProgress = 0, uplo
               />
               
               {getProgressBarSteps()}
+              
+              {estimatedTimeRemaining && (
+                <div className="flex items-center justify-center text-xs text-muted-foreground mt-2">
+                  <span>Estimated time remaining: ~{formatTimeRemaining(estimatedTimeRemaining)}</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-4 gap-2 w-full max-w-md mt-4">
+              {['Validation', 'Upload', 'Processing', 'Completion'].map((stage, index) => (
+                <div 
+                  key={stage}
+                  className={`text-center p-1 rounded-sm text-xs ${
+                    (index === 0 && uploadProgress > 0) || 
+                    (index === 1 && uploadProgress >= 25) || 
+                    (index === 2 && uploadProgress >= 50) || 
+                    (index === 3 && uploadProgress >= 95)
+                      ? 'bg-primary/10 text-primary-foreground'
+                      : 'bg-muted/50 text-muted-foreground'
+                  }`}
+                >
+                  {stage}
+                </div>
+              ))}
             </div>
           </div>
         ) : (

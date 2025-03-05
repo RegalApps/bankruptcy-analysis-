@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadDocument } from "@/utils/documentOperations";
 import { UploadArea } from "@/components/documents/UploadArea";
 import { DocumentList } from "@/components/documents/DocumentList";
+import logger from "@/utils/logger";
 
 export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
@@ -61,21 +62,27 @@ export const DocumentManagementPage = () => {
         return;
       }
 
-      // Update progress for upload preparation
+      // Update progress for upload preparation - slower, more realistic timing
+      setUploadProgress(5);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       setUploadProgress(10);
       setUploadStep("Stage 2: Preparing document for ingestion...");
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      setTimeout(() => {
-        setUploadProgress(15);
-        setUploadStep("Stage 3: Uploading document to secure storage...");
-      }, 500);
+      setUploadProgress(15);
+      setUploadStep("Stage 3: Uploading document to secure storage...");
+      
+      // Log upload start for debugging
+      logger.info(`Starting upload for file: ${file.name}, size: ${file.size} bytes`);
       
       // Actual upload process starts
       const documentData = await uploadDocument(file);
+      logger.info(`Document uploaded with ID: ${documentData?.id}`);
       
       setUploadProgress(25);
       setUploadStep("Stage 4: Document classification & understanding...");
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Different message based on file type      
       const isExcelFile = file.type.includes('excel') || 
@@ -95,7 +102,7 @@ export const DocumentManagementPage = () => {
         setUploadStep("Stage 5: Data extraction & content processing...");
       }
       
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 2500));
       setUploadProgress(55);
       
       if (isForm76) {
@@ -106,17 +113,18 @@ export const DocumentManagementPage = () => {
         setUploadStep("Stage 6: Analyzing document structure and content...");
       }
       
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 3000));
       setUploadProgress(70);
       
       setUploadStep("Stage 7: Issue prioritization & task management...");
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       setUploadProgress(85);
       
       setUploadStep("Stage 8: Document organization & client management...");
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       setUploadProgress(95);
       
+      await new Promise(resolve => setTimeout(resolve, 1500));
       setUploadStep("Complete: Document processing finalized.");
       setUploadProgress(100);
 
@@ -134,12 +142,13 @@ export const DocumentManagementPage = () => {
       
       // If a document was uploaded successfully, navigate to view it
       if (documentData && documentData.id) {
+        logger.info(`Navigating to document view for ID: ${documentData.id}`);
         setTimeout(() => {
           navigate('/', { state: { selectedDocument: documentData.id } });
-        }, 1000);
+        }, 1500);
       }
     } catch (error) {
-      console.error('Error uploading document:', error);
+      logger.error('Error uploading document:', error);
       toast({
         variant: "destructive",
         title: "Upload Failed",

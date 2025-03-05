@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useFileValidator } from '../components/FileValidator';
+import logger from "@/utils/logger";
 
 export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<void> | void) => {
   const { toast } = useToast();
@@ -20,6 +21,55 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
     return 'Untitled Client';
   }
 
+  // Create a more realistic and controlled upload process
+  const simulateProcessingStages = async (isForm76: boolean, isExcel: boolean): Promise<void> => {
+    // Initial validation stage (fast)
+    setUploadProgress(10);
+    setUploadStep("Validating document format and size...");
+    await new Promise(r => setTimeout(r, 1000));
+    
+    // Upload stage (slow)
+    setUploadProgress(25);
+    setUploadStep("Uploading document to secure storage...");
+    await new Promise(r => setTimeout(r, 2000));
+    
+    // Processing stages (variable time based on document type)
+    setUploadProgress(40);
+    if (isForm76) {
+      setUploadStep("Analyzing Form 76 and extracting client details...");
+      await new Promise(r => setTimeout(r, 3000));
+    } else if (isExcel) {
+      setUploadStep("Processing financial spreadsheet data...");
+      await new Promise(r => setTimeout(r, 2500));
+    } else {
+      setUploadStep("Performing document analysis...");
+      await new Promise(r => setTimeout(r, 2000));
+    }
+    
+    setUploadProgress(60);
+    if (isForm76) {
+      setUploadStep("Performing compliance risk assessment...");
+    } else if (isExcel) {
+      setUploadStep("Analyzing financial data patterns...");
+    } else {
+      setUploadStep("Extracting key document information...");
+    }
+    await new Promise(r => setTimeout(r, 2500));
+    
+    // Risk assessment and organization (slow)
+    setUploadProgress(80);
+    setUploadStep("Organizing document in folder structure...");
+    await new Promise(r => setTimeout(r, 2000));
+    
+    // Completion (fast)
+    setUploadProgress(95);
+    setUploadStep("Finalizing document processing...");
+    await new Promise(r => setTimeout(r, 1500));
+    
+    setUploadProgress(100);
+    setUploadStep("Upload complete!");
+  };
+
   const handleUpload = useCallback(async (file: File) => {
     if (!validateFile(file)) {
       return;
@@ -27,8 +77,10 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
 
     try {
       setIsUploading(true);
-      setUploadProgress(10);
-      setUploadStep("Validating document format and size...");
+      setUploadProgress(5);
+      setUploadStep("Preparing document for upload...");
+      
+      logger.info(`Starting upload process for: ${file.name}, size: ${file.size} bytes`);
 
       // Get user ID for document ownership
       const { data: { user } } = await supabase.auth.getUser();
@@ -42,31 +94,38 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
         return;
       }
 
-      setUploadProgress(25);
-      setUploadStep("Uploading document to secure storage...");
+      // Detect if this is Form 76 or Excel from the filename
+      const isForm76 = file.name.toLowerCase().includes('form 76') || 
+                    file.name.toLowerCase().includes('f76') || 
+                    file.name.toLowerCase().includes('form76');
+                    
+      const isExcel = file.name.toLowerCase().endsWith('.xlsx') || 
+                    file.name.toLowerCase().endsWith('.xls') ||
+                    file.type.includes('excel');
+                    
+      logger.info(`Document type detected: ${isForm76 ? 'Form 76' : isExcel ? 'Excel' : 'Standard document'}`);
 
+      // Start processing stage simulation (runs in parallel with actual upload)
+      const processingSimulation = simulateProcessingStages(isForm76, isExcel);
+
+      // Actual file upload
       const fileExt = file.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-      // Create upload options with onUploadProgress callback
       const uploadOptions = {
         cacheControl: '3600',
         upsert: false
       };
 
+      logger.info(`Uploading to storage path: ${filePath}`);
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file, uploadOptions);
 
-      if (uploadError) throw uploadError;
-
-      setUploadProgress(50);
-      setUploadStep("Processing document and extracting information...");
-
-      // Try to detect if this is Form 76 from the filename
-      const isForm76 = file.name.toLowerCase().includes('form 76') || 
-                     file.name.toLowerCase().includes('f76') || 
-                     file.name.toLowerCase().includes('form76');
+      if (uploadError) {
+        logger.error(`Upload error: ${uploadError.message}`, uploadError);
+        throw uploadError;
+      }
 
       // Create database record with user_id
       const { data: documentData, error: documentError } = await supabase
@@ -76,7 +135,7 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
           type: file.type,
           size: file.size,
           storage_path: filePath,
-          user_id: user.id, // Add user_id field to fix RLS policy
+          user_id: user.id,
           ai_processing_status: 'pending',
           metadata: {
             formType: isForm76 ? 'form-76' : null,
@@ -88,18 +147,12 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
         .select()
         .single();
 
-      if (documentError) throw documentError;
-
-      setUploadProgress(70);
-      
-      // Different message based on file type      
-      if (isForm76) {
-        setUploadStep("Analyzing Form 76 and extracting client details...");
-      } else if (file.type.includes('excel') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        setUploadStep("Processing financial spreadsheet data...");
-      } else {
-        setUploadStep("Performing document analysis and risk assessment...");
+      if (documentError) {
+        logger.error(`Database error: ${documentError.message}`, documentError);
+        throw documentError;
       }
+      
+      logger.info(`Document record created with ID: ${documentData.id}`);
 
       // Create notification for document upload
       try {
@@ -117,7 +170,7 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
               metadata: {
                 documentId: documentData.id,
                 fileName: file.name,
-                fileType: isForm76 ? 'form-76' : (file.type.includes('excel') ? 'excel' : 'document'),
+                fileType: isForm76 ? 'form-76' : (isExcel ? 'excel' : 'document'),
                 processingStage: 'upload_complete',
                 uploadedAt: new Date().toISOString()
               }
@@ -125,7 +178,7 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
           }
         });
       } catch (error) {
-        console.error("Error creating notification:", error);
+        logger.warn("Error creating notification:", error);
         // Continue processing even if notification fails
       }
 
@@ -142,17 +195,14 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
       });
 
       if (analysisError) {
-        console.error("Error triggering analysis:", analysisError);
+        logger.warn("Error triggering analysis:", analysisError);
         // Continue anyway, the analysis might be running in the background
       }
 
-      setUploadProgress(90);
-      setUploadStep("Organizing document in folder structure...");
+      // Wait for processing simulation to complete
+      await processingSimulation;
 
       await onUploadComplete(documentData.id);
-
-      setUploadProgress(100);
-      setUploadStep("Upload complete!");
 
       // Create notification for successful processing
       try {
@@ -177,7 +227,7 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
           }
         });
       } catch (error) {
-        console.error("Error creating completion notification:", error);
+        logger.warn("Error creating completion notification:", error);
       }
 
       toast({
@@ -187,18 +237,19 @@ export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<
           : "Document uploaded and processed successfully",
       });
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to upload document. Please try again.",
       });
     } finally {
+      // Delay resetting the state to let users see the completion message
       setTimeout(() => {
         setIsUploading(false);
         setUploadProgress(0);
         setUploadStep("");
-      }, 2000);
+      }, 3000); // Show completion for 3 seconds
     }
   }, [onUploadComplete, toast, validateFile]);
 
