@@ -24,11 +24,30 @@ export const ProfilePicture = ({ url, onUpload, size = 150 }: ProfilePictureProp
         }
 
         const file = event.target.files[0];
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `temp/${fileName}`; // Store in temp folder until user is created
+        
+        // Validate file type
+        const fileType = file.type;
+        if (!fileType.startsWith('image/')) {
+          throw new Error("Please upload an image file (JPG, PNG, etc.)");
+        }
+        
+        // Check file size (limit to 5MB)
+        const fileSizeInMB = file.size / (1024 * 1024);
+        if (fileSizeInMB > 5) {
+          throw new Error("File size must be less than 5MB");
+        }
 
-        // Upload the file to Supabase storage in temp folder
+        const fileExt = file.name.split(".").pop()?.toLowerCase();
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        
+        if (fileExt && !allowedExtensions.includes(fileExt)) {
+          throw new Error("Please upload an image file with a valid extension (JPG, PNG, GIF, WEBP)");
+        }
+        
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        // Upload the file to Supabase storage
         const { error: uploadError } = await supabase.storage
           .from("avatars")
           .upload(filePath, file, {
@@ -78,14 +97,21 @@ export const ProfilePicture = ({ url, onUpload, size = 150 }: ProfilePictureProp
             src={url}
             alt="Avatar"
             className="h-full w-full object-cover"
+            onError={(e) => {
+              console.error("Image failed to load:", url);
+              // Replace with camera icon if image fails to load
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement?.classList.add('image-error');
+            }}
           />
         ) : (
           <Camera className="h-8 w-8 text-muted-foreground" />
         )}
+        {url && <div className="image-error hidden"><Camera className="h-8 w-8 text-muted-foreground" /></div>}
       </div>
       <div>
         <label
-          className="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="cursor-pointer rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors duration-200"
           htmlFor="single"
         >
           {uploading ? "Uploading..." : "Upload"}

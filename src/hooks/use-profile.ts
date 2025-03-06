@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,6 +18,37 @@ export const useProfile = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const debouncedProfile = useDebounce(profile, 1000);
+
+  // Check if avatars bucket exists, create if necessary
+  useEffect(() => {
+    const checkAndCreateBucket = async () => {
+      try {
+        const { data: buckets, error: getBucketsError } = await supabase.storage.listBuckets();
+        
+        if (getBucketsError) {
+          console.error('Error checking buckets:', getBucketsError);
+          return;
+        }
+        
+        const avatarBucketExists = buckets.some(bucket => bucket.name === 'avatars');
+        
+        if (!avatarBucketExists) {
+          console.log('Creating avatars bucket');
+          const { error: createBucketError } = await supabase.storage.createBucket('avatars', {
+            public: true
+          });
+          
+          if (createBucketError) {
+            console.error('Error creating avatars bucket:', createBucketError);
+          }
+        }
+      } catch (error) {
+        console.error('Error in bucket check:', error);
+      }
+    };
+    
+    checkAndCreateBucket();
+  }, []);
 
   const { isLoading: isLoadingProfile } = useQuery({
     queryKey: ['user-profile'],

@@ -35,15 +35,20 @@ export const ProfileForm = ({
             value={profile?.email || ''}
             onChange={(e) => onProfileChange('email', e.target.value)}
             placeholder="Enter your email"
+            readOnly
           />
         </div>
       </div>
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center mt-6">
+        <h3 className="text-sm font-medium mb-2">Profile Picture</h3>
         <ProfilePicture
           url={profile?.avatar_url || null}
           onUpload={onAvatarUpload}
           size={120}
         />
+        <p className="text-xs text-muted-foreground mt-2">
+          Upload an image (JPG, PNG, GIF) up to 5MB
+        </p>
       </div>
     </div>
   );

@@ -51,17 +51,22 @@ export const SignUpFields = ({
         <label className="block text-sm font-medium mb-2">
           Profile Picture
         </label>
-        <ProfilePicture
-          url={avatarUrl}
-          onUpload={(url) => {
-            setAvatarUrl(url);
-            toast({
-              title: "Success",
-              description: "Profile picture selected successfully",
-            });
-          }}
-          size={100}
-        />
+        <div className="flex flex-col items-center">
+          <ProfilePicture
+            url={avatarUrl}
+            onUpload={(url) => {
+              setAvatarUrl(url);
+              toast({
+                title: "Success",
+                description: "Profile picture selected successfully",
+              });
+            }}
+            size={100}
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Optional: Upload an image (JPG, PNG, GIF) up to 5MB
+          </p>
+        </div>
       </div>
     </div>
   );
