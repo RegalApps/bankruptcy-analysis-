@@ -103,3 +103,6 @@ export const ActivityPage = () => {
     </div>
   );
 };
+
+// Add default export
+export default ActivityPage;

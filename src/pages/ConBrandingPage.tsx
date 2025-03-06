@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
@@ -109,3 +110,6 @@ export const ConBrandingPage = () => {
     </div>
   );
 };
+
+// Add default export
+export default ConBrandingPage;

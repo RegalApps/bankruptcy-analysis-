@@ -126,3 +126,6 @@ export const AnalyticsPage = () => {
     </div>
   );
 };
+
+// Add default export
+export default AnalyticsPage;

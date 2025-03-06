@@ -91,4 +91,5 @@ export const EFilingPage = () => {
   );
 };
 
+// Add default export
 export default EFilingPage;

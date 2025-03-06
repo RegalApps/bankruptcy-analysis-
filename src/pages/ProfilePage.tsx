@@ -184,3 +184,6 @@ export const ProfilePage = () => {
     </div>
   );
 };
+
+// Add default export
+export default ProfilePage;
