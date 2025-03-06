@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   clientName,
   trusteeName,
+  administratorName,
   dateSigned,
   formNumber,
   estateNumber,
@@ -24,6 +25,9 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   officialReceiver,
   summary,
   documentId,
+  filingDate,
+  submissionDeadline,
+  documentStatus,
   formType = ''
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -49,8 +53,36 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
       label: "Licensed Insolvency Trustee", 
       key: "trusteeName", 
       value: trusteeName || '', 
-      showForTypes: ['all'],
+      showForTypes: ['form-76', 'bankruptcy'],
       icon: <User className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Administrator", 
+      key: "administratorName", 
+      value: administratorName || '', 
+      showForTypes: ['form-47', 'proposal'],
+      icon: <User className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Document Status", 
+      key: "documentStatus", 
+      value: documentStatus || '', 
+      showForTypes: ['form-47', 'proposal'],
+      icon: <FileText className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Filing Date", 
+      key: "filingDate", 
+      value: filingDate ? new Date(filingDate).toLocaleDateString() : '', 
+      showForTypes: ['form-47', 'form-76', 'proposal', 'bankruptcy'],
+      icon: <Calendar className="h-4 w-4 text-muted-foreground" />
+    },
+    { 
+      label: "Submission Deadline", 
+      key: "submissionDeadline", 
+      value: submissionDeadline ? new Date(submissionDeadline).toLocaleDateString() : '', 
+      showForTypes: ['form-47', 'form-76', 'proposal', 'bankruptcy'],
+      icon: <Calendar className="h-4 w-4 text-muted-foreground" />
     },
     { 
       label: "Estate Number", 
@@ -162,7 +194,9 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
           <h3 className="font-medium">Document Details</h3>
           {formType && (
             <Badge variant="outline" className="ml-2 text-xs">
-              {formType}
+              {formType === 'form-47' ? 'Consumer Proposal' : 
+               formType === 'form-76' ? 'Statement of Affairs' : 
+               formType}
             </Badge>
           )}
         </div>
@@ -177,28 +211,37 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={handleSave} 
-              disabled={isSaving}
-            >
+            <Button variant="default" size="sm" onClick={handleSave} disabled={isSaving}>
               <Save className="h-4 w-4 mr-2" />
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         )}
       </div>
 
       {summary && <DocumentSummary summary={summary} />}
-      
-      <EditableFields
-        fields={relevantFields}
-        isEditing={isEditing}
-        editedValues={editedValues}
-        setEditedValues={setEditedValues}
-        isSaving={isSaving}
-      />
+
+      <div className="space-y-1 mt-4">
+        {isEditing ? (
+          <EditableFields 
+            fields={relevantFields} 
+            editedValues={editedValues} 
+            setEditedValues={setEditedValues} 
+          />
+        ) : (
+          relevantFields.map(field => 
+            field.value ? (
+              <div key={field.key} className="flex items-start py-2 border-b border-muted last:border-0">
+                <div className="flex items-center min-w-[180px] mr-2">
+                  {field.icon}
+                  <span className="text-sm ml-2">{field.label}:</span>
+                </div>
+                <span className="text-sm font-medium">{field.value}</span>
+              </div>
+            ) : null
+          )
+        )}
+      </div>
     </div>
   );
 };

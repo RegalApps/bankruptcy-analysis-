@@ -1,5 +1,5 @@
 
-import { ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react";
+import { ChevronRight, ChevronDown, Folder, FolderOpen, File, FileText, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
@@ -42,12 +42,29 @@ export const FolderItem = ({
     doc => !doc.is_folder && doc.parent_folder_id === folder.id
   );
   
+  // Get form documents specifically
+  const formDocuments = folderDocuments.filter(
+    doc => doc.metadata?.formType === 'form-47' || doc.metadata?.formType === 'form-76' || 
+          doc.title?.toLowerCase().includes('form 47') || doc.title?.toLowerCase().includes('form 76')
+  );
+  
   const isDragTarget = dragOverFolder === folder.id;
 
   // Create indentation based on level
   const indentation = Array(folder.level).fill(0).map((_, i) => (
     <div key={i} className="w-6" />
   ));
+
+  // Get folder icon based on type
+  const getFolderIcon = () => {
+    if (folder.type === 'client') {
+      return isExpanded ? <Users className="h-4 w-4 text-blue-500 mr-2" /> : <Users className="h-4 w-4 text-muted-foreground mr-2" />;
+    } else if (folder.type === 'form') {
+      return isExpanded ? <FileText className="h-4 w-4 text-green-500 mr-2" /> : <FileText className="h-4 w-4 text-muted-foreground mr-2" />;
+    } else {
+      return isExpanded ? <FolderOpen className="h-4 w-4 text-primary mr-2" /> : <Folder className="h-4 w-4 text-muted-foreground mr-2" />;
+    }
+  };
 
   return (
     <div>
@@ -77,15 +94,19 @@ export const FolderItem = ({
           )}
         </button>
         
-        {isExpanded ? (
-          <FolderOpen className="h-4 w-4 text-primary mr-2" />
-        ) : (
-          <Folder className="h-4 w-4 text-muted-foreground mr-2" />
-        )}
+        {getFolderIcon()}
         
         <span className="text-sm truncate">{folder.name}</span>
         
-        {folderDocuments.length > 0 && (
+        {/* Show form documents count with special badge for Forms folder */}
+        {folder.type === 'form' && formDocuments.length > 0 && (
+          <span className="ml-auto text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full">
+            {formDocuments.length}
+          </span>
+        )}
+        
+        {/* Show regular document count for other folders */}
+        {folder.type !== 'form' && folderDocuments.length > 0 && (
           <span className="ml-auto text-xs text-muted-foreground">{folderDocuments.length}</span>
         )}
       </div>

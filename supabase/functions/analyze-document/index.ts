@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -311,7 +312,9 @@ serve(async (req) => {
                     processing_time_ms: Date.now() - new Date().getTime(),
                     client_name: result.extracted_info.clientName,
                     submission_deadline: result.extracted_info.submissionDeadline,
-                    filing_date: result.extracted_info.filingDate
+                    filing_date: result.extracted_info.filingDate,
+                    administratorName: result.extracted_info.administratorName,
+                    documentStatus: result.extracted_info.documentStatus
                   }
                 })
                 .eq('id', documentId);

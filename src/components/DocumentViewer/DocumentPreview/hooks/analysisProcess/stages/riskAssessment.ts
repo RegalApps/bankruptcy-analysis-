@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { DocumentRecord } from "../../types";
 import { updateAnalysisStatus } from "../documentStatusUpdates";
 import { AnalysisProcessContext } from "../types";
+import { createForm47RiskAssessment } from "@/utils/documentOperations";
 
 export const riskAssessment = async (
   documentRecord: DocumentRecord,
@@ -11,12 +12,22 @@ export const riskAssessment = async (
 ): Promise<void> => {
   const { setAnalysisStep, setProgress } = context;
   
-  setAnalysisStep(isForm76 
-    ? "Stage 4: Performing regulatory compliance analysis for Form 76..." 
-    : "Stage 4: Risk & Compliance Assessment...");
+  // Check if this is a Form 47 (Consumer Proposal)
+  const isForm47 = documentRecord.metadata?.formType === 'form-47' || 
+                  documentRecord.title?.toLowerCase().includes('form 47') ||
+                  documentRecord.title?.toLowerCase().includes('consumer proposal');
+  
+  if (isForm47) {
+    setAnalysisStep("Stage 4: Analyzing Consumer Proposal for compliance...");
+  } else if (isForm76) {
+    setAnalysisStep("Stage 4: Performing regulatory compliance analysis for Form 76..."); 
+  } else {
+    setAnalysisStep("Stage 4: Risk & Compliance Assessment...");
+  }
+  
   setProgress(55);
   
-  console.log(`Starting risk assessment for document ${documentRecord.id}, Form 76: ${isForm76}`);
+  console.log(`Starting risk assessment for document ${documentRecord.id}, Form 76: ${isForm76}, Form 47: ${isForm47}`);
   
   try {
     // For Form 76, add specific risks related to Statement of Affairs
@@ -130,6 +141,10 @@ export const riskAssessment = async (
           
         console.log('Created new analysis with Form 76 risks');
       }
+    } else if (isForm47) {
+      // Process Form 47 Consumer Proposal
+      await createForm47RiskAssessment(documentRecord.id);
+      console.log('Created Form 47 risk assessment');
     }
     
     // Update document with risk assessment status
