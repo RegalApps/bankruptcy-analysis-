@@ -12,8 +12,8 @@ import {
 import { FileUpload } from "@/components/FileUpload";
 import { SearchBar } from "@/components/DocumentList/SearchBar";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/components/auth/authService";
 
 export const MainHeader = () => {
   const navigate = useNavigate();
@@ -22,19 +22,14 @@ export const MainHeader = () => {
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        throw error;
-      }
+      await authService.signOut();
       
       toast({
         title: "Signed out successfully",
         description: "You have been logged out of your account",
       });
       
-      // Force a page reload to ensure all auth state is cleared
-      window.location.href = "/";
+      // The page reload is handled in authService.signOut()
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
