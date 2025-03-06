@@ -7,6 +7,7 @@ import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
 import { useFolderPermissions } from "./hooks/useFolderPermissions";
 import { useFolderRecommendations } from "./hooks/useFolderRecommendations";
 import { FolderOperations } from "./components/FolderOperations";
+import { FolderManagementTools } from "./FolderManagementTools";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
@@ -61,6 +62,13 @@ export const EnhancedFolderTab = ({
   return (
     <Card className="h-full">
       <CardContent className="p-4 h-full">
+        {/* Add new Folder Management Tools component */}
+        <FolderManagementTools 
+          documents={documents}
+          onRefresh={onRefresh}
+          selectedFolderId={selectedFolderId}
+        />
+        
         {/* Folder Operations Section */}
         <FolderOperations
           showRecommendation={showRecommendation}
