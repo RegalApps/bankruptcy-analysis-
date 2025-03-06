@@ -1,8 +1,6 @@
 
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ViewerToolbar } from "./components/ViewerToolbar";
 import { DocumentViewerFrame } from "./components/DocumentViewerFrame";
 import { useDocumentPreview } from "./hooks/useDocumentPreview";
@@ -31,15 +29,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     setPreviewError,
     checkFile
   } = usePreviewState(storagePath, documentId, title, onAnalysisComplete);
-
-  const {
-    analyzing,
-    error,
-    analysisStep,
-    progress,
-    processingStage,
-    handleAnalyzeDocument
-  } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
   const [forceReload, setForceReload] = useState(0);
   const {
@@ -145,17 +134,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 onOpenInNewTab={handleOpenInNewTab}
                 onDownload={handleDownload}
               />
-            </div>
-            
-            <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm p-2 rounded-md shadow-sm">
-              <button
-                className="bg-primary text-primary-foreground px-3 py-1.5 rounded text-sm flex items-center gap-2"
-                onClick={() => handleAnalyzeDocument()}
-                disabled={analyzing}
-              >
-                <Search className="h-3.5 w-3.5" />
-                {analyzing ? "Analyzing..." : "Analyze Document"}
-              </button>
             </div>
           </div>
         ) : (
