@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useDocuments } from "./hooks/useDocuments";
 import { cn } from "@/lib/utils";
@@ -7,7 +6,7 @@ import { Sidebar } from "./components/Sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UncategorizedDocuments } from "./components/UncategorizedDocuments";
 import { DocumentGrid } from "./components/DocumentGrid";
-import { PreviewDialog } from "./components/PreviewDialog";
+import PreviewDialog from "./components/PreviewDialog";
 
 interface DocumentManagementProps {
   onDocumentSelect?: (id: string) => void;

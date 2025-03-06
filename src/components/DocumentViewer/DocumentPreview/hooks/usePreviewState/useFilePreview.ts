@@ -28,18 +28,12 @@ export const useFilePreview = ({
     const checkFile = async () => {
       try {
         // Check if file exists in storage
-        const { data, error } = await supabase.storage
+        const { data } = await supabase.storage
           .from('documents')
           .getPublicUrl(storagePath);
         
-        if (error) {
-          console.error("Error getting public URL:", error);
-          setFileExists(false);
-          setFileUrl(null);
-          setPreviewError(`Failed to get document URL: ${error.message}`);
-          return;
-        }
-        
+        // Fix: The getPublicUrl method doesn't return an error property
+        // So we need to check if data exists instead
         if (data?.publicUrl) {
           setFileExists(true);
           setFileUrl(data.publicUrl);
