@@ -57,18 +57,21 @@ export const authService = {
   },
 
   async signOut() {
-    // First, remove any local storage items that might be cached
+    // Clean up local storage and session storage
     try {
       localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
     } catch (e) {
-      console.log('Error clearing local storage:', e);
+      console.log('Error clearing storage:', e);
     }
     
-    // Then call the signOut method
+    // Call Supabase signOut method
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     
-    // Force a page reload to ensure all auth state is cleared
+    // Force a full page reload to ensure all auth state is completely cleared
     window.location.href = '/';
+    
+    return true;
   }
 };

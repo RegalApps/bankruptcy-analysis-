@@ -22,6 +22,9 @@ export const MainHeader = () => {
 
   const handleSignOut = async () => {
     try {
+      // Clear any session storage or local storage values
+      localStorage.removeItem('supabase.auth.token');
+      
       await authService.signOut();
       
       toast({
@@ -29,7 +32,8 @@ export const MainHeader = () => {
         description: "You have been logged out of your account",
       });
       
-      // The page reload is handled in authService.signOut()
+      // Force navigation to the homepage
+      window.location.href = '/';
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
