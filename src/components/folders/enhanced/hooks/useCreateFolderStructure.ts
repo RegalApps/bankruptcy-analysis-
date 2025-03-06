@@ -38,11 +38,6 @@ export const useCreateFolderStructure = (documents: Document[]) => {
             // Determine folder type
             const folderType = folder.folder_type || 'general';
             
-            // Get direct child documents for this folder
-            const childDocuments = documents.filter(doc => 
-              !doc.is_folder && doc.parent_folder_id === folder.id
-            );
-            
             // Build folder structure
             const folderStructure: FolderStructure = {
               id: folder.id,
@@ -50,8 +45,7 @@ export const useCreateFolderStructure = (documents: Document[]) => {
               type: folderType as 'client' | 'form' | 'financial' | 'general',
               level,
               parentId: folder.parent_folder_id || undefined,
-              metadata: folder.metadata || {},
-              documents: childDocuments
+              metadata: folder.metadata || {}
             };
             
             // Add children recursively
@@ -83,8 +77,7 @@ export const useCreateFolderStructure = (documents: Document[]) => {
             type: 'client',
             level: 0,
             children: clientFolders,
-            metadata: {},
-            isVirtual: true
+            metadata: {}
           };
           
           // Remove the client folders from the top level
