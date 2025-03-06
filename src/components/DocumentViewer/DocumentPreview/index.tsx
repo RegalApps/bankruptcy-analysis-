@@ -1,4 +1,4 @@
-<lov-codelov-code>
+
 import React from "react";
 import { DocumentObject } from "./DocumentObject";
 import { PreviewControls } from "./PreviewControls";
@@ -135,4 +135,3 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     </div>
   );
 };
-</lov-code>
