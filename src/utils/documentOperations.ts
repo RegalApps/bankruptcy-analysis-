@@ -194,22 +194,57 @@ export const uploadDocument = async (file: File) => {
   try {
     // Create a unique file path for storage
     const fileExt = file.name.split('.').pop();
-    const filePath = `${crypto.randomUUID()}.${fileExt}`;
+    const fileName = file.name.replace(/\.[^/.]+$/, ""); // Get filename without extension
+    const filePath = `${crypto.randomUUID()}-${fileName}.${fileExt}`;
 
-    // Upload the file to Supabase storage
-    const { error: uploadError } = await supabase.storage
+    console.log(`Uploading file "${file.name}" to storage path: ${filePath}`);
+
+    // Make sure the documents bucket exists
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const documentsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
+      
+      if (!documentsBucketExists) {
+        console.log("Documents bucket does not exist, creating...");
+        const { error: createBucketError } = await supabase.storage.createBucket('documents', {
+          public: true
+        });
+        
+        if (createBucketError) {
+          console.error("Error creating documents bucket:", createBucketError);
+        } else {
+          console.log("Documents bucket created successfully");
+        }
+      }
+    } catch (bucketError) {
+      console.warn("Error checking/creating bucket:", bucketError);
+      // Continue anyway, the bucket might already exist
+    }
+
+    // Upload the file to Supabase storage with public access
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('documents')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      throw uploadError;
+    }
+    
+    console.log("File uploaded successfully:", uploadData);
 
     // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError) throw userError;
 
     // Check for Form 47 in the filename or content
     const isForm47 = file.name.toLowerCase().includes('form 47') || 
                     file.name.toLowerCase().includes('consumer proposal');
+    
+    console.log(`File classification: ${isForm47 ? 'Form 47 detected' : 'Standard document'}`);
     
     // Create a database record for the document
     const { data: documentData, error: dbError } = await supabase
@@ -219,7 +254,7 @@ export const uploadDocument = async (file: File) => {
         type: file.type,
         size: file.size,
         storage_path: filePath,
-        user_id: user?.id,
+        user_id: userData.user?.id,
         ai_processing_status: 'pending',
         metadata: {
           formType: isForm47 ? 'form-47' : null,
@@ -230,12 +265,24 @@ export const uploadDocument = async (file: File) => {
       .select()
       .single();
 
-    if (dbError) throw dbError;
+    if (dbError) {
+      console.error("Database error:", dbError);
+      throw dbError;
+    }
+    
+    console.log("Document record created:", documentData);
 
     // If this is a Form 47, create a risk assessment for it
     if (isForm47) {
       await createForm47RiskAssessment(documentData.id);
     }
+
+    // Get and log the public URL for verification
+    const { data: urlData } = await supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath);
+      
+    console.log("Document public URL:", urlData?.publicUrl);
 
     return documentData;
   } catch (error) {

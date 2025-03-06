@@ -27,13 +27,15 @@ export const useFilePreview = ({
 
     const checkFile = async () => {
       try {
-        // Check if file exists in storage
+        console.log("Checking file at path:", storagePath);
+        
+        // Get public URL for file
         const { data } = await supabase.storage
           .from('documents')
           .getPublicUrl(storagePath);
         
-        // Check if data.publicUrl exists
         if (data?.publicUrl) {
+          console.log("File found with URL:", data.publicUrl);
           setFileExists(true);
           setFileUrl(data.publicUrl);
           
@@ -43,16 +45,12 @@ export const useFilePreview = ({
                          storagePath.toLowerCase().endsWith('.csv');
                          
           setIsExcelFile(isExcel);
-          
-          // Clear any previous errors
           setPreviewError(null);
-          
-          // Log successful file detection for troubleshooting
-          console.log(`File loaded successfully. Type: ${isExcel ? 'Excel' : 'Other'}, URL: ${data.publicUrl}`);
         } else {
+          console.error("No public URL returned for file:", storagePath);
           setFileExists(false);
           setFileUrl(null);
-          setPreviewError("File not found in storage");
+          setPreviewError("File not found in storage or not accessible");
         }
       } catch (error: any) {
         console.error("Error checking file existence:", error);
