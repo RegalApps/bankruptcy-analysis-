@@ -153,3 +153,48 @@ export const createForm47RiskAssessment = async (documentId: string) => {
     return false;
   }
 };
+
+/**
+ * Uploads a document to Supabase storage and creates a database record
+ * @param file The file to upload
+ * @returns The created document data or null if an error occurred
+ */
+export const uploadDocument = async (file: File) => {
+  try {
+    // Generate a unique file name
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `documents/${fileName}`;
+    
+    // Upload file to storage
+    const { data: storageData, error: storageError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file);
+      
+    if (storageError) {
+      throw new Error(`Storage error: ${storageError.message}`);
+    }
+    
+    // Create document record in database
+    const { data: documentData, error: dbError } = await supabase
+      .from('documents')
+      .insert({
+        name: file.name,
+        file_path: filePath,
+        content_type: file.type,
+        size: file.size,
+      })
+      .select()
+      .single();
+      
+    if (dbError) {
+      throw new Error(`Database error: ${dbError.message}`);
+    }
+    
+    logger.info(`Document uploaded with ID: ${documentData?.id}`);
+    return documentData;
+  } catch (error) {
+    logger.error('Error uploading document:', error);
+    return null;
+  }
+};

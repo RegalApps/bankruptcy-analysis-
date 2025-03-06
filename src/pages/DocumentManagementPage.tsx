@@ -1,4 +1,3 @@
-
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -28,7 +27,6 @@ export const DocumentManagementPage = () => {
       setUploadProgress(0);
       setUploadStep("Stage 1: Validating document format and structure...");
 
-      // Validate file type and size
       const validTypes = [
         'application/pdf', 
         'application/msword', 
@@ -62,7 +60,6 @@ export const DocumentManagementPage = () => {
         return;
       }
 
-      // Update progress for upload preparation - slower, more realistic timing
       setUploadProgress(5);
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -73,10 +70,8 @@ export const DocumentManagementPage = () => {
       setUploadProgress(15);
       setUploadStep("Stage 3: Uploading document to secure storage...");
       
-      // Log upload start for debugging
       logger.info(`Starting upload for file: ${file.name}, size: ${file.size} bytes`);
       
-      // Actual upload process starts
       const documentData = await uploadDocument(file);
       logger.info(`Document uploaded with ID: ${documentData?.id}`);
       
@@ -84,7 +79,6 @@ export const DocumentManagementPage = () => {
       setUploadStep("Stage 4: Document classification & understanding...");
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Different message based on file type      
       const isExcelFile = file.type.includes('excel') || 
                           file.name.endsWith('.xls') || 
                           file.name.endsWith('.xlsx');
@@ -137,10 +131,8 @@ export const DocumentManagementPage = () => {
             : "Document uploaded and processed successfully"
       });
 
-      // Refresh document list
       refetch();
       
-      // If a document was uploaded successfully, navigate to view it
       if (documentData && documentData.id) {
         logger.info(`Navigating to document view for ID: ${documentData.id}`);
         setTimeout(() => {
