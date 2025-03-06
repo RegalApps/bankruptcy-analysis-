@@ -1,3 +1,4 @@
+
 import { OSBFormTemplate } from '../types';
 
 export const proposalForms: Record<string, OSBFormTemplate> = {
@@ -179,5 +180,127 @@ export const proposalForms: Record<string, OSBFormTemplate> = {
         description: "Dividend feasibility analysis"
       }
     ]
+  },
+  "47": {
+    formNumber: "47",
+    title: "Consumer Proposal",
+    category: "proposal",
+    subcategory: "consumer_proposal",
+    purpose: "Formal proposal submitted by a consumer debtor to creditors",
+    legislation: "Paragraph 66.13(2)(c) of the Bankruptcy and Insolvency Act",
+    relatedForms: ["47.1", "48", "49"],
+    clientInfoFields: [
+      "consumerDebtorName",
+      "administratorName",
+      "administratorAddress"
+    ],
+    keyDates: [
+      "filingDate",
+      "submissionDeadline",
+      "firstPaymentDate"
+    ],
+    monetaryFields: [
+      "securedCreditorsPayment",
+      "preferredClaimsPayment",
+      "administratorFees",
+      "unsecuredCreditorsPayment"
+    ],
+    requiredFields: [
+      {
+        name: "consumerDebtorName",
+        type: "text",
+        required: true,
+        osbReference: "BIA.66.13(2)",
+        formNumbers: ["47"],
+        description: "Consumer debtor's full legal name"
+      },
+      {
+        name: "administratorName",
+        type: "text",
+        required: true,
+        osbReference: "BIA.66.13(2)",
+        formNumbers: ["47"],
+        description: "Administrator's full name"
+      },
+      {
+        name: "securedCreditorsPayment",
+        type: "text",
+        required: true,
+        osbReference: "BIA.66.13(2)(c)",
+        formNumbers: ["47"],
+        description: "Terms for secured creditors payment"
+      },
+      {
+        name: "preferredClaimsPayment",
+        type: "text",
+        required: true,
+        osbReference: "BIA.66.13(2)(c)",
+        formNumbers: ["47"],
+        description: "Terms for preferred claims payment"
+      },
+      {
+        name: "administratorFees",
+        type: "text",
+        required: true,
+        osbReference: "BIA.66.13(2)(c)",
+        formNumbers: ["47"],
+        description: "Administrator fees and expenses"
+      },
+      {
+        name: "unsecuredCreditorsPayment",
+        type: "text",
+        required: true,
+        osbReference: "BIA.66.14",
+        formNumbers: ["47"],
+        description: "Payment schedule for unsecured creditors"
+      },
+      {
+        name: "dividendDistribution",
+        type: "text",
+        required: true,
+        osbReference: "BIA.66.15",
+        formNumbers: ["47"],
+        description: "Dividend distribution schedule"
+      }
+    ],
+    riskIndicators: [
+      {
+        field: "securedCreditorsPayment",
+        riskType: "compliance",
+        severity: "high",
+        description: "Missing secured creditors payment terms"
+      },
+      {
+        field: "unsecuredCreditorsPayment",
+        riskType: "compliance",
+        severity: "high",
+        description: "Missing unsecured creditors payment plan"
+      },
+      {
+        field: "dividendDistribution",
+        riskType: "compliance",
+        severity: "high",
+        description: "Missing dividend distribution schedule"
+      },
+      {
+        field: "administratorFees",
+        riskType: "compliance",
+        severity: "medium",
+        description: "Administrator fees not specified"
+      },
+      {
+        field: "witness",
+        riskType: "legal",
+        severity: "medium",
+        description: "Proposal not signed by witness"
+      },
+      {
+        field: "additionalTerms",
+        riskType: "compliance",
+        severity: "low",
+        description: "No additional terms specified"
+      }
+    ]
   }
 };
+

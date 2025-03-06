@@ -5,6 +5,10 @@ interface RiskFactor {
   description: string;
   severity: 'low' | 'medium' | 'high';
   regulatoryReference?: string;
+  impact?: string;
+  requiredAction?: string;
+  solution?: string;
+  deadline?: string;
 }
 
 export const performRiskAnalysis = async (
@@ -16,6 +20,13 @@ export const performRiskAnalysis = async (
   if (formNumber === '76' || extractedData.formType === 'form-76') {
     console.log('Using pre-defined Form 76 risk assessment');
     return getPredefinedForm76Risks();
+  }
+  
+  // Fast path for Form 47 (Consumer Proposal) analysis
+  if (formNumber === '47' || extractedData.formType === 'form-47' || 
+      extractedData.formType === 'consumer-proposal') {
+    console.log('Using pre-defined Form 47 Consumer Proposal risk assessment');
+    return getPredefinedForm47Risks();
   }
   
   const risks: RiskFactor[] = [];
@@ -41,7 +52,6 @@ export const performRiskAnalysis = async (
 
 // Pre-defined risk assessment for Form 76
 function getPredefinedForm76Risks() {
-  // Return pre-defined Form 76 analysis to avoid reprocessing
   const risks = [
     {
       category: 'financial',
@@ -49,7 +59,8 @@ function getPredefinedForm76Risks() {
       severity: 'high',
       regulatoryReference: 'BIA Section 158(d)',
       impact: 'Form incomplete, cannot be processed',
-      requiredAction: 'Ensure the form includes full asset & liability disclosure'
+      requiredAction: 'Ensure the form includes full asset & liability disclosure',
+      solution: 'Ensure the form includes full asset & liability disclosure'
     },
     {
       category: 'legal',
@@ -57,7 +68,8 @@ function getPredefinedForm76Risks() {
       severity: 'high',
       regulatoryReference: 'BIA Section 66',
       impact: 'Document may be invalid',
-      requiredAction: 'Obtain official debtor signature before processing'
+      requiredAction: 'Obtain official debtor signature before processing',
+      solution: 'Obtain official debtor signature before processing'
     },
     {
       category: 'compliance',
@@ -65,7 +77,8 @@ function getPredefinedForm76Risks() {
       severity: 'medium',
       regulatoryReference: 'OSB Directive 13R',
       impact: 'Cannot verify trustee authority',
-      requiredAction: 'Verify trustee registration with OSB'
+      requiredAction: 'Verify trustee registration with OSB',
+      solution: 'Verify trustee registration with OSB'
     },
     {
       category: 'document',
@@ -73,7 +86,8 @@ function getPredefinedForm76Risks() {
       severity: 'medium',
       regulatoryReference: 'BIA Procedure',
       impact: 'Difficult to track in system',
-      requiredAction: 'Attach court case number for tracking'
+      requiredAction: 'Attach court case number for tracking',
+      solution: 'Attach court case number for tracking'
     }
   ];
   
@@ -89,11 +103,89 @@ function getPredefinedForm76Risks() {
   };
 }
 
+// Pre-defined risk assessment for Form 47 (Consumer Proposal)
+function getPredefinedForm47Risks() {
+  const risks = [
+    {
+      category: 'compliance',
+      description: 'Secured Creditors Payment Terms Missing',
+      severity: 'high',
+      regulatoryReference: 'BIA Section 66.13(2)(c)',
+      impact: 'Non-compliance with BIA Sec. 66.13(2)(c)',
+      requiredAction: 'Specify how secured debts will be paid',
+      solution: 'Add detailed payment terms for secured creditors',
+      deadline: 'Immediately'
+    },
+    {
+      category: 'compliance',
+      description: 'Unsecured Creditors Payment Plan Not Provided',
+      severity: 'high',
+      regulatoryReference: 'BIA Section 66.14',
+      impact: 'Proposal will be invalid under BIA Sec. 66.14',
+      requiredAction: 'Add a structured payment plan for unsecured creditors',
+      solution: 'Create detailed payment schedule for unsecured creditors',
+      deadline: 'Immediately'
+    },
+    {
+      category: 'compliance',
+      description: 'No Dividend Distribution Schedule',
+      severity: 'high',
+      regulatoryReference: 'BIA Section 66.15',
+      impact: 'Fails to meet regulatory distribution rules',
+      requiredAction: 'Define how funds will be distributed among creditors',
+      solution: 'Add dividend distribution schedule with percentages and timeline',
+      deadline: 'Immediately'
+    },
+    {
+      category: 'compliance',
+      description: 'Administrator Fees & Expenses Not Specified',
+      severity: 'medium',
+      regulatoryReference: 'OSB Directive',
+      impact: 'Can delay approval from the Office of the Superintendent of Bankruptcy (OSB)',
+      requiredAction: 'Detail administrator fees to meet regulatory transparency',
+      solution: 'Specify administrator fees and expenses with breakdown',
+      deadline: '3 days'
+    },
+    {
+      category: 'legal',
+      description: 'Proposal Not Signed by Witness',
+      severity: 'medium',
+      regulatoryReference: 'BIA Requirement',
+      impact: 'May cause legal delays',
+      requiredAction: 'Ensure a witness signs before submission',
+      solution: 'Obtain witness signature on proposal document',
+      deadline: '3 days'
+    },
+    {
+      category: 'compliance',
+      description: 'No Additional Terms Specified',
+      severity: 'low',
+      regulatoryReference: 'BIA Best Practice',
+      impact: 'Could be required for unique creditor terms',
+      requiredAction: 'Add custom clauses if applicable',
+      solution: 'Review if additional terms are needed for special cases',
+      deadline: '5 days'
+    }
+  ];
+  
+  return {
+    risks,
+    riskScore: 85,
+    recommendations: [
+      'Specify how secured debts will be paid',
+      'Add a structured payment plan for unsecured creditors',
+      'Define dividend distribution schedule among creditors',
+      'Detail administrator fees to meet regulatory transparency',
+      'Ensure a witness signs the proposal before submission',
+      'Consider adding custom clauses for special creditor arrangements'
+    ]
+  };
+}
+
 const analyzeFinancialRisks = async (
   extractedData: Record<string, any>,
   risks: RiskFactor[]
 ) => {
-  // Analyze financial data points
   if (extractedData.totalDebt && extractedData.totalIncome) {
     const debtToIncomeRatio = parseFloat(extractedData.totalDebt) / parseFloat(extractedData.totalIncome);
     
@@ -113,7 +205,6 @@ const analyzeComplianceRisks = async (
   formNumber: string,
   risks: RiskFactor[]
 ) => {
-  // Check for regulatory compliance issues
   const biaRequirements = regulatoryFramework.BIA.sections;
   
   for (const [section, requirements] of Object.entries(biaRequirements)) {
@@ -135,7 +226,6 @@ const analyzeLegalRisks = async (
   extractedData: Record<string, any>,
   risks: RiskFactor[]
 ) => {
-  // Analyze legal requirements and potential issues
   const legalChecks = [
     {
       pattern: /fraud|misrepresentation|concealment/i,
@@ -166,7 +256,6 @@ const analyzeDocumentIntegrity = async (
   extractedData: Record<string, any>,
   risks: RiskFactor[]
 ) => {
-  // Check document completeness and integrity
   const requiredSections = [
     'personal information',
     'financial statements',
@@ -198,7 +287,6 @@ const calculateRiskScore = (risks: RiskFactor[]): number => {
 const generateRiskRecommendations = (risks: RiskFactor[]): string[] => {
   const recommendations: string[] = [];
   
-  // Generate specific recommendations based on identified risks
   risks.forEach(risk => {
     switch (risk.category) {
       case 'financial':

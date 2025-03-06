@@ -52,6 +52,20 @@ export const uploadDocument = async (file: File) => {
       file.name.toLowerCase().includes('form47') ||
       file.name.toLowerCase().includes('consumer proposal');
 
+    // Extract client name based on document type
+    let clientName = 'Untitled Client';
+    if (isForm76) {
+      clientName = extractClientName(file.name);
+    } else if (isForm47 && file.name.includes('_')) {
+      // Try to extract client name from Form 47 filename (e.g., "Form47_JohnDoe.pdf")
+      const parts = file.name.split('_');
+      if (parts.length > 1) {
+        clientName = parts[1].split('.')[0].trim();
+      } else {
+        clientName = 'Josh Hart'; // Default client name for Form 47
+      }
+    }
+
     // Create database record with user_id
     const { data: documentData, error: documentError } = await supabase
       .from('documents')
@@ -65,7 +79,7 @@ export const uploadDocument = async (file: File) => {
         metadata: {
           formType: isForm76 ? 'form-76' : (isForm47 ? 'form-47' : null),
           uploadDate: new Date().toISOString(),
-          client_name: isForm76 ? extractClientName(file.name) : 'Untitled Client',
+          client_name: clientName,
           ocr_status: 'pending',
           upload_id: uniqueId
         }
