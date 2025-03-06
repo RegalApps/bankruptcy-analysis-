@@ -4,10 +4,12 @@ import { DocumentPreview } from "./DocumentPreview";
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
 import { Sidebar } from "./Sidebar";
 import { CollaborationPanel } from "./CollaborationPanel";
-import { LoadingState } from "./LoadingState";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { ViewerLayout } from "./layout/ViewerLayout";
+import { ViewerLoadingState } from "./components/ViewerLoadingState";
+import { ViewerErrorState } from "./components/ViewerErrorState";
+import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
+import { isDocumentForm47 } from "./utils/documentTypeUtils";
+import { Home } from "lucide-react";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -28,73 +30,36 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   };
 
   if (loading) {
-    return (
-      <div className="py-12 flex flex-col items-center justify-center gap-4">
-        <LoadingState size="large" message="Loading document details..." />
-        <p className="text-muted-foreground mt-2">
-          This may take a moment for large documents or during initial processing.
-        </p>
-      </div>
-    );
+    return <ViewerLoadingState />;
   }
 
   if (loadingError) {
-    return (
-      <div className="py-12 flex flex-col items-center justify-center gap-4">
-        <div className="max-w-md mx-auto text-center p-6 bg-muted rounded-lg">
-          <h3 className="text-lg font-medium mb-3">Document Loading Error</h3>
-          <p className="text-muted-foreground mb-6">{loadingError}</p>
-          <Button onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Retry Loading
-          </Button>
-        </div>
-      </div>
-    );
+    return <ViewerErrorState error={loadingError} onRetry={handleRefresh} />;
   }
 
   if (!document) {
-    return (
-      <div className="py-12 text-center">
-        <h3 className="text-lg font-medium">Document Not Found</h3>
-        <p className="text-muted-foreground mt-2">
-          The requested document could not be found or has been deleted.
-        </p>
-      </div>
-    );
+    return <ViewerNotFoundState />;
   }
 
   // Check if this is a Form 47 document to apply specific layout adjustments
-  const extractedFormType = document.analysis?.[0]?.content?.extracted_info?.formType;
-  const isForm47 = document.type === 'form-47' || 
-                  extractedFormType === 'form-47' ||
-                  document.title?.toLowerCase().includes('form 47') || 
-                  document.title?.toLowerCase().includes('consumer proposal');
+  const isForm47 = isDocumentForm47(document);
 
   return (
-    <div className="h-full max-h-[calc(100vh-10rem)] bg-background/50 rounded-lg shadow-sm overflow-hidden">
-      <div className="grid grid-cols-12 h-full divide-x divide-border/50">
-        {/* Left Panel - Document Summary & Details */}
-        <div className={`${isForm47 ? 'col-span-12 md:col-span-4 lg:col-span-3' : 'col-span-12 md:col-span-3 lg:col-span-2'} h-full overflow-hidden border-r border-border/50`}>
-          <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
-        </div>
-        
-        {/* Center Panel - Document Viewer */}
-        <div className={`${isForm47 ? 'col-span-12 md:col-span-8 lg:col-span-6' : 'col-span-12 md:col-span-9 lg:col-span-7'} h-full overflow-hidden border-r border-border/50`}>
-          <div className="h-full flex flex-col">
-            <DocumentPreview 
-              storagePath={document.storage_path} 
-              title={document.title}
-              documentId={documentId}
-            />
-          </div>
-        </div>
-        
-        {/* Right Panel - Collaboration */}
-        <div className="col-span-12 lg:col-span-3 h-full overflow-hidden">
-          <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
-        </div>
-      </div>
-    </div>
+    <ViewerLayout
+      isForm47={isForm47}
+      sidebar={
+        <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
+      }
+      mainContent={
+        <DocumentPreview 
+          storagePath={document.storage_path} 
+          title={document.title}
+          documentId={documentId}
+        />
+      }
+      collaborationPanel={
+        <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
+      }
+    />
   );
 };
