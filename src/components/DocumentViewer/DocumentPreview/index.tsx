@@ -3,13 +3,11 @@ import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
-import { StuckAnalysisAlert } from "./components/StuckAnalysisAlert";
-import { AnalysisProgress } from "./components/AnalysisProgress";
 import { ViewerToolbar } from "./components/ViewerToolbar";
 import { DocumentViewerFrame } from "./components/DocumentViewerFrame";
 import { useDocumentPreview } from "./hooks/useDocumentPreview";
 import usePreviewState from "./hooks/usePreviewState";
+import { ErrorDisplay } from "./components/ErrorDisplay";
 import { useDocumentAnalysis } from "../hooks/useDocumentAnalysis";
 
 interface DocumentPreviewProps {
@@ -31,9 +29,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     isExcelFile,
     previewError,
     setPreviewError,
-    checkFile,
-    handleAnalysisRetry,
-    isAnalysisStuck
+    checkFile
   } = usePreviewState(storagePath, documentId, title, onAnalysisComplete);
 
   const {
@@ -69,7 +65,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           setIsLoading(false);
         } catch (error) {
           console.error("Error getting document URL:", error);
-          setPreviewError("Failed to get document URL");
           setIsLoading(false);
         }
       };
@@ -115,38 +110,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     return <ErrorDisplay error="No document selected" onRetry={() => {}} />;
   }
 
-  const showStuckAnalysisAlert = isAnalysisStuck?.stuck;
   const isPdfFile = storagePath.toLowerCase().endsWith('.pdf');
   const isDocFile = storagePath.toLowerCase().endsWith('.doc') || storagePath.toLowerCase().endsWith('.docx');
 
   return (
-    <div className="flex flex-col h-full">
-      {previewError && (
-        <PreviewErrorAlert 
-          error={previewError} 
-          onRefresh={handleRefresh}
-          publicUrl={fileUrl || ''}
-          documentId={documentId}
-          onRunDiagnostics={() => handleAnalysisRetry()}
-        />
-      )}
-      
-      {showStuckAnalysisAlert && (
-        <StuckAnalysisAlert 
-          documentId={documentId} 
-          minutesStuck={isAnalysisStuck.minutesStuck}
-          onRetryComplete={handleAnalysisRetry}
-        />
-      )}
-      
-      {analyzing && (
-        <AnalysisProgress
-          progress={progress}
-          analysisStep={analysisStep}
-          processingStage={processingStage}
-        />
-      )}
-      
+    <div className="flex flex-col h-full">      
       <div className="flex-grow relative">
         {fileExists && fileUrl ? (
           <div className="h-full flex flex-col">
@@ -174,6 +142,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 onIframeError={handleIframeError}
                 iframeRef={iframeRef}
                 forceReload={forceReload}
+                onOpenInNewTab={handleOpenInNewTab}
+                onDownload={handleDownload}
               />
             </div>
             
@@ -191,7 +161,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         ) : (
           <div className="h-full flex items-center justify-center p-8 bg-muted rounded-md">
             <ErrorDisplay 
-              error={`Document preview not available. ${previewError || 'Try refreshing or check storage path.'}`} 
+              error="Document preview not available. Please try refreshing or check storage path."
               onRetry={handleRefresh}
             />
           </div>

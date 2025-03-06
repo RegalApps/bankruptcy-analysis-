@@ -28,6 +28,7 @@ export const useDocumentPreview = (fileUrl: string | null, title: string) => {
     if (!fileUrl) return;
     
     try {
+      // Create a temporary anchor and simulate click to download
       const a = document.createElement('a');
       a.href = fileUrl;
       a.download = title || 'document';

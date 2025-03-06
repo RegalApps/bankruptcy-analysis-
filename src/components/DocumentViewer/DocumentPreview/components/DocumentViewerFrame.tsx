@@ -1,6 +1,8 @@
 
 import React from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Button } from "@/components/ui/button";
+import { ExternalLink, Download } from "lucide-react";
 
 interface DocumentViewerFrameProps {
   fileUrl: string;
@@ -14,6 +16,8 @@ interface DocumentViewerFrameProps {
   onIframeError: () => void;
   iframeRef: React.RefObject<HTMLIFrameElement>;
   forceReload: number;
+  onOpenInNewTab?: () => void;
+  onDownload?: () => void;
 }
 
 export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
@@ -27,7 +31,9 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
   onIframeLoad,
   onIframeError,
   iframeRef,
-  forceReload
+  forceReload,
+  onOpenInNewTab,
+  onDownload
 }) => {
   const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
 
@@ -79,11 +85,11 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
             Browser security settings are preventing the document from being displayed inline.
           </p>
           <div className="flex flex-col gap-2">
-            <Button onClick={handleOpenInNewTab} className="w-full">
+            <Button onClick={onOpenInNewTab} className="w-full">
               <ExternalLink className="h-4 w-4 mr-2" />
               Open Document in New Tab
             </Button>
-            <Button variant="outline" onClick={handleDownload} className="w-full">
+            <Button variant="outline" onClick={onDownload} className="w-full">
               <Download className="h-4 w-4 mr-2" />
               Download Document
             </Button>
