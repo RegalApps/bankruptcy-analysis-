@@ -67,39 +67,41 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
   return (
     <div className="h-full">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
-        {/* Left Panel - Risk & Compliance */}
-        <div className="lg:col-span-1 h-full">
+      <div className="grid grid-cols-12 gap-6 h-full">
+        {/* Left Panel - Document Summary & Risk Assessment */}
+        <div className="col-span-3 h-full">
           <Sidebar document={document} onDeadlineUpdated={handleRefresh} />
         </div>
         
-        {/* Center and Right Panels */}
-        <div className="lg:col-span-3 h-full">
-          <Tabs defaultValue="preview" className="w-full h-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="preview">Document Preview</TabsTrigger>
+        {/* Center Panel - Document Viewer */}
+        <div className="col-span-6 h-full">
+          <div className="h-full flex flex-col">
+            <DocumentPreview 
+              storagePath={document.storage_path} 
+              title={document.title}
+              onAnalysisComplete={handleAnalysisComplete}
+              documentId={documentId}
+            />
+          </div>
+        </div>
+        
+        {/* Right Panel - Analysis, Collaboration & Tasks */}
+        <div className="col-span-3 h-full">
+          <Tabs defaultValue="analysis" className="h-full flex flex-col">
+            <TabsList className="mb-4 w-full justify-start">
               <TabsTrigger value="analysis">Analysis</TabsTrigger>
               <TabsTrigger value="collaboration">Collaboration</TabsTrigger>
             </TabsList>
             
-            {/* Center Panel - Document Viewer */}
-            <TabsContent value="preview" className="h-[calc(100vh-12rem)]">
-              <DocumentPreview 
-                storagePath={document.storage_path} 
-                title={document.title}
-                onAnalysisComplete={handleAnalysisComplete}
-                documentId={documentId}
-              />
-            </TabsContent>
-            
-            <TabsContent value="analysis" className="h-[calc(100vh-12rem)]">
-              <AnalysisPanel document={document} onDeadlineUpdated={handleRefresh} />
-            </TabsContent>
-            
-            {/* Right Panel - Collaboration & Tasks */}
-            <TabsContent value="collaboration" className="h-[calc(100vh-12rem)]">
-              <CollaborationPanel document={document} onCommentAdded={handleRefresh} />
-            </TabsContent>
+            <div className="flex-1 overflow-auto">
+              <TabsContent value="analysis" className="h-full mt-0 data-[state=active]:flex data-[state=active]:flex-col">
+                <AnalysisPanel document={document} onDeadlineUpdated={handleRefresh} />
+              </TabsContent>
+              
+              <TabsContent value="collaboration" className="h-full mt-0 data-[state=active]:flex data-[state=active]:flex-col">
+                <CollaborationPanel document={document} onCommentAdded={handleRefresh} />
+              </TabsContent>
+            </div>
           </Tabs>
         </div>
       </div>
