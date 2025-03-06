@@ -41,8 +41,8 @@ export const MainHeader = () => {
   };
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full">
-      <div className="flex h-16 items-center px-6 gap-4 container mx-auto">
+    <header className="border-b bg-white/95 dark:bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 w-full">
+      <div className="flex h-16 items-center px-4 gap-4">
         <div className="flex-1 flex justify-center max-w-2xl mx-auto">
           <div className="w-full">
             <SearchBar 

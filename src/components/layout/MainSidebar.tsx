@@ -23,22 +23,21 @@ export const MainSidebar = () => {
   ];
 
   return (
-    <aside className="w-64 h-screen flex flex-col fixed left-0 top-0 z-40 border-r bg-background">
-      {/* App Logo */}
-      <div className="p-4">
+    <aside className="w-64 h-screen flex flex-col fixed left-0 top-0 z-40 border-r bg-white dark:bg-background">
+      {/* App Logo - Enhanced for better visibility */}
+      <div className="p-4 border-b">
         <Button
           variant="ghost"
-          className="w-full justify-start px-4 py-6 hover:bg-transparent"
+          className="w-full justify-start px-2 py-4 hover:bg-transparent"
           onClick={() => navigate('/')}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <img 
               src="/lovable-uploads/b8620d24-fab6-4068-9af7-3e91ace7b559.png" 
               alt="Secure Files AI Logo" 
-              className="w-8 h-8 mix-blend-multiply dark:mix-blend-normal"
-              style={{ filter: 'brightness(1) contrast(1)' }}
+              className="w-9 h-9"
             />
-            <span className="font-semibold text-lg text-foreground">Secure Files AI</span>
+            <span className="font-bold text-lg text-black dark:text-white">Secure Files AI</span>
           </div>
         </Button>
       </div>

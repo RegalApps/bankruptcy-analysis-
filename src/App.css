@@ -2,6 +2,7 @@
 /* Remove width constraints that prevent full-screen functionality */
 #root {
   max-width: 100%;
+  width: 100%;
   margin: 0 auto;
   padding: 0;
   text-align: center;
@@ -13,9 +14,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -41,4 +44,32 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Ensure sidebar is properly visible */
+.sidebar-container {
+  background-color: white;
+  border-right: 1px solid var(--border);
+}
+
+/* Make the app logo and text more visible */
+.app-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.app-title {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: black;
+}
+
+[data-theme="dark"] .app-title {
+  color: white;
+}
+
+/* Ensure proper spacing in main layout */
+.main-content {
+  padding-left: 16rem; /* 256px = 64*4 for the sidebar width */
 }

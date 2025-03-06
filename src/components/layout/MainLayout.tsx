@@ -10,12 +10,12 @@ interface MainLayoutProps {
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
   return (
-    <div className="min-h-screen h-screen w-full flex overflow-hidden">
+    <div className="min-h-screen h-screen w-full flex overflow-hidden bg-white dark:bg-background">
       <MainSidebar />
-      <div className="flex-1 flex flex-col w-full overflow-hidden">
+      <div className="flex-1 flex flex-col pl-64 w-full overflow-hidden">
         <MainHeader />
-        <main className="flex-1 overflow-auto p-4">
-          <div className="container mx-auto h-full">
+        <main className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-background">
+          <div className="h-full">
             {children}
           </div>
         </main>
