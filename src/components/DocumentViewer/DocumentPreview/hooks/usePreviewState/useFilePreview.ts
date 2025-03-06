@@ -32,8 +32,7 @@ export const useFilePreview = ({
           .from('documents')
           .getPublicUrl(storagePath);
         
-        // Fix: The getPublicUrl method doesn't return an error property
-        // So we need to check if data exists instead
+        // Check if data.publicUrl exists
         if (data?.publicUrl) {
           setFileExists(true);
           setFileUrl(data.publicUrl);
@@ -42,10 +41,14 @@ export const useFilePreview = ({
           const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
                          storagePath.toLowerCase().endsWith('.xls') ||
                          storagePath.toLowerCase().endsWith('.csv');
+                         
           setIsExcelFile(isExcel);
           
           // Clear any previous errors
           setPreviewError(null);
+          
+          // Log successful file detection for troubleshooting
+          console.log(`File loaded successfully. Type: ${isExcel ? 'Excel' : 'Other'}, URL: ${data.publicUrl}`);
         } else {
           setFileExists(false);
           setFileUrl(null);

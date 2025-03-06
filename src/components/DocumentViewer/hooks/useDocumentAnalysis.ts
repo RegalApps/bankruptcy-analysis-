@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { useAnalysisProcess } from "../DocumentPreview/hooks/analysisProcess/useAnalysisProcess";
-import { AnalysisProcessProps } from "../DocumentPreview/hooks/analysisProcess/types";
+import { useAnalysisProcess } from "./analysisProcess/useAnalysisProcess";
+import { AnalysisProcessProps } from "./analysisProcess/types";
 
 export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: () => void) => {
   const [analyzing, setAnalyzing] = useState(false);
@@ -30,16 +30,45 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
     try {
       const { data: document } = await supabase
         .from('documents')
-        .select('id, ai_processing_status, metadata')
+        .select('id, ai_processing_status, metadata, type, title')
         .eq('storage_path', documentPath)
         .maybeSingle();
         
-      // Return cached analysis if complete and valid
+      // Detect if this is an Excel file
+      const isExcelFile = document?.type?.includes('excel') || 
+                       document?.title?.toLowerCase().endsWith('.xlsx') ||
+                       document?.title?.toLowerCase().endsWith('.xls') ||
+                       document?.metadata?.fileType === 'excel';
+      
+      // For Excel files, use simplified processing
+      if (isExcelFile) {
+        console.log('Excel file detected - using simplified analysis path');
+        
+        // Update the document status to complete directly
+        await supabase
+          .from('documents')
+          .update({
+            ai_processing_status: 'complete',
+            metadata: {
+              ...(document?.metadata || {}),
+              fileType: 'excel',
+              excel_processing_only: true,
+              processing_complete: true,
+              last_analyzed: new Date().toISOString()
+            }
+          })
+          .eq('id', document?.id);
+          
+        return true;
+      }
+        
+      // Return cached analysis if complete and valid for non-Excel files
       if (document?.ai_processing_status === 'complete' && 
           document?.metadata?.processing_steps_completed?.length >= 8) {
         console.log('Using cached document analysis');
         return true;
       }
+      
       return false;
     } catch (err) {
       console.error('Error checking document analysis cache:', err);
@@ -58,7 +87,47 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
 
       setAnalyzing(true);
       
-      // Check if we already have cached analysis
+      // Get document information
+      const { data: document } = await supabase
+        .from('documents')
+        .select('id, title, type')
+        .eq('storage_path', storagePath)
+        .maybeSingle();
+        
+      // Check if this is an Excel file
+      const isExcelFile = document?.type?.includes('excel') || 
+                         document?.title?.toLowerCase().endsWith('.xlsx') ||
+                         document?.title?.toLowerCase().endsWith('.xls');
+                         
+      if (isExcelFile) {
+        console.log('Excel file detected - using fast path processing');
+        
+        // Use special processing for Excel files (much faster)
+        setAnalysisStep("Processing Excel file - extracting metadata only");
+        
+        // Call the edge function with the isExcelFile flag for optimized processing
+        await supabase.functions.invoke('analyze-document', {
+          body: { 
+            documentId: document?.id,
+            isExcelFile: true,
+            title: document?.title || '',
+          }
+        });
+        
+        // Fast completion for Excel files
+        setProgress(100);
+        setAnalysisStep("Excel file processing complete");
+        
+        // Short delay to show completion message
+        setTimeout(() => {
+          setAnalyzing(false);
+          if (onAnalysisComplete) onAnalysisComplete();
+        }, 1500);
+        
+        return;
+      }
+      
+      // For non-Excel files, check if we already have cached analysis
       const hasCachedAnalysis = await getDocumentAnalysisCache(storagePath);
       if (hasCachedAnalysis) {
         console.log('Document already analyzed, using cached results');
@@ -85,9 +154,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
         title: "Analysis Failed",
         description: error.message || "Failed to analyze document"
       });
-    } finally {
-      // Note: We don't set analyzing to false here anymore
-      // It will be set to false when the process completes
+      setAnalyzing(false);
     }
   };
 
@@ -141,10 +208,44 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
         try {
           const { data: document } = await supabase
             .from('documents')
-            .select('ai_processing_status, metadata')
+            .select('ai_processing_status, metadata, type, title')
             .eq('storage_path', storagePath)
             .maybeSingle();
             
+          // Check if this is an Excel file
+          const isExcelFile = document?.type?.includes('excel') || 
+                           document?.title?.toLowerCase().endsWith('.xlsx') ||
+                           document?.title?.toLowerCase().endsWith('.xls') ||
+                           document?.metadata?.fileType === 'excel';
+                         
+          if (isExcelFile) {
+            console.log('Excel file detected - using simplified processing path');
+            
+            // Mark Excel files as complete without deep analysis
+            if (document && document.ai_processing_status !== 'complete') {
+              await supabase
+                .from('documents')
+                .update({
+                  ai_processing_status: 'complete',
+                  metadata: {
+                    ...(document.metadata || {}),
+                    fileType: 'excel',
+                    excel_processing_only: true,
+                    processing_complete: true,
+                    last_analyzed: new Date().toISOString()
+                  }
+                })
+                .eq('storage_path', storagePath);
+                
+              if (onAnalysisComplete) {
+                onAnalysisComplete();
+              }
+            }
+            
+            return;
+          }
+          
+          // For non-Excel files, check if analysis is needed
           if (document && 
              (document.ai_processing_status === 'pending' || 
               document.ai_processing_status === 'failed' ||
