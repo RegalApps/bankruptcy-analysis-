@@ -17,7 +17,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isGridView, setIsGridView] = useState(true);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-  const [previewDocument, setPreviewDocument] = useState<{ id: string; storage_path: string } | null>(null);
+  const [previewDocument, setPreviewDocument] = useState<{ id: string; title: string; storage_path: string } | null>(null);
   const [filterType, setFilterType] = useState<string | null>(null);
 
   const filteredDocuments = documents.filter(doc => {
@@ -68,6 +68,10 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
     types: Set<string>
   }>);
 
+  const handleDocumentClick = (document: { id: string; title: string; storage_path: string }) => {
+    setPreviewDocument(document);
+  };
+
   const renderContent = () => {
     if (selectedFolder === 'Uncategorized') {
       const uncategorizedDocs = filteredDocuments.filter(
@@ -76,7 +80,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
       return (
         <UncategorizedDocuments 
           documents={uncategorizedDocs}
-          onDocumentClick={setPreviewDocument}
+          onDocumentClick={handleDocumentClick}
         />
       );
     }
@@ -87,7 +91,7 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
         groupedByClient={groupedByClient}
         selectedFolder={selectedFolder}
         onFolderSelect={setSelectedFolder}
-        onDocumentClick={setPreviewDocument}
+        onDocumentClick={handleDocumentClick}
       />
     );
   };
