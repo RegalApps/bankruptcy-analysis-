@@ -26,20 +26,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
 
   return (
     <Card className="h-full">
-      <ScrollArea className="h-[calc(100vh-2rem)] p-4">
-        <div className="space-y-6">
-          <DocumentHeader title={document.title} type={document.type} />
-          
-          <div className="p-4 rounded-md bg-muted/50">
-            <div className="flex items-center gap-2 mb-4">
-              <FileText className="h-5 w-5 text-primary" />
-              <h3 className="font-medium">Document Summary</h3>
+      <div className="p-3">
+        <DocumentHeader title={document.title} type={document.type} />
+      </div>
+      
+      <ScrollArea className="h-[calc(100vh-12rem)] pr-1">
+        <div className="px-3 pb-4 space-y-4">
+          <div className="rounded-md bg-muted/50 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="h-4 w-4 text-primary" />
+              <h3 className="font-medium text-sm">Document Summary</h3>
             </div>
             {extractedInfo?.summary ? (
               <p className="text-sm text-muted-foreground">{extractedInfo.summary}</p>
             ) : (
               <div className="text-center py-2">
-                <p className="text-sm text-muted-foreground">No summary available</p>
+                <p className="text-xs text-muted-foreground">No summary available</p>
                 <p className="text-xs mt-1">Try analyzing the document to generate a summary</p>
               </div>
             )}
@@ -70,8 +72,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
           
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              <h3 className="font-medium">Risk Assessment</h3>
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+              <h3 className="font-medium text-sm">Risk Assessment</h3>
             </div>
             <RiskAssessment 
               risks={risks} 
@@ -83,8 +85,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
           
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-500" />
-              <h3 className="font-medium">Deadlines & Compliance</h3>
+              <Calendar className="h-4 w-4 text-blue-500" />
+              <h3 className="font-medium text-sm">Deadlines & Compliance</h3>
             </div>
             <DeadlineManager 
               document={document} 

@@ -9,7 +9,7 @@ import { StuckAnalysisAlert } from "./components/StuckAnalysisAlert";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, RefreshCw, Search, ZoomIn, ZoomOut } from "lucide-react";
 
 interface DocumentPreviewProps {
   storagePath: string;
@@ -47,6 +47,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
   const [isRetrying, setIsRetrying] = useState(false);
   const [forceReload, setForceReload] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(100);
 
   // Effect to get document URL when component loads
   useEffect(() => {
@@ -100,6 +101,14 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       toast.error("Failed to download document");
     }
   };
+  
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 10, 200));
+  };
+  
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 10, 50));
+  };
 
   if (!storagePath) {
     return <ErrorDisplay error="No document selected" onRetry={() => {}} />;
@@ -143,13 +152,33 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         {fileExists && fileUrl ? (
           <div className="h-full flex flex-col">
             <div className="bg-muted/50 p-2 flex justify-between items-center border-b">
-              <span className="text-sm font-medium truncate">{title}</span>
+              <span className="text-sm font-medium truncate flex-1">{title}</span>
               <div className="flex gap-2">
+                <div className="flex items-center gap-1 mr-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleZoomOut}
+                    className="h-7 w-7"
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </Button>
+                  <span className="text-xs font-mono">{zoomLevel}%</span>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleZoomIn}
+                    className="h-7 w-7"
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={handleRefresh}
                   disabled={isRetrying}
+                  className="h-7"
                 >
                   <RefreshCw className="h-3.5 w-3.5 mr-1" />
                   Refresh
@@ -158,20 +187,24 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                   variant="outline" 
                   size="sm"
                   onClick={handleDownload}
+                  className="h-7"
                 >
                   <Download className="h-3.5 w-3.5 mr-1" />
                   Download
                 </Button>
               </div>
             </div>
-            <iframe 
-              src={`${fileUrl}?t=${forceReload}`}
-              className="w-full h-full border-0"
-              title={`Document Preview: ${title}`}
-              sandbox="allow-same-origin allow-scripts allow-forms"
-              referrerPolicy="no-referrer"
-              key={`iframe-${forceReload}`}
-            />
+            <div className="flex-1 overflow-hidden">
+              <iframe 
+                src={`${fileUrl}?t=${forceReload}`}
+                className="w-full h-full border-0"
+                title={`Document Preview: ${title}`}
+                sandbox="allow-same-origin allow-scripts allow-forms"
+                referrerPolicy="no-referrer"
+                key={`iframe-${forceReload}`}
+                style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
+              />
+            </div>
             {/* Controls are added inline instead of using a separate component */}
             <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm p-2 rounded-md shadow-sm">
               <button
@@ -179,6 +212,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 onClick={() => handleAnalyzeDocument()}
                 disabled={analyzing}
               >
+                <Search className="h-3.5 w-3.5" />
                 {analyzing ? "Analyzing..." : "Analyze Document"}
               </button>
             </div>

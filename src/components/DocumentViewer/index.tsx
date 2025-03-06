@@ -64,15 +64,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   }
 
   return (
-    <div className="h-full">
-      <div className="grid grid-cols-12 gap-6 h-full">
-        {/* Left Panel - Document Summary & Details */}
-        <div className="col-span-3 h-full">
+    <div className="h-full max-h-[calc(100vh-10rem)]">
+      <div className="grid grid-cols-12 gap-4 h-full">
+        {/* Left Panel - Document Summary & Details - Adjusted from col-span-3 to col-span-2 */}
+        <div className="col-span-3 lg:col-span-2 h-full overflow-hidden">
           <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
         </div>
         
-        {/* Center Panel - Document Viewer */}
-        <div className="col-span-6 h-full">
+        {/* Center Panel - Document Viewer - Adjusted from col-span-6 to col-span-7 */}
+        <div className="col-span-6 lg:col-span-7 h-full overflow-hidden">
           <div className="h-full flex flex-col">
             <DocumentPreview 
               storagePath={document.storage_path} 
@@ -82,8 +82,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           </div>
         </div>
         
-        {/* Right Panel - Collaboration */}
-        <div className="col-span-3 h-full">
+        {/* Right Panel - Collaboration - Adjusted from col-span-3 to col-span-3 */}
+        <div className="col-span-3 h-full overflow-hidden">
           <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
         </div>
       </div>
