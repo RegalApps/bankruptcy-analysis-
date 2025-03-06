@@ -1,8 +1,6 @@
 
 import React from "react";
-import { DocumentObject } from "./DocumentObject";
-import { PreviewControls } from "./PreviewControls";
-import { usePreviewState } from "./hooks/usePreviewState";
+import usePreviewState from "./hooks/usePreviewState";
 import { useDocumentAnalysis } from "../hooks/useDocumentAnalysis";
 import { AnalysisProgress } from "./components/AnalysisProgress";
 import { ErrorDisplay } from "./components/ErrorDisplay";
@@ -62,13 +60,17 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   };
 
   if (!storagePath) {
-    return <ErrorDisplay message="No document selected" details="Please select a document to preview." />;
+    return <ErrorDisplay error="No document selected" onRetry={() => {}} />;
   }
 
   if (previewError) {
     return (
       <div className="flex flex-col h-full">
-        <PreviewErrorAlert error={previewError} />
+        <PreviewErrorAlert 
+          error={previewError} 
+          onRefresh={() => checkFile()}
+          publicUrl={fileUrl || ''}
+        />
       </div>
     );
   }
@@ -79,7 +81,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     <div className="flex flex-col h-full">
       {/* Show error message if something went wrong */}
       {state.previewError && (
-        <PreviewErrorAlert error={state.previewError} />
+        <PreviewErrorAlert 
+          error={state.previewError} 
+          onRefresh={() => checkFile()}
+          publicUrl={fileUrl || ''}
+        />
       )}
       
       {/* Show analysis stuck alert if needed */}
@@ -95,39 +101,36 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       {analysis.analyzing && (
         <AnalysisProgress
           progress={analysis.progress}
-          step={analysis.analysisStep}
+          analysisStep={analysis.analysisStep}
           processingStage={analysis.processingStage}
         />
       )}
       
-      {/* PDF Viewer for the document */}
+      {/* Document Viewer for the document */}
       <div className="flex-grow relative">
         {state.fileExists ? (
-          <>
-            <div className="absolute inset-0">
-              <DocumentObject
-                url={state.fileUrl}
-                isExcelFile={state.isExcelFile}
-                storagePath={storagePath}
-                documentId={documentId}
-              />
+          <div className="h-full flex items-center justify-center">
+            <iframe 
+              src={state.fileUrl || ''} 
+              className="w-full h-full border-0"
+              title={`Document Preview: ${title}`}
+            />
+            {/* Controls are added inline instead of using a separate component */}
+            <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm p-2 rounded-md shadow-sm">
+              <button
+                className="bg-primary text-primary-foreground px-3 py-1.5 rounded text-sm flex items-center gap-2"
+                onClick={() => analysis.handleAnalyzeDocument()}
+                disabled={analysis.analyzing}
+              >
+                {analysis.analyzing ? "Analyzing..." : "Analyze Document"}
+              </button>
             </div>
-            <div className="absolute bottom-4 right-4">
-              <PreviewControls
-                url={state.fileUrl}
-                title={title}
-                isAnalyzing={analysis.analyzing}
-                onAnalyzeClick={() => analysis.handleAnalyzeDocument()}
-              />
-            </div>
-          </>
+          </div>
         ) : (
           <div className="h-full flex items-center justify-center p-8 bg-muted rounded-md">
             <ErrorDisplay 
-              message="Document file not found" 
-              details="The file may have been moved or deleted"
-              showDiagnostics={true}
-              documentId={documentId}
+              error="Document file not found" 
+              onRetry={() => checkFile()}
             />
           </div>
         )}

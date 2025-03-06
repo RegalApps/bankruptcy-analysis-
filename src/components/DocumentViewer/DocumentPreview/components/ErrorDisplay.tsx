@@ -9,11 +9,17 @@ import { supabase } from "@/lib/supabase";
 interface ErrorDisplayProps {
   error: string;
   onRetry: () => void;
+  documentId?: string;
+  showDiagnostics?: boolean;
+  details?: string;
 }
 
 export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   error,
-  onRetry
+  onRetry,
+  documentId,
+  showDiagnostics,
+  details
 }) => {
   const navigate = useNavigate();
   const [isAuthError, setIsAuthError] = React.useState(false);
@@ -45,15 +51,18 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   return (
     <Alert className="mt-4" variant="destructive">
       <AlertTriangle className="h-4 w-4" />
-      <AlertTitle>Analysis Error</AlertTitle>
-      <AlertDescription>{error}</AlertDescription>
+      <AlertTitle>Document Error</AlertTitle>
+      <AlertDescription>
+        <p>{error}</p>
+        {details && <p className="text-sm mt-1 text-muted-foreground">{details}</p>}
+      </AlertDescription>
       <Button 
         onClick={handleRetry} 
         className="mt-2" 
         variant="outline" 
         size="sm"
       >
-        {isAuthError ? "Sign In Again" : "Try Analysis Again"}
+        {isAuthError ? "Sign In Again" : "Try Again"}
       </Button>
     </Alert>
   );

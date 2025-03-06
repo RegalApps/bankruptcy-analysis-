@@ -12,13 +12,13 @@ interface PreviewErrorAlertProps {
   onRunDiagnostics?: () => void;
 }
 
-export const PreviewErrorAlert = ({
+export const PreviewErrorAlert: React.FC<PreviewErrorAlertProps> = ({
   error,
   onRefresh,
   publicUrl,
   documentId,
   onRunDiagnostics
-}: PreviewErrorAlertProps) => {
+}) => {
   // Identify only format errors - removed network and database error detection
   const isFormatError = error.includes('format') || 
                         error.includes('unsupported') || 

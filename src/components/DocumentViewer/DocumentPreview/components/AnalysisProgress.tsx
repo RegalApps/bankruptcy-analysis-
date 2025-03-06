@@ -4,8 +4,8 @@ import { FileDigit, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface AnalysisProgressProps {
-  analysisStep: string;
   progress: number;
+  analysisStep: string;
   processingStage?: string;
 }
 

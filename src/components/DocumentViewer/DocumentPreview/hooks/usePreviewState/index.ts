@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -5,13 +6,6 @@ import { Session } from "@supabase/supabase-js";
 import { useDocumentAnalysis } from "../../hooks/useDocumentAnalysis";
 import { useFilePreview } from "./useFilePreview";
 import { useAnalysisInitialization } from "./useAnalysisInitialization";
-
-interface UsePreviewStateProps {
-  storagePath: string;
-  documentId: string;
-  title: string;
-  onAnalysisComplete?: () => void;
-}
 
 const usePreviewState = (
   storagePath: string,
@@ -34,7 +28,14 @@ const usePreviewState = (
     handleAnalyzeDocument
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
-  useFilePreview(storagePath, setFileExists, setFileUrl, setIsExcelFile, setPreviewError);
+  // Use the FilePreview hook with the correct props shape
+  useFilePreview({
+    storagePath,
+    setFileExists,
+    setFileUrl,
+    setIsExcelFile, 
+    setPreviewError
+  });
 
   useAnalysisInitialization({
     storagePath,
@@ -130,6 +131,7 @@ const usePreviewState = (
     setSession,
     handleAnalyzeDocument,
     isAnalysisStuck,
+    checkFile,
     handleAnalysisRetry: () => {
       // Reset stuck state
       setIsAnalysisStuck({
