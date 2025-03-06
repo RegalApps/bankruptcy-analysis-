@@ -38,6 +38,11 @@ export const useCreateFolderStructure = (documents: Document[]) => {
             // Determine folder type
             const folderType = folder.folder_type || 'general';
             
+            // Get direct child documents for this folder
+            const childDocuments = documents.filter(doc => 
+              !doc.is_folder && doc.parent_folder_id === folder.id
+            );
+            
             // Build folder structure
             const folderStructure: FolderStructure = {
               id: folder.id,
@@ -45,7 +50,8 @@ export const useCreateFolderStructure = (documents: Document[]) => {
               type: folderType as 'client' | 'form' | 'financial' | 'general',
               level,
               parentId: folder.parent_folder_id || undefined,
-              metadata: folder.metadata || {}
+              metadata: folder.metadata || {},
+              documents: childDocuments
             };
             
             // Add children recursively
@@ -60,9 +66,38 @@ export const useCreateFolderStructure = (documents: Document[]) => {
         
         // Build the top-level folders
         const folderStructure = buildFolderTree(null);
-        setFolders(folderStructure);
+        
+        // Create a virtual "Clients" root folder if it doesn't exist
+        const clientFolders = folderStructure.filter(folder => folder.type === 'client');
+        
+        // Only create the Clients folder if there are client folders but no existing "Clients" folder
+        const hasClientsFolder = folderStructure.some(folder => 
+          folder.name.toLowerCase() === 'clients' && folder.type === 'client'
+        );
+        
+        if (clientFolders.length > 0 && !hasClientsFolder) {
+          // Add the Clients virtual folder
+          const clientsFolder: FolderStructure = {
+            id: 'virtual-clients-folder',
+            name: 'Clients',
+            type: 'client',
+            level: 0,
+            children: clientFolders,
+            metadata: {},
+            isVirtual: true
+          };
+          
+          // Remove the client folders from the top level
+          const nonClientFolders = folderStructure.filter(folder => folder.type !== 'client');
+          
+          // Set the final structure
+          setFolders([clientsFolder, ...nonClientFolders]);
+        } else {
+          setFolders(folderStructure);
+        }
       } catch (error) {
         console.error("Error building folder structure:", error);
+        setFolders([]);
       } finally {
         setIsLoading(false);
       }

@@ -46,6 +46,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
   const [isRetrying, setIsRetrying] = useState(false);
+  const [forceReload, setForceReload] = useState(0);
 
   // Effect to get document URL when component loads
   useEffect(() => {
@@ -62,13 +63,16 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       fetchDocumentUrl();
     }
-  }, [storagePath, documentId]);
+  }, [storagePath, documentId, forceReload]);
 
   const handleRefresh = async () => {
     setIsRetrying(true);
     toast.info("Refreshing document preview...");
     try {
+      // Force a complete reload
       await checkFile();
+      // Update the forceReload counter to trigger iframe refresh
+      setForceReload(prev => prev + 1);
       toast.success("Document refreshed");
     } catch (error) {
       console.error("Error refreshing:", error);
@@ -101,18 +105,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     return <ErrorDisplay error="No document selected" onRetry={() => {}} />;
   }
 
-  if (previewError) {
-    return (
-      <div className="flex flex-col h-full">
-        <PreviewErrorAlert 
-          error={previewError} 
-          onRefresh={handleRefresh}
-          publicUrl={fileUrl || ''}
-        />
-      </div>
-    );
-  }
-
   const showStuckAnalysisAlert = isAnalysisStuck?.stuck;
 
   return (
@@ -123,6 +115,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           error={previewError} 
           onRefresh={handleRefresh}
           publicUrl={fileUrl || ''}
+          documentId={documentId}
+          onRunDiagnostics={() => handleAnalysisRetry()}
         />
       )}
       
@@ -171,11 +165,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               </div>
             </div>
             <iframe 
-              src={fileUrl} 
+              src={`${fileUrl}?t=${forceReload}`}
               className="w-full h-full border-0"
               title={`Document Preview: ${title}`}
               sandbox="allow-same-origin allow-scripts allow-forms"
               referrerPolicy="no-referrer"
+              key={`iframe-${forceReload}`}
             />
             {/* Controls are added inline instead of using a separate component */}
             <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm p-2 rounded-md shadow-sm">

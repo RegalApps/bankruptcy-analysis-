@@ -47,7 +47,32 @@ export function FolderNavigation({
       ...prev,
       [folderId]: !prev[folderId]
     }));
+    
+    // Auto-expand parent folders when a subfolder is expanded
+    const folder = folders.flat().find(f => f.id === folderId);
+    if (folder && folder.parentId) {
+      setExpandedFolders(prev => ({
+        ...prev,
+        [folder.parentId!]: true
+      }));
+    }
   };
+
+  // Auto-expand client folders by default on initial load
+  useState(() => {
+    // Find client folders and expand them by default
+    const clientFolders = folders.filter(folder => folder.type === 'client');
+    if (clientFolders.length > 0) {
+      const initialExpanded: Record<string, boolean> = {};
+      clientFolders.forEach(folder => {
+        initialExpanded[folder.id] = true;
+      });
+      setExpandedFolders(prev => ({
+        ...prev,
+        ...initialExpanded
+      }));
+    }
+  });
 
   return (
     <ScrollArea className="h-[calc(100vh-10rem)]">

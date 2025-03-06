@@ -31,48 +31,75 @@ export const DocumentListItem = ({
       return <FileText className="h-4 w-4 text-green-500 mr-2" />;
     } else if (formType === 'form-76' || title.includes('form 76') || title.includes('statement of affairs')) {
       return <FileText className="h-4 w-4 text-blue-500 mr-2" />;
+    } else if (title.includes('.xlsx') || title.includes('.xls') || title.includes('.csv')) {
+      return <FileText className="h-4 w-4 text-amber-500 mr-2" />;
     } else {
       return <File className="h-4 w-4 text-muted-foreground mr-2" />;
     }
   };
 
-  // Sort documents to show forms first
-  const sortedDocuments = [...documents].sort((a, b) => {
-    const aIsForm = a.metadata?.formType === 'form-47' || a.metadata?.formType === 'form-76';
-    const bIsForm = b.metadata?.formType === 'form-47' || b.metadata?.formType === 'form-76';
+  // Filter documents that are not folders
+  const filteredDocuments = documents.filter(doc => !doc.is_folder);
+
+  // Sort documents to show forms first, then financial documents, then others
+  const sortedDocuments = [...filteredDocuments].sort((a, b) => {
+    const aTitle = a.title?.toLowerCase() || '';
+    const bTitle = b.title?.toLowerCase() || '';
+    
+    // Check for form types
+    const aIsForm = a.metadata?.formType === 'form-47' || a.metadata?.formType === 'form-76' || 
+                    aTitle.includes('form 47') || aTitle.includes('form 76');
+    const bIsForm = b.metadata?.formType === 'form-47' || b.metadata?.formType === 'form-76' || 
+                    bTitle.includes('form 47') || bTitle.includes('form 76');
+    
+    // Check for financial documents
+    const aIsFinancial = aTitle.includes('.xlsx') || aTitle.includes('.xls') || aTitle.includes('.csv');
+    const bIsFinancial = bTitle.includes('.xlsx') || bTitle.includes('.xls') || bTitle.includes('.csv');
     
     if (aIsForm && !bIsForm) return -1;
     if (!aIsForm && bIsForm) return 1;
-    return 0;
+    if (aIsFinancial && !bIsFinancial) return -1;
+    if (!aIsFinancial && bIsFinancial) return 1;
+    
+    // Finally sort by title
+    return aTitle.localeCompare(bTitle);
   });
 
   return (
     <div>
-      {sortedDocuments.map(doc => {
-        const isForm = doc.metadata?.formType === 'form-47' || doc.metadata?.formType === 'form-76';
-        const clientName = doc.metadata?.client_name;
-        
-        return (
-          <div 
-            key={doc.id}
-            className="flex items-center py-1 px-2 hover:bg-accent/40 rounded-sm cursor-pointer"
-            onClick={() => onDocumentSelect(doc.id)}
-            onDoubleClick={() => onDocumentOpen(doc.id)}
-            draggable
-            onDragStart={() => handleDragStart(doc.id, 'document')}
-          >
-            {indentation}
-            <div className="w-6" /> {/* Align with folder icon */}
-            {getDocumentIcon(doc)}
-            <div className="flex flex-col">
-              <span className="text-sm truncate">{doc.title}</span>
-              {isForm && clientName && (
-                <span className="text-xs text-muted-foreground">Client: {clientName}</span>
-              )}
+      {sortedDocuments.length > 0 ? (
+        sortedDocuments.map(doc => {
+          const isForm = doc.metadata?.formType === 'form-47' || doc.metadata?.formType === 'form-76';
+          const clientName = doc.metadata?.clientName || doc.metadata?.client_name;
+          
+          return (
+            <div 
+              key={doc.id}
+              className="flex items-center py-1 px-2 hover:bg-accent/40 rounded-sm cursor-pointer"
+              onClick={() => onDocumentSelect(doc.id)}
+              onDoubleClick={() => onDocumentOpen(doc.id)}
+              draggable
+              onDragStart={() => handleDragStart(doc.id, 'document')}
+              role="button"
+              aria-label={`Document: ${doc.title}`}
+            >
+              {indentation}
+              <div className="w-6" /> {/* Align with folder icon */}
+              {getDocumentIcon(doc)}
+              <div className="flex flex-col">
+                <span className="text-sm truncate">{doc.title}</span>
+                {clientName && (
+                  <span className="text-xs text-muted-foreground">Client: {clientName}</span>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })
+      ) : (
+        <div className="pl-6 py-2 text-sm text-muted-foreground italic">
+          No documents in this folder
+        </div>
+      )}
     </div>
   );
 };

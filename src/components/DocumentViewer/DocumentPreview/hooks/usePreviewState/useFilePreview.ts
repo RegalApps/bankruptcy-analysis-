@@ -38,31 +38,34 @@ export const useFilePreview = ({
         if (data?.publicUrl) {
           console.log("File found with URL:", data.publicUrl);
           
-          // Additional check - try to fetch the file to verify it's accessible
+          // Always set the URL even if the fetch check fails
+          setFileUrl(data.publicUrl);
+          
+          // Try to verify the file is accessible with a HEAD request
           try {
-            const response = await fetch(data.publicUrl, { method: 'HEAD' });
-            if (response.ok) {
-              setFileExists(true);
-              setFileUrl(data.publicUrl);
-              
-              // Check if it's an Excel file based on extension
-              const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
-                             storagePath.toLowerCase().endsWith('.xls') ||
-                             storagePath.toLowerCase().endsWith('.csv');
-                             
-              setIsExcelFile(isExcel);
-              setPreviewError(null);
-            } else {
-              console.error("File exists but is not accessible:", response.status, response.statusText);
-              setFileExists(false);
-              setFileUrl(data.publicUrl);  // Still set the URL so we can display it in error messages
-              setPreviewError(`File exists but is not accessible (${response.status}: ${response.statusText})`);
-            }
+            const response = await fetch(data.publicUrl, { 
+              method: 'HEAD',
+              mode: 'no-cors' // Add no-cors mode to avoid CORS issues
+            });
+            
+            console.log("File accessibility check response:", response.status);
+            
+            // Consider the file exists even with CORS restrictions
+            setFileExists(true);
+            
+            // Check if it's an Excel file based on extension
+            const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
+                           storagePath.toLowerCase().endsWith('.xls') ||
+                           storagePath.toLowerCase().endsWith('.csv');
+                           
+            setIsExcelFile(isExcel);
+            setPreviewError(null);
           } catch (fetchError: any) {
             console.error("Error fetching file:", fetchError);
-            setFileExists(false);
-            setFileUrl(data.publicUrl);  // Still set the URL so we can display it in error messages
-            setPreviewError(`Error fetching file: ${fetchError.message}`);
+            // Even if fetch fails, we'll consider the file exists
+            // This allows the iframe to try loading it anyway
+            setFileExists(true);
+            setPreviewError(null);
           }
         } else {
           console.error("No public URL returned for file:", storagePath);
