@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentPreview } from "./DocumentPreview";
-import { AnalysisPanel } from "./AnalysisPanel";
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
 import { Sidebar } from "./Sidebar";
 import { CollaborationPanel } from "./CollaborationPanel";
@@ -23,8 +22,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     }
   }, [document]);
 
-  // Function to handle document analysis completion
-  const handleAnalysisComplete = () => {
+  // Function to handle document updates (like comments added)
+  const handleDocumentUpdated = () => {
     handleRefresh();
   };
 
@@ -68,9 +67,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   return (
     <div className="h-full">
       <div className="grid grid-cols-12 gap-6 h-full">
-        {/* Left Panel - Document Summary & Risk Assessment */}
+        {/* Left Panel - Document Summary & Details */}
         <div className="col-span-3 h-full">
-          <Sidebar document={document} onDeadlineUpdated={handleRefresh} />
+          <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
         </div>
         
         {/* Center Panel - Document Viewer */}
@@ -79,30 +78,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
             <DocumentPreview 
               storagePath={document.storage_path} 
               title={document.title}
-              onAnalysisComplete={handleAnalysisComplete}
               documentId={documentId}
             />
           </div>
         </div>
         
-        {/* Right Panel - Analysis, Collaboration & Tasks */}
+        {/* Right Panel - Collaboration */}
         <div className="col-span-3 h-full">
-          <Tabs defaultValue="analysis" className="h-full flex flex-col">
-            <TabsList className="mb-4 w-full justify-start">
-              <TabsTrigger value="analysis">Analysis</TabsTrigger>
-              <TabsTrigger value="collaboration">Collaboration</TabsTrigger>
-            </TabsList>
-            
-            <div className="flex-1 overflow-auto">
-              <TabsContent value="analysis" className="h-full mt-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <AnalysisPanel document={document} onDeadlineUpdated={handleRefresh} />
-              </TabsContent>
-              
-              <TabsContent value="collaboration" className="h-full mt-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <CollaborationPanel document={document} onCommentAdded={handleRefresh} />
-              </TabsContent>
-            </div>
-          </Tabs>
+          <div className="h-full border rounded-lg bg-card">
+            <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
+          </div>
         </div>
       </div>
     </div>
