@@ -1,9 +1,9 @@
 
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import { FolderRecommendationAlert } from "../FolderRecommendationAlert";
+import { ArrowRight, Check, X, FolderTree } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface FolderOperationsProps {
   showRecommendation: boolean;
@@ -16,7 +16,7 @@ interface FolderOperationsProps {
   onAcceptRecommendation: () => Promise<void>;
   onDismissRecommendation: () => void;
   onRefresh: () => void;
-  setExpandedFolders: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  setExpandedFolders: (setter: (prev: Record<string, boolean>) => Record<string, boolean>) => void;
 }
 
 export const FolderOperations = ({
@@ -27,54 +27,85 @@ export const FolderOperations = ({
   onRefresh,
   setExpandedFolders
 }: FolderOperationsProps) => {
-  
-  // Handle recommendation acceptance
-  const handleAcceptRecommendation = async () => {
+  // Handle moving a document to recommended folder
+  const handleMoveDocument = async () => {
     if (!recommendation) return;
     
     try {
-      // Update document with parent folder ID
-      await supabase
+      const { error } = await supabase
         .from('documents')
-        .update({ parent_folder_id: recommendation.suggestedFolderId })
+        .update({
+          parent_folder_id: recommendation.suggestedFolderId
+        })
         .eq('id', recommendation.documentId);
         
-      // Expand the folder
+      if (error) throw error;
+      
+      // Auto-expand the folder after moving the document
       setExpandedFolders(prev => ({
         ...prev,
         [recommendation.suggestedFolderId]: true
       }));
       
-      // Call parent handler to perform refresh and cleanup
-      await onAcceptRecommendation();
+      // Track the activity in audit_logs
+      await supabase
+        .from('audit_logs')
+        .insert({
+          document_id: recommendation.documentId,
+          action: 'document_moved',
+          metadata: {
+            destination_folder: recommendation.suggestedFolderId,
+            folder_path: recommendation.folderPath.join(' > '),
+            moved_by: 'AI Recommendation',
+            timestamp: new Date().toISOString()
+          }
+        });
+      
+      toast.success(`Document moved to ${recommendation.folderPath.join(' > ')}`);
+      onAcceptRecommendation();
+      onRefresh();
     } catch (error) {
-      console.error("Error accepting recommendation:", error);
+      console.error("Error moving document:", error);
+      toast.error("Failed to move document");
     }
   };
-
+  
+  if (!showRecommendation || !recommendation) {
+    return null;
+  }
+  
   return (
-    <>
-      {/* Recommendation Alert */}
-      {showRecommendation && recommendation && (
-        <FolderRecommendationAlert
-          documentTitle={recommendation.documentTitle}
-          folderPath={recommendation.folderPath}
-          onAccept={handleAcceptRecommendation}
-          onDismiss={onDismissRecommendation}
-        />
-      )}
-      
-      {/* Header with refresh button */}
-      <div className="flex justify-end mb-4">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onRefresh}
-          title="Refresh"
-        >
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-      </div>
-    </>
+    <Alert className="mb-4">
+      <FolderTree className="h-5 w-5" />
+      <AlertTitle>AI Folder Recommendation</AlertTitle>
+      <AlertDescription className="space-y-2">
+        <div className="text-sm">
+          <span className="font-medium">"{recommendation.documentTitle}"</span> should be placed in folder:
+          <div className="mt-1 font-medium text-primary">
+            {recommendation.folderPath.join(' > ')}
+          </div>
+        </div>
+        <div className="flex gap-2 mt-2">
+          <Button
+            variant="default"
+            size="sm"
+            className="gap-1"
+            onClick={handleMoveDocument}
+          >
+            <Check className="h-4 w-4" />
+            Accept
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1"
+            onClick={onDismissRecommendation}
+          >
+            <X className="h-4 w-4" />
+            Dismiss
+          </Button>
+        </div>
+      </AlertDescription>
+    </Alert>
   );
 };

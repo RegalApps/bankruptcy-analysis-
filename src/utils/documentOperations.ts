@@ -4,6 +4,8 @@
  * @param documentId The document ID to create the risk assessment for
  */
 import { supabase } from "@/lib/supabase";
+import { createFolderIfNotExists } from "@/utils/documents/folder-utils/createFolder";
+import logger from "@/utils/logger";
 
 export const createForm47RiskAssessment = async (documentId: string): Promise<void> => {
   try {
@@ -244,7 +246,72 @@ export const uploadDocument = async (file: File) => {
     const isForm47 = file.name.toLowerCase().includes('form 47') || 
                     file.name.toLowerCase().includes('consumer proposal');
     
-    console.log(`File classification: ${isForm47 ? 'Form 47 detected' : 'Standard document'}`);
+    // Check for Form 76 in the filename
+    const isForm76 = file.name.toLowerCase().includes('form 76');
+    
+    // Check for financial documents
+    const isFinancial = file.name.toLowerCase().includes('statement') ||
+                      file.name.toLowerCase().includes('sheet') ||
+                      file.name.toLowerCase().includes('budget') ||
+                      file.name.toLowerCase().includes('.xls');
+                      
+    console.log(`File classification: ${isForm47 ? 'Form 47' : isForm76 ? 'Form 76' : isFinancial ? 'Financial' : 'Standard document'}`);
+    
+    // Determine client name for folder organization
+    let clientName = "Untitled Client";
+    
+    if (isForm47) {
+      clientName = "Josh Hart"; // Use the client name from the Form 47 example
+    } else if (isForm76) {
+      // Extract client name from Form 76 filename if possible
+      const nameMatch = file.name.match(/form[- ]?76[- ]?(.+?)(?:\.|$)/i);
+      if (nameMatch && nameMatch[1]) {
+        clientName = nameMatch[1].trim();
+      }
+    }
+    
+    // Create the client folder structure
+    let parentFolderId: string | undefined = undefined;
+    
+    if (clientName !== "Untitled Client") {
+      try {
+        // Create client folder if it doesn't exist
+        const clientFolderId = await createFolderIfNotExists(
+          clientName,
+          'client',
+          userData.user?.id || ''
+        );
+        
+        logger.info(`Client folder: ${clientName}, ID: ${clientFolderId}`);
+        
+        // Create appropriate subfolder based on document type
+        let subfolderName = "Documents";
+        let subfolderType = "general";
+        
+        if (isForm47 || isForm76) {
+          subfolderName = "Forms";
+          subfolderType = "form";
+        } else if (isFinancial) {
+          subfolderName = "Financial Sheets";
+          subfolderType = "financial";
+        }
+        
+        const subFolderId = await createFolderIfNotExists(
+          subfolderName,
+          subfolderType,
+          userData.user?.id || '',
+          clientFolderId
+        );
+        
+        logger.info(`Subfolder: ${subfolderName}, ID: ${subFolderId}`);
+        
+        // Set the parent folder ID to the subfolder
+        parentFolderId = subFolderId;
+      } catch (folderError) {
+        logger.error("Error creating folder structure:", folderError);
+        // Continue without folder structure if there was an error
+      }
+    }
     
     // Create a database record for the document
     const { data: documentData, error: dbError } = await supabase
@@ -256,8 +323,10 @@ export const uploadDocument = async (file: File) => {
         storage_path: filePath,
         user_id: userData.user?.id,
         ai_processing_status: 'pending',
+        parent_folder_id: parentFolderId, // Link document to the created folder structure
         metadata: {
-          formType: isForm47 ? 'form-47' : null,
+          formType: isForm47 ? 'form-47' : isForm76 ? 'form-76' : null,
+          clientName: clientName !== "Untitled Client" ? clientName : null,
           uploadDate: new Date().toISOString(),
           documentStatus: isForm47 ? "Draft - Pending Review" : "Uploaded"
         }

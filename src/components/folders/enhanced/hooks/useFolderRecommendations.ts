@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Document } from "@/components/DocumentList/types";
 import { FolderStructure } from "@/types/folders";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface FolderRecommendation {
   documentId: string;
@@ -39,7 +40,7 @@ export const useFolderRecommendations = (
             .from('document_analysis')
             .select('content')
             .eq('document_id', uncategorizedDoc.id)
-            .single();
+            .maybeSingle();
             
           // Get client name from either document analysis or metadata
           let clientName = null;
@@ -53,12 +54,21 @@ export const useFolderRecommendations = (
             clientName = data.content.extracted_info.consumerDebtorName;
           }
           
-          // Check if document is Form 47
+          // Check document type
           const isForm47 = uncategorizedDoc.metadata?.formType === 'form-47' || 
                           uncategorizedDoc.title?.toLowerCase().includes('form 47') ||
                           uncategorizedDoc.title?.toLowerCase().includes('consumer proposal') ||
                           data?.content?.extracted_info?.formType === 'form-47';
                           
+          const isForm76 = uncategorizedDoc.metadata?.formType === 'form-76' || 
+                          uncategorizedDoc.title?.toLowerCase().includes('form 76') ||
+                          data?.content?.extracted_info?.formType === 'form-76';
+                          
+          const isFinancial = uncategorizedDoc.title?.toLowerCase().includes('statement') ||
+                            uncategorizedDoc.title?.toLowerCase().includes('sheet') ||
+                            uncategorizedDoc.title?.toLowerCase().includes('budget') ||
+                            uncategorizedDoc.title?.toLowerCase().includes('.xls');
+          
           if (clientName) {
             console.log("Found client name for folder recommendation:", clientName);
             
@@ -92,6 +102,22 @@ export const useFolderRecommendations = (
                   }
                 }
               });
+              
+              // Create toast notification
+              toast.info(
+                `New client detected: ${clientName}. Consider creating a folder.`,
+                {
+                  duration: 5000,
+                  action: {
+                    label: "Create Folder",
+                    onClick: () => {
+                      // This would be handled separately to create the folder
+                      toast.success(`Creating folder for ${clientName}...`);
+                    }
+                  }
+                }
+              );
+              
               return;
             }
             
@@ -99,29 +125,52 @@ export const useFolderRecommendations = (
               // Find appropriate subfolder based on document type
               let targetFolderId = clientFolder.id;
               let folderPath = [clientFolder.name];
+              let subfolderName = "";
               
               // Find or suggest appropriate subfolder 
               if (clientFolder.children) {
                 let targetSubfolder;
                 
-                if (isForm47) {
-                  // For Form 47, look for Forms folder
+                if (isForm47 || isForm76) {
+                  // For Form 47/76, look for Forms folder
+                  subfolderName = "Forms";
                   targetSubfolder = clientFolder.children.find(f => 
                     f.type === 'form' || f.name.toLowerCase().includes('form')
                   );
-                } else {
-                  const isFinancial = uncategorizedDoc.title.toLowerCase().includes('statement') || 
-                                     uncategorizedDoc.title.toLowerCase().includes('sheet') ||
-                                     uncategorizedDoc.title.toLowerCase().includes('.xls');
-                                     
+                } else if (isFinancial) {
+                  // For financial documents, look for Financial Sheets folder
+                  subfolderName = "Financial Sheets";
                   targetSubfolder = clientFolder.children.find(f => 
-                    isFinancial ? f.type === 'financial' : f.type === 'form'
+                    f.type === 'financial' || 
+                    f.name.toLowerCase().includes('financial') ||
+                    f.name.toLowerCase().includes('sheet')
+                  );
+                } else {
+                  // For other documents, use Documents folder
+                  subfolderName = "Documents";
+                  targetSubfolder = clientFolder.children.find(f => 
+                    f.type === 'general' || f.name.toLowerCase().includes('document')
                   );
                 }
                 
                 if (targetSubfolder) {
                   targetFolderId = targetSubfolder.id;
                   folderPath.push(targetSubfolder.name);
+                } else if (subfolderName) {
+                  // If appropriate subfolder not found, suggest creating one
+                  toast.info(
+                    `Consider creating a "${subfolderName}" folder under ${clientFolder.name}`,
+                    {
+                      duration: 5000,
+                      action: {
+                        label: "Create Folder",
+                        onClick: () => {
+                          // This would be handled separately
+                          toast.success(`Creating ${subfolderName} folder...`);
+                        }
+                      }
+                    }
+                  );
                 }
               }
               
@@ -148,7 +197,33 @@ export const useFolderRecommendations = (
                   }
                 }
               });
+              
+              // Show toast with recommendation
+              toast.info(
+                `AI suggests organizing "${uncategorizedDoc.title}" in folder: ${folderPath.join(' > ')}`,
+                {
+                  duration: 5000,
+                  action: {
+                    label: "Move File",
+                    onClick: () => {
+                      // This would need to be implemented
+                      moveDocumentToFolder(uncategorizedDoc.id, targetFolderId, folderPath.join(' > '));
+                    }
+                  }
+                }
+              );
             }
+          } else {
+            // If no client name found but document type is recognized
+            let folderType = isForm47 || isForm76 ? 'Forms' : 
+                             isFinancial ? 'Financial Documents' : 'General Documents';
+                             
+            toast.info(
+              `Document detected as "${folderType}" but no client associated`,
+              {
+                duration: 5000
+              }
+            );
           }
         }
       } catch (error) {
@@ -161,6 +236,25 @@ export const useFolderRecommendations = (
     }
   }, [documents, folders]);
 
+  // Helper function to move document to folder
+  const moveDocumentToFolder = async (documentId: string, folderId: string, folderPath: string) => {
+    try {
+      const { error } = await supabase
+        .from('documents')
+        .update({ parent_folder_id: folderId })
+        .eq('id', documentId);
+        
+      if (error) throw error;
+      
+      toast.success(`Document moved to ${folderPath}`);
+      setShowRecommendation(false);
+      setRecommendation(null);
+    } catch (error) {
+      console.error("Error moving document:", error);
+      toast.error("Failed to move document");
+    }
+  };
+
   // Helper function to reset recommendation
   const dismissRecommendation = () => {
     setShowRecommendation(false);
@@ -171,6 +265,7 @@ export const useFolderRecommendations = (
     showRecommendation,
     recommendation,
     setShowRecommendation,
-    dismissRecommendation
+    dismissRecommendation,
+    moveDocumentToFolder
   };
 };

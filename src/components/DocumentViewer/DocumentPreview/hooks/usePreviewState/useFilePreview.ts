@@ -22,6 +22,7 @@ export const useFilePreview = ({
     if (!storagePath) {
       setFileExists(false);
       setFileUrl(null);
+      setPreviewError("No storage path provided");
       return;
     }
 
@@ -30,22 +31,47 @@ export const useFilePreview = ({
         console.log("Checking file at path:", storagePath);
         
         // Get public URL for file
-        const { data } = await supabase.storage
+        const { data, error } = await supabase.storage
           .from('documents')
           .getPublicUrl(storagePath);
         
+        if (error) {
+          console.error("Error getting public URL:", error);
+          setFileExists(false);
+          setFileUrl(null);
+          setPreviewError(`Error getting public URL: ${error.message}`);
+          return;
+        }
+        
         if (data?.publicUrl) {
           console.log("File found with URL:", data.publicUrl);
-          setFileExists(true);
-          setFileUrl(data.publicUrl);
           
-          // Check if it's an Excel file based on extension
-          const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
-                         storagePath.toLowerCase().endsWith('.xls') ||
-                         storagePath.toLowerCase().endsWith('.csv');
-                         
-          setIsExcelFile(isExcel);
-          setPreviewError(null);
+          // Additional check - try to fetch the file to verify it's accessible
+          try {
+            const response = await fetch(data.publicUrl, { method: 'HEAD' });
+            if (response.ok) {
+              setFileExists(true);
+              setFileUrl(data.publicUrl);
+              
+              // Check if it's an Excel file based on extension
+              const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
+                             storagePath.toLowerCase().endsWith('.xls') ||
+                             storagePath.toLowerCase().endsWith('.csv');
+                             
+              setIsExcelFile(isExcel);
+              setPreviewError(null);
+            } else {
+              console.error("File exists but is not accessible:", response.status, response.statusText);
+              setFileExists(false);
+              setFileUrl(data.publicUrl);  // Still set the URL so we can display it in error messages
+              setPreviewError(`File exists but is not accessible (${response.status}: ${response.statusText})`);
+            }
+          } catch (fetchError: any) {
+            console.error("Error fetching file:", fetchError);
+            setFileExists(false);
+            setFileUrl(data.publicUrl);  // Still set the URL so we can display it in error messages
+            setPreviewError(`Error fetching file: ${fetchError.message}`);
+          }
         } else {
           console.error("No public URL returned for file:", storagePath);
           setFileExists(false);
