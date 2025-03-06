@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Lock, AlertTriangle } from 'lucide-react';
+import { Lock, AlertTriangle, Mail, Info } from 'lucide-react';
 import { SignUpFields } from './auth/SignUpFields';
 import { AuthFields } from './auth/AuthFields';
 import { validateAuthForm } from './auth/authValidation';
@@ -17,6 +17,7 @@ export const Auth = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmationSent, setConfirmationSent] = useState(false);
   const [lastAttemptTime, setLastAttemptTime] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const { toast } = useToast();
@@ -61,7 +62,7 @@ export const Auth = () => {
 
     try {
       if (isSignUp) {
-        await authService.signUp({
+        const { user } = await authService.signUp({
           email,
           password,
           fullName,
@@ -69,16 +70,31 @@ export const Auth = () => {
           avatarUrl
         });
 
-        toast({
-          title: "Success",
-          description: "Please check your email to confirm your account",
-        });
+        if (user?.identities?.length === 0) {
+          // User already exists but hasn't confirmed their email
+          setError("This email is already registered but not confirmed. Please check your email for the confirmation link.");
+        } else {
+          setConfirmationSent(true);
+          toast({
+            title: "Success",
+            description: "Please check your email to confirm your account",
+          });
+        }
       } else {
-        await authService.signIn(email, password);
-        toast({
-          title: "Success",
-          description: "Successfully signed in!",
-        });
+        try {
+          await authService.signIn(email, password);
+          toast({
+            title: "Success",
+            description: "Successfully signed in!",
+          });
+        } catch (signInError: any) {
+          if (signInError.message.includes('Email not confirmed')) {
+            // Handle the email confirmation error specifically
+            setError("Please check your email and confirm your account before signing in.");
+          } else {
+            throw signInError;
+          }
+        }
       }
 
       // Reset attempts on successful auth
@@ -91,7 +107,7 @@ export const Auth = () => {
       if (error.message.includes('Invalid login credentials')) {
         setError('Invalid email or password');
       } else if (error.message.includes('Email already registered')) {
-        setError('This email is already registered');
+        setError('This email is already registered. Try signing in instead.');
       } else if (error.message.includes('Password should be')) {
         setError('Password should be at least 6 characters long');
       } else {
@@ -101,6 +117,60 @@ export const Auth = () => {
       setLoading(false);
     }
   };
+
+  // If confirmation was sent, show a dedicated confirmation screen
+  if (confirmationSent) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20">
+        <div className="container max-w-[1200px] px-4">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2">
+              <img 
+                src="/lovable-uploads/01eb992b-a293-4ef9-a5ff-fa81da6a95ed.png" 
+                alt="SecureFiles AI" 
+                className="h-12"
+              />
+            </div>
+          </div>
+
+          <div className="w-full max-w-md mx-auto space-y-8 rounded-lg border bg-card p-8 shadow-lg">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <Mail className="h-12 w-12 text-primary" />
+              </div>
+              <h1 className="text-2xl font-bold text-primary">Check Your Email</h1>
+              <p className="text-muted-foreground">
+                We've sent a confirmation link to <strong>{email}</strong>
+              </p>
+              <p className="text-sm text-muted-foreground mt-4">
+                Please click the link in your email to confirm your account.
+                If you don't see the email, check your spam folder.
+              </p>
+            </div>
+
+            <Alert className="bg-muted">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                You won't be able to sign in until you confirm your email address.
+              </AlertDescription>
+            </Alert>
+
+            <div className="text-center mt-6">
+              <button
+                onClick={() => {
+                  setIsSignUp(false);
+                  setConfirmationSent(false);
+                }}
+                className="text-sm text-primary hover:underline"
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-secondary/20">

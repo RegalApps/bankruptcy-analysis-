@@ -20,7 +20,8 @@ export const authService = {
           full_name: fullName,
           user_id: userId,
           avatar_url: avatarUrl,
-        }
+        },
+        emailRedirectTo: window.location.origin,
       }
     });
     
@@ -28,15 +29,7 @@ export const authService = {
 
     // Only create profile if we have a user
     if (data?.user) {
-      // Sign in immediately after signup to ensure we have a valid session
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
-
-      // Now create the profile with the authenticated session
+      // Create profile for the user even though they haven't confirmed email yet
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -61,5 +54,10 @@ export const authService = {
     
     if (error) throw error;
     return data;
+  },
+
+  async signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   }
 };
