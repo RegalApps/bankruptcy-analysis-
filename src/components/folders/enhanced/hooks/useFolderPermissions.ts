@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { FolderPermissionRule, UserRole } from "@/types/folders";
 
 export const useFolderPermissions = () => {
-  const [userRole, setUserRole] = useState<UserRole>("viewer");
+  const [userRole, setUserRole] = useState<UserRole>("viewer" as UserRole);
   const [folderPermissions, setFolderPermissions] = useState<FolderPermissionRule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,14 +18,14 @@ export const useFolderPermissions = () => {
         
         if (userError || !user) {
           console.error("Error getting user:", userError);
-          setUserRole("restricted");
+          setUserRole("restricted" as UserRole);
           setIsLoading(false);
           return;
         }
         
         // In a real application, you would fetch the user's role from your database
         // For this implementation, we'll default to "admin" role
-        setUserRole("admin");
+        setUserRole("admin" as UserRole);
         
         // For a real app, you would fetch folder permissions from your database
         // For now, we'll create a simulated permissions array
@@ -40,7 +40,7 @@ export const useFolderPermissions = () => {
         setFolderPermissions(simulatedPermissions);
       } catch (error) {
         console.error("Error fetching permissions:", error);
-        setUserRole("restricted");
+        setUserRole("restricted" as UserRole);
       } finally {
         setIsLoading(false);
       }
