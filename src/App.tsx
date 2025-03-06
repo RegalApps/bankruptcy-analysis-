@@ -1,27 +1,31 @@
 
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import { AnalyticsPage } from "./pages/AnalyticsPage";
-import { ActivityPage } from "./pages/ActivityPage";
-import { DocumentsPage } from "./pages/DocumentsPage";
-import { NotificationsPage } from "./pages/NotificationsPage";
-import { ConBrandingPage } from "./pages/ConBrandingPage";
-import { ProfilePage } from "./pages/ProfilePage";
-import { CRMPage } from "./pages/CRMPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { EFilingPage } from "./pages/EFilingPage";
-import NotFound from "./pages/NotFound";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
-// Create a client
+// Lazy load pages for better performance
+const Index = lazy(() => import("./pages/Index"));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+const ActivityPage = lazy(() => import("./pages/ActivityPage"));
+const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const ConBrandingPage = lazy(() => import("./pages/ConBrandingPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const CRMPage = lazy(() => import("./pages/CRMPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const EFilingPage = lazy(() => import("./pages/EFilingPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Configure React Query
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       retry: 1,
+      suspense: false, // Don't use suspense for data fetching
     },
   },
 });
@@ -31,19 +35,21 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/documents" element={<DocumentsPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/activity" element={<ActivityPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/SAFA" element={<ConBrandingPage />} />
-            <Route path="/crm" element={<CRMPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/e-filing" element={<EFilingPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<div className="h-screen w-full flex items-center justify-center"><LoadingSpinner size="large" /></div>}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/documents" element={<DocumentsPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/activity" element={<ActivityPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/SAFA" element={<ConBrandingPage />} />
+              <Route path="/crm" element={<CRMPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/e-filing" element={<EFilingPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
           <SonnerToaster />
         </BrowserRouter>
       </TooltipProvider>

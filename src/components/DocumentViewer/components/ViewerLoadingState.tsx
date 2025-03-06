@@ -1,14 +1,17 @@
 
 import React from "react";
-import { LoadingState } from "../LoadingState";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export const ViewerLoadingState: React.FC = () => {
   return (
-    <div className="py-12 flex flex-col items-center justify-center gap-4">
-      <LoadingState size="large" message="Loading document details..." />
-      <p className="text-muted-foreground mt-2">
-        This may take a moment for large documents or during initial processing.
-      </p>
+    <div className="flex flex-col items-center justify-center h-full py-12 gap-6">
+      <LoadingSpinner size="large" />
+      <div className="text-center max-w-md">
+        <h3 className="text-lg font-medium mb-2">Loading Document</h3>
+        <p className="text-muted-foreground">
+          This may take a moment for large documents or during initial processing.
+        </p>
+      </div>
     </div>
   );
 };

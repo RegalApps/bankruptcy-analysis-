@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import usePreviewState from "./hooks/usePreviewState";
 import { useDocumentAnalysis } from "../hooks/useDocumentAnalysis";
 import { AnalysisProgress } from "./components/AnalysisProgress";
@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, RefreshCw, Search, ZoomIn, ZoomOut } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface DocumentPreviewProps {
   storagePath: string;
@@ -49,6 +50,9 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const [forceReload, setForceReload] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [useDirectLink, setUseDirectLink] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Effect to get document URL when component loads
   useEffect(() => {
@@ -56,10 +60,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       const fetchDocumentUrl = async () => {
         try {
           console.log("Fetching document URL for path:", storagePath);
-          checkFile();
+          await checkFile();
+          setIsLoading(false);
         } catch (error) {
           console.error("Error getting document URL:", error);
           setPreviewError("Failed to get document URL");
+          setIsLoading(false);
         }
       };
 
@@ -67,7 +73,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [storagePath, documentId, forceReload]);
 
-  // Check for Chrome/browser blocking errors and suggest direct link
+  // Check for Chrome/browser blocking errors and add backup viewers
   useEffect(() => {
     if (previewError && 
         (previewError.includes('blocked by Chrome') || 
@@ -77,8 +83,24 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [previewError]);
 
+  // Handle iframe load event
+  const handleIframeLoad = () => {
+    setIsLoading(false);
+  };
+
+  // Handle iframe error event
+  const handleIframeError = () => {
+    setIsLoading(false);
+    
+    // Only set useDirectLink if we haven't already tried to use Google Docs viewer
+    if (!useDirectLink) {
+      setUseDirectLink(true);
+    }
+  };
+
   const handleRefresh = async () => {
     setIsRetrying(true);
+    setIsLoading(true);
     toast.info("Refreshing document preview...");
     try {
       // Force a complete reload
@@ -135,6 +157,16 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   }
 
   const showStuckAnalysisAlert = isAnalysisStuck?.stuck;
+  const isPdfFile = storagePath.toLowerCase().endsWith('.pdf');
+  const isDocFile = storagePath.toLowerCase().endsWith('.doc') || storagePath.toLowerCase().endsWith('.docx');
+
+  // Create Google Docs Viewer URL for better document rendering
+  const getGoogleDocsViewerUrl = () => {
+    if (!fileUrl) return '';
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+  };
+
+  const googleDocsViewerUrl = getGoogleDocsViewerUrl();
 
   return (
     <div className="flex flex-col h-full">
@@ -147,35 +179,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           documentId={documentId}
           onRunDiagnostics={() => handleAnalysisRetry()}
         />
-      )}
-      
-      {/* Show direct link suggestion if browser blocking occurs */}
-      {useDirectLink && fileUrl && (
-        <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
-          <p className="text-sm text-yellow-800 mb-2">
-            Your browser may be blocking the embedded preview. You can:
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleOpenInNewTab}
-              className="h-8 bg-white"
-            >
-              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-              Open in New Tab
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleDownload}
-              className="h-8 bg-white"
-            >
-              <Download className="h-3.5 w-3.5 mr-1.5" />
-              Download
-            </Button>
-          </div>
-        </div>
       )}
       
       {/* Show analysis stuck alert if needed */}
@@ -252,12 +255,63 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 </Button>
               </div>
             </div>
-            <div className="flex-1 overflow-hidden">
-              {useDirectLink ? (
+            <div className="flex-1 overflow-hidden relative">
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+                  <div className="text-center">
+                    <LoadingSpinner size="large" className="mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading document preview...</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Use Google Docs Viewer for documents with issues */}
+              {useDirectLink && isPdfFile && (
+                <object
+                  data={fileUrl}
+                  type="application/pdf"
+                  className="w-full h-full"
+                  onLoad={() => setIsLoading(false)}
+                >
+                  <iframe 
+                    src={googleDocsViewerUrl}
+                    className="w-full h-full border-0"
+                    onLoad={handleIframeLoad}
+                    onError={handleIframeError}
+                  />
+                </object>
+              )}
+              
+              {/* Use Google Docs Viewer for DOC/DOCX files */}
+              {((useDirectLink && isDocFile) || isDocFile) && (
+                <iframe 
+                  src={googleDocsViewerUrl}
+                  className="w-full h-full border-0"
+                  onLoad={handleIframeLoad}
+                  onError={handleIframeError}
+                />
+              )}
+              
+              {/* Default viewer for PDFs and other files */}
+              {!useDirectLink && !isDocFile && (
+                <iframe 
+                  ref={iframeRef}
+                  src={`${fileUrl}?t=${forceReload}`}
+                  className="w-full h-full border-0"
+                  title={`Document Preview: ${title}`}
+                  sandbox="allow-same-origin allow-scripts allow-forms"
+                  style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
+                  onLoad={handleIframeLoad}
+                  onError={handleIframeError}
+                />
+              )}
+              
+              {/* Fallback for when all viewers fail */}
+              {useDirectLink && !isPdfFile && !isDocFile && (
                 <div className="w-full h-full flex items-center justify-center bg-muted/30">
                   <div className="text-center max-w-md p-6">
                     <p className="text-muted-foreground mb-4">
-                      Browser security settings are preventing the document from being displayed in this view.
+                      Browser security settings are preventing the document from being displayed inline.
                     </p>
                     <div className="flex flex-col gap-2">
                       <Button onClick={handleOpenInNewTab} className="w-full">
@@ -271,19 +325,9 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                     </div>
                   </div>
                 </div>
-              ) : (
-                <iframe 
-                  src={`${fileUrl}?t=${forceReload}`}
-                  className="w-full h-full border-0"
-                  title={`Document Preview: ${title}`}
-                  sandbox="allow-same-origin allow-scripts allow-forms"
-                  referrerPolicy="no-referrer"
-                  key={`iframe-${forceReload}`}
-                  style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
-                  onError={() => setUseDirectLink(true)}
-                />
               )}
             </div>
+            
             {/* Controls are added inline instead of using a separate component */}
             <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm p-2 rounded-md shadow-sm">
               <button

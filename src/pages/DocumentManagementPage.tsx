@@ -1,11 +1,13 @@
+
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { uploadDocument } from "@/utils/documentOperations";
 import { UploadArea } from "@/components/documents/UploadArea";
 import { DocumentList } from "@/components/documents/DocumentList";
 import logger from "@/utils/logger";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
@@ -14,6 +16,15 @@ export const DocumentManagementPage = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStep, setUploadStep] = useState("");
   const { toast } = useToast();
+
+  // Auto-refresh document list periodically
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      refetch();
+    }, 30000); // Refresh every 30 seconds
+    
+    return () => clearInterval(intervalId);
+  }, [refetch]);
 
   const handleDocumentDoubleClick = (documentId: string) => {
     navigate('/', { state: { selectedDocument: documentId } });
@@ -156,22 +167,28 @@ export const DocumentManagementPage = () => {
   };
 
   return (
-    <div className="flex-1 p-6 space-y-8">
-      <UploadArea 
-        onFileUpload={handleFileUpload}
-        isUploading={isUploading}
-        uploadProgress={uploadProgress}
-        uploadStep={uploadStep}
-      />
-
-      <section>
-        <h2 className="text-lg font-semibold mb-4">Recently Uploaded</h2>
-        <DocumentList 
-          documents={documents}
-          isLoading={isLoading}
-          onDocumentDoubleClick={handleDocumentDoubleClick}
+    <div className="h-full py-6">
+      <div className="container max-w-6xl mx-auto space-y-8">
+        <UploadArea 
+          onFileUpload={handleFileUpload}
+          isUploading={isUploading}
+          uploadProgress={uploadProgress}
+          uploadStep={uploadStep}
         />
-      </section>
+
+        <section>
+          <h2 className="text-lg font-semibold mb-4">Recently Uploaded</h2>
+          <ScrollArea className="h-[calc(100vh-24rem)] rounded-lg border">
+            <div className="p-4">
+              <DocumentList 
+                documents={documents}
+                isLoading={isLoading}
+                onDocumentDoubleClick={handleDocumentDoubleClick}
+              />
+            </div>
+          </ScrollArea>
+        </section>
+      </div>
     </div>
   );
 };
