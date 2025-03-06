@@ -66,7 +66,7 @@ const Index = () => {
     <MainLayout>
       {selectedDocument ? (
         <div className="h-full py-4">
-          <div className="mb-4">
+          <div className="mb-2">
             <Button
               variant="ghost"
               size="sm"
@@ -76,7 +76,7 @@ const Index = () => {
               <Home className="h-4 w-4 mr-1" /> Back to Documents
             </Button>
           </div>
-          <div className="h-[calc(100%-40px)]">
+          <div className="h-[calc(100%-36px)]">
             <DocumentViewer documentId={selectedDocument} />
           </div>
         </div>

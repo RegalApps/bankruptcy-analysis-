@@ -30,6 +30,17 @@ export interface Task {
   solution?: string;
 }
 
+export interface DocumentVersion {
+  id: string;
+  document_id: string;
+  version_number: number;
+  created_at: string;
+  created_by?: string;
+  storage_path: string;
+  is_current: boolean;
+  changes_description?: string;
+}
+
 export interface DocumentDetails {
   id: string;
   title: string;
@@ -37,6 +48,7 @@ export interface DocumentDetails {
   storage_path: string;
   deadlines?: Deadline[];
   tasks?: Task[];
+  versions?: DocumentVersion[];
   ai_processing_status?: 'pending' | 'complete' | 'failed';
   analysis?: {
     content: {

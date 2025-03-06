@@ -1,8 +1,8 @@
 
-import { MessageSquare, ClipboardList } from "lucide-react";
+import { useState } from "react";
+import { MessageSquare, ClipboardList, History } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 import { DocumentDetails } from "./types";
 import { Comment } from "./Comments/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -73,6 +73,10 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
             <ClipboardList className="h-4 w-4 mr-2" />
             Tasks
           </TabsTrigger>
+          <TabsTrigger value="versions" className="flex items-center">
+            <History className="h-4 w-4 mr-2" />
+            Versions
+          </TabsTrigger>
         </TabsList>
             
         <div className="flex-1 overflow-auto px-6 pb-6">
@@ -112,6 +116,33 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
               tasks={document.tasks || []}
               onTaskUpdate={onCommentAdded} // Using the same callback for task updates
             />
+          </TabsContent>
+
+          <TabsContent value="versions" className="h-full mt-0 data-[state=active]:flex data-[state=active]:flex-col">
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-4">
+                <h3 className="font-medium text-sm mb-2">Document Versions</h3>
+                {document.versions && document.versions.length > 0 ? (
+                  <ul className="space-y-2">
+                    {document.versions.map((version, index) => (
+                      <li key={version.id || index} className="flex items-center justify-between bg-card p-2 rounded-md">
+                        <div>
+                          <p className="text-sm font-medium">Version {index + 1}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(version.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <button className="text-xs text-primary hover:underline">
+                          View
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No version history available</p>
+                )}
+              </div>
+            </div>
           </TabsContent>
         </div>
       </Tabs>
