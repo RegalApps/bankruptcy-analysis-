@@ -12,6 +12,7 @@ export interface EditableField {
 export interface DocumentDetailsProps {
   clientName?: string;
   trusteeName?: string;
+  administratorName?: string;
   dateSigned?: string;
   formNumber?: string;
   estateNumber?: string;
@@ -26,4 +27,7 @@ export interface DocumentDetailsProps {
   summary?: string;
   documentId: string;
   formType?: string;
+  filingDate?: string;
+  submissionDeadline?: string;
+  documentStatus?: string;
 }

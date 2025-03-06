@@ -225,8 +225,10 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
         {isEditing ? (
           <EditableFields 
             fields={relevantFields} 
+            isEditing={isEditing}
             editedValues={editedValues} 
-            setEditedValues={setEditedValues} 
+            setEditedValues={setEditedValues}
+            isSaving={isSaving}
           />
         ) : (
           relevantFields.map(field => 
