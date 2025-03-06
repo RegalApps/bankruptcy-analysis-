@@ -214,3 +214,6 @@ export const DocumentsPage = () => {
     </div>
   );
 };
+
+// Add default export
+export default DocumentsPage;

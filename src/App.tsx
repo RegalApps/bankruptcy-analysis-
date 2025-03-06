@@ -13,7 +13,7 @@ const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
-const ConBrandingPage = lazy(() => import("./pages/SAFA/ConBrandingPage"));
+const ConBrandingPage = lazy(() => import("./pages/ConBrandingPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const CRMPage = lazy(() => import("./pages/CRMPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
