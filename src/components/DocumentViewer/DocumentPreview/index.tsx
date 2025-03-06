@@ -1,156 +1,138 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, AlertTriangle, FileSearch } from "lucide-react";
-import { ExcelPreview } from "../ExcelPreview";
+<lov-codelov-code>
+import React from "react";
+import { DocumentObject } from "./DocumentObject";
+import { PreviewControls } from "./PreviewControls";
+import { usePreviewState } from "./hooks/usePreviewState";
+import { useDocumentAnalysis } from "../hooks/useDocumentAnalysis";
 import { AnalysisProgress } from "./components/AnalysisProgress";
 import { ErrorDisplay } from "./components/ErrorDisplay";
-import { DocumentObject } from "./components/DocumentObject";
-import { PreviewControls } from "./components/PreviewControls";
 import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
-import { DocumentDiagnostics } from "./components/DocumentDiagnostics";
-import { usePreviewState } from "./hooks/usePreviewState";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { StuckAnalysisAlert } from "./components/StuckAnalysisAlert";
 
 interface DocumentPreviewProps {
   storagePath: string;
-  title?: string;
+  documentId: string;
+  title: string;
   onAnalysisComplete?: () => void;
-  documentId?: string;
 }
 
-export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ 
+export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   storagePath,
+  documentId,
   title,
-  onAnalysisComplete,
-  documentId 
+  onAnalysisComplete
 }) => {
   const {
-    previewError,
-    publicUrl,
-    isExcelFile,
     fileExists,
+    fileUrl,
+    isExcelFile,
+    previewError,
+    setPreviewError,
+    checkFile,
+    handleAnalysisRetry,
+    isAnalysisStuck
+  } = usePreviewState(storagePath, documentId, title, onAnalysisComplete);
+
+  const {
     analyzing,
     error,
     analysisStep,
     progress,
     processingStage,
-    loading,
-    handleRefreshPreview,
-    handleIframeError,
-    handleAnalyzeDocument,
-    diagnosticsMode,
-    toggleDiagnosticsMode
-  } = usePreviewState(storagePath, title, onAnalysisComplete);
+    setSession,
+    handleAnalyzeDocument
+  } = useDocumentAnalysis(storagePath, onAnalysisComplete);
+
+  const state = {
+    fileExists,
+    fileUrl,
+    isExcelFile,
+    previewError,
+    setPreviewError,
+  };
+
+  const analysis = {
+    analyzing,
+    error,
+    analysisStep,
+    progress,
+    processingStage,
+    setSession,
+    handleAnalyzeDocument
+  };
 
   if (!storagePath) {
+    return <ErrorDisplay message="No document selected" details="Please select a document to preview." />;
+  }
+
+  if (previewError) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Document Preview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>No document storage path provided.</AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col h-full">
+        <PreviewErrorAlert error={previewError} />
+      </div>
     );
   }
 
-  if (isExcelFile) {
-    return <ExcelPreview storagePath={storagePath} title={title} />;
-  }
-  
+  const showStuckAnalysisAlert = isAnalysisStuck.stuck;
+
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Document Preview
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {documentId && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleDiagnosticsMode}
-                className="gap-1"
-              >
-                <FileSearch className="h-4 w-4" />
-                {diagnosticsMode ? "Hide Diagnostics" : "Diagnostics"}
-              </Button>
-            )}
-            <PreviewControls 
-              publicUrl={publicUrl} 
-              onRefresh={handleRefreshPreview} 
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {diagnosticsMode && documentId && (
-            <div className="mb-6 p-4 border rounded-lg bg-muted/20">
-              <h3 className="text-sm font-medium mb-3">Document Diagnostics</h3>
-              <DocumentDiagnostics 
+    <div className="flex flex-col h-full">
+      {/* Show error message if something went wrong */}
+      {state.previewError && (
+        <PreviewErrorAlert error={state.previewError} />
+      )}
+      
+      {/* Show analysis stuck alert if needed */}
+      {showStuckAnalysisAlert && (
+        <StuckAnalysisAlert 
+          documentId={documentId} 
+          minutesStuck={isAnalysisStuck.minutesStuck}
+          onRetryComplete={handleAnalysisRetry}
+        />
+      )}
+      
+      {/* Show analysis progress if document is being analyzed */}
+      {analysis.analyzing && (
+        <AnalysisProgress
+          progress={analysis.progress}
+          step={analysis.analysisStep}
+          processingStage={analysis.processingStage}
+        />
+      )}
+      
+      {/* PDF Viewer for the document */}
+      <div className="flex-grow relative">
+        {state.fileExists ? (
+          <>
+            <div className="absolute inset-0">
+              <DocumentObject
+                url={state.fileUrl}
+                isExcelFile={state.isExcelFile}
+                storagePath={storagePath}
                 documentId={documentId}
-                onDiagnosticsComplete={handleRefreshPreview}
               />
             </div>
-          )}
-          
-          {!fileExists ? (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                The document file could not be found in storage. It may have been deleted or moved.
-              </AlertDescription>
-              {documentId && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleDiagnosticsMode}
-                  className="mt-3 gap-2"
-                >
-                  <FileSearch className="h-4 w-4" />
-                  Run Diagnostics
-                </Button>
-              )}
-            </Alert>
-          ) : previewError ? (
-            <PreviewErrorAlert 
-              error={previewError}
-              onRefresh={handleRefreshPreview}
-              publicUrl={publicUrl}
+            <div className="absolute bottom-4 right-4">
+              <PreviewControls
+                url={state.fileUrl}
+                title={title}
+                isAnalyzing={analysis.analyzing}
+                onAnalyzeClick={() => analysis.handleAnalyzeDocument()}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="h-full flex items-center justify-center p-8 bg-muted rounded-md">
+            <ErrorDisplay 
+              message="Document file not found" 
+              details="The file may have been moved or deleted"
+              showDiagnostics={true}
               documentId={documentId}
-              onRunDiagnostics={toggleDiagnosticsMode}
             />
-          ) : null}
-          
-          {(fileExists && publicUrl) && (
-            <DocumentObject 
-              publicUrl={publicUrl} 
-              onError={handleIframeError} 
-            />
-          )}
-          
-          {analyzing && (
-            <AnalysisProgress
-              analysisStep={analysisStep}
-              progress={progress}
-              processingStage={processingStage}
-            />
-          )}
-          
-          {error && (
-            <ErrorDisplay
-              error={error}
-              onRetry={() => handleAnalyzeDocument()}
-            />
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+</lov-code>

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import logger from "@/utils/logger";
@@ -166,7 +165,7 @@ export const repairDocumentIssues = async (documentId: string): Promise<{
         const minutesSinceUpdate = Math.floor((Date.now() - lastUpdateDate.getTime()) / (1000 * 60));
         
         // If analysis has been stuck for more than 5 minutes, reset it
-        if (minutesSinceUpdate > 5 && processingSteps.length < 5) {
+        if (minutesSinceUpdate > 5) {
           await supabase
             .from('documents')
             .update({
@@ -181,6 +180,25 @@ export const repairDocumentIssues = async (documentId: string): Promise<{
             .eq('id', documentId);
             
           actions.push(`Reset stuck analysis process (status: processing → failed)`);
+          
+          // Attempt to re-trigger analysis
+          try {
+            const { error: analysisError } = await supabase.functions.invoke('analyze-document', {
+              body: { 
+                documentId: document.id,
+                title: document.title,
+                formType: document.metadata?.formType || null
+              }
+            });
+            
+            if (analysisError) {
+              errors.push(`Failed to restart analysis: ${analysisError.message}`);
+            } else {
+              actions.push(`Analysis process restarted automatically`);
+            }
+          } catch (e) {
+            errors.push(`Error restarting analysis: ${e.message}`);
+          }
         }
       }
       
@@ -225,5 +243,62 @@ export const repairDocumentIssues = async (documentId: string): Promise<{
   } catch (e: any) {
     errors.push(`Repair error: ${e.message}`);
     return { success: false, actions, errors };
+  }
+};
+
+/**
+ * Manually retry document analysis
+ */
+export const retryDocumentAnalysis = async (documentId: string): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  try {
+    // Get the document details
+    const { data: document, error: docError } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('id', documentId)
+      .single();
+      
+    if (docError) {
+      logger.error(`Error fetching document for retry: ${docError.message}`);
+      return { success: false, message: `Could not find document: ${docError.message}` };
+    }
+    
+    // Update document status to pending to restart analysis
+    await supabase
+      .from('documents')
+      .update({
+        ai_processing_status: 'pending',
+        metadata: {
+          ...document.metadata,
+          manual_retry: true,
+          retry_timestamp: new Date().toISOString()
+        }
+      })
+      .eq('id', documentId);
+      
+    // Trigger analysis function
+    const { error: analysisError } = await supabase.functions.invoke('analyze-document', {
+      body: { 
+        documentId,
+        title: document.title,
+        formType: document.metadata?.formType || null
+      }
+    });
+    
+    if (analysisError) {
+      logger.error(`Error triggering analysis: ${analysisError.message}`);
+      return { success: false, message: `Analysis trigger failed: ${analysisError.message}` };
+    }
+    
+    return { 
+      success: true, 
+      message: `Document analysis restarted successfully` 
+    };
+  } catch (e: any) {
+    logger.error(`Unexpected error in retryDocumentAnalysis: ${e.message}`);
+    return { success: false, message: `Unexpected error: ${e.message}` };
   }
 };

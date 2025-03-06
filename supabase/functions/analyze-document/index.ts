@@ -20,11 +20,19 @@ interface AnalysisRequest {
   formType?: string;
 }
 
+// Add timeout to prevent function from running indefinitely
+const FUNCTION_TIMEOUT = 25000; // 25 seconds - edge functions have a 30s limit
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Use a timer to enforce function timeout
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Function timed out after 25 seconds')), FUNCTION_TIMEOUT);
+  });
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -91,48 +99,83 @@ serve(async (req) => {
     }
 
     // If we have a documentId, save the analysis to the database
+    // Race this against the timeout
     if (documentId) {
-      // Get the user ID who owns the document
-      const { data: documentOwner, error: ownerError } = await supabase
-        .from('documents')
-        .select('user_id')
-        .eq('id', documentId)
-        .single();
+      await Promise.race([
+        (async () => {
+          try {
+            // Get the user ID who owns the document
+            const { data: documentOwner, error: ownerError } = await supabase
+              .from('documents')
+              .select('user_id')
+              .eq('id', documentId)
+              .single();
 
-      if (ownerError) {
-        console.error('Error fetching document owner:', ownerError);
-      } else if (documentOwner) {
-        // Save analysis results
-        const { error: analysisError } = await supabase
-          .from('document_analysis')
-          .upsert({
-            document_id: documentId,
-            user_id: documentOwner.user_id,
-            content: result
-          });
+            if (ownerError) {
+              console.error('Error fetching document owner:', ownerError);
+              // Continue with default processing even if owner lookup fails
+            } 
+            
+            if (documentOwner) {
+              // Save analysis results
+              const { error: analysisError } = await supabase
+                .from('document_analysis')
+                .upsert({
+                  document_id: documentId,
+                  user_id: documentOwner.user_id,
+                  content: result,
+                  created_at: new Date().toISOString()
+                });
 
-        if (analysisError) {
-          console.error('Error saving analysis:', analysisError);
-        }
+              if (analysisError) {
+                console.error('Error saving analysis:', analysisError);
+              }
 
-        // Update document status
-        const { error: updateError } = await supabase
-          .from('documents')
-          .update({ 
-            ai_processing_status: 'complete',
-            metadata: {
-              formType: result.extracted_info.formType,
-              formNumber: result.extracted_info.formNumber,
-              processing_complete: true,
-              last_analyzed: new Date().toISOString()
+              // Update document status
+              const { error: updateError } = await supabase
+                .from('documents')
+                .update({ 
+                  ai_processing_status: 'complete',
+                  metadata: {
+                    formType: result.extracted_info.formType,
+                    formNumber: result.extracted_info.formNumber,
+                    processing_complete: true,
+                    last_analyzed: new Date().toISOString(),
+                    processing_steps_completed: ["analysis_complete"],
+                    processing_time_ms: Date.now() - new Date().getTime()
+                  }
+                })
+                .eq('id', documentId);
+
+              if (updateError) {
+                console.error('Error updating document status:', updateError);
+              }
+            } else {
+              // If we can't find the owner, still update the document status
+              const { error: updateError } = await supabase
+                .from('documents')
+                .update({ 
+                  ai_processing_status: 'complete',
+                  metadata: {
+                    formType: result.extracted_info.formType,
+                    formNumber: result.extracted_info.formNumber,
+                    processing_complete: true,
+                    last_analyzed: new Date().toISOString()
+                  }
+                })
+                .eq('id', documentId);
+
+              if (updateError) {
+                console.error('Error updating document status:', updateError);
+              }
             }
-          })
-          .eq('id', documentId);
-
-        if (updateError) {
-          console.error('Error updating document status:', updateError);
-        }
-      }
+          } catch (dbError) {
+            console.error('Database operation error:', dbError);
+            // Even if DB operations fail, we'll still return results to client
+          }
+        })(),
+        timeoutPromise
+      ]);
     }
 
     console.log('Analysis completed successfully');
@@ -142,6 +185,27 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in analyze-document function:', error);
+    
+    // If we have a document ID, update its status to failed
+    try {
+      const requestData = await req.json() as AnalysisRequest;
+      if (requestData.documentId) {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        await supabase
+          .from('documents')
+          .update({ 
+            ai_processing_status: 'failed',
+            metadata: {
+              processing_error: error.message,
+              error_timestamp: new Date().toISOString()
+            }
+          })
+          .eq('id', requestData.documentId);
+      }
+    } catch (updateError) {
+      console.error('Error updating document status after failure:', updateError);
+    }
+    
     return new Response(JSON.stringify({ 
       error: error.message,
       structureValid: false,
