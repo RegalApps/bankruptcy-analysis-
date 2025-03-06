@@ -37,6 +37,7 @@ export interface DocumentDetails {
   storage_path: string;
   deadlines?: Deadline[];
   tasks?: Task[];
+  ai_processing_status?: 'pending' | 'complete' | 'failed';
   analysis?: {
     content: {
       extracted_info: {
