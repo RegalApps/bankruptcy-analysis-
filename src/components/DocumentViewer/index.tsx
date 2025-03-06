@@ -1,13 +1,12 @@
 
 import { useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentPreview } from "./DocumentPreview";
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
 import { Sidebar } from "./Sidebar";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { LoadingState } from "./LoadingState";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Home } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -85,9 +84,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         
         {/* Right Panel - Collaboration */}
         <div className="col-span-3 h-full">
-          <div className="h-full border rounded-lg bg-card">
-            <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
-          </div>
+          <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
         </div>
       </div>
     </div>
