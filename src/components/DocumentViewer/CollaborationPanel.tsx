@@ -107,7 +107,11 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
           </TabsContent>
               
           <TabsContent value="tasks" className="h-full mt-0 data-[state=active]:flex data-[state=active]:flex-col">
-            <TaskManager documentId={document.id} tasks={document.tasks || []} />
+            <TaskManager 
+              documentId={document.id} 
+              tasks={document.tasks || []}
+              onTaskUpdate={onCommentAdded} // Using the same callback for task updates
+            />
           </TabsContent>
         </div>
       </Tabs>
