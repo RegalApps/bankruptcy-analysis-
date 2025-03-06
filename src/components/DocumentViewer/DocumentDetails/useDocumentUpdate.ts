@@ -1,68 +1,51 @@
 
 import { useState } from 'react';
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { documentService } from "./services/documentService";
+import logger from "@/utils/logger";
 
+/**
+ * Hook for updating document details with proper error handling and separation of concerns
+ */
 export const useDocumentUpdate = (documentId: string, formType: string) => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const saveDocumentDetails = async (editedValues: Record<string, string>) => {
-    if (isSaving) return;
+    if (isSaving || !documentId) {
+      return false;
+    }
     
     try {
       setIsSaving(true);
+      logger.info("Starting document update process", { documentId, formType });
 
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get authenticated user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      if (!user) {
-        throw new Error('No authenticated user found');
-      }
-
-      const { data: existingAnalysis, error: fetchError } = await supabase
-        .from('document_analysis')
-        .select('*')
-        .eq('document_id', documentId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      const updatedContent = {
-        ...(existingAnalysis?.content || {}),
-        extracted_info: {
-          ...(existingAnalysis?.content?.extracted_info || {}),
-          ...editedValues,
-          type: formType
-        }
-      };
-
-      console.log('Saving updated content:', updatedContent);
-
+      if (authError) throw new Error(`Authentication error: ${authError.message}`);
+      if (!user) throw new Error('No authenticated user found');
+      
+      // Fetch existing analysis
+      const existingAnalysis = await documentService.getDocumentAnalysis(documentId, user.id);
+      
+      // Create or update the document analysis
       if (!existingAnalysis) {
-        const { error: insertError } = await supabase
-          .from('document_analysis')
-          .insert([{ 
-            document_id: documentId,
-            user_id: user.id,
-            content: updatedContent 
-          }]);
-
-        if (insertError) {
-          console.error('Insert error:', insertError);
-          throw insertError;
-        }
+        await documentService.createDocumentAnalysis({
+          documentId,
+          userId: user.id,
+          formType,
+          editedValues
+        });
       } else {
-        const { error: updateError } = await supabase
-          .from('document_analysis')
-          .update({ content: updatedContent })
-          .eq('document_id', documentId)
-          .eq('user_id', user.id);
-
-        if (updateError) {
-          console.error('Update error:', updateError);
-          throw updateError;
-        }
+        await documentService.updateDocumentAnalysis({
+          documentId,
+          userId: user.id,
+          formType,
+          editedValues,
+          existingContent: existingAnalysis.content
+        });
       }
 
       toast({
@@ -72,15 +55,29 @@ export const useDocumentUpdate = (documentId: string, formType: string) => {
 
       return true;
     } catch (error: any) {
-      console.error('Error updating document details:', error);
+      logger.error('Error updating document details:', error);
+      
+      // More specific error messages based on error type
+      let errorMessage = "Failed to update document details. Please try again.";
+      
+      if (error.message.includes('Authentication error')) {
+        errorMessage = "You must be logged in to update documents.";
+      } else if (error.code === '23505') {
+        errorMessage = "A conflicting record already exists.";
+      } else if (error.code === 'PGRST301') {
+        errorMessage = "Database connection error. Please try again later.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to update document details. Please try again."
+        description: errorMessage
       });
+      
       return false;
     } finally {
       setIsSaving(false);
+      logger.info("Document update process completed");
     }
   };
 
