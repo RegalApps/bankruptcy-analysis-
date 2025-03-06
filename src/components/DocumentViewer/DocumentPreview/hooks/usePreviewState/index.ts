@@ -12,6 +12,7 @@ export const usePreviewState = (
   onAnalysisComplete?: () => void
 ): PreviewState => {
   const [diagnosticsMode, setDiagnosticsMode] = useState(false);
+  const [bypassAnalysis, setBypassAnalysis] = useState(false);
   
   const {
     publicUrl,
@@ -46,7 +47,7 @@ export const usePreviewState = (
     handleAnalyzeDocument,
     setPreviewError,
     onAnalysisComplete,
-    bypassAnalysis: false
+    bypassAnalysis
   });
 
   // Set up real-time subscriptions
@@ -72,6 +73,8 @@ export const usePreviewState = (
     progress,
     processingStage,
     loading,
+    bypassAnalysis,
+    setBypassAnalysis,
     handleRefreshPreview,
     handleIframeError,
     handleAnalyzeDocument,
