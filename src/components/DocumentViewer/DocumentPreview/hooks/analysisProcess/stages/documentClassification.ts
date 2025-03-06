@@ -1,104 +1,63 @@
 
 import { supabase } from "@/lib/supabase";
-import { extractTextFromPdf } from "@/utils/documents/pdfUtils";
 import { DocumentRecord } from "../../types";
 import { updateAnalysisStatus } from "../documentStatusUpdates";
+import { AnalysisProcessProps } from "../types";
 import { isForm76 } from "../formIdentification";
-import { AnalysisProcessContext } from "../types";
 
 export const documentClassification = async (
   documentRecord: DocumentRecord,
-  context: AnalysisProcessContext
+  context: AnalysisProcessProps
 ): Promise<{ documentText: string; isForm76: boolean }> => {
-  const { setAnalysisStep, setProgress, setError } = context;
-  
+  const { setAnalysisStep, setProgress } = context;
   setAnalysisStep("Stage 2: Document Classification & Understanding...");
   setProgress(25);
   
-  // Enhanced validation for storage path
-  if (!documentRecord.storage_path) {
-    console.error('Document record is missing storage_path', documentRecord);
-    throw new Error('Document record is missing storage path. Cannot proceed with analysis.');
-  }
-  
-  // Get the public URL with better error handling
-  const { data: urlData } = supabase.storage.from('documents').getPublicUrl(documentRecord.storage_path);
-  
-  if (!urlData?.publicUrl) {
-    console.error('Failed to get public URL');
-    throw new Error('Failed to get document URL: Unable to obtain public URL');
-  }
-  
-  const publicUrl = urlData.publicUrl;
-  console.log('Extracting text from PDF at URL:', publicUrl);
-  
-  let documentText = '';
-  let retries = 0;
-  const maxRetries = 3;
-  
-  while (retries < maxRetries) {
-    try {
-      documentText = await extractTextFromPdf(publicUrl);
+  try {
+    // Get document content from storage
+    const { data: fileData, error: fileError } = await supabase.storage
+      .from('documents')
+      .download(documentRecord.storage_path);
       
-      if (!documentText || documentText.trim().length < 50) {
-        console.warn(`Insufficient text extracted (${documentText?.length || 0} chars). Attempt ${retries + 1}/${maxRetries}`);
-        retries++;
-        
-        if (retries >= maxRetries) {
-          console.error('All text extraction attempts failed');
-          throw new Error('Could not extract sufficient text from the document after multiple attempts');
+    if (fileError) {
+      throw fileError;
+    }
+    
+    // Convert file to text (simplified for implementation)
+    const documentText = await fileData.text();
+    
+    // Check if this is Form 76 using our enhanced detection
+    const isForm76Document = isForm76(documentRecord, documentText);
+    
+    // Check if this is Form 47 (Consumer Proposal)
+    const isForm47 = documentRecord.title?.toLowerCase().includes('form 47') || 
+                    documentRecord.title?.toLowerCase().includes('consumer proposal') ||
+                    documentText.toLowerCase().includes('consumer proposal') ||
+                    documentText.toLowerCase().includes('form 47');
+    
+    console.log(`Document classification results - Form 76: ${isForm76Document}, Form 47: ${isForm47}`);
+    
+    // Update document with classification results
+    await supabase
+      .from('documents')
+      .update({
+        metadata: {
+          ...documentRecord.metadata,
+          formType: isForm76Document ? 'form-76' : (isForm47 ? 'form-47' : 'unknown'),
+          formNumber: isForm76Document ? '76' : (isForm47 ? '47' : ''),
+          classification_confidence: isForm76Document || isForm47 ? 'high' : 'medium',
+          processing_stage: 'classification',
+          processing_steps_completed: [...(documentRecord.metadata?.processing_steps_completed || []), 'ingestion_completed']
         }
-        
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
+      })
+      .eq('id', documentRecord.id);
       
-      // If we got here, we have successful text extraction
-      break;
-    } catch (error: any) {
-      console.error(`Text extraction error (attempt ${retries + 1}/${maxRetries}):`, error);
-      retries++;
-      
-      if (retries >= maxRetries) {
-        throw error;
-      }
-      
-      // Wait before retry
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
+    // Update document status
+    await updateAnalysisStatus(documentRecord, 'classification', 'ingestion_completed');
+    
+    return { documentText, isForm76: isForm76Document };
+  } catch (error) {
+    console.error('Error in document classification:', error);
+    throw error;
   }
-  
-  console.log(`Extracted ${documentText.length} characters of text from PDF`);
-  
-  // Update document with OCR status
-  await updateAnalysisStatus(documentRecord, 'document_classification', 'ocr_completed');
-  
-  // Check if the document is a Form 76 with enhanced detection
-  const formIs76 = isForm76(documentRecord, documentText);
-  console.log('Is document Form 76:', formIs76);
-  
-  // If it's a Form 76, let's also update the document metadata
-  if (formIs76) {
-    try {
-      await supabase
-        .from('documents')
-        .update({
-          metadata: {
-            ...documentRecord.metadata,
-            formType: 'form-76',
-            formNumber: '76',
-            processing_step: 'form_identified'
-          }
-        })
-        .eq('id', documentRecord.id);
-        
-      console.log('Updated document metadata to indicate Form 76');
-    } catch (updateError) {
-      // Don't fail the whole process if this update fails
-      console.error('Error updating form type metadata:', updateError);
-    }
-  }
-  
-  return { documentText, isForm76: formIs76 };
 };

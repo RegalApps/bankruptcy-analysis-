@@ -41,28 +41,83 @@ export const useFolderRecommendations = (
             .eq('document_id', uncategorizedDoc.id)
             .single();
             
+          // Get client name from either document analysis or metadata
+          let clientName = null;
+          
           if (data?.content?.extracted_info?.clientName) {
+            clientName = data.content.extracted_info.clientName;
+          } else if (uncategorizedDoc.metadata?.clientName) {
+            clientName = uncategorizedDoc.metadata.clientName;
+          } else if (data?.content?.extracted_info?.consumerDebtorName) {
+            // Special case for Form 47
+            clientName = data.content.extracted_info.consumerDebtorName;
+          }
+          
+          // Check if document is Form 47
+          const isForm47 = uncategorizedDoc.metadata?.formType === 'form-47' || 
+                          uncategorizedDoc.title?.toLowerCase().includes('form 47') ||
+                          uncategorizedDoc.title?.toLowerCase().includes('consumer proposal') ||
+                          data?.content?.extracted_info?.formType === 'form-47';
+                          
+          if (clientName) {
+            console.log("Found client name for folder recommendation:", clientName);
+            
             // Find matching client folder
-            const clientName = data.content.extracted_info.clientName;
             const clientFolder = folders.find(f => 
               f.type === 'client' && 
               f.name.toLowerCase() === clientName.toLowerCase()
             );
+            
+            // If client folder not found, suggest creating one
+            if (!clientFolder && clientName) {
+              console.log("Client folder not found, suggesting creation");
+              
+              // Create notification suggesting new client folder
+              await supabase.functions.invoke('handle-notifications', {
+                body: {
+                  action: 'create',
+                  userId: user.id,
+                  notification: {
+                    title: 'New Client Detected',
+                    message: `Consider creating a folder for client: ${clientName}`,
+                    type: 'suggestion',
+                    category: 'organization',
+                    priority: 'normal',
+                    action_url: `/documents`,
+                    metadata: {
+                      documentId: uncategorizedDoc.id,
+                      clientName: clientName,
+                      suggestedAction: 'create_client_folder'
+                    }
+                  }
+                }
+              });
+              return;
+            }
             
             if (clientFolder) {
               // Find appropriate subfolder based on document type
               let targetFolderId = clientFolder.id;
               let folderPath = [clientFolder.name];
               
-              // Find appropriate subfolder (Forms or Financial Sheets)
+              // Find or suggest appropriate subfolder 
               if (clientFolder.children) {
-                const isFinancial = uncategorizedDoc.title.toLowerCase().includes('statement') || 
-                                   uncategorizedDoc.title.toLowerCase().includes('sheet') ||
-                                   uncategorizedDoc.title.toLowerCase().includes('.xls');
-                                   
-                const targetSubfolder = clientFolder.children.find(f => 
-                  isFinancial ? f.type === 'financial' : f.type === 'form'
-                );
+                let targetSubfolder;
+                
+                if (isForm47) {
+                  // For Form 47, look for Forms folder
+                  targetSubfolder = clientFolder.children.find(f => 
+                    f.type === 'form' || f.name.toLowerCase().includes('form')
+                  );
+                } else {
+                  const isFinancial = uncategorizedDoc.title.toLowerCase().includes('statement') || 
+                                     uncategorizedDoc.title.toLowerCase().includes('sheet') ||
+                                     uncategorizedDoc.title.toLowerCase().includes('.xls');
+                                     
+                  targetSubfolder = clientFolder.children.find(f => 
+                    isFinancial ? f.type === 'financial' : f.type === 'form'
+                  );
+                }
                 
                 if (targetSubfolder) {
                   targetFolderId = targetSubfolder.id;

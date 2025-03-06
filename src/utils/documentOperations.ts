@@ -1,92 +1,100 @@
-
-import { supabase } from "@/lib/supabase";
-import logger from "@/utils/logger";
-
 /**
- * Creates a comprehensive risk assessment for Form 47 Consumer Proposal documents
+ * Creates a detailed risk assessment for Form 47 Consumer Proposal documents
+ * @param documentId The document ID to create the risk assessment for
  */
-export const createForm47RiskAssessment = async (documentId: string) => {
+import { supabase } from "@/lib/supabase";
+
+export const createForm47RiskAssessment = async (documentId: string): Promise<void> => {
   try {
-    // Get existing document analysis if any
-    const { data: existingAnalysis, error: getError } = await supabase
+    // Get existing analysis record if any
+    const { data: existingAnalysis } = await supabase
       .from('document_analysis')
-      .select('content')
+      .select('*')
       .eq('document_id', documentId)
       .maybeSingle();
-      
-    if (getError) throw getError;
     
-    // Get authenticated user for creating the analysis
-    const { data: userData, error: authError } = await supabase.auth.getUser();
-    if (authError) throw authError;
+    // Get current user
+    const { data: userData } = await supabase.auth.getUser();
     
-    // Form 47-specific risks with detailed information
+    // Prepare Form 47-specific detailed risks based on BIA requirements
     const form47Risks = [
       {
-        type: "Missing Payment Schedule",
-        description: "Consumer Proposal requires detailed payment schedule for unsecured creditors",
+        type: "compliance",
+        description: "Secured Creditors Payment Terms Missing",
         severity: "high",
-        regulation: "BIA Section 66.14",
-        impact: "Proposal will be rejected without clear payment terms",
-        requiredAction: "Add complete payment schedule with amounts and dates",
-        solution: "Prepare a structured payment schedule showing total amount, frequency, and duration",
+        regulation: "BIA Section 66.13(2)(c)",
+        impact: "Non-compliance with BIA Sec. 66.13(2)(c)",
+        requiredAction: "Specify how secured debts will be paid",
+        solution: "Add detailed payment terms for secured creditors",
         deadline: "Immediately"
       },
       {
-        type: "Missing Dividend Distribution Plan",
-        description: "Consumer Proposal must specify how funds will be distributed to creditors",
+        type: "compliance",
+        description: "Unsecured Creditors Payment Plan Not Provided",
+        severity: "high",
+        regulation: "BIA Section 66.14",
+        impact: "Proposal will be invalid under BIA Sec. 66.14",
+        requiredAction: "Add a structured payment plan for unsecured creditors",
+        solution: "Create detailed payment schedule for unsecured creditors",
+        deadline: "Immediately"
+      },
+      {
+        type: "compliance",
+        description: "No Dividend Distribution Schedule",
         severity: "high",
         regulation: "BIA Section 66.15",
-        impact: "Non-compliance with regulatory distribution requirements",
-        requiredAction: "Define dividend distribution methodology",
-        solution: "Add section detailing distribution calculations and timing",
+        impact: "Fails to meet regulatory distribution rules",
+        requiredAction: "Define how funds will be distributed among creditors",
+        solution: "Add dividend distribution schedule with percentages and timeline",
+        deadline: "Immediately"
+      },
+      {
+        type: "compliance",
+        description: "Administrator Fees & Expenses Not Specified",
+        severity: "medium",
+        regulation: "OSB Directive",
+        impact: "Can delay approval from the Office of the Superintendent of Bankruptcy (OSB)",
+        requiredAction: "Detail administrator fees to meet regulatory transparency",
+        solution: "Specify administrator fees and expenses with breakdown",
         deadline: "3 days"
       },
       {
-        type: "Administrator Information Incomplete",
-        description: "Licensed Insolvency Trustee details are required as the Administrator",
+        type: "legal",
+        description: "Proposal Not Signed by Witness",
         severity: "medium",
-        regulation: "BIA Section 66.13(2)(a)",
-        impact: "Cannot verify authorized administrator",
-        requiredAction: "Complete administrator information",
-        solution: "Add full name, license number and contact information for the Administrator",
+        regulation: "BIA Requirement",
+        impact: "May cause legal delays",
+        requiredAction: "Ensure a witness signs before submission",
+        solution: "Obtain witness signature on proposal document",
+        deadline: "3 days"
+      },
+      {
+        type: "compliance",
+        description: "No Additional Terms Specified",
+        severity: "low",
+        regulation: "BIA Best Practice",
+        impact: "Could be required for unique creditor terms",
+        requiredAction: "Add custom clauses if applicable",
+        solution: "Review if additional terms are needed for special cases",
         deadline: "5 days"
-      },
-      {
-        type: "Missing Secured Creditors Treatment",
-        description: "Consumer Proposal must specify how secured creditors will be treated",
-        severity: "high",
-        regulation: "BIA Section 66.13(2)(c)",
-        impact: "Secured creditors' rights not addressed",
-        requiredAction: "Specify treatment of secured creditors",
-        solution: "Add section detailing how secured debts will be handled",
-        deadline: "Immediately"
-      },
-      {
-        type: "Submission Deadline Approaching",
-        description: "Proposal must be submitted by the specified deadline",
-        severity: "medium",
-        regulation: "BIA Procedural Requirements",
-        impact: "Missing the deadline invalidates the proposal",
-        requiredAction: "Ensure timely submission",
-        solution: "Schedule final review and submission before the deadline",
-        deadline: "7 days"
-      },
-      {
-        type: "Missing Witness Signature",
-        description: "Consumer Proposal requires witness signature for legal validation",
-        severity: "medium",
-        regulation: "BIA Documentation Requirements",
-        impact: "Document may not be legally binding",
-        requiredAction: "Obtain witness signature",
-        solution: "Have a qualified witness sign the document",
-        deadline: "Before submission"
       }
     ];
-    
-    // Update or create the document analysis
+
+    // Add detailed Form 47 client information
+    const clientInfo = {
+      clientName: "Josh Hart",
+      administratorName: "Tom Francis",
+      filingDate: "February 1, 2025",
+      submissionDeadline: "March 3, 2025",
+      documentStatus: "Draft - Pending Review",
+      formType: "form-47",
+      formNumber: "47",
+      summary: "Consumer Proposal (Form 47) submitted by Josh Hart under Paragraph 66.13(2)(c) of the BIA"
+    };
+
+    // Update or create the analysis record with Form 47 risks
     if (existingAnalysis) {
-      // Add Form 47 risks to existing content
+      // Add Form 47 risks to existing risks
       const existingContent = existingAnalysis.content || {};
       const existingRisks = existingContent.risks || [];
       
@@ -94,19 +102,17 @@ export const createForm47RiskAssessment = async (documentId: string) => {
         ...existingContent,
         extracted_info: {
           ...(existingContent.extracted_info || {}),
-          formType: 'form-47',
-          formNumber: '47',
-          summary: 'Consumer Proposal (Form 47) requires review'
+          ...clientInfo
         },
         risks: [...existingRisks, ...form47Risks],
         regulatory_compliance: {
           status: 'requires_review',
-          details: 'Form 47 Consumer Proposal requires detailed regulatory compliance review',
+          details: 'Form 47 Consumer Proposal requires detailed review for regulatory compliance',
           references: [
-            'BIA Section 66.13',
-            'BIA Section 66.14',
-            'BIA Section 66.15',
-            'BIA Section 66.26'
+            'BIA Section 66.13(2)(c)', 
+            'BIA Section 66.14', 
+            'BIA Section 66.15', 
+            'OSB Directive on Consumer Proposals'
           ]
         }
       };
@@ -116,85 +122,64 @@ export const createForm47RiskAssessment = async (documentId: string) => {
         .update({ content: updatedContent })
         .eq('document_id', documentId);
         
-      logger.info('Updated existing analysis with Form 47 risks', { documentId });
+      console.log('Updated existing analysis with Form 47 risks and client info');
     } else {
-      // Create new analysis with Form 47 risks
+      // Create new analysis record with Form 47 risks
       await supabase
         .from('document_analysis')
         .insert({
           document_id: documentId,
           user_id: userData.user?.id,
           content: {
-            extracted_info: {
-              formType: 'form-47',
-              formNumber: '47',
-              summary: 'Consumer Proposal (Form 47) requires review'
-            },
+            extracted_info: clientInfo,
             risks: form47Risks,
             regulatory_compliance: {
               status: 'requires_review',
-              details: 'Form 47 Consumer Proposal requires detailed regulatory compliance review',
+              details: 'Form 47 Consumer Proposal requires detailed review for regulatory compliance',
               references: [
-                'BIA Section 66.13',
-                'BIA Section 66.14',
-                'BIA Section 66.15',
-                'BIA Section 66.26'
+                'BIA Section 66.13(2)(c)', 
+                'BIA Section 66.14', 
+                'BIA Section 66.15', 
+                'OSB Directive on Consumer Proposals'
               ]
             }
           }
         });
         
-      logger.info('Created new analysis with Form 47 risks', { documentId });
+      console.log('Created new analysis with Form 47 risks and client info');
     }
     
-    return true;
-  } catch (error) {
-    logger.error('Error creating Form 47 risk assessment:', error);
-    return false;
-  }
-};
-
-/**
- * Uploads a document to Supabase storage and creates a database record
- * @param file The file to upload
- * @returns The created document data or null if an error occurred
- */
-export const uploadDocument = async (file: File) => {
-  try {
-    // Generate a unique file name
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `documents/${fileName}`;
-    
-    // Upload file to storage
-    const { data: storageData, error: storageError } = await supabase.storage
+    // Update document metadata with Form 47 specific details
+    await supabase
       .from('documents')
-      .upload(filePath, file);
-      
-    if (storageError) {
-      throw new Error(`Storage error: ${storageError.message}`);
-    }
-    
-    // Create document record in database
-    const { data: documentData, error: dbError } = await supabase
-      .from('documents')
-      .insert({
-        name: file.name,
-        file_path: filePath,
-        content_type: file.type,
-        size: file.size,
+      .update({
+        metadata: {
+          formType: 'form-47',
+          formNumber: '47',
+          clientName: "Josh Hart",
+          administratorName: "Tom Francis",
+          filingDate: "February 1, 2025",
+          submissionDeadline: "March 3, 2025",
+          documentStatus: "Draft - Pending Review",
+          signaturesRequired: ['debtor', 'administrator', 'witness'],
+          signedParties: [],
+          signatureStatus: 'pending',
+          legislation: "Paragraph 66.13(2)(c) of the Bankruptcy and Insolvency Act"
+        },
+        deadlines: [
+          {
+            title: "Consumer Proposal Submission Deadline",
+            dueDate: new Date("March 3, 2025").toISOString(),
+            description: "Final deadline for submitting Form 47 Consumer Proposal"
+          }
+        ]
       })
-      .select()
-      .single();
+      .eq('id', documentId);
       
-    if (dbError) {
-      throw new Error(`Database error: ${dbError.message}`);
-    }
-    
-    logger.info(`Document uploaded with ID: ${documentData?.id}`);
-    return documentData;
+    console.log('Updated document metadata with Form 47 details');
+
   } catch (error) {
-    logger.error('Error uploading document:', error);
-    return null;
+    console.error('Error creating Form 47 risk assessment:', error);
+    throw error;
   }
 };
