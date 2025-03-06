@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DocumentViewer } from "@/components/DocumentViewer";
 import { DocumentManagementPage } from "@/pages/DocumentManagementPage";
@@ -25,14 +24,12 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Handle email confirmation redirects
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const errorCode = params.get('error');
     const errorDescription = params.get('error_description');
     
     if (errorCode === '401') {
-      // This happens when a user clicks on an expired confirmation link
       toast({
         variant: "destructive",
         title: "Link expired",
@@ -56,7 +53,6 @@ const Index = () => {
   }, [location]);
 
   useEffect(() => {
-    // Measure and show performance metrics when the page loads
     showPerformanceToast("Home Page");
   }, []);
 
@@ -64,20 +60,15 @@ const Index = () => {
     console.log("Initializing auth state...");
     setIsLoading(true);
     
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("Session state:", session);
       setSession(session);
       
-      // Check if user exists but is not confirmed
       if (session?.user) {
-        // Check if email is confirmed by looking at the confirmed_at property
         const isConfirmed = session.user.confirmed_at !== null;
         setIsEmailConfirmationPending(!isConfirmed);
         if (!isConfirmed) {
           setConfirmationEmail(session.user.email);
-          
-          // Show a toast if email is not confirmed
           toast({
             title: "Email Confirmation Required",
             description: "Please check your email for a confirmation link.",
@@ -92,7 +83,6 @@ const Index = () => {
       setAuthError(error.message);
     });
 
-    // Subscribe to auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -100,12 +90,10 @@ const Index = () => {
       
       if (event === 'SIGNED_IN') {
         setSession(session);
-        // Check if email is confirmed
         const isConfirmed = session?.user?.confirmed_at !== null;
         setIsEmailConfirmationPending(!isConfirmed);
         if (!isConfirmed && session?.user) {
           setConfirmationEmail(session.user.email);
-          // Show a toast if email is not confirmed
           toast({
             title: "Email Confirmation Required",
             description: "Please check your email for a confirmation link.",
@@ -117,7 +105,6 @@ const Index = () => {
         setConfirmationEmail(null);
       } else if (event === 'USER_UPDATED') {
         setSession(session);
-        // If user was updated, check if email confirmation changed
         if (session?.user?.confirmed_at) {
           setIsEmailConfirmationPending(false);
           setConfirmationEmail(null);
@@ -169,7 +156,7 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen h-screen w-full bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -177,7 +164,7 @@ const Index = () => {
 
   if (authError) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen h-screen w-full bg-background flex items-center justify-center">
         <div className="text-center p-6 max-w-md">
           <h2 className="text-xl font-semibold mb-4">Authentication Error</h2>
           <p className="text-muted-foreground mb-6">{authError}</p>
@@ -189,10 +176,9 @@ const Index = () => {
     );
   }
 
-  // If user's email is not confirmed, show a confirmation screen
   if (session && isEmailConfirmationPending) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen h-screen w-full bg-background flex items-center justify-center">
         <div className="text-center p-6 max-w-md border rounded-lg shadow-md">
           <div className="flex justify-center mb-4">
             <Mail className="h-12 w-12 text-primary" />
@@ -230,27 +216,28 @@ const Index = () => {
     );
   }
 
-  // If no session is found, redirect to auth page
   if (!session) {
     return <Auth />;
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen h-screen w-full flex overflow-hidden">
       <MainSidebar />
-      <div className="flex-1 pl-64 flex flex-col">
+      <div className="flex-1 flex flex-col w-full overflow-hidden">
         <MainHeader />
-        <main className="flex-1">
+        <main className="flex-1 overflow-auto">
           {selectedDocument ? (
-            <div className="container py-8">
-              <div className="space-y-6">
-                <button
-                  onClick={handleBackToDocuments}
-                  className="flex items-center text-sm text-muted-foreground hover:text-foreground"
-                >
-                  <Home className="h-4 w-4 mr-1" /> Back to Documents
-                </button>
-                <DocumentViewer documentId={selectedDocument} />
+            <div className="h-full overflow-auto">
+              <div className="container py-4 h-full">
+                <div className="space-y-4 h-full">
+                  <button
+                    onClick={handleBackToDocuments}
+                    className="flex items-center text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    <Home className="h-4 w-4 mr-1" /> Back to Documents
+                  </button>
+                  <DocumentViewer documentId={selectedDocument} />
+                </div>
               </div>
             </div>
           ) : (
