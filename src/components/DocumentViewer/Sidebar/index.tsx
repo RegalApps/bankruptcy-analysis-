@@ -17,17 +17,17 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated }) => {
   const analysisContent = document.analysis?.[0]?.content;
-  const extractedInfo = analysisContent?.extracted_info;
-  const risks = analysisContent?.risks || [];
+  const extractedInfo = analysisContent?.extracted_info || {};
 
   // Check if this is a Form 47 document
+  const extractedFormType = extractedInfo?.formType;
   const isForm47 = document.type === 'form-47' || 
-                  extractedInfo?.formType === 'form-47' ||
+                  extractedFormType === 'form-47' ||
                   document.title?.toLowerCase().includes('form 47') || 
                   document.title?.toLowerCase().includes('consumer proposal');
 
   logger.debug('Extracted info in Sidebar:', extractedInfo);
-  logger.debug('Risks in Sidebar:', risks);
+  logger.debug('Risks in Sidebar:', analysisContent?.risks || []);
   logger.debug('Is Form 47:', isForm47);
   logger.debug('Full document data:', document);
 
@@ -78,10 +78,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
             securityInfo={extractedInfo?.securityInfo}
             dateBankruptcy={extractedInfo?.dateBankruptcy}
             officialReceiver={extractedInfo?.officialReceiver}
-            summary={extractedInfo?.summary}
             filingDate={extractedInfo?.filingDate}
             submissionDeadline={extractedInfo?.submissionDeadline}
             documentStatus={extractedInfo?.documentStatus}
+            summary={extractedInfo?.summary}
           />
           
           <Separator />
@@ -94,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
               </h3>
             </div>
             <RiskAssessment 
-              risks={risks} 
+              risks={analysisContent?.risks || []} 
               documentId={document.id}
             />
           </div>

@@ -92,13 +92,17 @@ const processDocumentData = (document: any): DocumentDetails => {
         formType: analysisContent.extracted_info?.type || 
                  analysisContent.extracted_info?.formType || 
                  (document.title.toLowerCase().includes('bankruptcy') ? 'bankruptcy' : 
-                  document.title.toLowerCase().includes('proposal') ? 'proposal' : '') || '',
+                  document.title.toLowerCase().includes('proposal') ? 'form-47' : ''),
         dateSigned: analysisContent.extracted_info?.dateSigned || 
                    analysisContent.extracted_info?.dateOfFiling || '',
-        
+        filingDate: analysisContent.extracted_info?.filingDate || '',
+        submissionDeadline: analysisContent.extracted_info?.submissionDeadline || '',
+        documentStatus: analysisContent.extracted_info?.documentStatus || '',
+                   
         // Trustee Information
         trusteeName: analysisContent.extracted_info?.trusteeName || 
                     analysisContent.extracted_info?.insolvencyTrustee || '',
+        administratorName: analysisContent.extracted_info?.administratorName || '',
         trusteeAddress: analysisContent.extracted_info?.trusteeAddress || '',
         trusteePhone: analysisContent.extracted_info?.trusteePhone || '',
         trusteeEmail: analysisContent.extracted_info?.trusteeEmail || '',
@@ -121,6 +125,7 @@ const processDocumentData = (document: any): DocumentDetails => {
         totalDebts: analysisContent.extracted_info?.totalDebts || '',
         totalAssets: analysisContent.extracted_info?.totalAssets || '',
         monthlyIncome: analysisContent.extracted_info?.monthlyIncome || '',
+        paymentSchedule: analysisContent.extracted_info?.paymentSchedule || '',
         
         // Document Summary
         summary: analysisContent.extracted_info?.summary || '',

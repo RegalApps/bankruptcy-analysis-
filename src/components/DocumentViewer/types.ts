@@ -42,9 +42,11 @@ export interface DocumentDetails {
     content: {
       extracted_info: {
         type?: string;
+        formType?: string;
         formNumber?: string;
         clientName?: string;
         trusteeName?: string;
+        administratorName?: string;
         estateNumber?: string;
         district?: string;
         divisionNumber?: string;
@@ -56,6 +58,10 @@ export interface DocumentDetails {
         dateSigned?: string;
         officialReceiver?: string;
         summary?: string;
+        filingDate?: string;
+        submissionDeadline?: string;
+        documentStatus?: string;
+        paymentSchedule?: string;
       };
       risks: Risk[];
     };

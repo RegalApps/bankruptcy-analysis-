@@ -64,8 +64,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   }
 
   // Check if this is a Form 47 document to apply specific layout adjustments
+  const extractedFormType = document.analysis?.[0]?.content?.extracted_info?.formType;
   const isForm47 = document.type === 'form-47' || 
-                  document.analysis?.[0]?.content?.extracted_info?.formType === 'form-47' ||
+                  extractedFormType === 'form-47' ||
                   document.title?.toLowerCase().includes('form 47') || 
                   document.title?.toLowerCase().includes('consumer proposal');
 
