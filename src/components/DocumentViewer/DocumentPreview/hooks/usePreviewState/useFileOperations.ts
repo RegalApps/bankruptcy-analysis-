@@ -8,7 +8,6 @@ export const useFileOperations = (storagePath: string, title?: string) => {
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [diagnosticsMode, setDiagnosticsMode] = useState<boolean>(false);
-  const [networkError, setNetworkError] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Determine if the file is an Excel file
@@ -24,7 +23,6 @@ export const useFileOperations = (storagePath: string, title?: string) => {
       if (!storagePath) return;
       
       setLoading(true);
-      setNetworkError(false);
       console.log(`Checking file existence for path: ${storagePath}`);
       
       try {
@@ -36,15 +34,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
         if (error) {
           console.error('File existence check error:', error);
           setFileExists(false);
-          
-          // Differentiate between network and file errors
-          if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            setNetworkError(true);
-            setPreviewError(`Network connection error. Please check your internet connection and try again.`);
-          } else {
-            setPreviewError(`Unable to access the document. ${error.message}`);
-          }
-          
+          setPreviewError(`Unable to access the document. Please try again later.`);
           setLoading(false);
           return;
         }
@@ -59,14 +49,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
       } catch (err: any) {
         console.error('Error checking file existence:', err);
         setFileExists(false);
-        
-        if (err.message?.includes('Failed to fetch') || err.message?.includes('network')) {
-          setNetworkError(true);
-          setPreviewError('Network connection error. Please check your internet connection.');
-        } else {
-          setPreviewError('Document appears to be missing from storage.');
-        }
-        
+        setPreviewError('Document appears to be missing from storage. Please try again.');
         setLoading(false);
       }
     };
@@ -77,7 +60,6 @@ export const useFileOperations = (storagePath: string, title?: string) => {
   const handleRefreshPreview = useCallback(() => {
     setPreviewError(null);
     setLoading(true);
-    setNetworkError(false);
     
     // Force reload the iframe
     const iframe = document.querySelector('iframe');
@@ -102,14 +84,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
         if (error) {
           console.error('File refresh check error:', error);
           setFileExists(false);
-          
-          if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            setNetworkError(true);
-            setPreviewError(`Network connection error. Please try again when your connection is stable.`);
-          } else {
-            setPreviewError(`Document still unavailable. ${error.message}`);
-          }
-          
+          setPreviewError(`Document unavailable. Please try again later.`);
           setLoading(false);
           return;
         }
@@ -125,14 +100,7 @@ export const useFileOperations = (storagePath: string, title?: string) => {
         });
       } catch (err: any) {
         console.error('Error during refresh:', err);
-        
-        if (err.message?.includes('Failed to fetch') || err.message?.includes('network')) {
-          setNetworkError(true);
-          setPreviewError('Network connection error. Please check your internet connection.');
-        } else {
-          setPreviewError('Could not refresh the document. It may have been deleted.');
-        }
-        
+        setPreviewError('Could not refresh the document. Please try again later.');
         setLoading(false);
       }
     };
@@ -155,7 +123,6 @@ export const useFileOperations = (storagePath: string, title?: string) => {
     isExcelFile,
     previewError,
     loading,
-    networkError,
     setLoading,
     setPreviewError,
     handleRefreshPreview,

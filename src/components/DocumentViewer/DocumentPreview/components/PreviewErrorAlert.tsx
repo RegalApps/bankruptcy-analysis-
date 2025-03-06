@@ -19,17 +19,10 @@ export const PreviewErrorAlert = ({
   documentId,
   onRunDiagnostics
 }: PreviewErrorAlertProps) => {
-  // Identify the error type to provide more contextual help
-  const isNetworkError = error.includes('network') || 
-                         error.includes('connection') || 
-                         error.includes('Failed to fetch');
-                         
+  // Identify only format errors - removed network and database error detection
   const isFormatError = error.includes('format') || 
                         error.includes('unsupported') || 
                         error.includes('corrupted');
-                        
-  const isDatabaseError = error.includes('Database error') || 
-                          error.includes('SQL');
 
   return (
     <Alert variant="destructive" className="mb-4">
@@ -40,22 +33,14 @@ export const PreviewErrorAlert = ({
         </div>
         
         <div className="flex flex-wrap gap-2 mt-1">
-          {isNetworkError && <Badge variant="outline">Network Issue</Badge>}
           {isFormatError && <Badge variant="outline">Format Problem</Badge>}
-          {isDatabaseError && <Badge variant="outline">Database Error</Badge>}
         </div>
         
         <div className="text-sm opacity-80 mt-2">
-          {isNetworkError && (
-            <p>Check your internet connection and try again. The document server may be temporarily unavailable.</p>
-          )}
           {isFormatError && (
             <p>This document may be in an unsupported format. Try downloading it directly to view with a compatible application.</p>
           )}
-          {isDatabaseError && (
-            <p>There was a problem accessing the document data. This is likely a temporary server issue.</p>
-          )}
-          {!isNetworkError && !isFormatError && !isDatabaseError && (
+          {!isFormatError && (
             <p>An unexpected error occurred. Try refreshing the preview or downloading the document directly.</p>
           )}
         </div>
