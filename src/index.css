@@ -98,4 +98,25 @@
     margin-left: 16rem;
     width: calc(100% - 16rem);
   }
+  
+  /* Document viewer specific styles */
+  .document-viewer-container {
+    @apply h-full rounded-lg overflow-hidden border border-border/50;
+  }
+  
+  .document-viewer-grid {
+    @apply grid grid-cols-12 h-full;
+  }
+  
+  .document-sidebar {
+    @apply col-span-3 h-full overflow-auto border-r border-border/50 bg-white dark:bg-background;
+  }
+  
+  .document-content {
+    @apply col-span-6 h-full overflow-auto border-r border-border/50;
+  }
+  
+  .document-collaboration {
+    @apply col-span-3 h-full overflow-auto bg-white dark:bg-background;
+  }
 }

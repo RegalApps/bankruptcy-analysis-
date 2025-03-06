@@ -9,7 +9,6 @@ import { ViewerLoadingState } from "./components/ViewerLoadingState";
 import { ViewerErrorState } from "./components/ViewerErrorState";
 import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
 import { isDocumentForm47 } from "./utils/documentTypeUtils";
-import { Home } from "lucide-react";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -45,21 +44,23 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   const isForm47 = isDocumentForm47(document);
 
   return (
-    <ViewerLayout
-      isForm47={isForm47}
-      sidebar={
-        <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
-      }
-      mainContent={
-        <DocumentPreview 
-          storagePath={document.storage_path} 
-          title={document.title}
-          documentId={documentId}
-        />
-      }
-      collaborationPanel={
-        <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
-      }
-    />
+    <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20">
+      <ViewerLayout
+        isForm47={isForm47}
+        sidebar={
+          <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
+        }
+        mainContent={
+          <DocumentPreview 
+            storagePath={document.storage_path} 
+            title={document.title}
+            documentId={documentId}
+          />
+        }
+        collaborationPanel={
+          <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
+        }
+      />
+    </div>
   );
 };

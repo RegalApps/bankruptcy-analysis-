@@ -15,7 +15,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <div className="flex-1 flex flex-col pl-64 w-full overflow-hidden">
         <MainHeader />
         <main className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-background">
-          <div className="container mx-auto h-full">
+          <div className="container mx-auto h-full max-w-7xl">
             {children}
           </div>
         </main>

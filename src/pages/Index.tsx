@@ -11,6 +11,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AuthErrorDisplay } from "@/components/auth/AuthErrorDisplay";
 import { EmailConfirmationPending } from "@/components/auth/EmailConfirmationPending";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -64,17 +65,19 @@ const Index = () => {
   return (
     <MainLayout>
       {selectedDocument ? (
-        <div className="h-full overflow-auto">
-          <div className="container py-4 h-full">
-            <div className="space-y-4 h-full">
-              <button
-                onClick={handleBackToDocuments}
-                className="flex items-center text-sm text-muted-foreground hover:text-foreground"
-              >
-                <Home className="h-4 w-4 mr-1" /> Back to Documents
-              </button>
-              <DocumentViewer documentId={selectedDocument} />
-            </div>
+        <div className="h-full py-4">
+          <div className="mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackToDocuments}
+              className="flex items-center text-sm text-muted-foreground hover:text-foreground"
+            >
+              <Home className="h-4 w-4 mr-1" /> Back to Documents
+            </Button>
+          </div>
+          <div className="h-[calc(100%-40px)]">
+            <DocumentViewer documentId={selectedDocument} />
           </div>
         </div>
       ) : (
