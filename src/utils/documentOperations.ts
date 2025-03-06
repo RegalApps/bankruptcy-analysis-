@@ -10,6 +10,18 @@ function extractClientName(filename: string): string {
   return 'Untitled Client';
 }
 
+// Function to extract client name from Form 47 filename
+function extractForm47ClientName(filename: string): string {
+  // First, try to match pattern like "Form47_ClientName.pdf"
+  const nameMatch = filename.match(/form[- ]?47[- _](.+?)(?:\.|$)/i);
+  if (nameMatch && nameMatch[1]) {
+    return nameMatch[1].trim();
+  }
+  
+  // Default client name for Form 47 if pattern doesn't match
+  return 'Josh Hart';
+}
+
 export const uploadDocument = async (file: File) => {
   try {
     // Get user ID for document ownership
@@ -54,17 +66,24 @@ export const uploadDocument = async (file: File) => {
 
     // Extract client name based on document type
     let clientName = 'Untitled Client';
+    let formType = null;
+    let submissionDeadline = null;
+    
     if (isForm76) {
       clientName = extractClientName(file.name);
-    } else if (isForm47 && file.name.includes('_')) {
-      // Try to extract client name from Form 47 filename (e.g., "Form47_JohnDoe.pdf")
-      const parts = file.name.split('_');
-      if (parts.length > 1) {
-        clientName = parts[1].split('.')[0].trim();
-      } else {
-        clientName = 'Josh Hart'; // Default client name for Form 47
-      }
+      formType = 'form-76';
+    } else if (isForm47) {
+      clientName = extractForm47ClientName(file.name);
+      formType = 'form-47';
+      
+      // Set a default submission deadline for Form 47 (30 days from now)
+      const deadlineDate = new Date();
+      deadlineDate.setDate(deadlineDate.getDate() + 30);
+      submissionDeadline = deadlineDate.toISOString();
     }
+
+    // Set a default filing date for form documents (today)
+    const filingDate = new Date().toISOString();
 
     // Create database record with user_id
     const { data: documentData, error: documentError } = await supabase
@@ -77,12 +96,23 @@ export const uploadDocument = async (file: File) => {
         user_id: user.id, // Add user_id field to fix RLS policy
         ai_processing_status: 'pending',
         metadata: {
-          formType: isForm76 ? 'form-76' : (isForm47 ? 'form-47' : null),
+          formType: formType,
           uploadDate: new Date().toISOString(),
           client_name: clientName,
           ocr_status: 'pending',
-          upload_id: uniqueId
-        }
+          upload_id: uniqueId,
+          filingDate: filingDate,
+          submissionDeadline: submissionDeadline,
+          requiresSignature: isForm47, // Flag that Form 47 requires signatures
+          signatureStatus: isForm47 ? 'pending' : null,
+          signaturesRequired: isForm47 ? ['debtor', 'administrator', 'witness'] : []
+        },
+        // Add deadline for Form 47
+        deadlines: isForm47 ? [{
+          title: "Form 47 Submission Deadline",
+          dueDate: submissionDeadline,
+          description: "Consumer Proposal must be submitted before this date"
+        }] : []
       })
       .select()
       .single();
@@ -95,6 +125,35 @@ export const uploadDocument = async (file: File) => {
     console.log("Document record created with ID:", documentData.id);
     console.log("Document storage_path set to:", filePath);
 
+    // Create notification for Form 47 deadline if applicable
+    if (isForm47 && submissionDeadline) {
+      try {
+        await supabase.functions.invoke('handle-notifications', {
+          body: {
+            action: 'create',
+            userId: user.id,
+            notification: {
+              title: 'Form 47 Submission Deadline',
+              message: `Consumer Proposal for ${clientName} must be submitted by ${new Date(submissionDeadline).toLocaleDateString()}`,
+              type: 'reminder',
+              priority: 'high',
+              category: 'deadline',
+              action_url: `/documents/${documentData.id}`,
+              metadata: {
+                documentId: documentData.id,
+                deadlineType: 'submission',
+                dueDate: submissionDeadline,
+                formType: 'form-47'
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Failed to create deadline notification:", error);
+        // Continue anyway, the upload was successful
+      }
+    }
+
     // Immediately trigger document analysis
     try {
       console.log("Triggering document analysis...");
@@ -102,7 +161,7 @@ export const uploadDocument = async (file: File) => {
         body: { 
           documentId: documentData.id,
           title: file.name,
-          formType: isForm76 ? 'form-76' : (isForm47 ? 'form-47' : null)
+          formType: formType
         }
       });
 
