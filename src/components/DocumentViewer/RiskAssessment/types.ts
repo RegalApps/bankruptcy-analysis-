@@ -19,6 +19,10 @@ export interface RiskAssessmentProps {
 export interface Form47Risk extends Risk {
   status?: 'pending' | 'in_progress' | 'resolved';
   assignedTo?: string;
+  paymentScheduleAffected?: boolean;
+  complianceSection?: string;
+  documentationRequirement?: string;
+  deadlineStatus?: 'upcoming' | 'immediate' | 'overdue';
 }
 
 export interface Form76Risk extends Risk {
