@@ -63,6 +63,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     );
   }
 
+  // Check if document is still being processed
+  const isProcessing = document.ai_processing_status === 'pending';
+
   return (
     <div className="h-full">
       <div className="grid grid-cols-12 gap-6 h-full">
@@ -74,6 +77,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         {/* Center Panel - Document Viewer */}
         <div className="col-span-6 h-full">
           <div className="h-full flex flex-col">
+            {isProcessing && (
+              <div className="mb-4 p-4 bg-amber-50 text-amber-800 rounded-md">
+                <p className="font-medium">Document Analysis in Progress</p>
+                <p className="text-sm mt-1">The document is currently being analyzed. Some features may be limited until processing completes.</p>
+              </div>
+            )}
             <DocumentPreview 
               storagePath={document.storage_path} 
               title={document.title}

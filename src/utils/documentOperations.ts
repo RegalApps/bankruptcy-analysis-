@@ -45,6 +45,12 @@ export const uploadDocument = async (file: File) => {
     const isForm76 = file.name.toLowerCase().includes('form 76') ||
       file.name.toLowerCase().includes('f76') ||
       file.name.toLowerCase().includes('form76');
+      
+    // Check for Consumer Proposal Form 47
+    const isForm47 = file.name.toLowerCase().includes('form 47') ||
+      file.name.toLowerCase().includes('f47') ||
+      file.name.toLowerCase().includes('form47') ||
+      file.name.toLowerCase().includes('consumer proposal');
 
     // Create database record with user_id
     const { data: documentData, error: documentError } = await supabase
@@ -57,7 +63,7 @@ export const uploadDocument = async (file: File) => {
         user_id: user.id, // Add user_id field to fix RLS policy
         ai_processing_status: 'pending',
         metadata: {
-          formType: isForm76 ? 'form-76' : null,
+          formType: isForm76 ? 'form-76' : (isForm47 ? 'form-47' : null),
           uploadDate: new Date().toISOString(),
           client_name: isForm76 ? extractClientName(file.name) : 'Untitled Client',
           ocr_status: 'pending',
@@ -74,6 +80,28 @@ export const uploadDocument = async (file: File) => {
 
     console.log("Document record created with ID:", documentData.id);
     console.log("Document storage_path set to:", filePath);
+
+    // Immediately trigger document analysis
+    try {
+      console.log("Triggering document analysis...");
+      const { error: analysisError } = await supabase.functions.invoke('analyze-document', {
+        body: { 
+          documentId: documentData.id,
+          title: file.name,
+          formType: isForm76 ? 'form-76' : (isForm47 ? 'form-47' : null)
+        }
+      });
+
+      if (analysisError) {
+        console.error("Analysis error:", analysisError);
+        // Continue anyway, the upload was successful
+      } else {
+        console.log("Analysis triggered successfully");
+      }
+    } catch (error) {
+      console.error("Failed to trigger analysis:", error);
+      // Continue anyway, the upload was successful
+    }
 
     return documentData;
   } catch (error) {
