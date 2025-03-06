@@ -5,7 +5,8 @@ import {
   AlertTriangle, 
   AlertCircle, 
   Info,
-  FileText
+  FileText,
+  FileCheck
 } from "lucide-react";
 import { TooltipProvider } from "../../ui/tooltip";
 import { RiskItem } from "./RiskItem";
@@ -22,13 +23,23 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
     if (!risks?.length) return;
     
     const isConsumerProposal = risks.some(risk => 
-      risk.regulation?.includes('66.13') || 
-      risk.regulation?.includes('66.14') ||
-      risk.regulation?.includes('66.15') ||
-      risk.description?.toLowerCase().includes('consumer proposal') ||
-      risk.type?.toLowerCase().includes('consumer proposal')
+      (risk.regulation && (
+        risk.regulation.includes('66.13') || 
+        risk.regulation.includes('66.14') ||
+        risk.regulation.includes('66.15')
+      )) || 
+      (risk.description && (
+        risk.description.toLowerCase().includes('consumer proposal') ||
+        risk.description.toLowerCase().includes('secured creditors payment') ||
+        risk.description.toLowerCase().includes('unsecured creditors payment')
+      )) ||
+      (risk.type && (
+        risk.type.toLowerCase().includes('consumer proposal') ||
+        risk.type.toLowerCase().includes('proposal')
+      ))
     );
-    
+
+    console.log('Is Form 47 detected from risks:', isConsumerProposal);
     setIsForm47(isConsumerProposal);
   }, [risks]);
   
@@ -135,7 +146,7 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
 
             {risks && risks.length === 0 && (
               <div className="text-center p-6 border rounded-lg bg-muted/10">
-                <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                <FileCheck className="h-8 w-8 text-green-500 mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">No risks identified in this document</p>
               </div>
             )}

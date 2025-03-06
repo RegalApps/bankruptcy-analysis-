@@ -63,16 +63,22 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     );
   }
 
+  // Check if this is a Form 47 document to apply specific layout adjustments
+  const isForm47 = document.type === 'form-47' || 
+                  document.analysis?.[0]?.content?.extracted_info?.formType === 'form-47' ||
+                  document.title?.toLowerCase().includes('form 47') || 
+                  document.title?.toLowerCase().includes('consumer proposal');
+
   return (
     <div className="h-full max-h-[calc(100vh-10rem)]">
       <div className="grid grid-cols-12 gap-4 h-full">
-        {/* Left Panel - Document Summary & Details - Adjusted from col-span-3 to col-span-2 */}
-        <div className="col-span-3 lg:col-span-2 h-full overflow-hidden">
+        {/* Left Panel - Document Summary & Details - Adjusted size based on document type */}
+        <div className={`${isForm47 ? 'col-span-4 lg:col-span-3' : 'col-span-3 lg:col-span-2'} h-full overflow-hidden`}>
           <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
         </div>
         
-        {/* Center Panel - Document Viewer - Adjusted from col-span-6 to col-span-7 */}
-        <div className="col-span-6 lg:col-span-7 h-full overflow-hidden">
+        {/* Center Panel - Document Viewer - Adjusted size based on document type */}
+        <div className={`${isForm47 ? 'col-span-5 lg:col-span-6' : 'col-span-6 lg:col-span-7'} h-full overflow-hidden`}>
           <div className="h-full flex flex-col">
             <DocumentPreview 
               storagePath={document.storage_path} 
@@ -82,7 +88,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           </div>
         </div>
         
-        {/* Right Panel - Collaboration - Adjusted from col-span-3 to col-span-3 */}
+        {/* Right Panel - Collaboration - Fixed size */}
         <div className="col-span-3 h-full overflow-hidden">
           <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
         </div>

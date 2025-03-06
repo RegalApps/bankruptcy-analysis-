@@ -8,7 +8,10 @@ import {
   Clock, 
   ShieldAlert, 
   CalendarClock,
-  FileText
+  FileText,
+  DollarSign,
+  Users,
+  AlertCircle
 } from "lucide-react";
 import { Risk } from "./types";
 import { RiskItem } from "./RiskItem";
@@ -24,36 +27,53 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
 }) => {
   // Filter for Form 47 specific categories
   const paymentRisks = risks.filter(r => 
-    r.type.toLowerCase().includes('payment') || 
-    r.description.toLowerCase().includes('payment')
+    r.type?.toLowerCase().includes('payment') || 
+    r.description?.toLowerCase().includes('payment') ||
+    r.description?.toLowerCase().includes('dividend') ||
+    r.description?.toLowerCase().includes('creditor')
   );
   
   const complianceRisks = risks.filter(r => 
-    r.type.toLowerCase().includes('compliance') || 
+    r.type?.toLowerCase().includes('compliance') || 
     r.regulation?.toLowerCase().includes('66.13') ||
-    r.regulation?.toLowerCase().includes('66.14')
+    r.regulation?.toLowerCase().includes('66.14') ||
+    r.regulation?.toLowerCase().includes('bia')
   );
   
   const documentationRisks = risks.filter(r => 
-    r.type.toLowerCase().includes('missing') || 
-    r.type.toLowerCase().includes('incomplete') ||
-    r.description.toLowerCase().includes('signature') ||
-    r.description.toLowerCase().includes('witness')
+    r.type?.toLowerCase().includes('missing') || 
+    r.type?.toLowerCase().includes('incomplete') ||
+    r.description?.toLowerCase().includes('signature') ||
+    r.description?.toLowerCase().includes('witness') ||
+    r.description?.toLowerCase().includes('administrator')
   );
   
   const deadlineRisks = risks.filter(r =>
-    r.type.toLowerCase().includes('deadline') ||
-    r.description.toLowerCase().includes('deadline') ||
-    r.deadline?.toLowerCase().includes('immediately')
+    r.type?.toLowerCase().includes('deadline') ||
+    r.description?.toLowerCase().includes('deadline') ||
+    r.deadline?.toLowerCase().includes('immediately') ||
+    r.description?.toLowerCase().includes('submission')
   );
   
   // Count risks by severity for the progress bar
   const totalRisks = risks.length;
   const highRisks = risks.filter(r => r.severity === 'high').length;
-  const completionPercentage = totalRisks ? ((totalRisks - highRisks) / totalRisks) * 100 : 100;
+  const mediumRisks = risks.filter(r => r.severity === 'medium').length;
+  const completionPercentage = totalRisks ? 
+    Math.max(0, ((totalRisks - highRisks - (mediumRisks / 2)) / totalRisks) * 100) : 100;
   
-  // Skip component if no Form 47 specific risks
-  if (risks.length === 0) return null;
+  // Skip component if no risks
+  if (risks.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 text-center bg-muted/20 rounded-lg space-y-2">
+        <FileCheck className="h-10 w-10 text-green-500" />
+        <h3 className="font-medium">No Compliance Issues</h3>
+        <p className="text-sm text-muted-foreground">
+          This Consumer Proposal appears to have no outstanding compliance issues.
+        </p>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -65,16 +85,18 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
               <FileText className="h-5 w-5 text-primary" />
               <h3 className="font-medium">Consumer Proposal Review Status</h3>
             </div>
-            <Badge variant={highRisks > 0 ? "destructive" : "outline"} className="ml-auto">
+            <Badge variant={highRisks > 0 ? "destructive" : (mediumRisks > 0 ? "outline" : "secondary")} className="ml-auto">
               {highRisks > 0 
                 ? `${highRisks} Critical Issue${highRisks > 1 ? 's' : ''}` 
-                : 'Review Complete'}
+                : (mediumRisks > 0 
+                  ? `${mediumRisks} Issue${mediumRisks > 1 ? 's' : ''} to Resolve`
+                  : 'Compliant')}
             </Badge>
           </div>
           
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span>Document Compliance</span>
+              <span>Compliance Status</span>
               <span className="text-muted-foreground">{Math.round(completionPercentage)}% Complete</span>
             </div>
             <Progress value={completionPercentage} className="h-2" />
@@ -83,29 +105,29 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
           <div className="grid grid-cols-2 gap-4 mt-6">
             {paymentRisks.length > 0 && (
               <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-orange-500" />
-                <span>Payment Schedule Issues: {paymentRisks.length}</span>
+                <DollarSign className="h-4 w-4 text-green-500" />
+                <span>Payment Schedule: {paymentRisks.length} issue{paymentRisks.length !== 1 ? 's' : ''}</span>
               </div>
             )}
             
             {complianceRisks.length > 0 && (
               <div className="flex items-center gap-2 text-sm">
                 <ShieldAlert className="h-4 w-4 text-red-500" />
-                <span>Compliance Issues: {complianceRisks.length}</span>
+                <span>Regulatory: {complianceRisks.length} issue{complianceRisks.length !== 1 ? 's' : ''}</span>
               </div>
             )}
             
             {documentationRisks.length > 0 && (
               <div className="flex items-center gap-2 text-sm">
                 <FileWarning className="h-4 w-4 text-amber-500" />
-                <span>Documentation Issues: {documentationRisks.length}</span>
+                <span>Documentation: {documentationRisks.length} issue{documentationRisks.length !== 1 ? 's' : ''}</span>
               </div>
             )}
             
             {deadlineRisks.length > 0 && (
               <div className="flex items-center gap-2 text-sm">
                 <CalendarClock className="h-4 w-4 text-blue-500" />
-                <span>Deadline Issues: {deadlineRisks.length}</span>
+                <span>Deadlines: {deadlineRisks.length} issue{deadlineRisks.length !== 1 ? 's' : ''}</span>
               </div>
             )}
           </div>
@@ -116,7 +138,7 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
       {paymentRisks.length > 0 && (
         <div className="space-y-3">
           <h4 className="text-sm font-medium flex items-center gap-2">
-            <Clock className="h-4 w-4 text-orange-500" />
+            <DollarSign className="h-4 w-4 text-green-500" />
             Payment Schedule Issues
           </h4>
           <div className="space-y-2">
@@ -131,7 +153,7 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
         <div className="space-y-3">
           <h4 className="text-sm font-medium flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 text-red-500" />
-            Compliance Issues
+            Regulatory Compliance Issues
           </h4>
           <div className="space-y-2">
             {complianceRisks.map((risk, index) => (
@@ -168,6 +190,25 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Add creditor information section */}
+      <div className="space-y-3 mt-4">
+        <h4 className="text-sm font-medium flex items-center gap-2">
+          <Users className="h-4 w-4 text-blue-500" />
+          Creditor Information
+        </h4>
+        <Card className="bg-muted/20">
+          <CardContent className="p-3 text-sm">
+            <p className="text-muted-foreground">
+              Form 47 requires complete details of all secured and unsecured creditors, including payment terms.
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <span>Review creditor details carefully for compliance with BIA 66.13(2)(c).</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
