@@ -1,15 +1,13 @@
 
 import { useState } from "react";
 import { FileCheck } from "lucide-react";
-import { MainSidebar } from "@/components/layout/MainSidebar";
-import { MainHeader } from "@/components/header/MainHeader";
-import { Footer } from "@/components/layout/Footer";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Document } from "@/components/DocumentList/types";
+import { ValidationStatusAlert } from "@/components/e-filing/components/ValidationStatusAlert";
 import { DocumentSearch } from "@/components/e-filing/DocumentSearch";
 import { RiskAssessment } from "@/components/e-filing/RiskAssessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Document } from "@/components/DocumentList/types";
-import { ValidationStatusAlert } from "@/components/e-filing/components/ValidationStatusAlert";
 import { toast } from "sonner";
 
 export const EFilingPage = () => {
@@ -35,61 +33,53 @@ export const EFilingPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <MainSidebar />
-      <div className="flex-1 pl-64 flex flex-col">
-        <MainHeader />
-        <main className="flex-1">
-          <div className="container py-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <FileCheck className="h-6 w-6 text-primary" />
-                <h1 className="text-2xl font-semibold">E-Filing</h1>
-              </div>
-              <Button 
-                size="lg"
-                disabled={!isValidated || !selectedDocument}
-                onClick={handleEFile}
-                className="gradient-button"
-              >
-                E-File
-              </Button>
-            </div>
-            
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Left Column - Document Search */}
+    <MainLayout>
+      <div className="container py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <FileCheck className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-semibold">E-Filing</h1>
+          </div>
+          <Button 
+            size="lg"
+            disabled={!isValidated || !selectedDocument}
+            onClick={handleEFile}
+            className="gradient-button"
+          >
+            E-File
+          </Button>
+        </div>
+        
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Left Column - Document Search */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Document Search & Selection</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DocumentSearch onDocumentSelect={handleDocumentSelect} />
+            </CardContent>
+          </Card>
+
+          {/* Right Column - Risk Assessment */}
+          <div className="space-y-6">
+            <RiskAssessment 
+              document={selectedDocument}
+              onValidationComplete={handleValidationComplete}
+            />
+
+            {isValidated && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Document Search & Selection</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <DocumentSearch onDocumentSelect={handleDocumentSelect} />
+                <CardContent className="pt-6">
+                  <ValidationStatusAlert isValid={isValidated} />
                 </CardContent>
               </Card>
-
-              {/* Right Column - Risk Assessment */}
-              <div className="space-y-6">
-                <RiskAssessment 
-                  document={selectedDocument}
-                  onValidationComplete={handleValidationComplete}
-                />
-
-                {isValidated && (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <ValidationStatusAlert isValid={isValidated} />
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
+            )}
           </div>
-        </main>
-        <Footer />
+        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 
-// Add default export
 export default EFilingPage;

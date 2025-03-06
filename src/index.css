@@ -60,6 +60,14 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  
+  /* Add styles to ensure there's no overlap between sidebar and content */
+  #root {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 @layer components {
@@ -83,5 +91,11 @@
 
   .sidebar-gradient {
     background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--card)) 100%);
+  }
+  
+  /* Ensure content is properly offset for sidebar */
+  .content-with-sidebar {
+    margin-left: 16rem;
+    width: calc(100% - 16rem);
   }
 }

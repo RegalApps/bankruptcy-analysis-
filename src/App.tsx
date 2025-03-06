@@ -5,10 +5,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
-// Import without trying to access .default property directly
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
@@ -26,7 +26,6 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       retry: 1,
-      // Remove the suspense property as it's not supported in this version
     },
   },
 });

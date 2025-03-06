@@ -8,6 +8,7 @@ import { ClientAssistantPanel } from "./SAFA/components/ClientConnect/ClientAssi
 import { Sidebar } from "./SAFA/components/Sidebar";
 import { ConversationView } from "./SAFA/components/ConversationView";
 import { useConversations } from "./SAFA/hooks/useConversations";
+import { Footer } from "@/components/layout/Footer";
 
 export const ConBrandingPage = () => {
   const [inputMessage, setInputMessage] = useState("");
@@ -85,7 +86,7 @@ export const ConBrandingPage = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="min-h-screen h-screen flex overflow-hidden bg-background">
       <MainSidebar />
       <div className="flex-1 flex flex-col pl-64">
         <MainHeader />
@@ -106,10 +107,10 @@ export const ConBrandingPage = () => {
             </main>
           </div>
         </div>
+        <Footer />
       </div>
     </div>
   );
 };
 
-// Add default export
 export default ConBrandingPage;
