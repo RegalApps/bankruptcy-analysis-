@@ -42,10 +42,18 @@ export const FolderItem = ({
     doc => !doc.is_folder && doc.parent_folder_id === folder.id
   );
   
+  // Specifically identify Form 47 documents
+  const form47Documents = folderDocuments.filter(
+    doc => doc.metadata?.formType === 'form-47' || 
+          doc.title?.toLowerCase().includes('form 47') || 
+          doc.title?.toLowerCase().includes('consumer proposal')
+  );
+  
   // Get form documents specifically
   const formDocuments = folderDocuments.filter(
     doc => doc.metadata?.formType === 'form-47' || doc.metadata?.formType === 'form-76' || 
-          doc.title?.toLowerCase().includes('form 47') || doc.title?.toLowerCase().includes('form 76')
+          doc.title?.toLowerCase().includes('form 47') || doc.title?.toLowerCase().includes('form 76') ||
+          doc.title?.toLowerCase().includes('consumer proposal') || doc.title?.toLowerCase().includes('statement of affairs')
   );
   
   const isDragTarget = dragOverFolder === folder.id;
@@ -66,6 +74,20 @@ export const FolderItem = ({
     }
   };
 
+  // Create a tooltip message based on folder content
+  const getFolderTooltip = () => {
+    if (form47Documents.length > 0) {
+      return `Contains ${form47Documents.length} Form 47 document${form47Documents.length > 1 ? 's' : ''}`;
+    }
+    if (formDocuments.length > 0) {
+      return `Contains ${formDocuments.length} form document${formDocuments.length > 1 ? 's' : ''}`;
+    }
+    if (folderDocuments.length > 0) {
+      return `Contains ${folderDocuments.length} document${folderDocuments.length > 1 ? 's' : ''}`;
+    }
+    return "Empty folder";
+  };
+
   return (
     <div>
       <div 
@@ -75,11 +97,13 @@ export const FolderItem = ({
           isDragTarget && "bg-primary/20 border border-dashed border-primary"
         )}
         onClick={() => onFolderSelect(folder.id)}
+        onDoubleClick={(e) => toggleFolder(folder.id, e)}
         draggable
         onDragStart={() => handleDragStart(folder.id, 'folder')}
         onDragOver={(e) => handleDragOver(e, folder.id)}
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, folder.id)}
+        title={getFolderTooltip()}
       >
         {indentation}
         
@@ -98,8 +122,15 @@ export const FolderItem = ({
         
         <span className="text-sm truncate">{folder.name}</span>
         
+        {/* Special highlight for Form 47 documents in Forms folder */}
+        {folder.type === 'form' && form47Documents.length > 0 && (
+          <span className="ml-auto text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
+            Form 47 ({form47Documents.length})
+          </span>
+        )}
+        
         {/* Show form documents count with special badge for Forms folder */}
-        {folder.type === 'form' && formDocuments.length > 0 && (
+        {folder.type === 'form' && form47Documents.length === 0 && formDocuments.length > 0 && (
           <span className="ml-auto text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full">
             {formDocuments.length}
           </span>

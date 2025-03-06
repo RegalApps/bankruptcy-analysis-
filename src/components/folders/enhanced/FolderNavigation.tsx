@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FolderList } from "./components/FolderList";
 import { EmptyFolderState } from "./components/EmptyFolderState";
 import { useFolderDragDrop } from "./hooks/useFolderDragDrop";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface FolderNavigationProps {
   folders: FolderStructure[];
@@ -58,25 +60,64 @@ export function FolderNavigation({
     }
   };
 
-  // Auto-expand client folders by default on initial load
-  useState(() => {
-    // Find client folders and expand them by default
+  // Find Form 47 documents
+  const form47Documents = documents.filter(doc => 
+    doc.metadata?.formType === 'form-47' || 
+    doc.title?.toLowerCase().includes('form 47') ||
+    doc.title?.toLowerCase().includes('consumer proposal')
+  );
+
+  // Expand folders on initial load
+  useEffect(() => {
+    // Prepare initial expanded folders state
+    const initialExpanded: Record<string, boolean> = {};
+    
+    // Always expand client folders
     const clientFolders = folders.filter(folder => folder.type === 'client');
-    if (clientFolders.length > 0) {
-      const initialExpanded: Record<string, boolean> = {};
-      clientFolders.forEach(folder => {
-        initialExpanded[folder.id] = true;
+    clientFolders.forEach(folder => {
+      initialExpanded[folder.id] = true;
+    });
+    
+    // Find Form 47 documents and expand their parent folders
+    if (form47Documents.length > 0) {
+      // Get parent folders of Form 47 documents
+      form47Documents.forEach(doc => {
+        if (doc.parent_folder_id) {
+          initialExpanded[doc.parent_folder_id] = true;
+          
+          // Also expand the client folder if this is in a subfolder
+          const formFolder = folders.flat().find(f => f.id === doc.parent_folder_id);
+          if (formFolder && formFolder.parentId) {
+            initialExpanded[formFolder.parentId] = true;
+          }
+        }
       });
-      setExpandedFolders(prev => ({
-        ...prev,
-        ...initialExpanded
-      }));
     }
-  });
+    
+    // Update expanded folders state
+    setExpandedFolders(prev => ({
+      ...prev,
+      ...initialExpanded
+    }));
+  }, [folders, form47Documents]);
+
+  // Check if we have Form 47 documents that need attention
+  const hasForm47Documents = form47Documents.length > 0;
 
   return (
     <ScrollArea className="h-[calc(100vh-10rem)]">
       <div className="pr-4">
+        {/* Show alert for Form 47 documents */}
+        {hasForm47Documents && (
+          <Alert className="mb-4 bg-primary/10 border-primary/20">
+            <AlertCircle className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-sm">
+              {form47Documents.length} Form 47 document{form47Documents.length > 1 ? 's' : ''} available. 
+              Double-click on the document to open it.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {folders.length > 0 ? (
           <FolderList
             folders={folders}

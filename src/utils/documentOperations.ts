@@ -1,4 +1,3 @@
-
 /**
  * Creates a detailed risk assessment for Form 47 Consumer Proposal documents
  * @param documentId The document ID to create the risk assessment for
@@ -244,10 +243,13 @@ export const uploadDocument = async (file: File) => {
 
     // Check for Form 47 in the filename or content
     const isForm47 = file.name.toLowerCase().includes('form 47') || 
-                    file.name.toLowerCase().includes('consumer proposal');
+                    file.name.toLowerCase().includes('consumer proposal') ||
+                    file.name.toLowerCase().includes('f47');
     
     // Check for Form 76 in the filename
-    const isForm76 = file.name.toLowerCase().includes('form 76');
+    const isForm76 = file.name.toLowerCase().includes('form 76') || 
+                     file.name.toLowerCase().includes('statement of affairs') ||
+                     file.name.toLowerCase().includes('f76');
     
     // Check for financial documents
     const isFinancial = file.name.toLowerCase().includes('statement') ||
@@ -284,7 +286,7 @@ export const uploadDocument = async (file: File) => {
         
         logger.info(`Client folder: ${clientName}, ID: ${clientFolderId}`);
         
-        // Create appropriate subfolder based on document type
+        // Create appropriate subfolder based on document type - always create a Forms subfolder for form documents
         let subfolderName = "Documents";
         let subfolderType = "general";
         
