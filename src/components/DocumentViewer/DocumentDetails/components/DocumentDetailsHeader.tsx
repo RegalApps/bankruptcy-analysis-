@@ -34,19 +34,19 @@ export const DocumentDetailsHeader: React.FC<DocumentDetailsHeaderProps> = ({
         )}
       </div>
       {!isEditing ? (
-        <Button variant="ghost" size="sm" onClick={handleEdit}>
-          <Pencil className="h-4 w-4 mr-2" />
-          Edit Details
+        <Button variant="ghost" size="sm" onClick={handleEdit} className="h-8">
+          <Pencil className="h-3.5 w-3.5 mr-1.5" />
+          Edit
         </Button>
       ) : (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSaving}>
-            <X className="h-4 w-4 mr-2" />
+          <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSaving} className="h-8">
+            <X className="h-3.5 w-3.5 mr-1.5" />
             Cancel
           </Button>
-          <Button variant="default" size="sm" onClick={handleSave} disabled={isSaving}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Saving...' : 'Save Changes'}
+          <Button variant="default" size="sm" onClick={handleSave} disabled={isSaving} className="h-8">
+            <Save className="h-3.5 w-3.5 mr-1.5" />
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </div>
       )}

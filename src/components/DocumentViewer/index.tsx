@@ -7,6 +7,7 @@ import { CollaborationPanel } from "./CollaborationPanel";
 import { LoadingState } from "./LoadingState";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -71,15 +72,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
                   document.title?.toLowerCase().includes('consumer proposal');
 
   return (
-    <div className="h-full max-h-[calc(100vh-10rem)]">
-      <div className="grid grid-cols-12 gap-4 h-full">
-        {/* Left Panel - Document Summary & Details - Adjusted size based on document type */}
-        <div className={`${isForm47 ? 'col-span-4 lg:col-span-3' : 'col-span-3 lg:col-span-2'} h-full overflow-hidden`}>
+    <div className="h-full max-h-[calc(100vh-10rem)] bg-background/50 rounded-lg shadow-sm overflow-hidden">
+      <div className="grid grid-cols-12 h-full divide-x divide-border/50">
+        {/* Left Panel - Document Summary & Details */}
+        <div className={`${isForm47 ? 'col-span-12 md:col-span-4 lg:col-span-3' : 'col-span-12 md:col-span-3 lg:col-span-2'} h-full overflow-hidden border-r border-border/50`}>
           <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
         </div>
         
-        {/* Center Panel - Document Viewer - Adjusted size based on document type */}
-        <div className={`${isForm47 ? 'col-span-5 lg:col-span-6' : 'col-span-6 lg:col-span-7'} h-full overflow-hidden`}>
+        {/* Center Panel - Document Viewer */}
+        <div className={`${isForm47 ? 'col-span-12 md:col-span-8 lg:col-span-6' : 'col-span-12 md:col-span-9 lg:col-span-7'} h-full overflow-hidden border-r border-border/50`}>
           <div className="h-full flex flex-col">
             <DocumentPreview 
               storagePath={document.storage_path} 
@@ -89,8 +90,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
           </div>
         </div>
         
-        {/* Right Panel - Collaboration - Fixed size */}
-        <div className="col-span-3 h-full overflow-hidden">
+        {/* Right Panel - Collaboration */}
+        <div className="col-span-12 lg:col-span-3 h-full overflow-hidden">
           <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
         </div>
       </div>

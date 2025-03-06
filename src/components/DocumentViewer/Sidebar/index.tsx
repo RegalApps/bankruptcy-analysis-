@@ -32,18 +32,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   logger.debug('Full document data:', document);
 
   return (
-    <Card className="h-full">
-      <div className="p-3">
+    <div className="h-full bg-card/50">
+      <div className="p-4 border-b border-border/50">
         <DocumentHeader 
           title={document.title} 
           type={isForm47 ? 'form-47' : document.type} 
         />
       </div>
       
-      <ScrollArea className="h-[calc(100vh-12rem)] pr-1">
-        <div className="px-3 pb-4 space-y-4">
-          <div className="rounded-md bg-muted/50 p-3">
-            <div className="flex items-center gap-2 mb-2">
+      <ScrollArea className="h-[calc(100vh-14rem)] pr-1">
+        <div className="px-4 py-3 space-y-5">
+          <div className="rounded-md bg-muted/80 p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
               <FileText className="h-4 w-4 text-primary" />
               <h3 className="font-medium text-sm">
                 {isForm47 ? 'Consumer Proposal Summary' : 'Document Summary'}
@@ -52,14 +52,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
             {extractedInfo?.summary ? (
               <p className="text-sm text-muted-foreground">{extractedInfo.summary}</p>
             ) : (
-              <div className="text-center py-2">
+              <div className="text-center py-3 bg-background/50 rounded-md">
                 <p className="text-xs text-muted-foreground">No summary available</p>
                 <p className="text-xs mt-1">Try analyzing the document to generate a summary</p>
               </div>
             )}
           </div>
           
-          <Separator />
+          <Separator className="my-4" />
           
           <DocumentDetails
             documentId={document.id}
@@ -84,10 +84,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
             summary={extractedInfo?.summary}
           />
           
-          <Separator />
+          <Separator className="my-4" />
           
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
+          <div className="rounded-md bg-muted/80 p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="h-4 w-4 text-red-500" />
               <h3 className="font-medium text-sm">
                 {isForm47 ? 'Consumer Proposal Compliance' : 'Risk Assessment'}
@@ -99,10 +99,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
             />
           </div>
           
-          <Separator />
+          <Separator className="my-4" />
           
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
+          <div className="rounded-md bg-muted/80 p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
               <Calendar className="h-4 w-4 text-blue-500" />
               <h3 className="font-medium text-sm">
                 {isForm47 ? 'Proposal Deadlines' : 'Deadlines & Compliance'}
@@ -116,17 +116,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
           
           {isForm47 && (
             <>
-              <Separator />
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
+              <Separator className="my-4" />
+              <div className="rounded-md bg-muted/80 p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
                   <FileSpreadsheet className="h-4 w-4 text-green-500" />
                   <h3 className="font-medium text-sm">Payment Schedule</h3>
                 </div>
-                <div className="text-sm p-3 bg-muted/30 rounded-md">
+                <div className="bg-background/50 rounded-md p-3">
                   {extractedInfo?.paymentSchedule ? (
-                    <p className="text-muted-foreground">{extractedInfo.paymentSchedule}</p>
+                    <p className="text-sm text-muted-foreground">{extractedInfo.paymentSchedule}</p>
                   ) : (
-                    <p className="text-muted-foreground italic text-xs">
+                    <p className="text-muted-foreground italic text-xs text-center">
                       No payment schedule information available
                     </p>
                   )}
@@ -136,6 +136,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
           )}
         </div>
       </ScrollArea>
-    </Card>
+    </div>
   );
 };
