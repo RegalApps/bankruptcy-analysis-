@@ -1,3 +1,4 @@
+
 /**
  * Creates a detailed risk assessment for Form 47 Consumer Proposal documents
  * @param documentId The document ID to create the risk assessment for
@@ -180,6 +181,65 @@ export const createForm47RiskAssessment = async (documentId: string): Promise<vo
 
   } catch (error) {
     console.error('Error creating Form 47 risk assessment:', error);
+    throw error;
+  }
+};
+
+/**
+ * Uploads a document file and creates a database record for it
+ * @param file The document file to upload
+ * @returns The created document data or null if there was an error
+ */
+export const uploadDocument = async (file: File) => {
+  try {
+    // Create a unique file path for storage
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+    // Upload the file to Supabase storage
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+
+    // Check for Form 47 in the filename or content
+    const isForm47 = file.name.toLowerCase().includes('form 47') || 
+                    file.name.toLowerCase().includes('consumer proposal');
+    
+    // Create a database record for the document
+    const { data: documentData, error: dbError } = await supabase
+      .from('documents')
+      .insert({
+        title: file.name,
+        type: file.type,
+        size: file.size,
+        storage_path: filePath,
+        user_id: user?.id,
+        ai_processing_status: 'pending',
+        metadata: {
+          formType: isForm47 ? 'form-47' : null,
+          uploadDate: new Date().toISOString(),
+          documentStatus: isForm47 ? "Draft - Pending Review" : "Uploaded"
+        }
+      })
+      .select()
+      .single();
+
+    if (dbError) throw dbError;
+
+    // If this is a Form 47, create a risk assessment for it
+    if (isForm47) {
+      await createForm47RiskAssessment(documentData.id);
+    }
+
+    return documentData;
+  } catch (error) {
+    console.error('Error uploading document:', error);
     throw error;
   }
 };
