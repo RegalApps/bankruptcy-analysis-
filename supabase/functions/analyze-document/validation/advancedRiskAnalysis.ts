@@ -54,117 +54,64 @@ export const performRiskAnalysis = async (
 function getPredefinedForm76Risks() {
   const risks = [
     {
-      category: 'financial',
-      description: 'Missing financial details',
+      category: 'compliance',
+      description: 'Missing Financial Details',
       severity: 'high',
       regulatoryReference: 'BIA Section 158(d)',
       impact: 'Form incomplete, cannot be processed',
       requiredAction: 'Ensure the form includes full asset & liability disclosure',
-      solution: 'Ensure the form includes full asset & liability disclosure'
+      solution: 'Complete all financial disclosure sections',
+      deadline: '7 days'
     },
     {
       category: 'legal',
-      description: 'No debtor signature',
+      description: 'No Debtor Signature',
       severity: 'high',
       regulatoryReference: 'BIA Section 66',
-      impact: 'Document may be invalid',
+      impact: 'Document is invalid without debtor signature',
       requiredAction: 'Obtain official debtor signature before processing',
-      solution: 'Obtain official debtor signature before processing'
+      solution: 'Use e-signature system to collect debtor signature',
+      deadline: 'Immediately'
+    },
+    {
+      category: 'legal',
+      description: 'No Trustee Signature',
+      severity: 'high',
+      regulatoryReference: 'BIA Directive 1R6',
+      impact: 'Cannot verify trustee authorization',
+      requiredAction: 'Obtain trustee signature for validation',
+      solution: 'Send e-signature request to assigned trustee',
+      deadline: '3 days'
     },
     {
       category: 'compliance',
-      description: 'No trustee credentials',
+      description: 'No Trustee Credentials',
       severity: 'medium',
       regulatoryReference: 'OSB Directive 13R',
       impact: 'Cannot verify trustee authority',
       requiredAction: 'Verify trustee registration with OSB',
-      solution: 'Verify trustee registration with OSB'
+      solution: 'Add trustee license number to document',
+      deadline: '5 days'
     },
     {
       category: 'document',
-      description: 'Missing court reference',
+      description: 'Missing Court Reference',
       severity: 'medium',
       regulatoryReference: 'BIA Procedure',
       impact: 'Difficult to track in system',
       requiredAction: 'Attach court case number for tracking',
-      solution: 'Attach court case number for tracking'
-    }
-  ];
-  
-  return {
-    risks,
-    riskScore: 75,
-    recommendations: [
-      'Review and verify financial information: Missing financial details',
-      'Obtain official debtor signature before processing',
-      'Verify trustee credentials with OSB',
-      'Add court case number for tracking purposes'
-    ]
-  };
-}
-
-// Pre-defined risk assessment for Form 47 (Consumer Proposal)
-function getPredefinedForm47Risks() {
-  const risks = [
-    {
-      category: 'compliance',
-      description: 'Secured Creditors Payment Terms Missing',
-      severity: 'high',
-      regulatoryReference: 'BIA Section 66.13(2)(c)',
-      impact: 'Non-compliance with BIA Sec. 66.13(2)(c)',
-      requiredAction: 'Specify how secured debts will be paid',
-      solution: 'Add detailed payment terms for secured creditors',
-      deadline: 'Immediately'
+      solution: 'Update form with official court reference number',
+      deadline: 'Before filing'
     },
     {
-      category: 'compliance',
-      description: 'Unsecured Creditors Payment Plan Not Provided',
-      severity: 'high',
-      regulatoryReference: 'BIA Section 66.14',
-      impact: 'Proposal will be invalid under BIA Sec. 66.14',
-      requiredAction: 'Add a structured payment plan for unsecured creditors',
-      solution: 'Create detailed payment schedule for unsecured creditors',
-      deadline: 'Immediately'
-    },
-    {
-      category: 'compliance',
-      description: 'No Dividend Distribution Schedule',
-      severity: 'high',
-      regulatoryReference: 'BIA Section 66.15',
-      impact: 'Fails to meet regulatory distribution rules',
-      requiredAction: 'Define how funds will be distributed among creditors',
-      solution: 'Add dividend distribution schedule with percentages and timeline',
-      deadline: 'Immediately'
-    },
-    {
-      category: 'compliance',
-      description: 'Administrator Fees & Expenses Not Specified',
+      category: 'document',
+      description: 'Missing Witness Signature',
       severity: 'medium',
-      regulatoryReference: 'OSB Directive',
-      impact: 'Can delay approval from the Office of the Superintendent of Bankruptcy (OSB)',
-      requiredAction: 'Detail administrator fees to meet regulatory transparency',
-      solution: 'Specify administrator fees and expenses with breakdown',
-      deadline: '3 days'
-    },
-    {
-      category: 'legal',
-      description: 'Proposal Not Signed by Witness',
-      severity: 'medium',
-      regulatoryReference: 'BIA Requirement',
+      regulatoryReference: 'BIA Procedure',
       impact: 'May cause legal delays',
-      requiredAction: 'Ensure a witness signs before submission',
-      solution: 'Obtain witness signature on proposal document',
+      requiredAction: 'Ensure witness signs the document',
+      solution: 'Obtain witness signature through e-signature system',
       deadline: '3 days'
-    },
-    {
-      category: 'compliance',
-      description: 'No Additional Terms Specified',
-      severity: 'low',
-      regulatoryReference: 'BIA Best Practice',
-      impact: 'Could be required for unique creditor terms',
-      requiredAction: 'Add custom clauses if applicable',
-      solution: 'Review if additional terms are needed for special cases',
-      deadline: '5 days'
     }
   ];
   
@@ -172,12 +119,12 @@ function getPredefinedForm47Risks() {
     risks,
     riskScore: 85,
     recommendations: [
-      'Specify how secured debts will be paid',
-      'Add a structured payment plan for unsecured creditors',
-      'Define dividend distribution schedule among creditors',
-      'Detail administrator fees to meet regulatory transparency',
-      'Ensure a witness signs the proposal before submission',
-      'Consider adding custom clauses for special creditor arrangements'
+      'Ensure the form includes full asset & liability disclosure',
+      'Obtain official debtor signature before processing',
+      'Obtain trustee signature for validation',
+      'Verify trustee registration with OSB',
+      'Attach court case number for tracking purposes',
+      'Ensure witness signs the document'
     ]
   };
 }

@@ -72,6 +72,11 @@ export const uploadDocument = async (file: File) => {
     if (isForm76) {
       clientName = extractClientName(file.name);
       formType = 'form-76';
+      
+      // Set a default submission deadline for Form 76 (21 days from now)
+      const deadlineDate = new Date();
+      deadlineDate.setDate(deadlineDate.getDate() + 21);
+      submissionDeadline = deadlineDate.toISOString();
     } else if (isForm47) {
       clientName = extractForm47ClientName(file.name);
       formType = 'form-47';
@@ -103,15 +108,23 @@ export const uploadDocument = async (file: File) => {
           upload_id: uniqueId,
           filingDate: filingDate,
           submissionDeadline: submissionDeadline,
-          requiresSignature: isForm47, // Flag that Form 47 requires signatures
-          signatureStatus: isForm47 ? 'pending' : null,
-          signaturesRequired: isForm47 ? ['debtor', 'administrator', 'witness'] : []
+          // Add signature requirements for Form 76
+          requiresSignature: isForm76 || isForm47, 
+          signatureStatus: (isForm76 || isForm47) ? 'pending' : null,
+          // Set required signatures based on form type
+          signaturesRequired: isForm76 
+            ? ['debtor', 'trustee', 'witness'] 
+            : isForm47 
+              ? ['debtor', 'administrator', 'witness'] 
+              : []
         },
-        // Add deadline for Form 47
-        deadlines: isForm47 ? [{
-          title: "Form 47 Submission Deadline",
+        // Add deadline for the appropriate form
+        deadlines: (isForm76 || isForm47) ? [{
+          title: isForm76 ? "Form 76 Filing Deadline" : "Form 47 Submission Deadline",
           dueDate: submissionDeadline,
-          description: "Consumer Proposal must be submitted before this date"
+          description: isForm76 
+            ? "Statement of Affairs must be filed before this date" 
+            : "Consumer Proposal must be submitted before this date"
         }] : []
       })
       .select()
@@ -125,16 +138,16 @@ export const uploadDocument = async (file: File) => {
     console.log("Document record created with ID:", documentData.id);
     console.log("Document storage_path set to:", filePath);
 
-    // Create notification for Form 47 deadline if applicable
-    if (isForm47 && submissionDeadline) {
+    // Create notification for form deadline if applicable
+    if ((isForm76 || isForm47) && submissionDeadline) {
       try {
         await supabase.functions.invoke('handle-notifications', {
           body: {
             action: 'create',
             userId: user.id,
             notification: {
-              title: 'Form 47 Submission Deadline',
-              message: `Consumer Proposal for ${clientName} must be submitted by ${new Date(submissionDeadline).toLocaleDateString()}`,
+              title: isForm76 ? 'Form 76 Filing Deadline' : 'Form 47 Submission Deadline',
+              message: `${isForm76 ? 'Statement of Affairs' : 'Consumer Proposal'} for ${clientName} must be submitted by ${new Date(submissionDeadline).toLocaleDateString()}`,
               type: 'reminder',
               priority: 'high',
               category: 'deadline',
@@ -143,7 +156,7 @@ export const uploadDocument = async (file: File) => {
                 documentId: documentData.id,
                 deadlineType: 'submission',
                 dueDate: submissionDeadline,
-                formType: 'form-47'
+                formType: isForm76 ? 'form-76' : 'form-47'
               }
             }
           }

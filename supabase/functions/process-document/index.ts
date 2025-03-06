@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -33,6 +32,9 @@ serve(async (req) => {
       const isForm47 = document?.metadata?.formType === 'form-47' || 
                      document?.title?.toLowerCase().includes('form 47');
       
+      const isForm76 = document?.metadata?.formType === 'form-76' || 
+                     document?.title?.toLowerCase().includes('form 76');
+      
       // Record the signature
       const { data: signature, error: signatureError } = await supabase
         .from('signatures')
@@ -48,8 +50,8 @@ serve(async (req) => {
 
       if (signatureError) throw signatureError;
       
-      // Update document metadata to track signature workflow for Form 47
-      if (isForm47) {
+      // Update document metadata to track signature workflow for forms requiring signatures
+      if (isForm47 || isForm76) {
         // Get current signatures from metadata
         const currentSignatures = document.metadata.signatures || [];
         const signedParties = document.metadata.signedParties || [];
@@ -68,7 +70,9 @@ serve(async (req) => {
         }
         
         // Check if all required signatures are collected
-        const requiredParties = document.metadata.signaturesRequired || ['debtor', 'administrator', 'witness'];
+        const requiredParties = document.metadata.signaturesRequired || 
+          (isForm76 ? ['debtor', 'trustee', 'witness'] : ['debtor', 'administrator', 'witness']);
+        
         const allSigned = requiredParties.every(party => signedParties.includes(party));
         
         // Update the document metadata
@@ -104,7 +108,7 @@ serve(async (req) => {
             metadata: {
               documentId,
               signatureId: signature.id,
-              formType: 'form-47',
+              formType: isForm76 ? 'form-76' : 'form-47',
               signatureStatus: allSigned ? 'completed' : 'in_progress',
               partyType: partyType
             }
@@ -135,7 +139,8 @@ serve(async (req) => {
         JSON.stringify({ 
           message: 'Document signed successfully',
           signature_id: signature.id,
-          is_complete: isForm47 ? (document.metadata.signedParties || []).length === (document.metadata.signaturesRequired || []).length : true
+          is_complete: (isForm47 || isForm76) ? 
+            (document.metadata.signedParties || []).length === (document.metadata.signaturesRequired || []).length : true
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

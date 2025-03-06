@@ -9,3 +9,9 @@ export interface Risk {
   solution?: string;
   deadline?: string;
 }
+
+export interface RiskAssessmentProps {
+  documentId: string;
+  risks?: Risk[];
+  isLoading?: boolean;
+}

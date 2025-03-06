@@ -43,12 +43,12 @@ export const riskAssessment = async (
         {
           type: "Signature Verification",
           description: "Form 76 requires both debtor and trustee signatures to be valid",
-          severity: "medium",
+          severity: "high",
           regulation: "BIA Directive 1R6",
           impact: "Without proper signatures, the form may be rejected",
           requiredAction: "Verify all required signatures are present",
           solution: "Obtain missing signatures if needed",
-          deadline: "5 days"
+          deadline: "Immediately"
         },
         {
           type: "Disclosure Accuracy",
@@ -59,6 +59,26 @@ export const riskAssessment = async (
           requiredAction: "Verify accuracy of all disclosed information",
           solution: "Review and validate all provided information",
           deadline: "10 days"
+        },
+        {
+          type: "Missing Witness Signature",
+          description: "Form 76 requires witness signature for legal validation",
+          severity: "medium",
+          regulation: "BIA Procedure",
+          impact: "May cause legal delays in processing",
+          requiredAction: "Ensure a witness signs the document",
+          solution: "Obtain witness signature before submission",
+          deadline: "3 days"
+        },
+        {
+          type: "Court Reference Missing",
+          description: "Form 76 should include court case reference for filing",
+          severity: "low",
+          regulation: "BIA Best Practice",
+          impact: "Difficult to track in court system",
+          requiredAction: "Add court case number if available",
+          solution: "Update document with court reference number",
+          deadline: "Before filing"
         }
       ];
       
