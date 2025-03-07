@@ -15,7 +15,7 @@ export const ReadOnlyFields: React.FC<ReadOnlyFieldsProps> = ({ fields }) => {
               {field.icon && <span className="text-primary/80 mr-1.5">{field.icon}</span>}
               <span className="text-xs font-medium text-muted-foreground">{field.label}:</span>
             </div>
-            <span className="text-sm">{field.value}</span>
+            <span className="text-sm text-foreground">{field.value}</span>
           </div>
         ) : null
       )}

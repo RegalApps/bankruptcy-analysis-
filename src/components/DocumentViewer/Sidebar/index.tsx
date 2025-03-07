@@ -39,12 +39,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
         />
       </div>
       
-      <ScrollArea className="h-[calc(100vh-14rem)] pr-1">
-        <div className="px-4 py-3 space-y-4">
-          <div className="rounded-md bg-muted/30 p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
+      <ScrollArea className="h-[calc(100vh-14rem)] pr-2">
+        <div className="px-3 py-3 space-y-4">
+          <div className="sidebar-section">
+            <div className="sidebar-section-header">
               <FileText className="h-4 w-4 text-primary" />
-              <h3 className="font-medium text-sm">
+              <h3 className="sidebar-section-title">
                 {isForm47 ? 'Consumer Proposal Summary' : 'Document Summary'}
               </h3>
             </div>
@@ -58,37 +58,39 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
             )}
           </div>
           
-          <Separator className="my-4" />
+          <Separator className="my-3" />
           
-          <DocumentDetails
-            documentId={document.id}
-            formType={extractedInfo?.formType ?? document.type}
-            clientName={extractedInfo?.clientName}
-            trusteeName={extractedInfo?.trusteeName}
-            administratorName={extractedInfo?.administratorName}
-            dateSigned={extractedInfo?.dateSigned}
-            formNumber={extractedInfo?.formNumber}
-            estateNumber={extractedInfo?.estateNumber}
-            district={extractedInfo?.district}
-            divisionNumber={extractedInfo?.divisionNumber}
-            courtNumber={extractedInfo?.courtNumber}
-            meetingOfCreditors={extractedInfo?.meetingOfCreditors}
-            chairInfo={extractedInfo?.chairInfo}
-            securityInfo={extractedInfo?.securityInfo}
-            dateBankruptcy={extractedInfo?.dateBankruptcy}
-            officialReceiver={extractedInfo?.officialReceiver}
-            filingDate={extractedInfo?.filingDate}
-            submissionDeadline={extractedInfo?.submissionDeadline}
-            documentStatus={extractedInfo?.documentStatus}
-            summary={extractedInfo?.summary}
-          />
+          <div className="sidebar-section">
+            <DocumentDetails
+              documentId={document.id}
+              formType={extractedInfo?.formType ?? document.type}
+              clientName={extractedInfo?.clientName}
+              trusteeName={extractedInfo?.trusteeName}
+              administratorName={extractedInfo?.administratorName}
+              dateSigned={extractedInfo?.dateSigned}
+              formNumber={extractedInfo?.formNumber}
+              estateNumber={extractedInfo?.estateNumber}
+              district={extractedInfo?.district}
+              divisionNumber={extractedInfo?.divisionNumber}
+              courtNumber={extractedInfo?.courtNumber}
+              meetingOfCreditors={extractedInfo?.meetingOfCreditors}
+              chairInfo={extractedInfo?.chairInfo}
+              securityInfo={extractedInfo?.securityInfo}
+              dateBankruptcy={extractedInfo?.dateBankruptcy}
+              officialReceiver={extractedInfo?.officialReceiver}
+              filingDate={extractedInfo?.filingDate}
+              submissionDeadline={extractedInfo?.submissionDeadline}
+              documentStatus={extractedInfo?.documentStatus}
+              summary={extractedInfo?.summary}
+            />
+          </div>
           
-          <Separator className="my-4" />
+          <Separator className="my-3" />
           
-          <div className="rounded-md bg-muted/30 p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
+          <div className="sidebar-section">
+            <div className="sidebar-section-header">
               <AlertTriangle className="h-4 w-4 text-red-500" />
-              <h3 className="font-medium text-sm">
+              <h3 className="sidebar-section-title">
                 {isForm47 ? 'Consumer Proposal Compliance' : 'Risk Assessment'}
               </h3>
             </div>
@@ -98,12 +100,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
             />
           </div>
           
-          <Separator className="my-4" />
+          <Separator className="my-3" />
           
-          <div className="rounded-md bg-muted/30 p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
+          <div className="sidebar-section">
+            <div className="sidebar-section-header">
               <Calendar className="h-4 w-4 text-blue-500" />
-              <h3 className="font-medium text-sm">
+              <h3 className="sidebar-section-title">
                 {isForm47 ? 'Proposal Deadlines' : 'Deadlines & Compliance'}
               </h3>
             </div>
@@ -115,11 +117,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
           
           {isForm47 && (
             <>
-              <Separator className="my-4" />
-              <div className="rounded-md bg-muted/30 p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
+              <Separator className="my-3" />
+              <div className="sidebar-section">
+                <div className="sidebar-section-header">
                   <FileSpreadsheet className="h-4 w-4 text-green-500" />
-                  <h3 className="font-medium text-sm">Payment Schedule</h3>
+                  <h3 className="sidebar-section-title">Payment Schedule</h3>
                 </div>
                 <div className="bg-background/50 rounded-md p-3">
                   {extractedInfo?.paymentSchedule ? (

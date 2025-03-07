@@ -146,4 +146,36 @@
   .doc-card-content {
     @apply text-sm text-muted-foreground;
   }
+
+  /* Better document sidebar readability */
+  .sidebar-section {
+    @apply bg-white dark:bg-card/30 rounded-md shadow-sm p-4 mb-4;
+  }
+  
+  .sidebar-section-header {
+    @apply flex items-center gap-2 mb-3 pb-2 border-b border-border/50;
+  }
+  
+  .sidebar-section-title {
+    @apply font-medium text-sm text-foreground;
+  }
+  
+  .collaboration-panel-bottom {
+    @apply fixed bottom-0 left-0 right-0 bg-white dark:bg-background border-t border-border/50;
+    height: 300px;
+    z-index: 50;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  .document-field-row {
+    @apply flex items-start py-2 border-b border-muted/50 last:border-0;
+  }
+  
+  .document-field-label {
+    @apply flex items-center min-w-[120px] text-xs font-medium text-muted-foreground;
+  }
+  
+  .document-field-value {
+    @apply text-sm text-foreground;
+  }
 }

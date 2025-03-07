@@ -65,7 +65,7 @@ const Index = () => {
   return (
     <MainLayout>
       {selectedDocument ? (
-        <div className="h-full py-2">
+        <div className="h-full">
           <div className="mb-1">
             <Button
               variant="ghost"

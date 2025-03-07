@@ -6,7 +6,6 @@ import { DocumentViewerFrame } from "./components/DocumentViewerFrame";
 import { useDocumentPreview } from "./hooks/useDocumentPreview";
 import usePreviewState from "./hooks/usePreviewState";
 import { ErrorDisplay } from "./components/ErrorDisplay";
-import { useDocumentAnalysis } from "../hooks/useDocumentAnalysis";
 
 interface DocumentPreviewProps {
   storagePath: string;
