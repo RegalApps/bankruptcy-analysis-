@@ -14,6 +14,7 @@ export const useAuthState = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Handle URL error parameters
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const errorCode = params.get('error');
@@ -36,12 +37,22 @@ export const useAuthState = () => {
     }
   }, [navigate, toast]);
 
+  // Initialize auth state and set up listeners
   useEffect(() => {
     console.log("Initializing auth state...");
     setIsLoading(true);
     
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
       console.log("Session state:", session);
+      
+      if (error) {
+        console.error("Error fetching session:", error);
+        setAuthError(error.message);
+        setIsLoading(false);
+        return;
+      }
+      
       setSession(session);
       
       if (session?.user) {
@@ -57,12 +68,9 @@ export const useAuthState = () => {
       }
       
       setIsLoading(false);
-    }).catch(error => {
-      console.error("Error fetching session:", error);
-      setIsLoading(false);
-      setAuthError(error.message);
     });
 
+    // Subscribe to auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -93,20 +101,44 @@ export const useAuthState = () => {
             description: "Your email has been successfully confirmed.",
           });
         }
+      } else if (event === 'TOKEN_REFRESHED') {
+        setSession(session);
+      } else if (event === 'PASSWORD_RECOVERY') {
+        toast({
+          title: "Password Recovery",
+          description: "Check your email to reset your password.",
+        });
+      } else if (event === 'USER_DELETED') {
+        setSession(null);
+        toast({
+          title: "Account Deleted",
+          description: "Your account has been deleted.",
+        });
+        navigate('/');
       }
       
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [toast]);
+  }, [toast, navigate]);
 
+  // Handle sign out
   const handleSignOut = async () => {
+    setIsLoading(true);
     try {
       await authService.signOut();
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing out:", error);
+      setAuthError(error.message || "Failed to sign out");
+      toast({
+        variant: "destructive",
+        title: "Sign Out Error",
+        description: error.message || "Failed to sign out",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
