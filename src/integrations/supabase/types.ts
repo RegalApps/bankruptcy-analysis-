@@ -249,6 +249,48 @@ export type Database = {
         }
         Relationships: []
       }
+      document_access_history: {
+        Row: {
+          access_source: string | null
+          accessed_at: string | null
+          document_id: string
+          id: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_source?: string | null
+          accessed_at?: string | null
+          document_id: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_source?: string | null
+          accessed_at?: string | null
+          document_id?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_access_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "available_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_document_id"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_analysis: {
         Row: {
           content: string | null

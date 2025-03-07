@@ -18,7 +18,24 @@ export const RecentlyAccessedPage = () => {
   const [uploadStep, setUploadStep] = useState("");
   const { toast } = useToast();
 
-  const handleDocumentSelect = (documentId: string) => {
+  const handleDocumentSelect = async (documentId: string) => {
+    try {
+      // Record document access before navigating
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Insert record into document_access_history
+        await supabase.from('document_access_history').insert({
+          user_id: user.id,
+          document_id: documentId,
+          access_source: 'homepage',
+          session_id: Math.random().toString(36).substring(2, 15) // Simple session ID
+        });
+      }
+    } catch (error) {
+      console.error("Error recording document access:", error);
+    }
+    
     navigate('/', { state: { selectedDocument: documentId } });
   };
 
@@ -144,10 +161,16 @@ export const RecentlyAccessedPage = () => {
         
         // Record the document access before navigating
         try {
-          await supabase.from('document_access_history').insert({
-            document_id: documentData.id,
-            accessed_at: new Date().toISOString(),
-          });
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            await supabase.from('document_access_history').insert({
+              user_id: user.id,
+              document_id: documentData.id,
+              access_source: 'upload',
+              session_id: Math.random().toString(36).substring(2, 15) // Simple session ID
+            });
+          }
         } catch (error) {
           console.error("Error recording document access:", error);
         }

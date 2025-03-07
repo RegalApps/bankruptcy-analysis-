@@ -31,23 +31,63 @@ export const RecentDocuments = ({ onDocumentSelect }: RecentDocumentsProps) => {
       try {
         setIsLoading(true);
         
-        // In a real implementation, we would join with document_access_history
-        // For now, we'll just fetch recent documents
-        const { data, error } = await supabase
-          .from('documents')
-          .select('*')
-          .order('created_at', { ascending: false })
+        // Get recent document access history
+        const { data: accessHistory, error: accessError } = await supabase
+          .from('document_access_history')
+          .select('document_id, accessed_at')
+          .order('accessed_at', { ascending: false })
           .limit(10);
           
-        if (error) throw error;
+        if (accessError) throw accessError;
         
-        // Add last_accessed field (in a real app, this would come from access history)
-        const docsWithAccess = data?.map(doc => ({
-          ...doc,
-          last_accessed: doc.updated_at || doc.created_at
-        }));
+        if (!accessHistory || accessHistory.length === 0) {
+          // Fall back to recent documents if no access history
+          const { data: recentDocs, error: recentError } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('is_folder', false)
+            .order('created_at', { ascending: false })
+            .limit(10);
+            
+          if (recentError) throw recentError;
+          
+          const docsWithAccess = recentDocs?.map(doc => ({
+            ...doc,
+            last_accessed: doc.updated_at || doc.created_at,
+            client_name: doc.metadata?.client_name
+          })) || [];
+          
+          setDocuments(docsWithAccess);
+          setIsLoading(false);
+          return;
+        }
         
-        setDocuments(docsWithAccess || []);
+        // Get documents from the access history
+        const documentIds = accessHistory.map(record => record.document_id);
+        const { data: docs, error: docsError } = await supabase
+          .from('documents')
+          .select('*')
+          .in('id', documentIds)
+          .eq('is_folder', false);
+          
+        if (docsError) throw docsError;
+        
+        // Map the access time to each document
+        const accessedDocs = docs?.map(doc => {
+          const accessRecord = accessHistory.find(record => record.document_id === doc.id);
+          return {
+            ...doc,
+            last_accessed: accessRecord?.accessed_at || doc.updated_at || doc.created_at,
+            client_name: doc.metadata?.client_name
+          };
+        }) || [];
+        
+        // Sort by last accessed time
+        accessedDocs.sort((a, b) => {
+          return new Date(b.last_accessed).getTime() - new Date(a.last_accessed).getTime();
+        });
+        
+        setDocuments(accessedDocs);
       } catch (error) {
         console.error('Error fetching recent documents:', error);
         toast({

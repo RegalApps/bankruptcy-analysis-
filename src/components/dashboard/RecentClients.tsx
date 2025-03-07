@@ -28,37 +28,54 @@ export const RecentClients = ({ onClientSelect }: RecentClientsProps) => {
       try {
         setIsLoading(true);
         
-        // In a real implementation, we would fetch from a client_access_history table
-        // For demo purposes, we'll fetch from documents with client info
-        const { data, error } = await supabase
-          .from('documents')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(10);
+        // Fetch recent document access history
+        const { data: accessHistory, error: accessError } = await supabase
+          .from('document_access_history')
+          .select('document_id, accessed_at')
+          .order('accessed_at', { ascending: false })
+          .limit(20);
           
-        if (error) throw error;
+        if (accessError) throw accessError;
         
-        // Extract unique client names from documents
-        // In a real implementation, this would come from a proper clients table
+        if (!accessHistory || accessHistory.length === 0) {
+          setIsLoading(false);
+          return;
+        }
+        
+        // Get document details for the accessed documents
+        const documentIds = accessHistory.map(record => record.document_id);
+        const { data: documents, error: docsError } = await supabase
+          .from('documents')
+          .select('id, title, metadata, created_at, folder_type')
+          .in('id', documentIds);
+          
+        if (docsError) throw docsError;
+        
+        // Extract client information from the documents
         const clientMap = new Map<string, Client>();
         
-        data?.forEach(doc => {
-          const clientName = doc.client_name || 'Unknown Client';
-          const clientId = doc.client_id || doc.id;
+        documents?.forEach(doc => {
+          const clientName = doc.metadata?.client_name || 'Unknown Client';
+          const clientId = doc.metadata?.client_id || doc.id;
           
-          if (!clientMap.has(clientId)) {
-            clientMap.set(clientId, {
-              id: clientId,
-              name: clientName,
-              last_accessed: doc.created_at,
-              document_count: 1
-            });
-          } else {
-            const existing = clientMap.get(clientId)!;
-            clientMap.set(clientId, {
-              ...existing,
-              document_count: existing.document_count + 1
-            });
+          // Only process if we have a client name
+          if (clientName !== 'Unknown Client') {
+            if (!clientMap.has(clientId)) {
+              const accessRecord = accessHistory.find(record => record.document_id === doc.id);
+              
+              clientMap.set(clientId, {
+                id: clientId,
+                name: clientName,
+                last_accessed: accessRecord?.accessed_at || doc.created_at,
+                document_count: 1
+              });
+            } else {
+              const existing = clientMap.get(clientId)!;
+              clientMap.set(clientId, {
+                ...existing,
+                document_count: existing.document_count + 1
+              });
+            }
           }
         });
         
