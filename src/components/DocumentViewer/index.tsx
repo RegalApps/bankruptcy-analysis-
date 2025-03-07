@@ -47,6 +47,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20">
       <ViewerLayout
         isForm47={isForm47}
+        documentTitle={document.title}
+        documentType={document.type}
         sidebar={
           <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
         }

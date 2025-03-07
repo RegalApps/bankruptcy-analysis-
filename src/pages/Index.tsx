@@ -65,7 +65,7 @@ const Index = () => {
   return (
     <MainLayout>
       {selectedDocument ? (
-        <div className="h-full">
+        <div className="h-full flex flex-col">
           <div className="mb-1">
             <Button
               variant="ghost"
@@ -76,7 +76,7 @@ const Index = () => {
               <Home className="h-3.5 w-3.5 mr-1" /> Back to Documents
             </Button>
           </div>
-          <div className="h-[calc(100%-28px)]">
+          <div className="flex-1 overflow-hidden">
             <DocumentViewer documentId={selectedDocument} />
           </div>
         </div>

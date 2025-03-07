@@ -1,13 +1,16 @@
 
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, PanelRight } from "lucide-react";
+import { ChevronDown, PanelRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface ViewerLayoutProps {
   isForm47: boolean;
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
   collaborationPanel: React.ReactNode;
+  documentTitle: string;
+  documentType: string;
 }
 
 export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
@@ -15,72 +18,90 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   sidebar,
   mainContent,
   collaborationPanel,
+  documentTitle,
+  documentType,
 }) => {
-  const [isCollabExpanded, setIsCollabExpanded] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   return (
-    <div className="h-full flex flex-col md:grid md:grid-cols-12 overflow-hidden">
-      {/* Left Panel - Document Summary & Details */}
-      <div className={`${isSidebarCollapsed ? 'md:col-span-0 hidden' : isForm47 ? 'md:col-span-3 lg:col-span-3' : 'md:col-span-3 lg:col-span-2'} h-full overflow-auto border-r border-border/50 bg-white dark:bg-background shadow-sm transition-all duration-300`}>
-        <div className="p-2 h-full">
-          {sidebar}
+    <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-background">
+      {/* Document Header - Centered at the top */}
+      <div className="flex justify-center items-center p-4 bg-muted/30 border-b">
+        <div className="flex items-center gap-4 max-w-3xl">
+          <div className="bg-muted/50 p-4 rounded-md">
+            <FileText className="h-8 w-8 text-primary" />
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold text-foreground">{documentTitle}</h1>
+            <div className="flex gap-2 mt-1">
+              {isForm47 && (
+                <div className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                  Consumer Proposal
+                </div>
+              )}
+              <div className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-sm font-medium">
+                Form {documentType.includes('47') ? '47' : documentType}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
-      {/* Toggle button for sidebar */}
-      <button 
-        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        className="fixed top-20 left-0 bg-primary text-primary-foreground p-2 rounded-r-md shadow-md z-20 flex items-center gap-1"
-      >
-        <PanelRight className="h-4 w-4" />
-      </button>
-      
-      {/* Center Panel - Document Viewer */}
-      <div className={`${
-        isCollabExpanded 
-          ? 'md:col-span-12' 
-          : isSidebarCollapsed
-            ? 'md:col-span-12'
-            : isForm47 
-              ? 'md:col-span-9 lg:col-span-9' 
-              : 'md:col-span-9 lg:col-span-10'
-        } h-full overflow-auto bg-white dark:bg-muted/10 transition-all duration-300`}>
-        <div className="h-full flex flex-col">
-          {mainContent}
-        </div>
-      </div>
-      
-      {/* Bottom Panel - Collaboration (When expanded) */}
-      {isCollabExpanded && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-background border-t border-border/50 h-64 overflow-auto z-10 shadow-lg">
-          <div className="flex justify-between items-center px-4 py-2 bg-muted/30 border-b">
-            <h3 className="text-sm font-medium">Collaboration Panel</h3>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setIsCollabExpanded(false)}
-              className="p-1 hover:bg-muted rounded-full"
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="p-3 max-h-[calc(100%-40px)] overflow-auto">
-            {collaborationPanel}
-          </div>
-        </div>
-      )}
-
-      {/* Toggle button for collaboration panel (Only visible when not expanded) */}
-      {!isCollabExpanded && (
-        <Button 
-          onClick={() => setIsCollabExpanded(true)}
-          className="fixed bottom-4 right-4 bg-primary text-primary-foreground p-2 rounded-full shadow-md z-20 flex items-center gap-1"
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Panel - Document Summary & Details */}
+        <div 
+          className={`${
+            isSidebarCollapsed ? 'w-0' : 'w-72'
+          } h-full overflow-auto border-r border-border/50 transition-all duration-300 bg-white dark:bg-background shadow-sm`}
         >
-          <ChevronUp className="h-4 w-4 mr-1" />
-          <span className="text-xs">Comments & Tasks</span>
-        </Button>
-      )}
+          {!isSidebarCollapsed && (
+            <div className="p-3 h-full overflow-auto">
+              {sidebar}
+            </div>
+          )}
+        </div>
+        
+        {/* Toggle button for sidebar */}
+        <button 
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="fixed top-24 left-0 bg-primary text-primary-foreground p-2 rounded-r-md shadow-md z-20 flex items-center gap-1"
+        >
+          <PanelRight className="h-4 w-4" />
+        </button>
+        
+        {/* Main content area with tabs at the bottom */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+          {/* Document Viewer */}
+          <div className="flex-1 overflow-auto">
+            {mainContent}
+          </div>
+          
+          {/* Tabbed interface at the bottom */}
+          <div className="border-t border-border/50">
+            <Tabs defaultValue="comments" className="w-full">
+              <div className="flex items-center justify-center border-b border-border/50">
+                <TabsList className="my-1">
+                  <TabsTrigger value="comments" className="text-xs">Comments</TabsTrigger>
+                  <TabsTrigger value="tasks" className="text-xs">Tasks</TabsTrigger>
+                  <TabsTrigger value="versions" className="text-xs">Versions</TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <div className="h-48 overflow-auto">
+                <TabsContent value="comments" className="m-0 p-3">
+                  {collaborationPanel}
+                </TabsContent>
+                <TabsContent value="tasks" className="m-0 p-3">
+                  {collaborationPanel}
+                </TabsContent>
+                <TabsContent value="versions" className="m-0 p-3">
+                  {collaborationPanel}
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
