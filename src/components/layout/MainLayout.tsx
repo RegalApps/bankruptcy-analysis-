@@ -15,11 +15,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <div className="flex-1 flex flex-col pl-64 w-full overflow-hidden">
         <MainHeader />
         <main className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-background">
-          <div className="container mx-auto h-full max-w-7xl">
+          <div className="container mx-auto max-w-7xl pb-20">
             {children}
           </div>
         </main>
-        <Footer />
+        <Footer className="fixed bottom-0 left-0 w-full pl-64" />
       </div>
     </div>
   );

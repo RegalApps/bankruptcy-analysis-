@@ -2,8 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { Github, Twitter, Linkedin, Youtube, Facebook } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
-export const Footer = () => {
+interface FooterProps {
+  className?: string;
+}
+
+export const Footer = ({ className }: FooterProps) => {
   const legalLinks = [
     { label: "Privacy Policy", path: "/privacy-policy" },
     { label: "Terms of Service", path: "/terms-of-service" },
@@ -19,8 +24,8 @@ export const Footer = () => {
   ];
 
   return (
-    <footer className="border-t bg-background">
-      <div className="container px-6 py-8 mx-auto">
+    <footer className={cn("border-t bg-background z-10", className)}>
+      <div className="container px-6 py-4 mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           {/* Legal Links */}
           <div className="flex flex-wrap gap-6">
@@ -59,7 +64,7 @@ export const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="mt-8 text-center md:text-right">
+        <div className="mt-4 text-center md:text-right">
           <p className="text-sm text-muted-foreground">
             ©2025 FileSecureAI. All rights reserved.
           </p>
