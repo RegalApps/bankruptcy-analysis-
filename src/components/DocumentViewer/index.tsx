@@ -11,6 +11,7 @@ import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
 import { isDocumentForm47 } from "./utils/documentTypeUtils";
 import { TaskManager } from "./TaskManager";
 import { VersionTab } from "./VersionTab";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -47,37 +48,58 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
 
   return (
     <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20">
-      <ViewerLayout
-        isForm47={isForm47}
-        documentTitle={document.title}
-        documentType={document.type}
-        sidebar={
+      <ResizablePanelGroup direction="horizontal" className="h-full">
+        {/* Left sidebar */}
+        <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-background">
           <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
-        }
-        mainContent={
-          <DocumentPreview 
-            storagePath={document.storage_path} 
-            title={document.title}
-            documentId={documentId}
+        </ResizablePanel>
+        
+        <ResizableHandle withHandle />
+        
+        {/* Main content */}
+        <ResizablePanel defaultSize={50} className="bg-background">
+          <ViewerLayout
+            isForm47={isForm47}
+            documentTitle={document.title}
+            documentType={document.type}
+            sidebar={null}
+            mainContent={
+              <DocumentPreview 
+                storagePath={document.storage_path} 
+                title={document.title}
+                documentId={documentId}
+              />
+            }
+            collaborationPanel={null}
+            taskPanel={null}
+            versionPanel={null}
           />
-        }
-        collaborationPanel={
-          <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
-        }
-        taskPanel={
-          <TaskManager 
-            documentId={documentId} 
-            tasks={document.tasks || []} 
-            onTaskUpdate={handleDocumentUpdated} 
-          />
-        }
-        versionPanel={
-          <VersionTab 
-            documentId={documentId}
-            versions={document.versions || []}
-          />
-        }
-      />
+        </ResizablePanel>
+        
+        <ResizableHandle withHandle />
+        
+        {/* Right panel with tabs for collaboration, tasks, and versions */}
+        <ResizablePanel defaultSize={30} minSize={20} maxSize={40} className="bg-background">
+          <div className="h-full flex flex-col">
+            <div className="flex-1 overflow-auto">
+              <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
+            </div>
+            <div className="flex-1 overflow-auto border-t">
+              <TaskManager 
+                documentId={documentId} 
+                tasks={document.tasks || []} 
+                onTaskUpdate={handleDocumentUpdated} 
+              />
+            </div>
+            <div className="flex-1 overflow-auto border-t">
+              <VersionTab 
+                documentId={documentId}
+                versions={document.versions || []}
+              />
+            </div>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };
