@@ -1,13 +1,16 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, RefObject } from "react";
 import { toast } from "sonner";
 
-export const useDocumentPreview = (fileUrl: string | null, title: string) => {
+export const useDocumentPreview = (fileUrl: string | null, title: string, iframeRef?: RefObject<HTMLIFrameElement>) => {
   const [isLoading, setIsLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [useDirectLink, setUseDirectLink] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const localIframeRef = useRef<HTMLIFrameElement>(null);
+  
+  // Use the provided ref or fallback to local ref
+  const activeIframeRef = iframeRef || localIframeRef;
 
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(prev + 10, 200));
@@ -43,6 +46,27 @@ export const useDocumentPreview = (fileUrl: string | null, title: string) => {
     }
   };
 
+  const handlePrint = () => {
+    try {
+      if (activeIframeRef.current) {
+        // Try using the iframe's print function
+        activeIframeRef.current.contentWindow?.print();
+      } else if (fileUrl) {
+        // Fallback: open in new window and print
+        const printWindow = window.open(fileUrl, '_blank');
+        if (printWindow) {
+          printWindow.onload = () => {
+            printWindow.print();
+          };
+        }
+      }
+      toast.info("Print dialog opened");
+    } catch (error) {
+      console.error("Print error:", error);
+      toast.error("Failed to print document");
+    }
+  };
+
   return {
     isLoading,
     setIsLoading,
@@ -51,10 +75,11 @@ export const useDocumentPreview = (fileUrl: string | null, title: string) => {
     setUseDirectLink,
     isRetrying,
     setIsRetrying,
-    iframeRef,
+    iframeRef: activeIframeRef,
     handleZoomIn,
     handleZoomOut,
     handleOpenInNewTab,
-    handleDownload
+    handleDownload,
+    handlePrint
   };
 };

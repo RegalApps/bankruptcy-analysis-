@@ -63,10 +63,10 @@ const Index = () => {
   }
 
   return (
-    <MainLayout>
+    <div className={`min-h-screen bg-background ${selectedDocument ? 'flex flex-col' : ''}`}>
       {selectedDocument ? (
-        <div className="h-[calc(100vh-8rem)] flex flex-col">
-          <div className="mb-1 px-1">
+        <div className="h-[calc(100vh-4rem)] flex flex-col">
+          <div className="mb-1 px-1 py-2">
             <Button
               variant="ghost"
               size="sm"
@@ -81,9 +81,11 @@ const Index = () => {
           </div>
         </div>
       ) : (
-        <DocumentManagementPage />
+        <MainLayout>
+          <DocumentManagementPage />
+        </MainLayout>
       )}
-    </MainLayout>
+    </div>
   );
 };
 

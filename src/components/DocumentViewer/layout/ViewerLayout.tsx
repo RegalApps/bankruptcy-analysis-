@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { ChevronDown, PanelRight, FileText, FileBarChart, MessageSquare, ListTodo, History } from "lucide-react";
+import { ChevronDown, PanelRight, FileText, FileBarChart, MessageSquare, ListTodo, History, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
@@ -31,7 +31,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   
   return (
     <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-background">
-      {/* Document Header - Improved with better placement and Form 47 icon */}
+      {/* Document Header - With improved placement and Form 47 icon, removed redundant title */}
       <div className="sticky top-0 z-10 flex justify-between items-center p-3 bg-muted/30 border-b">
         <div className="flex items-center gap-3">
           <div className="bg-muted/50 p-2 rounded-md">
@@ -73,22 +73,22 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
         
         <ResizableHandle withHandle />
         
-        {/* Main content area with document viewer and bottom tabs */}
-        <ResizablePanel defaultSize={75} className="flex flex-col h-full overflow-hidden">
-          <ResizablePanelGroup direction="vertical" className="h-full">
+        {/* Main content area with document viewer and right-side collaboration panel */}
+        <ResizablePanel defaultSize={75} className="flex h-full overflow-hidden">
+          <ResizablePanelGroup direction="horizontal" className="h-full">
             {/* Document Viewer */}
-            <ResizablePanel defaultSize={70} minSize={30} className="overflow-auto">
+            <ResizablePanel defaultSize={70} minSize={50} className="overflow-auto flex flex-col">
               {mainContent}
             </ResizablePanel>
             
             <ResizableHandle withHandle />
             
-            {/* Improved tabbed interface */}
+            {/* Right-side collaboration panel */}
             <ResizablePanel 
               defaultSize={30} 
-              minSize={15} 
-              maxSize={60}
-              className="border-t border-border/50"
+              minSize={20} 
+              maxSize={40}
+              className="border-l border-border/50"
             >
               <Tabs 
                 value={selectedTab} 
@@ -96,7 +96,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
                 className="w-full h-full flex flex-col"
               >
                 <div className="flex items-center justify-between bg-muted/30 px-2 py-1 border-b border-border/50">
-                  <TabsList className="grid grid-cols-3 w-[300px]">
+                  <TabsList className="grid grid-cols-3 w-full">
                     <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
                       <MessageSquare className="h-3.5 w-3.5" />
                       <span>Comments</span>
