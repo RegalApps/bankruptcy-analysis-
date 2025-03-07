@@ -9,7 +9,10 @@ import { useFolderRecommendations } from "./hooks/useFolderRecommendations";
 import { FolderOperations } from "./components/FolderOperations";
 import { FolderManagementTools } from "./FolderManagementTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Folder, FileQuestion } from "lucide-react";
+import { Folder, FileQuestion, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { ClientViewer } from "../../client/ClientViewer";
+import { supabase } from "@/lib/supabase";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
@@ -26,6 +29,8 @@ export const EnhancedFolderTab = ({
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | undefined>();
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<string>("folders");
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>();
+  const { toast } = useToast();
   
   // Get the folder structure based on documents
   const { folders, isLoading: foldersLoading } = useCreateFolderStructure(documents);
@@ -45,11 +50,39 @@ export const EnhancedFolderTab = ({
   const handleFolderSelect = (folderId: string) => {
     setSelectedFolderId(folderId);
     setSelectedDocumentId(undefined);
+    setSelectedClientId(undefined);
   };
 
   // Handle document selection
   const handleDocumentSelect = (documentId: string) => {
     setSelectedDocumentId(documentId);
+    setSelectedClientId(undefined);
+  };
+
+  // Handle client selection
+  const handleClientSelect = async (clientId: string) => {
+    try {
+      // Log access to client documents
+      await supabase
+        .from('document_access_history')
+        .insert({
+          document_id: clientId,
+          accessed_at: new Date().toISOString(),
+          access_source: 'client_viewer'
+        });
+      
+      setSelectedClientId(clientId);
+      setSelectedFolderId(undefined);
+      setSelectedDocumentId(undefined);
+      setActiveTab("folders");
+    } catch (error) {
+      console.error('Error logging client access:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not access client information"
+      });
+    }
   };
 
   // Handle recommendation acceptance with refresh
@@ -66,6 +99,15 @@ export const EnhancedFolderTab = ({
   const uncategorizedDocuments = documents.filter(doc => 
     !doc.is_folder && !doc.parent_folder_id
   );
+
+  // If client is selected, show the client viewer
+  if (selectedClientId) {
+    return <ClientViewer 
+      clientId={selectedClientId} 
+      onBack={() => setSelectedClientId(undefined)}
+      onDocumentOpen={onDocumentOpen}
+    />;
+  }
 
   return (
     <Card className="h-full">
@@ -113,6 +155,7 @@ export const EnhancedFolderTab = ({
               onFolderSelect={handleFolderSelect}
               onDocumentSelect={handleDocumentSelect}
               onDocumentOpen={onDocumentOpen}
+              onClientSelect={handleClientSelect}
               selectedFolderId={selectedFolderId}
               expandedFolders={expandedFolders}
               setExpandedFolders={setExpandedFolders}

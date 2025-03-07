@@ -7,7 +7,8 @@ import { FolderList } from "./components/FolderList";
 import { EmptyFolderState } from "./components/EmptyFolderState";
 import { useFolderDragDrop } from "./hooks/useFolderDragDrop";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, UserCircle } from "lucide-react";
+import { ClientSection } from "./components/ClientSection";
 
 interface FolderNavigationProps {
   folders: FolderStructure[];
@@ -15,6 +16,7 @@ interface FolderNavigationProps {
   onFolderSelect: (folderId: string) => void;
   onDocumentSelect: (documentId: string) => void;
   onDocumentOpen: (documentId: string) => void;
+  onClientSelect?: (clientId: string) => void;
   selectedFolderId?: string;
   expandedFolders: Record<string, boolean>;
   setExpandedFolders: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
@@ -26,6 +28,7 @@ export function FolderNavigation({
   onFolderSelect,
   onDocumentSelect,
   onDocumentOpen,
+  onClientSelect,
   selectedFolderId,
   expandedFolders,
   setExpandedFolders
@@ -59,6 +62,21 @@ export function FolderNavigation({
       }));
     }
   };
+
+  // Extract unique client names and IDs from documents
+  const clients = documents.reduce<{id: string, name: string}[]>((acc, doc) => {
+    const metadata = doc.metadata as Record<string, any> || {};
+    if (metadata?.client_name && metadata?.client_id) {
+      const existingClient = acc.find(c => c.id === metadata.client_id);
+      if (!existingClient) {
+        acc.push({
+          id: metadata.client_id,
+          name: metadata.client_name
+        });
+      }
+    }
+    return acc;
+  }, []);
 
   // Find Form 47 documents
   const form47Documents = documents.filter(doc => 
@@ -116,6 +134,14 @@ export function FolderNavigation({
               Double-click on the document to open it.
             </AlertDescription>
           </Alert>
+        )}
+        
+        {/* Clients Section */}
+        {clients.length > 0 && onClientSelect && (
+          <ClientSection 
+            clients={clients} 
+            onClientSelect={onClientSelect} 
+          />
         )}
         
         {folders.length > 0 ? (
