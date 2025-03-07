@@ -69,7 +69,7 @@ const Index = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-background ${selectedDocument ? 'h-screen overflow-hidden' : ''}`}>
+    <div className={`min-h-screen bg-background ${selectedDocument ? 'flex flex-col' : ''}`}>
       {selectedDocument ? (
         <div className="h-screen flex flex-col">
           <div className="mb-1 px-1 py-2 flex items-center justify-between">

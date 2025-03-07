@@ -16,15 +16,11 @@ export const MainLayout = ({ children, showFooter = true }: MainLayoutProps) => 
       <div className="flex-1 flex flex-col pl-64 w-full overflow-hidden">
         <MainHeader />
         <main className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-background">
-          <div className="container mx-auto max-w-7xl">
+          <div className="container mx-auto max-w-7xl pb-20">
             {children}
           </div>
         </main>
-        {showFooter && (
-          <div className="mt-auto">
-            <Footer className="border-t" />
-          </div>
-        )}
+        {showFooter && <Footer className="fixed bottom-0 left-0 w-full pl-64" />}
       </div>
     </div>
   );

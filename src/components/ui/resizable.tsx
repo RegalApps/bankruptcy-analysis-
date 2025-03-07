@@ -32,9 +32,9 @@ const ResizablePanel = React.forwardRef<
 ))
 ResizablePanel.displayName = "ResizablePanel"
 
-type ResizableHandleProps = React.ComponentPropsWithoutRef<
-  typeof ResizablePrimitive.PanelResizeHandle
-> & {
+// Define the interface for ResizableHandle props
+interface ResizableHandleProps
+  extends React.ComponentPropsWithoutRef<typeof ResizablePrimitive.PanelResizeHandle> {
   withHandle?: boolean
 }
 

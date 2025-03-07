@@ -24,7 +24,7 @@ export const Footer = ({ className }: FooterProps) => {
   ];
 
   return (
-    <footer className={cn("bg-background z-10", className)}>
+    <footer className={cn("border-t bg-background z-10", className)}>
       <div className="container px-6 py-4 mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           {/* Legal Links */}

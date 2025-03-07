@@ -78,14 +78,9 @@ export const AuthForm = ({ onConfirmationSent }: AuthFormProps) => {
             description: "Successfully signed in!",
           });
         } catch (signInError: any) {
-          console.log("Sign in error details:", signInError);
-          
-          if (signInError.message?.includes('Email not confirmed')) {
+          if (signInError.message.includes('Email not confirmed')) {
             // Handle the email confirmation error specifically
             setError("Please check your email and confirm your account before signing in.");
-          } else if (signInError.message?.includes('Invalid login credentials')) {
-            setError("Invalid email or password. Please try again.");
-            recordAttempt();
           } else {
             throw signInError;
           }
@@ -98,16 +93,14 @@ export const AuthForm = ({ onConfirmationSent }: AuthFormProps) => {
       console.error('Auth error:', error);
       recordAttempt();
 
-      if (error.message?.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please try again.');
-      } else if (error.message?.includes('Email already registered')) {
+      if (error.message.includes('Invalid login credentials')) {
+        setError('Invalid email or password');
+      } else if (error.message.includes('Email already registered')) {
         setError('This email is already registered. Try signing in instead.');
-      } else if (error.message?.includes('Password should be')) {
-        setError('Password should be at least 6 characters long.');
-      } else if (error.message?.includes('rate limit')) {
-        setError('Too many attempts. Please try again later.');
+      } else if (error.message.includes('Password should be')) {
+        setError('Password should be at least 6 characters long');
       } else {
-        setError(error.message || 'An error occurred during authentication.');
+        setError(error.message);
       }
     } finally {
       setLoading(false);
