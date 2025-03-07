@@ -1,15 +1,16 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Brain, MessageSquare, History, Mail, Phone } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Brain } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Client } from "../../types/client";
 import { ClientOverview } from "./ClientOverview";
-import { ConversationView } from "../ConversationView";
 import { useConversations } from "../../hooks/useConversations";
+import { ClientDetails } from "./components/ClientDetails";
+import { ClientActions } from "./components/ClientActions";
+import { ClientActivitySection } from "./components/ClientActivitySection";
+import { ClientConversationView } from "./components/ClientConversationView";
 
 interface ClientAssistantPanelProps {
   onStartConversation: () => void;
@@ -138,28 +139,16 @@ export const ClientAssistantPanel = ({
 
   if (showConversation) {
     return (
-      <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-3">
-            <Brain className="h-6 w-6 text-primary" />
-            <div>
-              <h2 className="text-lg font-semibold">Conversation with {selectedClient.name}</h2>
-              <p className="text-sm text-muted-foreground">AI Client Assistant</p>
-            </div>
-          </div>
-          <Button variant="outline" onClick={() => setShowConversation(false)}>
-            Back to Client
-          </Button>
-        </div>
-        <ConversationView
-          messages={categoryMessages.client}
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          handleSendMessage={handleSend}
-          handleKeyPress={handleKeyPress}
-          isProcessing={isProcessing}
-        />
-      </div>
+      <ClientConversationView
+        client={selectedClient}
+        messages={categoryMessages.client}
+        inputMessage={inputMessage}
+        setInputMessage={setInputMessage}
+        handleSendMessage={handleSend}
+        handleKeyPress={handleKeyPress}
+        isProcessing={isProcessing}
+        onBack={() => setShowConversation(false)}
+      />
     );
   }
 
@@ -175,69 +164,15 @@ export const ClientAssistantPanel = ({
         </Button>
       </div>
       
-      <Card className="p-6">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">{selectedClient.name}</h3>
-            <div className={`px-2 py-1 rounded-full text-sm ${
-              selectedClient.status === 'active' 
-                ? 'bg-green-100 text-green-700' 
-                : 'bg-gray-100 text-gray-700'
-            }`}>
-              {selectedClient.status}
-            </div>
-          </div>
+      <ClientDetails client={selectedClient} status={selectedClient.status} />
+      
+      <ClientActions 
+        onStartConversation={handleStartConversation}
+        onViewHistory={handleViewHistory}
+        isLoading={isLoading}
+      />
 
-          <div className="space-y-2">
-            {selectedClient.email && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Mail className="h-4 w-4 mr-2" />
-                {selectedClient.email}
-              </div>
-            )}
-            {selectedClient.phone && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Phone className="h-4 w-4 mr-2" />
-                {selectedClient.phone}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex flex-col gap-3">
-            <Button 
-              size="lg" 
-              className="w-full"
-              onClick={handleStartConversation}
-              disabled={isLoading}
-            >
-              <MessageSquare className="mr-2 h-5 w-5" />
-              {isLoading ? "Starting..." : "Start Conversation"}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="w-full"
-              onClick={handleViewHistory}
-              disabled={isLoading}
-            >
-              <History className="mr-2 h-5 w-5" />
-              {isLoading ? "Loading..." : "View Conversation History"}
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      <div className="flex-1">
-        <h3 className="text-lg font-medium mb-4">Recent Activity</h3>
-        <ScrollArea className="h-[calc(100vh-500px)]">
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">
-              Loading recent client activity...
-            </p>
-          </Card>
-        </ScrollArea>
-      </div>
+      <ClientActivitySection />
     </div>
   );
 };
