@@ -6,9 +6,10 @@ import { Footer } from "@/components/layout/Footer";
 
 interface MainLayoutProps {
   children: ReactNode;
+  showFooter?: boolean;
 }
 
-export const MainLayout = ({ children }: MainLayoutProps) => {
+export const MainLayout = ({ children, showFooter = true }: MainLayoutProps) => {
   return (
     <div className="min-h-screen h-screen w-full flex overflow-hidden bg-white dark:bg-background">
       <MainSidebar />
@@ -19,7 +20,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             {children}
           </div>
         </main>
-        <Footer className="fixed bottom-0 left-0 w-full pl-64" />
+        {showFooter && <Footer className="fixed bottom-0 left-0 w-full pl-64" />}
       </div>
     </div>
   );
