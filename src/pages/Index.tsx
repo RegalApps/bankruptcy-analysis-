@@ -65,18 +65,18 @@ const Index = () => {
   return (
     <MainLayout>
       {selectedDocument ? (
-        <div className="h-full py-4">
-          <div className="mb-2">
+        <div className="h-full py-2">
+          <div className="mb-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleBackToDocuments}
-              className="flex items-center text-sm text-muted-foreground hover:text-foreground"
+              className="flex items-center text-xs text-muted-foreground hover:text-foreground"
             >
-              <Home className="h-4 w-4 mr-1" /> Back to Documents
+              <Home className="h-3.5 w-3.5 mr-1" /> Back to Documents
             </Button>
           </div>
-          <div className="h-[calc(100%-36px)]">
+          <div className="h-[calc(100%-28px)]">
             <DocumentViewer documentId={selectedDocument} />
           </div>
         </div>

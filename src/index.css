@@ -104,19 +104,46 @@
     @apply h-full rounded-lg overflow-hidden border border-border/50;
   }
   
-  .document-viewer-grid {
-    @apply grid grid-cols-12 h-full;
+  /* Enhanced document viewer styles */
+  .doc-sidebar {
+    @apply bg-white dark:bg-card/80 shadow-sm rounded-md overflow-auto;
   }
   
-  .document-sidebar {
-    @apply col-span-3 h-full overflow-auto border-r border-border/50 bg-white dark:bg-background;
+  .doc-content {
+    @apply bg-white dark:bg-muted/10 shadow-sm rounded-md overflow-auto;
   }
   
-  .document-content {
-    @apply col-span-6 h-full overflow-auto border-r border-border/50;
+  .doc-collaboration {
+    @apply bg-white dark:bg-card/80 shadow-sm rounded-md overflow-auto;
+  }
+
+  /* Document details enhanced styles */
+  .doc-detail-item {
+    @apply flex items-start py-2 border-b border-muted last:border-0;
   }
   
-  .document-collaboration {
-    @apply col-span-3 h-full overflow-auto bg-white dark:bg-background;
+  .doc-detail-label {
+    @apply flex items-center min-w-[180px] mr-2 text-sm text-muted-foreground;
+  }
+  
+  .doc-detail-value {
+    @apply text-sm font-medium;
+  }
+  
+  /* Document risk and task cards */
+  .doc-card {
+    @apply bg-white dark:bg-card/50 rounded-md shadow-sm border border-border/30 p-3 hover:shadow-md transition-shadow;
+  }
+  
+  .doc-card-header {
+    @apply flex items-center justify-between mb-2;
+  }
+  
+  .doc-card-title {
+    @apply text-sm font-medium;
+  }
+  
+  .doc-card-content {
+    @apply text-sm text-muted-foreground;
   }
 }

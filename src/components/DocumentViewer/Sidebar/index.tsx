@@ -4,7 +4,6 @@ import { DocumentDetails } from "../DocumentDetails";
 import { RiskAssessment } from "../RiskAssessment";
 import { DeadlineManager } from "../DeadlineManager";
 import { DocumentDetails as DocumentDetailsType } from "../types";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { FileText, AlertTriangle, Calendar, FileSpreadsheet } from "lucide-react";
@@ -32,8 +31,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   logger.debug('Full document data:', document);
 
   return (
-    <div className="h-full bg-card/50">
-      <div className="p-4 border-b border-border/50">
+    <div className="h-full bg-white dark:bg-card/50 rounded-md shadow-sm">
+      <div className="p-3 border-b border-border/50 bg-muted/30">
         <DocumentHeader 
           title={document.title} 
           type={isForm47 ? 'form-47' : document.type} 
@@ -41,8 +40,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
       </div>
       
       <ScrollArea className="h-[calc(100vh-14rem)] pr-1">
-        <div className="px-4 py-3 space-y-5">
-          <div className="rounded-md bg-muted/80 p-4 shadow-sm">
+        <div className="px-4 py-3 space-y-4">
+          <div className="rounded-md bg-muted/30 p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
               <FileText className="h-4 w-4 text-primary" />
               <h3 className="font-medium text-sm">
@@ -50,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
               </h3>
             </div>
             {extractedInfo?.summary ? (
-              <p className="text-sm text-muted-foreground">{extractedInfo.summary}</p>
+              <p className="text-sm text-foreground leading-relaxed">{extractedInfo.summary}</p>
             ) : (
               <div className="text-center py-3 bg-background/50 rounded-md">
                 <p className="text-xs text-muted-foreground">No summary available</p>
@@ -86,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
           
           <Separator className="my-4" />
           
-          <div className="rounded-md bg-muted/80 p-4 shadow-sm">
+          <div className="rounded-md bg-muted/30 p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="h-4 w-4 text-red-500" />
               <h3 className="font-medium text-sm">
@@ -101,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
           
           <Separator className="my-4" />
           
-          <div className="rounded-md bg-muted/80 p-4 shadow-sm">
+          <div className="rounded-md bg-muted/30 p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
               <Calendar className="h-4 w-4 text-blue-500" />
               <h3 className="font-medium text-sm">
@@ -117,14 +116,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
           {isForm47 && (
             <>
               <Separator className="my-4" />
-              <div className="rounded-md bg-muted/80 p-4 shadow-sm">
+              <div className="rounded-md bg-muted/30 p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <FileSpreadsheet className="h-4 w-4 text-green-500" />
                   <h3 className="font-medium text-sm">Payment Schedule</h3>
                 </div>
                 <div className="bg-background/50 rounded-md p-3">
                   {extractedInfo?.paymentSchedule ? (
-                    <p className="text-sm text-muted-foreground">{extractedInfo.paymentSchedule}</p>
+                    <p className="text-sm text-foreground leading-relaxed">{extractedInfo.paymentSchedule}</p>
                   ) : (
                     <p className="text-muted-foreground italic text-xs text-center">
                       No payment schedule information available
