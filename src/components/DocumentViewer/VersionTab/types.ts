@@ -1,6 +1,7 @@
 
 export interface DocumentVersion {
   id: string;
+  document_id: string;
   version_number: number;
   created_at: string;
   description?: string;

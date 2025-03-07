@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { DocumentVersion } from '../types';
+import { DocumentVersion } from './types';
 import { VersionList } from './VersionList';
 import { ComparisonView } from './ComparisonView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
