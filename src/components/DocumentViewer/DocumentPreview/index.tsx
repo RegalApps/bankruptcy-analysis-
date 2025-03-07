@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { DocumentViewerFrame } from "./components/DocumentViewerFrame";
 import { useDocumentPreview } from "./hooks/useDocumentPreview";
@@ -30,6 +30,9 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   } = usePreviewState(storagePath, documentId, title, onAnalysisComplete);
 
   const [forceReload, setForceReload] = useState(0);
+  // Create the iframe ref first
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  
   const {
     isLoading,
     setIsLoading,
@@ -38,7 +41,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     setUseDirectLink,
     isRetrying,
     setIsRetrying,
-    iframeRef,
     handleZoomIn,
     handleZoomOut,
     handleOpenInNewTab,

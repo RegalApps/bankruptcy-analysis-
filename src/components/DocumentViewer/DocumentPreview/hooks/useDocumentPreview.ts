@@ -2,7 +2,7 @@
 import { useState, useRef, RefObject } from "react";
 import { toast } from "sonner";
 
-export const useDocumentPreview = (fileUrl: string | null, title: string, iframeRef?: RefObject<HTMLIFrameElement>) => {
+export const useDocumentPreview = (fileUrl: string | null, title: string, providedIframeRef?: RefObject<HTMLIFrameElement>) => {
   const [isLoading, setIsLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [useDirectLink, setUseDirectLink] = useState(false);
@@ -10,7 +10,7 @@ export const useDocumentPreview = (fileUrl: string | null, title: string, iframe
   const localIframeRef = useRef<HTMLIFrameElement>(null);
   
   // Use the provided ref or fallback to local ref
-  const activeIframeRef = iframeRef || localIframeRef;
+  const activeIframeRef = providedIframeRef || localIframeRef;
 
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(prev + 10, 200));
