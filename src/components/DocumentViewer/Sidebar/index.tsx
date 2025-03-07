@@ -1,5 +1,4 @@
 
-import { DocumentHeader } from "../DocumentHeader";
 import { DocumentDetails } from "../DocumentDetails";
 import { RiskAssessment } from "../RiskAssessment";
 import { DeadlineManager } from "../DeadlineManager";
@@ -33,10 +32,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   return (
     <div className="h-full bg-white dark:bg-card/50 rounded-md shadow-sm">
       <div className="p-3 border-b border-border/50 bg-muted/30">
-        <DocumentHeader 
-          title={document.title} 
-          type={isForm47 ? 'form-47' : document.type} 
-        />
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-primary" />
+          <div>
+            <h2 className="text-base font-semibold truncate">{document.title}</h2>
+            <p className="text-xs text-muted-foreground">
+              {isForm47 ? 'Consumer Proposal' : `Form ${document.type}`}
+            </p>
+          </div>
+        </div>
       </div>
       
       <ScrollArea className="h-[calc(100vh-14rem)] pr-2">

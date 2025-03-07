@@ -4,15 +4,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, X, FolderTree } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { FolderRecommendation } from "../hooks/types/folderTypes";
 
 interface FolderOperationsProps {
   showRecommendation: boolean;
-  recommendation: {
-    documentId: string;
-    suggestedFolderId: string;
-    documentTitle: string;
-    folderPath: string[];
-  } | null;
+  recommendation: FolderRecommendation | null;
   onAcceptRecommendation: () => Promise<void>;
   onDismissRecommendation: () => void;
   onRefresh: () => void;

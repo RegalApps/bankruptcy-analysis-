@@ -4,18 +4,26 @@ import { Document } from "@/components/DocumentList/types";
 import { FolderStructure } from "@/types/folders";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-
-interface FolderRecommendation {
-  documentId: string;
-  suggestedFolderId: string;
-  documentTitle: string;
-  folderPath: string[];
-}
+import { FolderRecommendation, FolderRecommendationHookResult } from "./types/folderTypes";
+import { 
+  isDocumentForm47, 
+  isDocumentForm76, 
+  isFinancialDocument,
+  extractClientName,
+  findAppropriateSubfolder
+} from "./utils/folderIdentificationUtils";
+import {
+  suggestNewClientFolder,
+  suggestNewSubfolder,
+  notifyFolderRecommendation,
+  notifyDocumentTypeNoClient,
+  moveDocumentToFolder as moveDocument
+} from "./services/folderRecommendationService";
 
 export const useFolderRecommendations = (
   documents: Document[],
   folders: FolderStructure[]
-) => {
+): FolderRecommendationHookResult => {
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [recommendation, setRecommendation] = useState<FolderRecommendation | null>(null);
   
@@ -42,32 +50,13 @@ export const useFolderRecommendations = (
             .eq('document_id', uncategorizedDoc.id)
             .maybeSingle();
             
-          // Get client name from either document analysis or metadata
-          let clientName = null;
-          
-          if (data?.content?.extracted_info?.clientName) {
-            clientName = data.content.extracted_info.clientName;
-          } else if (uncategorizedDoc.metadata?.clientName) {
-            clientName = uncategorizedDoc.metadata.clientName;
-          } else if (data?.content?.extracted_info?.consumerDebtorName) {
-            // Special case for Form 47
-            clientName = data.content.extracted_info.consumerDebtorName;
-          }
+          // Get client name from document
+          const clientName = extractClientName(uncategorizedDoc, data);
           
           // Check document type
-          const isForm47 = uncategorizedDoc.metadata?.formType === 'form-47' || 
-                          uncategorizedDoc.title?.toLowerCase().includes('form 47') ||
-                          uncategorizedDoc.title?.toLowerCase().includes('consumer proposal') ||
-                          data?.content?.extracted_info?.formType === 'form-47';
-                          
-          const isForm76 = uncategorizedDoc.metadata?.formType === 'form-76' || 
-                          uncategorizedDoc.title?.toLowerCase().includes('form 76') ||
-                          data?.content?.extracted_info?.formType === 'form-76';
-                          
-          const isFinancial = uncategorizedDoc.title?.toLowerCase().includes('statement') ||
-                            uncategorizedDoc.title?.toLowerCase().includes('sheet') ||
-                            uncategorizedDoc.title?.toLowerCase().includes('budget') ||
-                            uncategorizedDoc.title?.toLowerCase().includes('.xls');
+          const isForm47 = isDocumentForm47(uncategorizedDoc, data);
+          const isForm76 = isDocumentForm76(uncategorizedDoc, data);
+          const isFinancial = isFinancialDocument(uncategorizedDoc);
           
           if (clientName) {
             console.log("Found client name for folder recommendation:", clientName);
@@ -82,96 +71,24 @@ export const useFolderRecommendations = (
             if (!clientFolder && clientName) {
               console.log("Client folder not found, suggesting creation");
               
-              // Create notification suggesting new client folder
-              await supabase.functions.invoke('handle-notifications', {
-                body: {
-                  action: 'create',
-                  userId: user.id,
-                  notification: {
-                    title: 'New Client Detected',
-                    message: `Consider creating a folder for client: ${clientName}`,
-                    type: 'suggestion',
-                    category: 'organization',
-                    priority: 'normal',
-                    action_url: `/documents`,
-                    metadata: {
-                      documentId: uncategorizedDoc.id,
-                      clientName: clientName,
-                      suggestedAction: 'create_client_folder'
-                    }
-                  }
-                }
-              });
-              
-              // Create toast notification
-              toast.info(
-                `New client detected: ${clientName}. Consider creating a folder.`,
-                {
-                  duration: 5000,
-                  action: {
-                    label: "Create Folder",
-                    onClick: () => {
-                      // This would be handled separately to create the folder
-                      toast.success(`Creating folder for ${clientName}...`);
-                    }
-                  }
-                }
-              );
-              
+              // Suggest creating a new client folder
+              await suggestNewClientFolder(user.id, uncategorizedDoc.id, clientName);
               return;
             }
             
             if (clientFolder) {
               // Find appropriate subfolder based on document type
-              let targetFolderId = clientFolder.id;
-              let folderPath = [clientFolder.name];
-              let subfolderName = "";
+              const { targetFolderId, folderPath, suggestedSubfolderName } = findAppropriateSubfolder(
+                clientFolder,
+                isForm47,
+                isForm76,
+                isFinancial
+              );
               
-              // Find or suggest appropriate subfolder 
-              if (clientFolder.children) {
-                let targetSubfolder;
-                
-                if (isForm47 || isForm76) {
-                  // For Form 47/76, look for Forms folder
-                  subfolderName = "Forms";
-                  targetSubfolder = clientFolder.children.find(f => 
-                    f.type === 'form' || f.name.toLowerCase().includes('form')
-                  );
-                } else if (isFinancial) {
-                  // For financial documents, look for Financial Sheets folder
-                  subfolderName = "Financial Sheets";
-                  targetSubfolder = clientFolder.children.find(f => 
-                    f.type === 'financial' || 
-                    f.name.toLowerCase().includes('financial') ||
-                    f.name.toLowerCase().includes('sheet')
-                  );
-                } else {
-                  // For other documents, use Documents folder
-                  subfolderName = "Documents";
-                  targetSubfolder = clientFolder.children.find(f => 
-                    f.type === 'general' || f.name.toLowerCase().includes('document')
-                  );
-                }
-                
-                if (targetSubfolder) {
-                  targetFolderId = targetSubfolder.id;
-                  folderPath.push(targetSubfolder.name);
-                } else if (subfolderName) {
-                  // If appropriate subfolder not found, suggest creating one
-                  toast.info(
-                    `Consider creating a "${subfolderName}" folder under ${clientFolder.name}`,
-                    {
-                      duration: 5000,
-                      action: {
-                        label: "Create Folder",
-                        onClick: () => {
-                          // This would be handled separately
-                          toast.success(`Creating ${subfolderName} folder...`);
-                        }
-                      }
-                    }
-                  );
-                }
+              // If we got a suggested subfolder name but no matching folder was found,
+              // suggest creating that subfolder
+              if (suggestedSubfolderName) {
+                suggestNewSubfolder(suggestedSubfolderName, clientFolder.name);
               }
               
               // Set recommendation
@@ -185,32 +102,12 @@ export const useFolderRecommendations = (
               setShowRecommendation(true);
               
               // Create recommendation notification
-              await supabase.functions.invoke('handle-notifications', {
-                body: {
-                  action: 'folderRecommendation',
-                  userId: user.id,
-                  notification: {
-                    message: `AI suggests organizing "${uncategorizedDoc.title}" in folder: ${folderPath.join(' > ')}`,
-                    documentId: uncategorizedDoc.id,
-                    recommendedFolderId: targetFolderId,
-                    suggestedPath: folderPath
-                  }
-                }
-              });
-              
-              // Show toast with recommendation
-              toast.info(
-                `AI suggests organizing "${uncategorizedDoc.title}" in folder: ${folderPath.join(' > ')}`,
-                {
-                  duration: 5000,
-                  action: {
-                    label: "Move File",
-                    onClick: () => {
-                      // This would need to be implemented
-                      moveDocumentToFolder(uncategorizedDoc.id, targetFolderId, folderPath.join(' > '));
-                    }
-                  }
-                }
+              await notifyFolderRecommendation(
+                user.id,
+                uncategorizedDoc.id,
+                uncategorizedDoc.title,
+                targetFolderId,
+                folderPath
               );
             }
           } else {
@@ -218,12 +115,7 @@ export const useFolderRecommendations = (
             let folderType = isForm47 || isForm76 ? 'Forms' : 
                              isFinancial ? 'Financial Documents' : 'General Documents';
                              
-            toast.info(
-              `Document detected as "${folderType}" but no client associated`,
-              {
-                duration: 5000
-              }
-            );
+            notifyDocumentTypeNoClient(folderType);
           }
         }
       } catch (error) {
@@ -238,20 +130,10 @@ export const useFolderRecommendations = (
 
   // Helper function to move document to folder
   const moveDocumentToFolder = async (documentId: string, folderId: string, folderPath: string) => {
-    try {
-      const { error } = await supabase
-        .from('documents')
-        .update({ parent_folder_id: folderId })
-        .eq('id', documentId);
-        
-      if (error) throw error;
-      
-      toast.success(`Document moved to ${folderPath}`);
+    const success = await moveDocument(documentId, folderId, folderPath);
+    if (success) {
       setShowRecommendation(false);
       setRecommendation(null);
-    } catch (error) {
-      console.error("Error moving document:", error);
-      toast.error("Failed to move document");
     }
   };
 
