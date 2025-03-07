@@ -72,14 +72,12 @@
 /* Ensure proper spacing in main layout */
 .main-content {
   padding-left: 16rem; /* 256px = 64*4 for the sidebar width */
-  padding-bottom: 60px; /* Add padding to account for fixed footer */
 }
 
-/* Fixed footer styles */
-.fixed-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  z-index: 50;
+/* Document viewer container adjustments */
+.document-viewer-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
