@@ -4,8 +4,9 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentDetails } from "./types";
 import { Comment } from "./Comments/types";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface CollaborationPanelProps {
   document: DocumentDetails;
@@ -33,8 +34,8 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Comment added successfully"
+        title: "Comment added",
+        description: "Your comment has been added successfully"
       });
 
       setNewComment("");
@@ -60,28 +61,46 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
     is_resolved: false
   })) : [];
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return {
+      date: date.toLocaleDateString(),
+      time: date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    };
+  };
+
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-2 flex items-center gap-2">
-        <MessageSquare className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-medium">Document Comments</h3>
-      </div>
-      
-      <div className="space-y-2 flex-1 overflow-auto border rounded-md bg-muted/10 p-2">
+      <div className="flex-1 overflow-auto space-y-3 pr-1">
         {typedComments.length > 0 ? (
-          typedComments.map((comment) => (
-            <div key={comment.id} className="p-3 rounded-md bg-white dark:bg-muted/40 shadow-sm">
-              <p className="text-sm text-foreground">{comment.content}</p>
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-xs text-muted-foreground">
-                  {new Date(comment.created_at).toLocaleDateString()} at {new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                </p>
-                <span className="text-xs px-2 py-1 bg-primary/10 rounded-full text-primary">User ID: {comment.user_id.substring(0, 6)}</span>
+          typedComments.map((comment) => {
+            const { date, time } = formatDateTime(comment.created_at);
+            return (
+              <div key={comment.id} className="p-3 rounded-md bg-white dark:bg-muted/40 shadow-sm border border-border/50">
+                <div className="flex items-start gap-2">
+                  <Avatar className="h-7 w-7">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      <User className="h-3.5 w-3.5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground break-words">{comment.content}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-muted-foreground">
+                        {date} at {time}
+                      </p>
+                      <span className="text-xs px-2 py-0.5 bg-primary/10 rounded-full text-primary">
+                        User {comment.user_id.substring(0, 6)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
-          <div className="text-center py-6 px-3">
+          <div className="flex flex-col items-center justify-center h-32 p-4">
+            <MessageSquare className="h-8 w-8 text-muted-foreground mb-2 opacity-50" />
             <p className="text-sm text-muted-foreground">No comments yet</p>
             <p className="text-xs text-muted-foreground mt-1">Start the conversation by adding a comment below</p>
           </div>
@@ -103,7 +122,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
           className="gap-1"
         >
           <Send className="h-4 w-4" />
-          <span className="hidden sm:inline">Send</span>
+          <span className="sr-only sm:not-sr-only sm:inline">Send</span>
         </Button>
       </div>
     </div>

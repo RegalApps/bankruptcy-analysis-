@@ -66,7 +66,7 @@ const Index = () => {
     <MainLayout>
       {selectedDocument ? (
         <div className="h-[calc(100vh-8rem)] flex flex-col">
-          <div className="mb-1">
+          <div className="mb-1 px-1">
             <Button
               variant="ghost"
               size="sm"
