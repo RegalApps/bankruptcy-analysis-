@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { DocumentPreview } from "./DocumentPreview";
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
 import { Sidebar } from "./Sidebar";
@@ -25,10 +25,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
     }
   }, [document]);
 
-  // Function to handle document updates (like comments added)
-  const handleDocumentUpdated = () => {
+  // Function to handle document updates (like comments added) with useCallback for stability
+  const handleDocumentUpdated = useCallback(() => {
     handleRefresh();
-  };
+  }, [handleRefresh]);
+
+  // Use memoization to prevent unnecessary re-renders
+  const isForm47 = useMemo(() => document ? isDocumentForm47(document) : false, [document]);
 
   if (loading) {
     return <ViewerLoadingState />;
@@ -41,9 +44,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   if (!document) {
     return <ViewerNotFoundState />;
   }
-
-  // Check if this is a Form 47 document to apply specific layout adjustments
-  const isForm47 = isDocumentForm47(document);
 
   return (
     <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20">

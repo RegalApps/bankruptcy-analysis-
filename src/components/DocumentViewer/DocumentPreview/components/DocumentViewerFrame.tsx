@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo, useState, useEffect } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Download } from "lucide-react";
@@ -20,7 +20,7 @@ interface DocumentViewerFrameProps {
   onDownload?: () => void;
 }
 
-export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
+export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = memo(({
   fileUrl,
   title,
   isLoading,
@@ -35,7 +35,14 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
   onOpenInNewTab,
   onDownload
 }) => {
-  const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
+  const [googleDocsViewerUrl, setGoogleDocsViewerUrl] = useState<string>('');
+  
+  // Compute Google Docs viewer URL only when needed
+  useEffect(() => {
+    if (isDocFile || (useDirectLink && !isPdfFile)) {
+      setGoogleDocsViewerUrl(`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`);
+    }
+  }, [fileUrl, isDocFile, useDirectLink, isPdfFile]);
 
   if (isLoading) {
     return (
@@ -61,6 +68,7 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
           className="w-full h-full border-0"
           onLoad={onIframeLoad}
           onError={onIframeError}
+          title={`PDF Fallback: ${title}`}
         />
       </object>
     );
@@ -73,6 +81,7 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
         className="w-full h-full border-0"
         onLoad={onIframeLoad}
         onError={onIframeError}
+        title={`Document: ${title}`}
       />
     );
   }
@@ -111,4 +120,6 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
       onError={onIframeError}
     />
   );
-};
+});
+
+DocumentViewerFrame.displayName = "DocumentViewerFrame";

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DocumentViewer } from "@/components/DocumentViewer";
 import { DocumentManagementPage } from "@/pages/DocumentManagementPage";
@@ -26,11 +26,17 @@ const Index = () => {
     handleSignOut
   } = useAuthState();
 
+  // Memoize the document ID from location state
+  const documentIdFromLocation = useMemo(() => 
+    location.state?.selectedDocument || null,
+  [location.state]);
+
+  // Update selected document when location changes
   useEffect(() => {
-    if (location.state?.selectedDocument) {
-      setSelectedDocument(location.state.selectedDocument);
+    if (documentIdFromLocation) {
+      setSelectedDocument(documentIdFromLocation);
     }
-  }, [location]);
+  }, [documentIdFromLocation]);
 
   useEffect(() => {
     showPerformanceToast("Home Page");
@@ -38,7 +44,7 @@ const Index = () => {
 
   const handleBackToDocuments = () => {
     setSelectedDocument(null);
-    navigate('/');
+    navigate('/', { replace: true }); // Use replace to avoid history build-up
   };
 
   if (isLoading) {
@@ -66,7 +72,7 @@ const Index = () => {
     <div className={`min-h-screen bg-background ${selectedDocument ? 'flex flex-col' : ''}`}>
       {selectedDocument ? (
         <div className="h-screen flex flex-col">
-          <div className="mb-1 px-1 py-2">
+          <div className="mb-1 px-1 py-2 flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
@@ -81,7 +87,7 @@ const Index = () => {
           </div>
         </div>
       ) : (
-        <MainLayout>
+        <MainLayout showFooter={true}>
           <DocumentManagementPage />
         </MainLayout>
       )}
