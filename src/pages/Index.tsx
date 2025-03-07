@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DocumentViewer } from "@/components/DocumentViewer";
-import { DocumentManagementPage } from "@/pages/DocumentManagementPage";
+import { RecentlyAccessedPage } from "@/pages/RecentlyAccessedPage";
 import { Auth } from "@/components/Auth";
 import { showPerformanceToast } from "@/utils/performance";
 import { Home } from "lucide-react";
@@ -82,7 +82,7 @@ const Index = () => {
         </div>
       ) : (
         <MainLayout>
-          <DocumentManagementPage />
+          <RecentlyAccessedPage />
         </MainLayout>
       )}
     </div>
