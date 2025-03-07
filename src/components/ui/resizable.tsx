@@ -60,7 +60,7 @@ const ResizableHandle = React.forwardRef<
       )}
     </ResizablePrimitive.PanelResizeHandle>
   );
-})
+});
 
 ResizableHandle.displayName = "ResizableHandle"
 
