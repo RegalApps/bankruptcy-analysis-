@@ -1,8 +1,8 @@
 
-import React, { memo } from "react";
+import React from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
-export const ViewerLoadingState: React.FC = memo(() => {
+export const ViewerLoadingState: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center h-full py-12 gap-6">
       <LoadingSpinner size="large" />
@@ -14,6 +14,4 @@ export const ViewerLoadingState: React.FC = memo(() => {
       </div>
     </div>
   );
-});
-
-ViewerLoadingState.displayName = "ViewerLoadingState";
+};
