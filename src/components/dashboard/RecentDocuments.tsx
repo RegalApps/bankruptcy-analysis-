@@ -51,11 +51,14 @@ export const RecentDocuments = ({ onDocumentSelect }: RecentDocumentsProps) => {
             
           if (recentError) throw recentError;
           
-          const docsWithAccess = recentDocs?.map(doc => ({
-            ...doc,
-            last_accessed: doc.updated_at || doc.created_at,
-            client_name: doc.metadata?.client_name
-          })) || [];
+          const docsWithAccess = recentDocs?.map(doc => {
+            const metadata = doc.metadata as Record<string, any> || {};
+            return {
+              ...doc,
+              last_accessed: doc.updated_at || doc.created_at,
+              client_name: metadata?.client_name
+            };
+          }) || [];
           
           setDocuments(docsWithAccess);
           setIsLoading(false);
@@ -75,10 +78,11 @@ export const RecentDocuments = ({ onDocumentSelect }: RecentDocumentsProps) => {
         // Map the access time to each document
         const accessedDocs = docs?.map(doc => {
           const accessRecord = accessHistory.find(record => record.document_id === doc.id);
+          const metadata = doc.metadata as Record<string, any> || {};
           return {
             ...doc,
             last_accessed: accessRecord?.accessed_at || doc.updated_at || doc.created_at,
-            client_name: doc.metadata?.client_name
+            client_name: metadata?.client_name
           };
         }) || [];
         

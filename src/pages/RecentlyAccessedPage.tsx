@@ -24,13 +24,16 @@ export const RecentlyAccessedPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Insert record into document_access_history
-        await supabase.from('document_access_history').insert({
-          user_id: user.id,
-          document_id: documentId,
-          access_source: 'homepage',
-          session_id: Math.random().toString(36).substring(2, 15) // Simple session ID
-        });
+        // Insert record into document access history
+        await supabase
+          .from('document_access_history')
+          .insert({
+            user_id: user.id,
+            document_id: documentId,
+            accessed_at: new Date().toISOString(),
+            access_source: 'homepage',
+            session_id: Math.random().toString(36).substring(2, 15) // Simple session ID
+          });
       }
     } catch (error) {
       console.error("Error recording document access:", error);
@@ -164,12 +167,15 @@ export const RecentlyAccessedPage = () => {
           const { data: { user } } = await supabase.auth.getUser();
           
           if (user) {
-            await supabase.from('document_access_history').insert({
-              user_id: user.id,
-              document_id: documentData.id,
-              access_source: 'upload',
-              session_id: Math.random().toString(36).substring(2, 15) // Simple session ID
-            });
+            await supabase
+              .from('document_access_history')
+              .insert({
+                user_id: user.id,
+                document_id: documentData.id,
+                accessed_at: new Date().toISOString(),
+                access_source: 'upload',
+                session_id: Math.random().toString(36).substring(2, 15) // Simple session ID
+              });
           }
         } catch (error) {
           console.error("Error recording document access:", error);

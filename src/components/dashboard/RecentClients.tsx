@@ -55,8 +55,9 @@ export const RecentClients = ({ onClientSelect }: RecentClientsProps) => {
         const clientMap = new Map<string, Client>();
         
         documents?.forEach(doc => {
-          const clientName = doc.metadata?.client_name || 'Unknown Client';
-          const clientId = doc.metadata?.client_id || doc.id;
+          const metadata = doc.metadata as Record<string, any> || {};
+          const clientName = metadata?.client_name || 'Unknown Client';
+          const clientId = metadata?.client_id || doc.id;
           
           // Only process if we have a client name
           if (clientName !== 'Unknown Client') {
