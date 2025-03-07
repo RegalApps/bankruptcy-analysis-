@@ -9,6 +9,8 @@ import { ViewerLoadingState } from "./components/ViewerLoadingState";
 import { ViewerErrorState } from "./components/ViewerErrorState";
 import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
 import { isDocumentForm47 } from "./utils/documentTypeUtils";
+import { TaskManager } from "./TaskManager";
+import { VersionTab } from "./VersionTab";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -61,6 +63,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
         }
         collaborationPanel={
           <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
+        }
+        taskPanel={
+          <TaskManager 
+            documentId={documentId} 
+            tasks={document.tasks || []} 
+            onTaskUpdate={handleDocumentUpdated} 
+          />
+        }
+        versionPanel={
+          <VersionTab 
+            documentId={documentId}
+            versions={document.versions || []}
+          />
         }
       />
     </div>

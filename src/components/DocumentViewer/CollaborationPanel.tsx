@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentDetails } from "./types";
 import { Comment } from "./Comments/types";
-import { TaskManager } from "./TaskManager";
+import { MessageSquare, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CollaborationPanelProps {
   document: DocumentDetails;
@@ -61,38 +62,49 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ document
 
   return (
     <div className="h-full flex flex-col">
-      <div className="space-y-2 flex-1 overflow-auto">
+      <div className="mb-2 flex items-center gap-2">
+        <MessageSquare className="h-4 w-4 text-primary" />
+        <h3 className="text-sm font-medium">Document Comments</h3>
+      </div>
+      
+      <div className="space-y-2 flex-1 overflow-auto border rounded-md bg-muted/10 p-2">
         {typedComments.length > 0 ? (
           typedComments.map((comment) => (
-            <div key={comment.id} className="p-2 rounded-md bg-muted/40">
-              <p className="text-sm">{comment.content}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {new Date(comment.created_at).toLocaleDateString()}
-              </p>
+            <div key={comment.id} className="p-3 rounded-md bg-white dark:bg-muted/40 shadow-sm">
+              <p className="text-sm text-foreground">{comment.content}</p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-muted-foreground">
+                  {new Date(comment.created_at).toLocaleDateString()} at {new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </p>
+                <span className="text-xs px-2 py-1 bg-primary/10 rounded-full text-primary">User ID: {comment.user_id.substring(0, 6)}</span>
+              </div>
             </div>
           ))
         ) : (
-          <div className="text-center py-3">
-            <p className="text-xs text-muted-foreground">No comments yet</p>
+          <div className="text-center py-6 px-3">
+            <p className="text-sm text-muted-foreground">No comments yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Start the conversation by adding a comment below</p>
           </div>
         )}
       </div>
 
-      <div className="flex items-center space-x-1 mt-3 pt-2 border-t">
+      <div className="flex items-center space-x-2 mt-3 pt-2 border-t">
         <input
           type="text"
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Add a comment..."
-          className="flex-1 min-w-0 rounded-md border bg-background px-2 py-1.5 text-xs"
+          className="flex-1 min-w-0 rounded-md border bg-background px-3 py-2 text-sm"
           onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
         />
-        <button
+        <Button
           onClick={handleAddComment}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-2 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          size="sm"
+          className="gap-1"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-        </button>
+          <Send className="h-4 w-4" />
+          <span className="hidden sm:inline">Send</span>
+        </Button>
       </div>
     </div>
   );
