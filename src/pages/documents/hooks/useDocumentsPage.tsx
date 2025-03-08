@@ -37,6 +37,7 @@ export const useDocumentsPage = () => {
         return acc;
       }, []);
       
+      console.log("Extracted clients:", extractedClients);
       setClients(extractedClients);
     }
   }, [documents]);

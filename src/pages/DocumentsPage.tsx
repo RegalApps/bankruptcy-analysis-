@@ -62,8 +62,9 @@ export const DocumentsPage = () => {
             </Alert>
           )}
           
+          {/* Always show the client section, even with empty clients array */}
           <DocumentPageClientSection 
-            clients={clients}
+            clients={clients || []}
             onClientSelect={handleClientSelect}
           />
           
