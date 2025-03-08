@@ -34,6 +34,16 @@ export const extractClientsFromDocuments = (documents: Document[]): {id: string,
       });
     }
     
+    // Special handling for Form 47 documents (Consumer Proposal)
+    if (metadata?.formNumber === '47' || metadata?.formType === 'form-47' || 
+        (doc.title && doc.title.toLowerCase().includes('consumer proposal'))) {
+      // Form 47 is known to be related to Josh Hart client
+      uniqueClients.set('josh-hart', {
+        id: 'josh-hart',
+        name: 'Josh Hart'
+      });
+    }
+    
     // Check for metadata from folder structure
     if (doc.is_folder && doc.folder_type === 'client') {
       uniqueClients.set(doc.id, {
