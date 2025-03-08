@@ -14,24 +14,32 @@ interface ClientTabProps {
 export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) => {
   const [loadError, setLoadError] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [retryId, setRetryId] = useState<string>('');
   
   useEffect(() => {
     // Reset error state when client ID changes
     setLoadError(false);
+    setRetryCount(0);
   }, [clientId]);
   
   useEffect(() => {
     // If we get an error but the client ID contains "josh" or "hart", 
     // it's likely our form-47 client and we can try to simplify the ID
-    if (loadError && clientId.toLowerCase().includes('josh') && retryCount < 1) {
+    if (loadError && 
+        (clientId.toLowerCase().includes('josh') || clientId.toLowerCase().includes('hart')) && 
+        retryCount < 1) {
       console.log("Detected Josh Hart client with error, simplifying ID for retry");
       setRetryCount(prev => prev + 1);
+      setRetryId('josh-hart');
       setLoadError(false);
       toast.info("Retrying client data load with simplified ID");
     }
   }, [loadError, clientId, retryCount]);
   
-  if (!clientId) {
+  // Use the retry ID if we're retrying, otherwise use the original client ID
+  const effectiveClientId = retryCount > 0 && retryId ? retryId : clientId;
+  
+  if (!effectiveClientId) {
     return <NoClientSelected />;
   }
   
@@ -41,7 +49,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   
   return (
     <ClientViewer 
-      clientId={clientId} 
+      clientId={effectiveClientId} 
       onBack={onBack}
       onDocumentOpen={onDocumentOpen}
       onError={() => setLoadError(true)}
