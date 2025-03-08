@@ -9,10 +9,12 @@ import { useFolderRecommendations } from "./hooks/useFolderRecommendations";
 import { FolderOperations } from "./components/FolderOperations";
 import { FolderManagementTools } from "./FolderManagementTools";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Folder, FileQuestion, User } from "lucide-react";
+import { Folder, FileQuestion } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ClientViewer } from "../../client/ClientViewer";
 import { supabase } from "@/lib/supabase";
+import { ClientTab } from "./components/ClientTab";
+import { UncategorizedTab } from "./components/UncategorizedTab";
+import { FolderRecommendationSection } from "./components/FolderRecommendationSection";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
@@ -95,28 +97,33 @@ export const EnhancedFolderTab = ({
     onRefresh();
   };
 
-  // Filter uncategorized documents (not in any folder)
-  const uncategorizedDocuments = documents.filter(doc => 
-    !doc.is_folder && !doc.parent_folder_id
-  );
-
   // If client is selected, show the client viewer
   if (selectedClientId) {
-    return <ClientViewer 
-      clientId={selectedClientId} 
-      onBack={() => setSelectedClientId(undefined)}
-      onDocumentOpen={onDocumentOpen}
-    />;
+    return (
+      <ClientTab 
+        clientId={selectedClientId} 
+        onBack={() => setSelectedClientId(undefined)}
+        onDocumentOpen={onDocumentOpen}
+      />
+    );
   }
 
   return (
     <Card className="h-full">
       <CardContent className="p-4 h-full">
-        {/* Add new Folder Management Tools component */}
+        {/* Add Folder Management Tools component */}
         <FolderManagementTools 
           documents={documents}
           onRefresh={onRefresh}
           selectedFolderId={selectedFolderId}
+        />
+        
+        {/* Folder Recommendation Section */}
+        <FolderRecommendationSection
+          showRecommendation={showRecommendation}
+          recommendation={recommendation}
+          onAcceptRecommendation={handleAcceptRecommendation}
+          onDismissRecommendation={dismissRecommendation}
         />
         
         {/* Folder Operations Section */}
@@ -163,28 +170,10 @@ export const EnhancedFolderTab = ({
           </TabsContent>
           
           <TabsContent value="uncategorized" className="mt-4 space-y-4">
-            <div className="border rounded-md p-3">
-              <h3 className="text-sm font-medium mb-2">Uncategorized Documents</h3>
-              <div className="space-y-1">
-                {uncategorizedDocuments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-2">No uncategorized documents found.</p>
-                ) : (
-                  uncategorizedDocuments.map(doc => (
-                    <div 
-                      key={doc.id}
-                      className="flex items-center gap-2 p-2 hover:bg-accent/50 rounded-sm cursor-pointer"
-                      onClick={() => onDocumentOpen(doc.id)}
-                    >
-                      <FileQuestion className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm truncate">{doc.title}</span>
-                      <span className="text-xs text-muted-foreground ml-auto">
-                        {new Date(doc.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+            <UncategorizedTab 
+              documents={documents}
+              onDocumentOpen={onDocumentOpen}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>
