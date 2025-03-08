@@ -1,6 +1,5 @@
 
 import { ClientViewer } from "@/components/client/ClientViewer";
-import { Document } from "@/components/DocumentList/types";
 
 interface ClientTabProps {
   clientId: string;
