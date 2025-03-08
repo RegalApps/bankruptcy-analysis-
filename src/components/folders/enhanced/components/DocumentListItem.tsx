@@ -63,6 +63,7 @@ export const DocumentListItem = ({
               e.stopPropagation();
               onDocumentOpen(doc.id);
             }}
+            title="View Document"
           />
         </div>
       ))}

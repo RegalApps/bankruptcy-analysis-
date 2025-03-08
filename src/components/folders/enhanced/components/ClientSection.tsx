@@ -15,6 +15,17 @@ export const ClientSection = ({
   onClientViewerAccess,
   selectedClientId
 }: ClientSectionProps) => {
+  // Create a Map to deduplicate clients by ID
+  const uniqueClients = new Map();
+  clients.forEach(client => {
+    if (!uniqueClients.has(client.id)) {
+      uniqueClients.set(client.id, client);
+    }
+  });
+  
+  // Convert Map back to array
+  const deduplicatedClients = Array.from(uniqueClients.values());
+  
   return (
     <div className="h-full border-r bg-background/95 w-56 shrink-0">
       <h3 className="text-sm font-medium p-3 flex items-center border-b">
@@ -22,7 +33,7 @@ export const ClientSection = ({
         Clients
       </h3>
       <div className="overflow-y-auto max-h-[calc(100vh-12rem)]">
-        {clients.map((client) => (
+        {deduplicatedClients.map((client) => (
           <div
             key={client.id}
             className={`p-2 border-b border-border/40 hover:bg-accent/20 text-sm cursor-pointer ${selectedClientId === client.id ? 'bg-accent/30' : ''}`}
