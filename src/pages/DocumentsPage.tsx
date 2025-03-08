@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { MainHeader } from "@/components/header/MainHeader";
@@ -6,13 +5,15 @@ import { MainSidebar } from "@/components/layout/MainSidebar";
 import { useNavigate } from "react-router-dom";
 import { showPerformanceToast } from "@/utils/performance";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { FolderTree, Lock, UnlockKeyhole } from "lucide-react";
+import { Eye, FolderTree, Lock, UnlockKeyhole, UserCircle } from "lucide-react";
 import { EnhancedFolderTab } from "@/components/folders/enhanced/EnhancedFolderTab";
 import { useCreateFolderStructure } from "@/components/folders/enhanced/hooks/useCreateFolderStructure";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export const DocumentsPage = () => {
   const { documents, refetch, isLoading } = useDocuments();
@@ -21,10 +22,32 @@ export const DocumentsPage = () => {
   const [folderPath, setFolderPath] = useState<{id: string, name: string}[]>([]);
   const [hasWriteAccess, setHasWriteAccess] = useState<boolean>(true);
   const [userRole, setUserRole] = useState<string>("viewer");
+  const [clients, setClients] = useState<{id: string, name: string}[]>([]);
   const navigate = useNavigate();
 
   // Get folder structure for breadcrumb path
   const { folders } = useCreateFolderStructure(documents || []);
+
+  // Extract clients from documents
+  useEffect(() => {
+    if (documents) {
+      const extractedClients = documents.reduce<{id: string, name: string}[]>((acc, doc) => {
+        const metadata = doc.metadata as Record<string, any> || {};
+        if (metadata?.client_name && metadata?.client_id) {
+          const existingClient = acc.find(c => c.id === metadata.client_id);
+          if (!existingClient) {
+            acc.push({
+              id: metadata.client_id,
+              name: metadata.client_name
+            });
+          }
+        }
+        return acc;
+      }, []);
+      
+      setClients(extractedClients);
+    }
+  }, [documents]);
 
   // Check user's role and permissions
   useEffect(() => {
@@ -135,6 +158,26 @@ export const DocumentsPage = () => {
     }
   };
 
+  // Handle client selection
+  const handleClientSelect = async (clientId: string) => {
+    try {
+      // Log access to client documents
+      await supabase
+        .from('document_access_history')
+        .insert({
+          document_id: clientId,
+          accessed_at: new Date().toISOString(),
+          access_source: 'client_viewer'
+        });
+      
+      // Navigate to the home page with the selected client ID in the state
+      navigate('/', { state: { selectedClient: clientId } });
+    } catch (error) {
+      console.error('Error logging client access:', error);
+      toast.error("Could not access client information");
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
@@ -202,6 +245,39 @@ export const DocumentsPage = () => {
                 You are currently in view-only mode. Switch to edit mode to create, delete, or merge folders.
               </AlertDescription>
             </Alert>
+          )}
+          
+          {clients.length > 0 && (
+            <Card className="mb-4">
+              <CardContent className="p-4">
+                <h3 className="text-sm font-medium mb-3 flex items-center">
+                  <UserCircle className="h-4 w-4 mr-1.5" />
+                  Clients
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {clients.map((client) => (
+                    <div 
+                      key={client.id}
+                      className="flex items-center justify-between p-2 bg-muted/50 hover:bg-accent/50 rounded-md text-sm group"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <UserCircle className="h-5 w-5 text-primary/70 shrink-0" />
+                        <span className="truncate font-medium">{client.name}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-80 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleClientSelect(client.id)}
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1" />
+                        <span className="text-xs">View</span>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
           
           <EnhancedFolderTab 
