@@ -5,6 +5,11 @@ import { Document } from "@/components/DocumentList/types";
 import { useFolderDragDrop } from "./hooks/useFolderDragDrop";
 import { ClientSidebar } from "./components/ClientSidebar";
 import { DocumentTree } from "./components/DocumentTree";
+import { 
+  extractClientsFromDocuments,
+  filterDocumentsByClient,
+  filterFoldersByClient
+} from "./hooks/utils/clientExtractionUtils";
 
 interface FolderNavigationProps {
   folders: FolderStructure[];
@@ -46,49 +51,8 @@ export function FolderNavigation({
   // Provide the setExpandedFolders function to the hook
   setExpandedFoldersFunction(setExpandedFolders);
   
-  // Extract unique client names and IDs from documents
-  const clients = documents.reduce<{id: string, name: string}[]>((acc, doc) => {
-    const metadata = doc.metadata as Record<string, any> || {};
-    
-    // Check for client_id and client_name in metadata
-    if (metadata?.client_id && metadata?.client_name) {
-      const existingClient = acc.find(c => c.id === metadata.client_id);
-      if (!existingClient) {
-        acc.push({
-          id: metadata.client_id,
-          name: metadata.client_name
-        });
-      }
-    }
-    
-    // Check for clientName in metadata (alternative format)
-    if (metadata?.clientName) {
-      const clientName = metadata.clientName;
-      // Create a consistent client ID from the name if no explicit ID exists
-      const clientId = metadata.client_id || clientName.toLowerCase().replace(/\s+/g, '-');
-      
-      const existingClient = acc.find(c => c.id === clientId);
-      if (!existingClient) {
-        acc.push({
-          id: clientId,
-          name: clientName
-        });
-      }
-    }
-    
-    // Check for metadata from folder structure
-    if (doc.is_folder && doc.folder_type === 'client') {
-      const existingClient = acc.find(c => c.id === doc.id);
-      if (!existingClient) {
-        acc.push({
-          id: doc.id,
-          name: doc.title
-        });
-      }
-    }
-    
-    return acc;
-  }, []);
+  // Extract unique clients from documents using our utility function
+  const clients = extractClientsFromDocuments(documents);
 
   // Find Form 47 documents
   const form47Documents = documents.filter(doc => 
@@ -97,26 +61,11 @@ export function FolderNavigation({
     doc.title?.toLowerCase().includes('consumer proposal')
   );
 
-  // Filter documents based on selected client
-  const filteredDocuments = selectedClientId 
-    ? documents.filter(doc => {
-        const metadata = doc.metadata as Record<string, any> || {};
-        return metadata?.client_id === selectedClientId || 
-               doc.id === selectedClientId ||
-               (metadata?.clientName && metadata.client_id === selectedClientId);
-      })
-    : documents;
+  // Filter documents based on selected client using our utility function
+  const filteredDocuments = filterDocumentsByClient(documents, selectedClientId);
 
-  // Filter folders based on selected client
-  const filteredFolders = selectedClientId
-    ? folders.filter(folder => {
-        // Check if any document in this folder belongs to the selected client
-        return filteredDocuments.some(doc => 
-          doc.parent_folder_id === folder.id || 
-          doc.id === folder.id
-        );
-      })
-    : folders;
+  // Filter folders based on selected client using our utility function
+  const filteredFolders = filterFoldersByClient(folders, filteredDocuments, selectedClientId);
 
   const toggleFolder = (folderId: string, e: React.MouseEvent) => {
     e.stopPropagation();
