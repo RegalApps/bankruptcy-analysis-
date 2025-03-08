@@ -32,6 +32,7 @@ export const EnhancedFolderTab = ({
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<string>("folders");
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>();
+  const [viewingClientId, setViewingClientId] = useState<string | undefined>();
   const { toast } = useToast();
   
   // Get the folder structure based on documents
@@ -52,17 +53,23 @@ export const EnhancedFolderTab = ({
   const handleFolderSelect = (folderId: string) => {
     setSelectedFolderId(folderId);
     setSelectedDocumentId(undefined);
-    setSelectedClientId(undefined);
   };
 
   // Handle document selection
   const handleDocumentSelect = (documentId: string) => {
     setSelectedDocumentId(documentId);
-    setSelectedClientId(undefined);
   };
 
-  // Handle client selection
-  const handleClientSelect = async (clientId: string) => {
+  // Handle client selection (filter documents)
+  const handleClientSelect = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setSelectedFolderId(undefined);
+    setSelectedDocumentId(undefined);
+    setActiveTab("folders");
+  };
+
+  // Handle client viewer access
+  const handleClientViewerAccess = async (clientId: string) => {
     try {
       // Log access to client documents
       await supabase
@@ -73,7 +80,7 @@ export const EnhancedFolderTab = ({
           access_source: 'client_viewer'
         });
       
-      setSelectedClientId(clientId);
+      setViewingClientId(clientId);
       setSelectedFolderId(undefined);
       setSelectedDocumentId(undefined);
       setActiveTab("folders");
@@ -84,6 +91,9 @@ export const EnhancedFolderTab = ({
         title: "Error",
         description: "Could not access client information"
       });
+      
+      // Still allow viewing even if logging fails
+      setViewingClientId(clientId);
     }
   };
 
@@ -97,12 +107,12 @@ export const EnhancedFolderTab = ({
     onRefresh();
   };
 
-  // If client is selected, show the client viewer
-  if (selectedClientId) {
+  // If viewing a client in the detailed view, show the client tab
+  if (viewingClientId) {
     return (
       <ClientTab 
-        clientId={selectedClientId} 
-        onBack={() => setSelectedClientId(undefined)}
+        clientId={viewingClientId} 
+        onBack={() => setViewingClientId(undefined)}
         onDocumentOpen={onDocumentOpen}
       />
     );
@@ -155,7 +165,7 @@ export const EnhancedFolderTab = ({
           </TabsList>
           
           <TabsContent value="folders" className="mt-4 space-y-4">
-            {/* Folder Navigation */}
+            {/* Folder Navigation with Client Sidebar */}
             <FolderNavigation 
               folders={folders}
               documents={documents}
@@ -163,7 +173,9 @@ export const EnhancedFolderTab = ({
               onDocumentSelect={handleDocumentSelect}
               onDocumentOpen={onDocumentOpen}
               onClientSelect={handleClientSelect}
+              onClientViewerAccess={handleClientViewerAccess}
               selectedFolderId={selectedFolderId}
+              selectedClientId={selectedClientId}
               expandedFolders={expandedFolders}
               setExpandedFolders={setExpandedFolders}
             />

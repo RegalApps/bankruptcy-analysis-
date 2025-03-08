@@ -8,7 +8,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useDocumentsPage } from "./documents/hooks/useDocumentsPage";
 import { BreadcrumbNavigation } from "./documents/components/BreadcrumbNavigation";
 import { AccessModeToggle } from "./documents/components/AccessModeToggle";
-import { DocumentPageClientSection } from "./documents/components/DocumentPageClientSection";
 
 export const DocumentsPage = () => {
   const {
@@ -19,7 +18,6 @@ export const DocumentsPage = () => {
     selectedItemType,
     folderPath,
     hasWriteAccess,
-    clients,
     handleItemSelect,
     handleOpenDocument,
     toggleAccess,
@@ -61,12 +59,6 @@ export const DocumentsPage = () => {
               </AlertDescription>
             </Alert>
           )}
-          
-          {/* Always show the client section, even with empty clients array */}
-          <DocumentPageClientSection 
-            clients={clients || []}
-            onClientSelect={handleClientSelect}
-          />
           
           <EnhancedFolderTab 
             documents={documents ?? []}

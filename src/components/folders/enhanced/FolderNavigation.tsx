@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
@@ -6,7 +7,7 @@ import { FolderList } from "./components/FolderList";
 import { EmptyFolderState } from "./components/EmptyFolderState";
 import { useFolderDragDrop } from "./hooks/useFolderDragDrop";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, UserCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { ClientSection } from "./components/ClientSection";
 
 interface FolderNavigationProps {
@@ -16,7 +17,9 @@ interface FolderNavigationProps {
   onDocumentSelect: (documentId: string) => void;
   onDocumentOpen: (documentId: string) => void;
   onClientSelect?: (clientId: string) => void;
+  onClientViewerAccess?: (clientId: string) => void;
   selectedFolderId?: string;
+  selectedClientId?: string;
   expandedFolders: Record<string, boolean>;
   setExpandedFolders: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
@@ -28,7 +31,9 @@ export function FolderNavigation({
   onDocumentSelect,
   onDocumentOpen,
   onClientSelect,
+  onClientViewerAccess,
   selectedFolderId,
+  selectedClientId,
   expandedFolders,
   setExpandedFolders
 }: FolderNavigationProps) {
@@ -45,23 +50,6 @@ export function FolderNavigation({
   // Provide the setExpandedFolders function to the hook
   setExpandedFoldersFunction(setExpandedFolders);
   
-  const toggleFolder = (folderId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setExpandedFolders(prev => ({
-      ...prev,
-      [folderId]: !prev[folderId]
-    }));
-    
-    // Auto-expand parent folders when a subfolder is expanded
-    const folder = folders.flat().find(f => f.id === folderId);
-    if (folder && folder.parentId) {
-      setExpandedFolders(prev => ({
-        ...prev,
-        [folder.parentId!]: true
-      }));
-    }
-  };
-
   // Extract unique client names and IDs from documents
   const clients = documents.reduce<{id: string, name: string}[]>((acc, doc) => {
     const metadata = doc.metadata as Record<string, any> || {};
@@ -113,6 +101,44 @@ export function FolderNavigation({
     doc.title?.toLowerCase().includes('consumer proposal')
   );
 
+  // Filter documents based on selected client
+  const filteredDocuments = selectedClientId 
+    ? documents.filter(doc => {
+        const metadata = doc.metadata as Record<string, any> || {};
+        return metadata?.client_id === selectedClientId || 
+               doc.id === selectedClientId ||
+               (metadata?.clientName && metadata.client_id === selectedClientId);
+      })
+    : documents;
+
+  // Filter folders based on selected client
+  const filteredFolders = selectedClientId
+    ? folders.filter(folder => {
+        // Check if any document in this folder belongs to the selected client
+        return filteredDocuments.some(doc => 
+          doc.parent_folder_id === folder.id || 
+          doc.id === folder.id
+        );
+      })
+    : folders;
+
+  const toggleFolder = (folderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedFolders(prev => ({
+      ...prev,
+      [folderId]: !prev[folderId]
+    }));
+    
+    // Auto-expand parent folders when a subfolder is expanded
+    const folder = folders.flat().find(f => f.id === folderId);
+    if (folder && folder.parentId) {
+      setExpandedFolders(prev => ({
+        ...prev,
+        [folder.parentId!]: true
+      }));
+    }
+  };
+
   // Expand folders on initial load
   useEffect(() => {
     // Prepare initial expanded folders state
@@ -151,47 +177,60 @@ export function FolderNavigation({
   const hasForm47Documents = form47Documents.length > 0;
 
   return (
-    <ScrollArea className="h-[calc(100vh-10rem)]">
-      <div className="pr-4">
-        {/* Show alert for Form 47 documents */}
-        {hasForm47Documents && (
-          <Alert className="mb-4 bg-primary/10 border-primary/20">
-            <AlertCircle className="h-4 w-4 text-primary" />
-            <AlertDescription className="text-sm">
-              {form47Documents.length} Form 47 document{form47Documents.length > 1 ? 's' : ''} available. 
-              Double-click on the document to open it.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {/* Clients Section */}
-        {clients.length > 0 && onClientSelect && (
-          <ClientSection 
-            clients={clients} 
-            onClientSelect={onClientSelect} 
-          />
-        )}
-        
-        {folders.length > 0 ? (
-          <FolderList
-            folders={folders}
-            documents={documents}
-            onFolderSelect={onFolderSelect}
-            onDocumentSelect={onDocumentSelect}
-            onDocumentOpen={onDocumentOpen}
-            selectedFolderId={selectedFolderId}
-            expandedFolders={expandedFolders}
-            toggleFolder={toggleFolder}
-            handleDragStart={handleDragStart}
-            handleDragOver={handleDragOver}
-            handleDragLeave={handleDragLeave}
-            handleDrop={handleDrop}
-            dragOverFolder={dragOverFolder}
-          />
-        ) : (
-          <EmptyFolderState />
-        )}
+    <div className="flex h-full">
+      {/* Client Sidebar */}
+      {clients.length > 0 && onClientSelect && onClientViewerAccess && (
+        <ClientSection 
+          clients={clients} 
+          onClientSelect={onClientSelect}
+          onClientViewerAccess={onClientViewerAccess}
+          selectedClientId={selectedClientId}
+        />
+      )}
+      
+      {/* Document Tree */}
+      <div className="flex-1">
+        <ScrollArea className="h-[calc(100vh-10rem)]">
+          <div className="pr-4 pl-2">
+            {/* Show alert for Form 47 documents */}
+            {hasForm47Documents && (
+              <Alert className="mb-4 bg-primary/10 border-primary/20">
+                <AlertCircle className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-sm">
+                  {form47Documents.length} Form 47 document{form47Documents.length > 1 ? 's' : ''} available. 
+                  Double-click on the document to open it.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {filteredFolders.length > 0 ? (
+              <FolderList
+                folders={filteredFolders}
+                documents={filteredDocuments}
+                onFolderSelect={onFolderSelect}
+                onDocumentSelect={onDocumentSelect}
+                onDocumentOpen={onDocumentOpen}
+                selectedFolderId={selectedFolderId}
+                expandedFolders={expandedFolders}
+                toggleFolder={toggleFolder}
+                handleDragStart={handleDragStart}
+                handleDragOver={handleDragOver}
+                handleDragLeave={handleDragLeave}
+                handleDrop={handleDrop}
+                dragOverFolder={dragOverFolder}
+              />
+            ) : (
+              selectedClientId ? (
+                <div className="text-center p-6 bg-muted/20 rounded-md">
+                  <p className="text-muted-foreground">No folders found for this client.</p>
+                </div>
+              ) : (
+                <EmptyFolderState />
+              )
+            )}
+          </div>
+        </ScrollArea>
       </div>
-    </ScrollArea>
+    </div>
   );
 }
