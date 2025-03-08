@@ -1,5 +1,4 @@
-
-import { File, FileText } from "lucide-react";
+import { File, FileText, Eye } from "lucide-react";
 import { Document } from "@/components/DocumentList/types";
 import { cn } from "@/lib/utils";
 
@@ -57,17 +56,13 @@ export const DocumentListItem = ({
             <File className="h-4 w-4 text-muted-foreground mr-2" />
           )}
           <span className="text-sm truncate flex-1">{doc.title}</span>
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
-            <button 
-              className="text-xs text-muted-foreground hover:text-primary px-1.5 py-0.5 rounded-sm hover:bg-accent"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDocumentOpen(doc.id);
-              }}
-            >
-              Open
-            </button>
-          </div>
+          <Eye 
+            className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDocumentOpen(doc.id);
+            }}
+          />
         </div>
       ))}
     </div>
