@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useNavigate } from "react-router-dom";
@@ -17,16 +16,13 @@ export const useDocumentsPage = () => {
   const [clients, setClients] = useState<{id: string, name: string}[]>([]);
   const navigate = useNavigate();
 
-  // Get folder structure for breadcrumb path
   const { folders } = useCreateFolderStructure(documents || []);
 
-  // Extract clients from documents
   useEffect(() => {
     if (documents) {
       const extractedClients = documents.reduce<{id: string, name: string}[]>((acc, doc) => {
         const metadata = doc.metadata as Record<string, any> || {};
         
-        // Check for client_id and client_name in metadata
         if (metadata?.client_id && metadata?.client_name) {
           const existingClient = acc.find(c => c.id === metadata.client_id);
           if (!existingClient) {
@@ -37,10 +33,8 @@ export const useDocumentsPage = () => {
           }
         }
         
-        // Check for clientName in metadata (alternative format)
         if (metadata?.clientName) {
           const clientName = metadata.clientName;
-          // Create a consistent client ID from the name if no explicit ID exists
           const clientId = metadata.client_id || clientName.toLowerCase().replace(/\s+/g, '-');
           
           const existingClient = acc.find(c => c.id === clientId);
@@ -52,7 +46,6 @@ export const useDocumentsPage = () => {
           }
         }
         
-        // Check for metadata from folder structure
         if (doc.is_folder && doc.folder_type === 'client') {
           const existingClient = acc.find(c => c.id === doc.id);
           if (!existingClient) {
@@ -71,11 +64,9 @@ export const useDocumentsPage = () => {
     }
   }, [documents]);
 
-  // Check user's role and permissions
   useEffect(() => {
     const checkUserPermissions = async () => {
       try {
-        // Get current user
         const { data: { user }, error } = await supabase.auth.getUser();
         
         if (error) {
@@ -89,10 +80,8 @@ export const useDocumentsPage = () => {
           return;
         }
         
-        // For this implementation, we'll default to having write access
-        // In a real app, you would check against user roles in your database
         setHasWriteAccess(true);
-        setUserRole("admin"); // Default to admin for demonstration
+        setUserRole("admin");
       } catch (error) {
         console.error("Error checking permissions:", error);
         setHasWriteAccess(false);
@@ -103,41 +92,32 @@ export const useDocumentsPage = () => {
   }, []);
 
   useEffect(() => {
-    // Update folder path when selected item changes
     if (selectedItemId && folders.length > 0) {
-      // Find selected item
       const selectedItem = documents?.find(doc => doc.id === selectedItemId);
       
       if (selectedItem) {
         if (selectedItem.is_folder) {
-          // Build path for folder
           buildFolderPath(selectedItemId);
         } else if (selectedItem.parent_folder_id) {
-          // Build path for document's parent folder
           buildFolderPath(selectedItem.parent_folder_id);
         } else {
-          // Reset path if no parent folder
           setFolderPath([]);
         }
       }
     } else {
-      // Reset path if no selected item
       setFolderPath([]);
     }
   }, [selectedItemId, folders, documents]);
 
-  // Build folder path array by traversing folder hierarchy
   const buildFolderPath = (folderId: string) => {
     const path: {id: string, name: string}[] = [];
     let currentFolderId = folderId;
     
-    // Add current folder
     const currentFolder = documents?.find(doc => doc.id === currentFolderId);
     if (currentFolder) {
       path.unshift({ id: currentFolder.id, name: currentFolder.title });
     }
     
-    // Traverse up the folder hierarchy
     while (currentFolder?.parent_folder_id) {
       const parentFolder = documents?.find(doc => doc.id === currentFolder.parent_folder_id);
       if (parentFolder) {
@@ -157,15 +137,12 @@ export const useDocumentsPage = () => {
   };
 
   const handleOpenDocument = (documentId: string) => {
-    // Navigate to the home page with the selected document ID in the state
     navigate('/', { state: { selectedDocument: documentId } });
   };
 
-  // Toggle user access
   const toggleAccess = () => {
     setHasWriteAccess(!hasWriteAccess);
     
-    // In a real application, you would update the user's role in your database
     if (hasWriteAccess) {
       setUserRole("viewer");
       toast.info("Switched to view-only mode");
@@ -175,11 +152,9 @@ export const useDocumentsPage = () => {
     }
   };
 
-  // Handle client selection
   const handleClientSelect = (clientId: string) => {
     console.log(`Selecting client with ID: ${clientId}`);
     try {
-      // Log access to client documents
       supabase
         .from('document_access_history')
         .insert({
@@ -189,13 +164,12 @@ export const useDocumentsPage = () => {
         })
         .then(() => {
           console.log('Access logged successfully');
+          navigate('/', { state: { selectedClient: clientId } });
         })
         .catch((error) => {
           console.error('Error logging access:', error);
+          navigate('/', { state: { selectedClient: clientId } });
         });
-      
-      // Navigate to the client viewer page
-      navigate('/', { state: { selectedClient: clientId } });
     } catch (error) {
       console.error('Error accessing client information:', error);
       toast.error("Could not access client information");
