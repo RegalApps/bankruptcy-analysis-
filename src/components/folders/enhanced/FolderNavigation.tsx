@@ -2,13 +2,9 @@
 import { useState, useEffect } from "react";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { FolderList } from "./components/FolderList";
-import { EmptyFolderState } from "./components/EmptyFolderState";
 import { useFolderDragDrop } from "./hooks/useFolderDragDrop";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { ClientSection } from "./components/ClientSection";
+import { ClientSidebar } from "./components/ClientSidebar";
+import { DocumentTree } from "./components/DocumentTree";
 
 interface FolderNavigationProps {
   folders: FolderStructure[];
@@ -173,15 +169,12 @@ export function FolderNavigation({
     }));
   }, [folders, form47Documents]);
 
-  // Check if we have Form 47 documents that need attention
-  const hasForm47Documents = form47Documents.length > 0;
-
   return (
     <div className="flex h-full">
       {/* Client Sidebar */}
       {clients.length > 0 && onClientSelect && onClientViewerAccess && (
-        <ClientSection 
-          clients={clients} 
+        <ClientSidebar
+          clients={clients}
           onClientSelect={onClientSelect}
           onClientViewerAccess={onClientViewerAccess}
           selectedClientId={selectedClientId}
@@ -190,46 +183,23 @@ export function FolderNavigation({
       
       {/* Document Tree */}
       <div className="flex-1">
-        <ScrollArea className="h-[calc(100vh-10rem)]">
-          <div className="pr-4 pl-2">
-            {/* Show alert for Form 47 documents */}
-            {hasForm47Documents && (
-              <Alert className="mb-4 bg-primary/10 border-primary/20">
-                <AlertCircle className="h-4 w-4 text-primary" />
-                <AlertDescription className="text-sm">
-                  {form47Documents.length} Form 47 document{form47Documents.length > 1 ? 's' : ''} available. 
-                  Double-click on the document to open it.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {filteredFolders.length > 0 ? (
-              <FolderList
-                folders={filteredFolders}
-                documents={filteredDocuments}
-                onFolderSelect={onFolderSelect}
-                onDocumentSelect={onDocumentSelect}
-                onDocumentOpen={onDocumentOpen}
-                selectedFolderId={selectedFolderId}
-                expandedFolders={expandedFolders}
-                toggleFolder={toggleFolder}
-                handleDragStart={handleDragStart}
-                handleDragOver={handleDragOver}
-                handleDragLeave={handleDragLeave}
-                handleDrop={handleDrop}
-                dragOverFolder={dragOverFolder}
-              />
-            ) : (
-              selectedClientId ? (
-                <div className="text-center p-6 bg-muted/20 rounded-md">
-                  <p className="text-muted-foreground">No folders found for this client.</p>
-                </div>
-              ) : (
-                <EmptyFolderState />
-              )
-            )}
-          </div>
-        </ScrollArea>
+        <DocumentTree
+          filteredFolders={filteredFolders}
+          filteredDocuments={filteredDocuments}
+          form47Documents={form47Documents}
+          selectedFolderId={selectedFolderId}
+          selectedClientId={selectedClientId}
+          expandedFolders={expandedFolders}
+          dragOverFolder={dragOverFolder}
+          onFolderSelect={onFolderSelect}
+          onDocumentSelect={onDocumentSelect}
+          onDocumentOpen={onDocumentOpen}
+          toggleFolder={toggleFolder}
+          handleDragStart={handleDragStart}
+          handleDragOver={handleDragOver}
+          handleDragLeave={handleDragLeave}
+          handleDrop={handleDrop}
+        />
       </div>
     </div>
   );
