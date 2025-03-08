@@ -1,5 +1,6 @@
 
-import { UserCircle } from "lucide-react";
+import { Eye, UserCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ClientSectionProps {
   clients: { id: string; name: string }[];
@@ -17,11 +18,21 @@ export const ClientSection = ({ clients, onClientSelect }: ClientSectionProps) =
         {clients.map((client) => (
           <div
             key={client.id}
-            className="flex items-center gap-2 p-2 hover:bg-accent/50 rounded-sm cursor-pointer text-sm"
-            onClick={() => onClientSelect(client.id)}
+            className="flex items-center justify-between p-2 hover:bg-accent/50 rounded-sm text-sm group"
           >
-            <UserCircle className="h-4 w-4 text-primary/70" />
-            <span className="truncate">{client.name}</span>
+            <div className="flex items-center gap-2 truncate">
+              <UserCircle className="h-4 w-4 text-primary/70 shrink-0" />
+              <span className="truncate">{client.name}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => onClientSelect(client.id)}
+            >
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              <span className="text-xs">View</span>
+            </Button>
           </div>
         ))}
       </div>
