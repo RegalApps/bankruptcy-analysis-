@@ -155,24 +155,28 @@ export const useDocumentsPage = () => {
   const handleClientSelect = (clientId: string) => {
     console.log(`Selecting client with ID: ${clientId}`);
     try {
-      supabase
-        .from('document_access_history')
-        .insert({
-          document_id: clientId,
-          accessed_at: new Date().toISOString(),
-          access_source: 'client_viewer'
-        })
-        .then(() => {
-          console.log('Access logged successfully');
-          navigate('/', { state: { selectedClient: clientId } });
-        })
-        .catch((error) => {
-          console.error('Error logging access:', error);
-          navigate('/', { state: { selectedClient: clientId } });
-        });
+      Promise.resolve(
+        supabase
+          .from('document_access_history')
+          .insert({
+            document_id: clientId,
+            accessed_at: new Date().toISOString(),
+            access_source: 'client_viewer'
+          })
+      )
+      .then(() => {
+        console.log('Access logged successfully');
+        navigate('/', { state: { selectedClient: clientId } });
+      })
+      .catch((error) => {
+        console.error('Error logging access:', error);
+        navigate('/', { state: { selectedClient: clientId } });
+      });
     } catch (error) {
       console.error('Error accessing client information:', error);
       toast.error("Could not access client information");
+      
+      navigate('/', { state: { selectedClient: clientId } });
     }
   };
 
