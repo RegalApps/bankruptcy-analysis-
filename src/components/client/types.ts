@@ -21,4 +21,5 @@ export interface ClientViewerProps {
   clientId: string;
   onBack: () => void;
   onDocumentOpen: (documentId: string) => void;
+  onError?: () => void;
 }

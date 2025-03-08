@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FolderNavigation } from "./FolderNavigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,13 +34,8 @@ export const EnhancedFolderTab = ({
   const [viewingClientId, setViewingClientId] = useState<string | undefined>();
   const { toast } = useToast();
   
-  // Get the folder structure based on documents
   const { folders, isLoading: foldersLoading } = useCreateFolderStructure(documents);
-  
-  // Get user permissions for folders
   const { userRole, folderPermissions } = useFolderPermissions();
-
-  // Get folder recommendations
   const { 
     showRecommendation, 
     recommendation, 
@@ -49,18 +43,15 @@ export const EnhancedFolderTab = ({
     dismissRecommendation
   } = useFolderRecommendations(documents, folders);
 
-  // Handle folder selection
   const handleFolderSelect = (folderId: string) => {
     setSelectedFolderId(folderId);
     setSelectedDocumentId(undefined);
   };
 
-  // Handle document selection
   const handleDocumentSelect = (documentId: string) => {
     setSelectedDocumentId(documentId);
   };
 
-  // Handle client selection (filter documents)
   const handleClientSelect = (clientId: string) => {
     setSelectedClientId(clientId);
     setSelectedFolderId(undefined);
@@ -68,10 +59,10 @@ export const EnhancedFolderTab = ({
     setActiveTab("folders");
   };
 
-  // Handle client viewer access
   const handleClientViewerAccess = async (clientId: string) => {
     try {
-      // Log access to client documents
+      console.log("Accessing client viewer for ID:", clientId);
+      
       await supabase
         .from('document_access_history')
         .insert({
@@ -92,22 +83,17 @@ export const EnhancedFolderTab = ({
         description: "Could not access client information"
       });
       
-      // Still allow viewing even if logging fails
       setViewingClientId(clientId);
     }
   };
 
-  // Handle recommendation acceptance with refresh
   const handleAcceptRecommendation = async () => {
-    // Hide recommendation
     setShowRecommendation(false);
     dismissRecommendation();
     
-    // Refresh documents
     onRefresh();
   };
 
-  // If viewing a client in the detailed view, show the client tab
   if (viewingClientId) {
     return (
       <ClientTab 
@@ -121,14 +107,12 @@ export const EnhancedFolderTab = ({
   return (
     <Card className="h-full">
       <CardContent className="p-4 h-full">
-        {/* Add Folder Management Tools component */}
         <FolderManagementTools 
           documents={documents}
           onRefresh={onRefresh}
           selectedFolderId={selectedFolderId}
         />
         
-        {/* Folder Recommendation Section */}
         <FolderRecommendationSection
           showRecommendation={showRecommendation}
           recommendation={recommendation}
@@ -136,7 +120,6 @@ export const EnhancedFolderTab = ({
           onDismissRecommendation={dismissRecommendation}
         />
         
-        {/* Folder Operations Section */}
         <FolderOperations
           showRecommendation={showRecommendation}
           recommendation={recommendation}
@@ -146,7 +129,6 @@ export const EnhancedFolderTab = ({
           setExpandedFolders={setExpandedFolders}
         />
         
-        {/* Tabs for Folders and Uncategorized */}
         <Tabs 
           defaultValue="folders" 
           value={activeTab}
@@ -165,7 +147,6 @@ export const EnhancedFolderTab = ({
           </TabsList>
           
           <TabsContent value="folders" className="mt-4 space-y-4">
-            {/* Folder Navigation with Client Sidebar */}
             <FolderNavigation 
               folders={folders}
               documents={documents}

@@ -13,8 +13,14 @@ import { ClientNotFound } from "./components/ClientNotFound";
 import { useClientData } from "./hooks/useClientData";
 import { ClientViewerProps } from "./types";
 
-export const ClientViewer = ({ clientId, onBack, onDocumentOpen }: ClientViewerProps) => {
-  const { client, documents, isLoading, activeTab, setActiveTab } = useClientData(clientId, onBack);
+export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: ClientViewerProps) => {
+  const { client, documents, isLoading, activeTab, setActiveTab, error } = useClientData(clientId, onBack);
+
+  // If there's an error, call the onError callback if provided
+  if (error && onError) {
+    console.error("Client data error:", error);
+    onError();
+  }
 
   // If still loading, show skeleton
   if (isLoading) {
