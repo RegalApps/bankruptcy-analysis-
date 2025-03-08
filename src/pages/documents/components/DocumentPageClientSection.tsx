@@ -32,7 +32,8 @@ export const DocumentPageClientSection = ({
             {clients.map((client) => (
               <div
                 key={client.id}
-                className="flex items-center justify-between p-2 bg-muted/50 hover:bg-accent/50 rounded-md text-sm group"
+                className="flex items-center justify-between p-2 bg-muted/50 hover:bg-accent/50 rounded-md text-sm group cursor-pointer"
+                onClick={() => onClientSelect(client.id)}
               >
                 <div className="flex items-center gap-2 truncate">
                   <UserCircle className="h-5 w-5 text-primary/70 shrink-0" />
@@ -42,7 +43,6 @@ export const DocumentPageClientSection = ({
                   variant="ghost"
                   size="sm"
                   className="opacity-80 group-hover:opacity-100 transition-opacity"
-                  onClick={() => onClientSelect(client.id)}
                 >
                   <Eye className="h-3.5 w-3.5 mr-1" />
                   <span className="text-xs">View</span>

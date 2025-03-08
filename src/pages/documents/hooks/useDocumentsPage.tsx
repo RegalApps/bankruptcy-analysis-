@@ -25,7 +25,9 @@ export const useDocumentsPage = () => {
     if (documents) {
       const extractedClients = documents.reduce<{id: string, name: string}[]>((acc, doc) => {
         const metadata = doc.metadata as Record<string, any> || {};
-        if (metadata?.client_name && metadata?.client_id) {
+        
+        // Check for client_id and client_name in metadata
+        if (metadata?.client_id && metadata?.client_name) {
           const existingClient = acc.find(c => c.id === metadata.client_id);
           if (!existingClient) {
             acc.push({
@@ -34,6 +36,33 @@ export const useDocumentsPage = () => {
             });
           }
         }
+        
+        // Check for clientName in metadata (alternative format)
+        if (metadata?.clientName) {
+          const clientName = metadata.clientName;
+          // Create a consistent client ID from the name if no explicit ID exists
+          const clientId = metadata.client_id || clientName.toLowerCase().replace(/\s+/g, '-');
+          
+          const existingClient = acc.find(c => c.id === clientId);
+          if (!existingClient) {
+            acc.push({
+              id: clientId,
+              name: clientName
+            });
+          }
+        }
+        
+        // Check for metadata from folder structure
+        if (doc.is_folder && doc.folder_type === 'client') {
+          const existingClient = acc.find(c => c.id === doc.id);
+          if (!existingClient) {
+            acc.push({
+              id: doc.id,
+              name: doc.title
+            });
+          }
+        }
+        
         return acc;
       }, []);
       
@@ -147,21 +176,28 @@ export const useDocumentsPage = () => {
   };
 
   // Handle client selection
-  const handleClientSelect = async (clientId: string) => {
+  const handleClientSelect = (clientId: string) => {
+    console.log(`Selecting client with ID: ${clientId}`);
     try {
       // Log access to client documents
-      await supabase
+      supabase
         .from('document_access_history')
         .insert({
           document_id: clientId,
           accessed_at: new Date().toISOString(),
           access_source: 'client_viewer'
+        })
+        .then(() => {
+          console.log('Access logged successfully');
+        })
+        .catch((error) => {
+          console.error('Error logging access:', error);
         });
       
-      // Navigate to the home page with the selected client ID in the state
+      // Navigate to the client viewer page
       navigate('/', { state: { selectedClient: clientId } });
     } catch (error) {
-      console.error('Error logging client access:', error);
+      console.error('Error accessing client information:', error);
       toast.error("Could not access client information");
     }
   };

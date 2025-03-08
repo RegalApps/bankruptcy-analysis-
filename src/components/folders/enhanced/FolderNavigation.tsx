@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
@@ -66,7 +65,9 @@ export function FolderNavigation({
   // Extract unique client names and IDs from documents
   const clients = documents.reduce<{id: string, name: string}[]>((acc, doc) => {
     const metadata = doc.metadata as Record<string, any> || {};
-    if (metadata?.client_name && metadata?.client_id) {
+    
+    // Check for client_id and client_name in metadata
+    if (metadata?.client_id && metadata?.client_name) {
       const existingClient = acc.find(c => c.id === metadata.client_id);
       if (!existingClient) {
         acc.push({
@@ -75,6 +76,33 @@ export function FolderNavigation({
         });
       }
     }
+    
+    // Check for clientName in metadata (alternative format)
+    if (metadata?.clientName) {
+      const clientName = metadata.clientName;
+      // Create a consistent client ID from the name if no explicit ID exists
+      const clientId = metadata.client_id || clientName.toLowerCase().replace(/\s+/g, '-');
+      
+      const existingClient = acc.find(c => c.id === clientId);
+      if (!existingClient) {
+        acc.push({
+          id: clientId,
+          name: clientName
+        });
+      }
+    }
+    
+    // Check for metadata from folder structure
+    if (doc.is_folder && doc.folder_type === 'client') {
+      const existingClient = acc.find(c => c.id === doc.id);
+      if (!existingClient) {
+        acc.push({
+          id: doc.id,
+          name: doc.title
+        });
+      }
+    }
+    
     return acc;
   }, []);
 
