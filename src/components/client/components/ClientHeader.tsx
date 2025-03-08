@@ -1,6 +1,6 @@
 
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Mail, Calendar } from "lucide-react";
 
 interface ClientHeaderProps {
   onBack: () => void;
@@ -8,21 +8,17 @@ interface ClientHeaderProps {
 
 export const ClientHeader = ({ onBack }: ClientHeaderProps) => {
   return (
-    <div className="flex items-center justify-between border-b pb-3">
-      <Button variant="ghost" size="sm" onClick={onBack}>
-        <ChevronLeft className="h-4 w-4 mr-1" />
+    <div className="flex items-center p-4">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="mr-2"
+        onClick={onBack}
+      >
+        <ArrowLeft className="h-4 w-4 mr-1" />
         Back
       </Button>
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm">
-          <Mail className="h-4 w-4 mr-1.5" />
-          Contact
-        </Button>
-        <Button variant="outline" size="sm">
-          <Calendar className="h-4 w-4 mr-1.5" />
-          Schedule
-        </Button>
-      </div>
+      <h2 className="text-lg font-semibold">Client Viewer</h2>
     </div>
   );
 };

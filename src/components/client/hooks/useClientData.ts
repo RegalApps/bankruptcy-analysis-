@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface Client {
   id: string;
@@ -26,7 +26,6 @@ export const useClientData = (clientId: string, onBack: () => void) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("documents");
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -56,27 +55,20 @@ export const useClientData = (clientId: string, onBack: () => void) => {
           setClient(clientData);
           setDocuments(clientDocs);
         } else {
-          toast({
-            variant: "destructive",
-            title: "Client not found",
-            description: "Could not find client information"
-          });
+          toast.error("Could not find client information");
           onBack();
         }
       } catch (error) {
         console.error('Error fetching client data:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load client information"
-        });
+        toast.error("Failed to load client information");
+        onBack();
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchClientData();
-  }, [clientId, toast, onBack]);
+  }, [clientId, onBack]);
 
   return {
     client,
