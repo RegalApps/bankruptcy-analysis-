@@ -8,13 +8,21 @@ import {
 import { ClientHeader } from "./components/ClientHeader";
 import { ClientInfoPanel } from "./components/ClientInfoPanel";
 import { DocumentsPanel } from "./components/DocumentsPanel";
+import { FilePreviewPanel } from "./components/FilePreviewPanel";
 import { ClientSkeleton } from "./components/ClientSkeleton";
 import { ClientNotFound } from "./components/ClientNotFound";
 import { useClientData } from "./hooks/useClientData";
 import { ClientViewerProps } from "./types";
+import { useState } from "react";
 
 export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: ClientViewerProps) => {
   const { client, documents, isLoading, activeTab, setActiveTab, error } = useClientData(clientId, onBack);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
+  
+  // Find the selected document
+  const selectedDocument = selectedDocumentId 
+    ? documents.find(doc => doc.id === selectedDocumentId)
+    : null;
 
   // If there's an error, call the onError callback if provided
   if (error && onError) {
@@ -32,6 +40,11 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
     return <ClientNotFound onBack={onBack} />;
   }
 
+  // Handle document selection
+  const handleDocumentSelect = (documentId: string) => {
+    setSelectedDocumentId(documentId);
+  };
+
   // Get last activity date
   const lastActivityDate = documents.length > 0 ? documents[0].updated_at : undefined;
 
@@ -42,23 +55,37 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
       </CardHeader>
       <CardContent className="p-0">
         <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)]">
-          {/* Left panel - Client info */}
-          <ResizablePanel defaultSize={25} minSize={20}>
+          {/* Left panel - Client info & Document Tree */}
+          <ResizablePanel defaultSize={20} minSize={15}>
             <ClientInfoPanel 
               client={client} 
               documentCount={documents.length}
               lastActivityDate={lastActivityDate}
+              documents={documents}
+              onDocumentSelect={handleDocumentSelect}
             />
           </ResizablePanel>
           
           <ResizableHandle withHandle />
           
-          {/* Right panel - Documents */}
-          <ResizablePanel defaultSize={75}>
+          {/* Middle panel - Client Files Hub */}
+          <ResizablePanel defaultSize={50}>
             <DocumentsPanel
               documents={documents}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
+              onDocumentOpen={onDocumentOpen}
+              onDocumentSelect={handleDocumentSelect}
+              selectedDocumentId={selectedDocumentId}
+            />
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Right panel - File Preview & Collaboration */}
+          <ResizablePanel defaultSize={30} minSize={20}>
+            <FilePreviewPanel 
+              document={selectedDocument} 
               onDocumentOpen={onDocumentOpen}
             />
           </ResizablePanel>

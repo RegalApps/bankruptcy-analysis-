@@ -15,6 +15,10 @@ export interface Document {
   type: string;
   created_at: string;
   updated_at: string;
+  metadata?: Record<string, any>;
+  parent_folder_id?: string;
+  is_folder?: boolean;
+  folder_type?: string;
 }
 
 export interface ClientViewerProps {
