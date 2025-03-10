@@ -1,3 +1,4 @@
+
 import { FileText, Eye, MessageSquare, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +29,21 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
       </div>
     );
   }
+
+  // Create a mock document details object that matches the DocumentDetails type
+  // including the required storage_path property
+  const documentDetails = {
+    id: document.id,
+    title: document.title,
+    type: document.type || 'document',
+    storage_path: document.metadata?.storage_path || '', // Add the required storage_path
+    comments: [],
+    // Add any other required properties from the DocumentDetails type
+    url: document.metadata?.url || '',
+    size: document.metadata?.size || 0,
+    created_at: document.created_at,
+    updated_at: document.updated_at
+  };
 
   return (
     <div className="h-full flex flex-col p-4">
@@ -92,12 +108,7 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
         
         <TabsContent value="comments" className="mt-0 flex-1 flex flex-col">
           <CollaborationPanel 
-            document={{
-              id: document.id,
-              title: document.title,
-              type: document.type || 'document',
-              comments: []
-            }} 
+            document={documentDetails}
             onCommentAdded={() => console.log('Comment added')}
           />
         </TabsContent>
