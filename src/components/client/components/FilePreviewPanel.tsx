@@ -1,4 +1,3 @@
-
 import { FileText, Eye, MessageSquare, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -97,8 +96,6 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
               id: document.id,
               title: document.title,
               type: document.type || 'document',
-              created_at: document.created_at,
-              updated_at: document.updated_at,
               comments: []
             }} 
             onCommentAdded={() => console.log('Comment added')}
