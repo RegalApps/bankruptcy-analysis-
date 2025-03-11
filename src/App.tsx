@@ -1,17 +1,19 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { ClientViewerPage } from '@/pages/ClientViewerPage';
-import { EFilingPage } from '@/pages/EFilingPage';
-import { DocumentReviewPage } from '@/pages/DocumentReviewPage';
-import { CrmPage } from '@/pages/CrmPage';
-import { SettingsPage } from '@/pages/SettingsPage';
-import { NotificationPreferencesPage } from '@/pages/NotificationPreferencesPage';
-import { BillingPage } from '@/pages/BillingPage';
-import { SupportPage } from '@/pages/SupportPage';
-import { NotFoundPage } from '@/pages/NotFoundPage';
 import { AuditTrailPage } from '@/pages/AuditTrailPage';
+
+// Define placeholder components for missing pages
+const DashboardPage = () => <div>Dashboard Page</div>;
+const ClientViewerPage = () => <div>Client Viewer Page</div>;
+const EFilingPage = () => <div>E-Filing Page</div>;
+const DocumentReviewPage = () => <div>Document Review Page</div>;
+const CrmPage = () => <div>CRM Page</div>;
+const SettingsPage = () => <div>Settings Page</div>;
+const NotificationPreferencesPage = () => <div>Notification Preferences Page</div>;
+const BillingPage = () => <div>Billing Page</div>;
+const SupportPage = () => <div>Support Page</div>;
+const NotFoundPage = () => <div>Not Found Page</div>;
 
 function App() {
   return (
