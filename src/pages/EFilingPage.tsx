@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FileCheck, History, AlertTriangle, Activity, FileText, Download, Shield, Calendar, Clock, CheckCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -207,7 +206,7 @@ export const EFilingPage = () => {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-sm font-medium">Document Name</span>
-                          <span className="text-sm">{selectedDocument.name}</span>
+                          <span className="text-sm">{selectedDocument.title}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm font-medium">Type</span>

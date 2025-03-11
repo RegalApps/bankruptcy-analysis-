@@ -15,15 +15,15 @@ export const DocumentSearch = ({ onDocumentSelect }: DocumentSearchProps) => {
   
   // Sample documents - in a real app, these would come from an API or database
   const mockDocuments: Document[] = [
-    { id: '1', name: 'Annual Report 2025', type: 'PDF', size: 2.4, lastModified: new Date() },
-    { id: '2', name: 'Tax Filing Q4 2024', type: 'PDF', size: 1.8, lastModified: new Date() },
-    { id: '3', name: 'Client Statement - March 2025', type: 'DOCX', size: 0.9, lastModified: new Date() },
-    { id: '4', name: 'Form 47 - Client A', type: 'PDF', size: 3.2, lastModified: new Date() },
-    { id: '5', name: 'Financial Statements 2024', type: 'XLSX', size: 1.5, lastModified: new Date() },
+    { id: '1', title: 'Annual Report 2025', type: 'PDF', size: 2.4, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
+    { id: '2', title: 'Tax Filing Q4 2024', type: 'PDF', size: 1.8, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
+    { id: '3', title: 'Client Statement - March 2025', type: 'DOCX', size: 0.9, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
+    { id: '4', title: 'Form 47 - Client A', type: 'PDF', size: 3.2, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
+    { id: '5', title: 'Financial Statements 2024', type: 'XLSX', size: 1.5, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
   ];
 
   const filteredDocuments = mockDocuments.filter(doc => 
-    doc.name.toLowerCase().includes(searchTerm.toLowerCase())
+    doc.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getFileIcon = (type: string) => {
@@ -61,7 +61,7 @@ export const DocumentSearch = ({ onDocumentSelect }: DocumentSearchProps) => {
                 <div className="flex items-center gap-3">
                   {getFileIcon(doc.type)}
                   <div>
-                    <div className="font-medium text-sm">{doc.name}</div>
+                    <div className="font-medium text-sm">{doc.title}</div>
                     <div className="text-xs text-muted-foreground">
                       {doc.type} • {doc.size} MB
                     </div>
