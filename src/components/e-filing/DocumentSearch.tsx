@@ -15,11 +15,11 @@ export const DocumentSearch = ({ onDocumentSelect }: DocumentSearchProps) => {
   
   // Sample documents - in a real app, these would come from an API or database
   const mockDocuments: Document[] = [
-    { id: '1', title: 'Annual Report 2025', type: 'PDF', size: 2.4, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
-    { id: '2', title: 'Tax Filing Q4 2024', type: 'PDF', size: 1.8, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
-    { id: '3', title: 'Client Statement - March 2025', type: 'DOCX', size: 0.9, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
-    { id: '4', title: 'Form 47 - Client A', type: 'PDF', size: 3.2, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
-    { id: '5', title: 'Financial Statements 2024', type: 'XLSX', size: 1.5, lastModified: new Date(), storage_path: '', created_at: '', updated_at: '' },
+    { id: '1', title: 'Annual Report 2025', type: 'PDF', size: 2.4, storage_path: '', created_at: '2025-01-01', updated_at: '2025-01-01' },
+    { id: '2', title: 'Tax Filing Q4 2024', type: 'PDF', size: 1.8, storage_path: '', created_at: '2024-12-01', updated_at: '2024-12-01' },
+    { id: '3', title: 'Client Statement - March 2025', type: 'DOCX', size: 0.9, storage_path: '', created_at: '2025-03-01', updated_at: '2025-03-01' },
+    { id: '4', title: 'Form 47 - Client A', type: 'PDF', size: 3.2, storage_path: '', created_at: '2025-02-01', updated_at: '2025-02-01' },
+    { id: '5', title: 'Financial Statements 2024', type: 'XLSX', size: 1.5, storage_path: '', created_at: '2024-12-31', updated_at: '2024-12-31' },
   ];
 
   const filteredDocuments = mockDocuments.filter(doc => 
