@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { FileCheck } from "lucide-react";
+import { FileCheck, History } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Document } from "@/components/DocumentList/types";
 import { ValidationStatusAlert } from "@/components/e-filing/components/ValidationStatusAlert";
@@ -9,6 +9,7 @@ import { RiskAssessment } from "@/components/e-filing/RiskAssessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 export const EFilingPage = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
@@ -40,14 +41,27 @@ export const EFilingPage = () => {
             <FileCheck className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-semibold">E-Filing</h1>
           </div>
-          <Button 
-            size="lg"
-            disabled={!isValidated || !selectedDocument}
-            onClick={handleEFile}
-            className="gradient-button"
-          >
-            E-File
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="flex items-center gap-2"
+            >
+              <Link to="/e-filing/audit-trail">
+                <History className="h-4 w-4" />
+                Audit Trail
+              </Link>
+            </Button>
+            <Button 
+              size="lg"
+              disabled={!isValidated || !selectedDocument}
+              onClick={handleEFile}
+              className="gradient-button"
+            >
+              E-File
+            </Button>
+          </div>
         </div>
         
         <div className="grid gap-6 lg:grid-cols-2">
