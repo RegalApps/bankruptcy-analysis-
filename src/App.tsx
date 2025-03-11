@@ -1,19 +1,19 @@
 
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuditTrailPage } from '@/pages/AuditTrailPage';
+import { EFilingPage } from '@/pages/EFilingPage'; 
 
 // Define placeholder components for missing pages
-const DashboardPage = () => <div>Dashboard Page</div>;
-const ClientViewerPage = () => <div>Client Viewer Page</div>;
-const EFilingPage = () => <div>E-Filing Page</div>;
-const DocumentReviewPage = () => <div>Document Review Page</div>;
-const CrmPage = () => <div>CRM Page</div>;
-const SettingsPage = () => <div>Settings Page</div>;
-const NotificationPreferencesPage = () => <div>Notification Preferences Page</div>;
-const BillingPage = () => <div>Billing Page</div>;
-const SupportPage = () => <div>Support Page</div>;
-const NotFoundPage = () => <div>Not Found Page</div>;
+const DashboardPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Dashboard Page</h1></div>;
+const ClientViewerPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Client Viewer Page</h1></div>;
+const DocumentReviewPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Document Review Page</h1></div>;
+const CrmPage = () => <div className="p-8"><h1 className="text-2xl font-bold">CRM Page</h1></div>;
+const SettingsPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Settings Page</h1></div>;
+const NotificationPreferencesPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Notification Preferences Page</h1></div>;
+const BillingPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Billing Page</h1></div>;
+const SupportPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Support Page</h1></div>;
+const NotFoundPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Not Found Page</h1></div>;
 
 function App() {
   return (
@@ -28,8 +28,8 @@ function App() {
         <Route path="/settings/notifications" element={<NotificationPreferencesPage />} />
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/support" element={<SupportPage />} />
-        <Route path="*" element={<NotFoundPage />} />
         <Route path="/e-filing/audit-trail" element={<AuditTrailPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
