@@ -19,6 +19,7 @@ export interface User {
   role: string;
   ipAddress: string;
   location: string;
+  avatarUrl?: string;
 }
 
 export interface DocumentInfo {
@@ -45,4 +46,23 @@ export interface AuditEntry {
   critical: boolean;
   hash: string;
   regulatoryFramework?: string;
+  clientId?: string;
+  clientName?: string;
+}
+
+export interface Client {
+  id: string;
+  name: string;
+}
+
+export interface AuditFilter {
+  dateRange?: {
+    from: Date;
+    to: Date;
+  };
+  users?: string[];
+  actions?: ActionType[];
+  critical?: boolean;
+  clientId?: string;
+  searchTerm?: string;
 }

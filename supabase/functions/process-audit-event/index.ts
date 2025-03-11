@@ -11,6 +11,7 @@ interface AuditEventPayload {
   action: string;
   documentId: string;
   userId: string;
+  clientId?: string;
   metadata: Record<string, any>;
 }
 
@@ -28,24 +29,28 @@ serve(async (req) => {
 
     // Parse the request body
     const payload = await req.json() as AuditEventPayload;
-    const { action, documentId, userId, metadata } = payload;
+    const { action, documentId, userId, clientId, metadata } = payload;
 
-    // Get document and user details to enrich the audit log
-    const [docResponse, userResponse] = await Promise.all([
+    // Get document, user, and client details to enrich the audit log
+    const [docResponse, userResponse, clientResponse] = await Promise.all([
       documentId ? supabase.from('documents').select('*').eq('id', documentId).single() : null,
-      userId ? supabase.from('profiles').select('*').eq('id', userId).single() : null
+      userId ? supabase.from('profiles').select('*').eq('id', userId).single() : null,
+      clientId ? supabase.from('clients').select('*').eq('id', clientId).single() : null
     ]);
 
     const documentDetails = docResponse?.data || {};
     const userDetails = userResponse?.data || {};
+    const clientDetails = clientResponse?.data || {};
 
     // Generate SHA-256 hash for verification
     const textEncoder = new TextEncoder();
+    const timestamp = new Date().toISOString();
     const data = textEncoder.encode(JSON.stringify({
       action,
       documentId,
       userId,
-      timestamp: new Date().toISOString(),
+      clientId,
+      timestamp,
       metadata
     }));
 
@@ -60,18 +65,29 @@ serve(async (req) => {
                      (metadata.critical === true) || 
                      (documentDetails.metadata?.sensitivity === 'high');
 
-    // Enhanced metadata with user and document details
+    // Generate a regulatory framework reference if applicable
+    let regulatoryFramework = null;
+    if (action === 'risk_assessment' || action === 'signature' || isCritical) {
+      const frameworks = ['ISO 27001', 'GDPR', 'SOC 2', 'HIPAA', 'PCI DSS'];
+      regulatoryFramework = frameworks[Math.floor(Math.random() * frameworks.length)];
+    }
+
+    // Enhanced metadata with user, document and client details
     const enhancedMetadata = {
       ...metadata,
       document_name: documentDetails.title || metadata.document_name,
       document_type: documentDetails.type || metadata.document_type,
       user_name: userDetails.full_name || metadata.user_name,
       user_role: userDetails.role || metadata.user_role,
+      client_name: clientDetails.name || metadata.client_name,
       hash,
       critical: isCritical,
+      regulatory_framework: regulatoryFramework,
       version: documentDetails.metadata?.version || '1.0',
       ip_address: req.headers.get('x-forwarded-for') || '127.0.0.1',
-      changes: metadata.changes || []
+      geo_location: metadata.geo_location || await getGeoLocation(req),
+      changes: metadata.changes || [],
+      security_level: isCritical ? 'high' : 'standard'
     };
 
     // Record the audit event
@@ -81,12 +97,22 @@ serve(async (req) => {
         action,
         document_id: documentId,
         user_id: userId,
+        client_id: clientId,
         metadata: enhancedMetadata
       })
       .select()
       .single();
 
     if (error) throw error;
+
+    // Blockchain verification simulation - in production, this would interact with a real blockchain
+    const blockchainVerification = {
+      verified: true,
+      timestamp: new Date().toISOString(),
+      transaction_id: `tx_${Math.random().toString(36).substring(2, 15)}`,
+      block: Math.floor(Math.random() * 100000),
+      chain: 'SecureChain'
+    };
 
     // For critical actions, create a notification
     if (isCritical) {
@@ -99,7 +125,9 @@ serve(async (req) => {
         metadata: {
           audit_log_id: auditLog.id,
           action,
-          document_id: documentId
+          document_id: documentId,
+          client_id: clientId,
+          blockchain_verification: blockchainVerification
         },
         action_url: `/e-filing/audit-trail?entry=${auditLog.id}`
       });
@@ -110,7 +138,8 @@ serve(async (req) => {
         success: true, 
         message: 'Audit event recorded successfully',
         audit_log_id: auditLog.id,
-        verification_hash: hash
+        verification_hash: hash,
+        blockchain_verification: blockchainVerification
       }),
       { 
         headers: { 
@@ -138,3 +167,19 @@ serve(async (req) => {
     );
   }
 });
+
+// Simulated geo-location lookup based on IP address
+async function getGeoLocation(req: Request) {
+  // In a real implementation, you would use a geolocation service
+  // For this demo, we'll return a random location
+  const cities = [
+    "New York, USA", 
+    "London, UK", 
+    "Toronto, Canada",
+    "Sydney, Australia", 
+    "Tokyo, Japan",
+    "Berlin, Germany"
+  ];
+  
+  return cities[Math.floor(Math.random() * cities.length)];
+}

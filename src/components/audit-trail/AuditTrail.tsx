@@ -35,7 +35,7 @@ export const AuditTrail = () => {
                     Timeline
                   </TabsTrigger>
                   <TabsTrigger value="visualization" className="text-xs px-3">
-                    Visualization
+                    Analytics
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -80,12 +80,12 @@ export const AuditTrail = () => {
       <div className="lg:col-span-3 space-y-6">
         <FilterPanel />
 
-        <Card className="h-[calc(100vh-330px)]">
+        <Card className="h-[calc(100vh-430px)]">
           <CardHeader className="px-4 py-3 border-b">
             <CardTitle className="text-lg">Recent Activity</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className="h-[calc(100vh-390px)]">
+            <ScrollArea className="h-[calc(100vh-490px)]">
               <RecentActivities entries={auditEntries.slice(0, 5)} />
             </ScrollArea>
           </CardContent>

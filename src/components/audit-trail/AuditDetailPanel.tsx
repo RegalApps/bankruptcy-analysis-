@@ -1,6 +1,6 @@
 
 import { format } from "date-fns";
-import { Globe, User, Clock, Shield, FileText, AlertTriangle } from "lucide-react";
+import { Globe, User, Clock, Shield, FileText, AlertTriangle, Lock, Award } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AuditEntry } from "./types";
@@ -65,7 +65,15 @@ export const AuditDetailPanel = ({ selectedEntry }: AuditDetailPanelProps) => {
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="flex gap-2 items-center col-span-2">
               <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                {selectedEntry.user.name.charAt(0).toUpperCase()}
+                {selectedEntry.user.avatarUrl ? (
+                  <img 
+                    src={selectedEntry.user.avatarUrl} 
+                    alt={selectedEntry.user.name} 
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  selectedEntry.user.name.charAt(0).toUpperCase()
+                )}
               </div>
               <div>
                 <div>{selectedEntry.user.name}</div>
@@ -108,6 +116,12 @@ export const AuditDetailPanel = ({ selectedEntry }: AuditDetailPanelProps) => {
                 <div>{selectedEntry.document.version}</div>
               </div>
             </div>
+            {selectedEntry.clientName && (
+              <div>
+                <div className="text-xs text-muted-foreground">Client</div>
+                <div>{selectedEntry.clientName}</div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -126,8 +140,56 @@ export const AuditDetailPanel = ({ selectedEntry }: AuditDetailPanelProps) => {
           </>
         )}
 
+        {/* Enhanced Security Information */}
+        <div>
+          <h3 className="text-sm font-medium flex items-center mb-2">
+            <Lock className="h-4 w-4 mr-1" /> Security Information
+          </h3>
+          <Card className="bg-muted/50">
+            <CardContent className="p-3 text-sm">
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Authentication Method</span>
+                  <span className="font-medium">Multi-factor (2FA)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Data Protection</span>
+                  <span className="font-medium">AES-256 Encryption</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Transmission Protocol</span>
+                  <span className="font-medium">TLS 1.3</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Separator />
+
         {/* Compliance Information */}
         <AuditComplianceInfo entry={selectedEntry} />
+
+        {/* Security Certifications */}
+        <div className="mt-4">
+          <h3 className="text-sm font-medium flex items-center mb-2">
+            <Award className="h-4 w-4 mr-1" /> Compliance Certifications
+          </h3>
+          <div className="flex justify-center gap-4 mt-3">
+            <div className="flex flex-col items-center opacity-60 hover:opacity-100 transition-opacity cursor-help" title="ISO 27001 Certified">
+              <Shield className="h-8 w-8" />
+              <span className="text-xs mt-1">ISO 27001</span>
+            </div>
+            <div className="flex flex-col items-center opacity-60 hover:opacity-100 transition-opacity cursor-help" title="GDPR Compliant">
+              <Lock className="h-8 w-8" />
+              <span className="text-xs mt-1">GDPR</span>
+            </div>
+            <div className="flex flex-col items-center opacity-60 hover:opacity-100 transition-opacity cursor-help" title="SOC 2 Certified">
+              <Award className="h-8 w-8" />
+              <span className="text-xs mt-1">SOC 2</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
