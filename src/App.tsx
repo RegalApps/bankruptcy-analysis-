@@ -19,7 +19,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<DashboardPage />} />
+        <Route path="/" element={<Navigate to="/e-filing" replace />} />
         <Route path="/clients/:clientId" element={<ClientViewerPage />} />
         <Route path="/e-filing" element={<EFilingPage />} />
         <Route path="/document-review" element={<DocumentReviewPage />} />
