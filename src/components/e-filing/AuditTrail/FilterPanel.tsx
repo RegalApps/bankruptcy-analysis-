@@ -25,9 +25,9 @@ export interface FilterOptions {
 
 export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
   const [filters, setFilters] = useState<FilterOptions>({
-    actionTypes: new Set(),
+    actionTypes: new Set<string>(),
     timeframe: 'all',
-    users: new Set()
+    users: new Set<string>()
   });
   
   // Extract unique values from entries for filtering
@@ -78,9 +78,9 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
   
   const clearAllFilters = () => {
     const newFilters = {
-      actionTypes: new Set(),
+      actionTypes: new Set<string>(),
       timeframe: 'all',
-      users: new Set()
+      users: new Set<string>()
     };
     setFilters(newFilters);
     onFilterChange(newFilters);
