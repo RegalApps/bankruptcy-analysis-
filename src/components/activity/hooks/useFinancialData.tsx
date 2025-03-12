@@ -1,257 +1,132 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+
+import { useState, useEffect, useCallback } from "react";
 import { Client } from "../types";
-import { Database } from "@/integrations/supabase/types";
 
-type FinancialRecord = Database["public"]["Tables"]["financial_records"]["Row"];
-
-export type FinancialMetrics = {
+interface Metrics {
   currentSurplus: string;
   surplusPercentage: string;
   monthlyTrend: string;
   riskLevel: string;
-};
+}
 
-export const useFinancialData = (selectedClient: Client | null) => {
-  const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
-  const [lastDataUpdate, setLastDataUpdate] = useState<Date | null>(null);
+interface UseFinancialDataReturn {
+  metrics: Metrics | null;
+  chartData: Array<{
+    date: string;
+    Income: number;
+    Expenses: number;
+    Surplus: number;
+  }>;
+  expenseBreakdown: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+  excelDocuments: Array<{
+    id: string;
+    name: string;
+    date: string;
+  }>;
+  isLoading: boolean;
+  refetch: () => void;
+}
 
-  // Query for financial records
-  const { 
-    data: financialRecords, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useQuery<FinancialRecord[]>({
-    queryKey: ["financial_records", selectedClient?.id],
-    queryFn: async () => {
-      if (!selectedClient) return [];
+export const useFinancialData = (selectedClient: Client | null): UseFinancialDataReturn => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [chartData, setChartData] = useState<Array<{
+    date: string;
+    Income: number;
+    Expenses: number;
+    Surplus: number;
+  }>>([]);
+  const [expenseBreakdown, setExpenseBreakdown] = useState<Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>>([]);
+  const [excelDocuments, setExcelDocuments] = useState<Array<{
+    id: string;
+    name: string;
+    date: string;
+  }>>([]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  
+  const refetch = useCallback(() => {
+    setRefetchTrigger(prev => prev + 1);
+  }, []);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!selectedClient) {
+        setMetrics(null);
+        setChartData([]);
+        setExpenseBreakdown([]);
+        setExcelDocuments([]);
+        return;
+      }
       
-      console.log("Fetching financial records for client:", selectedClient.id);
+      setIsLoading(true);
       
       try {
-        // Try to get actual data from Supabase
-        const { data, error } = await supabase
-          .from("financial_records")
-          .select("*")
-          .eq("user_id", selectedClient.id)
-          .order("submission_date", { ascending: true });
-
-        if (error) {
-          console.error("Supabase error:", error);
-          // Don't throw error - fall back to simulated data
-        }
+        console.log("Fetching financial data for client:", selectedClient.id);
         
-        // If we got data, return it
-        if (data && data.length > 0) {
-          console.log("Received financial records:", data.length);
-          return data;
-        }
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Otherwise generate mock data
-        console.log("Generating simulated data for client:", selectedClient.name);
-        const today = new Date();
-        const simulatedData = [];
+        // Mock metrics data
+        const mockMetrics = {
+          currentSurplus: "3930.00",
+          surplusPercentage: "43.7",
+          monthlyTrend: "120.00",
+          riskLevel: "Low"
+        };
         
-        // Create six months of simulated data
-        for (let i = 5; i >= 0; i--) {
-          const date = new Date(today);
-          date.setMonth(date.getMonth() - i);
-          
-          // Generate slightly different data for each month
-          const monthData = {
-            id: `sim-${5-i}`,
-            submission_date: date.toISOString(),
-            monthly_income: 5800 - (Math.random() * 300),
-            total_expenses: 3800 - (Math.random() * 400),
-            total_income: 5800 - (Math.random() * 300),
-            surplus_income: 2000 - (Math.random() * 500),
-            user_id: selectedClient.id, 
-          };
-          
-          simulatedData.push(monthData);
-        }
+        // Mock chart data - 6 months
+        const mockChartData = [
+          { date: "Jan 2024", Income: 8500, Expenses: 4800, Surplus: 3700 },
+          { date: "Feb 2024", Income: 8600, Expenses: 4900, Surplus: 3700 },
+          { date: "Mar 2024", Income: 8700, Expenses: 4950, Surplus: 3750 },
+          { date: "Apr 2024", Income: 8800, Expenses: 4990, Surplus: 3810 },
+          { date: "May 2024", Income: 9000, Expenses: 5070, Surplus: 3930 },
+          { date: "Jun 2024", Income: 9000, Expenses: 5070, Surplus: 3930 }
+        ];
         
-        return simulatedData as FinancialRecord[];
+        // Mock expense breakdown data
+        const mockExpenseBreakdown = [
+          { name: "Essential Expenses", value: 3600, color: "#8884d8" },
+          { name: "Discretionary Expenses", value: 500, color: "#82ca9d" },
+          { name: "Savings & Investments", value: 700, color: "#ffc658" },
+          { name: "Insurance", value: 270, color: "#ff8042" }
+        ];
+        
+        // Mock Excel documents
+        const mockExcelDocuments = [
+          { id: "doc1", name: "Bank Statement - May 2024", date: "2024-05-15" },
+          { id: "doc2", name: "Credit Card Statement - May 2024", date: "2024-05-10" }
+        ];
+        
+        setMetrics(mockMetrics);
+        setChartData(mockChartData);
+        setExpenseBreakdown(mockExpenseBreakdown);
+        setExcelDocuments(mockExcelDocuments);
+        
       } catch (error) {
-        console.error("Error fetching financial records:", error);
-        
-        // Generate simulated data if there was an error
-        console.log("Falling back to simulated data for client:", selectedClient.name);
-        const today = new Date();
-        const simulatedData = [];
-        
-        for (let i = 5; i >= 0; i--) {
-          const date = new Date(today);
-          date.setMonth(date.getMonth() - i);
-          
-          const monthData = {
-            id: `sim-${5-i}`,
-            submission_date: date.toISOString(),
-            monthly_income: 5800 - (Math.random() * 300),
-            total_expenses: 3800 - (Math.random() * 400),
-            total_income: 5800 - (Math.random() * 300),
-            surplus_income: 2000 - (Math.random() * 500),
-            user_id: selectedClient.id, 
-          };
-          
-          simulatedData.push(monthData);
-        }
-        
-        return simulatedData as FinancialRecord[];
+        console.error("Error fetching financial data:", error);
+      } finally {
+        setIsLoading(false);
       }
-    },
-    enabled: !!selectedClient, // Only run query when a client is selected
-  });
-
-  // Log any errors for debugging
-  useEffect(() => {
-    if (error) {
-      console.error("Query error:", error);
-      // Don't show error toast here, as we're falling back to simulated data
-    }
-  }, [error]);
-
-  // Setup real-time subscription to financial_records table
-  useEffect(() => {
-    if (!selectedClient) return;
-    
-    console.log("Setting up real-time subscription for client:", selectedClient.id);
-    const channel = supabase
-      .channel('financial_records_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'financial_records',
-          filter: `user_id=eq.${selectedClient.id}`
-        },
-        (payload) => {
-          console.log('Financial records changed, refreshing data', payload);
-          setLastDataUpdate(new Date());
-          toast.info("Financial data updated in real-time", {
-            description: "Dashboard is refreshing with the latest data",
-            duration: 3000,
-          });
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
     };
-  }, [refetch, selectedClient]);
-
-  // Calculate metrics from financial data
-  useEffect(() => {
-    if (financialRecords && financialRecords.length > 0) {
-      console.log("Calculating metrics from financial records:", financialRecords.length);
-      const currentRecord = financialRecords[financialRecords.length - 1];
-      const previousRecord = financialRecords.length > 1 ? financialRecords[financialRecords.length - 2] : null;
-      
-      const currentSurplus = currentRecord.surplus_income || 0;
-      const currentIncome = currentRecord.total_income || currentRecord.monthly_income || 0;
-      
-      const surplusPercentage = currentIncome > 0 
-        ? Math.round((currentSurplus / currentIncome) * 100) 
-        : 0;
-      
-      const monthlyTrend = previousRecord 
-        ? (currentSurplus - (previousRecord.surplus_income || 0)).toFixed(0)
-        : "0";
-      
-      let riskLevel = "Low";
-      if (surplusPercentage < 10) {
-        riskLevel = "High";
-      } else if (surplusPercentage < 20) {
-        riskLevel = "Medium";
-      }
-      
-      const newMetrics = {
-        currentSurplus: currentSurplus.toFixed(0),
-        surplusPercentage: surplusPercentage.toString(),
-        monthlyTrend,
-        riskLevel
-      };
-      
-      console.log("Setting new metrics:", newMetrics);
-      setMetrics(newMetrics);
-      
-      // If this is a refresh after a change, notify other components
-      if (lastDataUpdate) {
-        console.log("Notifying other components of data update");
-        const updateEvent = new CustomEvent('metrics-updated', { 
-          detail: { 
-            clientId: selectedClient?.id,
-            metrics: newMetrics
-          } 
-        });
-        window.dispatchEvent(updateEvent);
-      }
-    } else {
-      console.log("No financial records to calculate metrics");
-      setMetrics(null);
-    }
-  }, [financialRecords, lastDataUpdate, selectedClient]);
-
-  // Query for Excel documents
-  const { data: excelDocuments } = useQuery({
-    queryKey: ["excel_documents", selectedClient?.id],
-    queryFn: async () => {
-      if (!selectedClient) return [];
-      
-      console.log("Checking for Excel documents for client:", selectedClient.id);
-      
-      try {
-        // Try to get actual data
-        const { data, error } = await supabase
-          .from("documents")
-          .select("*")
-          .eq("user_id", selectedClient.id)
-          .or("type.eq.application/vnd.ms-excel,type.eq.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,storage_path.ilike.%.xls,storage_path.ilike.%.xlsx")
-          .order("created_at", { ascending: false })
-          .limit(3);
-
-        if (error) {
-          console.error("Error fetching Excel documents:", error);
-          // Don't throw error here
-        }
-        
-        // If we got data, use it
-        if (data && data.length > 0) {
-          console.log("Found Excel documents:", data.length);
-          return data;
-        }
-        
-        // Otherwise, return empty array
-        return [];
-      } catch (error) {
-        console.error("Error fetching Excel documents:", error);
-        return [];
-      }
-    },
-    enabled: !!selectedClient, // Only run when client is selected
-  });
-
-  // Process chart data
-  const chartData = financialRecords?.map(record => ({
-    date: new Date(record.submission_date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-    Income: record.total_income || record.monthly_income,
-    Expenses: record.total_expenses,
-    Surplus: record.surplus_income
-  })) || [];
-
+    
+    fetchData();
+  }, [selectedClient, refetchTrigger]);
+  
   return {
-    financialRecords,
-    chartData,
     metrics,
+    chartData,
+    expenseBreakdown,
     excelDocuments,
     isLoading,
-    error,
     refetch
   };
 };

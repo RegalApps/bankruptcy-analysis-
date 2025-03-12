@@ -1,7 +1,10 @@
 
 import { Button } from "@/components/ui/button";
-import { IncomeSection } from "./form/IncomeSection";
-import { ExpensesSection } from "./form/ExpensesSection";
+import { ClientProfileSection } from "./form/ClientProfileSection";
+import { EnhancedIncomeSection } from "./form/EnhancedIncomeSection";
+import { EssentialExpensesSection } from "./form/EssentialExpensesSection";
+import { DiscretionaryExpensesSection } from "./form/DiscretionaryExpensesSection";
+import { SavingsInsuranceSection } from "./form/SavingsInsuranceSection";
 import { HistoricalComparison } from "./components/HistoricalComparison";
 import { DocumentUploadSection } from "./components/DocumentUploadSection";
 import { useIncomeExpenseForm } from "./hooks/useIncomeExpenseForm";
@@ -34,6 +37,7 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
     handleFrequencyChange,
     handleSubmit,
     handlePeriodChange,
+    handleFieldSelectChange,
   } = useIncomeExpenseForm(selectedClient);
 
   // Display toast notification to encourage user to select a client if none selected
@@ -138,17 +142,40 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
             </CardContent>
           </Card>
           
-          <IncomeSection 
+          {/* Client Profile Section */}
+          <ClientProfileSection 
             formData={formData} 
+            onChange={handleChange}
+            onMaritalStatusChange={(value) => handleFieldSelectChange('marital_status', value)}
+          />
+          
+          {/* Enhanced Income Section */}
+          <EnhancedIncomeSection 
+            formData={formData} 
+            previousMonthData={previousMonthData}
             onChange={handleChange}
             onFrequencyChange={handleFrequencyChange('income')}
           />
           
-          <ExpensesSection 
+          {/* Essential Expenses Section */}
+          <EssentialExpensesSection 
             formData={formData} 
-            onChange={handleChange}
-            onFrequencyChange={handleFrequencyChange('expense')}
             previousMonthData={previousMonthData}
+            onChange={handleChange}
+          />
+          
+          {/* Discretionary Expenses Section */}
+          <DiscretionaryExpensesSection 
+            formData={formData} 
+            previousMonthData={previousMonthData}
+            onChange={handleChange}
+          />
+          
+          {/* Savings & Insurance Section */}
+          <SavingsInsuranceSection 
+            formData={formData} 
+            previousMonthData={previousMonthData}
+            onChange={handleChange}
           />
           
           <DocumentUploadSection financialRecordId={currentRecordId} />

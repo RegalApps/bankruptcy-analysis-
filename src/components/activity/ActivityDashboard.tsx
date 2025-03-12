@@ -25,6 +25,7 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
   const { 
     metrics, 
     chartData, 
+    expenseBreakdown,
     excelDocuments,
     isLoading,
     refetch
@@ -98,7 +99,8 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
               )}
               
               <FinancialChart 
-                chartData={chartData} 
+                chartData={chartData}
+                expenseBreakdown={expenseBreakdown}
                 clientName={selectedClient.name}
               />
             </>

@@ -48,37 +48,87 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
         // Generate sample data for both periods
         const currentPeriodData = {
           ...initialFormData,
-          monthly_income: "5800",
-          primary_salary: "5500",
-          overtime_bonuses: "300",
-          freelance_income: "200",
-          investment_income: "100",
-          rental_income: "200",
-          rent_mortgage: "1500",
+          full_name: selectedClient.name,
+          
+          // Monthly Income
+          employment_income: "3800",
+          pension_annuities: "800",
+          government_benefits: "500",
+          rental_income: "700",
+          spouse_employment_income: "3200",
+          total_monthly_income: "5800",
+          spouse_total_monthly_income: "3200",
+          
+          // Essential Expenses
+          mortgage_rent: "1500",
           utilities: "350",
-          food: "800",
-          transportation: "400",
-          insurance: "300",
-          medical_expenses: "200",
-          other_expenses: "250",
+          groceries: "600",
+          child_care: "400",
+          transportation: "300",
+          debt_repayments: "450",
+          total_essential_expenses: "3600",
+          
+          // Discretionary Expenses
+          dining_out: "200",
+          entertainment: "150",
+          subscriptions: "50",
+          clothing: "100",
+          total_discretionary_expenses: "500",
+          
+          // Savings
+          emergency_savings: "300",
+          retirement_savings: "400",
+          total_savings: "700",
+          
+          // Insurance
+          vehicle_insurance: "120",
+          home_insurance: "90",
+          life_insurance: "60",
+          total_insurance: "270",
+          
           id: `current-${Date.now()}`
         };
 
         const previousPeriodData = {
           ...initialFormData,
-          monthly_income: "5700",
-          primary_salary: "5400",
-          overtime_bonuses: "300",
-          freelance_income: "180",
-          investment_income: "90",
-          rental_income: "230",
-          rent_mortgage: "1500",
+          full_name: selectedClient.name,
+          
+          // Monthly Income
+          employment_income: "3700",
+          pension_annuities: "800",
+          government_benefits: "500",
+          rental_income: "700",
+          spouse_employment_income: "3100",
+          total_monthly_income: "5700",
+          spouse_total_monthly_income: "3100",
+          
+          // Essential Expenses
+          mortgage_rent: "1500",
           utilities: "340",
-          food: "780",
-          transportation: "380",
-          insurance: "300",
-          medical_expenses: "150",
-          other_expenses: "250",
+          groceries: "580",
+          child_care: "400",
+          transportation: "280",
+          debt_repayments: "450",
+          total_essential_expenses: "3550",
+          
+          // Discretionary Expenses
+          dining_out: "180",
+          entertainment: "150",
+          subscriptions: "50",
+          clothing: "90",
+          total_discretionary_expenses: "470",
+          
+          // Savings
+          emergency_savings: "300",
+          retirement_savings: "400",
+          total_savings: "700",
+          
+          // Insurance
+          vehicle_insurance: "120",
+          home_insurance: "90",
+          life_insurance: "60",
+          total_insurance: "270",
+          
           id: `previous-${Date.now()}`
         };
         
@@ -103,14 +153,14 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
         // Set historical data
         setHistoricalData({
           currentPeriod: {
-            totalIncome: 5800,
-            totalExpenses: 3800,
-            surplusIncome: 2000
+            totalIncome: 9000,
+            totalExpenses: 5070,
+            surplusIncome: 3930
           },
           previousPeriod: {
-            totalIncome: 5700,
-            totalExpenses: 3700,
-            surplusIncome: 2000
+            totalIncome: 8800,
+            totalExpenses: 4990,
+            surplusIncome: 3810
           }
         });
         
@@ -128,30 +178,28 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // Only allow numbers for numeric fields
-    if (name !== 'notes' && isNaN(Number(value)) && value !== '') {
+    // Only allow numbers for numeric fields that aren't text inputs
+    if (
+      !name.includes('description') && 
+      name !== 'notes' && 
+      name !== 'full_name' && 
+      name !== 'residential_address' && 
+      name !== 'phone_home' && 
+      name !== 'occupation' && 
+      name !== 'employer_name' && 
+      name !== 'work_phone' && 
+      name !== 'spouse_name' && 
+      name !== 'submission_date' && 
+      isNaN(Number(value)) && 
+      value !== ''
+    ) {
       return;
     }
     
-    // Special case for primary_salary and overtime_bonuses - update monthly_income
-    if (name === 'primary_salary' || name === 'overtime_bonuses') {
-      setFormData(prev => {
-        const primarySalary = name === 'primary_salary' ? Number(value) || 0 : Number(prev.primary_salary) || 0;
-        const overtimeBonuses = name === 'overtime_bonuses' ? Number(value) || 0 : Number(prev.overtime_bonuses) || 0;
-        const monthlyIncome = primarySalary + overtimeBonuses;
-        
-        return {
-          ...prev,
-          [name]: value,
-          monthly_income: String(monthlyIncome)
-        };
-      });
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
     
     // Update the periods data to keep track of changes
     setPeriodsData(prev => ({
@@ -159,6 +207,23 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
       [selectedPeriod]: {
         ...prev[selectedPeriod],
         [name]: value
+      }
+    }));
+  }, [selectedPeriod]);
+  
+  // Handle select field changes (for dropdowns)
+  const handleFieldSelectChange = useCallback((fieldName: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+    
+    // Update the periods data
+    setPeriodsData(prev => ({
+      ...prev,
+      [selectedPeriod]: {
+        ...prev[selectedPeriod],
+        [fieldName]: value
       }
     }));
   }, [selectedPeriod]);
@@ -225,23 +290,15 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
     
     try {
       // Calculate totals
-      const monthlyIncome = Number(formData.monthly_income) || 0;
-      const primarySalary = Number(formData.primary_salary) || 0;
-      const overtimeBonuses = Number(formData.overtime_bonuses) || 0;
-      const freelanceIncome = Number(formData.freelance_income) || 0;
-      const investmentIncome = Number(formData.investment_income) || 0;
-      const rentalIncome = Number(formData.rental_income) || 0;
+      const totalMonthlyIncome = parseFloat(formData.total_monthly_income || '0');
+      const spouseTotalMonthlyIncome = parseFloat(formData.spouse_total_monthly_income || '0');
+      const totalEssentialExpenses = parseFloat(formData.total_essential_expenses || '0');
+      const totalDiscretionaryExpenses = parseFloat(formData.total_discretionary_expenses || '0');
+      const totalSavings = parseFloat(formData.total_savings || '0');
+      const totalInsurance = parseFloat(formData.total_insurance || '0');
       
-      const rentMortgage = Number(formData.rent_mortgage) || 0;
-      const utilities = Number(formData.utilities) || 0;
-      const food = Number(formData.food) || 0;
-      const transportation = Number(formData.transportation) || 0;
-      const insurance = Number(formData.insurance) || 0;
-      const medicalExpenses = Number(formData.medical_expenses) || 0;
-      const otherExpenses = Number(formData.other_expenses) || 0;
-      
-      const totalIncome = monthlyIncome;
-      const totalExpenses = rentMortgage + utilities + food + transportation + insurance + medicalExpenses + otherExpenses;
+      const totalIncome = totalMonthlyIncome + spouseTotalMonthlyIncome;
+      const totalExpenses = totalEssentialExpenses + totalDiscretionaryExpenses + totalSavings + totalInsurance;
       const surplusIncome = totalIncome - totalExpenses;
       
       // Update historical data
@@ -283,6 +340,7 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
     isDataLoading,
     handleChange,
     handleFrequencyChange,
+    handleFieldSelectChange,
     handleSubmit,
     handlePeriodChange,
   };

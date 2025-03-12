@@ -27,7 +27,8 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
   
   const { 
     processedData, 
-    metrics, 
+    metrics,
+    categoryAnalysis,
     isLoading, 
     lastRefreshed,
     financialRecords,
@@ -99,7 +100,11 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
             financialRecords && financialRecords.length > 0 ? (
               <>
                 <MetricsGrid metrics={metrics} />
-                <ForecastChart processedData={processedData} isLoading={isLoading} />
+                <ForecastChart 
+                  processedData={processedData} 
+                  categoryAnalysis={categoryAnalysis}
+                  isLoading={isLoading} 
+                />
                 <AnalysisAlerts 
                   riskLevel={metrics?.riskLevel || ''} 
                   seasonalityScore={metrics?.seasonalityScore || null} 
