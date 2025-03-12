@@ -1,30 +1,21 @@
 
-import { CheckCircle, AlertTriangle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle2 } from "lucide-react";
 
 interface ValidationStatusAlertProps {
   isValid: boolean;
 }
 
 export const ValidationStatusAlert = ({ isValid }: ValidationStatusAlertProps) => {
-  if (isValid) {
-    return (
-      <Alert className="bg-green-50 border-green-200">
-        <CheckCircle className="h-5 w-5 text-green-600" />
-        <AlertTitle className="text-green-800 font-medium ml-2">Validation Successful</AlertTitle>
-        <AlertDescription className="text-green-700 ml-2">
-          This document has passed all validation checks and is ready for e-filing.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
+  if (!isValid) return null;
+  
   return (
-    <Alert className="bg-red-50 border-red-200">
-      <AlertTriangle className="h-5 w-5 text-red-600" />
-      <AlertTitle className="text-red-800 font-medium ml-2">Validation Failed</AlertTitle>
-      <AlertDescription className="text-red-700 ml-2">
-        This document has not passed all required validation checks. Please review the errors.
+    <Alert>
+      <CheckCircle2 className="h-4 w-4 text-green-500" />
+      <AlertTitle>Ready to E-File</AlertTitle>
+      <AlertDescription>
+        Document has passed all validation checks and is ready to be filed.
+        Click the E-File button above to proceed with filing.
       </AlertDescription>
     </Alert>
   );
