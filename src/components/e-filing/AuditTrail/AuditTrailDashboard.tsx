@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { AuditTrailHeader } from "./AuditTrailHeader";
 import { Timeline } from "./Timeline";
 import { DetailPanel } from "./DetailPanel";
-import { FilterPanel, FilterOptions } from "./FilterPanel";
+import { FilterPanel } from "./FilterPanel";
+import { FilterOptions } from "./types/filterTypes";
 import { AuditEntry } from "./TimelineEntry";
 import { Separator } from "@/components/ui/separator";
 
