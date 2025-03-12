@@ -1,191 +1,91 @@
-import { useState } from "react";
-import { FileCheck, History, AlertTriangle, Activity, FileText, Download, Shield, Calendar, Clock, CheckCircle } from "lucide-react";
-import { MainLayout } from "@/components/layout/MainLayout";
-import { Document } from "@/components/DocumentList/types";
-import { ValidationStatusAlert } from "@/components/e-filing/components/ValidationStatusAlert";
-import { DocumentSearch } from "@/components/e-filing/DocumentSearch";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Metadata } from "@/components/ui/metadata";
-import { toast } from "sonner";
-import { Link } from "react-router-dom";
+
+import React, { useState } from 'react';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowRight, CheckCircle, Clock, FileText, Upload } from 'lucide-react';
+import { DocumentSearch } from '@/components/e-filing/DocumentSearch';
+import { ValidationStatusAlert } from '@/components/e-filing/components/ValidationStatusAlert';
+import { Document } from '@/components/DocumentList/types';
+import { useNavigate } from 'react-router-dom';
 
 export const EFilingPage = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [isValidated, setIsValidated] = useState(false);
-  const [activeTab, setActiveTab] = useState("documents");
-  const [complianceScore, setComplianceScore] = useState(87);
+  const navigate = useNavigate();
 
   const handleDocumentSelect = (document: Document) => {
     setSelectedDocument(document);
     setIsValidated(false);
-    toast.success("Document selected for e-filing");
   };
 
-  const handleValidationComplete = (isValid: boolean) => {
-    setIsValidated(isValid);
-    if (isValid) {
-      toast.success("Document validation complete");
+  const handleValidate = () => {
+    // In a real app, this would be an actual validation process
+    // For demo purposes, we'll just set it to true after a delay
+    setTimeout(() => {
+      setIsValidated(true);
+    }, 1500);
+  };
+
+  const handleViewAuditTrail = () => {
+    navigate('/e-filing/audit-trail');
+  };
+
+  const recentFilings = [
+    {
+      id: '1',
+      title: 'Form 76 - John Smith',
+      status: 'completed',
+      date: 'Mar 15, 2025',
+      court: 'Ontario Superior Court'
+    },
+    {
+      id: '2',
+      title: 'Tax Filing - ABC Corp',
+      status: 'pending',
+      date: 'Mar 12, 2025',
+      court: 'Tax Court of Canada'
+    },
+    {
+      id: '3',
+      title: 'Bankruptcy Form 31 - Jane Doe',
+      status: 'completed',
+      date: 'Mar 10, 2025',
+      court: 'Ontario Superior Court'
     }
-  };
-
-  const handleEFile = () => {
-    toast.success("E-Filing process initiated");
-    // In a real app, this would redirect to an SSO login or process the filing
-  };
-
-  const metadataItems = [
-    { label: "Compliance Score", value: `${complianceScore}%` },
-    { label: "Last Audit", value: "Today, 2:15 PM" },
-    { label: "Documents Ready", value: "17" },
-    { label: "Pending Actions", value: "3" },
   ];
-
-  const recentActivities = [
-    { id: 1, user: "Sarah Johnson", action: "upload", document: "Form 47", time: "10 minutes ago" },
-    { id: 2, user: "Michael Chen", action: "edit", document: "Client Statement", time: "1 hour ago" },
-    { id: 3, user: "David Wilson", action: "download", document: "Annual Report", time: "3 hours ago" },
-    { id: 4, user: "Jennifer Lee", action: "share", document: "Tax Documents", time: "Yesterday" },
-  ];
-
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case "upload": return FileText;
-      case "edit": return Activity;
-      case "download": return Download;
-      case "share": return Shield;
-      default: return Activity;
-    }
-  };
 
   return (
     <MainLayout>
-      <div className="container py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <FileCheck className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-semibold">E-Filing Dashboard</h1>
+      <div className="container py-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">E-Filing Portal</h1>
+            <p className="text-muted-foreground mt-1">
+              Prepare, validate and submit court documents electronically
+            </p>
           </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="flex items-center gap-2"
-            >
-              <Link to="/e-filing/audit-trail">
-                <History className="h-4 w-4" />
-                Audit Trail
-              </Link>
-            </Button>
-            <Button 
-              size="lg"
-              disabled={!isValidated || !selectedDocument}
-              onClick={handleEFile}
-              className="gradient-button"
-            >
-              E-File Now
-            </Button>
-          </div>
+          <Button onClick={handleViewAuditTrail} variant="outline" className="gap-2">
+            <Clock className="h-4 w-4" />
+            View Audit Trail
+          </Button>
         </div>
 
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" />
-                Compliance Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Current Score</span>
-                  <span className="text-sm font-medium">{complianceScore}%</span>
-                </div>
-                <Progress value={complianceScore} className="h-2" />
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                  <CheckCircle className="h-3 w-3 text-green-600" />
-                  <span>Last verified: Today at 10:30 AM</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                Upcoming Deadlines
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Annual Filing</span>
-                  <Badge variant="outline" className="text-xs">7 days left</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Tax Return</span>
-                  <Badge variant="outline" className="text-xs">14 days left</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                {recentActivities.slice(0, 2).map((activity) => {
-                  const ActionIcon = getActionIcon(activity.action);
-                  return (
-                    <div key={activity.id} className="flex items-center gap-2">
-                      <ActionIcon className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs">{activity.user} {activity.action}ed {activity.document}</span>
-                    </div>
-                  );
-                })}
-                <Button variant="link" className="text-xs p-0 h-auto" asChild>
-                  <Link to="/e-filing/audit-trail">View all activity</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Metadata Summary */}
-        <Card className="mb-6">
-          <CardContent className="py-4">
-            <Metadata items={metadataItems} />
-          </CardContent>
-        </Card>
-
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs defaultValue="new-filing" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="validation">Validation</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="history">Filing History</TabsTrigger>
+            <TabsTrigger value="new-filing">New Filing</TabsTrigger>
+            <TabsTrigger value="recent">Recent Filings</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="documents" className="space-y-4">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <Card>
+          <TabsContent value="new-filing" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="md:col-span-1">
                 <CardHeader>
-                  <CardTitle>Document Selection</CardTitle>
+                  <CardTitle>Select Document</CardTitle>
                   <CardDescription>
-                    Search and select documents for e-filing
+                    Choose a document from your files to e-file
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -193,287 +93,155 @@ export const EFilingPage = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="md:col-span-2">
                 <CardHeader>
-                  <CardTitle>Selected Document</CardTitle>
+                  <CardTitle>Filing Details</CardTitle>
                   <CardDescription>
-                    Document details and validation status
+                    Document information and filing status
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   {selectedDocument ? (
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium">Document Name</span>
-                          <span className="text-sm">{selectedDocument.title}</span>
+                    <>
+                      <div className="p-4 border rounded-lg bg-slate-50">
+                        <div className="flex items-center gap-3 mb-3">
+                          <FileText className="h-5 w-5 text-primary" />
+                          <h3 className="font-medium">{selectedDocument.title}</h3>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium">Type</span>
-                          <span className="text-sm">{selectedDocument.type}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium">Size</span>
-                          <span className="text-sm">2.4 MB</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm font-medium">Last Modified</span>
-                          <span className="text-sm">Today, 10:30 AM</span>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">File Type</p>
+                            <p className="font-medium">{selectedDocument.type}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Size</p>
+                            <p className="font-medium">{selectedDocument.size} MB</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Created</p>
+                            <p className="font-medium">{new Date(selectedDocument.created_at).toLocaleDateString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Last Modified</p>
+                            <p className="font-medium">{new Date(selectedDocument.updated_at).toLocaleDateString()}</p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="pt-2">
-                        <Button 
-                          onClick={() => handleValidationComplete(true)} 
-                          className="w-full"
-                        >
-                          Validate Document
-                        </Button>
-                      </div>
-                    </div>
+                      {isValidated && (
+                        <ValidationStatusAlert isValid={true} />
+                      )}
+                    </>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-[200px] text-center">
-                      <FileText className="h-10 w-10 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium">No Document Selected</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Select a document from the list to view details
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <Upload className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="font-medium text-lg mb-1">No Document Selected</h3>
+                      <p className="text-muted-foreground max-w-md">
+                        Please select a document from the list on the left to begin the e-filing process
                       </p>
                     </div>
                   )}
                 </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button variant="outline" disabled={!selectedDocument}>
+                    Select Different Document
+                  </Button>
+                  <div className="space-x-2">
+                    <Button 
+                      onClick={handleValidate} 
+                      disabled={!selectedDocument || isValidated}
+                    >
+                      Validate Document
+                    </Button>
+                    <Button 
+                      className="gap-2"
+                      disabled={!selectedDocument || !isValidated}
+                    >
+                      Submit Filing
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardFooter>
               </Card>
             </div>
-
-            {isValidated && (
-              <Card>
-                <CardContent className="pt-6">
-                  <ValidationStatusAlert isValid={isValidated} />
-                </CardContent>
-              </Card>
-            )}
           </TabsContent>
 
-          <TabsContent value="validation">
+          <TabsContent value="recent">
             <Card>
               <CardHeader>
-                <CardTitle>Document Validation</CardTitle>
+                <CardTitle>Recent Filings</CardTitle>
                 <CardDescription>
-                  Validate documents for compliance and e-filing readiness
+                  View and manage your recent court filings
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <AlertTriangle className="h-5 w-5 text-amber-500 mr-3" />
-                    <div>
-                      <h4 className="text-sm font-medium">Validation Information</h4>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        All documents must pass validation checks before they can be e-filed
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Validation Checks</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                          <span className="text-sm">Format Compliance</span>
+                  {recentFilings.map((filing) => (
+                    <div key={filing.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-primary/10">
+                          <FileText className="h-5 w-5 text-primary" />
                         </div>
-                        <Badge variant="outline" className="bg-green-50">Passed</Badge>
+                        <div>
+                          <p className="font-medium">{filing.title}</p>
+                          <p className="text-sm text-muted-foreground">{filing.court} • {filing.date}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                          <span className="text-sm">Required Fields</span>
-                        </div>
-                        <Badge variant="outline" className="bg-green-50">Passed</Badge>
-                      </div>
-                      <div className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                          <span className="text-sm">Signatures</span>
-                        </div>
-                        <Badge variant="outline" className="bg-green-50">Passed</Badge>
-                      </div>
-                      <div className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex items-center">
-                          <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
-                          <span className="text-sm">Regulatory Check</span>
-                        </div>
-                        <Badge variant="outline" className="bg-amber-50">Warning</Badge>
+                      <div className="flex items-center">
+                        {filing.status === 'completed' ? (
+                          <div className="flex items-center text-green-600 gap-1">
+                            <CheckCircle className="h-4 w-4" />
+                            <span className="text-sm font-medium">Filed</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-amber-600 gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-sm font-medium">Pending</span>
+                          </div>
+                        )}
+                        <Button variant="ghost" size="sm" className="ml-4">View</Button>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="security">
+          <TabsContent value="templates">
             <Card>
               <CardHeader>
-                <CardTitle>Security & Compliance</CardTitle>
+                <CardTitle>Filing Templates</CardTitle>
                 <CardDescription>
-                  Information about document security and compliance features
+                  Use saved templates to speed up your filing process
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Document Security</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 border rounded-lg bg-gray-50">
-                        <h4 className="text-sm font-medium flex items-center gap-2">
-                          <Shield className="h-4 w-4 text-primary" />
-                          Encryption
-                        </h4>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          AES-256 encryption at rest and TLS 1.3 in transit
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {['Bankruptcy Form', 'Small Claims', 'Tax Court Filing'].map((template, i) => (
+                    <Card key={i} className="cursor-pointer hover:border-primary transition-colors">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">{template}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Pre-configured template with all required fields
                         </p>
-                      </div>
-                      <div className="p-4 border rounded-lg bg-gray-50">
-                        <h4 className="text-sm font-medium flex items-center gap-2">
-                          <Activity className="h-4 w-4 text-primary" />
-                          Audit Trail
-                        </h4>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Immutable blockchain-verified audit records
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Compliance Features</h3>
-                    <ul className="space-y-2">
-                      <li className="flex items-start">
-                        <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5" />
-                        <div>
-                          <span className="text-sm font-medium">Role-Based Access Control</span>
-                          <p className="text-xs text-muted-foreground">
-                            Ensures only authorized individuals can access sensitive documents
-                          </p>
-                        </div>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5" />
-                        <div>
-                          <span className="text-sm font-medium">Multi-Factor Authentication</span>
-                          <p className="text-xs text-muted-foreground">
-                            Additional security layer for sensitive operations
-                          </p>
-                        </div>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5" />
-                        <div>
-                          <span className="text-sm font-medium">Digital Signatures</span>
-                          <p className="text-xs text-muted-foreground">
-                            Cryptographically secure signatures for document validation
-                          </p>
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="history">
-            <Card>
-              <CardHeader>
-                <CardTitle>E-Filing History</CardTitle>
-                <CardDescription>
-                  Past e-filing submissions and their statuses
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="rounded-md border">
-                    <div className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-sm font-medium">Annual Report 2025</h3>
-                          <p className="text-xs text-muted-foreground">Submitted March 10, 2025</p>
-                        </div>
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>
-                      </div>
-                      <div className="mt-4 text-xs text-muted-foreground">
-                        <div className="flex justify-between">
-                          <span>Confirmation Number</span>
-                          <span className="font-medium">FIL-2025-0342</span>
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span>Processed By</span>
-                          <span className="font-medium">Michael Chen</span>
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span>Verified</span>
-                          <span className="font-medium">Yes (Blockchain)</span>
-                        </div>
-                      </div>
-                      <div className="mt-4 pt-4 border-t">
-                        <Button variant="outline" size="sm" className="text-xs h-7">
-                          View Details
+                      </CardContent>
+                      <CardFooter>
+                        <Button variant="ghost" size="sm" className="gap-2">
+                          Use Template
+                          <ArrowRight className="h-3 w-3" />
                         </Button>
-                        <Button variant="outline" size="sm" className="text-xs h-7 ml-2">
-                          Download Receipt
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-md border">
-                    <div className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-sm font-medium">Tax Filing Q4 2024</h3>
-                          <p className="text-xs text-muted-foreground">Submitted January 15, 2025</p>
-                        </div>
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>
-                      </div>
-                      <div className="mt-4 text-xs text-muted-foreground">
-                        <div className="flex justify-between">
-                          <span>Confirmation Number</span>
-                          <span className="font-medium">FIL-2025-0127</span>
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span>Processed By</span>
-                          <span className="font-medium">Sarah Johnson</span>
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span>Verified</span>
-                          <span className="font-medium">Yes (Blockchain)</span>
-                        </div>
-                      </div>
-                      <div className="mt-4 pt-4 border-t">
-                        <Button variant="outline" size="sm" className="text-xs h-7">
-                          View Details
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-xs h-7 ml-2">
-                          Download Receipt
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+                      </CardFooter>
+                    </Card>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Secure footer - Could be a component in a real implementation */}
-        <div className="mt-8 text-center text-xs text-muted-foreground">
-          <p>SecureFiles AI E-Filing System v1.2.4 • ISO 27001 Certified • SOC 2 Compliant • GDPR Ready</p>
-          <p className="mt-1">Data encrypted at rest with AES-256 • All transmissions protected with TLS 1.3</p>
-          <p className="mt-1">© 2025 SecureFiles AI • All actions are immutably logged and blockchain verified</p>
-        </div>
       </div>
     </MainLayout>
   );
 };
-
-export default EFilingPage;
