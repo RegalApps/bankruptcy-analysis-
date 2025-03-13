@@ -27,16 +27,11 @@ export const PrintButton = ({ formData }: PrintButtonProps) => {
   
   const handlePrint = useReactToPrint({
     documentTitle: `Income_Expense_${formData.full_name}_${formData.submission_date}`,
-    onBeforeGetContent: () => {
-      return new Promise<void>((resolve) => {
-        resolve();
-      });
-    },
+    // Use the appropriate prop for the current version of react-to-print
+    contentRef: printRef,
     onAfterPrint: () => {
       console.log("Printed successfully");
     },
-    // Correctly specify the content using the ref
-    contentRef: printRef,
   });
 
   return (
