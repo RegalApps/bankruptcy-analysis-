@@ -5,8 +5,10 @@ import { EnhancedIncomeSection } from "./form/EnhancedIncomeSection";
 import { EssentialExpensesSection } from "./form/EssentialExpensesSection";
 import { DiscretionaryExpensesSection } from "./form/DiscretionaryExpensesSection";
 import { SavingsInsuranceSection } from "./form/SavingsInsuranceSection";
+import { SignatureConsentSection } from "./form/SignatureConsentSection";
 import { HistoricalComparison } from "./components/HistoricalComparison";
 import { DocumentUploadSection } from "./components/DocumentUploadSection";
+import { PrintButton } from "./form/PrintButton";
 import { useIncomeExpenseForm } from "./hooks/useIncomeExpenseForm";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -39,6 +41,31 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
     handlePeriodChange,
     handleFieldSelectChange,
   } = useIncomeExpenseForm(selectedClient);
+
+  // Handle consent checkbox change
+  const handleConsentChange = (checked: boolean) => {
+    const consentEvent = {
+      target: {
+        name: 'consent_data_use',
+        value: checked ? 'true' : 'false'
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    handleChange(consentEvent);
+    
+    // If consent is given, set the consent date to today
+    if (checked) {
+      const todayDate = new Date().toISOString().split('T')[0];
+      const dateEvent = {
+        target: {
+          name: 'consent_date',
+          value: todayDate
+        }
+      } as React.ChangeEvent<HTMLInputElement>;
+      
+      handleChange(dateEvent);
+    }
+  };
 
   // Display toast notification to encourage user to select a client if none selected
   useEffect(() => {
@@ -113,6 +140,11 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
         </div>
       ) : (
         <>
+          {/* Print Button */}
+          <div className="flex justify-end">
+            <PrintButton formData={formData} />
+          </div>
+          
           <HistoricalComparison
             currentPeriod={historicalData.currentPeriod}
             previousPeriod={historicalData.previousPeriod}
@@ -176,6 +208,13 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
             formData={formData} 
             previousMonthData={previousMonthData}
             onChange={handleChange}
+          />
+          
+          {/* New Signature & Consent Section */}
+          <SignatureConsentSection
+            formData={formData}
+            onChange={handleChange}
+            onConsentChange={handleConsentChange}
           />
           
           <DocumentUploadSection financialRecordId={currentRecordId} />

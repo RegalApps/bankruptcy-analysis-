@@ -77,6 +77,12 @@ export interface IncomeExpenseData {
   other_insurance_description: string;
   total_insurance: string;
   
+  // Signature & Consent
+  electronic_signature?: string;
+  verification_date?: string;
+  consent_data_use?: string;
+  consent_date?: string;
+  
   // Frequency settings
   income_frequency: 'monthly' | 'bi-weekly' | 'weekly';
   expense_frequency: 'monthly' | 'bi-monthly' | 'one-time';

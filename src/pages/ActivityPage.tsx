@@ -10,6 +10,7 @@ import { ClientSelector } from "@/components/activity/form/ClientSelector";
 import { Client } from "@/components/activity/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useLocation } from "react-router-dom";
 
 // Valid UUID format mockup
 const MOCK_CLIENTS = [
@@ -30,6 +31,7 @@ const MOCK_CLIENTS = [
 export const ActivityPage = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState("form");
+  const location = useLocation();
 
   // Handle client selection for all tabs
   const handleClientSelect = (clientId: string) => {
@@ -46,6 +48,21 @@ export const ActivityPage = () => {
     setSelectedClient(client);
     toast.success(`Selected client: ${client.name}`);
   };
+
+  // Handle tab switching from CreateFormButton
+  useEffect(() => {
+    if (location.state) {
+      const { switchTab, clientId } = location.state as { switchTab?: string; clientId?: string };
+      
+      if (switchTab) {
+        setActiveTab(switchTab);
+      }
+      
+      if (clientId && !selectedClient) {
+        handleClientSelect(clientId);
+      }
+    }
+  }, [location.state, selectedClient]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

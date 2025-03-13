@@ -1,167 +1,138 @@
+
 import { IncomeExpenseData } from "../../types";
 
-// Helper function to convert database record to IncomeExpenseData format
 export const mapDatabaseRecordToIncomeExpenseData = (record: any): IncomeExpenseData => {
-  // Create a default IncomeExpenseData object with empty strings
-  const defaultData: IncomeExpenseData = {
-    full_name: "",
-    residential_address: "",
-    phone_home: "",
-    marital_status: "single",
-    employer_name: "",
-    work_phone: "",
-    occupation: "",
-    spouse_name: "",
-    household_size: "",
-    submission_date: "",
-    
-    employment_income: "",
-    pension_annuities: "",
-    child_spousal_support: "",
-    self_employment_income: "",
-    government_benefits: "",
-    rental_income: "",
-    other_income: "",
-    other_income_description: "",
-    total_monthly_income: "",
-    
-    spouse_employment_income: "",
-    spouse_pension_annuities: "",
-    spouse_child_spousal_support: "",
-    spouse_self_employment_income: "",
-    spouse_government_benefits: "",
-    spouse_rental_income: "",
-    spouse_other_income: "",
-    spouse_total_monthly_income: "",
-    
-    mortgage_rent: "",
-    utilities: "",
-    groceries: "",
-    child_care: "",
-    medical_dental: "",
-    transportation: "",
-    education_tuition: "",
-    debt_repayments: "",
-    misc_essential_expenses: "",
-    total_essential_expenses: "",
-    
-    dining_out: "",
-    alcohol: "",
-    tobacco: "",
-    entertainment: "",
-    gym_memberships: "",
-    gifts_donations: "",
-    subscriptions: "",
-    clothing: "",
-    pet_care: "",
-    leisure_travel: "",
-    other_discretionary: "",
-    other_discretionary_description: "",
-    total_discretionary_expenses: "",
-    
-    emergency_savings: "",
-    retirement_savings: "",
-    education_savings: "",
-    investment_contributions: "",
-    total_savings: "",
-    
-    vehicle_insurance: "",
-    health_insurance: "",
-    life_insurance: "",
-    home_insurance: "",
-    other_insurance: "",
-    other_insurance_description: "",
-    total_insurance: "",
-    
-    income_frequency: "monthly",
-    expense_frequency: "monthly",
-    notes: ""
-  };
-
-  // Map database fields to our IncomeExpenseData structure
-  if (record) {
-    // Extract metadata (if any) which might contain our extended fields
-    const metadata = record.metadata || {};
-
-    // Map client info (could be in metadata or directly on record)
-    defaultData.full_name = metadata.full_name || record.full_name || "";
-    defaultData.residential_address = metadata.residential_address || record.residential_address || "";
-    defaultData.phone_home = metadata.phone_home || record.phone_home || "";
-    defaultData.marital_status = metadata.marital_status || record.marital_status || "single";
-    defaultData.employer_name = metadata.employer_name || record.employer_name || "";
-    defaultData.work_phone = metadata.work_phone || record.work_phone || "";
-    defaultData.occupation = metadata.occupation || record.occupation || "";
-    defaultData.spouse_name = metadata.spouse_name || record.spouse_name || "";
-    defaultData.household_size = metadata.household_size || record.household_size || "";
-    defaultData.submission_date = record.submission_date || "";
-    
-    // Map income fields - handling both string and number types
-    defaultData.employment_income = record.employment_income?.toString() || "";
-    defaultData.pension_annuities = metadata.pension_annuities?.toString() || "";
-    defaultData.child_spousal_support = metadata.child_spousal_support?.toString() || "";
-    defaultData.self_employment_income = metadata.self_employment_income?.toString() || "";
-    defaultData.government_benefits = metadata.government_benefits?.toString() || "";
-    defaultData.rental_income = metadata.rental_income?.toString() || "";
-    defaultData.other_income = record.other_income?.toString() || "";
-    defaultData.other_income_description = metadata.other_income_description || "";
-    defaultData.total_monthly_income = record.total_income?.toString() || record.monthly_income?.toString() || "";
-    
-    // Map spouse income fields
-    defaultData.spouse_employment_income = metadata.spouse_employment_income?.toString() || "";
-    defaultData.spouse_pension_annuities = metadata.spouse_pension_annuities?.toString() || "";
-    defaultData.spouse_child_spousal_support = metadata.spouse_child_spousal_support?.toString() || "";
-    defaultData.spouse_self_employment_income = metadata.spouse_self_employment_income?.toString() || "";
-    defaultData.spouse_government_benefits = metadata.spouse_government_benefits?.toString() || "";
-    defaultData.spouse_rental_income = metadata.spouse_rental_income?.toString() || "";
-    defaultData.spouse_other_income = metadata.spouse_other_income?.toString() || "";
-    defaultData.spouse_total_monthly_income = metadata.spouse_total_monthly_income?.toString() || "";
-    
-    // Map expense fields - essential expenses
-    defaultData.mortgage_rent = record.rent_mortgage?.toString() || "";
-    defaultData.utilities = record.utilities?.toString() || "";
-    defaultData.groceries = record.food?.toString() || metadata.groceries?.toString() || "";
-    defaultData.child_care = metadata.child_care?.toString() || "";
-    defaultData.medical_dental = record.medical_expenses?.toString() || metadata.medical_dental?.toString() || "";
-    defaultData.transportation = record.transportation?.toString() || "";
-    defaultData.education_tuition = metadata.education_tuition?.toString() || "";
-    defaultData.debt_repayments = metadata.debt_repayments?.toString() || "";
-    defaultData.misc_essential_expenses = metadata.misc_essential_expenses?.toString() || "";
-    defaultData.total_essential_expenses = record.total_expenses?.toString() || metadata.total_essential_expenses?.toString() || "";
-    
-    // Map expense fields - discretionary expenses
-    defaultData.dining_out = metadata.dining_out?.toString() || "";
-    defaultData.alcohol = metadata.alcohol?.toString() || "";
-    defaultData.tobacco = metadata.tobacco?.toString() || "";
-    defaultData.entertainment = metadata.entertainment?.toString() || "";
-    defaultData.gym_memberships = metadata.gym_memberships?.toString() || "";
-    defaultData.gifts_donations = metadata.gifts_donations?.toString() || "";
-    defaultData.subscriptions = metadata.subscriptions?.toString() || "";
-    defaultData.clothing = metadata.clothing?.toString() || "";
-    defaultData.pet_care = metadata.pet_care?.toString() || "";
-    defaultData.leisure_travel = metadata.leisure_travel?.toString() || "";
-    defaultData.other_discretionary = metadata.other_discretionary?.toString() || "";
-    defaultData.other_discretionary_description = metadata.other_discretionary_description || "";
-    defaultData.total_discretionary_expenses = metadata.total_discretionary_expenses?.toString() || "";
-    
-    // Map savings fields
-    defaultData.emergency_savings = metadata.emergency_savings?.toString() || "";
-    defaultData.retirement_savings = metadata.retirement_savings?.toString() || "";
-    defaultData.education_savings = metadata.education_savings?.toString() || "";
-    defaultData.investment_contributions = metadata.investment_contributions?.toString() || "";
-    defaultData.total_savings = metadata.total_savings?.toString() || "";
-    
-    // Map insurance fields
-    defaultData.vehicle_insurance = metadata.vehicle_insurance?.toString() || "";
-    defaultData.health_insurance = metadata.health_insurance?.toString() || "";
-    defaultData.life_insurance = metadata.life_insurance?.toString() || "";
-    defaultData.home_insurance = metadata.home_insurance?.toString() || "";
-    defaultData.other_insurance = metadata.other_insurance?.toString() || record.insurance?.toString() || "";
-    defaultData.other_insurance_description = metadata.other_insurance_description || "";
-    defaultData.total_insurance = metadata.total_insurance?.toString() || "";
-    
-    // Other fields
-    defaultData.notes = record.notes || "";
-  }
+  const metadata = record.metadata || {};
   
-  return defaultData;
+  // Helper function to convert numbers to strings safely
+  const numToStr = (value: any): string => {
+    if (value === null || value === undefined) return '';
+    return typeof value === 'number' ? value.toString() : (value || '');
+  };
+  
+  // Check both record and metadata for each field to ensure backwards compatibility
+  const getValue = (key: string): string => {
+    // Try direct access first
+    if (record[key] !== undefined && record[key] !== null) {
+      return numToStr(record[key]);
+    }
+    
+    // Then check metadata
+    if (metadata[key] !== undefined && metadata[key] !== null) {
+      return numToStr(metadata[key]);
+    }
+    
+    // Then try some common mappings
+    const mappings: Record<string, string[]> = {
+      'employment_income': ['monthly_income'],
+      'total_monthly_income': ['monthly_income', 'total_income'],
+      'total_essential_expenses': ['total_expenses'],
+      'mortgage_rent': ['rent_mortgage'],
+      'medical_dental': ['medical_expenses'],
+    };
+    
+    if (mappings[key]) {
+      for (const altKey of mappings[key]) {
+        if (record[altKey] !== undefined && record[altKey] !== null) {
+          return numToStr(record[altKey]);
+        }
+        if (metadata[altKey] !== undefined && metadata[altKey] !== null) {
+          return numToStr(metadata[altKey]);
+        }
+      }
+    }
+    
+    // Default to empty string
+    return '';
+  };
+  
+  return {
+    // Client Information
+    client_id: record.user_id || "",
+    full_name: getValue('full_name'),
+    residential_address: getValue('residential_address'),
+    phone_home: getValue('phone_home'),
+    marital_status: getValue('marital_status'),
+    employer_name: getValue('employer_name'),
+    work_phone: getValue('work_phone'),
+    occupation: getValue('occupation'),
+    spouse_name: getValue('spouse_name'),
+    household_size: getValue('household_size'),
+    submission_date: record.submission_date ? new Date(record.submission_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    
+    // Income Information - Debtor
+    employment_income: getValue('employment_income'),
+    pension_annuities: getValue('pension_annuities'),
+    child_spousal_support: getValue('child_spousal_support'),
+    self_employment_income: getValue('self_employment_income'),
+    government_benefits: getValue('government_benefits'),
+    rental_income: getValue('rental_income'),
+    other_income: getValue('other_income'),
+    other_income_description: getValue('other_income_description'),
+    total_monthly_income: getValue('total_monthly_income'),
+    
+    // Income Information - Spouse
+    spouse_employment_income: getValue('spouse_employment_income'),
+    spouse_pension_annuities: getValue('spouse_pension_annuities'),
+    spouse_child_spousal_support: getValue('spouse_child_spousal_support'),
+    spouse_self_employment_income: getValue('spouse_self_employment_income'),
+    spouse_government_benefits: getValue('spouse_government_benefits'),
+    spouse_rental_income: getValue('spouse_rental_income'),
+    spouse_other_income: getValue('spouse_other_income'),
+    spouse_total_monthly_income: getValue('spouse_total_monthly_income'),
+    
+    // Essential Expenses
+    mortgage_rent: getValue('mortgage_rent'),
+    utilities: getValue('utilities'),
+    groceries: getValue('groceries'),
+    child_care: getValue('child_care'),
+    medical_dental: getValue('medical_dental'),
+    transportation: getValue('transportation'),
+    education_tuition: getValue('education_tuition'),
+    debt_repayments: getValue('debt_repayments'),
+    misc_essential_expenses: getValue('misc_essential_expenses'),
+    total_essential_expenses: getValue('total_essential_expenses'),
+    
+    // Discretionary Expenses
+    dining_out: getValue('dining_out'),
+    alcohol: getValue('alcohol'),
+    tobacco: getValue('tobacco'),
+    entertainment: getValue('entertainment'),
+    gym_memberships: getValue('gym_memberships'),
+    gifts_donations: getValue('gifts_donations'),
+    subscriptions: getValue('subscriptions'),
+    clothing: getValue('clothing'),
+    pet_care: getValue('pet_care'),
+    leisure_travel: getValue('leisure_travel'),
+    other_discretionary: getValue('other_discretionary'),
+    other_discretionary_description: getValue('other_discretionary_description'),
+    total_discretionary_expenses: getValue('total_discretionary_expenses'),
+    
+    // Savings & Investments
+    emergency_savings: getValue('emergency_savings'),
+    retirement_savings: getValue('retirement_savings'),
+    education_savings: getValue('education_savings'),
+    investment_contributions: getValue('investment_contributions'),
+    total_savings: getValue('total_savings'),
+    
+    // Insurance Expenses
+    vehicle_insurance: getValue('vehicle_insurance'),
+    health_insurance: getValue('health_insurance'),
+    life_insurance: getValue('life_insurance'),
+    home_insurance: getValue('home_insurance'),
+    other_insurance: getValue('other_insurance'),
+    other_insurance_description: getValue('other_insurance_description'),
+    total_insurance: getValue('total_insurance'),
+    
+    // Signature & Consent
+    electronic_signature: getValue('electronic_signature'),
+    verification_date: getValue('verification_date'),
+    consent_data_use: getValue('consent_data_use'),
+    consent_date: getValue('consent_date'),
+    
+    // Frequency settings
+    income_frequency: (getValue('income_frequency') || 'monthly') as 'monthly' | 'bi-weekly' | 'weekly',
+    expense_frequency: (getValue('expense_frequency') || 'monthly') as 'monthly' | 'bi-monthly' | 'one-time',
+    notes: getValue('notes'),
+  };
 };
