@@ -1,14 +1,24 @@
-
 import { IncomeExpenseData } from "../types";
 import React, { forwardRef } from "react";
+
+interface AISummary {
+  surplusDeficit: {
+    amount: string;
+    trend: string;
+  };
+  debtRatio: string;
+  highRiskCategories: string[];
+  trusteeNotes: string;
+}
 
 interface PrintableFormViewProps {
   formData: IncomeExpenseData;
   currentDate: string;
+  aiSummary: AISummary;
 }
 
 export const PrintableFormView = forwardRef<HTMLDivElement, PrintableFormViewProps>(
-  ({ formData, currentDate }, ref) => {
+  ({ formData, currentDate, aiSummary }, ref) => {
     const formatCurrency = (value: string) => {
       if (!value) return "$0.00";
       return `$${parseFloat(value).toFixed(2)}`;
@@ -18,6 +28,66 @@ export const PrintableFormView = forwardRef<HTMLDivElement, PrintableFormViewPro
       <div ref={ref} className="print-container p-8 bg-white">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold">Income & Expenses for the month of {currentDate}</h1>
+        </div>
+
+        <div className="mb-8 p-4 border border-gray-300 rounded-md bg-gray-50">
+          <h2 className="text-xl font-bold mb-4 border-b pb-2">AI-Generated Financial Summary</h2>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-bold mb-2">
+                {parseFloat(aiSummary.surplusDeficit.amount) >= 0 ? "Surplus" : "Deficit"} Income
+              </h3>
+              <p className="flex items-center">
+                <span className={parseFloat(aiSummary.surplusDeficit.amount) >= 0 ? "text-green-600" : "text-red-600"}>
+                  {parseFloat(aiSummary.surplusDeficit.amount) >= 0 ? "🔺" : "🔻"}
+                </span>
+                <span className="font-bold text-lg ml-2">
+                  {formatCurrency(aiSummary.surplusDeficit.amount)}
+                </span>
+                <span className="ml-2 text-sm text-gray-600">
+                  {parseFloat(aiSummary.surplusDeficit.amount) >= 0 
+                    ? "Available after expenses" 
+                    : "Shortfall each month"}
+                </span>
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-bold mb-2">Debt-to-Income Ratio</h3>
+              <p className="flex items-center">
+                <span className={parseFloat(aiSummary.debtRatio) <= 20 ? "text-green-600" : "text-red-600"}>
+                  {parseFloat(aiSummary.debtRatio) <= 20 ? "✅" : "⚠️"}
+                </span>
+                <span className="font-bold text-lg ml-2">{aiSummary.debtRatio}%</span>
+                <span className="ml-2 text-sm text-gray-600">
+                  {parseFloat(aiSummary.debtRatio) <= 20 
+                    ? "Healthy debt level" 
+                    : "Higher than recommended"}
+                </span>
+              </p>
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <h3 className="font-bold mb-2">Risk Assessment</h3>
+            {aiSummary.highRiskCategories.length > 0 ? (
+              <ul className="list-disc pl-6">
+                {aiSummary.highRiskCategories.map((risk, index) => (
+                  <li key={index} className="text-red-600">
+                    <span className="mr-1">🛑</span> {risk}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-green-600">✅ No high-risk financial patterns detected</p>
+            )}
+          </div>
+          
+          <div className="mt-4">
+            <h3 className="font-bold mb-2">Trustee Notes</h3>
+            <p className="italic">{aiSummary.trusteeNotes}</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
@@ -325,14 +395,31 @@ export const PrintableFormView = forwardRef<HTMLDivElement, PrintableFormViewPro
         <div className="mt-10 pt-10 border-t">
           <p className="mb-4">I hereby certify that the above information is complete and accurate to the best of my knowledge.</p>
           
-          <div className="mb-6 mt-8">
-            <div className="border-b border-black w-64 inline-block mb-1"></div>
-            <p>Signature</p>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="mb-6 mt-8">
+              <div className="border-b border-black w-64 inline-block mb-1"></div>
+              <p>Client Signature</p>
+            </div>
+            
+            <div className="mb-6 mt-8">
+              <div className="border-b border-black w-64 inline-block mb-1"></div>
+              <p>Date</p>
+            </div>
+            
+            <div className="mb-6">
+              <div className="border-b border-black w-64 inline-block mb-1"></div>
+              <p>Trustee Signature</p>
+            </div>
+            
+            <div className="mb-6">
+              <div className="border-b border-black w-64 inline-block mb-1"></div>
+              <p>Trustee Name (Print)</p>
+            </div>
           </div>
           
-          <div className="mb-6">
-            <div className="border-b border-black w-64 inline-block mb-1"></div>
-            <p>Date</p>
+          <div className="mt-4 p-3 border border-gray-300 rounded bg-gray-50">
+            <p className="text-sm text-gray-600 font-bold">Final Approval Notes:</p>
+            <div className="h-16 border-b border-gray-400"></div>
           </div>
         </div>
       </div>
