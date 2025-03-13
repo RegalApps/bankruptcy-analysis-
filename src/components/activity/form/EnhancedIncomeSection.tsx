@@ -1,4 +1,4 @@
-
+import React, { useEffect } from "react";
 import { IncomeExpenseData } from "../types";
 import { ComparisonField } from "./ComparisonField";
 import {
@@ -96,9 +96,9 @@ export const EnhancedIncomeSection = ({
   };
   
   // Call the update function whenever the component renders
-  React.useEffect(() => {
+  useEffect(() => {
     handleTotalsUpdate();
-  }, [formData]);
+  }, [formData, onChange]);
   
   return (
     <Card>
@@ -150,23 +150,22 @@ export const EnhancedIncomeSection = ({
               </TableRow>
             ))}
             
-            {field.id === "other_income" && (
-              <TableRow>
-                <TableCell colSpan={2}>
-                  <div className="space-y-1">
-                    <Label htmlFor="other_income_description">Specify Other Income</Label>
-                    <Input
-                      id="other_income_description"
-                      name="other_income_description"
-                      value={formData.other_income_description}
-                      onChange={onChange}
-                      placeholder="Describe other income sources"
-                    />
-                  </div>
-                </TableCell>
-                <TableCell colSpan={2}></TableCell>
-              </TableRow>
-            )}
+            {/* Other income description field */}
+            <TableRow>
+              <TableCell colSpan={2}>
+                <div className="space-y-1">
+                  <Label htmlFor="other_income_description">Specify Other Income</Label>
+                  <Input
+                    id="other_income_description"
+                    name="other_income_description"
+                    value={formData.other_income_description}
+                    onChange={onChange}
+                    placeholder="Describe other income sources"
+                  />
+                </div>
+              </TableCell>
+              <TableCell colSpan={2}></TableCell>
+            </TableRow>
             
             {/* Total Row */}
             <TableRow className="font-bold">

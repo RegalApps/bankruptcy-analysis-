@@ -1,4 +1,5 @@
 
+import React, { useEffect } from "react";
 import { IncomeExpenseData } from "../types";
 import { ComparisonField } from "./ComparisonField";
 import {
@@ -51,7 +52,7 @@ export const EssentialExpensesSection = ({
   };
   
   // Update total when values change
-  React.useEffect(() => {
+  useEffect(() => {
     const total = calculateTotal();
     if (formData.total_essential_expenses !== total) {
       const e = {
@@ -62,7 +63,7 @@ export const EssentialExpensesSection = ({
       } as React.ChangeEvent<HTMLInputElement>;
       onChange(e);
     }
-  }, [formData]);
+  }, [formData, onChange]);
   
   return (
     <Card>

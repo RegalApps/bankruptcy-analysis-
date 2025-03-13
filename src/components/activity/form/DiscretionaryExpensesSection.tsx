@@ -1,4 +1,4 @@
-
+import React, { useEffect } from "react";
 import { IncomeExpenseData } from "../types";
 import { ComparisonField } from "./ComparisonField";
 import {
@@ -55,7 +55,7 @@ export const DiscretionaryExpensesSection = ({
   };
   
   // Update total when values change
-  React.useEffect(() => {
+  useEffect(() => {
     const total = calculateTotal();
     if (formData.total_discretionary_expenses !== total) {
       const e = {
@@ -66,7 +66,7 @@ export const DiscretionaryExpensesSection = ({
       } as React.ChangeEvent<HTMLInputElement>;
       onChange(e);
     }
-  }, [formData]);
+  }, [formData, onChange]);
   
   return (
     <Card>
@@ -108,22 +108,21 @@ export const DiscretionaryExpensesSection = ({
               </TableRow>
             ))}
             
-            {field.id === "other_discretionary" && (
-              <TableRow>
-                <TableCell colSpan={3}>
-                  <div className="space-y-1">
-                    <Label htmlFor="other_discretionary_description">Specify Other Discretionary Expenses</Label>
-                    <Input
-                      id="other_discretionary_description"
-                      name="other_discretionary_description"
-                      value={formData.other_discretionary_description}
-                      onChange={onChange}
-                      placeholder="Describe other discretionary expenses"
-                    />
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
+            {/* Other discretionary description field */}
+            <TableRow>
+              <TableCell colSpan={3}>
+                <div className="space-y-1">
+                  <Label htmlFor="other_discretionary_description">Specify Other Discretionary Expenses</Label>
+                  <Input
+                    id="other_discretionary_description"
+                    name="other_discretionary_description"
+                    value={formData.other_discretionary_description}
+                    onChange={onChange}
+                    placeholder="Describe other discretionary expenses"
+                  />
+                </div>
+              </TableCell>
+            </TableRow>
             
             {/* Total Row */}
             <TableRow className="font-bold">

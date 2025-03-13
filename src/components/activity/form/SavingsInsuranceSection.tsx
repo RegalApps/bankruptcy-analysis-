@@ -1,4 +1,4 @@
-
+import React, { useEffect } from "react";
 import { IncomeExpenseData } from "../types";
 import { ComparisonField } from "./ComparisonField";
 import {
@@ -66,7 +66,7 @@ export const SavingsInsuranceSection = ({
   };
   
   // Update totals when values change
-  React.useEffect(() => {
+  useEffect(() => {
     const savingsTotal = calculateSavingsTotal();
     const insuranceTotal = calculateInsuranceTotal();
     
@@ -90,7 +90,7 @@ export const SavingsInsuranceSection = ({
       } as React.ChangeEvent<HTMLInputElement>;
       onChange(e);
     }
-  }, [formData]);
+  }, [formData, onChange]);
   
   return (
     <Tabs defaultValue="savings">
@@ -197,22 +197,21 @@ export const SavingsInsuranceSection = ({
                   </TableRow>
                 ))}
                 
-                {field.id === "other_insurance" && (
-                  <TableRow>
-                    <TableCell colSpan={3}>
-                      <div className="space-y-1">
-                        <Label htmlFor="other_insurance_description">Specify Other Insurance</Label>
-                        <Input
-                          id="other_insurance_description"
-                          name="other_insurance_description"
-                          value={formData.other_insurance_description}
-                          onChange={onChange}
-                          placeholder="Describe other insurance expenses"
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
+                {/* Other insurance description field */}
+                <TableRow>
+                  <TableCell colSpan={3}>
+                    <div className="space-y-1">
+                      <Label htmlFor="other_insurance_description">Specify Other Insurance</Label>
+                      <Input
+                        id="other_insurance_description"
+                        name="other_insurance_description"
+                        value={formData.other_insurance_description}
+                        onChange={onChange}
+                        placeholder="Describe other insurance expenses"
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
                 
                 {/* Total Row */}
                 <TableRow className="font-bold">
