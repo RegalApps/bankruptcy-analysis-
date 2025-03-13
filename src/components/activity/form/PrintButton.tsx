@@ -26,22 +26,23 @@ export const PrintButton = ({ formData }: PrintButtonProps) => {
   };
   
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
     documentTitle: `Income_Expense_${formData.full_name}_${formData.submission_date}`,
     onBeforeGetContent: () => {
-      return new Promise((resolve) => {
+      return new Promise<void>((resolve) => {
         resolve();
       });
     },
     onAfterPrint: () => {
       console.log("Printed successfully");
     },
+    // Correctly specify the content using the ref
+    contentRef: printRef,
   });
 
   return (
     <>
       <Button 
-        onClick={handlePrint} 
+        onClick={() => handlePrint()} 
         variant="outline" 
         className="flex items-center gap-2"
       >
