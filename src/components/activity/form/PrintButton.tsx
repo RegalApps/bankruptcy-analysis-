@@ -61,8 +61,54 @@ export const PrintButton = ({ formData }: PrintButtonProps) => {
       highRiskCategories.push("Discretionary spending is high relative to essentials");
     }
     
+    // Check savings rate (should ideally be at least 10% of income)
+    const savingsTotal = parseFloat(formData.total_savings || "0");
+    if ((savingsTotal / totalIncome) < 0.1) {
+      highRiskCategories.push("Savings rate below 10% of income");
+    }
+    
+    // Check if emergency fund is insufficient
+    const emergencySavings = parseFloat(formData.emergency_savings || "0");
+    const monthlyEssentials = parseFloat(formData.total_essential_expenses || "0");
+    if (emergencySavings < (monthlyEssentials * 3)) {
+      highRiskCategories.push("Emergency fund below 3 months of essential expenses");
+    }
+    
+    // Calculate repayment feasibility
+    let repaymentFeasibility = "High";
+    if (debtRatio > 36) {
+      repaymentFeasibility = "Low";
+    } else if (debtRatio > 28) {
+      repaymentFeasibility = "Medium";
+    }
+    
     // Determine trend
     const trend = surplus >= 0 ? "positive" : "negative";
+    
+    // Generate trustee notes
+    let trusteeNotes = "Client has a healthy financial profile.";
+    
+    if (highRiskCategories.length > 0) {
+      trusteeNotes = "Client should focus on: ";
+      if (highRiskCategories.includes("Housing costs exceed 35% of income")) {
+        trusteeNotes += "reducing housing costs, ";
+      }
+      if (highRiskCategories.includes("Debt payments exceed 20% of income")) {
+        trusteeNotes += "creating a debt reduction plan, ";
+      }
+      if (highRiskCategories.includes("Discretionary spending is high relative to essentials")) {
+        trusteeNotes += "reducing discretionary expenses, ";
+      }
+      if (highRiskCategories.includes("Savings rate below 10% of income")) {
+        trusteeNotes += "increasing monthly savings, ";
+      }
+      if (highRiskCategories.includes("Emergency fund below 3 months of essential expenses")) {
+        trusteeNotes += "building emergency funds, ";
+      }
+      
+      // Remove trailing comma and space
+      trusteeNotes = trusteeNotes.slice(0, -2) + ".";
+    }
     
     return {
       surplusDeficit: {
@@ -70,8 +116,9 @@ export const PrintButton = ({ formData }: PrintButtonProps) => {
         trend: trend
       },
       debtRatio: debtRatio.toFixed(1),
+      repaymentFeasibility,
       highRiskCategories: highRiskCategories,
-      trusteeNotes: "Client should focus on reducing discretionary expenses and building emergency savings."
+      trusteeNotes: trusteeNotes
     };
   };
   
