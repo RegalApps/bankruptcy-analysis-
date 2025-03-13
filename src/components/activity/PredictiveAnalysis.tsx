@@ -107,7 +107,7 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
                 />
                 <AnalysisAlerts 
                   riskLevel={metrics?.riskLevel || ''} 
-                  seasonalityScore={metrics?.seasonalityScore || '0'} 
+                  seasonalityScore={metrics?.seasonalityScore?.toString() || '0'} 
                 />
               </>
             ) : (
