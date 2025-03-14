@@ -14,6 +14,9 @@ import { RealTimeAnalyticsPanel } from "./components/RealTimeAnalyticsPanel";
 import { SmartCreateDocumentButton } from "./form/SmartCreateDocumentButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PrintButton } from "./form/PrintButton";
+import { ForecastChart } from "./components/ForecastChart";
+import { usePredictiveData } from "./hooks/usePredictiveData";
+import { PredictiveHeader } from "./components/PredictiveHeader";
 
 interface ActivityDashboardProps {
   selectedClient: Client | null;
@@ -21,6 +24,8 @@ interface ActivityDashboardProps {
 
 export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) => {
   const [activeAnalysisTab, setActiveAnalysisTab] = useState("metrics");
+  const [showPredictiveAnalysis, setShowPredictiveAnalysis] = useState(false);
+  
   const {
     formData,
     isSubmitting,
@@ -28,6 +33,15 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     isDataLoading,
     handleSubmit,
   } = useIncomeExpenseForm(selectedClient);
+
+  const {
+    processedData,
+    metrics: predictiveMetrics,
+    categoryAnalysis,
+    isLoading: isPredictiveLoading,
+    lastRefreshed,
+    refetch: refreshPredictiveData
+  } = usePredictiveData(selectedClient);
 
   const [metrics, setMetrics] = useState<{
     currentSurplus: string;
@@ -180,6 +194,36 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
       </div>
 
       <RealTimeAnalyticsPanel formData={formData} />
+
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-bold">Current Financial Analysis</h3>
+        <button 
+          onClick={() => setShowPredictiveAnalysis(!showPredictiveAnalysis)}
+          className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          {showPredictiveAnalysis ? 'Hide Predictive Analysis' : 'Show Predictive Analysis'}
+        </button>
+      </div>
+
+      {showPredictiveAnalysis && (
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <PredictiveHeader
+              clientName={selectedClient.name}
+              lastRefreshed={lastRefreshed}
+              onRefresh={refreshPredictiveData}
+              isLoading={isPredictiveLoading}
+            />
+          </CardHeader>
+          <CardContent>
+            <ForecastChart
+              processedData={processedData}
+              categoryAnalysis={categoryAnalysis}
+              isLoading={isPredictiveLoading}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
