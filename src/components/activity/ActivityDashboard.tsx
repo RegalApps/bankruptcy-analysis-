@@ -36,6 +36,17 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     riskLevel: string;
   } | null>(null);
 
+  // Mock data for components that need specific props
+  const [mockChartData, setMockChartData] = useState<Array<{
+    date: string;
+    Income: number;
+    Expenses: number;
+    Surplus: number;
+  }>>([]);
+
+  const [mockExcelDocuments, setMockExcelDocuments] = useState<any[]>([]);
+  const [seasonalityScore, setSeasonalityScore] = useState<string | null>("0.65");
+
   useEffect(() => {
     if (selectedClient && !isDataLoading) {
       // Calculate metrics from form data and historical data
@@ -74,6 +85,40 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
         monthlyTrend,
         riskLevel,
       });
+
+      // Generate mock chart data
+      const lastSixMonths = Array.from({ length: 6 }, (_, i) => {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        return date.toLocaleString('default', { month: 'short' });
+      }).reverse();
+
+      const chartData = lastSixMonths.map(month => {
+        const income = totalIncome * (0.9 + Math.random() * 0.2);
+        const expenses = 
+          parseFloat(formData.total_essential_expenses || "0") +
+          parseFloat(formData.total_discretionary_expenses || "0") +
+          parseFloat(formData.total_savings || "0") +
+          parseFloat(formData.total_insurance || "0");
+        const randomExpenses = expenses * (0.9 + Math.random() * 0.2);
+        
+        return {
+          date: month,
+          Income: parseFloat(income.toFixed(2)),
+          Expenses: parseFloat(randomExpenses.toFixed(2)),
+          Surplus: parseFloat((income - randomExpenses).toFixed(2))
+        };
+      });
+      
+      setMockChartData(chartData);
+
+      // Mock excel documents
+      if (selectedClient.id) {
+        setMockExcelDocuments([
+          { id: '1', name: 'Income Statement.xlsx', date: '2024-03-01' },
+          { id: '2', name: 'Budget Analysis.xlsx', date: '2024-02-15' }
+        ]);
+      }
     }
   }, [selectedClient, formData, historicalData, isDataLoading]);
 
@@ -82,8 +127,42 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
   }
 
   if (isDataLoading) {
-    return <LoadingState />;
+    return <LoadingState clientName={selectedClient.name} />;
   }
+
+  // Generate expense breakdown for chart
+  const expenseBreakdown = [
+    {
+      name: 'Housing',
+      value: parseFloat(formData.mortgage_rent || "0"),
+      color: '#8884d8'
+    },
+    {
+      name: 'Utilities',
+      value: parseFloat(formData.utilities || "0"),
+      color: '#82ca9d'
+    },
+    {
+      name: 'Food',
+      value: parseFloat(formData.groceries || "0"),
+      color: '#ffc658'
+    },
+    {
+      name: 'Transportation',
+      value: parseFloat(formData.transportation || "0"),
+      color: '#ff8042'
+    },
+    {
+      name: 'Debt Payments',
+      value: parseFloat(formData.debt_repayments || "0"),
+      color: '#0088FE'
+    },
+    {
+      name: 'Discretionary',
+      value: parseFloat(formData.total_discretionary_expenses || "0"),
+      color: '#FF8042'
+    }
+  ].filter(item => item.value > 0);
 
   return (
     <div className="space-y-6">
@@ -127,10 +206,16 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
                 <MetricsGrid metrics={metrics} />
               </TabsContent>
               <TabsContent value="comparison" className="pt-2 pb-0 m-0">
-                <HistoricalComparison historicalData={historicalData} />
+                <HistoricalComparison
+                  currentPeriod={historicalData.currentPeriod}
+                  previousPeriod={historicalData.previousPeriod}
+                />
               </TabsContent>
               <TabsContent value="alerts" className="pt-2 pb-0 m-0">
-                <AnalysisAlerts formData={formData} />
+                <AnalysisAlerts
+                  riskLevel={metrics?.riskLevel || "Low"}
+                  seasonalityScore={seasonalityScore}
+                />
               </TabsContent>
             </CardContent>
           </Card>
@@ -140,13 +225,20 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
               <CardTitle>Income vs. Expenses Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
-              <FinancialChart formData={formData} />
+              <FinancialChart
+                chartData={mockChartData}
+                expenseBreakdown={expenseBreakdown}
+                clientName={selectedClient.name}
+              />
             </CardContent>
           </Card>
         </div>
 
         <div className="space-y-6">
-          <ExcelDocumentsAlert clientId={selectedClient.id} />
+          <ExcelDocumentsAlert
+            documents={mockExcelDocuments}
+            clientName={selectedClient.name}
+          />
           
           <Card>
             <CardHeader>
