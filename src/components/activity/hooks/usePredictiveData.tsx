@@ -42,6 +42,13 @@ export const usePredictiveData = (
   const refetch = () => {
     // This will trigger a re-fetch via the effect
     console.log("Manually refreshing predictive data");
+    setIsLoading(true);
+    
+    // Simulate API delay
+    setTimeout(() => {
+      setLastRefreshed(new Date());
+      setIsLoading(false);
+    }, 1200);
   };
 
   useEffect(() => {
