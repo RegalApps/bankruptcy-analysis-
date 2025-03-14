@@ -13,11 +13,14 @@ import {
   Area,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  ReferenceLine
 } from "recharts";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ForecastChartProps {
   processedData: any[] | null;
@@ -53,13 +56,34 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({
     );
   }
 
+  // Find the current date to separate historical from forecast data
+  const currentDate = new Date();
+  const currentMonthStr = currentDate.toISOString().substring(0, 7);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('default', { month: 'short', year: 'numeric' });
   };
 
+  // Determine which data points are historical vs forecast
+  const enhancedData = processedData.map(item => {
+    const itemDate = new Date(item.submission_date);
+    const isFuture = itemDate > currentDate;
+    return {
+      ...item,
+      isForecast: isFuture || item.isForecast,
+    };
+  });
+
   return (
     <div className="space-y-4">
+      <Alert className="bg-blue-50 border-blue-200">
+        <AlertCircle className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          This forecast is based on {processedData.filter(d => !d.isForecast).length} months of historical data and projects trends for the next 6 months.
+        </AlertDescription>
+      </Alert>
+      
       <Tabs defaultValue="forecast" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="forecast">6-Month Forecast</TabsTrigger>
@@ -69,13 +93,17 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({
         <TabsContent value="forecast" className="pt-4">
           <ResponsiveContainer width="100%" height={350}>
             <AreaChart
-              data={processedData}
+              data={enhancedData}
               margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
             >
               <defs>
                 <linearGradient id="colorSurplus" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
                   <stop offset="95%" stopColor="#8884d8" stopOpacity={0.2}/>
+                </linearGradient>
+                <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.2}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" />
@@ -93,6 +121,12 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({
                 labelFormatter={(label) => formatDate(label)}
               />
               <Legend />
+              <ReferenceLine 
+                x={processedData.find(d => d.isForecast)?.submission_date} 
+                stroke="#666" 
+                strokeDasharray="3 3"
+                label={{ value: 'Forecast Start', position: 'top', fill: '#666' }}
+              />
               <Area 
                 type="monotone" 
                 dataKey="surplus_income" 
@@ -108,7 +142,7 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({
                 dataKey="forecast" 
                 name="Forecast" 
                 stroke="#82ca9d" 
-                fill="#82ca9d"
+                fill="url(#colorForecast)"
                 fillOpacity={0.3}
                 strokeDasharray="5 5"
                 connectNulls

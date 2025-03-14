@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface CreateFormButtonProps {
@@ -19,11 +19,11 @@ export const CreateFormButton = ({ clientId }: CreateFormButtonProps) => {
   return (
     <Button 
       onClick={handleClick} 
-      className="flex items-center gap-2"
-      variant="outline"
+      className="flex items-center gap-2 w-full"
+      size="lg"
     >
-      <FileText className="h-4 w-4" />
-      Create Income & Expense Form
+      <Plus className="h-4 w-4" />
+      Create New Income & Expense Form
     </Button>
   );
 };

@@ -11,6 +11,7 @@ import { Client } from "@/components/activity/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
+import { CreateFormButton } from "@/components/activity/components/CreateFormButton";
 
 // Valid UUID format mockup
 const MOCK_CLIENTS = [
@@ -75,18 +76,27 @@ export const ActivityPage = () => {
               <h1 className="text-3xl font-bold">Smart Income & Expense Management</h1>
             </div>
             
-            {/* Global Client Selection Card */}
+            {/* Global Client Selection Card with Create Form Button */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Client Information</CardTitle>
                 <CardDescription>Select a client to manage their financial data</CardDescription>
               </CardHeader>
               <CardContent>
-                <ClientSelector 
-                  selectedClient={selectedClient}
-                  onClientSelect={handleClientSelect}
-                  availableClients={MOCK_CLIENTS}
-                />
+                <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+                  <div className="w-full md:w-3/4">
+                    <ClientSelector 
+                      selectedClient={selectedClient}
+                      onClientSelect={handleClientSelect}
+                      availableClients={MOCK_CLIENTS}
+                    />
+                  </div>
+                  {selectedClient && (
+                    <div className="w-full md:w-auto mt-2 md:mt-0">
+                      <CreateFormButton clientId={selectedClient.id} />
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
             
@@ -96,7 +106,7 @@ export const ActivityPage = () => {
               value={activeTab}
               onValueChange={setActiveTab}
             >
-              <TabsList>
+              <TabsList className="grid grid-cols-3">
                 <TabsTrigger value="form">Income & Expense Form</TabsTrigger>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="predictive">Predictive Analysis</TabsTrigger>

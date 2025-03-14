@@ -1,13 +1,33 @@
 
 import { Client } from "./types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreateFormButton } from "./components/CreateFormButton";
+import { Card, CardContent } from "@/components/ui/card";
+import { usePredictiveData } from "./hooks/usePredictiveData";
+import { ForecastChart } from "./components/ForecastChart";
+import { PredictiveHeader } from "./components/PredictiveHeader";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
 
 interface PredictiveAnalysisProps {
   selectedClient: Client | null;
 }
 
 export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) => {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  const {
+    processedData,
+    metrics,
+    categoryAnalysis,
+    isLoading,
+    lastRefreshed,
+    refetch
+  } = usePredictiveData(selectedClient, refreshTrigger);
+
+  const handleRefresh = () => {
+    refetch();
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   if (!selectedClient) {
     return (
       <Card className="py-12">
@@ -25,52 +45,56 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">{selectedClient.name}'s Predictive Analysis</h2>
-        
-        {/* Add the Create Form Button */}
-        <CreateFormButton clientId={selectedClient.id} />
       </div>
       
       <Card>
-        <CardHeader>
-          <CardTitle>Financial Forecasting</CardTitle>
-          <CardDescription>Predictions based on historical data</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">
-              Predictive analysis will appear here once the client has enough financial data history.
-            </p>
-          </div>
+        <CardContent className="pt-6">
+          <PredictiveHeader
+            clientName={selectedClient.name}
+            lastRefreshed={lastRefreshed}
+            onRefresh={handleRefresh}
+            isLoading={isLoading}
+          />
+          
+          {isLoading ? (
+            <div className="mt-6">
+              <Skeleton className="h-[350px] w-full rounded-md" />
+            </div>
+          ) : (
+            <div className="mt-6">
+              <ForecastChart
+                processedData={processedData}
+                categoryAnalysis={categoryAnalysis}
+                isLoading={isLoading}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Risk Assessment</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Low Risk</div>
+          <CardContent className="pt-6">
+            <h3 className="text-base font-medium mb-2">Risk Assessment</h3>
+            <div className="text-2xl font-bold">{metrics?.riskLevel || "Low Risk"}</div>
             <p className="text-sm text-muted-foreground mt-1">Based on cash flow stability</p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Savings Potential</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$420/month</div>
-            <p className="text-sm text-muted-foreground mt-1">Projected additional savings</p>
+          <CardContent className="pt-6">
+            <h3 className="text-base font-medium mb-2">Current Surplus</h3>
+            <div className="text-2xl font-bold">${metrics?.currentSurplus || "0.00"}</div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {metrics?.surplusPercentage ? `${metrics.surplusPercentage}% of income` : "No data"}
+            </p>
           </CardContent>
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Income Seasonality</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{"8.5%"}</div>
+          <CardContent className="pt-6">
+            <h3 className="text-base font-medium mb-2">Seasonality Score</h3>
+            <div className="text-2xl font-bold">{metrics?.seasonalityScore || "0.0"}</div>
             <p className="text-sm text-muted-foreground mt-1">Variance in monthly income</p>
           </CardContent>
         </Card>

@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface PredictiveHeaderProps {
   clientName: string;
@@ -19,9 +20,12 @@ export const PredictiveHeader: React.FC<PredictiveHeaderProps> = ({
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full">
       <div>
-        <h3 className="text-lg font-bold">Predictive Analysis: {clientName}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-bold">Financial Forecast</h3>
+          <Badge variant="outline" className="bg-blue-50">AI Powered</Badge>
+        </div>
         {lastRefreshed && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-1">
             Last updated: {lastRefreshed.toLocaleString()}
           </p>
         )}

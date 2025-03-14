@@ -39,38 +39,51 @@ export const FinancialAnalysisCard = ({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <Tabs
-          defaultValue="metrics"
-          value={activeAnalysisTab}
-          onValueChange={setActiveAnalysisTab}
-          className="w-full"
-        >
-          <div className="flex justify-between items-center">
-            <CardTitle>Financial Analysis</CardTitle>
-            <TabsList>
-              <TabsTrigger value="metrics">Metrics</TabsTrigger>
-              <TabsTrigger value="comparison">Comparison</TabsTrigger>
-              <TabsTrigger value="alerts">Alerts</TabsTrigger>
-            </TabsList>
-          </div>
-        </Tabs>
+        <div className="flex justify-between items-center flex-col sm:flex-row gap-4">
+          <CardTitle>Financial Analysis</CardTitle>
+          <TabsList>
+            <TabsTrigger 
+              value="metrics" 
+              onClick={() => setActiveAnalysisTab("metrics")}
+              data-state={activeAnalysisTab === "metrics" ? "active" : ""}
+            >
+              Metrics
+            </TabsTrigger>
+            <TabsTrigger 
+              value="comparison"
+              onClick={() => setActiveAnalysisTab("comparison")}
+              data-state={activeAnalysisTab === "comparison" ? "active" : ""}
+            >
+              Comparison
+            </TabsTrigger>
+            <TabsTrigger 
+              value="alerts"
+              onClick={() => setActiveAnalysisTab("alerts")}
+              data-state={activeAnalysisTab === "alerts" ? "active" : ""}
+            >
+              Alerts
+            </TabsTrigger>
+          </TabsList>
+        </div>
       </CardHeader>
       <CardContent>
-        <TabsContent value="metrics" className="pt-2 pb-0 m-0">
+        {activeAnalysisTab === "metrics" && (
           <MetricsGrid metrics={metrics} />
-        </TabsContent>
-        <TabsContent value="comparison" className="pt-2 pb-0 m-0">
+        )}
+        
+        {activeAnalysisTab === "comparison" && (
           <HistoricalComparison
             currentPeriod={currentPeriod}
             previousPeriod={previousPeriod}
           />
-        </TabsContent>
-        <TabsContent value="alerts" className="pt-2 pb-0 m-0">
+        )}
+        
+        {activeAnalysisTab === "alerts" && (
           <AnalysisAlerts
             riskLevel={metrics?.riskLevel || "Low"}
             seasonalityScore={seasonalityScore}
           />
-        </TabsContent>
+        )}
       </CardContent>
     </Card>
   );

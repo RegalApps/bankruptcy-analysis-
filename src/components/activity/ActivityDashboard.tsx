@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Client } from "./types";
 import { useIncomeExpenseForm } from "./hooks/useIncomeExpenseForm";
 import { usePredictiveData } from "./hooks/usePredictiveData";
@@ -13,6 +13,8 @@ import { FinancialAnalysisCard } from "./dashboard/FinancialAnalysisCard";
 import { FinancialChartCard } from "./dashboard/FinancialChartCard";
 import { FinancialSnapshotCard } from "./dashboard/FinancialSnapshotCard";
 import { PredictiveAnalysisCard } from "./dashboard/PredictiveAnalysisCard";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface ActivityDashboardProps {
   selectedClient: Client | null;
@@ -20,7 +22,8 @@ interface ActivityDashboardProps {
 
 export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) => {
   const [activeAnalysisTab, setActiveAnalysisTab] = useState("metrics");
-  const [showPredictiveAnalysis, setShowPredictiveAnalysis] = useState(false);
+  const [showPredictiveAnalysis, setShowPredictiveAnalysis] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const {
     formData,
@@ -37,7 +40,7 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     isLoading: isPredictiveLoading,
     lastRefreshed,
     refetch: refreshPredictiveData
-  } = usePredictiveData(selectedClient);
+  } = usePredictiveData(selectedClient, refreshTrigger);
 
   const {
     metrics,
@@ -46,6 +49,27 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     seasonalityScore,
     expenseBreakdown
   } = useDashboardData(selectedClient, formData, historicalData);
+
+  const handleRefresh = () => {
+    refreshPredictiveData();
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Listen for financial data updates
+  useEffect(() => {
+    const handleDataUpdate = (event: any) => {
+      if (event.detail?.clientId === selectedClient?.id) {
+        console.log("Detected financial data update, refreshing dashboard");
+        setRefreshTrigger(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('financial-data-updated', handleDataUpdate);
+    
+    return () => {
+      window.removeEventListener('financial-data-updated', handleDataUpdate);
+    };
+  }, [selectedClient]);
 
   if (!selectedClient) {
     return <NoClientSelected />;
@@ -68,12 +92,18 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
 
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold">Current Financial Analysis</h3>
-        <button 
+        <Button 
+          variant="ghost"
+          size="sm"
           onClick={() => setShowPredictiveAnalysis(!showPredictiveAnalysis)}
-          className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          className="text-sm font-medium flex items-center gap-1"
         >
-          {showPredictiveAnalysis ? 'Hide Predictive Analysis' : 'Show Predictive Analysis'}
-        </button>
+          {showPredictiveAnalysis ? (
+            <>Hide Predictive Analysis <ChevronUp className="h-4 w-4" /></>
+          ) : (
+            <>Show Predictive Analysis <ChevronDown className="h-4 w-4" /></>
+          )}
+        </Button>
       </div>
 
       {showPredictiveAnalysis && (
@@ -83,7 +113,7 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
           processedData={processedData}
           categoryAnalysis={categoryAnalysis}
           isLoading={isPredictiveLoading}
-          onRefresh={refreshPredictiveData}
+          onRefresh={handleRefresh}
         />
       )}
 
