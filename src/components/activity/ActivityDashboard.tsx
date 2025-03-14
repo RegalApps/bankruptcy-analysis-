@@ -1,22 +1,18 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MetricsGrid } from "./components/MetricsGrid";
-import { HistoricalComparison } from "./components/HistoricalComparison";
-import { FinancialChart } from "./components/FinancialChart";
+import React, { useState } from "react";
+import { Client } from "./types";
+import { useIncomeExpenseForm } from "./hooks/useIncomeExpenseForm";
+import { usePredictiveData } from "./hooks/usePredictiveData";
+import { useDashboardData } from "./dashboard/useDashboardData";
+import { RealTimeAnalyticsPanel } from "./components/RealTimeAnalyticsPanel";
 import { NoClientSelected } from "./components/NoClientSelected";
 import { LoadingState } from "./components/LoadingState";
 import { ExcelDocumentsAlert } from "./components/ExcelDocumentsAlert";
-import { AnalysisAlerts } from "./components/AnalysisAlerts";
-import { Client } from "./types";
-import { useIncomeExpenseForm } from "./hooks/useIncomeExpenseForm";
-import { RealTimeAnalyticsPanel } from "./components/RealTimeAnalyticsPanel";
-import { SmartCreateDocumentButton } from "./form/SmartCreateDocumentButton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PrintButton } from "./form/PrintButton";
-import { ForecastChart } from "./components/ForecastChart";
-import { usePredictiveData } from "./hooks/usePredictiveData";
-import { PredictiveHeader } from "./components/PredictiveHeader";
+import { DashboardHeader } from "./dashboard/DashboardHeader";
+import { FinancialAnalysisCard } from "./dashboard/FinancialAnalysisCard";
+import { FinancialChartCard } from "./dashboard/FinancialChartCard";
+import { FinancialSnapshotCard } from "./dashboard/FinancialSnapshotCard";
+import { PredictiveAnalysisCard } from "./dashboard/PredictiveAnalysisCard";
 
 interface ActivityDashboardProps {
   selectedClient: Client | null;
@@ -43,98 +39,13 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     refetch: refreshPredictiveData
   } = usePredictiveData(selectedClient);
 
-  const [metrics, setMetrics] = useState<{
-    currentSurplus: string;
-    surplusPercentage: string;
-    monthlyTrend: string;
-    riskLevel: string;
-  } | null>(null);
-
-  // Mock data for components that need specific props
-  const [mockChartData, setMockChartData] = useState<Array<{
-    date: string;
-    Income: number;
-    Expenses: number;
-    Surplus: number;
-  }>>([]);
-
-  const [mockExcelDocuments, setMockExcelDocuments] = useState<any[]>([]);
-  const [seasonalityScore, setSeasonalityScore] = useState<string | null>("0.65");
-
-  useEffect(() => {
-    if (selectedClient && !isDataLoading) {
-      // Calculate metrics from form data and historical data
-      const currentSurplus = (
-        parseFloat(formData.total_monthly_income || "0") +
-        parseFloat(formData.spouse_total_monthly_income || "0") -
-        parseFloat(formData.total_essential_expenses || "0") -
-        parseFloat(formData.total_discretionary_expenses || "0") -
-        parseFloat(formData.total_savings || "0") -
-        parseFloat(formData.total_insurance || "0")
-      ).toFixed(2);
-
-      const totalIncome = parseFloat(formData.total_monthly_income || "0") +
-                          parseFloat(formData.spouse_total_monthly_income || "0");
-      
-      const surplusPercentage = totalIncome > 0 
-        ? ((parseFloat(currentSurplus) / totalIncome) * 100).toFixed(1)
-        : "0";
-      
-      const monthlyTrend = (
-        historicalData.currentPeriod.surplusIncome -
-        historicalData.previousPeriod.surplusIncome
-      ).toFixed(2);
-
-      // Determine risk level
-      let riskLevel = "Low";
-      if (parseFloat(currentSurplus) < 0) {
-        riskLevel = "High";
-      } else if (parseFloat(surplusPercentage) < 10) {
-        riskLevel = "Medium";
-      }
-
-      setMetrics({
-        currentSurplus,
-        surplusPercentage,
-        monthlyTrend,
-        riskLevel,
-      });
-
-      // Generate mock chart data
-      const lastSixMonths = Array.from({ length: 6 }, (_, i) => {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        return date.toLocaleString('default', { month: 'short' });
-      }).reverse();
-
-      const chartData = lastSixMonths.map(month => {
-        const income = totalIncome * (0.9 + Math.random() * 0.2);
-        const expenses = 
-          parseFloat(formData.total_essential_expenses || "0") +
-          parseFloat(formData.total_discretionary_expenses || "0") +
-          parseFloat(formData.total_savings || "0") +
-          parseFloat(formData.total_insurance || "0");
-        const randomExpenses = expenses * (0.9 + Math.random() * 0.2);
-        
-        return {
-          date: month,
-          Income: parseFloat(income.toFixed(2)),
-          Expenses: parseFloat(randomExpenses.toFixed(2)),
-          Surplus: parseFloat((income - randomExpenses).toFixed(2))
-        };
-      });
-      
-      setMockChartData(chartData);
-
-      // Mock excel documents
-      if (selectedClient.id) {
-        setMockExcelDocuments([
-          { id: '1', name: 'Income Statement.xlsx', date: '2024-03-01' },
-          { id: '2', name: 'Budget Analysis.xlsx', date: '2024-02-15' }
-        ]);
-      }
-    }
-  }, [selectedClient, formData, historicalData, isDataLoading]);
+  const {
+    metrics,
+    mockChartData,
+    mockExcelDocuments,
+    seasonalityScore,
+    expenseBreakdown
+  } = useDashboardData(selectedClient, formData, historicalData);
 
   if (!selectedClient) {
     return <NoClientSelected />;
@@ -144,54 +55,14 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     return <LoadingState clientName={selectedClient.name} />;
   }
 
-  // Generate expense breakdown for chart
-  const expenseBreakdown = [
-    {
-      name: 'Housing',
-      value: parseFloat(formData.mortgage_rent || "0"),
-      color: '#8884d8'
-    },
-    {
-      name: 'Utilities',
-      value: parseFloat(formData.utilities || "0"),
-      color: '#82ca9d'
-    },
-    {
-      name: 'Food',
-      value: parseFloat(formData.groceries || "0"),
-      color: '#ffc658'
-    },
-    {
-      name: 'Transportation',
-      value: parseFloat(formData.transportation || "0"),
-      color: '#ff8042'
-    },
-    {
-      name: 'Debt Payments',
-      value: parseFloat(formData.debt_repayments || "0"),
-      color: '#0088FE'
-    },
-    {
-      name: 'Discretionary',
-      value: parseFloat(formData.total_discretionary_expenses || "0"),
-      color: '#FF8042'
-    }
-  ].filter(item => item.value > 0);
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Financial Dashboard: {selectedClient.name}</h2>
-        <div className="flex gap-2">
-          <PrintButton formData={formData} />
-          <SmartCreateDocumentButton 
-            formData={formData}
-            selectedClient={selectedClient}
-            isSubmitting={isSubmitting}
-            onSubmit={() => handleSubmit(new Event('submit') as unknown as React.SyntheticEvent<HTMLFormElement>)}
-          />
-        </div>
-      </div>
+      <DashboardHeader 
+        selectedClient={selectedClient}
+        formData={formData}
+        isSubmitting={isSubmitting}
+        handleSubmit={handleSubmit}
+      />
 
       <RealTimeAnalyticsPanel formData={formData} />
 
@@ -206,76 +77,32 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
       </div>
 
       {showPredictiveAnalysis && (
-        <Card className="mb-6">
-          <CardHeader className="pb-2">
-            <PredictiveHeader
-              clientName={selectedClient.name}
-              lastRefreshed={lastRefreshed}
-              onRefresh={refreshPredictiveData}
-              isLoading={isPredictiveLoading}
-            />
-          </CardHeader>
-          <CardContent>
-            <ForecastChart
-              processedData={processedData}
-              categoryAnalysis={categoryAnalysis}
-              isLoading={isPredictiveLoading}
-            />
-          </CardContent>
-        </Card>
+        <PredictiveAnalysisCard
+          clientName={selectedClient.name}
+          lastRefreshed={lastRefreshed}
+          processedData={processedData}
+          categoryAnalysis={categoryAnalysis}
+          isLoading={isPredictiveLoading}
+          onRefresh={refreshPredictiveData}
+        />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <Tabs
-                defaultValue="metrics"
-                value={activeAnalysisTab}
-                onValueChange={setActiveAnalysisTab}
-                className="w-full"
-              >
-                <div className="flex justify-between items-center">
-                  <CardTitle>Financial Analysis</CardTitle>
-                  <TabsList>
-                    <TabsTrigger value="metrics">Metrics</TabsTrigger>
-                    <TabsTrigger value="comparison">Comparison</TabsTrigger>
-                    <TabsTrigger value="alerts">Alerts</TabsTrigger>
-                  </TabsList>
-                </div>
-              </Tabs>
-            </CardHeader>
-            <CardContent>
-              <TabsContent value="metrics" className="pt-2 pb-0 m-0">
-                <MetricsGrid metrics={metrics} />
-              </TabsContent>
-              <TabsContent value="comparison" className="pt-2 pb-0 m-0">
-                <HistoricalComparison
-                  currentPeriod={historicalData.currentPeriod}
-                  previousPeriod={historicalData.previousPeriod}
-                />
-              </TabsContent>
-              <TabsContent value="alerts" className="pt-2 pb-0 m-0">
-                <AnalysisAlerts
-                  riskLevel={metrics?.riskLevel || "Low"}
-                  seasonalityScore={seasonalityScore}
-                />
-              </TabsContent>
-            </CardContent>
-          </Card>
+          <FinancialAnalysisCard
+            activeAnalysisTab={activeAnalysisTab}
+            setActiveAnalysisTab={setActiveAnalysisTab}
+            metrics={metrics}
+            currentPeriod={historicalData.currentPeriod}
+            previousPeriod={historicalData.previousPeriod}
+            seasonalityScore={seasonalityScore}
+          />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Income vs. Expenses Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FinancialChart
-                chartData={mockChartData}
-                expenseBreakdown={expenseBreakdown}
-                clientName={selectedClient.name}
-              />
-            </CardContent>
-          </Card>
+          <FinancialChartCard
+            chartData={mockChartData}
+            expenseBreakdown={expenseBreakdown}
+            clientName={selectedClient.name}
+          />
         </div>
 
         <div className="space-y-6">
@@ -284,45 +111,10 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
             clientName={selectedClient.name}
           />
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Financial Snapshot</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Monthly Income</h3>
-                <p className="text-xl font-bold">
-                  ${(parseFloat(formData.total_monthly_income || "0") + 
-                     parseFloat(formData.spouse_total_monthly_income || "0")).toFixed(2)}
-                </p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Essential Expenses</h3>
-                <p className="text-xl font-bold">${parseFloat(formData.total_essential_expenses || "0").toFixed(2)}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Discretionary Expenses</h3>
-                <p className="text-xl font-bold">${parseFloat(formData.total_discretionary_expenses || "0").toFixed(2)}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Savings & Insurance</h3>
-                <p className="text-xl font-bold">
-                  ${(parseFloat(formData.total_savings || "0") + 
-                     parseFloat(formData.total_insurance || "0")).toFixed(2)}
-                </p>
-              </div>
-              
-              <div className="pt-2 border-t">
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Surplus/Deficit</h3>
-                <p className={`text-xl font-bold ${parseFloat(metrics?.currentSurplus || "0") >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  ${parseFloat(metrics?.currentSurplus || "0").toFixed(2)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <FinancialSnapshotCard
+            formData={formData}
+            currentSurplus={metrics?.currentSurplus || "0"}
+          />
         </div>
       </div>
     </div>
