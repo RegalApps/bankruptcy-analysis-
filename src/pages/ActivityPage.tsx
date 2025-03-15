@@ -11,7 +11,7 @@ import { Client } from "@/components/activity/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useLocation } from "react-router-dom";
-import { CreateFormButton } from "@/components/activity/components/CreateFormButton";
+import { IncomeExpenseButton } from "@/components/activity/components/IncomeExpenseButton";
 
 // Valid UUID format mockup
 const MOCK_CLIENTS = [
@@ -91,11 +91,12 @@ export const ActivityPage = () => {
                       availableClients={MOCK_CLIENTS}
                     />
                   </div>
-                  {selectedClient && (
-                    <div className="w-full md:w-auto mt-2 md:mt-0">
-                      <CreateFormButton clientId={selectedClient.id} />
-                    </div>
-                  )}
+                  <div className="w-full md:w-auto mt-2 md:mt-0">
+                    <IncomeExpenseButton 
+                      selectedClient={selectedClient}
+                      onClientSelect={handleClientSelect}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
