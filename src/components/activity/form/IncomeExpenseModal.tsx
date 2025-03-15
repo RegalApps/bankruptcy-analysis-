@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { X, Save, Upload, Printer, AlertTriangle } from "lucide-react";
 import { 
@@ -59,53 +58,51 @@ export const IncomeExpenseModal = ({
     handleFieldSelectChange,
   } = useIncomeExpenseForm(selectedClient);
   
-  // Track form changes
   useEffect(() => {
     if (formData !== initialFormData) {
       setHasUnsavedChanges(true);
     }
   }, [formData]);
   
-  // Handle client selection
   const handleClientSelect = (clientId: string) => {
     if (hasUnsavedChanges) {
-      // Ask for confirmation before switching clients
       if (!window.confirm("You have unsaved changes. Are you sure you want to switch clients?")) {
         return;
       }
     }
     
-    // Handle client selection
     setSelectedClient({ 
       id: clientId, 
       name: "Loading...", 
       status: "active"
     });
     
-    // If external handler is provided, call it
     if (onClientSelect) {
       onClientSelect(clientId);
     }
     
-    // Move to the next tab
     setActiveTab("income");
   };
   
-  // Handle form submission
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await handleSubmit(e as React.SyntheticEvent<HTMLFormElement>);
       toast.success("Form submitted successfully!");
       setHasUnsavedChanges(false);
-      setTimeout(() => onOpenChange(false), 1500); // Close modal after success
+      setTimeout(() => onOpenChange(false), 1500);
     } catch (error) {
       console.error("Error submitting form:", error);
       toast.error("Failed to submit form");
     }
   };
   
-  // Handle closing the modal with unsaved changes
+  const handleDocumentSubmit = (e: React.FormEvent) => {
+    handleFormSubmit(e).catch(err => {
+      console.error("Error in document submission:", err);
+    });
+  };
+  
   const handleCloseWithConfirmation = () => {
     if (hasUnsavedChanges) {
       if (window.confirm("You have unsaved changes. Are you sure you want to close?")) {
@@ -116,7 +113,6 @@ export const IncomeExpenseModal = ({
     }
   };
   
-  // Handle saving as draft
   const handleSaveDraft = () => {
     toast.success("Draft saved successfully!");
     setHasUnsavedChanges(false);
@@ -135,7 +131,6 @@ export const IncomeExpenseModal = ({
         </DialogHeader>
         
         <div className="flex flex-1 overflow-hidden">
-          {/* Main Form Area */}
           <div className="flex-1 overflow-y-auto p-6">
             {!selectedClient ? (
               <div className="space-y-6">
@@ -274,7 +269,6 @@ export const IncomeExpenseModal = ({
                         
                         handleChange(consentEvent);
                         
-                        // If consent is given, set the consent date to today
                         if (checked) {
                           const todayDate = new Date().toISOString().split('T')[0];
                           const dateEvent = {
@@ -302,7 +296,7 @@ export const IncomeExpenseModal = ({
                           formData={formData}
                           selectedClient={selectedClient}
                           isSubmitting={isSubmitting}
-                          onSubmit={(e) => handleFormSubmit(e)}
+                          onSubmit={handleDocumentSubmit}
                         />
                       </div>
                     </div>
@@ -312,7 +306,6 @@ export const IncomeExpenseModal = ({
             )}
           </div>
           
-          {/* Right Sidebar - Real-time Analytics */}
           {selectedClient && (
             <div className="w-1/4 border-l p-4 overflow-y-auto bg-slate-50">
               <h3 className="text-lg font-medium mb-4">📈 Real-time Analysis</h3>

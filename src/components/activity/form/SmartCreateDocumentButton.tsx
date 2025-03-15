@@ -10,7 +10,7 @@ interface SmartCreateDocumentButtonProps {
   formData: IncomeExpenseData;
   selectedClient: { id: string; name: string } | null;
   isSubmitting: boolean;
-  onSubmit: () => void;
+  onSubmit: (e: React.FormEvent) => void; // Updated to expect void return type instead of Promise<void>
 }
 
 export const SmartCreateDocumentButton = ({ 
@@ -67,7 +67,7 @@ export const SmartCreateDocumentButton = ({
     
     try {
       // Call the submit handler first
-      await onSubmit();
+      onSubmit(new Event('submit') as unknown as React.FormEvent);
       
       // Simulate document creation and categorization
       setTimeout(() => {
