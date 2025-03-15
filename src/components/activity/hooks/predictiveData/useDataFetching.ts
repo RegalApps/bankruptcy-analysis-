@@ -87,6 +87,7 @@ export const useDataFetching = (
     setMetrics,
     setLastRefreshed,
     setCategoryAnalysis,
-    setFinancialRecords
+    setFinancialRecords,
+    setIsLoading // Ensure we're returning the setIsLoading function
   };
 };
