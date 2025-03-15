@@ -302,7 +302,7 @@ export const IncomeExpenseModal = ({
                           formData={formData}
                           selectedClient={selectedClient}
                           isSubmitting={isSubmitting}
-                          onSubmit={handleFormSubmit}
+                          onSubmit={(e) => handleFormSubmit(e)}
                         />
                       </div>
                     </div>

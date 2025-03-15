@@ -21,7 +21,7 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
     isLoading,
     lastRefreshed,
     refetch
-  } = usePredictiveData(selectedClient, refreshTrigger);
+  } = usePredictiveData(selectedClient);
 
   const handleRefresh = () => {
     refetch();

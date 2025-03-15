@@ -40,7 +40,7 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     isLoading: isPredictiveLoading,
     lastRefreshed,
     refetch: refreshPredictiveData
-  } = usePredictiveData(selectedClient, refreshTrigger);
+  } = usePredictiveData(selectedClient);
 
   const {
     metrics,
@@ -88,7 +88,10 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
         handleSubmit={handleSubmit}
       />
 
-      <RealTimeAnalyticsPanel formData={formData} />
+      <RealTimeAnalyticsPanel 
+        formData={formData} 
+        historicalData={historicalData}
+      />
 
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold">Current Financial Analysis</h3>
