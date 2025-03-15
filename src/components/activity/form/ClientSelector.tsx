@@ -1,6 +1,10 @@
 
+import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Plus, Loader2 } from "lucide-react";
 import { Client } from "../types";
+import { NewClientIntakeDialog } from "./NewClientIntakeDialog";
 
 interface ClientSelectorProps {
   selectedClient: Client | null;
@@ -9,6 +13,9 @@ interface ClientSelectorProps {
 }
 
 export const ClientSelector = ({ selectedClient, onClientSelect, availableClients }: ClientSelectorProps) => {
+  const [showIntakeDialog, setShowIntakeDialog] = useState(false);
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
+  
   // Default available clients if none provided
   const clients = availableClients || [
     {
@@ -25,23 +32,57 @@ export const ClientSelector = ({ selectedClient, onClientSelect, availableClient
     },
   ];
 
+  const handleClientCreated = (newClientId: string) => {
+    setShowIntakeDialog(false);
+    onClientSelect(newClientId);
+  };
+
   return (
-    <div className="w-full">
-      <Select
-        value={selectedClient?.id}
-        onValueChange={onClientSelect}
+    <div className="flex w-full items-center gap-2">
+      <div className="flex-1">
+        <Select
+          value={selectedClient?.id}
+          onValueChange={onClientSelect}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a client" />
+          </SelectTrigger>
+          <SelectContent>
+            {clients.map((client) => (
+              <SelectItem key={client.id} value={client.id}>
+                {client.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <Button 
+        variant="outline" 
+        size="sm"
+        className="whitespace-nowrap"
+        onClick={() => setShowIntakeDialog(true)}
+        disabled={isCreatingClient}
       >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select a client" />
-        </SelectTrigger>
-        <SelectContent>
-          {clients.map((client) => (
-            <SelectItem key={client.id} value={client.id}>
-              {client.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        {isCreatingClient ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Creating...
+          </>
+        ) : (
+          <>
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Client
+          </>
+        )}
+      </Button>
+
+      <NewClientIntakeDialog 
+        open={showIntakeDialog} 
+        onOpenChange={setShowIntakeDialog}
+        onClientCreated={handleClientCreated}
+        setIsCreatingClient={setIsCreatingClient}
+      />
     </div>
   );
 };
