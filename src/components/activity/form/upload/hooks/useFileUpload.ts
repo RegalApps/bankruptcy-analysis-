@@ -30,7 +30,7 @@ export const useFileUpload = ({ clientName, onDocumentUpload, setFiles }: UseFil
       setIsUploading(true);
       
       // Create file info object
-      const fileObj: FileInfo = {
+      const fileInfo: FileInfo = {
         id: generateId(),
         name: file.name,
         size: file.size,
@@ -40,7 +40,7 @@ export const useFileUpload = ({ clientName, onDocumentUpload, setFiles }: UseFil
       };
       
       // Add to files state
-      setFiles(prev => [...prev, fileObj]);
+      setFiles(prev => [...prev, fileInfo]);
       e.target.value = "";
       
       // Get current user
@@ -54,13 +54,13 @@ export const useFileUpload = ({ clientName, onDocumentUpload, setFiles }: UseFil
       const { data: document, error: docError } = await supabase
         .from("documents")
         .insert({
-          title: fileObj.name,
-          type: determineFileType(fileObj.name),
-          size: fileObj.size,
+          title: fileInfo.name,
+          type: determineFileType(fileInfo.name),
+          size: fileInfo.size,
           user_id: user.id,
           metadata: {
             client_name: clientName,
-            original_filename: fileObj.name,
+            original_filename: fileInfo.name,
             upload_method: "client_intake"
           }
         })
@@ -72,7 +72,7 @@ export const useFileUpload = ({ clientName, onDocumentUpload, setFiles }: UseFil
       // Update file status to analyzing
       setFiles(prev => 
         prev.map(f => 
-          f.id === fileObj.id 
+          f.id === fileInfo.id 
             ? {
                 ...f,
                 status: 'analyzing',
@@ -84,7 +84,7 @@ export const useFileUpload = ({ clientName, onDocumentUpload, setFiles }: UseFil
       );
       
       // Upload file to storage
-      const filePath = `${user.id}/${document.id}/${fileObj.name}`;
+      const filePath = `${user.id}/${document.id}/${fileInfo.name}`;
       const { error: uploadError } = await supabase.storage
         .from("documents")
         .upload(filePath, file);
@@ -110,7 +110,7 @@ export const useFileUpload = ({ clientName, onDocumentUpload, setFiles }: UseFil
       // Update file status to completed
       setFiles(prev => 
         prev.map(f => 
-          f.id === fileObj.id 
+          f.id === fileInfo.id 
             ? {
                 ...f,
                 status: 'completed',
@@ -127,15 +127,18 @@ export const useFileUpload = ({ clientName, onDocumentUpload, setFiles }: UseFil
       
       toast({
         title: "Document uploaded successfully",
-        description: `${fileObj.name} was analyzed and categorized for ${clientName || 'the client'}`
+        description: `${fileInfo.name} was analyzed and categorized for ${clientName || 'the client'}`
       });
       
     } catch (error) {
       console.error("Error uploading file:", error);
       
+      // Since we can't reference fileObj directly anymore, we need to check current file name
+      const fileName = file.name;
+      
       setFiles(prev => 
         prev.map(f => 
-          f.id === fileObj.id 
+          f.name === fileName 
             ? {
                 ...f,
                 status: 'error',
@@ -148,7 +151,7 @@ export const useFileUpload = ({ clientName, onDocumentUpload, setFiles }: UseFil
       toast({
         variant: "destructive",
         title: "Upload failed",
-        description: `Failed to upload ${file.name}`
+        description: `Failed to upload ${fileName}`
       });
       
     } finally {

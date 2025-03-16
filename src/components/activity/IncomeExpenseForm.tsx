@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ClientProfileSection } from "./form/ClientProfileSection";
 import { EnhancedIncomeSection } from "./form/EnhancedIncomeSection";
@@ -66,6 +67,21 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
       } as React.ChangeEvent<HTMLInputElement>;
       
       handleChange(dateEvent);
+    }
+  };
+
+  // Custom function to handle document upload completion
+  const handleDocumentUploadComplete = (documentId: string) => {
+    if (currentRecordId) {
+      console.log(`Linking document ${documentId} to financial record ${currentRecordId}`);
+      try {
+        // This creates a new instance of DocumentUploadSection and calls the handleUploadComplete method
+        DocumentUploadSection({ financialRecordId: currentRecordId }).handleUploadComplete(documentId);
+      } catch (error) {
+        console.error("Error linking document:", error);
+      }
+    } else {
+      console.warn("No current record ID available to link the document");
     }
   };
 
@@ -159,11 +175,7 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
           
           <FileUploadSection 
             clientName={selectedClient?.name}
-            onDocumentUpload={(documentId) => {
-              if (currentRecordId) {
-                DocumentUploadSection({ financialRecordId: currentRecordId }).handleUploadComplete(documentId);
-              }
-            }} 
+            onDocumentUpload={handleDocumentUploadComplete} 
           />
           
           <Button type="submit" disabled={isSubmitting} className="w-full">
