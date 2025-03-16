@@ -8,7 +8,7 @@ export interface PredictiveData {
     surplusPercentage: string;
     monthlyTrend: string;
     riskLevel: string;
-    seasonalityScore: number | null;
+    seasonalityScore?: number | null;
   } | null;
   categoryAnalysis: Array<{
     name: string;
@@ -20,4 +20,36 @@ export interface PredictiveData {
   lastRefreshed: Date | null;
   financialRecords: any[];
   refetch: () => void;
+}
+
+export interface ClientInsightData {
+  riskLevel: 'low' | 'medium' | 'high';
+  riskScore: number;
+  complianceStatus: 'compliant' | 'issues' | 'critical';
+  pendingTasks: number;
+  missingDocuments: number;
+  upcomingDeadlines: Array<{
+    id: string;
+    title: string;
+    date: string;
+    priority: 'low' | 'medium' | 'high';
+  }>;
+  recentActivities: Array<{
+    id: string;
+    action: string;
+    timestamp: string;
+    type: 'document' | 'meeting' | 'payment' | 'communication';
+  }>;
+  aiSuggestions: Array<{
+    id: string;
+    message: string;
+    type: 'urgent' | 'warning' | 'info';
+    action?: string;
+  }>;
+  caseProgress: number;
+  financialHealth: {
+    score: number;
+    status: 'improving' | 'stable' | 'declining';
+    trend: number;
+  };
 }
