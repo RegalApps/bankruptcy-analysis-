@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ClientProfileSection } from "./form/ClientProfileSection";
 import { EnhancedIncomeSection } from "./form/EnhancedIncomeSection";
@@ -19,6 +18,7 @@ import { NoClientSelected } from "./form/NoClientSelected";
 import { PeriodSelection } from "./form/PeriodSelection";
 import { useFormSubmission } from "./hooks/useFormSubmission";
 import { FileUploadSection } from "./form/upload/FileUploadSection";
+import { supabase } from "@/lib/supabase";
 
 interface IncomeExpenseFormProps {
   selectedClient: Client | null;
@@ -45,7 +45,6 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
     selectedClient
   });
 
-  // Handle consent checkbox change
   const handleConsentChange = (checked: boolean) => {
     const consentEvent = {
       target: {
@@ -71,12 +70,22 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
   };
 
   // Custom function to handle document upload completion
-  const handleDocumentUploadComplete = (documentId: string) => {
+  const handleDocumentUploadComplete = async (documentId: string) => {
     if (currentRecordId) {
       console.log(`Linking document ${documentId} to financial record ${currentRecordId}`);
       try {
-        // This creates a new instance of DocumentUploadSection and calls the handleUploadComplete method
-        DocumentUploadSection({ financialRecordId: currentRecordId }).handleUploadComplete(documentId);
+        // Link the document to the financial record
+        const { error } = await supabase
+          .from("document_links")
+          .insert({
+            document_id: documentId,
+            record_id: currentRecordId,
+            link_type: "financial_record"
+          });
+          
+        if (error) {
+          console.error("Error linking document:", error);
+        }
       } catch (error) {
         console.error("Error linking document:", error);
       }
@@ -85,7 +94,6 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
     }
   };
 
-  // Display toast notification to encourage user to select a client if none selected
   useEffect(() => {
     if (!selectedClient) {
       const timer = setTimeout(() => {
