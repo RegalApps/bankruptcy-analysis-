@@ -5,48 +5,54 @@ import { Button } from "@/components/ui/button";
 import { Upload, FileText, Check, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { v4 as uuidv4 } from "uuid";
 
-interface FileUploadSectionProps {
-  clientName: string;
-  onDocumentUpload?: (documentId: string) => void;
-}
-
-interface UploadedFile {
+interface FileInfo {
   id: string;
   name: string;
   size: number;
-  status: "uploading" | "analyzing" | "completed" | "error";
+  status: 'uploading' | 'analyzing' | 'completed' | 'error';
   progress: number;
+  file: File;
   documentId?: string;
 }
 
+interface FileUploadSectionProps {
+  clientName?: string;
+  onDocumentUpload?: (documentId: string) => void;
+}
+
 export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSectionProps) => {
-  const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [files, setFiles] = useState<FileInfo[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     
-    const newFiles = Array.from(e.target.files).map(file => ({
-      id: uuidv4(),
+    const newFiles = Array.from(e.target.files).map((file) => ({
+      id: generateId(),
       name: file.name,
       size: file.size,
-      status: "uploading" as const,
+      status: 'uploading' as const,
       progress: 0,
       file
     }));
     
-    setFiles(prev => [...prev, ...newFiles]);
+    setFiles((prev) => [...prev, ...newFiles]);
     e.target.value = "";
     
-    newFiles.forEach(fileObj => {
+    newFiles.forEach((fileObj) => {
       uploadFile(fileObj);
     });
   };
   
-  const uploadFile = async (fileObj: UploadedFile & { file: File }) => {
+  // Simple ID generator instead of using uuid
+  const generateId = () => {
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15);
+  };
+
+  const uploadFile = async (fileObj: FileInfo) => {
     try {
       setIsUploading(true);
       
@@ -77,11 +83,18 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
       if (docError) throw docError;
       
       // Update the file status in state
-      setFiles(prev => prev.map(f => 
-        f.id === fileObj.id 
-          ? { ...f, status: "analyzing", progress: 50, documentId: document.id } 
-          : f
-      ));
+      setFiles((prev) => 
+        prev.map((f) => 
+          f.id === fileObj.id 
+            ? {
+                ...f,
+                status: 'analyzing',
+                progress: 50,
+                documentId: document.id
+              } 
+            : f
+        )
+      );
       
       // Upload file to storage
       const filePath = `${user.id}/${document.id}/${fileObj.name}`;
@@ -94,7 +107,7 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
       // Update document with storage path
       const { error: updateError } = await supabase
         .from("documents")
-        .update({ 
+        .update({
           storage_path: filePath,
           ai_processing_status: "complete"
         })
@@ -103,9 +116,17 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
       if (updateError) throw updateError;
       
       // Update state to completed
-      setFiles(prev => prev.map(f => 
-        f.id === fileObj.id ? { ...f, status: "completed", progress: 100 } : f
-      ));
+      setFiles((prev) => 
+        prev.map((f) => 
+          f.id === fileObj.id 
+            ? {
+                ...f,
+                status: 'completed',
+                progress: 100
+              } 
+            : f
+        )
+      );
       
       // Call the onDocumentUpload callback if provided
       if (onDocumentUpload) {
@@ -114,27 +135,38 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
       
       toast({
         title: "Document uploaded successfully",
-        description: `${fileObj.name} was analyzed and categorized for ${clientName}`,
+        description: `${fileObj.name} was analyzed and categorized for ${clientName || 'the client'}`
       });
+      
     } catch (error) {
       console.error("Error uploading file:", error);
       
-      setFiles(prev => prev.map(f => 
-        f.id === fileObj.id ? { ...f, status: "error", progress: 0 } : f
-      ));
+      setFiles((prev) => 
+        prev.map((f) => 
+          f.id === fileObj.id 
+            ? {
+                ...f,
+                status: 'error',
+                progress: 0
+              } 
+            : f
+        )
+      );
       
       toast({
         variant: "destructive",
         title: "Upload failed",
-        description: `Failed to upload ${fileObj.name}`,
+        description: `Failed to upload ${fileObj.name}`
       });
+      
     } finally {
       setIsUploading(false);
     }
   };
-  
-  const determineFileType = (filename: string): string => {
+
+  const determineFileType = (filename: string) => {
     const ext = filename.split('.').pop()?.toLowerCase();
+    
     switch (ext) {
       case 'pdf':
         return 'pdf';
@@ -152,8 +184,8 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
         return 'other';
     }
   };
-  
-  const getStatusIcon = (status: UploadedFile['status']) => {
+
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'uploading':
       case 'analyzing':
@@ -164,8 +196,8 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
         return <X className="h-4 w-4 text-red-500" />;
     }
   };
-  
-  const getStatusText = (status: UploadedFile['status']) => {
+
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'uploading':
         return 'Uploading...';
@@ -177,7 +209,7 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
         return 'Failed';
     }
   };
-  
+
   return (
     <div className="space-y-6">
       <Card>
@@ -192,10 +224,9 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
             <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
             <div>
               <h3 className="font-medium">Drag & drop files or click to upload</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Supports PDF, Word, Excel, and image files
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">Supports PDF, Word, Excel, and image files</p>
             </div>
+            
             <Button variant="outline" disabled={isUploading}>
               <Upload className="mr-2 h-4 w-4" />
               <label className="cursor-pointer">
@@ -212,7 +243,7 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
           </div>
         </CardContent>
       </Card>
-      
+
       {files.length > 0 && (
         <Card>
           <CardHeader>
@@ -220,7 +251,7 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {files.map(file => (
+              {files.map((file) => (
                 <div key={file.id} className="border rounded-md p-3 flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4" />
@@ -231,11 +262,13 @@ export const FileUploadSection = ({ clientName, onDocumentUpload }: FileUploadSe
                       </p>
                     </div>
                   </div>
+                  
                   <div className="flex items-center gap-2">
                     <div className="flex items-center">
                       {getStatusIcon(file.status)}
                       <span className="text-xs ml-1">{getStatusText(file.status)}</span>
                     </div>
+                    
                     {file.status !== 'completed' && file.status !== 'error' && (
                       <div className="w-20 h-1.5 bg-secondary rounded-full overflow-hidden">
                         <div 

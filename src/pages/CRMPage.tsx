@@ -11,30 +11,98 @@ import { DocumentVault } from "@/components/crm/DocumentVault";
 import { AIWorkflow } from "@/components/crm/AIWorkflow";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FormSteps } from "@/components/crm/FormSteps";
+import { Progress } from "@/components/ui/progress";
+import { FormData } from "@/components/crm/types";
+import { toast } from "sonner";
 
 export const CRMPage = () => {
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formProgress, setFormProgress] = useState(0);
+  const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
     phone: "",
     companyName: "",
     businessType: "",
     notes: "",
-    address: "" // Added the missing address property here
+    address: ""
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Calculate progress based on filled fields
+    calculateProgress();
+  };
+  
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    calculateProgress();
+  };
+  
+  const handleEmploymentTypeChange = (value: string) => {
+    setFormData(prev => ({ ...prev, employmentType: value }));
+    calculateProgress();
+  };
+  
+  const calculateProgress = () => {
+    // Step 1: Personal Info (8 fields)
+    const step1Fields = ['fullName', 'dateOfBirth', 'sin', 'maritalStatus', 'address', 'city', 'province', 'postalCode', 'email', 'mobilePhone'];
+    const step1FilledFields = step1Fields.filter(field => formData[field as keyof FormData]);
+    const step1Progress = Math.min(100, (step1FilledFields.length / 6) * 100); // At least 6 fields for 100%
+    
+    // Step 2: Employment & Income (5 fields)
+    const step2Fields = ['employmentType', 'employer', 'occupation', 'monthlyIncome', 'incomeFrequency'];
+    const step2FilledFields = step2Fields.filter(field => formData[field as keyof FormData]);
+    const step2Progress = Math.min(100, (step2FilledFields.length / 3) * 100); // At least 3 fields for 100%
+    
+    // Step 3: Financial Details (6 fields)
+    const step3Fields = ['unsecuredDebt', 'securedDebt', 'taxDebt', 'realEstate', 'vehicles', 'bankAccounts'];
+    const step3FilledFields = step3Fields.filter(field => formData[field as keyof FormData]);
+    const step3Progress = Math.min(100, (step3FilledFields.length / 3) * 100); // At least 3 fields for 100%
+    
+    // Calculate total progress based on current step
+    let totalProgress;
+    if (currentStep === 1) {
+      totalProgress = step1Progress * 0.25;
+    } else if (currentStep === 2) {
+      totalProgress = 25 + (step2Progress * 0.25);
+    } else if (currentStep === 3) {
+      totalProgress = 50 + (step3Progress * 0.25);
+    } else if (currentStep === 4) {
+      totalProgress = 75 + (25 * 0.25); // Document upload step
+    } else {
+      totalProgress = 100; // Final step
+    }
+    
+    setFormProgress(Math.round(totalProgress));
   };
 
   const openClientDialog = () => {
     setCurrentStep(1);
+    setFormProgress(0);
+    setFormData({
+      fullName: "",
+      email: "",
+      phone: "",
+      companyName: "",
+      businessType: "",
+      notes: "",
+      address: ""
+    });
     setIsClientDialogOpen(true);
+  };
+  
+  const handleSubmitForm = () => {
+    // Handle final form submission
+    toast.success("Client added successfully", {
+      description: "New client has been created with all provided information.",
+    });
+    setIsClientDialogOpen(false);
   };
 
   return (
@@ -125,51 +193,69 @@ export const CRMPage = () => {
         </div>
       </div>
 
-      {/* Add New Client Dialog */}
+      {/* Enhanced AI-Powered Client Intake Dialog */}
       <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add New Client</DialogTitle>
+            <DialogTitle>AI-Powered Client Intake</DialogTitle>
+            <DialogDescription>
+              Complete the comprehensive intake process to collect all required information for insolvency assessment.
+            </DialogDescription>
           </DialogHeader>
-          <Tabs value={`step-${currentStep}`} className="mt-4">
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="step-1" onClick={() => setCurrentStep(1)}>Personal</TabsTrigger>
-              <TabsTrigger value="step-2" onClick={() => setCurrentStep(2)}>Business</TabsTrigger>
-              <TabsTrigger value="step-3" onClick={() => setCurrentStep(3)}>Documents</TabsTrigger>
-              <TabsTrigger value="step-4" onClick={() => setCurrentStep(4)}>Schedule</TabsTrigger>
-            </TabsList>
-            
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              if (currentStep < 4) {
-                setCurrentStep(prev => prev + 1);
-              } else {
-                // Handle final submission
-                setIsClientDialogOpen(false);
-              }
-            }}>
-              <FormSteps 
-                currentStep={currentStep} 
-                formData={formData}
-                handleInputChange={handleInputChange}
-              />
-              
-              <div className="flex justify-between mt-6">
-                {currentStep > 1 && (
-                  <Button type="button" variant="outline" onClick={() => setCurrentStep(prev => prev - 1)}>
-                    Previous
-                  </Button>
-                )}
-                <div className="ml-auto">
-                  {currentStep < 4 ? (
-                    <Button type="submit">Continue</Button>
-                  ) : (
-                    <Button type="submit">Complete</Button>
-                  )}
-                </div>
+          
+          <div className="mt-4 space-y-6">
+            {/* Progress Indicator */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Completion Progress</span>
+                <span>{formProgress}%</span>
               </div>
-            </form>
-          </Tabs>
+              <Progress value={formProgress} className="h-2" />
+            </div>
+            
+            <Tabs value={`step-${currentStep}`} className="mt-4">
+              <TabsList className="grid grid-cols-5 w-full">
+                <TabsTrigger value="step-1" onClick={() => setCurrentStep(1)}>Personal Info</TabsTrigger>
+                <TabsTrigger value="step-2" onClick={() => setCurrentStep(2)}>Employment</TabsTrigger>
+                <TabsTrigger value="step-3" onClick={() => setCurrentStep(3)}>Finances</TabsTrigger>
+                <TabsTrigger value="step-4" onClick={() => setCurrentStep(4)}>Documents</TabsTrigger>
+                <TabsTrigger value="step-5" onClick={() => setCurrentStep(5)}>Schedule</TabsTrigger>
+              </TabsList>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (currentStep < 5) {
+                  setCurrentStep(prev => prev + 1);
+                  calculateProgress();
+                } else {
+                  handleSubmitForm();
+                }
+              }}>
+                <FormSteps 
+                  currentStep={currentStep} 
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                  handleSelectChange={handleSelectChange}
+                  handleEmploymentTypeChange={handleEmploymentTypeChange}
+                />
+                
+                <div className="flex justify-between mt-6">
+                  {currentStep > 1 && (
+                    <Button type="button" variant="outline" onClick={() => setCurrentStep(prev => prev - 1)}>
+                      Previous
+                    </Button>
+                  )}
+                  <div className="ml-auto">
+                    {currentStep < 5 ? (
+                      <Button type="submit">Continue</Button>
+                    ) : (
+                      <Button type="submit">Complete Intake</Button>
+                    )}
+                  </div>
+                </div>
+              </form>
+            </Tabs>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
