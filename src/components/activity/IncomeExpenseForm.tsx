@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ClientProfileSection } from "./form/ClientProfileSection";
 import { EnhancedIncomeSection } from "./form/EnhancedIncomeSection";
@@ -18,6 +17,7 @@ import { FormAlerts } from "./form/FormAlerts";
 import { NoClientSelected } from "./form/NoClientSelected";
 import { PeriodSelection } from "./form/PeriodSelection";
 import { useFormSubmission } from "./hooks/useFormSubmission";
+import { FileUploadSection } from "./form/upload/FileUploadSection";
 
 interface IncomeExpenseFormProps {
   selectedClient: Client | null;
@@ -157,7 +157,14 @@ export const IncomeExpenseForm = ({ selectedClient }: IncomeExpenseFormProps) =>
             onConsentChange={handleConsentChange}
           />
           
-          <DocumentUploadSection financialRecordId={currentRecordId} />
+          <FileUploadSection 
+            clientName={selectedClient?.name}
+            onDocumentUpload={(documentId) => {
+              if (currentRecordId) {
+                DocumentUploadSection({ financialRecordId: currentRecordId }).handleUploadComplete(documentId);
+              }
+            }} 
+          />
           
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Submitting..." : "Submit Financial Data"}
