@@ -1,8 +1,7 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUpDown, Brain, MessageSquare, VoiceIcon } from "lucide-react";
+import { ArrowUpDown, Brain, MessageSquare, Mic } from "lucide-react";
 import { ClientConnect } from "../../pages/SAFA/components/ClientConnect";
 import { AICommunication } from "../../pages/SAFA/components/ClientConnect/AICommunication";
 
@@ -41,7 +40,7 @@ export const AIWorkflow = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center">
-              <VoiceIcon className="h-4 w-4 mr-2 text-primary" />
+              <Mic className="h-4 w-4 mr-2 text-primary" />
               Transcribed Calls
             </CardTitle>
           </CardHeader>

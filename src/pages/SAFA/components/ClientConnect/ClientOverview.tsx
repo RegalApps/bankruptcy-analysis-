@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Brain, Search, User } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Client } from "../../types";
+import { Client } from "../../types/client";
 
 interface ClientOverviewProps {
   onSelectClient: (client: Client) => void;

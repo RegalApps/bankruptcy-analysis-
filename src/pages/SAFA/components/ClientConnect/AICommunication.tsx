@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChatBubbleIcon, EnvelopeClosedIcon, PhoneIcon } from "@radix-ui/react-icons";
+import { MessageSquare, Mail, Phone } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -78,15 +77,15 @@ export const AICommunication = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="email">
-                <EnvelopeClosedIcon className="mr-2 h-4 w-4" />
+                <Mail className="mr-2 h-4 w-4" />
                 Email Templates
               </TabsTrigger>
               <TabsTrigger value="chat">
-                <ChatBubbleIcon className="mr-2 h-4 w-4" />
+                <MessageSquare className="mr-2 h-4 w-4" />
                 Chat Messages
               </TabsTrigger>
               <TabsTrigger value="call">
-                <PhoneIcon className="mr-2 h-4 w-4" />
+                <Phone className="mr-2 h-4 w-4" />
                 Call Scripts
               </TabsTrigger>
             </TabsList>
@@ -158,7 +157,7 @@ export const AICommunication = () => {
             
             <TabsContent value="chat">
               <div className="p-8 text-center">
-                <ChatBubbleIcon className="mx-auto h-10 w-10 text-muted-foreground/50" />
+                <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground/50" />
                 <h3 className="mt-4 text-lg font-medium">Chat Template Generator</h3>
                 <p className="text-sm text-muted-foreground mt-2">
                   Generate AI-suggested chat messages based on client status and case requirements.
@@ -171,7 +170,7 @@ export const AICommunication = () => {
             
             <TabsContent value="call">
               <div className="p-8 text-center">
-                <PhoneIcon className="mx-auto h-10 w-10 text-muted-foreground/50" />
+                <Phone className="mx-auto h-10 w-10 text-muted-foreground/50" />
                 <h3 className="mt-4 text-lg font-medium">Call Script Generator</h3>
                 <p className="text-sm text-muted-foreground mt-2">
                   Generate AI-suggested call scripts for client follow-ups and updates.
