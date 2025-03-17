@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { useDataFetching } from "./useDataFetching";
 import { useRefreshing } from "./useRefreshing";
 import { Client } from "../../types";
-import { PredictiveData } from "../types";
+import { PredictiveData } from "./types";
 
 export const usePredictiveData = (selectedClient: Client | null): PredictiveData => {
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
