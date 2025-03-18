@@ -1,5 +1,7 @@
 
 import { Appointment } from "./AppointmentsList";
+import { AISuggestion } from "./AIRecommendations";
+import { StaffAvailabilityItem } from "./StaffAvailability";
 
 // Mock appointment data
 export const appointments: Appointment[] = [
@@ -126,73 +128,149 @@ export const appointments: Appointment[] = [
 ];
 
 // Staff availability data
-export const staffAvailability = [
+export const staffAvailability: StaffAvailabilityItem[] = [
   {
     id: "1",
     name: "John Doe",
-    title: "Licensed Insolvency Trustee",
-    status: "available",
-    nextAvailable: "Today, 2:00 PM",
-    avatar: "/placeholder.svg"
+    role: "Licensed Insolvency Trustee",
+    avatar: "/placeholder.svg",
+    color: "bg-blue-500",
+    schedule: [
+      {
+        day: "Monday",
+        busy: ["9:00 - 10:30", "2:00 - 3:30"]
+      },
+      {
+        day: "Tuesday",
+        busy: ["11:00 - 12:30"]
+      },
+      {
+        day: "Wednesday",
+        busy: []
+      },
+      {
+        day: "Thursday",
+        busy: ["3:00 - 4:30"]
+      },
+      {
+        day: "Friday",
+        busy: ["9:00 - 10:30", "1:00 - 2:30"]
+      }
+    ]
   },
   {
     id: "2",
     name: "Jane Smith",
-    title: "Financial Counselor",
-    status: "busy",
-    nextAvailable: "Tomorrow, 9:30 AM",
-    avatar: "/placeholder.svg"
+    role: "Financial Counselor",
+    avatar: "/placeholder.svg",
+    color: "bg-green-500",
+    schedule: [
+      {
+        day: "Monday",
+        busy: ["11:00 - 1:00"]
+      },
+      {
+        day: "Tuesday",
+        busy: ["9:00 - 11:30", "2:00 - 3:30"]
+      },
+      {
+        day: "Wednesday",
+        busy: ["10:00 - 11:30"]
+      },
+      {
+        day: "Thursday",
+        busy: []
+      },
+      {
+        day: "Friday",
+        busy: ["2:00 - 4:30"]
+      }
+    ]
   },
   {
     id: "3",
     name: "Robert Johnson",
-    title: "Bankruptcy Specialist",
-    status: "away",
-    nextAvailable: "Monday, 11:00 AM",
-    avatar: "/placeholder.svg"
+    role: "Bankruptcy Specialist",
+    avatar: "/placeholder.svg",
+    color: "bg-purple-500",
+    schedule: [
+      {
+        day: "Monday",
+        busy: ["9:00 - 11:00", "3:00 - 4:30"]
+      },
+      {
+        day: "Tuesday",
+        busy: []
+      },
+      {
+        day: "Wednesday",
+        busy: ["1:00 - 3:30"]
+      },
+      {
+        day: "Thursday",
+        busy: ["10:00 - 11:30", "2:00 - 3:30"]
+      },
+      {
+        day: "Friday",
+        busy: ["9:00 - 10:30"]
+      }
+    ]
   },
   {
     id: "4",
     name: "Sarah Williams",
-    title: "Client Intake Specialist",
-    status: "available",
-    nextAvailable: "Today, 3:30 PM",
-    avatar: "/placeholder.svg"
+    role: "Client Intake Specialist",
+    avatar: "/placeholder.svg",
+    color: "bg-teal-500",
+    schedule: [
+      {
+        day: "Monday",
+        busy: []
+      },
+      {
+        day: "Tuesday",
+        busy: ["10:00 - 11:30"]
+      },
+      {
+        day: "Wednesday",
+        busy: ["9:00 - 10:30", "2:00 - 3:30"]
+      },
+      {
+        day: "Thursday",
+        busy: ["1:00 - 2:30"]
+      },
+      {
+        day: "Friday",
+        busy: ["11:00 - 12:30", "3:00 - 4:30"]
+      }
+    ]
   }
 ];
 
 // AI suggestions
-export const aiSuggestions = [
+export const aiSuggestions: AISuggestion[] = [
   {
     id: "1",
-    type: "scheduling",
-    title: "Client rescheduling risk",
-    description: "John Smith has rescheduled 3 times in the past. Consider calling to confirm today's appointment.",
+    message: "John Smith has rescheduled 3 times in the past. Consider calling to confirm today's appointment.",
     priority: "high",
-    action: "Call Client"
+    actionable: true
   },
   {
     id: "2",
-    type: "document",
-    title: "Missing documentation",
-    description: "Michael Williams hasn't submitted his tax returns. Request before tomorrow's meeting.",
+    message: "Michael Williams hasn't submitted his tax returns. Request before tomorrow's meeting.",
     priority: "medium",
-    action: "Send Reminder"
+    actionable: true
   },
   {
     id: "3",
-    type: "optimization",
-    title: "Schedule optimization",
-    description: "You have 3 clients in the same area on Thursday. Consider grouping appointments for efficiency.",
+    message: "You have 3 clients in the same area on Thursday. Consider grouping appointments for efficiency.",
     priority: "low",
-    action: "View Details"
+    actionable: true
   },
   {
     id: "4",
-    type: "booking",
-    title: "Low booking rate",
-    description: "Your afternoon slots are underutilized. Consider opening these for self-booking.",
+    message: "Your afternoon slots are underutilized. Consider opening these for self-booking.",
     priority: "medium",
-    action: "Update Settings"
+    actionable: true
   }
 ];

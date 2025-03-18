@@ -1,6 +1,5 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
 
 // Staff availability type
 export interface StaffAvailabilityItem {
