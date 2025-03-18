@@ -1,8 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { useClientInsights } from "./hooks/useClientInsights";
@@ -21,7 +19,6 @@ interface ClientDashboardProps {
 }
 
 export const ClientDashboard = ({ clientId: propClientId, clientName: propClientName }: ClientDashboardProps) => {
-  const [activeTab, setActiveTab] = useState("overview");
   const [selectedClientId, setSelectedClientId] = useState<string>(propClientId || "1");
   const [selectedClientName, setSelectedClientName] = useState<string>(propClientName || "John Doe");
   const { insightData, isLoading, error } = useClientInsights(selectedClientId);
@@ -112,62 +109,20 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="finances">Finances</TabsTrigger>
-          <TabsTrigger value="communication">Communication</TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <ClientRiskCard insights={insightData} />
+          <CaseProgressCard insights={insightData} />
+          <UpcomingDeadlinesCard insights={insightData} />
+        </div>
 
-        <TabsContent value="overview" className="space-y-6 pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <ClientRiskCard insights={insightData} />
-            <CaseProgressCard insights={insightData} />
-            <UpcomingDeadlinesCard insights={insightData} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <AiInsightsCard insights={insightData} />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <AiInsightsCard insights={insightData} />
-            </div>
-            <RecentActivitiesCard insights={insightData} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="documents">
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Document Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Document management features for {selectedClientName} coming soon...</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="finances">
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Financial Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Financial analysis features for {selectedClientName} coming soon...</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="communication">
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Communication Hub</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Communication features for {selectedClientName} coming soon...</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <RecentActivitiesCard insights={insightData} />
+        </div>
+      </div>
     </div>
   );
 };
