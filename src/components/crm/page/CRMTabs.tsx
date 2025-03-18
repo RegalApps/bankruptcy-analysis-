@@ -1,7 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientDashboard } from "@/components/crm/ClientDashboard";
-import { ClientIntakeSection } from "@/components/crm/ClientIntakeSection";
 import { IntelligentScheduling } from "@/components/crm/IntelligentScheduling";
 import { DocumentVault } from "@/components/crm/DocumentVault";
 import { AIWorkflow } from "@/components/crm/AIWorkflow";
@@ -11,16 +10,12 @@ export const CRMTabs = () => {
     <Tabs defaultValue="dashboard" className="space-y-4">
       <TabsList>
         <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-        <TabsTrigger value="intake">Client Intake</TabsTrigger>
         <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
         <TabsTrigger value="documents">Document Vault</TabsTrigger>
         <TabsTrigger value="workflow">AI Workflow</TabsTrigger>
       </TabsList>
       <TabsContent value="dashboard" className="space-y-4">
         <ClientDashboard />
-      </TabsContent>
-      <TabsContent value="intake" className="space-y-4">
-        <ClientIntakeSection />
       </TabsContent>
       <TabsContent value="scheduling" className="space-y-4">
         <IntelligentScheduling />
