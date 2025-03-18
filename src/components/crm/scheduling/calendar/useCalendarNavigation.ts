@@ -9,12 +9,10 @@ import {
 } from "date-fns";
 
 export const useCalendarNavigation = (
-  initialDate: Date,
-  initialView: "day" | "week" | "month"
+  selectedDate: Date,
+  calendarView: "day" | "week" | "month",
+  setSelectedDate: (date: Date) => void
 ) => {
-  const [selectedDate, setSelectedDate] = useState<Date>(initialDate);
-  const [calendarView, setCalendarView] = useState<"day" | "week" | "month">(initialView);
-  
   // Handle navigation based on current view
   const handlePrevious = () => {
     if (calendarView === "day") {
@@ -37,10 +35,6 @@ export const useCalendarNavigation = (
   };
 
   return {
-    selectedDate,
-    setSelectedDate,
-    calendarView,
-    setCalendarView,
     handlePrevious,
     handleNext
   };

@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   CalendarDays, 
@@ -14,6 +13,7 @@ import { WeekView } from "./calendar/WeekView";
 import { MonthView } from "./calendar/MonthView";
 import { useAppointmentUtils } from "./calendar/useAppointmentUtils";
 import { Appointment } from "./AppointmentsList";
+import { useCalendarNavigation } from "./calendar/useCalendarNavigation";
 
 interface CalendarViewProps {
   selectedDate: Date;
@@ -33,26 +33,12 @@ export const CalendarView = ({
   // Use the appointment utility hook
   const { getAppointmentColorClass } = useAppointmentUtils();
 
-  // Handle navigation based on current view
-  const handlePrevious = () => {
-    if (calendarView === "day") {
-      setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() - 1)));
-    } else if (calendarView === "week") {
-      setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() - 7)));
-    } else {
-      setSelectedDate(new Date(selectedDate.setMonth(selectedDate.getMonth() - 1)));
-    }
-  };
-
-  const handleNext = () => {
-    if (calendarView === "day") {
-      setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() + 1)));
-    } else if (calendarView === "week") {
-      setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() + 7)));
-    } else {
-      setSelectedDate(new Date(selectedDate.setMonth(selectedDate.getMonth() + 1)));
-    }
-  };
+  // Use the calendar navigation hook for handling navigation
+  const { handlePrevious, handleNext } = useCalendarNavigation(
+    selectedDate,
+    calendarView,
+    setSelectedDate
+  );
 
   return (
     <div>

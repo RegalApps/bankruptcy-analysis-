@@ -43,6 +43,11 @@ export const SmartSchedulingCalendar = () => {
     if (appointment.status === 'self-booked' && !filters.showSelfBooked) return false;
     return true;
   });
+
+  // Handle calendar view change
+  const handleViewChange = (view: "day" | "week" | "month") => {
+    setCalendarView(view);
+  };
   
   return (
     <div className="space-y-6">
@@ -80,21 +85,21 @@ export const SmartSchedulingCalendar = () => {
                   <TabsList>
                     <TabsTrigger 
                       value="day" 
-                      onClick={() => setCalendarView("day")}
+                      onClick={() => handleViewChange("day")}
                       className={calendarView === "day" ? "bg-primary text-primary-foreground" : ""}
                     >
                       Day
                     </TabsTrigger>
                     <TabsTrigger 
                       value="week" 
-                      onClick={() => setCalendarView("week")}
+                      onClick={() => handleViewChange("week")}
                       className={calendarView === "week" ? "bg-primary text-primary-foreground" : ""}
                     >
                       Week
                     </TabsTrigger>
                     <TabsTrigger 
                       value="month" 
-                      onClick={() => setCalendarView("month")}
+                      onClick={() => handleViewChange("month")}
                       className={calendarView === "month" ? "bg-primary text-primary-foreground" : ""}
                     >
                       Month
