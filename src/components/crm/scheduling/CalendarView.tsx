@@ -3,8 +3,31 @@ import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, CalendarDays, Grid2X2, List } from "lucide-react";
-import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  CalendarDays, 
+  Grid2X2, 
+  List,
+  ArrowLeft,
+  ArrowRight 
+} from "lucide-react";
+import { 
+  format, 
+  addDays, 
+  startOfWeek, 
+  endOfWeek, 
+  eachDayOfInterval,
+  isSameDay,
+  isSameMonth,
+  startOfMonth,
+  endOfMonth,
+  isSameWeek,
+  addWeeks,
+  subWeeks,
+  addMonths,
+  subMonths
+} from "date-fns";
 import { Appointment } from "./AppointmentsList";
 
 interface CalendarViewProps {
@@ -24,27 +47,23 @@ export const CalendarView = ({
 }: CalendarViewProps) => {
   // Handle navigation based on current view
   const handlePrevious = () => {
-    const newDate = new Date(selectedDate);
     if (calendarView === "day") {
-      newDate.setDate(selectedDate.getDate() - 1);
+      setSelectedDate(addDays(selectedDate, -1));
     } else if (calendarView === "week") {
-      newDate.setDate(selectedDate.getDate() - 7);
+      setSelectedDate(subWeeks(selectedDate, 1));
     } else {
-      newDate.setMonth(selectedDate.getMonth() - 1);
+      setSelectedDate(subMonths(selectedDate, 1));
     }
-    setSelectedDate(newDate);
   };
 
   const handleNext = () => {
-    const newDate = new Date(selectedDate);
     if (calendarView === "day") {
-      newDate.setDate(selectedDate.getDate() + 1);
+      setSelectedDate(addDays(selectedDate, 1));
     } else if (calendarView === "week") {
-      newDate.setDate(selectedDate.getDate() + 7);
+      setSelectedDate(addWeeks(selectedDate, 1));
     } else {
-      newDate.setMonth(selectedDate.getMonth() + 1);
+      setSelectedDate(addMonths(selectedDate, 1));
     }
-    setSelectedDate(newDate);
   };
 
   // Format header based on current view
@@ -60,6 +79,29 @@ export const CalendarView = ({
     }
   };
 
+  // Generate weekly view days
+  const getWeekDays = () => {
+    const start = startOfWeek(selectedDate);
+    return eachDayOfInterval({ start, end: endOfWeek(selectedDate) });
+  };
+
+  // Check if appointment is on a specific date
+  const getAppointmentsForDate = (date: Date) => {
+    return appointments.filter(apt => 
+      isSameDay(apt.date, date)
+    );
+  };
+
+  // Determine the appointment color class based on priority and status
+  const getAppointmentColorClass = (appointment: Appointment) => {
+    switch(appointment.priority) {
+      case 'high': return 'bg-red-500';
+      case 'medium': return 'bg-amber-500';
+      case 'normal': return appointment.status === 'self-booked' ? 'bg-blue-500' : 'bg-green-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -72,48 +114,135 @@ export const CalendarView = ({
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-        <div className="md:col-span-5">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => date && setSelectedDate(date)}
-            className="rounded-md border pointer-events-auto"
-            components={{
-              DayContent: (props) => {
-                // Check if there are appointments on this date
-                const hasAppointments = appointments.some(apt => 
-                  apt.date.getDate() === props.date.getDate() &&
-                  apt.date.getMonth() === props.date.getMonth() &&
-                  apt.date.getFullYear() === props.date.getFullYear()
-                );
-
-                // Check if there are high priority appointments
-                const hasHighPriority = appointments.some(apt => 
-                  apt.date.getDate() === props.date.getDate() &&
-                  apt.date.getMonth() === props.date.getMonth() &&
-                  apt.date.getFullYear() === props.date.getFullYear() &&
-                  apt.priority === 'high'
-                );
-
-                return (
-                  <div className="relative">
-                    <div>{props.date.getDate()}</div>
-                    {hasAppointments && (
-                      <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-1 w-1 rounded-full ${hasHighPriority ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+      {calendarView === "day" && (
+        <div className="border rounded-md p-4">
+          <div className="text-center mb-2 font-medium">
+            {format(selectedDate, "EEEE, MMMM d")}
+          </div>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {Array.from({ length: 12 }, (_, i) => i + 8).map((hour) => {
+              const timeString = `${hour}:00`;
+              const appointmentsAtTime = appointments.filter(apt => 
+                isSameDay(apt.date, selectedDate) && apt.time.startsWith(`${hour}:`)
+              );
+              
+              return (
+                <div key={hour} className="grid grid-cols-[60px,1fr] gap-2">
+                  <div className="text-sm text-gray-500 text-right pt-2">{timeString}</div>
+                  <div className="min-h-[60px] border-l pl-2">
+                    {appointmentsAtTime.length > 0 ? (
+                      appointmentsAtTime.map(apt => (
+                        <div 
+                          key={apt.id} 
+                          className={`px-2 py-1 mb-1 rounded text-white text-sm ${getAppointmentColorClass(apt)}`}
+                        >
+                          {apt.time} - {apt.clientName}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="h-full border border-dashed border-gray-200 rounded-md"></div>
                     )}
                   </div>
-                );
-              }
-            }}
-          />
+                </div>
+              );
+            })}
+          </div>
         </div>
+      )}
+      
+      {calendarView === "week" && (
+        <div className="border rounded-md overflow-hidden">
+          <div className="grid grid-cols-7 border-b">
+            {getWeekDays().map((day, i) => (
+              <div 
+                key={i} 
+                className={`text-center py-2 font-medium ${
+                  isSameDay(day, new Date()) ? 'bg-blue-50' : ''
+                }`}
+              >
+                <div>{format(day, "EEE")}</div>
+                <div className={`text-lg ${isSameDay(day, selectedDate) ? 'text-blue-600 font-bold' : ''}`}>
+                  {format(day, "d")}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 divide-x h-[350px] overflow-y-auto">
+            {getWeekDays().map((day, i) => {
+              const dayAppointments = getAppointmentsForDate(day);
+              
+              return (
+                <div 
+                  key={i} 
+                  className={`p-1 ${isSameDay(day, new Date()) ? 'bg-blue-50' : ''}`}
+                  onClick={() => setSelectedDate(day)}
+                >
+                  {dayAppointments.length > 0 ? (
+                    <div className="space-y-1">
+                      {dayAppointments.map(apt => (
+                        <div 
+                          key={apt.id} 
+                          className={`px-2 py-1 rounded text-white text-xs ${getAppointmentColorClass(apt)}`}
+                        >
+                          <div className="font-medium truncate">{apt.time}</div>
+                          <div className="truncate">{apt.clientName}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-xs text-gray-400">No Events</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
+      {calendarView === "month" && (
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          <div className="md:col-span-5">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
+              className="rounded-md border pointer-events-auto"
+              components={{
+                DayContent: (props) => {
+                  // Check if there are appointments on this date
+                  const hasAppointments = appointments.some(apt => 
+                    apt.date.getDate() === props.date.getDate() &&
+                    apt.date.getMonth() === props.date.getMonth() &&
+                    apt.date.getFullYear() === props.date.getFullYear()
+                  );
 
-        <div className="md:col-span-2 space-y-4">
-          <CalendarLegend />
-          <CalendarStats selectedDate={selectedDate} appointments={appointments} calendarView={calendarView} />
+                  // Check if there are high priority appointments
+                  const hasHighPriority = appointments.some(apt => 
+                    apt.date.getDate() === props.date.getDate() &&
+                    apt.date.getMonth() === props.date.getMonth() &&
+                    apt.date.getFullYear() === props.date.getFullYear() &&
+                    apt.priority === 'high'
+                  );
+
+                  return (
+                    <div className="relative">
+                      <div>{props.date.getDate()}</div>
+                      {hasAppointments && (
+                        <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-1 w-1 rounded-full ${hasHighPriority ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+                      )}
+                    </div>
+                  );
+                }
+              }}
+            />
+          </div>
+
+          <div className="md:col-span-2 space-y-4">
+            <CalendarLegend />
+            <CalendarStats selectedDate={selectedDate} appointments={appointments} calendarView={calendarView} />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -158,9 +287,7 @@ const CalendarStats = ({
   if (calendarView === "day") {
     // Filter for the selected day
     filteredAppointments = appointments.filter(apt => 
-      apt.date.getDate() === selectedDate.getDate() &&
-      apt.date.getMonth() === selectedDate.getMonth() &&
-      apt.date.getFullYear() === selectedDate.getFullYear()
+      isSameDay(apt.date, selectedDate)
     );
   } else if (calendarView === "week") {
     // Filter for the selected week
@@ -172,8 +299,7 @@ const CalendarStats = ({
   } else {
     // Filter for the selected month
     filteredAppointments = appointments.filter(apt => 
-      apt.date.getMonth() === selectedDate.getMonth() &&
-      apt.date.getFullYear() === selectedDate.getFullYear()
+      isSameMonth(apt.date, selectedDate)
     );
   }
 
@@ -200,7 +326,7 @@ const CalendarStats = ({
         </div>
         <div className="bg-gray-50 p-2 rounded-md">
           <div className="text-xs text-gray-500">Available Slots</div>
-          <div className="text-lg font-bold">{calendarView === "day" ? 4 : calendarView === "week" ? 28 : 120}</div>
+          <div className="text-lg font-bold">{calendarView === "day" ? 8 : calendarView === "week" ? 40 : 120}</div>
         </div>
       </div>
     </div>
