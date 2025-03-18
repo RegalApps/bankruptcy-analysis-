@@ -17,3 +17,9 @@ export interface BookingRequest {
   caseNumber?: string;
   confirmedSlot?: ConfirmedSlot;
 }
+
+export interface TimeSlot {
+  id: string;
+  time: string;
+  enabled: boolean;
+}
