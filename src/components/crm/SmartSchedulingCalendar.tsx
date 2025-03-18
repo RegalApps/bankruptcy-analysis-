@@ -20,7 +20,7 @@ import { QuickActions } from "./scheduling/QuickActions";
 import { FilterDialog } from "./scheduling/FilterDialog";
 import { QuickBookDialog } from "./scheduling/QuickBookDialog";
 
-// Import mock data
+// Import mock data from the new location
 import { appointments, staffAvailability, aiSuggestions } from "./scheduling/mockData";
 
 export const SmartSchedulingCalendar = () => {
