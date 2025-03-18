@@ -37,6 +37,7 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     processedData,
     metrics: predictiveMetrics,
     categoryAnalysis,
+    advancedRiskMetrics,
     isLoading: isPredictiveLoading,
     lastRefreshed,
     refetch: refreshPredictiveData
@@ -115,6 +116,7 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
           lastRefreshed={lastRefreshed}
           processedData={processedData}
           categoryAnalysis={categoryAnalysis}
+          advancedRiskMetrics={advancedRiskMetrics}
           isLoading={isPredictiveLoading}
           onRefresh={handleRefresh}
         />

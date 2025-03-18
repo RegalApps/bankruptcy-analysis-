@@ -5,7 +5,8 @@ import {
   generateMockHistoricalData, 
   generateMockForecastData, 
   generateMockMetrics, 
-  generateMockCategoryAnalysis 
+  generateMockCategoryAnalysis,
+  generateAdvancedRiskMetrics
 } from "./mockDataGenerator";
 import { toast } from "sonner";
 
@@ -24,6 +25,7 @@ export const useDataFetching = (
     percentage: number;
     color: string;
   }>>([]);
+  const [advancedRiskMetrics, setAdvancedRiskMetrics] = useState<any>(null);
 
   useEffect(() => {
     const fetchPredictiveData = async () => {
@@ -31,6 +33,7 @@ export const useDataFetching = (
         setProcessedData([]);
         setMetrics(null);
         setCategoryAnalysis([]);
+        setAdvancedRiskMetrics(null);
         return;
       }
 
@@ -55,6 +58,7 @@ export const useDataFetching = (
         // Mock metrics and category analysis
         const mockMetrics = generateMockMetrics();
         const mockCategoryAnalysis = generateMockCategoryAnalysis();
+        const mockAdvancedRiskMetrics = generateAdvancedRiskMetrics(selectedClient.name);
 
         // Combine historical and forecast data
         const combinedData = [...mockHistoricalData, ...mockForecastData];
@@ -63,7 +67,19 @@ export const useDataFetching = (
         setMetrics(mockMetrics);
         setCategoryAnalysis(mockCategoryAnalysis);
         setFinancialRecords(mockHistoricalData);
+        setAdvancedRiskMetrics(mockAdvancedRiskMetrics);
         setLastRefreshed(new Date());
+
+        // Show toast notification for high risk alerts
+        if (mockAdvancedRiskMetrics.riskLevel === 'high') {
+          toast.error(`High Financial Risk Alert for ${selectedClient.name}: ${mockAdvancedRiskMetrics.primaryRiskFactor}`, {
+            duration: 6000,
+          });
+        } else if (mockAdvancedRiskMetrics.opportunities.length > 0) {
+          toast.info(`Financial Opportunity Detected: ${mockAdvancedRiskMetrics.opportunities[0].title}`, {
+            duration: 5000,
+          });
+        }
 
       } catch (error) {
         console.error("Error fetching predictive data:", error);
@@ -83,11 +99,12 @@ export const useDataFetching = (
     lastRefreshed,
     financialRecords,
     categoryAnalysis,
+    advancedRiskMetrics,
     setProcessedData,
     setMetrics,
     setLastRefreshed,
     setCategoryAnalysis,
     setFinancialRecords,
-    setIsLoading // Ensure we're returning the setIsLoading function
+    setIsLoading
   };
 };

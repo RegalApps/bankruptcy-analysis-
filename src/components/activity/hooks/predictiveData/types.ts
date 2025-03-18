@@ -19,7 +19,43 @@ export interface PredictiveData {
   isLoading: boolean;
   lastRefreshed: Date | null;
   financialRecords: any[];
+  advancedRiskMetrics: AdvancedRiskMetrics | null;
   refetch: () => void;
+}
+
+export interface AdvancedRiskMetrics {
+  riskLevel: 'low' | 'medium' | 'high';
+  overallRiskScore: number;
+  primaryRiskFactor: string;
+  detailedRiskScores: {
+    creditUtilization: number;
+    debtToIncome: number;
+    emergencyFund: number;
+    incomeStability: number;
+    expenseVolatility: number;
+  };
+  opportunities: Array<{
+    title: string;
+    description: string;
+    potentialSavings?: string;
+    potentialGains?: string;
+    confidence: string;
+    type: 'saving' | 'growth';
+  }>;
+  improvementSuggestions: string[];
+  scenarioAnalysis: {
+    bestCase: {
+      surplusIncrease: string;
+      debtReduction: string;
+      timeFrame: string;
+    };
+    worstCase: {
+      surplusDecrease: string;
+      debtIncrease: string;
+      recoveryTime: string;
+    };
+  };
+  clientName: string;
 }
 
 export interface ClientInsightData {

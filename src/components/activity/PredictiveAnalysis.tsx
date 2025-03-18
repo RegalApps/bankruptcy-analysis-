@@ -6,6 +6,10 @@ import { ForecastChart } from "./components/ForecastChart";
 import { PredictiveHeader } from "./components/PredictiveHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EnhancedRiskAssessment } from "./components/EnhancedRiskAssessment";
+import { EnhancedOpportunityPanel } from "./components/EnhancedOpportunityPanel";
+import { AnalysisAlerts } from "./components/AnalysisAlerts";
 
 interface PredictiveAnalysisProps {
   selectedClient: Client | null;
@@ -13,11 +17,13 @@ interface PredictiveAnalysisProps {
 
 export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState("forecast");
   
   const {
     processedData,
     metrics,
     categoryAnalysis,
+    advancedRiskMetrics,
     isLoading,
     lastRefreshed,
     refetch
@@ -56,19 +62,46 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
             isLoading={isLoading}
           />
           
-          {isLoading ? (
-            <div className="mt-6">
-              <Skeleton className="h-[350px] w-full rounded-md" />
-            </div>
-          ) : (
-            <div className="mt-6">
-              <ForecastChart
-                processedData={processedData}
-                categoryAnalysis={categoryAnalysis}
-                isLoading={isLoading}
-              />
-            </div>
-          )}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+            <TabsList>
+              <TabsTrigger value="forecast">Financial Forecast</TabsTrigger>
+              <TabsTrigger value="risk">Risk Assessment</TabsTrigger>
+              <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="forecast" className="pt-4">
+              {isLoading ? (
+                <Skeleton className="h-[350px] w-full rounded-md" />
+              ) : (
+                <ForecastChart
+                  processedData={processedData}
+                  categoryAnalysis={categoryAnalysis}
+                  isLoading={isLoading}
+                />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="risk" className="pt-4">
+              {isLoading ? (
+                <Skeleton className="h-[450px] w-full rounded-md" />
+              ) : (
+                <EnhancedRiskAssessment 
+                  riskMetrics={advancedRiskMetrics}
+                  isLoading={isLoading}
+                />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="opportunities" className="pt-4">
+              {isLoading ? (
+                <Skeleton className="h-[450px] w-full rounded-md" />
+              ) : (
+                <EnhancedOpportunityPanel 
+                  riskMetrics={advancedRiskMetrics}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
       
@@ -99,6 +132,12 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
           </CardContent>
         </Card>
       </div>
+      
+      {/* Risk & Opportunity Alerts */}
+      <AnalysisAlerts 
+        riskLevel={metrics?.riskLevel || "Low"}
+        seasonalityScore={metrics?.seasonalityScore ? metrics.seasonalityScore.toString() : null}
+      />
     </div>
   );
 };
