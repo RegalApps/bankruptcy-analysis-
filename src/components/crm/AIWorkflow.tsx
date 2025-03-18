@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { TabsContent } from "@/components/ui/tabs";
 import { WorkflowHeader } from "./ai-workflow/WorkflowHeader";
 import { CommunicationHub } from "./ai-workflow/CommunicationHub";
 import { DocumentAutomation } from "./ai-workflow/DocumentAutomation";
@@ -43,17 +42,17 @@ export const AIWorkflow = () => {
 
       <WorkflowHeader activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <TabsContent value="communication" className="space-y-4">
+      {activeTab === "communication" && (
         <CommunicationHub clientId={selectedClient} />
-      </TabsContent>
+      )}
 
-      <TabsContent value="document" className="space-y-4">
+      {activeTab === "document" && (
         <DocumentAutomation clientId={selectedClient} />
-      </TabsContent>
+      )}
 
-      <TabsContent value="compliance" className="space-y-4">
+      {activeTab === "compliance" && (
         <ComplianceMonitoring clientId={selectedClient} />
-      </TabsContent>
+      )}
     </div>
   );
 };

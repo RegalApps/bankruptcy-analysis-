@@ -4,15 +4,20 @@ import { MessageSquare, Mail, Phone, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AICommunication } from "@/pages/SAFA/components/ClientConnect/AICommunication";
 
-export const CommunicationHub = () => {
+interface CommunicationHubProps {
+  clientId?: string;
+}
+
+export const CommunicationHub = ({ clientId }: CommunicationHubProps) => {
   return (
     <div className="space-y-4">
       <Alert className="bg-blue-50 border-blue-100">
         <MessageSquare className="h-4 w-4 text-blue-500" />
         <AlertTitle>AI-Driven Communication Hub</AlertTitle>
         <AlertDescription>
-          Streamline communication with clients using AI-generated templates, automated follow-ups,
-          and intelligent reminders to ensure compliance and engagement.
+          {clientId 
+            ? `Streamline communication with client #${clientId} using AI-generated templates.` 
+            : "Select a client to start communication workflows."}
         </AlertDescription>
       </Alert>
 
