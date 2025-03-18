@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SmartSchedulingCalendar } from "@/components/crm/SmartSchedulingCalendar";
+import { SchedulingAnalytics } from "@/components/crm/scheduling/SchedulingAnalytics";
 
 export const IntelligentScheduling = () => {
   const [activeTab, setActiveTab] = useState("calendar");
@@ -30,13 +31,7 @@ export const IntelligentScheduling = () => {
         </TabsContent>
         
         <TabsContent value="analytics">
-          <div className="p-6 text-center border rounded-md">
-            <h3 className="text-lg font-medium">Scheduling Analytics</h3>
-            <p className="text-sm text-muted-foreground mt-2">
-              Coming soon: Advanced insights and AI reports on meeting efficiency,
-              client engagement scores, and trustee workload distribution.
-            </p>
-          </div>
+          <SchedulingAnalytics />
         </TabsContent>
       </Tabs>
     </div>
