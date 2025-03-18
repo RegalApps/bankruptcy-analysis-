@@ -21,8 +21,11 @@ export const BookingSettingsPanel = () => {
     setReminderHours,
     availableTimeSlots,
     toggleTimeSlot,
+    addTimeSlot,
     handleSaveSettings,
-    handleSyncCalendar
+    handleSyncCalendar,
+    isCustomTimeSlotDialogOpen,
+    setIsCustomTimeSlotDialogOpen
   } = useBookingSettings();
   
   return (
@@ -47,6 +50,9 @@ export const BookingSettingsPanel = () => {
           availableTimeSlots={availableTimeSlots}
           toggleTimeSlot={toggleTimeSlot}
           handleSyncCalendar={handleSyncCalendar}
+          isCustomTimeSlotDialogOpen={isCustomTimeSlotDialogOpen}
+          setIsCustomTimeSlotDialogOpen={setIsCustomTimeSlotDialogOpen}
+          addTimeSlot={addTimeSlot}
         />
       </div>
       

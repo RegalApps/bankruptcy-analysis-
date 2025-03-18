@@ -17,6 +17,7 @@ export const useBookingSettings = () => {
     { id: "4", time: "14:30", enabled: true },
     { id: "5", time: "16:00", enabled: true },
   ]);
+  const [isCustomTimeSlotDialogOpen, setIsCustomTimeSlotDialogOpen] = useState(false);
   
   // Toggle a time slot
   const toggleTimeSlot = (id: string) => {
@@ -25,6 +26,16 @@ export const useBookingSettings = () => {
         slot.id === id ? { ...slot, enabled: !slot.enabled } : slot
       )
     );
+  };
+  
+  // Add a new time slot
+  const addTimeSlot = (time: string) => {
+    const id = `${Date.now()}`;
+    setAvailableTimeSlots(prev => [
+      ...prev,
+      { id, time, enabled: true }
+    ]);
+    toast.success(`Added time slot: ${time}`);
   };
   
   // Handle saving settings
@@ -53,7 +64,10 @@ export const useBookingSettings = () => {
     setReminderHours,
     availableTimeSlots,
     toggleTimeSlot,
+    addTimeSlot,
     handleSaveSettings,
-    handleSyncCalendar
+    handleSyncCalendar,
+    isCustomTimeSlotDialogOpen,
+    setIsCustomTimeSlotDialogOpen
   };
 };

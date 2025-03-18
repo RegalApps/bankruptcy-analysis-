@@ -5,17 +5,24 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Clock } from "lucide-react";
 import { TimeSlotItem } from "./TimeSlotItem";
 import { TimeSlot } from "../types";
+import { CustomTimeSlotDialog } from "./CustomTimeSlotDialog";
 
 interface TimeSlotCardProps {
   availableTimeSlots: TimeSlot[];
   toggleTimeSlot: (id: string) => void;
   handleSyncCalendar: () => void;
+  isCustomTimeSlotDialogOpen: boolean;
+  setIsCustomTimeSlotDialogOpen: (open: boolean) => void;
+  addTimeSlot: (time: string) => void;
 }
 
 export const TimeSlotCard: React.FC<TimeSlotCardProps> = ({
   availableTimeSlots,
   toggleTimeSlot,
-  handleSyncCalendar
+  handleSyncCalendar,
+  isCustomTimeSlotDialogOpen,
+  setIsCustomTimeSlotDialogOpen,
+  addTimeSlot
 }) => {
   return (
     <Card>
@@ -37,7 +44,11 @@ export const TimeSlotCard: React.FC<TimeSlotCardProps> = ({
             />
           ))}
           
-          <Button variant="outline" className="w-full">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => setIsCustomTimeSlotDialogOpen(true)}
+          >
             <Clock className="h-4 w-4 mr-2" />
             Add Custom Time Slot
           </Button>
@@ -52,6 +63,12 @@ export const TimeSlotCard: React.FC<TimeSlotCardProps> = ({
             Manage Staff Availability
           </Button>
         </div>
+
+        <CustomTimeSlotDialog
+          open={isCustomTimeSlotDialogOpen}
+          onOpenChange={setIsCustomTimeSlotDialogOpen}
+          onAddTimeSlot={addTimeSlot}
+        />
       </CardContent>
     </Card>
   );
