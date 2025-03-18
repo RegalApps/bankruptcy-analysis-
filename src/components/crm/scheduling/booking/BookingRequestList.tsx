@@ -5,8 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, Clock, Calendar, Search } from "lucide-react";
 
+// Type definitions for booking requests
+interface ConfirmedSlot {
+  date: string;
+  time: string;
+  trustee: string;
+}
+
+interface BookingRequest {
+  id: string;
+  clientName: string;
+  clientEmail: string;
+  caseType: string;
+  requestDate: string;
+  status: string;
+  preferredDates: string[];
+  urgency: string;
+  caseNumber?: string; // Make caseNumber optional for all requests
+  confirmedSlot?: ConfirmedSlot;
+}
+
 // Sample booking request data - in a real app this would come from a database
-const SAMPLE_BOOKING_REQUESTS = [
+const SAMPLE_BOOKING_REQUESTS: BookingRequest[] = [
   {
     id: "br-001",
     clientName: "Michael Johnson",
@@ -48,7 +68,7 @@ const SAMPLE_BOOKING_REQUESTS = [
 
 export const BookingRequestList = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [requests, setRequests] = useState(SAMPLE_BOOKING_REQUESTS);
+  const [requests, setRequests] = useState<BookingRequest[]>(SAMPLE_BOOKING_REQUESTS);
   
   // Filter requests based on search query
   const filteredRequests = requests.filter(
