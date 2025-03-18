@@ -15,6 +15,7 @@ export const usePredictiveData = (selectedClient: Client | null): PredictiveData
     lastRefreshed,
     financialRecords,
     categoryAnalysis,
+    advancedRiskMetrics,
     setProcessedData,
     setMetrics,
     setLastRefreshed,
@@ -37,6 +38,7 @@ export const usePredictiveData = (selectedClient: Client | null): PredictiveData
     lastRefreshed,
     financialRecords,
     categoryAnalysis,
+    advancedRiskMetrics,
     refetch: handleRefetch
   };
 };
