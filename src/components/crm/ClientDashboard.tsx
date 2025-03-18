@@ -12,15 +12,43 @@ import { AiInsightsCard } from "./components/AiInsightsCard";
 import { UpcomingDeadlinesCard } from "./components/UpcomingDeadlinesCard";
 import { RecentActivitiesCard } from "./components/RecentActivitiesCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface ClientDashboardProps {
   clientId?: string;
   clientName?: string;
 }
 
-export const ClientDashboard = ({ clientId = "1", clientName = "John Doe" }: ClientDashboardProps) => {
+export const ClientDashboard = ({ clientId: propClientId, clientName: propClientName }: ClientDashboardProps) => {
   const [activeTab, setActiveTab] = useState("overview");
-  const { insightData, isLoading, error } = useClientInsights(clientId);
+  const [selectedClientId, setSelectedClientId] = useState<string>(propClientId || "1");
+  const [selectedClientName, setSelectedClientName] = useState<string>(propClientName || "John Doe");
+  const { insightData, isLoading, error } = useClientInsights(selectedClientId);
+
+  // Mock client list - in a real app, this would come from an API
+  const clients = [
+    { id: "1", name: "John Doe" },
+    { id: "2", name: "Jane Smith" },
+    { id: "3", name: "Robert Johnson" }
+  ];
+
+  const handleClientChange = (clientId: string) => {
+    setSelectedClientId(clientId);
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setSelectedClientName(client.name);
+    }
+  };
+
+  useEffect(() => {
+    if (propClientId) {
+      setSelectedClientId(propClientId);
+    }
+    if (propClientName) {
+      setSelectedClientName(propClientName);
+    }
+  }, [propClientId, propClientName]);
 
   if (isLoading) {
     return (
@@ -62,8 +90,26 @@ export const ClientDashboard = ({ clientId = "1", clientName = "John Doe" }: Cli
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{clientName}'s Dashboard</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">{selectedClientName}'s Dashboard</h1>
+        
+        <div className="w-full md:w-64">
+          <Label htmlFor="client-select" className="mb-2 block text-sm font-medium">
+            Select Client
+          </Label>
+          <Select value={selectedClientId} onValueChange={handleClientChange}>
+            <SelectTrigger id="client-select" className="w-full">
+              <SelectValue placeholder="Select a client" />
+            </SelectTrigger>
+            <SelectContent>
+              {clients.map(client => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -95,7 +141,7 @@ export const ClientDashboard = ({ clientId = "1", clientName = "John Doe" }: Cli
               <CardTitle>Document Management</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Document management features coming soon...</p>
+              <p className="text-muted-foreground">Document management features for {selectedClientName} coming soon...</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -106,7 +152,7 @@ export const ClientDashboard = ({ clientId = "1", clientName = "John Doe" }: Cli
               <CardTitle>Financial Analysis</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Financial analysis features coming soon...</p>
+              <p className="text-muted-foreground">Financial analysis features for {selectedClientName} coming soon...</p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -117,7 +163,7 @@ export const ClientDashboard = ({ clientId = "1", clientName = "John Doe" }: Cli
               <CardTitle>Communication Hub</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Communication features coming soon...</p>
+              <p className="text-muted-foreground">Communication features for {selectedClientName} coming soon...</p>
             </CardContent>
           </Card>
         </TabsContent>
