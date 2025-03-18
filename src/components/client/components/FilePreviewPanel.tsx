@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Document } from "../types";
 import { CollaborationPanel } from "@/components/DocumentViewer/CollaborationPanel";
 import { useState } from "react";
+import { DocumentPreview } from "@/components/DocumentViewer/DocumentPreview";
 
 interface FilePreviewPanelProps {
   document: Document | null;
@@ -81,19 +82,29 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
         </TabsList>
         
         <TabsContent value="preview" className="mt-0 flex-1">
-          <div className="bg-muted rounded-md p-8 h-64 flex items-center justify-center">
-            <p className="text-muted-foreground text-center">
-              Document preview will be available soon.
-              <br />
-              <Button 
-                variant="link" 
-                className="mt-2"
-                onClick={() => onDocumentOpen(document.id)}
-              >
-                Open in Document Viewer
-              </Button>
-            </p>
-          </div>
+          {document.metadata?.storage_path ? (
+            <div className="h-64 overflow-hidden rounded-md border">
+              <DocumentPreview 
+                storagePath={document.metadata.storage_path}
+                documentId={document.id}
+                title={document.title}
+              />
+            </div>
+          ) : (
+            <div className="bg-muted rounded-md p-8 h-64 flex items-center justify-center">
+              <p className="text-muted-foreground text-center">
+                Document preview not available.
+                <br />
+                <Button 
+                  variant="link" 
+                  className="mt-2"
+                  onClick={() => onDocumentOpen(document.id)}
+                >
+                  Open in Document Viewer
+                </Button>
+              </p>
+            </div>
+          )}
           
           <div className="mt-4">
             <h4 className="text-sm font-medium mb-2">AI Summary</h4>
