@@ -1,12 +1,12 @@
 
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SmartSchedulingCalendar } from "@/components/crm/SmartSchedulingCalendar";
 import { SchedulingAnalytics } from "@/components/crm/scheduling/SchedulingAnalytics";
 import { ClientBookingPortal } from "@/components/crm/scheduling/ClientBookingPortal";
+import { useSchedulingTabs } from "./hooks/useSchedulingTabs";
 
 export const IntelligentScheduling = () => {
-  const [activeTab, setActiveTab] = useState("calendar");
+  const { activeTab, setActiveTab } = useSchedulingTabs();
 
   return (
     <div className="space-y-6">
