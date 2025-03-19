@@ -165,9 +165,7 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
               title: document.title,
               type: document.type || 'document',
               storage_path: document.metadata?.storage_path || '',
-              comments: [],
-              created_at: document.created_at,
-              updated_at: document.updated_at
+              comments: []
             }}
             onCommentAdded={() => console.log('Comment added')}
           />
