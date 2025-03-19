@@ -35,6 +35,12 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
       toast.info("Retrying client data load with simplified ID");
     }
   }, [loadError, clientId, retryCount]);
+
+  // Handle document opening with logging for debugging
+  const handleDocumentOpen = (documentId: string) => {
+    console.log(`ClientTab: Opening document with ID ${documentId}`);
+    onDocumentOpen(documentId);
+  };
   
   // Use the retry ID if we're retrying, otherwise use the original client ID
   const effectiveClientId = retryCount > 0 && retryId ? retryId : clientId;
@@ -51,7 +57,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     <ClientViewer 
       clientId={effectiveClientId} 
       onBack={onBack}
-      onDocumentOpen={onDocumentOpen}
+      onDocumentOpen={handleDocumentOpen}
       onError={() => setLoadError(true)}
     />
   );

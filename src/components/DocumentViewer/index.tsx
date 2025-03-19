@@ -11,6 +11,8 @@ import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
 import { isDocumentForm47 } from "./utils/documentTypeUtils";
 import { TaskManager } from "./TaskManager";
 import { VersionTab } from "./VersionTab";
+import { isUUID } from "@/utils/validation";
+import { toast } from "sonner";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -24,6 +26,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
       console.log("Document data loaded:", document);
     }
   }, [document]);
+
+  // Log the document ID format on initial load for debugging
+  useEffect(() => {
+    console.log(`Loading document with ID: ${documentId}, UUID format: ${isUUID(documentId)}`);
+    
+    // Check if the document ID is not in UUID format and show a warning
+    if (!isUUID(documentId)) {
+      toast.info("Loading document with a non-standard ID format. This might cause issues with some documents.");
+    }
+  }, [documentId]);
 
   // Function to handle document updates (like comments added)
   const handleDocumentUpdated = () => {

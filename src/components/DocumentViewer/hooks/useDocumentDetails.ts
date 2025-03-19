@@ -2,6 +2,7 @@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { DocumentDetails } from "../types";
+import { isUUID } from "@/utils/validation";
 
 interface UseDocumentDetailsOptions {
   onSuccess?: (document: DocumentDetails) => void;
@@ -16,18 +17,40 @@ export const useDocumentDetails = (
 
   const fetchDocumentDetails = async () => {
     try {
-      const { data: document, error: docError } = await supabase
-        .from('documents')
-        .select(`
-          *,
-          analysis:document_analysis(content),
-          comments:document_comments(id, content, created_at, user_id)
-        `)
-        .eq('id', documentId)
-        .maybeSingle();
+      console.log("Fetching document details for ID:", documentId);
+      
+      // If the document ID is not a valid UUID, we need to query differently
+      // since Supabase might be expecting UUIDs for direct ID matching
+      let documentQuery;
+      
+      if (isUUID(documentId)) {
+        // Standard UUID query
+        documentQuery = supabase
+          .from('documents')
+          .select(`
+            *,
+            analysis:document_analysis(content),
+            comments:document_comments(id, content, created_at, user_id)
+          `)
+          .eq('id', documentId);
+      } else {
+        // Try alternative query approaches for non-UUID IDs
+        // First try direct match, but also try matching on other fields
+        documentQuery = supabase
+          .from('documents')
+          .select(`
+            *,
+            analysis:document_analysis(content),
+            comments:document_comments(id, content, created_at, user_id)
+          `)
+          .or(`id.eq.${documentId},metadata->document_id.eq.${documentId},title.ilike.%${documentId}%`);
+      }
+
+      const { data: document, error: docError } = await documentQuery.maybeSingle();
 
       if (docError) throw docError;
       if (!document) {
+        console.error("Document not found for ID:", documentId);
         toast({
           variant: "destructive",
           title: "Error",

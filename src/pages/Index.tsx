@@ -12,6 +12,7 @@ import { AuthErrorDisplay } from "@/components/auth/AuthErrorDisplay";
 import { EmailConfirmationPending } from "@/components/auth/EmailConfirmationPending";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -26,8 +27,10 @@ const Index = () => {
     handleSignOut
   } = useAuthState();
 
+  // Get document ID from location state
   useEffect(() => {
     if (location.state?.selectedDocument) {
+      console.log("Selected document from location state:", location.state.selectedDocument);
       setSelectedDocument(location.state.selectedDocument);
     }
   }, [location]);
@@ -39,6 +42,11 @@ const Index = () => {
   const handleBackToDocuments = () => {
     setSelectedDocument(null);
     navigate('/');
+  };
+
+  const handleDocumentOpenError = () => {
+    toast.error("Failed to open document. Please try again.");
+    setSelectedDocument(null);
   };
 
   if (isLoading) {
