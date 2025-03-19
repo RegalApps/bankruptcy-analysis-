@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -19,7 +18,7 @@ export const MainSidebar = () => {
     { icon: BrainCog, label: "Smart Income Expense", path: "/activity" },
     { icon: PieChart, label: "Analytics", path: "/analytics" },
     { icon: Bell, label: "Notifications", path: "/notifications" },
-    { icon: FileCheck, label: "E-Filing", path: "/e-filing" },
+    { icon: FileCheck, label: "Audit Trail", path: "/e-filing" },
   ];
 
   return (
