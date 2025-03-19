@@ -22,10 +22,10 @@ export const ClientViewer: React.FC<ClientViewerProps> = ({
   onDocumentOpen,
   onError
 }) => {
-  const { client, documents, isLoading, error } = useClientData(clientId);
+  // Pass onBack to useClientData
+  const { client, documents, isLoading, error, activeTab, setActiveTab } = useClientData(clientId, onBack);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const [activeTab, setActiveTab] = useState('documents');
 
   // Set selected document when document ID changes
   useEffect(() => {
@@ -59,7 +59,7 @@ export const ClientViewer: React.FC<ClientViewerProps> = ({
   };
 
   if (isLoading) {
-    return <ClientSkeleton />;
+    return <ClientSkeleton onBack={onBack} />;
   }
 
   if (!client) {
@@ -79,13 +79,28 @@ export const ClientViewer: React.FC<ClientViewerProps> = ({
     );
   }
 
+  // Calculate document count for ClientInfoPanel
+  const documentCount = documents.length;
+  // Find the most recent document's updated_at date to use as last activity date
+  const lastActivityDate = documents.length > 0 
+    ? documents.reduce((latest, doc) => {
+        return new Date(doc.updated_at) > new Date(latest) ? doc.updated_at : latest;
+      }, documents[0].updated_at)
+    : client.last_interaction;
+
   return (
     <div className="h-full flex flex-col">
       <ClientHeader client={client} onBack={onBack} />
       
       <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
         <div className="md:col-span-1">
-          <ClientInfoPanel client={client} />
+          <ClientInfoPanel 
+            client={client} 
+            documentCount={documentCount}
+            lastActivityDate={lastActivityDate}
+            documents={documents}
+            onDocumentSelect={handleDocumentSelect}
+          />
         </div>
         
         <div className="md:col-span-1 lg:col-span-1 border rounded-lg">
@@ -102,7 +117,6 @@ export const ClientViewer: React.FC<ClientViewerProps> = ({
         <div className="md:col-span-1 lg:col-span-2 border rounded-lg">
           <FilePreviewPanel 
             document={selectedDocument} 
-            activeTab={activeTab} 
             onDocumentOpen={handleDocumentOpen}
           />
         </div>
