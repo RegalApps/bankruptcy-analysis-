@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 // Simple inline loading component for faster initial render
 const LoadingPlaceholder = () => (
@@ -29,6 +30,7 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const CRMPage = lazy(() => import("./pages/CRMPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const EFilingPage = lazy(() => import("./pages/EFilingPage"));
+const PerformancePage = lazy(() => import("./pages/PerformancePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Pre-fetch the main layout after initial render
@@ -51,29 +53,31 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <Suspense fallback={<LoadingPlaceholder />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/documents" element={<DocumentsPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/activity" element={<ActivityPage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/SAFA" element={<ConBrandingPage />} />
-              <Route path="/crm" element={<CRMPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/e-filing" element={<EFilingPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-          <SonnerToaster />
-        </BrowserRouter>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Suspense fallback={<LoadingPlaceholder />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/documents" element={<DocumentsPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/activity" element={<ActivityPage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/SAFA" element={<ConBrandingPage />} />
+                <Route path="/crm" element={<CRMPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/e-filing" element={<EFilingPage />} />
+                <Route path="/performance" element={<PerformancePage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+            <SonnerToaster />
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };
 
 export default App;
-
