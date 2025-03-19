@@ -19,6 +19,8 @@ export interface Document {
   parent_folder_id?: string;
   is_folder?: boolean;
   folder_type?: string;
+  storage_path?: string;
+  original_id?: string;
 }
 
 export interface ClientViewerProps {

@@ -30,13 +30,13 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   
   // Check if document has a valid storage path
   useEffect(() => {
-    if (document && document.metadata) {
+    if (document) {
       // For Form 47 documents, ensure they have a storage path
       if (document.title.toLowerCase().includes('form 47') || 
           document.title.toLowerCase().includes('consumer proposal')) {
         // If no storage_path exists, use a default path for Form 47
         setHasStoragePath(true);
-      } else if (document.metadata.storage_path) {
+      } else if (document.metadata?.storage_path) {
         setHasStoragePath(true);
       } else if (document.storage_path) {
         setHasStoragePath(true);
