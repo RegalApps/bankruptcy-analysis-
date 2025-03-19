@@ -104,9 +104,10 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
                       document.metadata?.client_name?.toLowerCase().includes('josh');
       
       if (isForm47 || isJoshHart) {
-        // Use a consistent ID for Form 47 documents
-        onDocumentOpen('form-47-consumer-proposal');
-        toast.success("Opening Form 47 document");
+        // Use a consistent ID for Form 47 documents but pass the actual document ID
+        // to ensure consistent document viewing
+        onDocumentOpen(document.id);
+        toast.success("Opening document");
       } else {
         onDocumentOpen(document.id);
       }

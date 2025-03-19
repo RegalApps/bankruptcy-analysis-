@@ -54,8 +54,16 @@ export const ClientViewer: React.FC<ClientViewerProps> = ({
   };
 
   const handleDocumentOpen = (documentId: string) => {
-    console.log("Opening document with ID:", documentId);
-    onDocumentOpen(documentId);
+    console.log("ClientViewer: Opening document with ID:", documentId);
+    
+    // Find the document to ensure we're passing the correct ID
+    const document = documents.find(doc => doc.id === documentId);
+    if (document) {
+      onDocumentOpen(document.id);
+    } else {
+      console.warn("Document not found in documents array, using ID directly");
+      onDocumentOpen(documentId);
+    }
   };
 
   if (isLoading) {

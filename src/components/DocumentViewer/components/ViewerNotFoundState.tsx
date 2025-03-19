@@ -32,7 +32,7 @@ export const ViewerNotFoundState: React.FC = () => {
         </Button>
       </div>
       <div className="mt-6 border-t border-muted pt-6 max-w-md text-sm text-muted-foreground">
-        <p>Tip: If you're looking for Form 47 (Consumer Proposal) documents, you can access them through the client portal by selecting a client.</p>
+        <p>If you are trying to view a client document like Form 47 (Consumer Proposal), please use the client viewer to access these documents. They should appear in both Recently Accessed Documents and in the Client Viewer.</p>
       </div>
     </div>
   );

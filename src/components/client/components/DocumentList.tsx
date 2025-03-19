@@ -45,16 +45,9 @@ export const DocumentList = ({
   // Handle document opening with special handling for Form 47
   const handleOpenDocument = (doc: Document, e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log("Opening document:", doc.id, doc.title);
     
-    // Special handling for Form 47
-    if (isForm47Document(doc)) {
-      console.log("Opening Form 47 document");
-      // Use a consistent ID for Form 47 documents if needed
-      const effectiveId = doc.id;
-      onDocumentOpen(effectiveId);
-      return;
-    }
-    
+    // Pass the actual document ID directly to ensure consistent document viewing
     onDocumentOpen(doc.id);
   };
 
@@ -63,7 +56,8 @@ export const DocumentList = ({
     return doc.title.toLowerCase().includes('form 47') || 
            doc.title.toLowerCase().includes('consumer proposal') ||
            doc.type?.toLowerCase() === 'form-47' || 
-           doc.metadata?.formType === 'form-47';
+           doc.metadata?.formType === 'form-47' ||
+           doc.form_type === 'form-47';
   };
 
   if (documents.length === 0) {

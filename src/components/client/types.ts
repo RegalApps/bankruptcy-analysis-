@@ -35,3 +35,14 @@ export interface ClientViewerProps {
   onDocumentOpen: (documentId: string) => void;
   onError?: () => void;
 }
+
+// Added this interface to ensure document consistency across the app
+export interface DocumentViewerCompatible {
+  id: string;
+  title: string;
+  storage_path?: string;
+  created_at: string;
+  updated_at: string;
+  metadata?: Record<string, any>;
+  type?: string;
+}
