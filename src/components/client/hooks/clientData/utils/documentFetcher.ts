@@ -13,7 +13,7 @@ export const fetchClientDocuments = async (clientId: string, searchClientId: str
   const { data: clientDocs, error: docsError } = await supabase
     .from('documents')
     .select('*')
-    .or(`metadata->client_id.eq.${searchClientId},id.eq.${clientId}`)
+    .or(`metadata->client_id.eq.${searchClientId},metadata->client_name.ilike.%${clientId}%`)
     .order('created_at', { ascending: false });
     
   if (docsError) {

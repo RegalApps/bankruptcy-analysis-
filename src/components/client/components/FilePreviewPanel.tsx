@@ -3,12 +3,13 @@ import { FileText, Eye, MessageSquare, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { Document } from "../types";
 import { CollaborationPanel } from "@/components/DocumentViewer/CollaborationPanel";
 import { useState, useEffect } from "react";
 import { DocumentPreview } from "@/components/DocumentViewer/DocumentPreview";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
+import { isUUID } from "@/utils/validation";
 
 interface FilePreviewPanelProps {
   document: Document | null;
@@ -18,6 +19,17 @@ interface FilePreviewPanelProps {
 export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelProps) => {
   const [activeTab, setActiveTab] = useState('preview');
   const [hasStoragePath, setHasStoragePath] = useState(false);
+  const [temporaryUuid, setTemporaryUuid] = useState<string | null>(null);
+  
+  // Generate a temporary UUID for non-UUID document IDs
+  useEffect(() => {
+    if (document && !isUUID(document.id)) {
+      console.log("Document has non-UUID id, generating temporary UUID for preview:", document.id);
+      setTemporaryUuid(uuidv4());
+    } else {
+      setTemporaryUuid(null);
+    }
+  }, [document]);
   
   // Check if document has a valid storage path
   useEffect(() => {
@@ -49,20 +61,8 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
     );
   }
 
-  // Create a mock document details object that matches the DocumentDetails type
-  // including the required storage_path property
-  const documentDetails = {
-    id: document.id,
-    title: document.title,
-    type: document.type || 'document',
-    storage_path: document.metadata?.storage_path || '', // Add the required storage_path
-    comments: [],
-    // Add any other required properties from the DocumentDetails type
-    url: document.metadata?.url || '',
-    size: document.metadata?.size || 0,
-    created_at: document.created_at,
-    updated_at: document.updated_at
-  };
+  // Use the temporary UUID for preview if needed
+  const effectiveDocumentId = temporaryUuid || document.id;
 
   // For Form 47 documents, ensure we have a storage path to use for preview
   const getStoragePath = () => {
@@ -80,6 +80,13 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
     return '';
   };
 
+  const handleDocumentOpen = () => {
+    if (temporaryUuid) {
+      toast.info("This document is using a temporary preview. Some features may be limited.");
+    }
+    onDocumentOpen(document.id);
+  };
+
   return (
     <div className="h-full flex flex-col p-4">
       <div className="mb-4">
@@ -90,7 +97,7 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
           </p>
           <Button 
             size="sm" 
-            onClick={() => onDocumentOpen(document.id)}
+            onClick={handleDocumentOpen}
             className="gap-1"
           >
             <Eye className="h-4 w-4" />
@@ -120,7 +127,7 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
             <div className="h-64 overflow-hidden rounded-md border">
               <DocumentPreview 
                 storagePath={getStoragePath()}
-                documentId={document.id}
+                documentId={effectiveDocumentId}
                 title={document.title}
               />
             </div>
@@ -132,7 +139,7 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
                 <Button 
                   variant="link" 
                   className="mt-2"
-                  onClick={() => onDocumentOpen(document.id)}
+                  onClick={handleDocumentOpen}
                 >
                   Open in Document Viewer
                 </Button>
@@ -153,7 +160,17 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
         
         <TabsContent value="comments" className="mt-0 flex-1 flex flex-col">
           <CollaborationPanel 
-            document={documentDetails}
+            document={{
+              id: effectiveDocumentId,
+              title: document.title,
+              type: document.type || 'document',
+              storage_path: document.metadata?.storage_path || '',
+              comments: [],
+              url: document.metadata?.url || '',
+              size: document.metadata?.size || 0,
+              created_at: document.created_at,
+              updated_at: document.updated_at
+            }}
             onCommentAdded={() => console.log('Comment added')}
           />
         </TabsContent>

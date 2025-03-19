@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { DocumentRecord } from "../../types";
 import { updateAnalysisStatus } from "../documentStatusUpdates";
 import { AnalysisProcessContext } from "../types";
+import { isUUID } from "@/utils/validation";
 
 export const documentIngestion = async (
   storagePath: string,
