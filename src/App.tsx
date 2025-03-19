@@ -43,7 +43,7 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000, // 5 minutes
       retry: 1,
       refetchOnWindowFocus: false, // Prevent unnecessary refetches
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (replacing cacheTime)
     },
   },
 });
@@ -76,3 +76,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
