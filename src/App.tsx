@@ -5,9 +5,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { MainLayout } from "@/components/layout/MainLayout";
 
-// Lazy load pages for better performance
+// Simple inline loading component for faster initial render
+const LoadingPlaceholder = () => (
+  <div className="h-screen w-full flex items-center justify-center">
+    <LoadingSpinner size="large" />
+  </div>
+);
+
+// Lazy load MainLayout to improve initial load time
+const MainLayout = lazy(() => import("@/components/layout/MainLayout").then(
+  module => ({ default: module.MainLayout })
+));
+
+// Lazy load pages with prefetching for better UX
 const Index = lazy(() => import("./pages/Index"));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
@@ -20,12 +31,19 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const EFilingPage = lazy(() => import("./pages/EFilingPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Configure React Query
+// Pre-fetch the main layout after initial render
+setTimeout(() => {
+  import("@/components/layout/MainLayout");
+}, 1000);
+
+// Configure React Query with performance optimizations
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       retry: 1,
+      refetchOnWindowFocus: false, // Prevent unnecessary refetches
+      cacheTime: 10 * 60 * 1000, // 10 minutes
     },
   },
 });
@@ -35,7 +53,7 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
-          <Suspense fallback={<div className="h-screen w-full flex items-center justify-center"><LoadingSpinner size="large" /></div>}>
+          <Suspense fallback={<LoadingPlaceholder />}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/documents" element={<DocumentsPage />} />

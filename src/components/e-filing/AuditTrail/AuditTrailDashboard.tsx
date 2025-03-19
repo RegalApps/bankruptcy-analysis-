@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { AuditTrailHeader } from "./AuditTrailHeader";
 import { Timeline } from "./Timeline";
 import { DetailPanel } from "./DetailPanel";
@@ -8,7 +8,7 @@ import { FilterOptions } from "./types/filterTypes";
 import { AuditEntry } from "./TimelineEntry";
 import { isWithinTimeframe } from "@/utils/validation";
 
-// Generate mock audit data
+// Generate mock audit data - Memoized to prevent regeneration on re-renders
 const generateMockData = (): AuditEntry[] => {
   const users = [
     { 
@@ -91,65 +91,85 @@ export const AuditTrailDashboard = () => {
     users: new Set<string>()
   });
   
-  useEffect(() => {
-    // In a real app, we would fetch data based on the client ID
-    // Here we're just generating mock data
-    const mockData = generateMockData();
-    setAllEntries(mockData);
-    setFilteredEntries(mockData);
-    setSelectedEntry(null);
+  // Memoize mock data generation to prevent unnecessary recalculations
+  const fetchAuditData = useCallback(() => {
+    // In a real app, this would be an API call
+    return generateMockData();
   }, [currentClientId]);
   
-  // Apply filters whenever filters or allEntries change
   useEffect(() => {
-    applyFilters();
-  }, [filters, allEntries]);
-  
-  const handleClientChange = (clientId: number) => {
-    setCurrentClientId(clientId);
-  };
-  
-  const handleEntrySelect = (entry: AuditEntry) => {
-    setSelectedEntry(entry);
-  };
-  
-  const handleFilterChange = (newFilters: FilterOptions) => {
-    setFilters(newFilters);
-  };
-  
-  const applyFilters = () => {
-    console.log("Applying filters:", filters);
-    let filtered = [...allEntries];
-    
-    // Filter by action type
-    if (filters.actionTypes.size > 0) {
-      filtered = filtered.filter(entry => 
-        filters.actionTypes.has(entry.actionType)
-      );
-    }
-    
-    // Filter by user
-    if (filters.users.size > 0) {
-      filtered = filtered.filter(entry => 
-        filters.users.has(entry.user.name)
-      );
-    }
-    
-    // Filter by timeframe using the utility function
-    if (filters.timeframe !== 'all') {
-      filtered = filtered.filter(entry => 
-        isWithinTimeframe(entry.timestamp, filters.timeframe)
-      );
-    }
-    
-    console.log("Filtered entries count:", filtered.length);
-    setFilteredEntries(filtered);
-    
-    // If the selected entry is filtered out, clear the selection
-    if (selectedEntry && !filtered.find(e => e.id === selectedEntry.id)) {
+    // Use requestIdleCallback for non-critical data loading
+    if (typeof window.requestIdleCallback === 'function') {
+      const idleCallback = window.requestIdleCallback(() => {
+        const mockData = fetchAuditData();
+        setAllEntries(mockData);
+        setFilteredEntries(mockData);
+        setSelectedEntry(null);
+      });
+      
+      return () => {
+        if (typeof window.cancelIdleCallback === 'function') {
+          window.cancelIdleCallback(idleCallback);
+        }
+      };
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      const mockData = fetchAuditData();
+      setAllEntries(mockData);
+      setFilteredEntries(mockData);
       setSelectedEntry(null);
     }
-  };
+  }, [currentClientId, fetchAuditData]);
+  
+  // Apply filters with throttling to prevent excessive calculations
+  const applyFilters = useCallback(() => {
+    const filteredData = allEntries.filter(entry => {
+      // Filter by action type
+      if (filters.actionTypes.size > 0 && !filters.actionTypes.has(entry.actionType)) {
+        return false;
+      }
+      
+      // Filter by user
+      if (filters.users.size > 0 && !filters.users.has(entry.user.name)) {
+        return false;
+      }
+      
+      // Filter by timeframe
+      if (filters.timeframe !== 'all' && !isWithinTimeframe(entry.timestamp, filters.timeframe)) {
+        return false;
+      }
+      
+      return true;
+    });
+    
+    setFilteredEntries(filteredData);
+    
+    // If the selected entry is filtered out, clear the selection
+    if (selectedEntry && !filteredData.find(e => e.id === selectedEntry.id)) {
+      setSelectedEntry(null);
+    }
+  }, [filters, allEntries, selectedEntry]);
+  
+  // Use debouncing to prevent too many filter operations
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      applyFilters();
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [filters, applyFilters]);
+  
+  const handleClientChange = useCallback((clientId: number) => {
+    setCurrentClientId(clientId);
+  }, []);
+  
+  const handleEntrySelect = useCallback((entry: AuditEntry) => {
+    setSelectedEntry(entry);
+  }, []);
+  
+  const handleFilterChange = useCallback((newFilters: FilterOptions) => {
+    setFilters(newFilters);
+  }, []);
   
   return (
     <div className="flex flex-col h-full container max-w-screen-2xl">
