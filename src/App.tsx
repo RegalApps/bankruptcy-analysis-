@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,6 +31,8 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const EFilingPage = lazy(() => import("./pages/EFilingPage"));
 const PerformancePage = lazy(() => import("./pages/PerformancePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const NewSupportTicket = lazy(() => import("./pages/NewSupportTicket"));
+const SupportTicketDetail = lazy(() => import("./pages/SupportTicketDetail"));
 
 // Pre-fetch the main layout after initial render
 setTimeout(() => {
@@ -69,6 +70,8 @@ const App: React.FC = () => {
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/e-filing" element={<EFilingPage />} />
                 <Route path="/performance" element={<PerformancePage />} />
+                <Route path="/support/new" element={<NewSupportTicket />} />
+                <Route path="/support/ticket/:id" element={<SupportTicketDetail />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
