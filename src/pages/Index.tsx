@@ -5,7 +5,7 @@ import { DocumentViewer } from "@/components/DocumentViewer";
 import { RecentlyAccessedPage } from "@/pages/RecentlyAccessedPage";
 import { Auth } from "@/components/Auth";
 import { showPerformanceToast } from "@/utils/performance";
-import { Home } from "lucide-react";
+import { Home, AlertTriangle } from "lucide-react";
 import { useAuthState } from "@/hooks/useAuthState";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AuthErrorDisplay } from "@/components/auth/AuthErrorDisplay";
@@ -13,9 +13,11 @@ import { EmailConfirmationPending } from "@/components/auth/EmailConfirmationPen
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ViewerNotFoundState } from "@/components/DocumentViewer/components/ViewerNotFoundState";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+  const [documentError, setDocumentError] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { 
@@ -32,6 +34,7 @@ const Index = () => {
     if (location.state?.selectedDocument) {
       console.log("Selected document from location state:", location.state.selectedDocument);
       setSelectedDocument(location.state.selectedDocument);
+      setDocumentError(null);
     }
   }, [location]);
 
@@ -41,12 +44,14 @@ const Index = () => {
 
   const handleBackToDocuments = () => {
     setSelectedDocument(null);
+    setDocumentError(null);
     navigate('/');
   };
 
-  const handleDocumentOpenError = () => {
+  const handleDocumentOpenError = (error: string) => {
+    console.error("Document open error:", error);
+    setDocumentError(error);
     toast.error("Failed to open document. Please try again.");
-    setSelectedDocument(null);
   };
 
   if (isLoading) {
@@ -85,7 +90,14 @@ const Index = () => {
             </Button>
           </div>
           <div className="flex-1 overflow-hidden">
-            <DocumentViewer documentId={selectedDocument} />
+            {documentError ? (
+              <ViewerNotFoundState />
+            ) : (
+              <DocumentViewer 
+                documentId={selectedDocument} 
+                onError={handleDocumentOpenError}
+              />
+            )}
           </div>
         </div>
       ) : (

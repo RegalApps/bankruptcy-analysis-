@@ -9,11 +9,19 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   const [activeTab, setActiveTab] = useState('preview');
   const [hasStoragePath, setHasStoragePath] = useState(false);
   const [temporaryUuid, setTemporaryUuid] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  
+  // Reset error state when document changes
+  useEffect(() => {
+    setLoadError(null);
+  }, [document]);
   
   // Generate a temporary UUID for non-UUID document IDs
   useEffect(() => {
     if (document && !isUUID(document.id)) {
       console.log("Document has non-UUID id, generating temporary UUID for preview:", document.id);
+      // Store both the original ID and a temporary UUID for different purposes
+      document.original_id = document.id;
       setTemporaryUuid(uuidv4());
     } else {
       setTemporaryUuid(null);
@@ -30,18 +38,25 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
         setHasStoragePath(true);
       } else if (document.metadata.storage_path) {
         setHasStoragePath(true);
+      } else if (document.storage_path) {
+        setHasStoragePath(true);
       } else {
         setHasStoragePath(false);
+        setLoadError("Document has no storage path. Preview unavailable.");
       }
     }
   }, [document]);
 
-  // Use the temporary UUID for preview if needed
-  const effectiveDocumentId = document ? (temporaryUuid || document.id) : '';
+  // Always use the document's actual ID for opening, not the temporary one
+  const effectiveDocumentId = document ? document.id : '';
 
   // For Form 47 documents, ensure we have a storage path to use for preview
   const getStoragePath = () => {
     if (!document) return '';
+    
+    if (document.storage_path) {
+      return document.storage_path;
+    }
     
     if (document.metadata?.storage_path) {
       return document.metadata.storage_path;
@@ -60,16 +75,20 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   const handleDocumentOpen = () => {
     if (!document) return;
     
-    if (temporaryUuid) {
-      toast.info("This document is using a temporary preview. Some features may be limited.");
+    try {
+      console.log("Opening document with ID:", document.id);
+      onDocumentOpen(document.id);
+    } catch (error) {
+      console.error("Error opening document:", error);
+      toast.error("Failed to open document");
     }
-    onDocumentOpen(document.id);
   };
 
   return {
     activeTab,
     setActiveTab,
     hasStoragePath,
+    loadError,
     effectiveDocumentId,
     getStoragePath,
     handleDocumentOpen

@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { DocumentDetails } from "../types";
@@ -18,6 +17,12 @@ export const useDocumentDetails = (
   const fetchDocumentDetails = async () => {
     try {
       console.log("Fetching document details for ID:", documentId);
+      
+      if (!documentId) {
+        console.error("No document ID provided");
+        if (options.onError) options.onError(new Error("No document ID provided"));
+        return null;
+      }
       
       // If the document ID is not a valid UUID, we need to query differently
       // since Supabase might be expecting UUIDs for direct ID matching
@@ -43,7 +48,7 @@ export const useDocumentDetails = (
             analysis:document_analysis(content),
             comments:document_comments(id, content, created_at, user_id)
           `)
-          .or(`id.eq.${documentId},metadata->document_id.eq.${documentId},title.ilike.%${documentId}%`);
+          .or(`id.eq.${documentId},metadata->document_id.eq.${documentId},title.ilike.%${documentId}%,storage_path.ilike.%${documentId}%`);
       }
 
       const { data: document, error: docError } = await documentQuery.maybeSingle();
@@ -51,12 +56,7 @@ export const useDocumentDetails = (
       if (docError) throw docError;
       if (!document) {
         console.error("Document not found for ID:", documentId);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Document not found"
-        });
-        if (options.onError) options.onError(new Error("Document not found"));
+        if (options.onError) options.onError(new Error(`Document not found for ID: ${documentId}`));
         return null;
       }
       
@@ -71,11 +71,6 @@ export const useDocumentDetails = (
       return processedDocument;
     } catch (error: any) {
       console.error('Error fetching document details:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load document details"
-      });
       if (options.onError) options.onError(error);
       return null;
     }
