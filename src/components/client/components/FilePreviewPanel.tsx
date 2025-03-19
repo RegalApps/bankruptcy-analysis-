@@ -166,8 +166,6 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
               type: document.type || 'document',
               storage_path: document.metadata?.storage_path || '',
               comments: [],
-              url: document.metadata?.url || '',
-              size: document.metadata?.size || 0,
               created_at: document.created_at,
               updated_at: document.updated_at
             }}
