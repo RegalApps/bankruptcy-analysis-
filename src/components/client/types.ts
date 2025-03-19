@@ -22,6 +22,11 @@ export interface Document {
   storage_path?: string;
   original_id?: string;
   form_type?: 'form-47' | 'form-76' | string;  // Adding specific form type for better identification
+  // Additional props for compatibility
+  size?: number;
+  user_id?: string;
+  description?: string;
+  ai_processing_status?: string;
 }
 
 export interface ClientViewerProps {

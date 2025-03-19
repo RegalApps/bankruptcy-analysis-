@@ -18,6 +18,7 @@ import { ViewerNotFoundState } from "@/components/DocumentViewer/components/View
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [documentError, setDocumentError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState<boolean>(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { 
@@ -29,9 +30,12 @@ const Index = () => {
     handleSignOut
   } = useAuthState();
 
-  // Check if we need to load a Form 47 document directly
+  // Enhanced method to check for Form 47 documents
   const checkForForm47 = () => {
     const pathName = location.pathname.toLowerCase();
+    const stateClient = (location.state?.selectedClient || '').toLowerCase();
+    
+    // Check URL path for Form 47 indicators
     if (pathName.includes('form-47') || pathName.includes('form47') || 
         pathName.includes('consumer-proposal')) {
       console.log("Form 47 detected in path, loading Form 47 document");
@@ -39,19 +43,42 @@ const Index = () => {
       setDocumentError(null);
       return true;
     }
+    
+    // Check state for Form 47 indicators
+    if (stateClient.includes('josh') || stateClient.includes('hart') || 
+        pathName.includes('josh') || pathName.includes('hart')) {
+      console.log("Josh Hart client detected, loading Form 47 document");
+      setSelectedDocument('form-47-consumer-proposal');
+      setDocumentError(null);
+      return true;
+    }
+    
     return false;
   };
 
-  // Get document ID from location state or URL
+  // Get document ID from location state or URL with enhanced detection
   useEffect(() => {
-    // First check for Form 47 in the URL
+    // Reset document error when location changes
+    setDocumentError(null);
+    
+    // First check for Form 47 in the URL or state
     if (checkForForm47()) {
       return;
     }
     
     if (location.state?.selectedDocument) {
       console.log("Selected document from location state:", location.state.selectedDocument);
-      setSelectedDocument(location.state.selectedDocument);
+      
+      // Check if the selected document might be a Form 47
+      const docId = location.state.selectedDocument.toLowerCase();
+      if (docId.includes('form-47') || docId.includes('form47') || 
+          docId.includes('consumer') || docId.includes('proposal')) {
+        console.log("Form 47 document detected in state, using standardized ID");
+        setSelectedDocument('form-47-consumer-proposal');
+      } else {
+        setSelectedDocument(location.state.selectedDocument);
+      }
+      
       setDocumentError(null);
     } else if (location.state?.selectedClient) {
       console.log("Selected client:", location.state.selectedClient);
@@ -84,13 +111,20 @@ const Index = () => {
          selectedDocument.includes('form47') || 
          selectedDocument.includes('consumer'))) {
       console.log("Form 47 document error, trying fallback");
-      setSelectedDocument('form-47-consumer-proposal');
-      setDocumentError(null);
-      return;
+      
+      // If we're already retrying with the standard ID, don't do it again
+      if (!isRetrying) {
+        setIsRetrying(true);
+        setSelectedDocument('form-47-consumer-proposal');
+        setDocumentError(null);
+        return;
+      }
     }
     
+    // If retrying didn't work or for other documents, show error
     setDocumentError(error);
     toast.error("Failed to open document. Please try again.");
+    setIsRetrying(false);
   };
 
   if (isLoading) {

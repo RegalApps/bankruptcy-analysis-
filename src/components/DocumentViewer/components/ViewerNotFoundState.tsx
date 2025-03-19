@@ -17,12 +17,23 @@ export const ViewerNotFoundState: React.FC = () => {
         The requested document could not be found or has been deleted.
         You can return to the documents page to view available documents.
       </p>
-      <Button 
-        onClick={() => navigate('/documents')}
-        className="mt-4"
-      >
-        Browse Documents
-      </Button>
+      <div className="flex gap-4 mt-4">
+        <Button 
+          onClick={() => navigate('/documents')}
+          variant="default"
+        >
+          Browse Documents
+        </Button>
+        <Button 
+          onClick={() => navigate('/')}
+          variant="outline"
+        >
+          Return Home
+        </Button>
+      </div>
+      <div className="mt-6 border-t border-muted pt-6 max-w-md text-sm text-muted-foreground">
+        <p>Tip: If you're looking for Form 47 (Consumer Proposal) documents, you can access them through the client portal by selecting a client.</p>
+      </div>
     </div>
   );
 };
