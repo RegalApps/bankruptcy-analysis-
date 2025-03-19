@@ -1,15 +1,13 @@
 
 import { FileText, Eye, MessageSquare, History } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Document } from "../types";
-import { CollaborationPanel } from "@/components/DocumentViewer/CollaborationPanel";
-import { useState, useEffect } from "react";
-import { DocumentPreview } from "@/components/DocumentViewer/DocumentPreview";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
-import { isUUID } from "@/utils/validation";
+import { EmptyDocumentState } from "./FilePreview/EmptyDocumentState";
+import { DocumentHeader } from "./FilePreview/DocumentHeader";
+import { DocumentPreviewTab } from "./FilePreview/DocumentPreviewTab";
+import { CommentsTab } from "./FilePreview/CommentsTab";
+import { ActivityTab } from "./FilePreview/ActivityTab";
+import { useFilePreview } from "./FilePreview/useFilePreview";
 
 interface FilePreviewPanelProps {
   document: Document | null;
@@ -17,94 +15,22 @@ interface FilePreviewPanelProps {
 }
 
 export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelProps) => {
-  const [activeTab, setActiveTab] = useState('preview');
-  const [hasStoragePath, setHasStoragePath] = useState(false);
-  const [temporaryUuid, setTemporaryUuid] = useState<string | null>(null);
-  
-  // Generate a temporary UUID for non-UUID document IDs
-  useEffect(() => {
-    if (document && !isUUID(document.id)) {
-      console.log("Document has non-UUID id, generating temporary UUID for preview:", document.id);
-      setTemporaryUuid(uuidv4());
-    } else {
-      setTemporaryUuid(null);
-    }
-  }, [document]);
-  
-  // Check if document has a valid storage path
-  useEffect(() => {
-    if (document && document.metadata) {
-      // For Form 47 documents, ensure they have a storage path
-      if (document.title.toLowerCase().includes('form 47') || 
-          document.title.toLowerCase().includes('consumer proposal')) {
-        // If no storage_path exists, use a default path for Form 47
-        setHasStoragePath(true);
-      } else if (document.metadata.storage_path) {
-        setHasStoragePath(true);
-      } else {
-        setHasStoragePath(false);
-      }
-    }
-  }, [document]);
+  const {
+    activeTab,
+    setActiveTab,
+    hasStoragePath,
+    effectiveDocumentId,
+    getStoragePath,
+    handleDocumentOpen
+  } = useFilePreview(document, onDocumentOpen);
   
   if (!document) {
-    return (
-      <div className="h-full flex items-center justify-center p-6 text-center">
-        <div>
-          <FileText className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-          <h3 className="text-lg font-medium mb-2">No Document Selected</h3>
-          <p className="text-muted-foreground">
-            Select a document from the list to preview details and collaborate.
-          </p>
-        </div>
-      </div>
-    );
+    return <EmptyDocumentState />;
   }
-
-  // Use the temporary UUID for preview if needed
-  const effectiveDocumentId = temporaryUuid || document.id;
-
-  // For Form 47 documents, ensure we have a storage path to use for preview
-  const getStoragePath = () => {
-    if (document.metadata?.storage_path) {
-      return document.metadata.storage_path;
-    }
-    
-    // If it's a Form 47 but has no storage path, use a default one
-    if (document.title.toLowerCase().includes('form 47') || 
-        document.title.toLowerCase().includes('consumer proposal')) {
-      // This forces a preview for Form 47 documents even if they don't have a storage path
-      return 'sample-documents/form-47-consumer-proposal.pdf';
-    }
-    
-    return '';
-  };
-
-  const handleDocumentOpen = () => {
-    if (temporaryUuid) {
-      toast.info("This document is using a temporary preview. Some features may be limited.");
-    }
-    onDocumentOpen(document.id);
-  };
 
   return (
     <div className="h-full flex flex-col p-4">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-1 truncate">{document.title}</h3>
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Last updated: {new Date(document.updated_at).toLocaleDateString()}
-          </p>
-          <Button 
-            size="sm" 
-            onClick={handleDocumentOpen}
-            className="gap-1"
-          >
-            <Eye className="h-4 w-4" />
-            <span>Open</span>
-          </Button>
-        </div>
-      </div>
+      <DocumentHeader document={document} handleDocumentOpen={handleDocumentOpen} />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="mb-4">
@@ -123,78 +49,24 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
         </TabsList>
         
         <TabsContent value="preview" className="mt-0 flex-1">
-          {hasStoragePath ? (
-            <div className="h-64 overflow-hidden rounded-md border">
-              <DocumentPreview 
-                storagePath={getStoragePath()}
-                documentId={effectiveDocumentId}
-                title={document.title}
-              />
-            </div>
-          ) : (
-            <div className="bg-muted rounded-md p-8 h-64 flex items-center justify-center">
-              <p className="text-muted-foreground text-center">
-                Document preview not available.
-                <br />
-                <Button 
-                  variant="link" 
-                  className="mt-2"
-                  onClick={handleDocumentOpen}
-                >
-                  Open in Document Viewer
-                </Button>
-              </p>
-            </div>
-          )}
-          
-          <div className="mt-4">
-            <h4 className="text-sm font-medium mb-2">AI Summary</h4>
-            <Card>
-              <CardContent className="p-3 text-sm">
-                <p>This document appears to be a {document.type || 'standard document'} related to client {document.title.includes('Form') ? 'financial information' : 'case details'}.</p>
-                <p className="mt-2 text-muted-foreground text-xs">AI summary is a preview feature and may not be accurate.</p>
-              </CardContent>
-            </Card>
-          </div>
+          <DocumentPreviewTab 
+            document={document}
+            hasStoragePath={hasStoragePath}
+            effectiveDocumentId={effectiveDocumentId}
+            getStoragePath={getStoragePath}
+            handleDocumentOpen={handleDocumentOpen}
+          />
         </TabsContent>
         
         <TabsContent value="comments" className="mt-0 flex-1 flex flex-col">
-          <CollaborationPanel 
-            document={{
-              id: effectiveDocumentId,
-              title: document.title,
-              type: document.type || 'document',
-              storage_path: document.metadata?.storage_path || '',
-              comments: []
-            }}
-            onCommentAdded={() => console.log('Comment added')}
+          <CommentsTab 
+            document={document}
+            effectiveDocumentId={effectiveDocumentId}
           />
         </TabsContent>
         
         <TabsContent value="history" className="mt-0 flex-1">
-          <div className="space-y-4">
-            <div className="text-sm">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs">
-                  U
-                </div>
-                <div>
-                  <p className="font-medium">User opened this document</p>
-                  <p className="text-xs text-muted-foreground">Today at {new Date().toLocaleTimeString()}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs">
-                  S
-                </div>
-                <div>
-                  <p className="font-medium">System updated document metadata</p>
-                  <p className="text-xs text-muted-foreground">{new Date(document.updated_at).toLocaleDateString()} at {new Date(document.updated_at).toLocaleTimeString()}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ActivityTab document={document} />
         </TabsContent>
       </Tabs>
     </div>
