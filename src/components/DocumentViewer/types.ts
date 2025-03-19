@@ -46,9 +46,6 @@ export interface DocumentDetails {
   title: string;
   type: string;
   storage_path: string;
-  created_at: string;
-  updated_at: string;
-  metadata?: Record<string, any>;
   deadlines?: Deadline[];
   tasks?: Task[];
   versions?: DocumentVersion[];

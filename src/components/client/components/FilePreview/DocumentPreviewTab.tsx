@@ -3,7 +3,6 @@ import { FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Document } from "../../types";
 import { DocumentPreview } from "@/components/DocumentViewer/DocumentPreview";
-import { Button } from "@/components/ui/button";
 
 interface DocumentPreviewTabProps {
   document: Document;
@@ -54,10 +53,9 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
             <p className="mt-2 text-muted-foreground text-xs">AI summary is a preview feature and may not be accurate.</p>
           </CardContent>
         </Card>
-        <p className="text-xs text-muted-foreground mt-3">
-          Tip: Double-click on a document in the list to open it in the document viewer.
-        </p>
       </div>
     </>
   );
 };
+
+import { Button } from "@/components/ui/button";

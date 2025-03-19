@@ -1,134 +1,96 @@
 
-import React, { useState, useEffect } from "react";
-import { DocumentsPanel } from "./components/DocumentsPanel";
-import { ClientInfoPanel } from "./components/ClientInfoPanel";
-import { FilePreviewPanel } from "./components/FilePreviewPanel";
-import { useClientData } from "./hooks/useClientData";
-import { Document } from "./types";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { 
+  ResizablePanelGroup, 
+  ResizablePanel, 
+  ResizableHandle 
+} from "@/components/ui/resizable";
 import { ClientHeader } from "./components/ClientHeader";
+import { ClientInfoPanel } from "./components/ClientInfoPanel";
+import { DocumentsPanel } from "./components/DocumentsPanel";
+import { FilePreviewPanel } from "./components/FilePreviewPanel";
 import { ClientSkeleton } from "./components/ClientSkeleton";
-import { toast } from "sonner";
+import { ClientNotFound } from "./components/ClientNotFound";
+import { useClientData } from "./hooks/useClientData";
+import { ClientViewerProps } from "./types";
+import { useState } from "react";
 
-interface ClientViewerProps {
-  clientId: string;
-  onBack: () => void;
-  onDocumentOpen: (documentId: string) => void;
-  onError?: () => void;
-}
-
-export const ClientViewer: React.FC<ClientViewerProps> = ({ 
-  clientId, 
-  onBack,
-  onDocumentOpen,
-  onError
-}) => {
-  // Pass onBack to useClientData
-  const { client, documents, isLoading, error, activeTab, setActiveTab } = useClientData(clientId, onBack);
+export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: ClientViewerProps) => {
+  const { client, documents, isLoading, activeTab, setActiveTab, error } = useClientData(clientId, onBack);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  
+  // Find the selected document
+  const selectedDocument = selectedDocumentId 
+    ? documents.find(doc => doc.id === selectedDocumentId)
+    : null;
 
-  // Set selected document when document ID changes
-  useEffect(() => {
-    if (selectedDocumentId && documents.length > 0) {
-      const document = documents.find(doc => doc.id === selectedDocumentId);
-      setSelectedDocument(document || null);
-    } else {
-      setSelectedDocument(null);
-    }
-  }, [selectedDocumentId, documents]);
+  // If there's an error, call the onError callback if provided
+  if (error && onError) {
+    console.error("Client data error:", error);
+    onError();
+  }
 
-  // Error handling
-  useEffect(() => {
-    if (error) {
-      console.error("Error loading client data:", error);
-      toast.error("Failed to load client data");
-      if (onError) {
-        onError();
-      }
-    }
-  }, [error, onError]);
-
-  const handleDocumentSelect = (documentId: string) => {
-    console.log("Selected document ID:", documentId);
-    setSelectedDocumentId(documentId);
-  };
-
-  const handleDocumentOpen = (documentId: string) => {
-    console.log("ClientViewer: Opening document with ID:", documentId);
-    
-    // Find the document to ensure we're passing the correct ID
-    const document = documents.find(doc => doc.id === documentId);
-    if (document) {
-      onDocumentOpen(document.id);
-    } else {
-      console.warn("Document not found in documents array, using ID directly");
-      onDocumentOpen(documentId);
-    }
-  };
-
+  // If still loading, show skeleton
   if (isLoading) {
     return <ClientSkeleton onBack={onBack} />;
   }
 
+  // If client not found
   if (!client) {
-    return (
-      <div className="p-8 text-center">
-        <h2 className="text-xl font-semibold mb-2">Client Not Found</h2>
-        <p className="text-muted-foreground mb-4">
-          We couldn't find the client you're looking for.
-        </p>
-        <button 
-          onClick={onBack}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-        >
-          Go Back
-        </button>
-      </div>
-    );
+    return <ClientNotFound onBack={onBack} />;
   }
 
-  // Calculate document count for ClientInfoPanel
-  const documentCount = documents.length;
-  // Find the most recent document's updated_at date to use as last activity date
-  const lastActivityDate = documents.length > 0 
-    ? documents.reduce((latest, doc) => {
-        return new Date(doc.updated_at) > new Date(latest) ? doc.updated_at : latest;
-      }, documents[0].updated_at)
-    : client.last_interaction;
+  // Handle document selection
+  const handleDocumentSelect = (documentId: string) => {
+    setSelectedDocumentId(documentId);
+  };
+
+  // Get last activity date
+  const lastActivityDate = documents.length > 0 ? documents[0].updated_at : undefined;
 
   return (
-    <div className="h-full flex flex-col">
-      <ClientHeader client={client} onBack={onBack} />
-      
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-        <div className="md:col-span-1">
-          <ClientInfoPanel 
-            client={client} 
-            documentCount={documentCount}
-            lastActivityDate={lastActivityDate}
-            documents={documents}
-            onDocumentSelect={handleDocumentSelect}
-          />
-        </div>
-        
-        <div className="md:col-span-1 lg:col-span-1 border rounded-lg">
-          <DocumentsPanel 
-            documents={documents} 
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            onDocumentSelect={handleDocumentSelect}
-            onDocumentOpen={handleDocumentOpen}
-            selectedDocumentId={selectedDocumentId}
-          />
-        </div>
-        
-        <div className="md:col-span-1 lg:col-span-2 border rounded-lg">
-          <FilePreviewPanel 
-            document={selectedDocument} 
-            onDocumentOpen={handleDocumentOpen}
-          />
-        </div>
-      </div>
-    </div>
+    <Card className="h-full">
+      <CardHeader className="border-b pb-3 px-0 pt-0">
+        <ClientHeader onBack={onBack} />
+      </CardHeader>
+      <CardContent className="p-0">
+        <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)]">
+          {/* Left panel - Client info & Document Tree */}
+          <ResizablePanel defaultSize={20} minSize={15}>
+            <ClientInfoPanel 
+              client={client} 
+              documentCount={documents.length}
+              lastActivityDate={lastActivityDate}
+              documents={documents}
+              onDocumentSelect={handleDocumentSelect}
+            />
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Middle panel - Client Files Hub */}
+          <ResizablePanel defaultSize={50}>
+            <DocumentsPanel
+              documents={documents}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onDocumentOpen={onDocumentOpen}
+              onDocumentSelect={handleDocumentSelect}
+              selectedDocumentId={selectedDocumentId}
+            />
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Right panel - File Preview & Collaboration */}
+          <ResizablePanel defaultSize={30} minSize={20}>
+            <FilePreviewPanel 
+              document={selectedDocument} 
+              onDocumentOpen={onDocumentOpen}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </CardContent>
+    </Card>
   );
 };

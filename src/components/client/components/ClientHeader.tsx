@@ -1,14 +1,12 @@
 
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Client } from "../types";
 
 interface ClientHeaderProps {
-  client: Client;
   onBack: () => void;
 }
 
-export const ClientHeader = ({ client, onBack }: ClientHeaderProps) => {
+export const ClientHeader = ({ onBack }: ClientHeaderProps) => {
   return (
     <div className="flex items-center p-4">
       <Button 
@@ -20,7 +18,7 @@ export const ClientHeader = ({ client, onBack }: ClientHeaderProps) => {
         <ArrowLeft className="h-4 w-4 mr-1" />
         Back
       </Button>
-      <h2 className="text-lg font-semibold">Client: {client.name}</h2>
+      <h2 className="text-lg font-semibold">Client Viewer</h2>
     </div>
   );
 };

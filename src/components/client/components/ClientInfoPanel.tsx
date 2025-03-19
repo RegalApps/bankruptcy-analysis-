@@ -5,7 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { DocumentTree } from "./DocumentTree";
-import { Document, Client } from "../types";
+import { Document } from "../types";
+
+interface Client {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+  last_interaction?: string;
+  engagement_score?: number;
+}
 
 interface ClientInfoPanelProps {
   client: Client;

@@ -17,23 +17,12 @@ export const ViewerNotFoundState: React.FC = () => {
         The requested document could not be found or has been deleted.
         You can return to the documents page to view available documents.
       </p>
-      <div className="flex gap-4 mt-4">
-        <Button 
-          onClick={() => navigate('/documents')}
-          variant="default"
-        >
-          Browse Documents
-        </Button>
-        <Button 
-          onClick={() => navigate('/')}
-          variant="outline"
-        >
-          Return Home
-        </Button>
-      </div>
-      <div className="mt-6 border-t border-muted pt-6 max-w-md text-sm text-muted-foreground">
-        <p>If you are trying to view a client document like Form 47 (Consumer Proposal), please use the client viewer to access these documents. They should appear in both Recently Accessed Documents and in the Client Viewer.</p>
-      </div>
+      <Button 
+        onClick={() => navigate('/documents')}
+        className="mt-4"
+      >
+        Browse Documents
+      </Button>
     </div>
   );
 };

@@ -1,23 +1,16 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientHeader } from "./ClientHeader";
-import { Client } from "../types";
 
 interface ClientSkeletonProps {
   onBack: () => void;
 }
 
 export const ClientSkeleton = ({ onBack }: ClientSkeletonProps) => {
-  // Create a placeholder client for the header
-  const placeholderClient: Client = {
-    id: "loading",
-    name: "Loading...",
-  };
-
   return (
     <div className="h-full border rounded-md">
       <div className="border-b">
-        <ClientHeader client={placeholderClient} onBack={onBack} />
+        <ClientHeader onBack={onBack} />
       </div>
       <div className="flex h-[calc(100%-4rem)]">
         <div className="w-64 border-r p-4">

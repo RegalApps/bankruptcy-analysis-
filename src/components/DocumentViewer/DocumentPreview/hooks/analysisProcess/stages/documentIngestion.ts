@@ -15,60 +15,6 @@ export const documentIngestion = async (
   setProgress(10);
   
   console.log('Fetching document record for path:', storagePath);
-  
-  // Check if this is a Form 47 path (special handling)
-  const isForm47Path = storagePath.toLowerCase().includes('form-47') || 
-                    storagePath.toLowerCase().includes('consumer-proposal');
-  
-  if (isForm47Path) {
-    console.log('Detected Form 47 path, using special handling');
-    
-    // First try to find existing Form 47 documents
-    const { data: form47Docs, error: searchError } = await supabase
-      .from('documents')
-      .select('id, title, metadata, ai_processing_status, storage_path')
-      .or(`title.ilike.%form 47%,title.ilike.%consumer proposal%,metadata->formType.eq.form-47,type.eq.form-47`)
-      .limit(1);
-      
-    if (!searchError && form47Docs && form47Docs.length > 0) {
-      console.log('Found existing Form 47 document:', form47Docs[0]);
-      
-      // Update storage_path if needed
-      if (!form47Docs[0].storage_path) {
-        const { error: updateError } = await supabase
-          .from('documents')
-          .update({ storage_path: storagePath })
-          .eq('id', form47Docs[0].id);
-          
-        if (!updateError) {
-          form47Docs[0].storage_path = storagePath;
-        }
-      }
-      
-      await updateAnalysisStatus(form47Docs[0], 'document_ingestion', 'analysis_started');
-      return form47Docs[0];
-    }
-    
-    // If no existing Form 47 document, create a fallback one
-    console.log('No existing Form 47 document found, creating fallback');
-    
-    const fallbackDocument = {
-      id: 'form-47-consumer-proposal',
-      title: 'Form 47 - Consumer Proposal',
-      type: 'pdf',
-      storage_path: storagePath,
-      metadata: {
-        formType: 'form-47',
-        clientName: 'Josh Hart',
-        description: 'Consumer Proposal Document'
-      },
-      ai_processing_status: 'complete'
-    };
-    
-    return fallbackDocument;
-  }
-  
-  // Normal path for non-Form 47 documents
   const { data: documentRecord, error: fetchError } = await supabase
     .from('documents')
     .select('id, title, metadata, ai_processing_status, storage_path')

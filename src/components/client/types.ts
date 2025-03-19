@@ -19,14 +19,6 @@ export interface Document {
   parent_folder_id?: string;
   is_folder?: boolean;
   folder_type?: string;
-  storage_path?: string;
-  original_id?: string;
-  form_type?: 'form-47' | 'form-76' | string;  // Adding specific form type for better identification
-  // Additional props for compatibility
-  size?: number;
-  user_id?: string;
-  description?: string;
-  ai_processing_status?: string;
 }
 
 export interface ClientViewerProps {
@@ -34,15 +26,4 @@ export interface ClientViewerProps {
   onBack: () => void;
   onDocumentOpen: (documentId: string) => void;
   onError?: () => void;
-}
-
-// Added this interface to ensure document consistency across the app
-export interface DocumentViewerCompatible {
-  id: string;
-  title: string;
-  storage_path?: string;
-  created_at: string;
-  updated_at: string;
-  metadata?: Record<string, any>;
-  type?: string;
 }
