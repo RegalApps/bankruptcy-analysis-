@@ -2,26 +2,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useEffect, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export const Preferences = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    // Check if user has a theme preference
-    const theme = localStorage.getItem("theme");
-    setIsDarkMode(theme === "dark");
-    
-    // Apply the theme
-    document.documentElement.setAttribute("data-theme", theme || "light");
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = isDarkMode ? "light" : "dark";
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-  };
+  const { theme, toggleTheme } = useTheme();
+  const isDarkMode = theme === "dark";
 
   return (
     <div className="space-y-6">

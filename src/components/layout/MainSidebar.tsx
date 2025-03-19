@@ -4,10 +4,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { BrainCog, Bell, FileText, Home, MessageCircle, PieChart, Settings, User, Users, FileCheck, BarChart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export const MainSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
 
   const isActivePath = (path: string) => location.pathname === path;
 
@@ -24,7 +27,10 @@ export const MainSidebar = () => {
   ];
 
   return (
-    <aside className="w-64 h-screen flex flex-col fixed left-0 top-0 z-40 border-r bg-white dark:bg-background">
+    <aside className={cn(
+      "w-64 h-screen flex flex-col fixed left-0 top-0 z-40 border-r",
+      isDarkMode ? "bg-background" : "bg-white"
+    )}>
       {/* App Logo - Enhanced for better visibility */}
       <div className="p-4 border-b">
         <Button
@@ -38,7 +44,10 @@ export const MainSidebar = () => {
               alt="Secure Files AI Logo" 
               className="w-9 h-9"
             />
-            <span className="font-bold text-lg text-black dark:text-white">Secure Files AI</span>
+            <span className={cn(
+              "font-bold text-lg",
+              isDarkMode ? "text-white" : "text-black"
+            )}>Secure Files AI</span>
           </div>
         </Button>
       </div>
@@ -63,7 +72,9 @@ export const MainSidebar = () => {
               )} />
               <span className={cn(
                 "text-sm font-medium",
-                isActivePath(item.path) ? "text-accent" : "text-black dark:text-white"
+                isActivePath(item.path) ? 
+                  "text-accent" : 
+                  isDarkMode ? "text-white" : "text-black"
               )}>
                 {item.label}
               </span>
@@ -80,7 +91,10 @@ export const MainSidebar = () => {
           onClick={() => navigate("/settings")}
         >
           <Settings className="h-5 w-5 text-muted-foreground" />
-          <span className="text-sm font-medium text-black dark:text-white">Settings</span>
+          <span className={cn(
+            "text-sm font-medium",
+            isDarkMode ? "text-white" : "text-black"
+          )}>Settings</span>
         </Button>
         
         <Button 
@@ -89,7 +103,10 @@ export const MainSidebar = () => {
           onClick={() => navigate("/profile")}
         >
           <User className="h-5 w-5 text-muted-foreground" />
-          <span className="text-sm font-medium text-black dark:text-white">Profile</span>
+          <span className={cn(
+            "text-sm font-medium",
+            isDarkMode ? "text-white" : "text-black"
+          )}>Profile</span>
         </Button>
       </div>
     </aside>

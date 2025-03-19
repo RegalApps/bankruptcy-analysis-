@@ -30,11 +30,22 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('theme', theme);
     
     // Apply the theme to the document
+    const root = document.documentElement;
+    
     if (theme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
+      root.classList.add('dark-mode-transition');
+      root.setAttribute('data-theme', 'dark');
     } else {
-      document.documentElement.removeAttribute('data-theme');
+      root.classList.add('dark-mode-transition');
+      root.removeAttribute('data-theme');
     }
+    
+    // Remove transition class after animation completes
+    const transitionTimeout = setTimeout(() => {
+      root.classList.remove('dark-mode-transition');
+    }, 300);
+    
+    return () => clearTimeout(transitionTimeout);
   }, [theme]);
 
   const toggleTheme = () => {

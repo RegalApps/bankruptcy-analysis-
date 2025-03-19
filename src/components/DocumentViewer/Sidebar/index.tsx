@@ -7,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle, Calendar, FileSpreadsheet } from "lucide-react";
 import logger from "@/utils/logger";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   document: DocumentDetailsType;
@@ -14,6 +16,9 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated }) => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
+  
   const analysisContent = document.analysis?.[0]?.content;
   const extractedInfo = analysisContent?.extracted_info || {};
 
@@ -30,7 +35,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   logger.debug('Full document data:', document);
 
   return (
-    <div className="h-full bg-white dark:bg-card/50 rounded-md shadow-sm">
+    <div className={cn(
+      "h-full rounded-md shadow-sm",
+      isDarkMode ? "bg-card/50" : "bg-white"
+    )}>
       <div className="p-3 border-b border-border/50 bg-muted/30">
         <h3 className="font-medium text-sm">Document Details</h3>
       </div>
