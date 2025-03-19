@@ -21,6 +21,7 @@ export interface Document {
   folder_type?: string;
   storage_path?: string;
   original_id?: string;
+  form_type?: 'form-47' | 'form-76' | string;  // Adding specific form type for better identification
 }
 
 export interface ClientViewerProps {

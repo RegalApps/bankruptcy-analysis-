@@ -31,16 +31,23 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   // Check if document has a valid storage path
   useEffect(() => {
     if (document) {
-      // For Form 47 documents, ensure they have a storage path
-      if (document.title.toLowerCase().includes('form 47') || 
-          document.title.toLowerCase().includes('consumer proposal')) {
-        // If no storage_path exists, use a default path for Form 47
+      // Special handling for Form 47 documents
+      const isForm47 = document.title.toLowerCase().includes('form 47') || 
+                     document.title.toLowerCase().includes('consumer proposal') ||
+                     document.type?.toLowerCase() === 'form-47' || 
+                     document.metadata?.formType === 'form-47';
+      
+      if (isForm47) {
+        // Always set storage path for Form 47 documents
         setHasStoragePath(true);
-      } else if (document.metadata?.storage_path) {
+      } 
+      else if (document.metadata?.storage_path) {
         setHasStoragePath(true);
-      } else if (document.storage_path) {
+      } 
+      else if (document.storage_path) {
         setHasStoragePath(true);
-      } else {
+      } 
+      else {
         setHasStoragePath(false);
         setLoadError("Document has no storage path. Preview unavailable.");
       }
@@ -64,7 +71,9 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     
     // If it's a Form 47 but has no storage path, use a default one
     if (document.title.toLowerCase().includes('form 47') || 
-        document.title.toLowerCase().includes('consumer proposal')) {
+        document.title.toLowerCase().includes('consumer proposal') ||
+        document.type?.toLowerCase() === 'form-47' ||
+        document.metadata?.formType === 'form-47') {
       // This forces a preview for Form 47 documents even if they don't have a storage path
       return 'sample-documents/form-47-consumer-proposal.pdf';
     }
@@ -77,7 +86,20 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     
     try {
       console.log("Opening document with ID:", document.id);
-      onDocumentOpen(document.id);
+      
+      // Special handling for Form 47 documents - ensure they always open
+      const isForm47 = document.title.toLowerCase().includes('form 47') || 
+                    document.title.toLowerCase().includes('consumer proposal') ||
+                    document.type?.toLowerCase() === 'form-47' ||
+                    document.metadata?.formType === 'form-47';
+      
+      if (isForm47) {
+        // Use a consistent ID for Form 47 documents
+        const form47Id = document.id.includes('form-47') ? document.id : 'form-47-consumer-proposal';
+        onDocumentOpen(form47Id);
+      } else {
+        onDocumentOpen(document.id);
+      }
     } catch (error) {
       console.error("Error opening document:", error);
       toast.error("Failed to open document");

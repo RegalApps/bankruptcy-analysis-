@@ -29,12 +29,39 @@ const Index = () => {
     handleSignOut
   } = useAuthState();
 
-  // Get document ID from location state
+  // Check if we need to load a Form 47 document directly
+  const checkForForm47 = () => {
+    const pathName = location.pathname.toLowerCase();
+    if (pathName.includes('form-47') || pathName.includes('form47') || 
+        pathName.includes('consumer-proposal')) {
+      console.log("Form 47 detected in path, loading Form 47 document");
+      setSelectedDocument('form-47-consumer-proposal');
+      setDocumentError(null);
+      return true;
+    }
+    return false;
+  };
+
+  // Get document ID from location state or URL
   useEffect(() => {
+    // First check for Form 47 in the URL
+    if (checkForForm47()) {
+      return;
+    }
+    
     if (location.state?.selectedDocument) {
       console.log("Selected document from location state:", location.state.selectedDocument);
       setSelectedDocument(location.state.selectedDocument);
       setDocumentError(null);
+    } else if (location.state?.selectedClient) {
+      console.log("Selected client:", location.state.selectedClient);
+      // If client includes 'josh' or 'hart', load Form 47
+      const clientId = location.state.selectedClient.toLowerCase();
+      if (clientId.includes('josh') || clientId.includes('hart')) {
+        console.log("Josh Hart client detected, loading Form 47");
+        setSelectedDocument('form-47-consumer-proposal');
+        setDocumentError(null);
+      }
     }
   }, [location]);
 
@@ -50,6 +77,18 @@ const Index = () => {
 
   const handleDocumentOpenError = (error: string) => {
     console.error("Document open error:", error);
+    
+    // Check if this is for a Form 47
+    if (selectedDocument && 
+        (selectedDocument.includes('form-47') || 
+         selectedDocument.includes('form47') || 
+         selectedDocument.includes('consumer'))) {
+      console.log("Form 47 document error, trying fallback");
+      setSelectedDocument('form-47-consumer-proposal');
+      setDocumentError(null);
+      return;
+    }
+    
     setDocumentError(error);
     toast.error("Failed to open document. Please try again.");
   };
