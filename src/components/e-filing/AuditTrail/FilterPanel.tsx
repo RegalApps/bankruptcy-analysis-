@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FilterOptions } from "./types/filterTypes";
 import { TimeframeFilter } from "./FilterComponents/TimeframeFilter";
 import { ActionTypesFilter } from "./FilterComponents/ActionTypesFilter";
@@ -25,10 +25,14 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
   
   // Recent activity - show the latest 5 entries
   const recentActivity = entries.slice(0, 5);
+
+  // Apply filters when they change
+  useEffect(() => {
+    onFilterChange(filters);
+  }, [filters, onFilterChange]);
   
   const updateFilters = (newFilters: FilterOptions) => {
     setFilters(newFilters);
-    onFilterChange(newFilters);
   };
   
   const clearAllFilters = () => {
@@ -38,7 +42,6 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
       users: new Set<string>()
     };
     setFilters(newFilters);
-    onFilterChange(newFilters);
   };
   
   // Calculate active filter count for the badge
@@ -65,8 +68,7 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
       <TimeframeFilter 
         selectedTimeframe={filters.timeframe} 
         onTimeframeChange={(timeframe) => {
-          const newFilters = { ...filters, timeframe };
-          updateFilters(newFilters);
+          updateFilters({ ...filters, timeframe });
         }} 
       />
       
@@ -82,8 +84,7 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
             newActionTypes.add(actionType);
           }
           
-          const newFilters = { ...filters, actionTypes: newActionTypes };
-          updateFilters(newFilters);
+          updateFilters({ ...filters, actionTypes: newActionTypes });
         }}
       />
       
@@ -99,8 +100,7 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
             newUsers.add(userName);
           }
           
-          const newFilters = { ...filters, users: newUsers };
-          updateFilters(newFilters);
+          updateFilters({ ...filters, users: newUsers });
         }}
       />
       

@@ -6,7 +6,7 @@ import { DetailPanel } from "./DetailPanel";
 import { FilterPanel } from "./FilterPanel";
 import { FilterOptions } from "./types/filterTypes";
 import { AuditEntry } from "./TimelineEntry";
-import { Separator } from "@/components/ui/separator";
+import { isWithinTimeframe } from "@/utils/validation";
 
 // Generate mock audit data
 const generateMockData = (): AuditEntry[] => {
@@ -85,6 +85,11 @@ export const AuditTrailDashboard = () => {
   const [filteredEntries, setFilteredEntries] = useState<AuditEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<AuditEntry | null>(null);
   const [currentClientId, setCurrentClientId] = useState(1);
+  const [filters, setFilters] = useState<FilterOptions>({
+    actionTypes: new Set<string>(),
+    timeframe: 'all',
+    users: new Set<string>()
+  });
   
   useEffect(() => {
     // In a real app, we would fetch data based on the client ID
@@ -95,6 +100,11 @@ export const AuditTrailDashboard = () => {
     setSelectedEntry(null);
   }, [currentClientId]);
   
+  // Apply filters whenever filters or allEntries change
+  useEffect(() => {
+    applyFilters();
+  }, [filters, allEntries]);
+  
   const handleClientChange = (clientId: number) => {
     setCurrentClientId(clientId);
   };
@@ -103,7 +113,12 @@ export const AuditTrailDashboard = () => {
     setSelectedEntry(entry);
   };
   
-  const handleFilterChange = (filters: FilterOptions) => {
+  const handleFilterChange = (newFilters: FilterOptions) => {
+    setFilters(newFilters);
+  };
+  
+  const applyFilters = () => {
+    console.log("Applying filters:", filters);
     let filtered = [...allEntries];
     
     // Filter by action type
@@ -120,24 +135,14 @@ export const AuditTrailDashboard = () => {
       );
     }
     
-    // Filter by timeframe
+    // Filter by timeframe using the utility function
     if (filters.timeframe !== 'all') {
-      const now = new Date();
-      let startDate = new Date();
-      
-      if (filters.timeframe === 'today') {
-        startDate.setHours(0, 0, 0, 0);
-      } else if (filters.timeframe === 'week') {
-        startDate.setDate(now.getDate() - 7);
-      } else if (filters.timeframe === 'month') {
-        startDate.setMonth(now.getMonth() - 1);
-      }
-      
       filtered = filtered.filter(entry => 
-        entry.timestamp >= startDate
+        isWithinTimeframe(entry.timestamp, filters.timeframe)
       );
     }
     
+    console.log("Filtered entries count:", filtered.length);
     setFilteredEntries(filtered);
     
     // If the selected entry is filtered out, clear the selection
