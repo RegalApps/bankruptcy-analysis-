@@ -12,6 +12,7 @@ interface ClientSelectionSectionProps {
   enableClientCreation: boolean;
   isCreatingClient: boolean;
   onOpenIntakeDialog: () => void;
+  onCreateDirectClient?: () => void; // New prop for direct client creation
 }
 
 export const ClientSelectionSection = ({
@@ -19,7 +20,8 @@ export const ClientSelectionSection = ({
   onClientSelect,
   enableClientCreation,
   isCreatingClient,
-  onOpenIntakeDialog
+  onOpenIntakeDialog,
+  onCreateDirectClient
 }: ClientSelectionSectionProps) => {
   return (
     <div className="space-y-6">
@@ -41,24 +43,37 @@ export const ClientSelectionSection = ({
           </div>
           
           {enableClientCreation && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="whitespace-nowrap w-full md:w-auto"
-              onClick={onOpenIntakeDialog}
-              disabled={isCreatingClient}
-            >
-              {isCreatingClient ? (
-                <>
-                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  + Add New Client
-                </>
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="whitespace-nowrap w-full md:w-auto"
+                onClick={onOpenIntakeDialog}
+                disabled={isCreatingClient}
+              >
+                {isCreatingClient ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    + Add Client With Details
+                  </>
+                )}
+              </Button>
+              
+              {onCreateDirectClient && (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="whitespace-nowrap w-full md:w-auto"
+                  onClick={onCreateDirectClient}
+                >
+                  + Quick Add Client
+                </Button>
               )}
-            </Button>
+            </div>
           )}
         </div>
       </div>

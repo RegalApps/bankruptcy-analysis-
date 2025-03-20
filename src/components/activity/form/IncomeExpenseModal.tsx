@@ -15,6 +15,7 @@ import { NewClientIntakeDialog } from "./NewClientIntakeDialog";
 import { useIncomeExpenseForm } from "../hooks/useIncomeExpenseForm";
 import { initialFormData } from "../hooks/initialState";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from 'uuid';
 
 interface IncomeExpenseModalProps {
   open: boolean;
@@ -75,13 +76,39 @@ export const IncomeExpenseModal = ({
       onClientSelect(clientId);
     }
     
-    setActiveTab("income");
+    setActiveTab("client");
   };
 
   const handleClientCreated = (newClientId: string) => {
     setShowIntakeDialog(false);
     handleClientSelect(newClientId);
     toast.success("New client created successfully");
+  };
+
+  // Function to handle direct client creation
+  const handleDirectClientCreation = () => {
+    // Generate a UUID for the new client
+    const newClientId = uuidv4();
+    
+    // Create a temporary client with the new ID
+    const newClient = { 
+      id: newClientId, 
+      name: "New Client", 
+      status: "active",
+      last_activity: new Date().toISOString().split('T')[0]
+    };
+    
+    // Set the new client as selected
+    setSelectedClient(newClient);
+    
+    if (onClientSelect) {
+      onClientSelect(newClientId);
+    }
+    
+    // Set the active tab to client profile for user to fill in details
+    setActiveTab("client");
+    
+    toast.success("New client created. Please fill in client details.");
   };
   
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -125,7 +152,7 @@ export const IncomeExpenseModal = ({
           <DialogHeader className="p-4 border-b flex-shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                📝 New Income & Expense Form
+                📝 {selectedClient ? 'Income & Expense Form' : 'New Income & Expense Form'}
               </DialogTitle>
               <DialogClose className="h-4 w-4" onClick={handleCloseWithConfirmation} />
             </div>
@@ -152,6 +179,7 @@ export const IncomeExpenseModal = ({
                   handleDocumentSubmit={handleDocumentSubmit}
                   isSubmitting={isSubmitting}
                   handleFieldSelectChange={handleFieldSelectChange}
+                  onCreateDirectClient={handleDirectClientCreation}
                 />
               </form>
             </div>

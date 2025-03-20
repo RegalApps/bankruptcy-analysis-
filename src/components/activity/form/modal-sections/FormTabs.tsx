@@ -29,6 +29,7 @@ interface FormTabsProps {
   handleDocumentSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   handleFieldSelectChange: (field: string, value: string) => void;
+  onCreateDirectClient?: () => void; // New prop for direct client creation
 }
 
 export const FormTabs = ({
@@ -48,7 +49,8 @@ export const FormTabs = ({
   handleSaveDraft,
   handleDocumentSubmit,
   isSubmitting,
-  handleFieldSelectChange
+  handleFieldSelectChange,
+  onCreateDirectClient
 }: FormTabsProps) => {
   const handleConsentChange = (checked: boolean) => {
     const consentEvent = {
@@ -85,6 +87,7 @@ export const FormTabs = ({
         enableClientCreation={enableClientCreation}
         isCreatingClient={isCreatingClient}
         onOpenIntakeDialog={() => setShowIntakeDialog(true)}
+        onCreateDirectClient={onCreateDirectClient}
       />
     );
   }
