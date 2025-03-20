@@ -80,7 +80,7 @@ export const ActivityPage = () => {
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Client Information</CardTitle>
-                <CardDescription>Select a client to manage their financial data</CardDescription>
+                <CardDescription>Select a client or create a new form to get started</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
@@ -95,6 +95,7 @@ export const ActivityPage = () => {
                     <IncomeExpenseButton 
                       selectedClient={selectedClient}
                       onClientSelect={handleClientSelect}
+                      createClientEnabled={true}
                     />
                   </div>
                 </div>

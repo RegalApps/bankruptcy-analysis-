@@ -11,6 +11,7 @@ interface IncomeExpenseButtonProps {
   className?: string;
   selectedClient?: Client | null;
   onClientSelect?: (clientId: string) => void;
+  createClientEnabled?: boolean;
 }
 
 export const IncomeExpenseButton = ({ 
@@ -18,7 +19,8 @@ export const IncomeExpenseButton = ({
   size = "lg", 
   className = "",
   selectedClient = null,
-  onClientSelect
+  onClientSelect,
+  createClientEnabled = true
 }: IncomeExpenseButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -40,6 +42,7 @@ export const IncomeExpenseButton = ({
         onOpenChange={setIsModalOpen}
         selectedClient={selectedClient}
         onClientSelect={onClientSelect}
+        enableClientCreation={createClientEnabled}
       />
     </>
   );
