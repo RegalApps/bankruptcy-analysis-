@@ -12,7 +12,6 @@ interface ClientSelectionSectionProps {
   enableClientCreation: boolean;
   isCreatingClient: boolean;
   onOpenIntakeDialog: () => void;
-  onCreateDirectClient?: () => void;
 }
 
 export const ClientSelectionSection = ({
@@ -21,7 +20,6 @@ export const ClientSelectionSection = ({
   enableClientCreation,
   isCreatingClient,
   onOpenIntakeDialog,
-  onCreateDirectClient
 }: ClientSelectionSectionProps) => {
   return (
     <div className="space-y-6">
@@ -62,17 +60,6 @@ export const ClientSelectionSection = ({
                   </>
                 )}
               </Button>
-              
-              {onCreateDirectClient && (
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  className="whitespace-nowrap w-full md:w-auto"
-                  onClick={onCreateDirectClient}
-                >
-                  + Quick Add Client
-                </Button>
-              )}
             </div>
           )}
         </div>

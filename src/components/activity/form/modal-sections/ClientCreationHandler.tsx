@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Client } from "../../types";
 import { NewClientIntakeDialog } from "../NewClientIntakeDialog";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid';
 
 interface ClientCreationHandlerProps {
   onClientCreated: (clientId: string) => void;
@@ -34,25 +33,13 @@ export const useClientCreation = (
     onClientSelect(clientId);
   };
 
-  const handleDirectClientCreation = () => {
-    // Generate a UUID for the new client
-    const newClientId = uuidv4();
-    
-    // Create a temporary client with the new ID
-    // Pass the client ID to the parent component
-    onClientSelect(newClientId);
-    
-    toast.success("New client created. Please fill in client details.");
-  };
-
   return {
     showIntakeDialog,
     setShowIntakeDialog,
     isCreatingClient,
     setIsCreatingClient,
     handleClientCreated,
-    handleClientSelect,
-    handleDirectClientCreation
+    handleClientSelect
   };
 };
 

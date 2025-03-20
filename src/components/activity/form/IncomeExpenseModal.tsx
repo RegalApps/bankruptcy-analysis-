@@ -53,8 +53,7 @@ export const IncomeExpenseModal = ({
     isCreatingClient,
     setIsCreatingClient,
     handleClientCreated,
-    handleClientSelect,
-    handleDirectClientCreation
+    handleClientSelect
   } = useClientCreation(
     (clientId: string) => {
       setSelectedClient({ 
@@ -121,7 +120,6 @@ export const IncomeExpenseModal = ({
                 handleDocumentSubmit={handleDocumentSubmit}
                 isSubmitting={isSubmitting}
                 handleFieldSelectChange={handleFieldSelectChange}
-                onCreateDirectClient={handleDirectClientCreation}
               />
             </form>
           </div>
