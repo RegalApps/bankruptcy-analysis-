@@ -50,6 +50,7 @@ export const ClientCreationDialogWrapper = ({
 }: ClientCreationHandlerProps) => {
   const [showIntakeDialog, setShowIntakeDialog] = useState(false);
 
+  // This component should pass the showIntakeDialog state to the dialog
   return (
     <NewClientIntakeDialog
       open={showIntakeDialog}

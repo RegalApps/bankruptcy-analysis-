@@ -22,6 +22,7 @@ export const useFormSubmission = (
   };
   
   const handleDocumentSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent default to avoid unintended form submission
     handleFormSubmit(e).catch(err => {
       console.error("Error in document submission:", err);
     });

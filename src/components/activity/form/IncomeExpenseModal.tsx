@@ -134,10 +134,12 @@ export const IncomeExpenseModal = ({
         </div>
       </ModalWrapper>
 
-      <ClientCreationDialogWrapper
+      {/* This is the dialog that should appear when "Add Client With Details" is clicked */}
+      <NewClientIntakeDialog
+        open={showIntakeDialog}
+        onOpenChange={setShowIntakeDialog}
         onClientCreated={handleClientCreated}
         setIsCreatingClient={setIsCreatingClient}
-        isCreatingClient={isCreatingClient}
       />
     </>
   );

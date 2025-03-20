@@ -1,13 +1,10 @@
+
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  ClientProfileTabContent, 
-  IncomeTabContent, 
-  ExpensesTabContent, 
-  SavingsTabContent, 
-  SignatureTabContent 
+  ClientSelectionSection,
+  TabContentComponents
 } from "./TabContentComponents";
-import { ClientSelectionSection } from "./ClientSelectionSection";
 import { IncomeExpenseData, Client } from "../../types";
 
 interface FormTabsProps {
@@ -20,10 +17,10 @@ interface FormTabsProps {
   handleClientSelect: (clientId: string) => void;
   setShowIntakeDialog: (show: boolean) => void;
   formData: IncomeExpenseData;
-  previousMonthData: any;
-  historicalData: any;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onFrequencyChange: (type: 'income' | 'expense') => (value: string) => void;
+  previousMonthData: IncomeExpenseData;
+  historicalData: any[];
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFrequencyChange: (field: string, value: string) => void;
   handleSaveDraft: () => void;
   handleDocumentSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
@@ -52,33 +49,18 @@ export const FormTabs = ({
   const handleConsentChange = (checked: boolean) => {
     const consentEvent = {
       target: {
-        name: 'consent_data_use',
-        value: checked ? 'true' : 'false'
+        name: "consent_signature",
+        value: checked ? "signed" : ""
       }
     } as React.ChangeEvent<HTMLInputElement>;
     
     onChange(consentEvent);
-    
-    if (checked) {
-      const todayDate = new Date().toISOString().split('T')[0];
-      const dateEvent = {
-        target: {
-          name: 'consent_date',
-          value: todayDate
-        }
-      } as React.ChangeEvent<HTMLInputElement>;
-      
-      onChange(dateEvent);
-    }
   };
-
-  const handleMaritalStatusChange = (value: string) => {
-    handleFieldSelectChange('marital_status', value);
-  };
-
+  
+  // If no client is selected, show client selection view
   if (!selectedClient) {
     return (
-      <ClientSelectionSection
+      <ClientSelectionSection 
         selectedClient={selectedClient}
         onClientSelect={handleClientSelect}
         enableClientCreation={enableClientCreation}
@@ -87,91 +69,59 @@ export const FormTabs = ({
       />
     );
   }
-
+  
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-      <TabsList className="grid grid-cols-5 mb-4">
-        <TabsTrigger value="client">Client Info</TabsTrigger>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid grid-cols-5 w-full mb-8">
+        <TabsTrigger value="client">Client Profile</TabsTrigger>
         <TabsTrigger value="income">Income</TabsTrigger>
         <TabsTrigger value="expenses">Expenses</TabsTrigger>
-        <TabsTrigger value="savings">Savings & Insurance</TabsTrigger>
-        <TabsTrigger value="signature">Signature</TabsTrigger>
+        <TabsTrigger value="savings">Savings/Insurance</TabsTrigger>
+        <TabsTrigger value="signature">Signature & Submit</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="client">
-        <ClientProfileTabContent 
+      <TabsContent value="client" className="space-y-6">
+        <TabContentComponents.ClientProfileTabContent 
+          selectedClient={selectedClient} 
           formData={formData}
-          previousMonthData={previousMonthData}
-          historicalData={historicalData}
           onChange={onChange}
-          onFrequencyChange={onFrequencyChange}
-          onSaveDraft={handleSaveDraft}
-          setActiveTab={setActiveTab}
-          handleDocumentSubmit={handleDocumentSubmit}
-          selectedClient={selectedClient}
-          isSubmitting={isSubmitting}
-          onMaritalStatusChange={handleMaritalStatusChange}
         />
       </TabsContent>
       
-      <TabsContent value="income">
-        <IncomeTabContent 
-          formData={formData}
+      <TabsContent value="income" className="space-y-6">
+        <TabContentComponents.IncomeTabContent 
+          formData={formData} 
           previousMonthData={previousMonthData}
-          historicalData={historicalData}
           onChange={onChange}
           onFrequencyChange={onFrequencyChange}
-          onSaveDraft={handleSaveDraft}
-          setActiveTab={setActiveTab}
-          handleDocumentSubmit={handleDocumentSubmit}
-          selectedClient={selectedClient}
-          isSubmitting={isSubmitting}
         />
       </TabsContent>
       
-      <TabsContent value="expenses">
-        <ExpensesTabContent 
-          formData={formData}
+      <TabsContent value="expenses" className="space-y-6">
+        <TabContentComponents.ExpensesTabContent 
+          formData={formData} 
           previousMonthData={previousMonthData}
-          historicalData={historicalData}
           onChange={onChange}
           onFrequencyChange={onFrequencyChange}
-          onSaveDraft={handleSaveDraft}
-          setActiveTab={setActiveTab}
-          handleDocumentSubmit={handleDocumentSubmit}
-          selectedClient={selectedClient}
-          isSubmitting={isSubmitting}
         />
       </TabsContent>
       
-      <TabsContent value="savings">
-        <SavingsTabContent 
-          formData={formData}
+      <TabsContent value="savings" className="space-y-6">
+        <TabContentComponents.SavingsTabContent 
+          formData={formData} 
           previousMonthData={previousMonthData}
-          historicalData={historicalData}
           onChange={onChange}
           onFrequencyChange={onFrequencyChange}
-          onSaveDraft={handleSaveDraft}
-          setActiveTab={setActiveTab}
-          handleDocumentSubmit={handleDocumentSubmit}
-          selectedClient={selectedClient}
-          isSubmitting={isSubmitting}
         />
       </TabsContent>
       
-      <TabsContent value="signature">
-        <SignatureTabContent 
+      <TabsContent value="signature" className="space-y-6">
+        <TabContentComponents.SignatureTabContent 
           formData={formData}
-          previousMonthData={previousMonthData}
-          historicalData={historicalData}
-          onChange={onChange}
-          onFrequencyChange={onFrequencyChange}
-          onSaveDraft={handleSaveDraft}
-          setActiveTab={setActiveTab}
-          handleDocumentSubmit={handleDocumentSubmit}
-          selectedClient={selectedClient}
-          isSubmitting={isSubmitting}
           onConsentChange={handleConsentChange}
+          onSaveForm={handleSaveDraft}
+          onSubmitForm={handleDocumentSubmit}
+          isSubmitting={isSubmitting}
         />
       </TabsContent>
     </Tabs>
