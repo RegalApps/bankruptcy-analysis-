@@ -12,7 +12,7 @@ interface ClientSelectionSectionProps {
   enableClientCreation: boolean;
   isCreatingClient: boolean;
   onOpenIntakeDialog: () => void;
-  onCreateDirectClient?: () => void; // New prop for direct client creation
+  onCreateDirectClient?: () => void;
 }
 
 export const ClientSelectionSection = ({
