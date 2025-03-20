@@ -69,7 +69,7 @@ export const IncomeExpenseModal = ({
     setSelectedClient({ 
       id: clientId, 
       name: "Loading...", 
-      status: "active"
+      status: "active",
     });
     
     if (onClientSelect) {
@@ -91,10 +91,11 @@ export const IncomeExpenseModal = ({
     const newClientId = uuidv4();
     
     // Create a temporary client with the new ID
-    const newClient = { 
+    // Fix the type error by explicitly typing status as "active" (a valid union type value)
+    const newClient: Client = { 
       id: newClientId, 
       name: "New Client", 
-      status: "active",
+      status: "active", // Explicitly use "active" which matches the Client type
       last_activity: new Date().toISOString().split('T')[0]
     };
     
