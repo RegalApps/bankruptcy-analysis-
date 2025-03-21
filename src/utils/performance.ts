@@ -1,83 +1,50 @@
 
-import React from "react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { startTiming, endTiming } from "./performanceMonitor";
 
-interface PerformanceMetrics {
-  pageLoadTime: number;
-  resourceLoadTime: number;
-  domContentLoaded: number;
-  firstPaint: number;
-  fullRender: number;
-}
-
-export const measurePagePerformance = (): Promise<PerformanceMetrics> => {
-  return new Promise((resolve) => {
-    // Wait for the page to fully load
-    window.addEventListener('load', () => {
-      // Use requestAnimationFrame to ensure all painting is done
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          const performance = window.performance;
-          
-          if (!performance) {
-            console.error("Performance API not supported");
-            return;
-          }
-          
-          // Get performance entries
-          const perfEntries = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
-          const paintEntries = performance.getEntriesByType("paint");
-          
-          // Calculate metrics
-          const pageLoadTime = perfEntries.loadEventEnd - perfEntries.startTime;
-          const domContentLoaded = perfEntries.domContentLoadedEventEnd - perfEntries.startTime;
-          const resourceLoadTime = perfEntries.loadEventEnd - perfEntries.domContentLoadedEventEnd;
-          
-          // Find first paint time
-          let firstPaint = 0;
-          const firstPaintEntry = paintEntries.find(entry => entry.name === "first-paint");
-          if (firstPaintEntry) {
-            firstPaint = firstPaintEntry.startTime;
-          }
-          
-          // Full render time (estimation)
-          const fullRender = pageLoadTime;
-          
-          resolve({
-            pageLoadTime,
-            resourceLoadTime,
-            domContentLoaded,
-            firstPaint,
-            fullRender
-          });
-          
-          // Log for debugging
-          console.log("Performance metrics:", {
-            pageLoadTime: `${pageLoadTime.toFixed(0)}ms`,
-            resourceLoadTime: `${resourceLoadTime.toFixed(0)}ms`,
-            domContentLoaded: `${domContentLoaded.toFixed(0)}ms`,
-            firstPaint: `${firstPaint.toFixed(0)}ms`,
-            fullRender: `${fullRender.toFixed(0)}ms`
-          });
-        }, 100); // Small delay to ensure everything is captured
-      });
-    });
-  });
+/**
+ * Shows a performance toast for a specific page or operation
+ */
+export const showPerformanceToast = (pageName: string) => {
+  // End timing for page load
+  const loadTime = endTiming(`page-load-${pageName}`, false);
+  
+  if (loadTime > 500) {
+    toast.info(
+      `${pageName} loaded in ${(loadTime / 1000).toFixed(1)}s`, 
+      { duration: 3000, position: 'bottom-right' }
+    );
+  }
+  
+  // Start timing for page interactions
+  startTiming(`page-interact-${pageName}`);
 };
 
-export const showPerformanceToast = async (pageName: string) => {
-  const metrics = await measurePagePerformance();
+/**
+ * Measures and reports navigation performance
+ */
+export const measureRouteChange = (from: string, to: string) => {
+  endTiming(`page-interact-${from}`, false);
+  startTiming(`page-load-${to}`);
   
-  // Create the description content as a string instead of JSX
-  const description = `
-    Page load: ${metrics.pageLoadTime.toFixed(0)}ms
-    First paint: ${metrics.firstPaint.toFixed(0)}ms
-    Full render: ${metrics.fullRender.toFixed(0)}ms
-  `;
-  
-  toast({
-    title: `${pageName} Performance`,
-    description: description,
-    duration: 5000,
-  });
+  // Reset document load timings when changing routes
+  try {
+    performance.clearMarks('document-load-start');
+    performance.clearMarks('document-load-end');
+  } catch (e) {
+    // Ignore errors in browsers that don't support this
+  }
+};
+
+/**
+ * Measures document loading performance
+ */
+export const measureDocumentLoad = (documentId: string) => {
+  startTiming(`document-load-${documentId}`);
+  return () => {
+    const loadTime = endTiming(`document-load-${documentId}`, false);
+    if (loadTime > 1000) {
+      console.warn(`Document ${documentId} took ${(loadTime / 1000).toFixed(1)}s to load`);
+    }
+  };
 };

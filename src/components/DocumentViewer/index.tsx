@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { DocumentPreview } from "./DocumentPreview";
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
 import { Sidebar } from "./Sidebar";
@@ -17,11 +17,14 @@ interface DocumentViewerProps {
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) => {
+  // Use a stable key for this component to force full remount when documentId changes
+  const componentKey = useMemo(() => `document-viewer-${documentId}`, [documentId]);
+  
   const { document, loading, loadingError, handleRefresh } = useDocumentViewer(documentId);
 
   useEffect(() => {
     if (document) {
-      console.log("Document data loaded:", document);
+      console.log("Document data loaded:", document.id);
     }
   }, [document]);
 
@@ -31,22 +34,22 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
   };
 
   if (loading) {
-    return <ViewerLoadingState />;
+    return <ViewerLoadingState key={`${componentKey}-loading`} />;
   }
 
   if (loadingError) {
-    return <ViewerErrorState error={loadingError} onRetry={handleRefresh} />;
+    return <ViewerErrorState key={`${componentKey}-error`} error={loadingError} onRetry={handleRefresh} />;
   }
 
   if (!document) {
-    return <ViewerNotFoundState />;
+    return <ViewerNotFoundState key={`${componentKey}-not-found`} />;
   }
 
   // Check if this is a Form 47 document to apply specific layout adjustments
   const isForm47 = isDocumentForm47(document);
 
   return (
-    <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20">
+    <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20" key={componentKey}>
       <ViewerLayout
         isForm47={isForm47}
         documentTitle={document.title}
@@ -59,6 +62,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
             storagePath={document.storage_path} 
             title={document.title}
             documentId={documentId}
+            key={`preview-${documentId}`}
           />
         }
         collaborationPanel={

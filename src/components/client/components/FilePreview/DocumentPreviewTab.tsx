@@ -2,7 +2,6 @@
 import { FileText, FileQuestion, Download, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Document } from "../../types";
-import { DocumentPreview } from "@/components/DocumentViewer/DocumentPreview";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +12,7 @@ interface DocumentPreviewTabProps {
   effectiveDocumentId: string;
   getStoragePath: () => string;
   handleDocumentOpen: () => void;
+  isLoading: boolean;
 }
 
 export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
@@ -21,6 +21,7 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
   effectiveDocumentId,
   getStoragePath,
   handleDocumentOpen,
+  isLoading
 }) => {
   const [previewError, setPreviewError] = useState(false);
   
@@ -47,14 +48,18 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
             onClick={handleDocumentOpen}
             title="Click to open document viewer"
           />
-          <DocumentPreview 
-            storagePath={getStoragePath()}
-            documentId={effectiveDocumentId}
-            title={document.title}
-            onAnalysisComplete={() => {
-              console.log("Analysis completed for", document.title);
-            }}
-          />
+          
+          {/* Simplified preview - just show document title instead of loading preview */}
+          <div className="flex items-center justify-center h-full bg-muted/30">
+            <div className="text-center p-4">
+              <FileText className="h-12 w-12 mx-auto text-primary/60 mb-3" />
+              <h3 className="font-medium text-sm mb-1">{document.title}</h3>
+              <p className="text-xs text-muted-foreground">
+                Click to open document
+              </p>
+            </div>
+          </div>
+          
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
             <Button 
               variant="secondary" 
@@ -64,9 +69,10 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
                 e.stopPropagation();
                 handleDocumentOpen();
               }}
+              disabled={isLoading}
             >
               <ExternalLink className="h-3 w-3 mr-1" />
-              Open
+              {isLoading ? 'Opening...' : 'Open'}
             </Button>
             <Button 
               variant="outline" 
@@ -102,8 +108,9 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
             variant="default" 
             className="mt-2"
             onClick={handleDocumentOpen}
+            disabled={isLoading}
           >
-            Open in Document Viewer
+            {isLoading ? 'Opening...' : 'Open in Document Viewer'}
           </Button>
         </div>
       )}

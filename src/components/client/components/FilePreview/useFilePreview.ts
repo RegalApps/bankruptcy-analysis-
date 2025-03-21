@@ -9,6 +9,7 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   const [activeTab, setActiveTab] = useState('preview');
   const [hasStoragePath, setHasStoragePath] = useState(false);
   const [temporaryUuid, setTemporaryUuid] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Generate a temporary UUID for non-UUID document IDs
   useEffect(() => {
@@ -61,9 +62,11 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     if (!document) return;
     
     console.log("Opening document from preview:", document.id, "Document:", document);
+    setIsLoading(true);
     
     if (!document.id) {
       toast.error("Cannot open document: Missing ID");
+      setIsLoading(false);
       return;
     }
     
@@ -79,6 +82,7 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     activeTab,
     setActiveTab,
     hasStoragePath,
+    isLoading,
     // Use the real document ID for navigation, not the temporary UUID
     effectiveDocumentId: document?.id || '',
     getStoragePath,
