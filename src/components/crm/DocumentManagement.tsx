@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { NewClientIntakeDialog } from '@/components/activity/form/NewClientIntakeDialog';
 
@@ -20,7 +21,7 @@ export const DocumentManagement = () => {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         setIsCreatingClient={setIsCreatingClient}
-        onClientCreated={handleClientCreated} // Added the missing prop
+        onClientCreated={handleClientCreated}
       />
     </div>
   );

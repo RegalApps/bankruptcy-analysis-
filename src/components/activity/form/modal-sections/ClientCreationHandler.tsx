@@ -1,53 +1,84 @@
 
-import { useState } from "react";
-import { Client } from "../../types";
-import { toast } from "sonner";
+import { useState, useCallback } from "react";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
-interface ClientCreationHandlerProps {
-  onClientCreated: (clientId: string) => void;
-  setIsCreatingClient: (isCreating: boolean) => void;
-  isCreatingClient: boolean;
-}
-
+// Client creation hook
 export const useClientCreation = (
-  onClientSelect: (clientId: string) => void,
-  hasUnsavedChanges: boolean
+  onClientCreated: (clientId: string) => void,
+  hasUnsavedChanges: boolean,
 ) => {
   const [showIntakeDialog, setShowIntakeDialog] = useState(false);
   const [isCreatingClient, setIsCreatingClient] = useState(false);
-
-  const handleClientCreated = (newClientId: string) => {
-    setShowIntakeDialog(false);
-    handleClientSelect(newClientId);
-    toast.success("New client created successfully");
-  };
-
-  const handleClientSelect = (clientId: string) => {
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [pendingClientId, setPendingClientId] = useState<string | null>(null);
+  
+  // Handle client created by intake form
+  const handleClientCreated = useCallback((clientId: string) => {
+    onClientCreated(clientId);
+  }, [onClientCreated]);
+  
+  // Handle client select from dropdown or creation
+  const handleClientSelect = useCallback((clientId: string) => {
     if (hasUnsavedChanges) {
-      if (!window.confirm("You have unsaved changes. Are you sure you want to switch clients?")) {
-        return;
-      }
+      setPendingClientId(clientId);
+      setShowUnsavedChangesDialog(true);
+    } else {
+      onClientCreated(clientId);
     }
-    
-    onClientSelect(clientId);
-  };
-
+  }, [hasUnsavedChanges, onClientCreated]);
+  
+  // When the user confirms they want to discard changes
+  const handleConfirmClientChange = useCallback(() => {
+    if (pendingClientId) {
+      onClientCreated(pendingClientId);
+      setPendingClientId(null);
+    }
+    setShowUnsavedChangesDialog(false);
+  }, [pendingClientId, onClientCreated]);
+  
   return {
     showIntakeDialog,
     setShowIntakeDialog,
     isCreatingClient,
     setIsCreatingClient,
+    showUnsavedChangesDialog,
+    setShowUnsavedChangesDialog,
     handleClientCreated,
-    handleClientSelect
+    handleClientSelect,
+    handleConfirmClientChange
   };
 };
 
-export const ClientCreationDialogWrapper = ({ 
-  onClientCreated,
-  setIsCreatingClient,
-  isCreatingClient
-}: ClientCreationHandlerProps) => {
-  const [showIntakeDialog, setShowIntakeDialog] = useState(false);
-
-  return null; // We're handling the dialog in the parent component
+// Wrapper for the unsaved changes dialog
+export const ClientCreationDialogWrapper = ({
+  showUnsavedChangesDialog,
+  setShowUnsavedChangesDialog,
+  handleConfirmClientChange
+}: {
+  showUnsavedChangesDialog: boolean;
+  setShowUnsavedChangesDialog: (show: boolean) => void;
+  handleConfirmClientChange: () => void;
+}) => {
+  return (
+    <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+          <AlertDialogDescription>
+            You have unsaved changes. Are you sure you want to switch clients? 
+            Your current changes will be lost.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <Button variant="outline" onClick={() => setShowUnsavedChangesDialog(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleConfirmClientChange}>
+            Discard Changes
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 };

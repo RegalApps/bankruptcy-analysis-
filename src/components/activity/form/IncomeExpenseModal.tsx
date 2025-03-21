@@ -12,6 +12,7 @@ import {
 } from "./modal-sections/ClientCreationHandler";
 import { useFormSubmission } from "./modal-sections/FormSubmissionHandler";
 import { NewClientIntakeDialog } from "./NewClientIntakeDialog";
+import { PeriodSelection } from "./PeriodSelection";
 
 interface IncomeExpenseModalProps {
   open: boolean;
@@ -103,6 +104,15 @@ export const IncomeExpenseModal = ({
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-6">
             <form onSubmit={handleFormSubmit}>
+              {selectedClient && selectedPeriod && (
+                <div className="mb-6">
+                  <PeriodSelection
+                    selectedPeriod={selectedPeriod}
+                    handlePeriodChange={handlePeriodChange}
+                  />
+                </div>
+              )}
+              
               <FormTabs
                 selectedClient={selectedClient}
                 activeTab={activeTab}

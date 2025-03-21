@@ -1,27 +1,36 @@
 
-import React, { useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Define the form schema
-const clientFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string().min(5, { message: "Please enter a valid phone number." }),
-  address: z.string().min(5, { message: "Address must be at least 5 characters." }),
-  status: z.enum(["active", "inactive", "pending"]).default("active"),
+const clientSchema = z.object({
+  fullName: z.string().min(2, { message: "Full name is required" }),
+  email: z.string().email({ message: "Invalid email address" }).or(z.string().length(0)),
+  phone: z.string().min(7, { message: "Phone number should be at least 7 digits" }).or(z.string().length(0)),
+  address: z.string(),
+  dateOfBirth: z.string().optional(),
+  occupation: z.string().optional(),
+  maritalStatus: z.enum(["single", "married", "common_law", "separated", "divorced", "widowed"]),
+  employmentStatus: z.enum(["employed", "self_employed", "unemployed", "retired", "student"]),
   notes: z.string().optional(),
 });
 
-type ClientFormValues = z.infer<typeof clientFormSchema>;
+type ClientFormValues = z.infer<typeof clientSchema>;
 
 interface NewClientIntakeDialogProps {
   open: boolean;
@@ -39,41 +48,45 @@ export const NewClientIntakeDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ClientFormValues>({
-    resolver: zodResolver(clientFormSchema),
+    resolver: zodResolver(clientSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      status: 'active',
-      notes: '',
+      fullName: "",
+      email: "",
+      phone: "",
+      address: "",
+      dateOfBirth: "",
+      occupation: "",
+      maritalStatus: "single",
+      employmentStatus: "employed",
+      notes: "",
     },
   });
 
-  const onSubmit = async (data: ClientFormValues) => {
-    setIsSubmitting(true);
+  const handleSubmit = async (values: ClientFormValues) => {
     setIsCreatingClient(true);
-    
+    setIsSubmitting(true);
+
     try {
-      // Here we would normally send data to an API
-      console.log("Submitting new client:", data);
+      // Generate a new client ID (this would normally be done by your backend)
+      const newClientId = uuidv4();
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // In a real app, this would be an API call to save the client
+      // Simulate an API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Generate a UUID for the new client
-      const newClientId = crypto.randomUUID();
-      
+      // Show success toast
       toast.success("Client created successfully", {
-        description: `${data.name} has been added to your client list`,
+        description: `${values.fullName} has been added to your client list`,
       });
+      
+      // Call the callback with the new client ID
+      onClientCreated(newClientId);
+      
+      // Close the dialog
+      onOpenChange(false);
       
       // Reset the form
       form.reset();
-      
-      // Close the dialog and notify parent
-      onClientCreated(newClientId);
-      
     } catch (error) {
       console.error("Error creating client:", error);
       toast.error("Failed to create client");
@@ -85,28 +98,28 @@ export const NewClientIntakeDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Client</DialogTitle>
+          <DialogTitle>New Client Information</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>Full Name*</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -114,7 +127,7 @@ export const NewClientIntakeDialog = ({
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="john.doe@example.com" {...field} />
+                      <Input {...field} type="email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -126,9 +139,9 @@ export const NewClientIntakeDialog = ({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="(555) 123-4567" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -143,38 +156,101 @@ export const NewClientIntakeDialog = ({
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Main St, City, State, ZIP" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="dateOfBirth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date of Birth</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a status" />
-                      </SelectTrigger>
+                      <Input {...field} type="date" />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="occupation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Occupation</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="maritalStatus"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Marital Status</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select marital status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="single">Single</SelectItem>
+                        <SelectItem value="married">Married</SelectItem>
+                        <SelectItem value="common_law">Common Law</SelectItem>
+                        <SelectItem value="separated">Separated</SelectItem>
+                        <SelectItem value="divorced">Divorced</SelectItem>
+                        <SelectItem value="widowed">Widowed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="employmentStatus"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Employment Status</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select employment status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="employed">Employed</SelectItem>
+                        <SelectItem value="self_employed">Self-Employed</SelectItem>
+                        <SelectItem value="unemployed">Unemployed</SelectItem>
+                        <SelectItem value="retired">Retired</SelectItem>
+                        <SelectItem value="student">Student</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <FormField
               control={form.control}
@@ -183,9 +259,8 @@ export const NewClientIntakeDialog = ({
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Additional information about the client" 
-                      className="resize-y min-h-[100px]"
+                    <textarea 
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" 
                       {...field} 
                     />
                   </FormControl>
@@ -194,13 +269,8 @@ export const NewClientIntakeDialog = ({
               )}
             />
             
-            <DialogFooter className="mt-6">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
@@ -209,7 +279,9 @@ export const NewClientIntakeDialog = ({
                     <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     Creating...
                   </>
-                ) : "Create Client"}
+                ) : (
+                  "Create Client"
+                )}
               </Button>
             </DialogFooter>
           </form>
