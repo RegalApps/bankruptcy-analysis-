@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
+  const [documentKey, setDocumentKey] = useState<number>(0); // Key for forcing re-render
   const location = useLocation();
   const navigate = useNavigate();
   const { 
@@ -40,6 +42,8 @@ const Index = () => {
         return;
       }
       
+      // Force component re-render with a new key when opening a new document
+      setDocumentKey(prev => prev + 1);
       setSelectedDocument(docId);
       
       // Clear the state to prevent issues with browser back navigation
@@ -102,7 +106,7 @@ const Index = () => {
           <div className="flex-1 overflow-hidden">
             <DocumentViewer 
               documentId={selectedDocument} 
-              key={`doc-${selectedDocument}`}
+              key={`doc-${selectedDocument}-${documentKey}`}
             />
           </div>
         </div>

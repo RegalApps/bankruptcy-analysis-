@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Document } from "../../types";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { isUUID } from "@/utils/validation";
+import { startTiming, endTiming } from "@/utils/performanceMonitor";
 
 export const useFilePreview = (document: Document | null, onDocumentOpen: (documentId: string) => void) => {
   const [activeTab, setActiveTab] = useState('preview');
@@ -40,11 +41,11 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   }, [document]);
 
   // For Form 47 documents, ensure we have a storage path to use for preview
-  const getStoragePath = () => {
-    if (!document) return '';
+  const getStoragePath = useCallback(() => {
+    if (!document || !document.metadata) return '';
     
     // Check if storage_path exists in metadata
-    if (document.metadata?.storage_path) {
+    if (document.metadata.storage_path) {
       return document.metadata.storage_path;
     }
     
@@ -56,13 +57,16 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     }
     
     return '';
-  };
+  }, [document]);
 
-  const handleDocumentOpen = () => {
+  const handleDocumentOpen = useCallback(() => {
     if (!document) return;
     
     console.log("Opening document from preview:", document.id, "Document:", document);
     setIsLoading(true);
+    
+    // Start timing for performance tracking
+    startTiming(`document-open-${document.id}`);
     
     if (!document.id) {
       toast.error("Cannot open document: Missing ID");
@@ -70,13 +74,30 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
       return;
     }
     
-    if (temporaryUuid) {
-      toast.info("This document is using a temporary preview. Some features may be limited.");
-    }
+    // Use a small timeout before opening the document to allow UI to update
+    setTimeout(() => {
+      // Call the provided onDocumentOpen function with the document ID
+      onDocumentOpen(document.id);
+      
+      // End timing
+      const openTime = endTiming(`document-open-${document.id}`, false);
+      if (openTime > 1000) {
+        console.warn(`Document ${document.id} took ${(openTime / 1000).toFixed(1)}s to open`);
+      }
+    }, 50);
     
-    // Call the provided onDocumentOpen function with the document ID
-    onDocumentOpen(document.id);
-  };
+  }, [document, onDocumentOpen]);
+
+  // Reset loading state after 5 seconds maximum to prevent UI getting stuck
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        setIsLoading(false);
+      }, 5000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading]);
 
   return {
     activeTab,

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDocumentDetails } from "./useDocumentDetails";
 import { useDocumentRealtime } from "./useDocumentRealtime";
@@ -13,6 +14,7 @@ export const useDocumentViewer = (documentId: string) => {
   const { toast } = useToast();
   const fetchAttempts = useRef(0);
   const cachedDocumentId = useRef<string | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
   const handleDocumentSuccess = useCallback((data: DocumentDetails) => {
     console.log("Document loaded successfully:", data.id);
@@ -27,23 +29,31 @@ export const useDocumentViewer = (documentId: string) => {
 
   const handleDocumentError = useCallback((error: any) => {
     console.error("Error loading document:", error, "DocumentID:", documentId);
+    fetchAttempts.current += 1;
     
-    // Only show the error toast once after multiple attempts
+    // Only show the error toast after multiple attempts
     if (fetchAttempts.current >= 2) {
       setLoading(false);
       setLoadingError(`Failed to load document: ${error.message}`);
+      
+      // Provide more specific error message based on error type
+      let errorMessage = "There was a problem loading this document. Please try refreshing.";
+      if (error.message?.includes("not found")) {
+        errorMessage = "Document not found. It may have been deleted or moved.";
+      } else if (error.message?.includes("permission")) {
+        errorMessage = "You don't have permission to view this document.";
+      } else if (error.message?.includes("network") || error.message?.includes("connection")) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Document Loading Error",
-        description: "There was a problem loading this document. Please try refreshing."
+        description: errorMessage
       });
       
       // End timing if we started it
       endTiming(`document-load-${documentId}`);
-    } else {
-      // For the first few attempts, keep the loading state true
-      // and don't show an error message to the user
-      fetchAttempts.current += 1;
     }
   }, [documentId, toast]);
 
@@ -63,6 +73,12 @@ export const useDocumentViewer = (documentId: string) => {
       return;
     }
     
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     console.log("Fetching document details for ID:", documentId);
     setLoading(true);
     setLoadingError(null);
@@ -77,21 +93,32 @@ export const useDocumentViewer = (documentId: string) => {
     return () => {
       // Cancel any in-progress timing if component unmounts
       endTiming(`document-load-${documentId}`, false);
+      
+      // Clear timeout if it exists
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
-  }, [documentId, fetchDocumentDetails]);
+  }, [documentId, fetchDocumentDetails, document]);
 
   // Reduced retry intervals to avoid long waits
   useEffect(() => {
-    let retryCount = 0;
-    const maxRetries = 2;
+    // Clear existing timeout if any
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     
     if (loading) {
-      const timeoutId = setTimeout(() => {
-        if (loading && retryCount < maxRetries) {
-          console.log(`Document still loading after ${(retryCount + 1) * 2} seconds, retrying...`);
+      // Faster retry for first attempt
+      const retryTime = fetchAttempts.current === 0 ? 1500 : 3000;
+      
+      timeoutRef.current = window.setTimeout(() => {
+        if (loading && fetchAttempts.current < 2) {
+          console.log(`Document still loading after ${(fetchAttempts.current + 1) * (retryTime/1000)} seconds, retrying...`);
           fetchDocumentDetails();
-          retryCount++;
-        } else if (loading && retryCount >= maxRetries) {
+        } else if (loading && fetchAttempts.current >= 2) {
           setLoading(false);
           setLoadingError("Document is taking too long to load. It might still be processing.");
           toast({
@@ -99,11 +126,17 @@ export const useDocumentViewer = (documentId: string) => {
             description: "This document is taking longer than expected to process. You can try refreshing the page.",
           });
         }
-      }, 2000); // Reduced from 5000 to 2000ms (2 second timeout before retry)
+      }, retryTime);
       
-      return () => clearTimeout(timeoutId);
+      // Cleanup
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+      };
     }
-  }, [loading, fetchDocumentDetails, toast]);
+  }, [loading, fetchDocumentDetails, toast, fetchAttempts]);
 
   // Set up real-time subscriptions - but only if we have a valid document
   useEffect(() => {
@@ -117,8 +150,17 @@ export const useDocumentViewer = (documentId: string) => {
     setLoading(true);
     setLoadingError(null);
     fetchAttempts.current = 0;
+    
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    // Reset the timing
+    startTiming(`document-load-${documentId}`);
     fetchDocumentDetails();
-  }, [fetchDocumentDetails]);
+  }, [fetchDocumentDetails, documentId]);
 
   return {
     document,
