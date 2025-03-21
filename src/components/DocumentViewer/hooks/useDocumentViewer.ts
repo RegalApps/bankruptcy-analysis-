@@ -139,11 +139,8 @@ export const useDocumentViewer = (documentId: string) => {
   }, [loading, fetchDocumentDetails, toast, fetchAttempts]);
 
   // Set up real-time subscriptions - but only if we have a valid document
-  useEffect(() => {
-    if (document) {
-      return useDocumentRealtime(documentId, fetchDocumentDetails);
-    }
-  }, [documentId, fetchDocumentDetails, document]);
+  // Use the hook properly within the component
+  useDocumentRealtime(documentId, fetchDocumentDetails);
 
   const handleRefresh = useCallback(() => {
     sonnerToast.info("Refreshing document...");
