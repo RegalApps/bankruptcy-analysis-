@@ -19,6 +19,7 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
     activeTab,
     setActiveTab,
     hasStoragePath,
+    isLoading,
     effectiveDocumentId,
     getStoragePath,
     handleDocumentOpen
@@ -55,6 +56,7 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
             effectiveDocumentId={effectiveDocumentId}
             getStoragePath={getStoragePath}
             handleDocumentOpen={handleDocumentOpen}
+            isLoading={isLoading}
           />
         </TabsContent>
         
