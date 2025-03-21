@@ -11,22 +11,31 @@ import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
 import { isDocumentForm47 } from "./utils/documentTypeUtils";
 import { TaskManager } from "./TaskManager";
 import { VersionTab } from "./VersionTab";
+import { debugTiming, isDebugMode } from "@/utils/debugMode";
 
 interface DocumentViewerProps {
   documentId: string;
+  bypassProcessing?: boolean;
 }
 
-export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) => {
+export const DocumentViewer: React.FC<DocumentViewerProps> = ({ 
+  documentId, 
+  bypassProcessing = false 
+}) => {
   // Use a stable key for this component to force full remount when documentId changes
   const componentKey = useMemo(() => `document-viewer-${documentId}`, [documentId]);
   
+  const loadStart = performance.now();
   const { document, loading, loadingError, handleRefresh } = useDocumentViewer(documentId);
 
   useEffect(() => {
     if (document) {
       console.log("Document data loaded:", document.id);
+      if (isDebugMode() || bypassProcessing) {
+        debugTiming('document-viewer-load', performance.now() - loadStart);
+      }
     }
-  }, [document]);
+  }, [document, loadStart]);
 
   // Function to handle document updates (like comments added)
   const handleDocumentUpdated = () => {
@@ -62,6 +71,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId }) =>
             storagePath={document.storage_path} 
             title={document.title}
             documentId={documentId}
+            bypassAnalysis={bypassProcessing || isDebugMode()}
             key={`preview-${documentId}`}
           />
         }

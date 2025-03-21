@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -13,6 +12,7 @@ import { EmailConfirmationPending } from "@/components/auth/EmailConfirmationPen
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { isDebugMode, debugTiming } from "@/utils/debugMode";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -34,6 +34,8 @@ const Index = () => {
       console.log("Setting selected document from location state:", location.state.selectedDocument);
       console.log("Source:", location.state.source || "unknown");
       
+      const loadStart = performance.now();
+      
       // Validate document ID
       const docId = location.state.selectedDocument;
       if (!docId || typeof docId !== 'string') {
@@ -46,9 +48,14 @@ const Index = () => {
       setDocumentKey(prev => prev + 1);
       setSelectedDocument(docId);
       
-      // Clear the state to prevent issues with browser back navigation
-      // but keep the URL clean by using replace state instead of pushing a new state
-      navigate('/', { replace: true });
+      // In debug mode, we want to log the timing but might not want to clear the state
+      if (isDebugMode()) {
+        debugTiming('document-state-load', performance.now() - loadStart);
+      } else {
+        // Clear the state to prevent issues with browser back navigation
+        // but keep the URL clean by using replace state instead of pushing a new state
+        navigate('/', { replace: true });
+      }
     }
   }, [location, navigate]);
 
@@ -65,6 +72,9 @@ const Index = () => {
   useEffect(() => {
     if (selectedDocument) {
       console.log("Selected document in Index.tsx:", selectedDocument);
+      if (isDebugMode()) {
+        console.log("🛠️ DEBUG: Document viewer loaded in debug mode");
+      }
     }
   }, [selectedDocument]);
 
@@ -107,6 +117,7 @@ const Index = () => {
             <DocumentViewer 
               documentId={selectedDocument} 
               key={`doc-${selectedDocument}-${documentKey}`}
+              bypassProcessing={isDebugMode()}
             />
           </div>
         </div>
