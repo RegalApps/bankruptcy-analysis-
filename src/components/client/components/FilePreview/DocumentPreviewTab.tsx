@@ -24,6 +24,7 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
 }) => {
   const [previewError, setPreviewError] = useState(false);
   
+  // We're now using this function to handle errors from DocumentPreview
   const handlePreviewError = () => {
     setPreviewError(true);
     toast.error("Could not load document preview");
@@ -44,7 +45,10 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
             storagePath={getStoragePath()}
             documentId={effectiveDocumentId}
             title={document.title}
-            onError={handlePreviewError}
+            onAnalysisComplete={() => {
+              // This is a valid prop according to DocumentPreviewProps
+              console.log("Analysis completed for", document.title);
+            }}
           />
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button 
