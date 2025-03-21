@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Badge } from '@/components/ui/badge';
@@ -105,11 +104,7 @@ export const NotificationBell = () => {
   }, []);
 
   return (
-    <Link 
-      to="/notifications" 
-      className="relative inline-flex items-center justify-center p-2 text-muted-foreground hover:text-foreground transition-colors"
-      aria-label={`${unreadCount} unread notifications`}
-    >
+    <>
       <Bell className="h-5 w-5" />
       {unreadCount > 0 && (
         <Badge 
@@ -119,6 +114,6 @@ export const NotificationBell = () => {
           {unreadCount > 9 ? '9+' : unreadCount}
         </Badge>
       )}
-    </Link>
+    </>
   );
 };
