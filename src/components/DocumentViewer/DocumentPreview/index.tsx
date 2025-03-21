@@ -11,6 +11,7 @@ interface DocumentPreviewProps {
   storagePath: string;
   documentId: string;
   title: string;
+  bypassAnalysis?: boolean;
   onAnalysisComplete?: () => void;
 }
 
@@ -18,6 +19,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   storagePath,
   documentId,
   title,
+  bypassAnalysis = false,
   onAnalysisComplete
 }) => {
   const {
@@ -27,7 +29,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     previewError,
     setPreviewError,
     checkFile
-  } = usePreviewState(storagePath, documentId, title, onAnalysisComplete);
+  } = usePreviewState(storagePath, documentId, title, onAnalysisComplete, bypassAnalysis);
 
   const [forceReload, setForceReload] = useState(0);
   // Create the iframe ref first

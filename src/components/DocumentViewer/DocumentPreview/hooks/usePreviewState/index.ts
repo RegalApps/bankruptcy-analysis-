@@ -11,7 +11,8 @@ const usePreviewState = (
   storagePath: string,
   documentId: string,
   title: string,
-  onAnalysisComplete?: () => void
+  onAnalysisComplete?: () => void,
+  bypassAnalysis: boolean = false
 ) => {
   const [session, setSession] = useState<Session | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -46,7 +47,8 @@ const usePreviewState = (
     setSession,
     handleAnalyzeDocument,
     setPreviewError,
-    onAnalysisComplete
+    onAnalysisComplete,
+    bypassAnalysis
   });
 
   // Enhanced document status tracking
