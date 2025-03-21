@@ -28,8 +28,6 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
           document.title?.toLowerCase().includes('consumer proposal')) {
         // If no storage_path exists, use a default path for Form 47
         setHasStoragePath(true);
-      } else if (document.storage_path) {
-        setHasStoragePath(true);
       } else if (document.metadata.storage_path) {
         setHasStoragePath(true);
       } else {
@@ -44,10 +42,7 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   const getStoragePath = () => {
     if (!document) return '';
     
-    if (document.storage_path) {
-      return document.storage_path;
-    }
-    
+    // Check if storage_path exists in metadata
     if (document.metadata?.storage_path) {
       return document.metadata.storage_path;
     }
