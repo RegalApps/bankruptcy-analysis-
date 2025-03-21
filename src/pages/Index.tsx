@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DocumentViewer } from "@/components/DocumentViewer";
 import { RecentlyAccessedPage } from "@/pages/RecentlyAccessedPage";
@@ -12,6 +11,7 @@ import { AuthErrorDisplay } from "@/components/auth/AuthErrorDisplay";
 import { EmailConfirmationPending } from "@/components/auth/EmailConfirmationPending";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -30,26 +30,37 @@ const Index = () => {
   useEffect(() => {
     if (location.state?.selectedDocument) {
       console.log("Setting selected document from location state:", location.state.selectedDocument);
-      setSelectedDocument(location.state.selectedDocument);
+      console.log("Source:", location.state.source || "unknown");
+      
+      // Validate document ID
+      const docId = location.state.selectedDocument;
+      if (!docId || typeof docId !== 'string') {
+        toast.error("Invalid document ID provided");
+        console.error("Invalid document ID:", docId);
+        return;
+      }
+      
+      setSelectedDocument(docId);
       
       // Clear the state to prevent issues with browser back navigation
-      window.history.replaceState({}, document.title);
+      // but keep the URL clean by using replace state instead of pushing a new state
+      navigate('/', { replace: true });
     }
-  }, [location]);
+  }, [location, navigate]);
 
   useEffect(() => {
     showPerformanceToast("Home Page");
   }, []);
 
-  const handleBackToDocuments = () => {
+  const handleBackToDocuments = useCallback(() => {
     setSelectedDocument(null);
-    navigate('/');
-  };
+    navigate('/', { replace: true });
+  }, [navigate]);
 
   // Debug to check if we're getting the document ID
   useEffect(() => {
     if (selectedDocument) {
-      console.log("Selected document:", selectedDocument);
+      console.log("Selected document in Index.tsx:", selectedDocument);
     }
   }, [selectedDocument]);
 
@@ -89,7 +100,10 @@ const Index = () => {
             </Button>
           </div>
           <div className="flex-1 overflow-hidden">
-            <DocumentViewer documentId={selectedDocument} />
+            <DocumentViewer 
+              documentId={selectedDocument} 
+              key={`doc-${selectedDocument}`}
+            />
           </div>
         </div>
       ) : (

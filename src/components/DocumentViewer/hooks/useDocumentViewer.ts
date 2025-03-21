@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDocumentDetails } from "./useDocumentDetails";
 import { useDocumentRealtime } from "./useDocumentRealtime";
 import { DocumentDetails } from "../types";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 
 export const useDocumentViewer = (documentId: string) => {
   const [document, setDocument] = useState<DocumentDetails | null>(null);
@@ -11,22 +12,36 @@ export const useDocumentViewer = (documentId: string) => {
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const handleDocumentSuccess = useCallback((data: DocumentDetails) => {
+    console.log("Document loaded successfully:", data.id);
+    setDocument(data);
+    setLoading(false);
+    setLoadingError(null);
+  }, []);
+
+  const handleDocumentError = useCallback((error: any) => {
+    console.error("Error loading document:", error, "DocumentID:", documentId);
+    setLoading(false);
+    setLoadingError(`Failed to load document: ${error.message}`);
+    toast({
+      variant: "destructive",
+      title: "Document Loading Error",
+      description: "There was a problem loading this document. Please try refreshing."
+    });
+  }, [documentId, toast]);
+
   const { fetchDocumentDetails } = useDocumentDetails(documentId, {
-    onSuccess: (data) => {
-      setDocument(data);
-      setLoading(false);
-      setLoadingError(null);
-    },
-    onError: (error) => {
-      setLoading(false);
-      setLoadingError(`Failed to load document: ${error.message}`);
-      toast({
-        variant: "destructive",
-        title: "Document Loading Error",
-        description: "There was a problem loading this document. Please try refreshing."
-      });
-    }
+    onSuccess: handleDocumentSuccess,
+    onError: handleDocumentError
   });
+
+  // Call fetchDocumentDetails initially
+  useEffect(() => {
+    console.log("Fetching document details for ID:", documentId);
+    setLoading(true);
+    setLoadingError(null);
+    fetchDocumentDetails();
+  }, [documentId, fetchDocumentDetails]);
 
   // Retry mechanism for stalled document loading
   useEffect(() => {
@@ -56,11 +71,12 @@ export const useDocumentViewer = (documentId: string) => {
   // Set up real-time subscriptions
   useDocumentRealtime(documentId, fetchDocumentDetails);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
+    sonnerToast.info("Refreshing document...");
     setLoading(true);
     setLoadingError(null);
     fetchDocumentDetails();
-  };
+  }, [fetchDocumentDetails]);
 
   return {
     document,

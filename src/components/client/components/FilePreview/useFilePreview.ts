@@ -28,6 +28,8 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
           document.title?.toLowerCase().includes('consumer proposal')) {
         // If no storage_path exists, use a default path for Form 47
         setHasStoragePath(true);
+      } else if (document.storage_path) {
+        setHasStoragePath(true);
       } else if (document.metadata.storage_path) {
         setHasStoragePath(true);
       } else {
@@ -38,12 +40,13 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     }
   }, [document]);
 
-  // Use the temporary UUID for preview if needed
-  const effectiveDocumentId = document ? (temporaryUuid || document.id) : '';
-
   // For Form 47 documents, ensure we have a storage path to use for preview
   const getStoragePath = () => {
     if (!document) return '';
+    
+    if (document.storage_path) {
+      return document.storage_path;
+    }
     
     if (document.metadata?.storage_path) {
       return document.metadata.storage_path;
@@ -62,7 +65,12 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   const handleDocumentOpen = () => {
     if (!document) return;
     
-    console.log("Opening document from preview:", document.id);
+    console.log("Opening document from preview:", document.id, "Document:", document);
+    
+    if (!document.id) {
+      toast.error("Cannot open document: Missing ID");
+      return;
+    }
     
     if (temporaryUuid) {
       toast.info("This document is using a temporary preview. Some features may be limited.");
@@ -76,7 +84,8 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     activeTab,
     setActiveTab,
     hasStoragePath,
-    effectiveDocumentId,
+    // Use the real document ID for navigation, not the temporary UUID
+    effectiveDocumentId: document?.id || '',
     getStoragePath,
     handleDocumentOpen
   };

@@ -53,11 +53,22 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const handleDocumentOpen = (documentId: string) => {
     console.log("ClientTab: Opening document:", documentId);
     
+    if (!documentId) {
+      console.error("Invalid document ID received in ClientTab");
+      toast.error("Cannot open document: Invalid ID");
+      return;
+    }
+    
     if (onDocumentOpen) {
       onDocumentOpen(documentId);
     } else {
       // If no callback is provided, navigate directly to the home page with the selected document
-      navigate('/', { state: { selectedDocument: documentId } });
+      navigate('/', { 
+        state: { 
+          selectedDocument: documentId,
+          source: 'client-tab'
+        } 
+      });
     }
   };
   

@@ -1,3 +1,4 @@
+
 import { FileText, FileQuestion, Download, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Document } from "../../types";
@@ -23,8 +24,9 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
 }) => {
   const [previewError, setPreviewError] = useState(false);
   
-  // Handle errors from DocumentPreview
+  // Handle preview errors locally
   const handlePreviewError = () => {
+    console.log("Preview error encountered in DocumentPreviewTab");
     setPreviewError(true);
     toast.error("Could not load document preview");
   };
@@ -119,6 +121,9 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
               
               <div className="text-muted-foreground">Created:</div>
               <div>{new Date(document.created_at).toLocaleDateString()}</div>
+              
+              <div className="text-muted-foreground">ID:</div>
+              <div className="truncate" title={document.id}>{document.id}</div>
               
               {document.metadata && document.metadata.formNumber && (
                 <>

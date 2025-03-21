@@ -53,13 +53,30 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
 
   // Handle document selection
   const handleDocumentSelect = (documentId: string) => {
+    console.log("Selected document ID:", documentId);
     setSelectedDocumentId(documentId);
   };
 
   // Handle document opening - use either provided callback or navigate directly
   const handleDocumentOpen = (documentId: string) => {
-    console.log("Opening document:", documentId);
+    console.log("Opening document from ClientViewer:", documentId);
     
+    // Make sure we have a valid document ID
+    if (!documentId || typeof documentId !== 'string') {
+      console.error("Invalid document ID:", documentId);
+      toast.error("Invalid document ID");
+      return;
+    }
+    
+    // Find the document to verify it exists
+    const docToOpen = documents.find(doc => doc.id === documentId);
+    if (!docToOpen) {
+      console.error("Document not found in documents list:", documentId);
+      toast.error("Document not found in current view");
+      return;
+    }
+    
+    // Use the provided callback if available
     if (onDocumentOpen) {
       onDocumentOpen(documentId);
     } else {
