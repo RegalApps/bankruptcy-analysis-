@@ -24,13 +24,18 @@ export const IncomeExpenseButton = ({
 }: IncomeExpenseButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
+  const handleOpenModal = () => {
+    console.log("Opening Income & Expense Form Modal");
+    setIsModalOpen(true);
+  };
+  
   return (
     <>
       <Button 
         variant={variant} 
         size={size}
         className={`flex items-center gap-2 ${className}`}
-        onClick={() => setIsModalOpen(true)}
+        onClick={handleOpenModal}
       >
         <Plus className="h-4 w-4" />
         <FileText className="h-4 w-4" />

@@ -11,6 +11,7 @@ import {
   ClientCreationDialogWrapper 
 } from "./modal-sections/ClientCreationHandler";
 import { useFormSubmission } from "./modal-sections/FormSubmissionHandler";
+import { NewClientIntakeDialog } from "./NewClientIntakeDialog";
 
 interface IncomeExpenseModalProps {
   open: boolean;
@@ -113,9 +114,15 @@ export const IncomeExpenseModal = ({
                 setShowIntakeDialog={setShowIntakeDialog}
                 formData={formData}
                 previousMonthData={previousMonthData}
-                historicalData={historicalData}
+                historicalData={historicalData as any[]} 
                 onChange={handleChange}
-                onFrequencyChange={handleFrequencyChange}
+                onFrequencyChange={(field: string, value: string) => {
+                  if (field === 'income') {
+                    handleFrequencyChange('income')(value);
+                  } else if (field === 'expense') {
+                    handleFrequencyChange('expense')(value);
+                  }
+                }}
                 handleSaveDraft={handleSaveDraft}
                 handleDocumentSubmit={handleDocumentSubmit}
                 isSubmitting={isSubmitting}
@@ -128,13 +135,13 @@ export const IncomeExpenseModal = ({
             <AnalyticsSidebar
               formData={formData}
               previousMonthData={previousMonthData}
-              historicalData={historicalData}
+              historicalData={historicalData as any[]}
             />
           )}
         </div>
       </ModalWrapper>
 
-      {/* This is the dialog that should appear when "Add Client With Details" is clicked */}
+      {/* This is the dialog that appears when "Add Client With Details" is clicked */}
       <NewClientIntakeDialog
         open={showIntakeDialog}
         onOpenChange={setShowIntakeDialog}

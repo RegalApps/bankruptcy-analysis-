@@ -1,10 +1,7 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  ClientSelectionSection,
-  TabContentComponents
-} from "./TabContentComponents";
+import { ClientSelectionSection, TabContentComponents } from "./TabContentComponents";
 import { IncomeExpenseData, Client } from "../../types";
 
 interface FormTabsProps {
@@ -85,6 +82,8 @@ export const FormTabs = ({
           selectedClient={selectedClient} 
           formData={formData}
           onChange={onChange}
+          onSaveDraft={handleSaveDraft}
+          setActiveTab={setActiveTab}
         />
       </TabsContent>
       
@@ -94,6 +93,8 @@ export const FormTabs = ({
           previousMonthData={previousMonthData}
           onChange={onChange}
           onFrequencyChange={onFrequencyChange}
+          onSaveDraft={handleSaveDraft}
+          setActiveTab={setActiveTab}
         />
       </TabsContent>
       
@@ -102,7 +103,8 @@ export const FormTabs = ({
           formData={formData} 
           previousMonthData={previousMonthData}
           onChange={onChange}
-          onFrequencyChange={onFrequencyChange}
+          onSaveDraft={handleSaveDraft}
+          setActiveTab={setActiveTab}
         />
       </TabsContent>
       
@@ -111,7 +113,8 @@ export const FormTabs = ({
           formData={formData} 
           previousMonthData={previousMonthData}
           onChange={onChange}
-          onFrequencyChange={onFrequencyChange}
+          onSaveDraft={handleSaveDraft}
+          setActiveTab={setActiveTab}
         />
       </TabsContent>
       
@@ -119,8 +122,11 @@ export const FormTabs = ({
         <TabContentComponents.SignatureTabContent 
           formData={formData}
           onConsentChange={handleConsentChange}
-          onSaveForm={handleSaveDraft}
-          onSubmitForm={handleDocumentSubmit}
+          onChange={onChange}
+          onSaveDraft={handleSaveDraft}
+          setActiveTab={setActiveTab}
+          handleDocumentSubmit={handleDocumentSubmit}
+          selectedClient={selectedClient}
           isSubmitting={isSubmitting}
         />
       </TabsContent>

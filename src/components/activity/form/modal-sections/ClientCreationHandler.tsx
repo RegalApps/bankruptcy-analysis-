@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Client } from "../../types";
-import { NewClientIntakeDialog } from "../NewClientIntakeDialog";
 import { toast } from "sonner";
 
 interface ClientCreationHandlerProps {
@@ -50,13 +49,5 @@ export const ClientCreationDialogWrapper = ({
 }: ClientCreationHandlerProps) => {
   const [showIntakeDialog, setShowIntakeDialog] = useState(false);
 
-  // This component should pass the showIntakeDialog state to the dialog
-  return (
-    <NewClientIntakeDialog
-      open={showIntakeDialog}
-      onOpenChange={setShowIntakeDialog}
-      onClientCreated={onClientCreated}
-      setIsCreatingClient={setIsCreatingClient}
-    />
-  );
+  return null; // We're handling the dialog in the parent component
 };
