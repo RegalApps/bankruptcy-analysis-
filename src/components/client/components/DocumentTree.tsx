@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { ChevronRight, ChevronDown, File, Folder } from 'lucide-react';
 import { Document } from '../types';
@@ -23,7 +22,6 @@ export const DocumentTree = ({ documents, onDocumentSelect }: DocumentTreeProps)
     'Other': false,
   });
 
-  // Function to categorize documents
   const categorizeDocuments = (docs: Document[]): Record<string, Document[]> => {
     const categories: Record<string, Document[]> = {
       'Forms': [],
@@ -34,7 +32,6 @@ export const DocumentTree = ({ documents, onDocumentSelect }: DocumentTreeProps)
     };
 
     docs.forEach(doc => {
-      // Extract category from document metadata or type
       const metadata = doc.metadata as Record<string, any> || {};
       const title = doc.title?.toLowerCase() || '';
       const type = doc.type?.toLowerCase() || '';
@@ -52,7 +49,6 @@ export const DocumentTree = ({ documents, onDocumentSelect }: DocumentTreeProps)
       }
     });
 
-    // Filter out empty categories
     return Object.fromEntries(
       Object.entries(categories).filter(([_, docs]) => docs.length > 0)
     );
@@ -91,8 +87,9 @@ export const DocumentTree = ({ documents, onDocumentSelect }: DocumentTreeProps)
                 {docs.map(doc => (
                   <button
                     key={doc.id}
-                    className="flex items-center w-full text-left text-sm p-1.5 rounded-md hover:bg-muted"
+                    className="flex items-center w-full text-left text-sm p-1.5 rounded-md hover:bg-muted group"
                     onClick={() => onDocumentSelect(doc.id)}
+                    onDoubleClick={() => onDocumentSelect(doc.id)}
                   >
                     <File className="h-4 w-4 mr-1.5 text-muted-foreground" />
                     <span className="truncate">{doc.title}</span>

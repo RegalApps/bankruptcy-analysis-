@@ -59,6 +59,7 @@ export const DocumentList = ({
               selectedDocumentId === doc.id ? "ring-2 ring-primary" : ""
             )}
             onClick={() => onDocumentSelect(doc.id)}
+            onDoubleClick={() => onDocumentOpen(doc.id)}
           >
             <CardContent className="p-4 flex flex-col items-center text-center">
               <div className="mb-3 mt-2">
@@ -97,6 +98,7 @@ export const DocumentList = ({
             selectedDocumentId === doc.id ? "bg-primary/5 border-primary/30" : ""
           )}
           onClick={() => onDocumentSelect(doc.id)}
+          onDoubleClick={() => onDocumentOpen(doc.id)}
         >
           <CardContent className="p-3 flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1 min-w-0">

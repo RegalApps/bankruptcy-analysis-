@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -37,7 +36,6 @@ export const DocumentsPanel = ({
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterType, setFilterType] = useState<string | null>(null);
   
-  // Get unique document types for filter
   const documentTypes = useMemo(() => {
     const types = new Set<string>();
     documents.forEach(doc => {
@@ -46,11 +44,9 @@ export const DocumentsPanel = ({
     return Array.from(types);
   }, [documents]);
   
-  // Filter and sort documents
   const filteredDocuments = useMemo(() => {
     let filtered = documents;
     
-    // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(doc => 
@@ -59,12 +55,10 @@ export const DocumentsPanel = ({
       );
     }
     
-    // Apply type filter
     if (filterType) {
       filtered = filtered.filter(doc => doc.type === filterType);
     }
     
-    // Apply sorting
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'date') {
         const dateA = new Date(a.updated_at).getTime();
@@ -79,13 +73,11 @@ export const DocumentsPanel = ({
     
     return filtered;
   }, [documents, searchTerm, filterType, sortBy, sortDirection]);
-
-  // Toggle sort direction
+  
   const toggleSortDirection = () => {
     setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
   
-  // Group documents by month/year when in timeline view
   const documentsByDate = useMemo(() => {
     const grouped: Record<string, Document[]> = {};
     
@@ -102,7 +94,7 @@ export const DocumentsPanel = ({
     
     return grouped;
   }, [filteredDocuments]);
-
+  
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b">
@@ -194,6 +186,7 @@ export const DocumentsPanel = ({
                         selectedDocumentId === doc.id ? "bg-accent" : ""
                       )}
                       onClick={() => onDocumentSelect(doc.id)}
+                      onDoubleClick={() => onDocumentOpen(doc.id)}
                     >
                       <div className="flex items-start">
                         <div className="bg-muted rounded-md p-1.5 mr-3">
@@ -208,6 +201,15 @@ export const DocumentsPanel = ({
                           </div>
                           <div className="flex items-center mt-1">
                             <span className="text-xs text-muted-foreground">{doc.type || 'Document'}</span>
+                            <button 
+                              className="text-xs text-primary ml-auto hover:underline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDocumentOpen(doc.id);
+                              }}
+                            >
+                              Open
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -243,6 +245,7 @@ export const DocumentsPanel = ({
                               selectedDocumentId === doc.id ? "bg-accent" : ""
                             )}
                             onClick={() => onDocumentSelect(doc.id)}
+                            onDoubleClick={() => onDocumentOpen(doc.id)}
                           >
                             <div className="flex items-center">
                               <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -250,9 +253,15 @@ export const DocumentsPanel = ({
                                 <h4 className="text-sm font-medium">{doc.title}</h4>
                                 <div className="flex justify-between mt-1">
                                   <span className="text-xs text-muted-foreground">{doc.type || 'Document'}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {format(new Date(doc.updated_at), 'MMM d')}
-                                  </span>
+                                  <button 
+                                    className="text-xs text-primary hover:underline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDocumentOpen(doc.id);
+                                    }}
+                                  >
+                                    Open
+                                  </button>
                                 </div>
                               </div>
                             </div>

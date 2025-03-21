@@ -41,6 +41,11 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
     <>
       {hasStoragePath && !previewError ? (
         <div className="h-64 overflow-hidden rounded-md border relative group">
+          <div 
+            className="absolute inset-0 cursor-pointer z-10"
+            onClick={handleDocumentOpen}
+            title="Click to open document viewer"
+          />
           <DocumentPreview 
             storagePath={getStoragePath()}
             documentId={effectiveDocumentId}
@@ -50,12 +55,15 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
               console.log("Analysis completed for", document.title);
             }}
           />
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
             <Button 
               variant="secondary" 
               size="sm" 
               className="mr-2"
-              onClick={handleDocumentOpen}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDocumentOpen();
+              }}
             >
               <ExternalLink className="h-3 w-3 mr-1" />
               Open
@@ -63,7 +71,10 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={handleDownload}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownload();
+              }}
             >
               <Download className="h-3 w-3 mr-1" />
               Download
