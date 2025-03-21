@@ -14,16 +14,13 @@ const LoadingPlaceholder = () => (
   </div>
 );
 
-// Lazy load MainLayout to improve initial load time
-const MainLayout = lazy(() => import("@/components/layout/MainLayout").then(
-  module => ({ default: module.MainLayout })
-));
+// Directly import DocumentsPage to avoid dynamic import issues
+import DocumentsPage from "./pages/DocumentsPage";
 
 // Lazy load pages with prefetching for better UX
 const Index = lazy(() => import("./pages/Index"));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
-const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const ConBrandingPage = lazy(() => import("./pages/ConBrandingPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
@@ -35,11 +32,6 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Support = lazy(() => import("./pages/Support"));
 const NewSupportTicket = lazy(() => import("./pages/NewSupportTicket"));
 const SupportTicketDetail = lazy(() => import("./pages/SupportTicketDetail"));
-
-// Pre-fetch the main layout after initial render
-setTimeout(() => {
-  import("@/components/layout/MainLayout");
-}, 1000);
 
 // Configure React Query with performance optimizations
 const queryClient = new QueryClient({

@@ -10,7 +10,7 @@ export const useDocumentsPage = () => {
   const { folders } = useCreateFolderStructure(documents || []);
   
   // Use our new focused hooks
-  const { clients, handleClientSelect } = useClientsData(documents);
+  const { clients, handleClientSelect } = useClientsData(documents || []);
   
   const {
     selectedItemId,
@@ -18,7 +18,7 @@ export const useDocumentsPage = () => {
     folderPath,
     handleItemSelect,
     handleOpenDocument
-  } = useFolderNavigation(documents);
+  } = useFolderNavigation(documents || []);
   
   const {
     hasWriteAccess,
@@ -28,7 +28,7 @@ export const useDocumentsPage = () => {
 
   return {
     // Document data
-    documents,
+    documents: documents || [],
     refetch,
     isLoading,
     folders,

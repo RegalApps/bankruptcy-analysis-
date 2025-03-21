@@ -9,7 +9,7 @@ import { useDocumentsPage } from "./documents/hooks/useDocumentsPage";
 import { BreadcrumbNavigation } from "./documents/components/BreadcrumbNavigation";
 import { AccessModeToggle } from "./documents/components/AccessModeToggle";
 
-export const DocumentsPage = () => {
+const DocumentsPage = () => {
   const {
     documents,
     refetch,
@@ -71,5 +71,4 @@ export const DocumentsPage = () => {
   );
 };
 
-// Add default export
 export default DocumentsPage;
