@@ -26,9 +26,14 @@ const Index = () => {
     handleSignOut
   } = useAuthState();
 
+  // Effect to handle document selection from location state
   useEffect(() => {
     if (location.state?.selectedDocument) {
+      console.log("Setting selected document from location state:", location.state.selectedDocument);
       setSelectedDocument(location.state.selectedDocument);
+      
+      // Clear the state to prevent issues with browser back navigation
+      window.history.replaceState({}, document.title);
     }
   }, [location]);
 
@@ -40,6 +45,13 @@ const Index = () => {
     setSelectedDocument(null);
     navigate('/');
   };
+
+  // Debug to check if we're getting the document ID
+  useEffect(() => {
+    if (selectedDocument) {
+      console.log("Selected document:", selectedDocument);
+    }
+  }, [selectedDocument]);
 
   if (isLoading) {
     return <LoadingSpinner />;

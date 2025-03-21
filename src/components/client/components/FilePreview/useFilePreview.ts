@@ -62,9 +62,13 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   const handleDocumentOpen = () => {
     if (!document) return;
     
+    console.log("Opening document from preview:", document.id);
+    
     if (temporaryUuid) {
       toast.info("This document is using a temporary preview. Some features may be limited.");
     }
+    
+    // Call the provided onDocumentOpen function with the document ID
     onDocumentOpen(document.id);
   };
 

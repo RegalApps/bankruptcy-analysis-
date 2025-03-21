@@ -1,4 +1,3 @@
-
 import { FileText, FileQuestion, Download, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Document } from "../../types";
@@ -24,7 +23,7 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
 }) => {
   const [previewError, setPreviewError] = useState(false);
   
-  // We're now using this function to handle errors from DocumentPreview
+  // Handle errors from DocumentPreview
   const handlePreviewError = () => {
     setPreviewError(true);
     toast.error("Could not load document preview");
@@ -51,7 +50,6 @@ export const DocumentPreviewTab: React.FC<DocumentPreviewTabProps> = ({
             documentId={effectiveDocumentId}
             title={document.title}
             onAnalysisComplete={() => {
-              // This is a valid prop according to DocumentPreviewProps
               console.log("Analysis completed for", document.title);
             }}
           />

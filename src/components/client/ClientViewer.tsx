@@ -15,8 +15,10 @@ import { useClientData } from "./hooks/useClientData";
 import { ClientViewerProps } from "./types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: ClientViewerProps) => {
+  const navigate = useNavigate();
   const { client, documents, isLoading, activeTab, setActiveTab, error } = useClientData(clientId, onBack);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   
@@ -54,6 +56,18 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
     setSelectedDocumentId(documentId);
   };
 
+  // Handle document opening - use either provided callback or navigate directly
+  const handleDocumentOpen = (documentId: string) => {
+    console.log("Opening document:", documentId);
+    
+    if (onDocumentOpen) {
+      onDocumentOpen(documentId);
+    } else {
+      // If no callback is provided, navigate directly
+      navigate('/', { state: { selectedDocument: documentId } });
+    }
+  };
+
   // Get last activity date
   const lastActivityDate = documents.length > 0 
     ? new Date(Math.max(...documents.map(d => new Date(d.updated_at).getTime()))).toISOString()
@@ -89,7 +103,7 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
               documents={documents}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
-              onDocumentOpen={onDocumentOpen}
+              onDocumentOpen={handleDocumentOpen}
               onDocumentSelect={handleDocumentSelect}
               selectedDocumentId={selectedDocumentId}
             />
@@ -101,7 +115,7 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
           <ResizablePanel defaultSize={30} minSize={20}>
             <FilePreviewPanel 
               document={selectedDocument} 
-              onDocumentOpen={onDocumentOpen}
+              onDocumentOpen={handleDocumentOpen}
             />
           </ResizablePanel>
         </ResizablePanelGroup>
