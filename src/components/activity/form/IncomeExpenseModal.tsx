@@ -114,7 +114,7 @@ export const IncomeExpenseModal = ({
                 setShowIntakeDialog={setShowIntakeDialog}
                 formData={formData}
                 previousMonthData={previousMonthData}
-                historicalData={historicalData as any[]} 
+                historicalData={historicalData ? [historicalData] : []}
                 onChange={handleChange}
                 onFrequencyChange={(field: string, value: string) => {
                   if (field === 'income') {
@@ -135,7 +135,7 @@ export const IncomeExpenseModal = ({
             <AnalyticsSidebar
               formData={formData}
               previousMonthData={previousMonthData}
-              historicalData={historicalData as any[]}
+              historicalData={historicalData ? [historicalData] : []}
             />
           )}
         </div>

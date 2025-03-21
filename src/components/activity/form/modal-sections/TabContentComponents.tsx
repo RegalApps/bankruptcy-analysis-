@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
@@ -12,7 +11,7 @@ import { PrintButton } from "../PrintButton";
 import { SmartCreateDocumentButton } from "../SmartCreateDocumentButton";
 import { HistoricalComparison } from "../../components/HistoricalComparison";
 import { IncomeExpenseData, Client } from "../../types";
-import { ClientSelectionSection as ClientSelectionSectionComponent } from "../ClientSelectionSection";
+import { ClientSelectionSection as ClientSelectionSectionComponent } from "../modal-sections/ClientSelectionSection";
 
 // Export ClientSelectionSection for use in FormTabs
 export const ClientSelectionSection = ClientSelectionSectionComponent;
