@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
@@ -9,12 +10,7 @@ import { SavingsInsuranceSection } from "../SavingsInsuranceSection";
 import { SignatureConsentSection } from "../SignatureConsentSection";
 import { PrintButton } from "../PrintButton";
 import { SmartCreateDocumentButton } from "../SmartCreateDocumentButton";
-import { HistoricalComparison } from "../../components/HistoricalComparison";
-import { IncomeExpenseData, Client } from "../../types";
-import { ClientSelectionSection as ClientSelectionSectionComponent } from "../modal-sections/ClientSelectionSection";
-
-// Export ClientSelectionSection for use in FormTabs
-export const ClientSelectionSection = ClientSelectionSectionComponent;
+import { Client } from "../../types";
 
 // Create the TabContentComponents object with all components
 export const TabContentComponents = {
@@ -22,13 +18,18 @@ export const TabContentComponents = {
     formData, 
     onChange, 
     onSaveDraft, 
-    setActiveTab 
+    setActiveTab,
+    handleFieldSelectChange,
+    isNewClientMode,
+    newClient
   }: any) => (
     <div className="space-y-6">
       <ClientProfileSection 
         formData={formData} 
         onChange={onChange}
-        onMaritalStatusChange={() => {}}
+        onMaritalStatusChange={(value) => handleFieldSelectChange('marital_status', value)}
+        isNewClientMode={isNewClientMode}
+        newClient={newClient}
       />
       
       <div className="flex justify-end gap-2">
@@ -166,12 +167,20 @@ export const TabContentComponents = {
             <Save className="h-4 w-4 mr-2" /> Save Draft
           </Button>
           <PrintButton formData={formData} />
-          <SmartCreateDocumentButton 
-            formData={formData}
-            selectedClient={selectedClient}
-            isSubmitting={isSubmitting}
-            onSubmit={handleDocumentSubmit}
-          />
+          <Button 
+            type="submit" 
+            onClick={handleDocumentSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Creating...
+              </>
+            ) : (
+              "Submit & Create Client"
+            )}
+          </Button>
         </div>
       </div>
     </div>

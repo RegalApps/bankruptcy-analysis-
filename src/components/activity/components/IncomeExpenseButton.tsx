@@ -9,24 +9,26 @@ interface IncomeExpenseButtonProps {
   variant?: "default" | "outline" | "secondary";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
-  selectedClient?: Client | null;
-  onClientSelect?: (clientId: string) => void;
-  createClientEnabled?: boolean;
+  onClientCreated?: (clientId: string, clientName: string) => void;
 }
 
 export const IncomeExpenseButton = ({ 
   variant = "default", 
   size = "lg", 
   className = "",
-  selectedClient = null,
-  onClientSelect,
-  createClientEnabled = true
+  onClientCreated
 }: IncomeExpenseButtonProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const handleOpenModal = () => {
     console.log("Opening Income & Expense Form Modal");
     setIsModalOpen(true);
+  };
+  
+  const handleClientCreated = (clientId: string, clientName: string) => {
+    if (onClientCreated) {
+      onClientCreated(clientId, clientName);
+    }
   };
   
   return (
@@ -45,9 +47,7 @@ export const IncomeExpenseButton = ({
       <IncomeExpenseModal 
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        selectedClient={selectedClient}
-        onClientSelect={onClientSelect}
-        enableClientCreation={createClientEnabled}
+        onClientCreated={handleClientCreated}
       />
     </>
   );

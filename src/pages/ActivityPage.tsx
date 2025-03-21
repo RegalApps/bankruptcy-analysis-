@@ -32,14 +32,15 @@ const MOCK_CLIENTS = [
 export const ActivityPage = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState("form");
+  const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS);
   const location = useLocation();
 
   // Handle client selection for all tabs
   const handleClientSelect = (clientId: string) => {
     console.log("ActivityPage - Client selected:", clientId);
     
-    // Find the mock client by ID
-    const client = MOCK_CLIENTS.find(c => c.id === clientId) || {
+    // Find the client by ID
+    const client = clients.find(c => c.id === clientId) || {
       id: clientId,
       name: "Unknown Client",
       status: "active" as const,
@@ -48,6 +49,22 @@ export const ActivityPage = () => {
     
     setSelectedClient(client);
     toast.success(`Selected client: ${client.name}`);
+  };
+
+  // Handle new client creation from the IncomeExpenseButton
+  const handleClientCreated = (clientId: string, clientName: string) => {
+    const newClient: Client = {
+      id: clientId,
+      name: clientName,
+      status: "active" as const,
+      last_activity: new Date().toISOString().split('T')[0]
+    };
+    
+    // Add the new client to the list
+    setClients(prevClients => [...prevClients, newClient]);
+    
+    // Select the new client
+    setSelectedClient(newClient);
   };
 
   // Handle tab switching from CreateFormButton
@@ -80,7 +97,7 @@ export const ActivityPage = () => {
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Client Information</CardTitle>
-                <CardDescription>Select a client or create a new form to get started</CardDescription>
+                <CardDescription>Select a client or create a new form</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
@@ -88,14 +105,12 @@ export const ActivityPage = () => {
                     <ClientSelector 
                       selectedClient={selectedClient}
                       onClientSelect={handleClientSelect}
-                      availableClients={MOCK_CLIENTS}
+                      availableClients={clients}
                     />
                   </div>
                   <div className="w-full md:w-auto mt-2 md:mt-0">
                     <IncomeExpenseButton 
-                      selectedClient={selectedClient}
-                      onClientSelect={handleClientSelect}
-                      createClientEnabled={true}
+                      onClientCreated={handleClientCreated}
                     />
                   </div>
                 </div>

@@ -1,18 +1,13 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClientSelectionSection, TabContentComponents } from "./TabContentComponents";
+import { TabContentComponents } from "./TabContentComponents";
 import { IncomeExpenseData, Client } from "../../types";
 
 interface FormTabsProps {
-  selectedClient: Client | null;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   hasUnsavedChanges: boolean;
-  enableClientCreation: boolean;
-  isCreatingClient: boolean;
-  handleClientSelect: (clientId: string) => void;
-  setShowIntakeDialog: (show: boolean) => void;
   formData: IncomeExpenseData;
   previousMonthData: IncomeExpenseData;
   historicalData: any[];
@@ -22,17 +17,14 @@ interface FormTabsProps {
   handleDocumentSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   handleFieldSelectChange: (field: string, value: string) => void;
+  isNewClientMode?: boolean;
+  newClient?: Client;
 }
 
 export const FormTabs = ({
-  selectedClient,
   activeTab,
   setActiveTab,
   hasUnsavedChanges,
-  enableClientCreation,
-  isCreatingClient,
-  handleClientSelect,
-  setShowIntakeDialog,
   formData,
   previousMonthData,
   historicalData,
@@ -42,6 +34,8 @@ export const FormTabs = ({
   handleDocumentSubmit,
   isSubmitting,
   handleFieldSelectChange,
+  isNewClientMode = false,
+  newClient
 }: FormTabsProps) => {
   const handleConsentChange = (checked: boolean) => {
     const consentEvent = {
@@ -53,19 +47,6 @@ export const FormTabs = ({
     
     onChange(consentEvent);
   };
-  
-  // If no client is selected, show client selection view
-  if (!selectedClient) {
-    return (
-      <ClientSelectionSection 
-        selectedClient={selectedClient}
-        onClientSelect={handleClientSelect}
-        enableClientCreation={enableClientCreation}
-        isCreatingClient={isCreatingClient}
-        onOpenIntakeDialog={() => setShowIntakeDialog(true)}
-      />
-    );
-  }
   
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -79,11 +60,13 @@ export const FormTabs = ({
       
       <TabsContent value="client" className="space-y-6">
         <TabContentComponents.ClientProfileTabContent 
-          selectedClient={selectedClient} 
           formData={formData}
           onChange={onChange}
           onSaveDraft={handleSaveDraft}
           setActiveTab={setActiveTab}
+          handleFieldSelectChange={handleFieldSelectChange}
+          isNewClientMode={isNewClientMode}
+          newClient={newClient}
         />
       </TabsContent>
       
@@ -126,7 +109,7 @@ export const FormTabs = ({
           onSaveDraft={handleSaveDraft}
           setActiveTab={setActiveTab}
           handleDocumentSubmit={handleDocumentSubmit}
-          selectedClient={selectedClient}
+          selectedClient={newClient}
           isSubmitting={isSubmitting}
         />
       </TabsContent>
