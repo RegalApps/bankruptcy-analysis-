@@ -1,5 +1,5 @@
 
-import { FileText, Shield, MessageCircle, Timer, Calendar, Upload, Lock, Users, CheckCircle } from "lucide-react";
+import { FileText, Shield, MessageCircle, Timer, Calendar, Upload, Lock, Users, CheckCircle, UserCircle, AlertCircle, Bell } from "lucide-react";
 import type { CategoryConfig, NotificationCategory } from "@/types/notifications";
 
 export const categoryConfig: Record<NotificationCategory, CategoryConfig> = {
@@ -8,6 +8,24 @@ export const categoryConfig: Record<NotificationCategory, CategoryConfig> = {
     icon: FileText,
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
+  },
+  client_update: {
+    label: "Client Updates",
+    icon: UserCircle,
+    color: "text-indigo-500",
+    bgColor: "bg-indigo-500/10",
+  },
+  system_alert: {
+    label: "System Alerts",
+    icon: AlertCircle,
+    color: "text-yellow-500",
+    bgColor: "bg-yellow-500/10",
+  },
+  task_complete: {
+    label: "Completed Tasks",
+    icon: CheckCircle,
+    color: "text-green-500",
+    bgColor: "bg-green-500/10",
   },
   security: {
     label: "Security",

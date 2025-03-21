@@ -1,7 +1,7 @@
 
 import { LucideIcon } from "lucide-react";
 
-export type NotificationCategory = 'file_activity' | 'security' | 'task' | 'subscription' | 'reminder';
+export type NotificationCategory = 'file_activity' | 'client_update' | 'system_alert' | 'task_complete' | 'security' | 'task' | 'subscription' | 'reminder';
 
 // UI-side notification with category field
 export interface Notification {
