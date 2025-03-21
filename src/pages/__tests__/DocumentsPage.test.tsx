@@ -2,7 +2,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import { DocumentsPage } from '../DocumentsPage';
+import DocumentsPage from '../DocumentsPage';
 import { supabase } from '@/lib/supabase';
 import { vi } from 'vitest';
 
