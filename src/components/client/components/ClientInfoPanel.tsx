@@ -1,21 +1,9 @@
 
-import { User, Mail, Phone, Clock, MessageSquare, Calendar, FileText, AlertTriangle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { DocumentTree } from "./DocumentTree";
-import { Document } from "../types";
-
-interface Client {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  status?: string;
-  last_interaction?: string;
-  engagement_score?: number;
-}
+import { User, Calendar, FileText, Phone, Mail, Clock, Folder } from "lucide-react";
+import { Client, Document } from "../types";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface ClientInfoPanelProps {
   client: Client;
@@ -23,113 +11,108 @@ interface ClientInfoPanelProps {
   lastActivityDate?: string;
   documents: Document[];
   onDocumentSelect: (documentId: string) => void;
+  selectedDocumentId: string | null;
 }
 
 export const ClientInfoPanel = ({ 
   client, 
   documentCount, 
-  lastActivityDate,
+  lastActivityDate, 
   documents,
-  onDocumentSelect
+  onDocumentSelect,
+  selectedDocumentId
 }: ClientInfoPanelProps) => {
-  const handleQuickAction = (action: string) => {
-    toast.info(`${action} feature will be available soon`);
-  };
+  // Group documents by type
+  const documentTypes = documents.reduce((acc, doc) => {
+    const type = doc.type || 'Other';
+    if (!acc[type]) acc[type] = 0;
+    acc[type]++;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Client profile section */}
+    <div className="h-full flex flex-col">
       <div className="p-4 border-b">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="bg-primary/10 p-2 rounded-full">
-            <User className="h-8 w-8 text-primary" />
+        <div className="flex items-center mb-4">
+          <div className="bg-primary/10 p-3 rounded-full mr-3">
+            <User className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">{client.name}</h2>
-            <div className={`px-2 py-0.5 text-xs inline-block rounded-full ${
-              client.status === 'active' 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-gray-100 text-gray-800'
-            }`}>
-              {client.status || 'Unknown Status'}
-            </div>
+            <h3 className="font-medium">{client.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              {client.status === 'active' ? 'Active Client' : 'Inactive Client'}
+            </p>
           </div>
         </div>
         
-        <div className="space-y-3 mb-4">
+        <div className="space-y-2 text-sm">
           {client.email && (
-            <div className="flex items-center text-sm">
+            <div className="flex items-center">
               <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>{client.email}</span>
             </div>
           )}
+          
           {client.phone && (
-            <div className="flex items-center text-sm">
+            <div className="flex items-center">
               <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>{client.phone}</span>
             </div>
           )}
+          
+          <div className="flex items-center">
+            <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+            <span>{documentCount} Documents</span>
+          </div>
+          
           {lastActivityDate && (
-            <div className="flex items-center text-sm">
+            <div className="flex items-center">
               <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span>Last Activity: {new Date(lastActivityDate).toLocaleDateString()}</span>
+              <span>Last activity: {format(new Date(lastActivityDate), 'MMM d, yyyy')}</span>
             </div>
           )}
         </div>
-        
-        {/* Quick actions */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={() => handleQuickAction("Message")}
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span>Message</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={() => handleQuickAction("Schedule")}
-          >
-            <Calendar className="h-3.5 w-3.5" />
-            <span>Schedule</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={() => handleQuickAction("Add Note")}
-          >
-            <FileText className="h-3.5 w-3.5" />
-            <span>Add Note</span>
-          </Button>
-        </div>
-        
-        {/* AI insights card */}
-        {documentCount > 0 && (
-          <Card className="bg-muted/50 mb-2">
-            <CardContent className="p-3">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div className="text-xs">
-                  <p className="font-medium">Insights</p>
-                  <p className="text-muted-foreground">
-                    Client has {documentCount} documents. Last activity on {lastActivityDate ? new Date(lastActivityDate).toLocaleDateString() : 'N/A'}.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
       
-      {/* Document tree section */}
-      <div className="flex-1 overflow-auto p-4">
-        <h3 className="text-sm font-medium mb-3">Document Tree</h3>
-        <DocumentTree documents={documents} onDocumentSelect={onDocumentSelect} />
+      <div className="p-4 border-b">
+        <h4 className="text-sm font-medium mb-2">Document Types</h4>
+        <div className="space-y-1">
+          {Object.entries(documentTypes).map(([type, count]) => (
+            <div key={type} className="flex items-center justify-between text-sm">
+              <div className="flex items-center">
+                <Folder className="h-4 w-4 mr-1.5 text-muted-foreground" />
+                <span>{type}</span>
+              </div>
+              <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <div className="flex-1 overflow-hidden">
+        <div className="p-4 border-b">
+          <h4 className="text-sm font-medium">Recent Documents</h4>
+        </div>
+        <ScrollArea className="h-[calc(100%-12rem)]">
+          <div className="p-2">
+            {documents.slice(0, 10).map((doc) => (
+              <div 
+                key={doc.id}
+                className={cn(
+                  "p-2 text-sm rounded cursor-pointer hover:bg-accent/50 transition-colors",
+                  selectedDocumentId === doc.id ? "bg-accent/60" : ""
+                )}
+                onClick={() => onDocumentSelect(doc.id)}
+              >
+                <div className="font-medium truncate">{doc.title}</div>
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>{doc.type || 'Document'}</span>
+                  <span>{format(new Date(doc.updated_at), 'MMM d')}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );

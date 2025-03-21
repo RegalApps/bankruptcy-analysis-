@@ -13,12 +13,21 @@ import { ClientSkeleton } from "./components/ClientSkeleton";
 import { ClientNotFound } from "./components/ClientNotFound";
 import { useClientData } from "./hooks/useClientData";
 import { ClientViewerProps } from "./types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: ClientViewerProps) => {
   const { client, documents, isLoading, activeTab, setActiveTab, error } = useClientData(clientId, onBack);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   
+  // Auto-select the first document when documents are loaded
+  useEffect(() => {
+    if (documents.length > 0 && !selectedDocumentId) {
+      setSelectedDocumentId(documents[0].id);
+      toast.info(`${documents.length} documents loaded for ${client?.name || 'client'}`);
+    }
+  }, [documents, selectedDocumentId, client]);
+
   // Find the selected document
   const selectedDocument = selectedDocumentId 
     ? documents.find(doc => doc.id === selectedDocumentId)
@@ -46,12 +55,17 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
   };
 
   // Get last activity date
-  const lastActivityDate = documents.length > 0 ? documents[0].updated_at : undefined;
+  const lastActivityDate = documents.length > 0 
+    ? new Date(Math.max(...documents.map(d => new Date(d.updated_at).getTime()))).toISOString()
+    : undefined;
 
   return (
     <Card className="h-full">
       <CardHeader className="border-b pb-3 px-0 pt-0">
-        <ClientHeader onBack={onBack} />
+        <ClientHeader 
+          onBack={onBack} 
+          clientName={client.name}
+        />
       </CardHeader>
       <CardContent className="p-0">
         <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)]">
@@ -63,6 +77,7 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
               lastActivityDate={lastActivityDate}
               documents={documents}
               onDocumentSelect={handleDocumentSelect}
+              selectedDocumentId={selectedDocumentId}
             />
           </ResizablePanel>
           
