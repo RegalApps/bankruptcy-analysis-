@@ -30,6 +30,9 @@ export interface PreviewState {
   checkFile: () => Promise<void>;
   isLoading: boolean;
   handleAnalysisRetry: () => void;
+  hasFallbackToDirectUrl: boolean;
+  networkStatus: 'online' | 'offline';
+  attemptCount: number;
 }
 
 export interface DocumentPreviewContentProps {
@@ -83,4 +86,26 @@ export interface PDFViewerProps {
 export interface NetworkStatusIndicatorProps {
   isOnline: boolean;
   onRetry: () => void;
+  attemptCount?: number;
+}
+
+export interface UseNetworkMonitorReturn {
+  networkStatus: 'online' | 'offline';
+  handleOnline: () => void;
+  handleOffline: () => void;
+}
+
+export interface UseFileCheckerReturn {
+  checkFile: () => Promise<void>;
+  handleFileCheckError: (error: any, publicUrl?: string | null) => void;
+}
+
+export interface UseRetryStrategyReturn {
+  attemptCount: number;
+  incrementAttempt: () => void;
+  resetAttempts: () => void;
+  lastAttempt: Date | null;
+  setLastAttempt: (date: Date) => void;
+  shouldRetry: (currentAttempt: number) => boolean;
+  getRetryDelay: (attempt: number) => number;
 }

@@ -37,7 +37,8 @@ const usePreviewState = (
     checkFile, 
     networkStatus, 
     attemptCount,
-    hasFileLoadStarted 
+    hasFileLoadStarted,
+    resetRetries
   } = useFilePreview({
     storagePath,
     setFileExists,
@@ -90,6 +91,15 @@ const usePreviewState = (
     bypassAnalysis
   });
 
+  // Add state for tracking stuck analysis
+  const [isAnalysisStuck, setIsAnalysisStuck] = useState<{
+    stuck: boolean;
+    minutesStuck: number;
+  }>({
+    stuck: false,
+    minutesStuck: 0
+  });
+
   // Enhanced document status tracking
   useEffect(() => {
     if (!documentId) return;
@@ -130,15 +140,6 @@ const usePreviewState = (
     return () => clearInterval(intervalId);
   }, [documentId]);
 
-  // Add state for tracking stuck analysis
-  const [isAnalysisStuck, setIsAnalysisStuck] = useState<{
-    stuck: boolean;
-    minutesStuck: number;
-  }>({
-    stuck: false,
-    minutesStuck: 0
-  });
-
   return {
     fileUrl,
     fileExists,
@@ -173,6 +174,7 @@ const usePreviewState = (
       setPreviewError(null);
       setFileExists(false);
       setLoadRetries(0);
+      resetRetries();
       checkFile();
     }
   };
