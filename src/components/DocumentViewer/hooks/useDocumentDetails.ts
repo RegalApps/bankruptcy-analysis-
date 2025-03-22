@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { DocumentDetails } from "../types";
@@ -16,7 +15,8 @@ export const useDocumentDetails = (
 
   const fetchDocumentDetails = async () => {
     try {
-      const { data: document, error: docError } = await supabase
+      // First try direct document fetch
+      let { data: document, error: docError } = await supabase
         .from('documents')
         .select(`
           *,
@@ -26,33 +26,40 @@ export const useDocumentDetails = (
         .eq('id', documentId)
         .maybeSingle();
 
-      if (docError) throw docError;
+      // If not found and looks like a Form 47, try to find by title
+      if (!document && (documentId.toLowerCase().includes('form-47') || documentId.toLowerCase().includes('consumer'))) {
+        console.log("Document not found by ID, trying Form 47 fallback");
+        const { data: form47Doc, error: form47Error } = await supabase
+          .from('documents')
+          .select(`
+            *,
+            analysis:document_analysis(content),
+            comments:document_comments(id, content, created_at, user_id)
+          `)
+          .or('title.ilike.%form 47%,title.ilike.%consumer proposal%')
+          .maybeSingle();
+          
+        if (form47Error) throw form47Error;
+        if (form47Doc) {
+          console.log("Found Form 47 document by title");
+          document = form47Doc;
+        }
+      }
+
       if (!document) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Document not found"
-        });
+        console.error("Document not found:", documentId);
         if (options.onError) options.onError(new Error("Document not found"));
         return null;
       }
       
-      console.log("Raw document data:", document);
-
       // Process the analysis content
       const processedDocument = processDocumentData(document);
       
-      console.log('Final processed document:', processedDocument);
-
       if (options.onSuccess) options.onSuccess(processedDocument);
       return processedDocument;
+      
     } catch (error: any) {
       console.error('Error fetching document details:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load document details"
-      });
       if (options.onError) options.onError(error);
       return null;
     }

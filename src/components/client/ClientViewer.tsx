@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   ResizablePanelGroup, 
@@ -22,7 +21,6 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
   const { client, documents, isLoading, activeTab, setActiveTab, error } = useClientData(clientId, onBack);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   
-  // Auto-select the first document when documents are loaded
   useEffect(() => {
     if (documents.length > 0 && !selectedDocumentId) {
       setSelectedDocumentId(documents[0].id);
@@ -30,62 +28,56 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
     }
   }, [documents, selectedDocumentId, client]);
 
-  // Find the selected document
   const selectedDocument = selectedDocumentId 
     ? documents.find(doc => doc.id === selectedDocumentId)
     : null;
 
-  // If there's an error, call the onError callback if provided
   if (error && onError) {
     console.error("Client data error:", error);
     onError();
   }
 
-  // If still loading, show skeleton
   if (isLoading) {
     return <ClientSkeleton onBack={onBack} />;
   }
 
-  // If client not found
   if (!client) {
     return <ClientNotFound onBack={onBack} />;
   }
 
-  // Handle document selection
   const handleDocumentSelect = (documentId: string) => {
     console.log("Selected document ID:", documentId);
     setSelectedDocumentId(documentId);
   };
 
-  // Handle document opening - use either provided callback or navigate directly
   const handleDocumentOpen = (documentId: string) => {
     console.log("Opening document from ClientViewer:", documentId);
     
-    // Make sure we have a valid document ID
-    if (!documentId || typeof documentId !== 'string') {
-      console.error("Invalid document ID:", documentId);
-      toast.error("Invalid document ID");
+    if (!documentId) {
+      console.error("Invalid document ID");
+      toast.error("Cannot open document: Invalid ID");
       return;
     }
-    
-    // Find the document to verify it exists
+
     const docToOpen = documents.find(doc => doc.id === documentId);
-    if (!docToOpen) {
-      console.error("Document not found in documents list:", documentId);
-      toast.error("Document not found in current view");
-      return;
+    if (docToOpen?.title?.toLowerCase().includes('form 47') || 
+        docToOpen?.title?.toLowerCase().includes('consumer proposal')) {
+      console.log("Opening Form 47 document");
     }
     
-    // Use the provided callback if available
     if (onDocumentOpen) {
       onDocumentOpen(documentId);
     } else {
-      // If no callback is provided, navigate directly
-      navigate('/', { state: { selectedDocument: documentId } });
+      navigate('/', { 
+        state: { 
+          selectedDocument: documentId,
+          source: 'client-viewer',
+          isForm47: docToOpen?.title?.toLowerCase().includes('form 47')
+        } 
+      });
     }
   };
 
-  // Get last activity date
   const lastActivityDate = documents.length > 0 
     ? new Date(Math.max(...documents.map(d => new Date(d.updated_at).getTime()))).toISOString()
     : undefined;
@@ -100,7 +92,6 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
       </CardHeader>
       <CardContent className="p-0">
         <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)]">
-          {/* Left panel - Client info & Document Tree */}
           <ResizablePanel defaultSize={20} minSize={15}>
             <ClientInfoPanel 
               client={client} 
@@ -114,7 +105,6 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
           
           <ResizableHandle withHandle />
           
-          {/* Middle panel - Client Files Hub */}
           <ResizablePanel defaultSize={50}>
             <DocumentsPanel
               documents={documents}
@@ -128,7 +118,6 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
           
           <ResizableHandle withHandle />
           
-          {/* Right panel - File Preview & Collaboration */}
           <ResizablePanel defaultSize={30} minSize={20}>
             <FilePreviewPanel 
               document={selectedDocument} 
