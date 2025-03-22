@@ -16,11 +16,17 @@ import { debugTiming, isDebugMode } from "@/utils/debugMode";
 interface DocumentViewerProps {
   documentId: string;
   bypassProcessing?: boolean;
+  documentTitle?: string | null;
+  isForm47?: boolean;
+  onLoadFailure?: () => void;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({ 
   documentId, 
-  bypassProcessing = false 
+  bypassProcessing = false,
+  documentTitle,
+  isForm47 = false,
+  onLoadFailure
 }) => {
   // Use a stable key for this component to force full remount when documentId changes
   const componentKey = useMemo(() => `document-viewer-${documentId}`, [documentId]);
@@ -36,6 +42,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       }
     }
   }, [document, loadStart, bypassProcessing]);
+
+  // Call onLoadFailure when there's an error loading the document
+  useEffect(() => {
+    if (loadingError && onLoadFailure) {
+      console.log("Document load failed, calling onLoadFailure callback");
+      onLoadFailure();
+    }
+  }, [loadingError, onLoadFailure]);
 
   // Function to handle document updates (like comments added)
   const handleDocumentUpdated = () => {
@@ -58,14 +72,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return <ViewerNotFoundState key={`${componentKey}-not-found`} />;
   }
 
-  // Check if this is a Form 47 document to apply specific layout adjustments
-  const isForm47 = isDocumentForm47(document);
+  // If isForm47 is explicitly passed as prop, use that, otherwise check from document
+  const isForm47Document = isForm47 || isDocumentForm47(document);
+  // Use passed documentTitle if available, otherwise use the one from document
+  const displayTitle = documentTitle || document.title;
 
   return (
     <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20" key={componentKey}>
       <ViewerLayout
-        isForm47={isForm47}
-        documentTitle={document.title}
+        isForm47={isForm47Document}
+        documentTitle={displayTitle}
         documentType={document.type}
         sidebar={
           <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
@@ -73,7 +89,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         mainContent={
           <DocumentPreview 
             storagePath={document.storage_path} 
-            title={document.title}
+            title={displayTitle}
             documentId={documentId}
             bypassAnalysis={bypassProcessing || isDebugMode()}
             key={`preview-${documentId}`}
