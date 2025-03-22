@@ -15,6 +15,7 @@ export const useDocumentViewer = (documentId: string) => {
   const fetchAttempts = useRef(0);
   const cachedDocumentId = useRef<string | null>(null);
   const timeoutRef = useRef<number | null>(null);
+  const maxAttempts = 2; // Limit the number of retries to prevent infinite loops
 
   const handleDocumentSuccess = useCallback((data: DocumentDetails) => {
     console.log("Document loaded successfully:", data.id);
@@ -31,8 +32,8 @@ export const useDocumentViewer = (documentId: string) => {
     console.error("Error loading document:", error, "DocumentID:", documentId);
     fetchAttempts.current += 1;
     
-    // Only show the error toast after multiple attempts
-    if (fetchAttempts.current >= 2) {
+    // Only show the error toast after retries or when max attempts reached
+    if (fetchAttempts.current >= maxAttempts) {
       setLoading(false);
       setLoadingError(`Failed to load document: ${error.message}`);
       
@@ -67,16 +68,16 @@ export const useDocumentViewer = (documentId: string) => {
     // Skip fetching if document ID is null or undefined
     if (!documentId) return;
     
+    // Cancel any running timeouts
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
     // Avoid repeated fetches for the same document ID
     if (cachedDocumentId.current === documentId && document) {
       console.log("Using cached document details for ID:", documentId);
       return;
-    }
-    
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
     }
     
     console.log("Fetching document details for ID:", documentId);
@@ -102,7 +103,7 @@ export const useDocumentViewer = (documentId: string) => {
     };
   }, [documentId, fetchDocumentDetails, document]);
 
-  // Reduced retry intervals to avoid long waits
+  // Reduced retry intervals with a maximum number of attempts
   useEffect(() => {
     // Clear existing timeout if any
     if (timeoutRef.current) {
@@ -110,21 +111,24 @@ export const useDocumentViewer = (documentId: string) => {
       timeoutRef.current = null;
     }
     
-    if (loading) {
+    if (loading && fetchAttempts.current < maxAttempts) {
       // Faster retry for first attempt
       const retryTime = fetchAttempts.current === 0 ? 1500 : 3000;
       
       timeoutRef.current = window.setTimeout(() => {
-        if (loading && fetchAttempts.current < 2) {
+        if (loading && fetchAttempts.current < maxAttempts) {
           console.log(`Document still loading after ${(fetchAttempts.current + 1) * (retryTime/1000)} seconds, retrying...`);
           fetchDocumentDetails();
-        } else if (loading && fetchAttempts.current >= 2) {
+        } else if (loading && fetchAttempts.current >= maxAttempts) {
           setLoading(false);
-          setLoadingError("Document is taking too long to load. It might still be processing.");
+          setLoadingError("Document is taking too long to load. It might still be processing or doesn't exist.");
           toast({
-            title: "Long Loading Time",
-            description: "This document is taking longer than expected to process. You can try refreshing the page.",
+            title: "Document Not Found",
+            description: "This document could not be loaded. It may have been deleted or moved.",
           });
+          
+          // End timing
+          endTiming(`document-load-${documentId}`, false);
         }
       }, retryTime);
       
@@ -136,11 +140,10 @@ export const useDocumentViewer = (documentId: string) => {
         }
       };
     }
-  }, [loading, fetchDocumentDetails, toast, fetchAttempts]);
+  }, [loading, fetchDocumentDetails, toast, documentId]);
 
   // Set up real-time subscriptions - but only if we have a valid document
-  // Use the hook properly within the component
-  useDocumentRealtime(documentId, fetchDocumentDetails);
+  useDocumentRealtime(documentId, document ? fetchDocumentDetails : null);
 
   const handleRefresh = useCallback(() => {
     sonnerToast.info("Refreshing document...");

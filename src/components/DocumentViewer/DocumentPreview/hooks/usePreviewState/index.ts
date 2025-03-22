@@ -19,6 +19,8 @@ const usePreviewState = (
   const [fileExists, setFileExists] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [isExcelFile, setIsExcelFile] = useState(false);
+  const [loadRetries, setLoadRetries] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     analyzing,
@@ -37,6 +39,14 @@ const usePreviewState = (
     setIsExcelFile, 
     setPreviewError
   });
+
+  // When file information changes, update loading state
+  useEffect(() => {
+    if (fileUrl) {
+      // If we have a file URL, we can consider loading complete
+      setIsLoading(false);
+    }
+  }, [fileUrl]);
 
   useAnalysisInitialization({
     storagePath,
@@ -57,26 +67,30 @@ const usePreviewState = (
     
     // Check if analysis is stuck
     const checkStuckAnalysis = async () => {
-      const { data } = await supabase
-        .from('documents')
-        .select('ai_processing_status, updated_at, metadata')
-        .eq('id', documentId)
-        .single();
-        
-      if (data && data.ai_processing_status === 'processing') {
-        const lastUpdateTime = new Date(data.updated_at);
-        const minutesSinceUpdate = Math.floor((Date.now() - lastUpdateTime.getTime()) / (1000 * 60));
-        
-        // If analysis has been stuck for more than 10 minutes
-        if (minutesSinceUpdate > 10) {
-          setPreviewError(`Analysis appears to be stuck (running for ${minutesSinceUpdate} minutes)`);
+      try {
+        const { data } = await supabase
+          .from('documents')
+          .select('ai_processing_status, updated_at, metadata')
+          .eq('id', documentId)
+          .maybeSingle();
           
-          // Update local state to show retry button
-          setIsAnalysisStuck({
-            stuck: true,
-            minutesStuck: minutesSinceUpdate
-          });
+        if (data && data.ai_processing_status === 'processing') {
+          const lastUpdateTime = new Date(data.updated_at);
+          const minutesSinceUpdate = Math.floor((Date.now() - lastUpdateTime.getTime()) / (1000 * 60));
+          
+          // If analysis has been stuck for more than 10 minutes
+          if (minutesSinceUpdate > 10) {
+            setPreviewError(`Analysis appears to be stuck (running for ${minutesSinceUpdate} minutes)`);
+            
+            // Update local state to show retry button
+            setIsAnalysisStuck({
+              stuck: true,
+              minutesStuck: minutesSinceUpdate
+            });
+          }
         }
+      } catch (error) {
+        console.error("Error checking document status:", error);
       }
     };
     
@@ -88,6 +102,15 @@ const usePreviewState = (
   }, [documentId]);
 
   const checkFile = async () => {
+    // Skip if already loading or retried too many times
+    if (loadRetries > 3) {
+      setPreviewError("Maximum load attempts reached. Please try again later.");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadRetries(prev => prev + 1);
+    
     try {
       const { data } = await supabase.storage
         .from('documents')
@@ -96,16 +119,19 @@ const usePreviewState = (
       if (data?.publicUrl) {
         setFileExists(true);
         setFileUrl(data.publicUrl);
+        setIsLoading(false);
       } else {
         setFileExists(false);
         setFileUrl(null);
         setPreviewError("File not found in storage");
+        setIsLoading(false);
       }
     } catch (error: any) {
       console.error("Error checking file existence:", error);
       setFileExists(false);
       setFileUrl(null);
       setPreviewError(error.message || "Failed to check file existence");
+      setIsLoading(false);
     }
   };
 
@@ -134,6 +160,7 @@ const usePreviewState = (
     handleAnalyzeDocument,
     isAnalysisStuck,
     checkFile,
+    isLoading,
     handleAnalysisRetry: () => {
       // Reset stuck state
       setIsAnalysisStuck({
@@ -144,6 +171,7 @@ const usePreviewState = (
       // Refresh document data
       setPreviewError(null);
       setFileExists(false);
+      setLoadRetries(0);
       checkFile();
     }
   };

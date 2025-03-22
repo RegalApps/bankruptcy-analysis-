@@ -6,6 +6,7 @@ import { useDocumentPreview } from "./hooks/useDocumentPreview";
 import usePreviewState from "./hooks/usePreviewState";
 import { ErrorDisplay } from "./components/ErrorDisplay";
 import { Printer } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface DocumentPreviewProps {
   storagePath: string;
@@ -28,7 +29,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     isExcelFile,
     previewError,
     setPreviewError,
-    checkFile
+    checkFile,
+    isLoading
   } = usePreviewState(storagePath, documentId, title, onAnalysisComplete, bypassAnalysis);
 
   const [forceReload, setForceReload] = useState(0);
@@ -36,8 +38,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   
   const {
-    isLoading,
-    setIsLoading,
+    isLoading: isFrameLoading,
+    setIsLoading: setIsFrameLoading,
     zoomLevel,
     useDirectLink,
     setUseDirectLink,
@@ -50,15 +52,16 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     handlePrint
   } = useDocumentPreview(fileUrl, title, iframeRef);
 
+  // Improved fetch logic with maximum retries
   useEffect(() => {
-    if (storagePath) {
+    if (storagePath && (!fileUrl || !fileExists)) {
       const fetchDocumentUrl = async () => {
         try {
+          console.log("Fetching document URL for path:", storagePath);
           await checkFile();
-          setIsLoading(false);
         } catch (error) {
           console.error("Error getting document URL:", error);
-          setIsLoading(false);
+          setIsFrameLoading(false);
         }
       };
       fetchDocumentUrl();
@@ -74,9 +77,9 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [previewError]);
 
-  const handleIframeLoad = () => setIsLoading(false);
+  const handleIframeLoad = () => setIsFrameLoading(false);
   const handleIframeError = () => {
-    setIsLoading(false);
+    setIsFrameLoading(false);
     if (!useDirectLink) {
       setUseDirectLink(true);
     }
@@ -84,7 +87,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
   const handleRefresh = async () => {
     setIsRetrying(true);
-    setIsLoading(true);
+    setIsFrameLoading(true);
     toast.info("Refreshing document preview...");
     try {
       await checkFile();
@@ -101,6 +104,18 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
   if (!storagePath) {
     return <ErrorDisplay error="No document selected" onRetry={() => {}} />;
+  }
+
+  // Show loading state when document is loading
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="large" className="mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading document preview...</p>
+        </div>
+      </div>
+    );
   }
 
   const isPdfFile = storagePath.toLowerCase().endsWith('.pdf');
@@ -163,7 +178,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           <DocumentViewerFrame
             fileUrl={fileUrl}
             title={title}
-            isLoading={isLoading}
+            isLoading={isFrameLoading}
             useDirectLink={useDirectLink}
             zoomLevel={zoomLevel}
             isPdfFile={isPdfFile}
@@ -178,7 +193,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         ) : (
           <div className="h-full flex items-center justify-center p-8 bg-muted rounded-md">
             <ErrorDisplay 
-              error="Document preview not available. Please try refreshing or check storage path."
+              error={previewError || "Document preview not available. Please try refreshing or check storage path."}
               onRetry={handleRefresh}
             />
           </div>

@@ -20,8 +20,8 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({ onRetry 
       const newTime = Math.floor((Date.now() - startTime) / 1000);
       setLoadingTime(newTime);
       
-      // Show retry button after 15 seconds
-      if (newTime > 15 && !showRetry) {
+      // Show retry button after 10 seconds - reduced from 15
+      if (newTime > 10 && !showRetry) {
         setShowRetry(true);
       }
     }, 1000);
@@ -31,14 +31,14 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({ onRetry 
   
   // Different messages based on loading time
   const getLoadingMessage = () => {
-    if (loadingTime > 20) {
-      return "This document is taking longer than expected to load. You can try refreshing the page or clicking the retry button below.";
-    } else if (loadingTime > 10) {
+    if (loadingTime > 15) {
+      return "This document is taking longer than expected to load. It may be unavailable or the server may be experiencing issues.";
+    } else if (loadingTime > 8) {
       return "Still loading document... This may take a moment for large files or if the system is busy.";
-    } else if (loadingTime > 5) {
+    } else if (loadingTime > 3) {
       return "Loading document content... This may take a moment for large files.";
     }
-    return "This may take a moment for large documents or during initial processing. Preparing document viewer...";
+    return "Preparing document viewer...";
   };
   
   const handleRetry = () => {
