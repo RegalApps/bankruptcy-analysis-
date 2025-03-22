@@ -1,18 +1,15 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { DocumentViewerFrame } from "./DocumentViewerFrame";
-import { useDocumentPreview } from "../hooks/useDocumentPreview";
+import { PDFViewer } from "./PDFViewer";
 import { ErrorDisplay } from "./ErrorDisplay";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ViewerToolbar } from "./ViewerToolbar";
-
-interface DocumentPreviewContentProps {
-  storagePath: string;
-  documentId: string;
-  title: string;
-  previewState: any; // Using any here to avoid circular dependencies, but in practice should be properly typed
-}
+import { NetworkStatusIndicator } from "./NetworkStatusIndicator";
+import { useNetworkResilience } from "../hooks/useNetworkResilience";
+import { DocumentPreviewContentProps } from "../types";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   storagePath,
@@ -26,44 +23,80 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     previewError,
     setPreviewError,
     checkFile,
-    isLoading
+    isLoading,
+    isExcelFile
   } = previewState;
 
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [forceReload, setForceReload] = useState(0);
   
-  const {
-    isLoading: isFrameLoading,
-    setIsLoading: setIsFrameLoading,
-    zoomLevel,
-    useDirectLink,
-    setUseDirectLink,
-    isRetrying,
-    setIsRetrying,
-    handleZoomIn,
-    handleZoomOut,
-    handleOpenInNewTab,
-    handleDownload,
-    handlePrint,
-    iframeRef
-  } = useDocumentPreview(fileUrl, title, undefined);
+  const { 
+    isOnline, 
+    resetRetries, 
+    incrementRetry,
+    shouldRetry 
+  } = useNetworkResilience(storagePath);
 
-  const handleIframeLoad = () => setIsFrameLoading(false);
+  // Handle file check errors
+  useEffect(() => {
+    if (previewError && shouldRetry({ message: previewError })) {
+      console.log("Automatically retrying file check due to error:", previewError);
+      const timeout = setTimeout(() => {
+        checkFile();
+        incrementRetry();
+      }, 2000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [previewError, checkFile, shouldRetry, incrementRetry]);
+
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 10, 200));
+  };
   
-  const handleIframeError = () => {
-    setIsFrameLoading(false);
-    if (!useDirectLink) {
-      setUseDirectLink(true);
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 10, 50));
+  };
+
+  const handleOpenInNewTab = () => {
+    if (fileUrl) {
+      window.open(fileUrl, '_blank');
+      toast.success("Document opened in new tab");
+    }
+  };
+
+  const handleDownload = () => {
+    if (fileUrl) {
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = title || 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Download started");
+    }
+  };
+
+  const handlePrint = () => {
+    if (fileUrl) {
+      const printWindow = window.open(fileUrl, '_blank');
+      if (printWindow) {
+        printWindow.addEventListener('load', () => {
+          printWindow.print();
+        });
+      }
+      toast.success("Print dialog opened");
     }
   };
 
   const handleRefresh = async () => {
     setIsRetrying(true);
-    setIsFrameLoading(true);
+    resetRetries();
     toast.info("Refreshing document preview...");
     try {
       await checkFile();
       setForceReload(prev => prev + 1);
-      setUseDirectLink(false);
       toast.success("Document refreshed");
     } catch (error) {
       console.error("Error refreshing:", error);
@@ -89,8 +122,28 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     );
   }
 
-  const isPdfFile = storagePath.toLowerCase().endsWith('.pdf');
-  const isDocFile = storagePath.toLowerCase().endsWith('.doc') || storagePath.toLowerCase().endsWith('.docx');
+  // Special handling for Excel files
+  if (isExcelFile) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center max-w-md p-6 bg-muted rounded-lg">
+          <h3 className="text-lg font-medium mb-3">Excel Preview Not Available</h3>
+          <p className="text-muted-foreground mb-6">
+            Excel files cannot be previewed in the browser. Please download the file to view it.
+          </p>
+          {fileUrl && (
+            <Button
+              onClick={handleDownload}
+              className="w-full"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Excel File
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -108,20 +161,12 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
       
       <div className="flex-1 overflow-hidden relative">
         {fileExists && fileUrl ? (
-          <DocumentViewerFrame
+          <PDFViewer
             fileUrl={fileUrl}
             title={title}
-            isLoading={isFrameLoading}
-            useDirectLink={useDirectLink}
             zoomLevel={zoomLevel}
-            isPdfFile={isPdfFile}
-            isDocFile={isDocFile}
-            onIframeLoad={handleIframeLoad}
-            onIframeError={handleIframeError}
-            iframeRef={iframeRef}
-            forceReload={forceReload}
-            onOpenInNewTab={handleOpenInNewTab}
-            onDownload={handleDownload}
+            onLoad={() => setPreviewError(null)}
+            onError={() => setPreviewError("Error loading document")}
           />
         ) : (
           <div className="h-full flex items-center justify-center p-8 bg-muted rounded-md">
@@ -132,6 +177,11 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           </div>
         )}
       </div>
+      
+      <NetworkStatusIndicator 
+        isOnline={isOnline} 
+        onRetry={handleRefresh} 
+      />
     </div>
   );
 };

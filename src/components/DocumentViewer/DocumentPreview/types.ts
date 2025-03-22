@@ -71,3 +71,16 @@ export interface ErrorDisplayProps {
   error: string;
   onRetry: () => void;
 }
+
+export interface PDFViewerProps {
+  fileUrl: string | null;
+  title: string;
+  zoomLevel: number;
+  onLoad?: () => void;
+  onError?: () => void;
+}
+
+export interface NetworkStatusIndicatorProps {
+  isOnline: boolean;
+  onRetry: () => void;
+}

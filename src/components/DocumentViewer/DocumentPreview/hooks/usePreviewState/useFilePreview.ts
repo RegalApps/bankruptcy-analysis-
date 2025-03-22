@@ -1,6 +1,6 @@
-
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface UseFilePreviewProps {
   storagePath: string;
@@ -17,8 +17,11 @@ export const useFilePreview = ({
   setIsExcelFile,
   setPreviewError
 }: UseFilePreviewProps) => {
+  const [lastAttempt, setLastAttempt] = useState<Date | null>(null);
+  const [attemptCount, setAttemptCount] = useState(0);
+
   // Check if file exists and get its URL
-  useEffect(() => {
+  const checkFile = useCallback(async () => {
     if (!storagePath) {
       setFileExists(false);
       setFileUrl(null);
@@ -26,88 +29,133 @@ export const useFilePreview = ({
       return;
     }
 
-    const checkFile = async () => {
-      try {
-        console.log("Checking file at path:", storagePath);
+    try {
+      // Record attempt
+      setLastAttempt(new Date());
+      setAttemptCount(count => count + 1);
+      
+      console.log("Checking file at path:", storagePath);
+      
+      // Get public URL for file
+      const { data, error: urlError } = await supabase.storage
+        .from('documents')
+        .getPublicUrl(storagePath);
+      
+      if (urlError) {
+        console.error("Error getting public URL:", urlError);
+        setFileExists(false);
+        setFileUrl(null);
+        setPreviewError(`Storage error: ${urlError.message}`);
+        return;
+      }
+      
+      if (data?.publicUrl) {
+        console.log("File found with URL:", data.publicUrl);
         
-        // Get public URL for file - this doesn't return an error property
-        const { data } = await supabase.storage
-          .from('documents')
-          .getPublicUrl(storagePath);
+        // Set the URL regardless of fetch success
+        setFileUrl(data.publicUrl);
         
-        if (data?.publicUrl) {
-          console.log("File found with URL:", data.publicUrl);
+        try {
+          // Use a combination of fetch API and timeout to check accessibility
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
           
-          // Always set the URL even if the fetch check fails
-          setFileUrl(data.publicUrl);
+          const response = await fetch(data.publicUrl, { 
+            method: 'HEAD',
+            cache: 'no-cache',
+            signal: controller.signal
+          });
           
-          // Try to verify the file is accessible with a HEAD request
-          try {
-            // First try a standard HEAD request
-            const response = await fetch(data.publicUrl, { 
-              method: 'HEAD',
-              cache: 'no-cache' // Avoid caching issues
-            });
+          clearTimeout(timeoutId);
+          
+          console.log("File accessibility check response:", response.status);
+          
+          if (response.ok) {
+            setFileExists(true);
             
-            console.log("File accessibility check response:", response.status);
+            // Check file type
+            const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
+                           storagePath.toLowerCase().endsWith('.xls') ||
+                           storagePath.toLowerCase().endsWith('.csv');
+                           
+            setIsExcelFile(isExcel);
+            setPreviewError(null);
+          } else {
+            // Status code error
+            setFileExists(false);
+            setPreviewError(`File accessibility error: HTTP ${response.status}`);
             
-            if (response.ok) {
-              setFileExists(true);
-              
-              // Check if it's an Excel file based on extension
-              const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
-                             storagePath.toLowerCase().endsWith('.xls') ||
-                             storagePath.toLowerCase().endsWith('.csv');
-                             
-              setIsExcelFile(isExcel);
-              setPreviewError(null);
-            } else {
-              // If standard request fails, try with no-cors mode
-              console.log("Standard fetch failed, trying with no-cors mode");
+            // Try no-cors mode as fallback
+            try {
               await fetch(data.publicUrl, { 
                 method: 'HEAD',
-                mode: 'no-cors' // Fall back to no-cors mode
+                mode: 'no-cors' 
               });
               
-              // If we get here without exception, assume file exists
+              // If we get here, assume file might exist
+              console.log("No-cors fetch didn't throw, assuming file exists");
               setFileExists(true);
               
-              // Check Excel file
+              // Check file type
               const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
-                             storagePath.toLowerCase().endsWith('.xls') ||
-                             storagePath.toLowerCase().endsWith('.csv');
-                             
+                            storagePath.toLowerCase().endsWith('.xls') ||
+                            storagePath.toLowerCase().endsWith('.csv');
+                            
               setIsExcelFile(isExcel);
               setPreviewError(null);
+            } catch (corsError) {
+              console.error("No-cors fetch also failed:", corsError);
             }
-          } catch (fetchError: any) {
-            console.error("Error fetching file:", fetchError);
-            // Even with fetch error, we'll still consider the file exists
-            // so the iframe can try to load it
+          }
+        } catch (fetchError: any) {
+          console.error("Error fetching file:", fetchError);
+          
+          if (fetchError.name === 'AbortError') {
+            setPreviewError("Request timed out. The server might be busy or the file too large.");
+            // Still try to show the file
             setFileExists(true);
-            setPreviewError("File accessibility check failed. Trying to load anyway.");
+          } else if (fetchError.message?.includes('network') || 
+                    fetchError.message?.includes('fetch')) {
+            // Network error, but we'll still try to show the file
+            setFileExists(true);
+            setPreviewError("Network issue detected. Preview might be limited.");
             
-            // Check Excel file
+            // Check if it's an Excel file anyway
             const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
                           storagePath.toLowerCase().endsWith('.xls') ||
                           storagePath.toLowerCase().endsWith('.csv');
-                          
             setIsExcelFile(isExcel);
+            
+            // Show toast to inform user
+            toast.warning("Network connectivity issues detected. Document preview might be limited.");
+          } else {
+            // Other errors
+            setFileExists(false);
+            setPreviewError(`Error accessing file: ${fetchError.message || "Unknown error"}`);
           }
-        } else {
-          console.error("No public URL returned for file:", storagePath);
-          setFileExists(false);
-          setFileUrl(null);
-          setPreviewError("File not found in storage or not accessible");
         }
-      } catch (error: any) {
-        console.error("Error checking file existence:", error);
+      } else {
+        console.error("No public URL returned for file:", storagePath);
         setFileExists(false);
         setFileUrl(null);
-        setPreviewError(error.message || "Failed to check file existence");
+        setPreviewError("File not found in storage or not accessible");
       }
-    };
-    
-    checkFile();
+    } catch (error: any) {
+      console.error("Error checking file existence:", error);
+      setFileExists(false);
+      setFileUrl(null);
+      setPreviewError(error.message || "Failed to check file existence");
+    }
   }, [storagePath, setFileExists, setFileUrl, setIsExcelFile, setPreviewError]);
+
+  // Initial file check
+  useEffect(() => {
+    checkFile();
+  }, [checkFile]);
+
+  return {
+    checkFile,
+    lastAttempt,
+    attemptCount
+  };
 };
