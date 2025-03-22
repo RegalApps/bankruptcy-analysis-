@@ -62,11 +62,23 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     if (onDocumentOpen) {
       onDocumentOpen(documentId);
     } else {
+      // Check if it's the Form 47 document for josh-hart client
+      let isForm47 = false;
+      let documentTitle = null;
+      
+      if (effectiveClientId === 'josh-hart') {
+        isForm47 = true;
+        documentTitle = "Form 47 - Consumer Proposal";
+        console.log("Opening Josh Hart's Form 47 document");
+      }
+      
       // If no callback is provided, navigate directly to the home page with the selected document
       navigate('/', { 
         state: { 
           selectedDocument: documentId,
-          source: 'client-tab'
+          source: 'client-tab',
+          isForm47: isForm47,
+          documentTitle: documentTitle
         } 
       });
     }

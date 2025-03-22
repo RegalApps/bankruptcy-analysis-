@@ -79,6 +79,10 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
       return;
     }
     
+    // Identify if this is a Form 47 document for special handling
+    const isForm47 = document.title?.toLowerCase().includes('form 47') || 
+                     document.title?.toLowerCase().includes('consumer proposal');
+    
     // Use a small timeout before opening the document to allow UI to update
     setTimeout(() => {
       try {
@@ -94,6 +98,11 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
         console.error("Error opening document:", error);
         setIsError(true);
         toast.error("Error opening document. Please try again.");
+      } finally {
+        // Reset loading after a short delay to avoid UI flicker
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
       }
     }, 50);
     

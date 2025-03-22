@@ -25,7 +25,19 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
   
   useEffect(() => {
     if (documents.length > 0 && !selectedDocumentId) {
-      setSelectedDocumentId(documents[0].id);
+      // Prioritize Form 47 document if available
+      const form47Doc = documents.find(doc => 
+        doc.title?.toLowerCase().includes('form 47') || 
+        doc.title?.toLowerCase().includes('consumer proposal')
+      );
+      
+      if (form47Doc) {
+        console.log("Found Form 47 document, selecting automatically:", form47Doc.id);
+        setSelectedDocumentId(form47Doc.id);
+      } else {
+        setSelectedDocumentId(documents[0].id);
+      }
+      
       toast.info(`${documents.length} documents loaded for ${client?.name || 'client'}`);
     }
   }, [documents, selectedDocumentId, client]);
@@ -71,13 +83,18 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
     try {
       const docToOpen = documents.find(doc => doc.id === documentId);
       
+      if (!docToOpen) {
+        console.error("Document not found in list:", documentId);
+        toast.error("Document not found");
+        return;
+      }
+      
       // For Form 47 documents, add specific handling
       const isForm47 = docToOpen?.title?.toLowerCase().includes('form 47') || 
                       docToOpen?.title?.toLowerCase().includes('consumer proposal');
       
       if (isForm47) {
         console.log("Opening Form 47 document with special handling");
-        // Add form47 flag to the state for special handling
       }
       
       if (onDocumentOpen) {
@@ -92,6 +109,8 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
           } 
         });
       }
+      
+      toast.success(`Opening ${docToOpen.title}`);
     } catch (error) {
       console.error("Error opening document:", error);
       toast.error("Error opening document. Please try again.");
