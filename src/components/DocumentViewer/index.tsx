@@ -26,7 +26,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const componentKey = useMemo(() => `document-viewer-${documentId}`, [documentId]);
   
   const loadStart = performance.now();
-  const { document, loading, loadingError, handleRefresh } = useDocumentViewer(documentId);
+  const { document, loading, loadingError, handleRefresh, isNetworkError } = useDocumentViewer(documentId);
 
   useEffect(() => {
     if (document) {
@@ -35,7 +35,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         debugTiming('document-viewer-load', performance.now() - loadStart);
       }
     }
-  }, [document, loadStart]);
+  }, [document, loadStart, bypassProcessing]);
 
   // Function to handle document updates (like comments added)
   const handleDocumentUpdated = () => {
@@ -43,7 +43,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   };
 
   if (loading) {
-    return <ViewerLoadingState key={`${componentKey}-loading`} />;
+    return <ViewerLoadingState 
+      key={`${componentKey}-loading`} 
+      onRetry={handleRefresh}
+      networkError={isNetworkError}
+    />;
   }
 
   if (loadingError) {

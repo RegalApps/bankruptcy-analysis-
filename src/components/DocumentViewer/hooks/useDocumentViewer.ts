@@ -11,6 +11,7 @@ export const useDocumentViewer = (documentId: string) => {
   const [document, setDocument] = useState<DocumentDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [isNetworkError, setIsNetworkError] = useState(false);
   const { toast } = useToast();
   const fetchAttempts = useRef(0);
   const cachedDocumentId = useRef<string | null>(null);
@@ -22,6 +23,7 @@ export const useDocumentViewer = (documentId: string) => {
     setDocument(data);
     setLoading(false);
     setLoadingError(null);
+    setIsNetworkError(false);
     fetchAttempts.current = 0;
     
     // End timing if we started it
@@ -32,19 +34,32 @@ export const useDocumentViewer = (documentId: string) => {
     console.error("Error loading document:", error, "DocumentID:", documentId);
     fetchAttempts.current += 1;
     
+    // Check if this is a network error
+    const isNetwork = error.message?.includes('Failed to fetch') ||
+                     error.message?.includes('NetworkError') ||
+                     error.message?.includes('network') ||
+                     error.message?.includes('connect') ||
+                     error.message?.includes('CORS');
+    
+    setIsNetworkError(isNetwork);
+    
     // Only show the error toast after retries or when max attempts reached
     if (fetchAttempts.current >= maxAttempts) {
       setLoading(false);
-      setLoadingError(`Failed to load document: ${error.message}`);
       
       // Provide more specific error message based on error type
       let errorMessage = "There was a problem loading this document. Please try refreshing.";
       if (error.message?.includes("not found")) {
         errorMessage = "Document not found. It may have been deleted or moved.";
+        setLoadingError(errorMessage);
       } else if (error.message?.includes("permission")) {
         errorMessage = "You don't have permission to view this document.";
-      } else if (error.message?.includes("network") || error.message?.includes("connection")) {
+        setLoadingError(errorMessage);
+      } else if (isNetwork) {
         errorMessage = "Network error. Please check your connection and try again.";
+        setLoadingError("Network connection error. Unable to reach the server.");
+      } else {
+        setLoadingError(`Failed to load document: ${error.message}`);
       }
       
       toast({
@@ -83,6 +98,7 @@ export const useDocumentViewer = (documentId: string) => {
     console.log("Fetching document details for ID:", documentId);
     setLoading(true);
     setLoadingError(null);
+    setIsNetworkError(false);
     fetchAttempts.current = 0;
     cachedDocumentId.current = documentId;
     
@@ -112,8 +128,8 @@ export const useDocumentViewer = (documentId: string) => {
     }
     
     if (loading && fetchAttempts.current < maxAttempts) {
-      // Faster retry for first attempt
-      const retryTime = fetchAttempts.current === 0 ? 1500 : 3000;
+      // Faster retry for first attempt, slower for network errors
+      const retryTime = isNetworkError ? 3000 : (fetchAttempts.current === 0 ? 1500 : 3000);
       
       timeoutRef.current = window.setTimeout(() => {
         if (loading && fetchAttempts.current < maxAttempts) {
@@ -121,10 +137,16 @@ export const useDocumentViewer = (documentId: string) => {
           fetchDocumentDetails();
         } else if (loading && fetchAttempts.current >= maxAttempts) {
           setLoading(false);
-          setLoadingError("Document is taking too long to load. It might still be processing or doesn't exist.");
+          
+          const errorMsg = isNetworkError 
+            ? "Network connection issues detected. Please check your internet connection and try again." 
+            : "Document is taking too long to load. It might still be processing or doesn't exist.";
+          
+          setLoadingError(errorMsg);
+          
           toast({
-            title: "Document Not Found",
-            description: "This document could not be loaded. It may have been deleted or moved.",
+            title: isNetworkError ? "Network Error" : "Document Not Found",
+            description: errorMsg,
           });
           
           // End timing
@@ -140,7 +162,7 @@ export const useDocumentViewer = (documentId: string) => {
         }
       };
     }
-  }, [loading, fetchDocumentDetails, toast, documentId]);
+  }, [loading, fetchDocumentDetails, toast, documentId, isNetworkError]);
 
   // Set up real-time subscriptions - but only if we have a valid document
   useDocumentRealtime(documentId, document ? fetchDocumentDetails : null);
@@ -149,6 +171,7 @@ export const useDocumentViewer = (documentId: string) => {
     sonnerToast.info("Refreshing document...");
     setLoading(true);
     setLoadingError(null);
+    setIsNetworkError(false);
     fetchAttempts.current = 0;
     
     // Clear any existing timeout
@@ -166,6 +189,7 @@ export const useDocumentViewer = (documentId: string) => {
     document,
     loading,
     loadingError,
+    isNetworkError,
     fetchDocumentDetails,
     handleRefresh
   };
