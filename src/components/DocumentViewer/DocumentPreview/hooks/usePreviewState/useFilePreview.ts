@@ -157,9 +157,13 @@ export const useFilePreview = ({
         setNetworkStatus('offline');
         
         // In case of network error but URL is already set, we'll still try to display
-        if (data?.publicUrl) {
+        const result = await supabase.storage
+          .from('documents')
+          .getPublicUrl(storagePath);
+        
+        if (result.data?.publicUrl) {
           setFileExists(true);
-          setFileUrl(data.publicUrl);
+          setFileUrl(result.data.publicUrl);
         } else {
           setFileExists(false);
           setFileUrl(null);
