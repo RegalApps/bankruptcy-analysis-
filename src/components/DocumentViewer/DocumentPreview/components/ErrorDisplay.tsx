@@ -2,11 +2,7 @@
 import React from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-interface ErrorDisplayProps {
-  error: string;
-  onRetry: () => void;
-}
+import { ErrorDisplayProps } from "../types";
 
 export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ error, onRetry }) => {
   return (

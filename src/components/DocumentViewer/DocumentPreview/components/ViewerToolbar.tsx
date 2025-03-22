@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
+import { Download, ExternalLink, RefreshCw, ZoomIn, ZoomOut, Printer } from "lucide-react";
 
 interface ViewerToolbarProps {
   title: string;
@@ -12,6 +12,7 @@ interface ViewerToolbarProps {
   onRefresh: () => void;
   onOpenInNewTab: () => void;
   onDownload: () => void;
+  onPrint: () => void;
 }
 
 export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
@@ -22,59 +23,56 @@ export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
   onZoomOut,
   onRefresh,
   onOpenInNewTab,
-  onDownload
+  onDownload,
+  onPrint
 }) => {
   return (
-    <div className="bg-muted/50 p-2 flex justify-between items-center border-b">
-      <span className="text-sm font-medium truncate flex-1">{title}</span>
-      <div className="flex gap-2">
-        <div className="flex items-center gap-1 mr-2">
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={onZoomOut}
-            className="h-7 w-7"
-          >
-            <ZoomOut className="h-3.5 w-3.5" />
-          </Button>
-          <span className="text-xs font-mono">{zoomLevel}%</span>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={onZoomIn}
-            className="h-7 w-7"
-          >
-            <ZoomIn className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onOpenInNewTab}
-          className="h-7"
+    <div className="bg-muted/30 p-2 flex justify-between items-center border-b">
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={onZoomOut} 
+          className="p-1 hover:bg-muted rounded-md"
         >
-          <ExternalLink className="h-3.5 w-3.5 mr-1" />
+          <ZoomOut className="h-4 w-4" />
+        </button>
+        <span className="text-xs font-mono">{zoomLevel}%</span>
+        <button 
+          onClick={onZoomIn} 
+          className="p-1 hover:bg-muted rounded-md"
+        >
+          <ZoomIn className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={onOpenInNewTab}
+          className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-muted/50 rounded-md border"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
           Open
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm"
+        </button>
+        <button 
           onClick={onRefresh}
           disabled={isRetrying}
-          className="h-7"
+          className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-muted/50 rounded-md border"
         >
-          <RefreshCw className="h-3.5 w-3.5 mr-1" />
+          <RefreshCw className="h-3.5 w-3.5" />
           Refresh
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm"
+        </button>
+        <button 
           onClick={onDownload}
-          className="h-7"
+          className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-muted/50 rounded-md border"
         >
-          <Download className="h-3.5 w-3.5 mr-1" />
+          <Download className="h-3.5 w-3.5" />
           Download
-        </Button>
+        </button>
+        <button 
+          onClick={onPrint}
+          className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-muted/50 rounded-md border"
+        >
+          <Printer className="h-3.5 w-3.5" />
+          Print
+        </button>
       </div>
     </div>
   );

@@ -3,22 +3,7 @@ import React from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Download } from "lucide-react";
-
-interface DocumentViewerFrameProps {
-  fileUrl: string;
-  title: string;
-  isLoading: boolean;
-  useDirectLink: boolean;
-  zoomLevel: number;
-  isPdfFile: boolean;
-  isDocFile: boolean;
-  onIframeLoad: () => void;
-  onIframeError: () => void;
-  iframeRef: React.RefObject<HTMLIFrameElement>;
-  forceReload: number;
-  onOpenInNewTab?: () => void;
-  onDownload?: () => void;
-}
+import { DocumentViewerFrameProps } from "../types";
 
 export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
   fileUrl,

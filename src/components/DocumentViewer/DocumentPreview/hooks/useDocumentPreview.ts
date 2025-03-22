@@ -10,7 +10,7 @@ export const useDocumentPreview = (fileUrl: string | null, title: string, provid
   const localIframeRef = useRef<HTMLIFrameElement>(null);
   
   // Use the provided ref or fallback to local ref
-  const activeIframeRef = providedIframeRef || localIframeRef;
+  const iframeRef = providedIframeRef || localIframeRef;
 
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(prev + 10, 200));
@@ -48,9 +48,9 @@ export const useDocumentPreview = (fileUrl: string | null, title: string, provid
 
   const handlePrint = () => {
     try {
-      if (activeIframeRef.current) {
+      if (iframeRef.current) {
         // Try using the iframe's print function
-        activeIframeRef.current.contentWindow?.print();
+        iframeRef.current.contentWindow?.print();
       } else if (fileUrl) {
         // Fallback: open in new window and print
         const printWindow = window.open(fileUrl, '_blank');
@@ -75,7 +75,7 @@ export const useDocumentPreview = (fileUrl: string | null, title: string, provid
     setUseDirectLink,
     isRetrying,
     setIsRetrying,
-    iframeRef: activeIframeRef,
+    iframeRef,
     handleZoomIn,
     handleZoomOut,
     handleOpenInNewTab,
