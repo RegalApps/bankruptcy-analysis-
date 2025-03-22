@@ -3,7 +3,7 @@ import React from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertCircle } from "lucide-react";
+import { RefreshCw, AlertCircle, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -71,7 +71,7 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
     <div className="flex flex-col items-center justify-center h-full py-12 gap-6">
       {networkError ? (
         <div className="p-2 bg-destructive/10 rounded-full">
-          <AlertCircle size={40} className="text-destructive" />
+          <WifiOff size={40} className="text-destructive" />
         </div>
       ) : (
         <LoadingSpinner size="large" />

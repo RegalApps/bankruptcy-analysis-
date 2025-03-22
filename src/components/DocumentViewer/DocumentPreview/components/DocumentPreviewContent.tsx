@@ -9,7 +9,7 @@ import { NetworkStatusIndicator } from "./NetworkStatusIndicator";
 import { useNetworkResilience } from "../hooks/useNetworkResilience";
 import { DocumentPreviewContentProps } from "../types";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 
 export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   storagePath,
@@ -24,12 +24,15 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     setPreviewError,
     checkFile,
     isLoading,
-    isExcelFile
+    isExcelFile,
+    networkStatus,
+    attemptCount
   } = previewState;
 
   const [zoomLevel, setZoomLevel] = useState(100);
   const [isRetrying, setIsRetrying] = useState(false);
   const [forceReload, setForceReload] = useState(0);
+  const [useFallbackViewer, setUseFallbackViewer] = useState(false);
   
   const { 
     isOnline, 
@@ -37,6 +40,14 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     incrementRetry,
     shouldRetry 
   } = useNetworkResilience(storagePath);
+
+  useEffect(() => {
+    // If preview fails multiple times, try fallback viewer
+    if (attemptCount > 2 && fileUrl && !useFallbackViewer) {
+      setUseFallbackViewer(true);
+      toast.info("Trying alternative document viewer...");
+    }
+  }, [attemptCount, fileUrl, useFallbackViewer]);
 
   // Handle file check errors
   useEffect(() => {
@@ -94,6 +105,10 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     setIsRetrying(true);
     resetRetries();
     toast.info("Refreshing document preview...");
+    
+    // Clear any fallback viewer state
+    setUseFallbackViewer(false);
+    
     try {
       await checkFile();
       setForceReload(prev => prev + 1);
@@ -104,6 +119,12 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     } finally {
       setIsRetrying(false);
     }
+  };
+  
+  const getFallbackViewerUrl = () => {
+    if (!fileUrl) return '';
+    // Use Google Docs Viewer as fallback
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`;
   };
 
   if (!storagePath) {
@@ -145,6 +166,58 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     );
   }
 
+  // Alternative viewer when standard PDF viewer fails
+  const renderDocumentViewer = () => {
+    if (!fileExists || !fileUrl) {
+      return (
+        <div className="h-full flex items-center justify-center p-8 bg-muted rounded-md">
+          <ErrorDisplay 
+            error={previewError || "Document preview not available. Please try refreshing or check storage path."}
+            onRetry={handleRefresh}
+          />
+        </div>
+      );
+    }
+    
+    if (useFallbackViewer) {
+      return (
+        <div className="relative h-full w-full flex flex-col">
+          <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 text-sm text-center">
+            Using alternative viewer due to loading issues. 
+            <Button variant="link" className="px-1 py-0 h-auto" onClick={() => setUseFallbackViewer(false)}>
+              Try standard viewer
+            </Button>
+          </div>
+          <iframe
+            src={getFallbackViewerUrl()}
+            className="w-full flex-1"
+            title={title || "Document Preview"}
+          />
+          <div className="absolute top-1 right-1">
+            <Button size="sm" variant="outline" onClick={handleOpenInNewTab}>
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Open in New Tab
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <PDFViewer
+        fileUrl={fileUrl}
+        title={title}
+        zoomLevel={zoomLevel}
+        onLoad={() => setPreviewError(null)}
+        onError={() => {
+          setPreviewError("Error loading document");
+          // Auto-switch to fallback viewer on error
+          setUseFallbackViewer(true);
+        }}
+      />
+    );
+  };
+
   return (
     <div className="flex flex-col h-full">
       <ViewerToolbar 
@@ -160,27 +233,13 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
       />
       
       <div className="flex-1 overflow-hidden relative">
-        {fileExists && fileUrl ? (
-          <PDFViewer
-            fileUrl={fileUrl}
-            title={title}
-            zoomLevel={zoomLevel}
-            onLoad={() => setPreviewError(null)}
-            onError={() => setPreviewError("Error loading document")}
-          />
-        ) : (
-          <div className="h-full flex items-center justify-center p-8 bg-muted rounded-md">
-            <ErrorDisplay 
-              error={previewError || "Document preview not available. Please try refreshing or check storage path."}
-              onRetry={handleRefresh}
-            />
-          </div>
-        )}
+        {renderDocumentViewer()}
       </div>
       
       <NetworkStatusIndicator 
-        isOnline={isOnline} 
-        onRetry={handleRefresh} 
+        isOnline={networkStatus === 'online'} 
+        onRetry={handleRefresh}
+        attemptCount={attemptCount}
       />
     </div>
   );

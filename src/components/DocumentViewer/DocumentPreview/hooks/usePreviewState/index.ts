@@ -33,7 +33,12 @@ const usePreviewState = (
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
   // Use the FilePreview hook with the correct props shape
-  const { checkFile, networkStatus, attemptCount } = useFilePreview({
+  const { 
+    checkFile, 
+    networkStatus, 
+    attemptCount,
+    hasFileLoadStarted 
+  } = useFilePreview({
     storagePath,
     setFileExists,
     setFileUrl,
@@ -153,6 +158,7 @@ const usePreviewState = (
     isLoading,
     hasFallbackToDirectUrl,
     networkStatus,
+    attemptCount,
     handleAnalysisRetry: () => {
       // Reset stuck state
       setIsAnalysisStuck({

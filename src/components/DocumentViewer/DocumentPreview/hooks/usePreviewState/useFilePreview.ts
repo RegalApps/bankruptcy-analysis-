@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -20,7 +21,8 @@ export const useFilePreview = ({
   const [lastAttempt, setLastAttempt] = useState<Date | null>(null);
   const [attemptCount, setAttemptCount] = useState(0);
   const [networkStatus, setNetworkStatus] = useState<'online' | 'offline'>(navigator.onLine ? 'online' : 'offline');
-
+  const [hasFileLoadStarted, setHasFileLoadStarted] = useState(false);
+  
   // Enhanced network status monitoring
   useEffect(() => {
     const handleOnline = () => {
@@ -60,13 +62,16 @@ export const useFilePreview = ({
       // Record attempt
       setLastAttempt(new Date());
       setAttemptCount(count => count + 1);
+      setHasFileLoadStarted(true);
       
       console.log("Checking file at path:", storagePath);
       
-      // Get public URL for file
-      const { data } = await supabase.storage
+      // Get public URL for file with specific options to prevent caching
+      const { data, error } = await supabase.storage
         .from('documents')
         .getPublicUrl(storagePath);
+      
+      if (error) throw error;
       
       if (data?.publicUrl) {
         console.log("File found with URL:", data.publicUrl);
@@ -75,14 +80,19 @@ export const useFilePreview = ({
         setFileUrl(data.publicUrl);
         
         try {
+          // Generate a unique URL to avoid browser caching issues
+          const cacheBreakingUrl = `${data.publicUrl}?cache=${Date.now()}`;
+          
           // Use a combination of fetch API and timeout to check accessibility
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 10000);
           
-          const response = await fetch(data.publicUrl, { 
+          const response = await fetch(cacheBreakingUrl, { 
             method: 'HEAD',
             cache: 'no-cache',
-            signal: controller.signal
+            signal: controller.signal,
+            // Add credentials to ensure cookies are sent with the request
+            credentials: 'same-origin'
           });
           
           clearTimeout(timeoutId);
@@ -199,6 +209,21 @@ export const useFilePreview = ({
     checkFile();
   }, [checkFile]);
 
+  // Periodically check file accessibility when loading hasn't started yet or has failed
+  useEffect(() => {
+    // Only apply this check to PDF documents to avoid unnecessary retries for Excel files
+    const isPdf = storagePath.toLowerCase().endsWith('.pdf');
+    
+    if (isPdf && (hasFileLoadStarted && attemptCount < 3)) {
+      const checkInterval = setTimeout(() => {
+        console.log("Doing periodic file accessibility check");
+        checkFile();
+      }, 5000);
+      
+      return () => clearTimeout(checkInterval);
+    }
+  }, [hasFileLoadStarted, attemptCount, checkFile, storagePath]);
+
   // Enhanced auto-retry with progressive backoff
   useEffect(() => {
     // Only retry if we're online and have had a previous attempt
@@ -217,10 +242,23 @@ export const useFilePreview = ({
     }
   }, [networkStatus, attemptCount, checkFile]);
 
+  // Handle special retry after longer delay when all previous attempts failed
+  useEffect(() => {
+    if (attemptCount === 4) {
+      console.log("All regular retries failed, scheduling one final attempt after longer delay");
+      const finalRetryTimeout = setTimeout(() => {
+        checkFile();
+      }, 15000); // Wait 15 seconds
+      
+      return () => clearTimeout(finalRetryTimeout);
+    }
+  }, [attemptCount, checkFile]);
+
   return {
     checkFile,
     lastAttempt,
     attemptCount,
-    networkStatus
+    networkStatus,
+    hasFileLoadStarted
   };
 };
