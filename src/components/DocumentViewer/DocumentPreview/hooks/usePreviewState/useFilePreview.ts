@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -20,12 +19,24 @@ export const useFilePreview = ({
 }: UseFilePreviewProps) => {
   const [lastAttempt, setLastAttempt] = useState<Date | null>(null);
   const [attemptCount, setAttemptCount] = useState(0);
-  const [networkStatus, setNetworkStatus] = useState<'online' | 'offline'>('online');
+  const [networkStatus, setNetworkStatus] = useState<'online' | 'offline'>(navigator.onLine ? 'online' : 'offline');
 
-  // Monitor network status
+  // Enhanced network status monitoring
   useEffect(() => {
-    const handleOnline = () => setNetworkStatus('online');
-    const handleOffline = () => setNetworkStatus('offline');
+    const handleOnline = () => {
+      setNetworkStatus('online');
+      // Only show toast if we were previously offline and now coming back online
+      if (networkStatus === 'offline') {
+        toast.success("Connection restored. Retrying document load...");
+        // Auto-retry when connection is restored
+        setTimeout(() => checkFile(), 1000);
+      }
+    };
+    
+    const handleOffline = () => {
+      setNetworkStatus('offline');
+      toast.error("You're offline. Document loading paused.");
+    };
     
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -34,9 +45,9 @@ export const useFilePreview = ({
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [networkStatus]);
 
-  // Check if file exists and get its URL
+  // Check if file exists and get its URL with improved error handling
   const checkFile = useCallback(async () => {
     if (!storagePath) {
       setFileExists(false);
@@ -88,6 +99,7 @@ export const useFilePreview = ({
                            
             setIsExcelFile(isExcel);
             setPreviewError(null);
+            setNetworkStatus('online'); // Explicitly set online status on success
           } else {
             // Status code error
             setFileExists(false);
@@ -134,8 +146,8 @@ export const useFilePreview = ({
                           storagePath.toLowerCase().endsWith('.csv');
             setIsExcelFile(isExcel);
             
-            // Show toast to inform user
-            toast.warning("Network connectivity issues detected. Document preview might be limited.");
+            // Update network status
+            setNetworkStatus('offline');
           } else {
             // Other errors
             setFileExists(false);
@@ -157,14 +169,20 @@ export const useFilePreview = ({
         setNetworkStatus('offline');
         
         // In case of network error but URL is already set, we'll still try to display
-        const result = await supabase.storage
-          .from('documents')
-          .getPublicUrl(storagePath);
-        
-        if (result.data?.publicUrl) {
-          setFileExists(true);
-          setFileUrl(result.data.publicUrl);
-        } else {
+        try {
+          const result = await supabase.storage
+            .from('documents')
+            .getPublicUrl(storagePath);
+          
+          if (result.data?.publicUrl) {
+            setFileExists(true);
+            setFileUrl(result.data.publicUrl);
+          } else {
+            setFileExists(false);
+            setFileUrl(null);
+          }
+        } catch (innerError) {
+          console.error("Failed to get URL in offline fallback:", innerError);
           setFileExists(false);
           setFileUrl(null);
         }
@@ -181,15 +199,21 @@ export const useFilePreview = ({
     checkFile();
   }, [checkFile]);
 
-  // Auto-retry on network status change
+  // Enhanced auto-retry with progressive backoff
   useEffect(() => {
-    if (networkStatus === 'online' && attemptCount > 0 && attemptCount < 3) {
-      const retryDelay = setTimeout(() => {
-        console.log("Network is back online, retrying file check");
-        checkFile();
-      }, 2000);
+    // Only retry if we're online and have had a previous attempt
+    if (networkStatus === 'online' && attemptCount > 0 && attemptCount < 4) {
+      // Calculate backoff time: 2s, 4s, 8s for progressive retries
+      const retryDelay = Math.min(2000 * Math.pow(2, attemptCount - 1), 8000);
       
-      return () => clearTimeout(retryDelay);
+      console.log(`Network is online, scheduling retry #${attemptCount} in ${retryDelay/1000}s`);
+      
+      const timeoutId = setTimeout(() => {
+        console.log("Auto-retrying file check");
+        checkFile();
+      }, retryDelay);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [networkStatus, attemptCount, checkFile]);
 
