@@ -42,9 +42,7 @@ export const useFileChecker = (
   /**
    * Check if file exists in storage and get its public URL
    */
-  const checkFile = useCallback(async () => {
-    const storagePath = arguments[0];
-    
+  const checkFile = useCallback(async (storagePath: string) => {
     if (!storagePath) {
       setFileExists(false);
       setFileUrl(null);
@@ -56,11 +54,11 @@ export const useFileChecker = (
       console.log("Checking file at path:", storagePath);
       
       // Get public URL for file with specific options to prevent caching
-      const { data, error } = await supabase.storage
+      const { data, error: supabaseError } = await supabase.storage
         .from('documents')
         .getPublicUrl(storagePath);
       
-      if (error) throw error;
+      if (supabaseError) throw supabaseError;
       
       if (data?.publicUrl) {
         console.log("File found with URL:", data.publicUrl);

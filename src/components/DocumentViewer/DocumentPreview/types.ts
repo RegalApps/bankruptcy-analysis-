@@ -27,7 +27,7 @@ export interface PreviewState {
     stuck: boolean;
     minutesStuck: number;
   };
-  checkFile: () => Promise<void>;
+  checkFile: (path?: string) => Promise<void>;
   isLoading: boolean;
   handleAnalysisRetry: () => void;
   hasFallbackToDirectUrl: boolean;
@@ -96,7 +96,7 @@ export interface UseNetworkMonitorReturn {
 }
 
 export interface UseFileCheckerReturn {
-  checkFile: () => Promise<void>;
+  checkFile: (storagePath: string) => Promise<void>;
   handleFileCheckError: (error: any, publicUrl?: string | null) => void;
 }
 

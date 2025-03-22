@@ -125,7 +125,7 @@ export const useFilePreview = ({
   }, [attemptCount, checkFile, storagePath, incrementAttempt]);
 
   return {
-    checkFile: () => checkFile(storagePath),
+    checkFile: (path: string = storagePath) => checkFile(path),
     lastAttempt,
     attemptCount,
     networkStatus,
