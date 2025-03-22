@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Document } from "../../types";
 import { toast } from "sonner";
@@ -10,6 +11,7 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   const [hasStoragePath, setHasStoragePath] = useState(false);
   const [temporaryUuid, setTemporaryUuid] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
   
   // Generate a temporary UUID for non-UUID document IDs
   useEffect(() => {
@@ -24,6 +26,8 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
   // Check if document has a valid storage path
   useEffect(() => {
     if (document && document.metadata) {
+      setIsError(false);
+      
       // For Form 47 documents, ensure they have a storage path
       if (document.title?.toLowerCase().includes('form 47') || 
           document.title?.toLowerCase().includes('consumer proposal')) {
@@ -63,6 +67,7 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     
     console.log("Opening document from preview:", document.id, "Document:", document);
     setIsLoading(true);
+    setIsError(false);
     
     // Start timing for performance tracking
     startTiming(`document-open-${document.id}`);
@@ -70,18 +75,25 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     if (!document.id) {
       toast.error("Cannot open document: Missing ID");
       setIsLoading(false);
+      setIsError(true);
       return;
     }
     
     // Use a small timeout before opening the document to allow UI to update
     setTimeout(() => {
-      // Call the provided onDocumentOpen function with the document ID
-      onDocumentOpen(document.id);
-      
-      // End timing
-      const openTime = endTiming(`document-open-${document.id}`, false);
-      if (openTime > 1000) {
-        console.warn(`Document ${document.id} took ${(openTime / 1000).toFixed(1)}s to open`);
+      try {
+        // Call the provided onDocumentOpen function with the document ID
+        onDocumentOpen(document.id);
+        
+        // End timing
+        const openTime = endTiming(`document-open-${document.id}`, false);
+        if (openTime > 1000) {
+          console.warn(`Document ${document.id} took ${(openTime / 1000).toFixed(1)}s to open`);
+        }
+      } catch (error) {
+        console.error("Error opening document:", error);
+        setIsError(true);
+        toast.error("Error opening document. Please try again.");
       }
     }, 50);
     
@@ -103,6 +115,7 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
     setActiveTab,
     hasStoragePath,
     isLoading,
+    isError,
     // Use the real document ID for navigation, not the temporary UUID
     effectiveDocumentId: document?.id || '',
     getStoragePath,

@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   ResizablePanelGroup, 
@@ -20,6 +21,7 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
   const navigate = useNavigate();
   const { client, documents, isLoading, activeTab, setActiveTab, error } = useClientData(clientId, onBack);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
+  const [openingDocument, setOpeningDocument] = useState(false);
   
   useEffect(() => {
     if (documents.length > 0 && !selectedDocumentId) {
@@ -53,28 +55,51 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
   const handleDocumentOpen = (documentId: string) => {
     console.log("Opening document from ClientViewer:", documentId);
     
+    if (openingDocument) {
+      console.log("Document open already in progress, ignoring request");
+      return;
+    }
+    
     if (!documentId) {
       console.error("Invalid document ID");
       toast.error("Cannot open document: Invalid ID");
       return;
     }
 
-    const docToOpen = documents.find(doc => doc.id === documentId);
-    if (docToOpen?.title?.toLowerCase().includes('form 47') || 
-        docToOpen?.title?.toLowerCase().includes('consumer proposal')) {
-      console.log("Opening Form 47 document");
-    }
+    setOpeningDocument(true);
     
-    if (onDocumentOpen) {
-      onDocumentOpen(documentId);
-    } else {
-      navigate('/', { 
-        state: { 
-          selectedDocument: documentId,
-          source: 'client-viewer',
-          isForm47: docToOpen?.title?.toLowerCase().includes('form 47')
-        } 
-      });
+    try {
+      const docToOpen = documents.find(doc => doc.id === documentId);
+      
+      // For Form 47 documents, add specific handling
+      const isForm47 = docToOpen?.title?.toLowerCase().includes('form 47') || 
+                      docToOpen?.title?.toLowerCase().includes('consumer proposal');
+      
+      if (isForm47) {
+        console.log("Opening Form 47 document with special handling");
+        // Add form47 flag to the state for special handling
+      }
+      
+      if (onDocumentOpen) {
+        onDocumentOpen(documentId);
+      } else {
+        navigate('/', { 
+          state: { 
+            selectedDocument: documentId,
+            source: 'client-viewer',
+            isForm47: isForm47,
+            documentTitle: docToOpen?.title
+          } 
+        });
+      }
+    } catch (error) {
+      console.error("Error opening document:", error);
+      toast.error("Error opening document. Please try again.");
+    } finally {
+      // Reset the flag after a short delay
+      setTimeout(() => {
+        setOpeningDocument(false);
+      }, 1000);
     }
   };
 

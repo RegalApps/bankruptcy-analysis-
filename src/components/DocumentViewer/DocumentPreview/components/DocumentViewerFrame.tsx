@@ -48,6 +48,7 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
     );
   }
 
+  // For PDF files, try using the object tag first with fallback to iframe
   if (useDirectLink && isPdfFile) {
     return (
       <object
@@ -55,12 +56,18 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
         type="application/pdf"
         className="w-full h-full"
         onLoad={onIframeLoad}
+        onError={(e) => {
+          console.error("PDF object load error, falling back to Google Docs viewer");
+          onIframeError();
+        }}
       >
         <iframe 
           src={googleDocsViewerUrl}
           className="w-full h-full border-0"
           onLoad={onIframeLoad}
           onError={onIframeError}
+          referrerPolicy="no-referrer"
+          allow="fullscreen"
         />
       </object>
     );
@@ -73,6 +80,8 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
         className="w-full h-full border-0"
         onLoad={onIframeLoad}
         onError={onIframeError}
+        referrerPolicy="no-referrer"
+        allow="fullscreen"
       />
     );
   }
@@ -109,6 +118,8 @@ export const DocumentViewerFrame: React.FC<DocumentViewerFrameProps> = ({
       style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
       onLoad={onIframeLoad}
       onError={onIframeError}
+      referrerPolicy="no-referrer"
+      allow="fullscreen"
     />
   );
 };

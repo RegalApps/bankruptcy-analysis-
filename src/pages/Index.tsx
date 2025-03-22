@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -17,6 +18,10 @@ import { isDebugMode, debugTiming } from "@/utils/debugMode";
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
   const [documentKey, setDocumentKey] = useState<number>(0); // Key for forcing re-render
+  const [documentTitle, setDocumentTitle] = useState<string | null>(null);
+  const [isForm47, setIsForm47] = useState<boolean>(false);
+  const [loadFailed, setLoadFailed] = useState<boolean>(false);
+  
   const location = useLocation();
   const navigate = useNavigate();
   const { 
@@ -35,6 +40,7 @@ const Index = () => {
       console.log("Source:", location.state.source || "unknown");
       
       const loadStart = performance.now();
+      setLoadFailed(false);
       
       // Validate document ID
       const docId = location.state.selectedDocument;
@@ -42,6 +48,17 @@ const Index = () => {
         toast.error("Invalid document ID provided");
         console.error("Invalid document ID:", docId);
         return;
+      }
+      
+      // Set document metadata
+      if (location.state.isForm47) {
+        setIsForm47(true);
+        console.log("Document is Form 47");
+      }
+      
+      if (location.state.documentTitle) {
+        setDocumentTitle(location.state.documentTitle);
+        console.log("Document title:", location.state.documentTitle);
       }
       
       // Force component re-render with a new key when opening a new document
@@ -65,8 +82,17 @@ const Index = () => {
 
   const handleBackToDocuments = useCallback(() => {
     setSelectedDocument(null);
+    setDocumentTitle(null);
+    setIsForm47(false);
+    setLoadFailed(false);
     navigate('/', { replace: true });
   }, [navigate]);
+
+  // Handle document load failure
+  const handleDocumentLoadFailure = useCallback(() => {
+    console.log("Document load failed, showing error state");
+    setLoadFailed(true);
+  }, []);
 
   // Debug to check if we're getting the document ID
   useEffect(() => {
@@ -117,7 +143,10 @@ const Index = () => {
             <DocumentViewer 
               documentId={selectedDocument} 
               key={`doc-${selectedDocument}-${documentKey}`}
-              bypassProcessing={isDebugMode()}
+              bypassProcessing={isDebugMode() || isForm47}
+              onLoadFailure={handleDocumentLoadFailure}
+              documentTitle={documentTitle}
+              isForm47={isForm47}
             />
           </div>
         </div>
