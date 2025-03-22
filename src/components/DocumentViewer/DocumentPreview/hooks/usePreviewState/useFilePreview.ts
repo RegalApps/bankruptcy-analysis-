@@ -37,17 +37,9 @@ export const useFilePreview = ({
       console.log("Checking file at path:", storagePath);
       
       // Get public URL for file
-      const { data, error: urlError } = await supabase.storage
+      const { data } = await supabase.storage
         .from('documents')
         .getPublicUrl(storagePath);
-      
-      if (urlError) {
-        console.error("Error getting public URL:", urlError);
-        setFileExists(false);
-        setFileUrl(null);
-        setPreviewError(`Storage error: ${urlError.message}`);
-        return;
-      }
       
       if (data?.publicUrl) {
         console.log("File found with URL:", data.publicUrl);
