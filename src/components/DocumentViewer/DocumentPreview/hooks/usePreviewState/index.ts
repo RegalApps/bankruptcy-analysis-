@@ -21,6 +21,7 @@ const usePreviewState = (
   const [isExcelFile, setIsExcelFile] = useState(false);
   const [loadRetries, setLoadRetries] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasFallbackToDirectUrl, setHasFallbackToDirectUrl] = useState(false);
 
   const {
     analyzing,
@@ -32,7 +33,7 @@ const usePreviewState = (
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
   // Use the FilePreview hook with the correct props shape
-  useFilePreview({
+  const { checkFile, networkStatus, attemptCount } = useFilePreview({
     storagePath,
     setFileExists,
     setFileUrl,
@@ -47,6 +48,29 @@ const usePreviewState = (
       setIsLoading(false);
     }
   }, [fileUrl]);
+
+  // Log network status changes for debugging
+  useEffect(() => {
+    console.log(`Network status: ${networkStatus}, attempt count: ${attemptCount}`);
+  }, [networkStatus, attemptCount]);
+
+  // Auto-fallback to direct URL mode after multiple failures with preview
+  useEffect(() => {
+    if (previewError && loadRetries < 2 && !hasFallbackToDirectUrl) {
+      console.log("Preview error detected, retrying with fallback strategies");
+      
+      // Increment retry counter 
+      setLoadRetries(prev => prev + 1);
+      
+      // On second retry, fall back to direct URL
+      if (loadRetries === 1) {
+        setHasFallbackToDirectUrl(true);
+        console.log("Falling back to direct URL mode");
+        // Force an additional check
+        setTimeout(checkFile, 1000);
+      }
+    }
+  }, [previewError, loadRetries, hasFallbackToDirectUrl, checkFile]);
 
   useAnalysisInitialization({
     storagePath,
@@ -101,40 +125,6 @@ const usePreviewState = (
     return () => clearInterval(intervalId);
   }, [documentId]);
 
-  const checkFile = async () => {
-    // Skip if already loading or retried too many times
-    if (loadRetries > 3) {
-      setPreviewError("Maximum load attempts reached. Please try again later.");
-      return;
-    }
-
-    setIsLoading(true);
-    setLoadRetries(prev => prev + 1);
-    
-    try {
-      const { data } = await supabase.storage
-        .from('documents')
-        .getPublicUrl(storagePath);
-
-      if (data?.publicUrl) {
-        setFileExists(true);
-        setFileUrl(data.publicUrl);
-        setIsLoading(false);
-      } else {
-        setFileExists(false);
-        setFileUrl(null);
-        setPreviewError("File not found in storage");
-        setIsLoading(false);
-      }
-    } catch (error: any) {
-      console.error("Error checking file existence:", error);
-      setFileExists(false);
-      setFileUrl(null);
-      setPreviewError(error.message || "Failed to check file existence");
-      setIsLoading(false);
-    }
-  };
-
   // Add state for tracking stuck analysis
   const [isAnalysisStuck, setIsAnalysisStuck] = useState<{
     stuck: boolean;
@@ -161,12 +151,17 @@ const usePreviewState = (
     isAnalysisStuck,
     checkFile,
     isLoading,
+    hasFallbackToDirectUrl,
+    networkStatus,
     handleAnalysisRetry: () => {
       // Reset stuck state
       setIsAnalysisStuck({
         stuck: false,
         minutesStuck: 0
       });
+      
+      // Reset fallback status
+      setHasFallbackToDirectUrl(false);
       
       // Refresh document data
       setPreviewError(null);

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { AlertTriangle, Download, ExternalLink } from "lucide-react";
+import { AlertTriangle, Download, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [useGoogleViewer, setUseGoogleViewer] = useState(false);
   const [forceReload, setForceReload] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
 
@@ -43,17 +44,29 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const handleLoadSuccess = () => {
     setIsLoading(false);
     setLoadError(null);
+    setRetryCount(0);
     if (onLoad) onLoad();
   };
 
   const handleLoadError = () => {
     console.error("Error loading PDF:", fileUrl);
     
-    if (!useGoogleViewer) {
+    setRetryCount(prev => prev + 1);
+    
+    // First retry immediately without changing modes
+    if (retryCount === 1) {
+      console.log("First load failed, retrying immediately");
+      setForceReload(prev => prev + 1);
+      return;
+    }
+    
+    // After first retry fails, switch to Google Docs viewer
+    if (!useGoogleViewer && retryCount >= 2) {
       console.log("Falling back to Google Docs viewer");
       setUseGoogleViewer(true);
       setIsLoading(true);
-    } else {
+    } else if (useGoogleViewer && retryCount >= 3) {
+      // Both methods failed
       setIsLoading(false);
       setLoadError("Could not load the document. It may be in an unsupported format or inaccessible.");
       if (onError) onError();
@@ -83,6 +96,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     setUseGoogleViewer(false);
     setLoadError(null);
     setIsLoading(true);
+    setRetryCount(0);
     setForceReload(prev => prev + 1);
   };
 
@@ -103,6 +117,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           <p className="text-muted-foreground mb-6">{loadError}</p>
           <div className="flex flex-col gap-3">
             <Button onClick={handleRetry} className="w-full">
+              <RefreshCw className="h-4 w-4 mr-2" />
               Try Again
             </Button>
             <Button variant="outline" onClick={handleOpenInNewTab} className="w-full">
@@ -126,6 +141,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
           <div className="text-center">
             <LoadingSpinner size="large" className="mx-auto mb-4" />
             <p className="text-muted-foreground">Loading document...</p>
+            {retryCount > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {retryCount === 1 ? "Retrying..." : 
+                 useGoogleViewer ? "Using alternative viewer..." : 
+                 "Attempting direct view..."}
+              </p>
+            )}
           </div>
         </div>
       )}

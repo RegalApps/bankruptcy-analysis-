@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -19,6 +20,21 @@ export const useFilePreview = ({
 }: UseFilePreviewProps) => {
   const [lastAttempt, setLastAttempt] = useState<Date | null>(null);
   const [attemptCount, setAttemptCount] = useState(0);
+  const [networkStatus, setNetworkStatus] = useState<'online' | 'offline'>('online');
+
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => setNetworkStatus('online');
+    const handleOffline = () => setNetworkStatus('offline');
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Check if file exists and get its URL
   const checkFile = useCallback(async () => {
@@ -134,9 +150,25 @@ export const useFilePreview = ({
       }
     } catch (error: any) {
       console.error("Error checking file existence:", error);
-      setFileExists(false);
-      setFileUrl(null);
-      setPreviewError(error.message || "Failed to check file existence");
+      
+      // More specific error handling
+      if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
+        setPreviewError(`Network error: ${navigator.onLine ? "Server connection issue" : "You appear to be offline"}`);
+        setNetworkStatus('offline');
+        
+        // In case of network error but URL is already set, we'll still try to display
+        if (data?.publicUrl) {
+          setFileExists(true);
+          setFileUrl(data.publicUrl);
+        } else {
+          setFileExists(false);
+          setFileUrl(null);
+        }
+      } else {
+        setFileExists(false);
+        setFileUrl(null);
+        setPreviewError(`Database error: ${error.message || "Failed to check file existence"}`);
+      }
     }
   }, [storagePath, setFileExists, setFileUrl, setIsExcelFile, setPreviewError]);
 
@@ -145,9 +177,22 @@ export const useFilePreview = ({
     checkFile();
   }, [checkFile]);
 
+  // Auto-retry on network status change
+  useEffect(() => {
+    if (networkStatus === 'online' && attemptCount > 0 && attemptCount < 3) {
+      const retryDelay = setTimeout(() => {
+        console.log("Network is back online, retrying file check");
+        checkFile();
+      }, 2000);
+      
+      return () => clearTimeout(retryDelay);
+    }
+  }, [networkStatus, attemptCount, checkFile]);
+
   return {
     checkFile,
     lastAttempt,
-    attemptCount
+    attemptCount,
+    networkStatus
   };
 };
