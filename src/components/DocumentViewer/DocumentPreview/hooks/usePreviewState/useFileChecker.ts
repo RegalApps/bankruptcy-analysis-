@@ -54,11 +54,9 @@ export const useFileChecker = (
       console.log("Checking file at path:", storagePath);
       
       // Get public URL for file with specific options to prevent caching
-      const { data, error: supabaseError } = await supabase.storage
+      const { data } = await supabase.storage
         .from('documents')
         .getPublicUrl(storagePath);
-      
-      if (supabaseError) throw supabaseError;
       
       if (data?.publicUrl) {
         console.log("File found with URL:", data.publicUrl);
