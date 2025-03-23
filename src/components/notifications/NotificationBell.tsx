@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { BellRing } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Badge } from '@/components/ui/badge';
 import { Notification, NotificationCategory } from '@/types/notifications';
@@ -104,16 +104,18 @@ export const NotificationBell = () => {
   }, []);
 
   return (
-    <>
-      <Bell className="h-5 w-5" />
+    <div className="relative inline-flex items-center justify-center">
+      <div className="relative p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+        <BellRing className="h-5 w-5 text-primary" />
+      </div>
       {unreadCount > 0 && (
         <Badge 
-          className="absolute -top-1 -right-1 px-1.5 h-5 min-w-5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs"
+          className="absolute -top-1.5 -right-1.5 px-1.5 h-5 min-w-5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-semibold shadow-sm"
           variant="destructive"
         >
           {unreadCount > 9 ? '9+' : unreadCount}
         </Badge>
       )}
-    </>
+    </div>
   );
 };

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Bell, Search, LogOut } from "lucide-react";
+import { Search, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -58,15 +58,15 @@ export const MainHeader = () => {
           />
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Popover open={showNotifications} onOpenChange={setShowNotifications}>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="icon" className="rounded-full">
+              <Button variant="ghost" size="icon" className="relative rounded-full p-0 h-9 w-9">
                 <NotificationBell />
                 <span className="sr-only">Notifications</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-0 max-h-[500px] overflow-hidden">
+            <PopoverContent align="end" className="w-[380px] p-0 max-h-[500px] overflow-hidden">
               <NotificationsList 
                 notifications={notifications} 
                 isLoading={isLoadingNotifications} 
@@ -76,7 +76,7 @@ export const MainHeader = () => {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="cursor-pointer">
+              <Avatar className="cursor-pointer h-9 w-9 border-2 border-primary/10 hover:border-primary/30 transition-colors">
                 <AvatarFallback>JD</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
