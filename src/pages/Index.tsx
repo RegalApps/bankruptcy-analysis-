@@ -12,6 +12,7 @@ import { AuthErrorDisplay } from "@/components/auth/AuthErrorDisplay";
 import { EmailConfirmationPending } from "@/components/auth/EmailConfirmationPending";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { Footer } from "@/components/layout/Footer";
 import { toast } from "sonner";
 import { isDebugMode, debugTiming } from "@/utils/debugMode";
 
@@ -151,9 +152,12 @@ const Index = () => {
           </div>
         </div>
       ) : (
-        <MainLayout>
-          <RecentlyAccessedPage />
-        </MainLayout>
+        <div className="flex flex-col min-h-screen">
+          <MainLayout>
+            <RecentlyAccessedPage />
+          </MainLayout>
+          <Footer className="mt-auto" />
+        </div>
       )}
     </div>
   );
