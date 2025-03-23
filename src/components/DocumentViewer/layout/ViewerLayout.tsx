@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from "react";
-import { ChevronDown, PanelRight, FileText, FileBarChart, MessageSquare, ListTodo, History, Printer } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsTablet } from "@/hooks/use-tablet";
+import { ViewerHeader } from "./components/ViewerHeader";
+import { MobileLayout } from "./components/MobileLayout";
+import { TabletLayout } from "./components/TabletLayout";
+import { DesktopLayout } from "./components/DesktopLayout";
 
 interface ViewerLayoutProps {
   isForm47: boolean;
@@ -33,241 +35,60 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   const [showSidebar, setShowSidebar] = useState(!isMobile);
   const [showCollaborationPanel, setShowCollaborationPanel] = useState(!isMobile);
   
-  const useIsTablet = () => {
-    const [isTablet, setIsTablet] = useState(false);
-    
-    useEffect(() => {
-      const checkIfTablet = () => {
-        const width = window.innerWidth;
-        setIsTablet(width >= 768 && width < 1024);
-      };
-      
-      checkIfTablet();
-      window.addEventListener('resize', checkIfTablet);
-      return () => window.removeEventListener('resize', checkIfTablet);
-    }, []);
-    
-    return isTablet;
-  };
-  
-  const isTabletDevice = useIsTablet();
-  
   useEffect(() => {
     setShowSidebar(!isMobile);
     setShowCollaborationPanel(!isMobile);
   }, [isMobile]);
 
+  const toggleSidebar = () => setShowSidebar(!showSidebar);
+  const toggleCollaborationPanel = () => setShowCollaborationPanel(!showCollaborationPanel);
+
   return (
     <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-background">
-      <div className="sticky top-0 z-10 flex justify-between items-center p-2 sm:p-3 bg-muted/30 border-b">
-        <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-          <div className="bg-muted/50 p-1.5 sm:p-2 rounded-md flex-shrink-0">
-            {isForm47 ? (
-              <FileBarChart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            ) : (
-              <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            )}
-          </div>
-          <div className="flex flex-col overflow-hidden">
-            <h1 className="text-sm sm:text-lg font-bold text-foreground truncate">{documentTitle}</h1>
-            <div className="flex flex-wrap gap-1 sm:gap-2 mt-0.5 sm:mt-1">
-              {isForm47 && (
-                <div className="bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
-                  Consumer Proposal
-                </div>
-              )}
-              <div className="bg-muted text-muted-foreground px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
-                Form {documentType.includes('47') ? '47' : documentType}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {(isMobile || isTabletDevice) && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSidebar(!showSidebar)}
-              className="h-8 px-2"
-            >
-              {isTabletDevice && !isMobile ? "Document Details" : "Details"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm" 
-              onClick={() => setShowCollaborationPanel(!showCollaborationPanel)}
-              className="h-8 px-2"
-            >
-              {isTabletDevice && !isMobile ? "Collaboration" : "Comments"}
-            </Button>
-          </div>
-        )}
-      </div>
+      <ViewerHeader 
+        documentTitle={documentTitle}
+        documentType={documentType}
+        isForm47={isForm47}
+        isTablet={isTablet}
+        isMobile={isMobile}
+        toggleSidebar={toggleSidebar}
+        toggleCollaborationPanel={toggleCollaborationPanel}
+      />
       
       {isMobile ? (
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {showSidebar && (
-            <div className="border-b border-border/50 overflow-auto max-h-[40vh]">
-              <div className="p-3">{sidebar}</div>
-            </div>
-          )}
-          
-          <div className="flex-1 overflow-auto">
-            {mainContent}
-          </div>
-          
-          {showCollaborationPanel && (
-            <div className="border-t border-border/50 max-h-[40vh] overflow-auto">
-              <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-                <div className="flex items-center justify-between bg-muted/30 px-2 py-1 border-b border-border/50">
-                  <TabsList className="grid grid-cols-3 w-full">
-                    <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      <span>Comments</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="tasks" className="flex items-center gap-1 text-xs">
-                      <ListTodo className="h-3.5 w-3.5" />
-                      <span>Tasks</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="versions" className="flex items-center gap-1 text-xs">
-                      <History className="h-3.5 w-3.5" />
-                      <span>Versions</span>
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                
-                <div className="overflow-auto max-h-[calc(40vh-40px)]">
-                  <TabsContent value="comments" className="m-0 p-2 overflow-auto">
-                    {collaborationPanel}
-                  </TabsContent>
-                  <TabsContent value="tasks" className="m-0 p-2 overflow-auto">
-                    {taskPanel}
-                  </TabsContent>
-                  <TabsContent value="versions" className="m-0 p-2 overflow-auto">
-                    {versionPanel}
-                  </TabsContent>
-                </div>
-              </Tabs>
-            </div>
-          )}
-        </div>
-      ) : isTabletDevice ? (
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 flex overflow-hidden">
-            {showSidebar && (
-              <div className="w-72 border-r border-border/50 overflow-auto">
-                <div className="p-3">{sidebar}</div>
-              </div>
-            )}
-            
-            <div className={`flex-1 overflow-auto`}>
-              {mainContent}
-            </div>
-            
-            {showCollaborationPanel && (
-              <div className="w-80 border-l border-border/50 overflow-auto">
-                <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full h-full">
-                  <div className="flex items-center justify-between bg-muted/30 px-2 py-1 border-b border-border/50">
-                    <TabsList className="grid grid-cols-3 w-full">
-                      <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
-                        <MessageSquare className="h-3.5 w-3.5" />
-                        <span>Comments</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="tasks" className="flex items-center gap-1 text-xs">
-                        <ListTodo className="h-3.5 w-3.5" />
-                        <span>Tasks</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="versions" className="flex items-center gap-1 text-xs">
-                        <History className="h-3.5 w-3.5" />
-                        <span>Versions</span>
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
-                  
-                  <div className="flex-1 overflow-auto">
-                    <TabsContent value="comments" className="m-0 p-2 h-full overflow-auto">
-                      {collaborationPanel}
-                    </TabsContent>
-                    <TabsContent value="tasks" className="m-0 p-2 h-full overflow-auto">
-                      {taskPanel}
-                    </TabsContent>
-                    <TabsContent value="versions" className="m-0 p-2 h-full overflow-auto">
-                      {versionPanel}
-                    </TabsContent>
-                  </div>
-                </Tabs>
-              </div>
-            )}
-          </div>
-        </div>
+        <MobileLayout 
+          showSidebar={showSidebar}
+          sidebar={sidebar}
+          mainContent={mainContent}
+          showCollaborationPanel={showCollaborationPanel}
+          collaborationPanel={collaborationPanel}
+          taskPanel={taskPanel}
+          versionPanel={versionPanel}
+          selectedTab={selectedTab}
+          setSelectedTab={setSelectedTab}
+        />
+      ) : isTablet ? (
+        <TabletLayout 
+          showSidebar={showSidebar}
+          sidebar={sidebar}
+          mainContent={mainContent}
+          showCollaborationPanel={showCollaborationPanel}
+          collaborationPanel={collaborationPanel}
+          taskPanel={taskPanel}
+          versionPanel={versionPanel}
+          selectedTab={selectedTab}
+          setSelectedTab={setSelectedTab}
+        />
       ) : (
-        <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
-          <ResizablePanel 
-            defaultSize={25} 
-            minSize={15}
-            maxSize={40}
-            className="h-full overflow-auto border-r border-border/50 bg-white dark:bg-background"
-          >
-            <div className="p-3 h-full overflow-auto">
-              {sidebar}
-            </div>
-          </ResizablePanel>
-          
-          <ResizableHandle withHandle />
-          
-          <ResizablePanel defaultSize={75} className="flex h-full overflow-hidden">
-            <ResizablePanelGroup direction="horizontal" className="h-full">
-              <ResizablePanel defaultSize={70} minSize={50} className="overflow-auto flex flex-col">
-                {mainContent}
-              </ResizablePanel>
-              
-              <ResizableHandle withHandle />
-              
-              <ResizablePanel 
-                defaultSize={30} 
-                minSize={20} 
-                maxSize={40}
-                className="border-l border-border/50"
-              >
-                <Tabs 
-                  value={selectedTab} 
-                  onValueChange={setSelectedTab}
-                  className="w-full h-full flex flex-col"
-                >
-                  <div className="flex items-center justify-between bg-muted/30 px-2 py-1 border-b border-border/50">
-                    <TabsList className="grid grid-cols-3 w-full">
-                      <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
-                        <MessageSquare className="h-3.5 w-3.5" />
-                        <span>Comments</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="tasks" className="flex items-center gap-1 text-xs">
-                        <ListTodo className="h-3.5 w-3.5" />
-                        <span>Tasks</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="versions" className="flex items-center gap-1 text-xs">
-                        <History className="h-3.5 w-3.5" />
-                        <span>Versions</span>
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
-                  
-                  <div className="flex-1 overflow-hidden">
-                    <TabsContent value="comments" className="m-0 p-2 h-full overflow-auto">
-                      {collaborationPanel}
-                    </TabsContent>
-                    <TabsContent value="tasks" className="m-0 p-2 h-full overflow-auto">
-                      {taskPanel}
-                    </TabsContent>
-                    <TabsContent value="versions" className="m-0 p-2 h-full overflow-auto">
-                      {versionPanel}
-                    </TabsContent>
-                  </div>
-                </Tabs>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        <DesktopLayout 
+          sidebar={sidebar}
+          mainContent={mainContent}
+          collaborationPanel={collaborationPanel}
+          taskPanel={taskPanel}
+          versionPanel={versionPanel}
+          selectedTab={selectedTab}
+          setSelectedTab={setSelectedTab}
+        />
       )}
     </div>
   );
