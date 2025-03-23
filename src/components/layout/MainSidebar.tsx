@@ -2,15 +2,27 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { BrainCog, Bell, FileText, Home, MessageCircle, PieChart, Settings, User, Users, FileCheck } from "lucide-react";
+import { BrainCog, Bell, FileText, Home, MessageCircle, PieChart, Settings, User, Users, FileCheck, Menu, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useState, useEffect } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 export const MainSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
+  const isMobile = useIsMobile();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
   const isActivePath = (path: string) => location.pathname === path;
 
@@ -25,12 +37,9 @@ export const MainSidebar = () => {
     { icon: FileCheck, label: "Audit Trail", path: "/e-filing" },
   ];
 
-  return (
-    <aside className={cn(
-      "w-64 h-screen flex flex-col fixed left-0 top-0 z-40 border-r",
-      isDarkMode ? "bg-background" : "bg-white"
-    )}>
-      {/* App Logo - Enhanced for better visibility */}
+  const SidebarContent = () => (
+    <>
+      {/* App Logo */}
       <div className="p-4 border-b">
         <Button
           variant="ghost"
@@ -63,7 +72,10 @@ export const MainSidebar = () => {
                 "hover:bg-accent/10 hover:text-accent transition-colors duration-200",
                 isActivePath(item.path) && "bg-accent/10 text-accent"
               )}
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                navigate(item.path);
+                if (isMobile) setIsSidebarOpen(false);
+              }}
             >
               <item.icon className={cn(
                 "h-5 w-5",
@@ -87,7 +99,10 @@ export const MainSidebar = () => {
         <Button 
           variant="ghost"
           className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-accent/10 hover:text-accent"
-          onClick={() => navigate("/settings")}
+          onClick={() => {
+            navigate("/settings");
+            if (isMobile) setIsSidebarOpen(false);
+          }}
         >
           <Settings className="h-5 w-5 text-muted-foreground" />
           <span className={cn(
@@ -99,7 +114,10 @@ export const MainSidebar = () => {
         <Button 
           variant="ghost"
           className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-accent/10 hover:text-accent"
-          onClick={() => navigate("/profile")}
+          onClick={() => {
+            navigate("/profile");
+            if (isMobile) setIsSidebarOpen(false);
+          }}
         >
           <User className="h-5 w-5 text-muted-foreground" />
           <span className={cn(
@@ -108,6 +126,42 @@ export const MainSidebar = () => {
           )}>Profile</span>
         </Button>
       </div>
+    </>
+  );
+
+  // Mobile menu toggle button
+  const MobileMenuButton = () => (
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      className="fixed top-4 left-4 z-50 md:hidden"
+      onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+    >
+      {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+    </Button>
+  );
+
+  // For mobile: use sheet component
+  if (isMobile) {
+    return (
+      <>
+        <MobileMenuButton />
+        <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-64">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  // For desktop: use fixed sidebar
+  return (
+    <aside className={cn(
+      "w-64 h-screen flex flex-col fixed left-0 top-0 z-40 border-r",
+      isDarkMode ? "bg-background" : "bg-white"
+    )}>
+      <SidebarContent />
     </aside>
   );
 };

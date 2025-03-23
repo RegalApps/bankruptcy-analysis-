@@ -21,9 +21,9 @@ export const FolderRecommendationSection = ({
   }
 
   return (
-    <div className="bg-gradient-to-r from-secondary/10 to-primary/5 border border-secondary/20 rounded-lg p-4 mb-5 backdrop-blur-sm shadow-sm">
-      <div className="flex items-start gap-3">
-        <div className="mt-1 bg-secondary/20 p-2 rounded-full">
+    <div className="bg-gradient-to-r from-secondary/10 to-primary/5 border border-secondary/20 rounded-lg p-3 sm:p-4 mb-4 sm:mb-5 backdrop-blur-sm shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+        <div className="mt-1 bg-secondary/20 p-2 rounded-full self-start">
           <LightbulbIcon className="h-5 w-5 text-secondary" />
         </div>
         
@@ -34,14 +34,14 @@ export const FolderRecommendationSection = ({
             belong in folder:
           </p>
           
-          <div className="bg-background/50 border border-border/50 rounded-md p-2 mb-4">
-            <div className="font-medium text-primary flex items-center gap-1.5">
-              <ArrowRight className="h-4 w-4" />
-              {recommendation.folderPath.join(' > ')}
+          <div className="bg-background/50 border border-border/50 rounded-md p-2 mb-3 sm:mb-4 break-words">
+            <div className="font-medium text-primary flex items-center gap-1.5 flex-wrap">
+              <ArrowRight className="h-4 w-4 flex-shrink-0" />
+              <span className="break-all">{recommendation.folderPath.join(' > ')}</span>
             </div>
           </div>
           
-          <div className="flex gap-2 mt-3">
+          <div className="flex flex-wrap gap-2 mt-2 sm:mt-3">
             <Button
               size="sm"
               className="gap-1.5"

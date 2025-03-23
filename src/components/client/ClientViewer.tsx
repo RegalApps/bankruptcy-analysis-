@@ -16,12 +16,16 @@ import { ClientViewerProps } from "./types";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: ClientViewerProps) => {
   const navigate = useNavigate();
   const { client, documents, isLoading, activeTab, setActiveTab, error } = useClientData(clientId, onBack);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [openingDocument, setOpeningDocument] = useState(false);
+  const isMobile = useIsMobile();
+  const [mobileTab, setMobileTab] = useState<string>("info");
   
   useEffect(() => {
     if (documents.length > 0 && !selectedDocumentId) {
@@ -62,6 +66,7 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
   const handleDocumentSelect = (documentId: string) => {
     console.log("Selected document ID:", documentId);
     setSelectedDocumentId(documentId);
+    if (isMobile) setMobileTab("preview");
   };
 
   const handleDocumentOpen = (documentId: string) => {
@@ -126,6 +131,59 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
     ? new Date(Math.max(...documents.map(d => new Date(d.updated_at).getTime()))).toISOString()
     : undefined;
 
+  // Mobile view with tabs
+  if (isMobile) {
+    return (
+      <Card className="h-full">
+        <CardHeader className="border-b pb-3 px-0 pt-0">
+          <ClientHeader 
+            onBack={onBack} 
+            clientName={client.name}
+          />
+        </CardHeader>
+        <CardContent className="p-0">
+          <Tabs value={mobileTab} onValueChange={setMobileTab} className="w-full">
+            <TabsList className="grid grid-cols-3 w-full rounded-none px-2 pt-2">
+              <TabsTrigger value="info">Client Info</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="info" className="m-0 p-4 h-[calc(100vh-10rem)]">
+              <ClientInfoPanel 
+                client={client} 
+                documentCount={documents.length}
+                lastActivityDate={lastActivityDate}
+                documents={documents}
+                onDocumentSelect={handleDocumentSelect}
+                selectedDocumentId={selectedDocumentId}
+              />
+            </TabsContent>
+            
+            <TabsContent value="documents" className="m-0 p-0 h-[calc(100vh-10rem)]">
+              <DocumentsPanel
+                documents={documents}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                onDocumentOpen={handleDocumentOpen}
+                onDocumentSelect={handleDocumentSelect}
+                selectedDocumentId={selectedDocumentId}
+              />
+            </TabsContent>
+            
+            <TabsContent value="preview" className="m-0 p-0 h-[calc(100vh-10rem)]">
+              <FilePreviewPanel 
+                document={selectedDocument} 
+                onDocumentOpen={handleDocumentOpen}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Desktop view with resizable panels
   return (
     <Card className="h-full">
       <CardHeader className="border-b pb-3 px-0 pt-0">

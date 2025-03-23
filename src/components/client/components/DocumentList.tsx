@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Document } from "../types";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DocumentListProps {
   documents: Document[];
@@ -20,6 +21,8 @@ export const DocumentList = ({
   selectedDocumentId,
   viewMode
 }: DocumentListProps) => {
+  const isMobile = useIsMobile();
+  
   // Get appropriate icon for document type
   const getDocumentIcon = (doc: Document) => {
     const type = doc.type?.toLowerCase() || '';
@@ -50,7 +53,7 @@ export const DocumentList = ({
   // Grid view
   if (viewMode === 'grid') {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 p-2 sm:p-4">
         {documents.map((doc) => (
           <Card 
             key={doc.id} 
@@ -61,23 +64,23 @@ export const DocumentList = ({
             onClick={() => onDocumentSelect(doc.id)}
             onDoubleClick={() => onDocumentOpen(doc.id)}
           >
-            <CardContent className="p-4 flex flex-col items-center text-center">
-              <div className="mb-3 mt-2">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
+              <div className="mb-2 sm:mb-3 mt-1 sm:mt-2">
                 {getDocumentIcon(doc)}
               </div>
-              <p className="font-medium text-sm mb-1 line-clamp-2">{doc.title}</p>
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="font-medium text-xs sm:text-sm mb-1 line-clamp-2">{doc.title}</p>
+              <p className="text-xs text-muted-foreground mb-2 sm:mb-3">
                 {new Date(doc.updated_at).toLocaleDateString()}
               </p>
               <Button 
                 size="sm" 
-                className="w-full mt-auto"
+                className="w-full mt-auto text-xs sm:text-sm px-2 sm:px-3"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDocumentOpen(doc.id);
                 }}
               >
-                <ArrowUpRight className="h-4 w-4 mr-1" />
+                <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Open
               </Button>
             </CardContent>
@@ -89,7 +92,7 @@ export const DocumentList = ({
 
   // List view (default)
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 p-2 sm:p-4">
       {documents.map((doc) => (
         <Card 
           key={doc.id} 
@@ -100,12 +103,12 @@ export const DocumentList = ({
           onClick={() => onDocumentSelect(doc.id)}
           onDoubleClick={() => onDocumentOpen(doc.id)}
         >
-          <CardContent className="p-3 flex items-center justify-between">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+          <CardContent className="p-2 sm:p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
               {getDocumentIcon(doc)}
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{doc.title}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="font-medium truncate text-xs sm:text-sm">{doc.title}</p>
+                <p className="text-xs text-muted-foreground hidden xs:block">
                   Last modified: {new Date(doc.updated_at).toLocaleDateString()}
                 </p>
               </div>
@@ -113,6 +116,7 @@ export const DocumentList = ({
             <Button 
               size="sm" 
               variant="ghost"
+              className="h-8 w-8 p-0"
               onClick={(e) => {
                 e.stopPropagation();
                 onDocumentOpen(doc.id);
