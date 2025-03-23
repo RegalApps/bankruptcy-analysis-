@@ -1,7 +1,7 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, X, FolderTree } from "lucide-react";
+import { ArrowRight, Check, X, FolderTree, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { FolderRecommendation } from "../hooks/types/folderTypes";
@@ -71,37 +71,49 @@ export const FolderOperations = ({
   }
   
   return (
-    <Alert className="mb-4">
-      <FolderTree className="h-5 w-5" />
-      <AlertTitle>AI Folder Recommendation</AlertTitle>
-      <AlertDescription className="space-y-2">
-        <div className="text-sm">
-          <span className="font-medium">"{recommendation.documentTitle}"</span> should be placed in folder:
-          <div className="mt-1 font-medium text-primary">
-            {recommendation.folderPath.join(' > ')}
-          </div>
+    <Alert className="mb-5 bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/20">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 bg-primary/10 p-1.5 rounded-full">
+          <Sparkles className="h-4 w-4 text-primary" />
         </div>
-        <div className="flex gap-2 mt-2">
-          <Button
-            variant="default"
-            size="sm"
-            className="gap-1"
-            onClick={handleMoveDocument}
-          >
-            <Check className="h-4 w-4" />
-            Accept
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1"
-            onClick={onDismissRecommendation}
-          >
-            <X className="h-4 w-4" />
-            Dismiss
-          </Button>
+        
+        <div className="flex-1">
+          <AlertTitle className="flex items-center gap-2 mb-1">
+            AI Folder Recommendation
+          </AlertTitle>
+          
+          <AlertDescription className="space-y-3">
+            <div className="text-sm">
+              <span className="font-medium">"{recommendation.documentTitle}"</span> should be placed in:
+              <div className="mt-2 font-medium text-primary bg-card/80 border border-border/50 p-2 rounded-md flex items-center gap-1.5">
+                <FolderTree className="h-4 w-4 text-primary/70" />
+                {recommendation.folderPath.join(' > ')}
+              </div>
+            </div>
+            
+            <div className="flex gap-2 mt-2">
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-1.5"
+                onClick={handleMoveDocument}
+              >
+                <Check className="h-3.5 w-3.5" />
+                Accept
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={onDismissRecommendation}
+              >
+                <X className="h-3.5 w-3.5" />
+                Dismiss
+              </Button>
+            </div>
+          </AlertDescription>
         </div>
-      </AlertDescription>
+      </div>
     </Alert>
   );
 };

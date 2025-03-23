@@ -2,12 +2,15 @@
 import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Lock, AlertTriangle } from 'lucide-react';
+import { Lock, AlertTriangle, Mail, UserPlus } from 'lucide-react';
 import { SignUpFields } from './SignUpFields';
 import { AuthFields } from './AuthFields';
 import { validateAuthForm } from './authValidation';
 import { authService } from './authService';
 import { useRateLimiting } from './hooks/useRateLimiting';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface AuthFormProps {
   onConfirmationSent: (email: string) => void;
@@ -108,22 +111,24 @@ export const AuthForm = ({ onConfirmationSent }: AuthFormProps) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-8 rounded-lg border bg-card p-8 shadow-lg">
+    <div className="w-full max-w-md mx-auto space-y-8 rounded-xl border bg-card/95 p-8 shadow-lg backdrop-blur-sm">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold text-primary">Access to SecureFiles AI</h1>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary/80 bg-clip-text text-transparent">
+          {isSignUp ? 'Create Your Account' : 'Welcome Back'}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          {isSignUp ? 'Create a new account to continue' : 'Sign in to your account'}
+          {isSignUp ? 'Sign up to access SecureFiles AI' : 'Sign in to continue to SecureFiles AI'}
         </p>
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="border border-destructive/20 bg-destructive/10">
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="font-medium">{error}</AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={handleAuth} className="space-y-4">
+      <form onSubmit={handleAuth} className="space-y-5">
         {isSignUp && (
           <SignUpFields
             fullName={fullName}
@@ -143,14 +148,28 @@ export const AuthForm = ({ onConfirmationSent }: AuthFormProps) => {
           isDisabled={loading}
         />
 
-        <button
+        <Button
           type="submit"
           disabled={loading || isRateLimited}
-          className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <Lock className="h-4 w-4" />
-          {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
-        </button>
+          {loading ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+              <span>Processing...</span>
+            </>
+          ) : isSignUp ? (
+            <>
+              <UserPlus className="h-4 w-4" />
+              <span>Sign Up</span>
+            </>
+          ) : (
+            <>
+              <Lock className="h-4 w-4" />
+              <span>Sign In</span>
+            </>
+          )}
+        </Button>
 
         {attempts > 0 && attempts < 5 && (
           <p className="text-xs text-destructive text-center">
@@ -159,16 +178,28 @@ export const AuthForm = ({ onConfirmationSent }: AuthFormProps) => {
         )}
       </form>
 
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-muted"></div>
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-card px-2 text-muted-foreground">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+          </span>
+        </div>
+      </div>
+
       <div className="text-center">
-        <button
+        <Button
           onClick={() => {
             setIsSignUp(!isSignUp);
             setError(null);
           }}
-          className="text-sm text-primary hover:underline"
+          variant="ghost"
+          className="text-sm text-primary hover:text-primary/90 hover:underline transition-colors"
         >
-          {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-        </button>
+          {isSignUp ? 'Sign in instead' : "Create an account"}
+        </Button>
       </div>
     </div>
   );

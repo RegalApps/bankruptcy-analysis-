@@ -1,5 +1,7 @@
 
 import { FolderRecommendation } from "../hooks/types/folderTypes";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Check, X, LightbulbIcon } from "lucide-react";
 
 interface FolderRecommendationSectionProps {
   showRecommendation: boolean;
@@ -19,27 +21,46 @@ export const FolderRecommendationSection = ({
   }
 
   return (
-    <div className="bg-muted/50 border rounded-md p-3 mb-4">
-      <h3 className="font-medium text-sm mb-2">AI Recommendation</h3>
-      <p className="text-sm mb-2">
-        The document <span className="font-medium">{recommendation.documentTitle}</span> might 
-        belong in folder: <span className="text-primary font-medium">
-          {recommendation.folderPath.join(' > ')}
-        </span>
-      </p>
-      <div className="flex gap-2 mt-3">
-        <button
-          className="bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1 rounded-md text-sm"
-          onClick={onAcceptRecommendation}
-        >
-          Accept
-        </button>
-        <button
-          className="bg-muted hover:bg-muted/80 px-3 py-1 rounded-md text-sm"
-          onClick={onDismissRecommendation}
-        >
-          Dismiss
-        </button>
+    <div className="bg-gradient-to-r from-secondary/10 to-primary/5 border border-secondary/20 rounded-lg p-4 mb-5 backdrop-blur-sm shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="mt-1 bg-secondary/20 p-2 rounded-full">
+          <LightbulbIcon className="h-5 w-5 text-secondary" />
+        </div>
+        
+        <div className="flex-1">
+          <h3 className="font-medium text-base mb-1">AI Recommendation</h3>
+          <p className="text-sm mb-3 text-muted-foreground">
+            The document <span className="font-medium text-foreground">{recommendation.documentTitle}</span> might 
+            belong in folder:
+          </p>
+          
+          <div className="bg-background/50 border border-border/50 rounded-md p-2 mb-4">
+            <div className="font-medium text-primary flex items-center gap-1.5">
+              <ArrowRight className="h-4 w-4" />
+              {recommendation.folderPath.join(' > ')}
+            </div>
+          </div>
+          
+          <div className="flex gap-2 mt-3">
+            <Button
+              size="sm"
+              className="gap-1.5"
+              onClick={onAcceptRecommendation}
+            >
+              <Check className="h-4 w-4" />
+              Accept
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={onDismissRecommendation}
+            >
+              <X className="h-4 w-4" />
+              Dismiss
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { AlertCircle, CheckCircle2, FolderTree } from "lucide-react";
+import { AlertCircle, CheckCircle2, FolderTree, Sparkles } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,7 +50,7 @@ export function FolderRecommendation({ document, onAccept, onReject }: FolderRec
 
   if (isLoading) {
     return (
-      <Card className="mb-4">
+      <Card className="mb-4 border-primary/10">
         <CardContent className="pt-6">
           <div className="flex items-center space-x-4">
             <div className="animate-pulse flex space-x-4 w-full">
@@ -79,18 +79,23 @@ export function FolderRecommendation({ document, onAccept, onReject }: FolderRec
   }
 
   return (
-    <Card className="mb-4 border-primary/20">
+    <Card className="mb-4 border-primary/20 bg-gradient-to-br from-card to-secondary/5">
       <CardContent className="pt-6">
         <div className="flex items-start gap-4">
-          <FolderTree className="h-6 w-6 text-primary mt-1" />
+          <div className="bg-primary/10 p-2 rounded-full">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          
           <div className="flex-1">
-            <h4 className="font-medium mb-1">AI Recommendation</h4>
+            <h4 className="font-medium text-lg mb-1">AI Recommendation</h4>
             <p className="text-sm text-muted-foreground mb-2">
               "{document.title}" should be stored under:
             </p>
-            <div className="bg-accent/30 p-2 rounded-md mb-4">
-              <div className="font-mono text-sm">
-                📂 {recommendation.suggestedPath.join(' > ')}
+            
+            <div className="bg-accent/10 p-3 rounded-md mb-4 border border-border">
+              <div className="font-medium flex items-center gap-2 text-primary">
+                <FolderTree className="h-4 w-4 text-primary/70" />
+                {recommendation.suggestedPath.join(' > ')}
               </div>
             </div>
             
@@ -117,15 +122,18 @@ export function FolderRecommendation({ document, onAccept, onReject }: FolderRec
             {recommendation.alternatives && recommendation.alternatives.length > 0 && (
               <div className="mt-4">
                 <p className="text-xs text-muted-foreground mb-1">Alternative locations:</p>
-                {recommendation.alternatives.map((alt, index) => (
-                  <div 
-                    key={index}
-                    className="text-xs p-1 hover:bg-accent cursor-pointer rounded-sm"
-                    onClick={() => onAccept(alt.folderId)}
-                  >
-                    📂 {alt.path.join(' > ')}
-                  </div>
-                ))}
+                <div className="bg-background/50 rounded-md p-2 border border-border/50">
+                  {recommendation.alternatives.map((alt, index) => (
+                    <div 
+                      key={index}
+                      className="text-xs p-1.5 hover:bg-accent/10 cursor-pointer rounded-sm flex items-center gap-1.5"
+                      onClick={() => onAccept(alt.folderId)}
+                    >
+                      <FolderTree className="h-3 w-3 text-muted-foreground" />
+                      <span>{alt.path.join(' > ')}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
