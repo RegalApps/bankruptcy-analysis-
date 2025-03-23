@@ -58,7 +58,6 @@ export const ClientViewerContainer = ({ clientId, onBack, onDocumentOpen, onErro
   const handleDocumentSelect = (documentId: string) => {
     console.log("Selected document ID:", documentId);
     setSelectedDocumentId(documentId);
-    if (isMobile) setMobileTab("preview");
   };
 
   const handleDocumentOpen = (documentId: string) => {

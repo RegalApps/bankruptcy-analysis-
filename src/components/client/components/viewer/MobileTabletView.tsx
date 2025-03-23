@@ -34,6 +34,12 @@ export const MobileTabletView = ({
   const [mobileTab, setMobileTab] = useState<string>("info");
   const isSmallScreen = isMobile;
 
+  // Update document selection handler to also switch to preview tab
+  const handleDocumentSelect = (documentId: string) => {
+    onDocumentSelect(documentId);
+    setMobileTab("preview");
+  };
+
   return (
     <Tabs value={mobileTab} onValueChange={setMobileTab} className="w-full">
       <TabsList className="grid grid-cols-3 w-full rounded-none px-2 pt-2">
@@ -52,7 +58,7 @@ export const MobileTabletView = ({
           documentCount={documents.length}
           lastActivityDate={lastActivityDate}
           documents={documents}
-          onDocumentSelect={onDocumentSelect}
+          onDocumentSelect={handleDocumentSelect}
           selectedDocumentId={selectedDocumentId}
         />
       </TabsContent>
@@ -63,7 +69,7 @@ export const MobileTabletView = ({
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onDocumentOpen={onDocumentOpen}
-          onDocumentSelect={onDocumentSelect}
+          onDocumentSelect={handleDocumentSelect}
           selectedDocumentId={selectedDocumentId}
         />
       </TabsContent>
