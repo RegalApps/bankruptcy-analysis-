@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { 
   ResizablePanelGroup, 
@@ -17,6 +16,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsTablet } from "@/hooks/use-tablet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: ClientViewerProps) => {
@@ -25,6 +25,7 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [openingDocument, setOpeningDocument] = useState(false);
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const [mobileTab, setMobileTab] = useState<string>("info");
   
   useEffect(() => {
@@ -131,8 +132,10 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
     ? new Date(Math.max(...documents.map(d => new Date(d.updated_at).getTime()))).toISOString()
     : undefined;
 
-  // Mobile view with tabs
-  if (isMobile) {
+  // Combined mobile and tablet view with tabs
+  if (isMobile || isTablet) {
+    const isSmallScreen = isMobile && !isTablet;
+    
     return (
       <Card className="h-full">
         <CardHeader className="border-b pb-3 px-0 pt-0">
@@ -144,8 +147,12 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
         <CardContent className="p-0">
           <Tabs value={mobileTab} onValueChange={setMobileTab} className="w-full">
             <TabsList className="grid grid-cols-3 w-full rounded-none px-2 pt-2">
-              <TabsTrigger value="info">Client Info</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="info">
+                {isSmallScreen ? "Info" : "Client Info"}
+              </TabsTrigger>
+              <TabsTrigger value="documents">
+                {isSmallScreen ? "Docs" : "Documents"}
+              </TabsTrigger>
               <TabsTrigger value="preview">Preview</TabsTrigger>
             </TabsList>
             
@@ -183,7 +190,7 @@ export const ClientViewer = ({ clientId, onBack, onDocumentOpen, onError }: Clie
     );
   }
 
-  // Desktop view with resizable panels
+  // Desktop view with resizable panels (unchanged)
   return (
     <Card className="h-full">
       <CardHeader className="border-b pb-3 px-0 pt-0">

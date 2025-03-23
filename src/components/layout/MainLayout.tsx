@@ -17,7 +17,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <MainSidebar />
       <div className={`flex-1 flex flex-col w-full overflow-hidden ${!isMobile ? 'pl-64' : 'pl-0'}`}>
         <MainHeader />
-        <main className="flex-1 overflow-auto p-2 sm:p-4 bg-gray-50 dark:bg-background">
+        <main className="flex-1 overflow-auto p-2 sm:p-4 md:p-6 bg-gray-50 dark:bg-background">
           <div className="container mx-auto max-w-7xl pb-16 sm:pb-20">
             {children}
           </div>

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Search, LogOut } from "lucide-react";
+import { Search, LogOut, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,13 +20,18 @@ import { useNavigate } from "react-router-dom";
 import { NotificationBell } from "../notifications/NotificationBell";
 import { NotificationsList } from "../notifications/NotificationsList";
 import { supabase } from "@/lib/supabase";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsTablet } from "@/hooks/use-tablet";
 
 export const MainHeader = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
 
   const handleSignOut = async () => {
     try {
@@ -49,7 +54,20 @@ export const MainHeader = () => {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
       <div className="w-full flex items-center justify-between">
-        <div className="relative w-full max-w-md">
+        {/* Search button that expands on tablet */}
+        {isTablet && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden"
+            onClick={() => setShowSearch(!showSearch)}
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+        )}
+        
+        {/* Search input - full width on desktop, conditional on tablet */}
+        <div className={`relative ${isMobile ? (showSearch ? 'w-full' : 'hidden') : 'w-full max-w-md'}`}>
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"

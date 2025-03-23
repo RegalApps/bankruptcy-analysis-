@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ChevronDown, PanelRight, FileText, FileBarChart, MessageSquare, ListTodo, History, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,10 +29,29 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>("comments");
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const [showSidebar, setShowSidebar] = useState(!isMobile);
   const [showCollaborationPanel, setShowCollaborationPanel] = useState(!isMobile);
   
-  // Update layout when screen size changes
+  const useIsTablet = () => {
+    const [isTablet, setIsTablet] = useState(false);
+    
+    useEffect(() => {
+      const checkIfTablet = () => {
+        const width = window.innerWidth;
+        setIsTablet(width >= 768 && width < 1024);
+      };
+      
+      checkIfTablet();
+      window.addEventListener('resize', checkIfTablet);
+      return () => window.removeEventListener('resize', checkIfTablet);
+    }, []);
+    
+    return isTablet;
+  };
+  
+  const isTabletDevice = useIsTablet();
+  
   useEffect(() => {
     setShowSidebar(!isMobile);
     setShowCollaborationPanel(!isMobile);
@@ -41,7 +59,6 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-white dark:bg-background">
-      {/* Document Header - With improved responsive design */}
       <div className="sticky top-0 z-10 flex justify-between items-center p-2 sm:p-3 bg-muted/30 border-b">
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
           <div className="bg-muted/50 p-1.5 sm:p-2 rounded-md flex-shrink-0">
@@ -66,8 +83,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
           </div>
         </div>
         
-        {/* Mobile view controls */}
-        {isMobile && (
+        {(isMobile || isTabletDevice) && (
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -75,7 +91,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
               onClick={() => setShowSidebar(!showSidebar)}
               className="h-8 px-2"
             >
-              Details
+              {isTabletDevice && !isMobile ? "Document Details" : "Details"}
             </Button>
             <Button
               variant="outline"
@@ -83,16 +99,14 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
               onClick={() => setShowCollaborationPanel(!showCollaborationPanel)}
               className="h-8 px-2"
             >
-              Comments
+              {isTabletDevice && !isMobile ? "Collaboration" : "Comments"}
             </Button>
           </div>
         )}
       </div>
       
-      {/* Main Content with Responsive Panel Layout */}
       {isMobile ? (
         <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Mobile Layout - Stack panels vertically */}
           {showSidebar && (
             <div className="border-b border-border/50 overflow-auto max-h-[40vh]">
               <div className="p-3">{sidebar}</div>
@@ -138,10 +152,57 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
             </div>
           )}
         </div>
+      ) : isTabletDevice ? (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 flex overflow-hidden">
+            {showSidebar && (
+              <div className="w-72 border-r border-border/50 overflow-auto">
+                <div className="p-3">{sidebar}</div>
+              </div>
+            )}
+            
+            <div className={`flex-1 overflow-auto`}>
+              {mainContent}
+            </div>
+            
+            {showCollaborationPanel && (
+              <div className="w-80 border-l border-border/50 overflow-auto">
+                <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full h-full">
+                  <div className="flex items-center justify-between bg-muted/30 px-2 py-1 border-b border-border/50">
+                    <TabsList className="grid grid-cols-3 w-full">
+                      <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <span>Comments</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="tasks" className="flex items-center gap-1 text-xs">
+                        <ListTodo className="h-3.5 w-3.5" />
+                        <span>Tasks</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="versions" className="flex items-center gap-1 text-xs">
+                        <History className="h-3.5 w-3.5" />
+                        <span>Versions</span>
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+                  
+                  <div className="flex-1 overflow-auto">
+                    <TabsContent value="comments" className="m-0 p-2 h-full overflow-auto">
+                      {collaborationPanel}
+                    </TabsContent>
+                    <TabsContent value="tasks" className="m-0 p-2 h-full overflow-auto">
+                      {taskPanel}
+                    </TabsContent>
+                    <TabsContent value="versions" className="m-0 p-2 h-full overflow-auto">
+                      {versionPanel}
+                    </TabsContent>
+                  </div>
+                </Tabs>
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
-        /* Desktop Layout - Resizable panels */
         <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
-          {/* Left Panel - Document Summary & Details - Now resizable */}
           <ResizablePanel 
             defaultSize={25} 
             minSize={15}
@@ -155,17 +216,14 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
           
           <ResizableHandle withHandle />
           
-          {/* Main content area with document viewer and right-side collaboration panel */}
           <ResizablePanel defaultSize={75} className="flex h-full overflow-hidden">
             <ResizablePanelGroup direction="horizontal" className="h-full">
-              {/* Document Viewer */}
               <ResizablePanel defaultSize={70} minSize={50} className="overflow-auto flex flex-col">
                 {mainContent}
               </ResizablePanel>
               
               <ResizableHandle withHandle />
               
-              {/* Right-side collaboration panel */}
               <ResizablePanel 
                 defaultSize={30} 
                 minSize={20} 

@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/layout/Footer";
 import { toast } from "sonner";
 import { isDebugMode, debugTiming } from "@/utils/debugMode";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsTablet } from "@/hooks/use-tablet";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -25,6 +27,9 @@ const Index = () => {
   
   const location = useLocation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  
   const { 
     session, 
     isLoading, 
@@ -133,11 +138,13 @@ const Index = () => {
           <div className="mb-1 px-1 py-2">
             <Button
               variant="ghost"
-              size="sm"
+              size={isMobile ? "sm" : "default"}
               onClick={handleBackToDocuments}
-              className="flex items-center text-xs text-muted-foreground hover:text-foreground"
+              className="flex items-center text-xs sm:text-sm text-muted-foreground hover:text-foreground"
             >
-              <Home className="h-3.5 w-3.5 mr-1" /> Back to Documents
+              <Home className="h-3.5 w-3.5 mr-1" /> 
+              {(!isMobile || isTablet) && "Back to Documents"}
+              {isMobile && !isTablet && "Back"}
             </Button>
           </div>
           <div className="flex-1 overflow-hidden">
