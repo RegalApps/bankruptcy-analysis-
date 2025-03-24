@@ -2,7 +2,7 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { AuditTrailDashboard } from "@/components/e-filing/AuditTrail/AuditTrailDashboard";
 
-export const EFilingPage = () => {
+const EFilingPage = () => {
   return (
     <MainLayout>
       <div className="h-full">

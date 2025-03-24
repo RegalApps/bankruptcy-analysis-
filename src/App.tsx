@@ -16,6 +16,8 @@ const LoadingPlaceholder = () => (
 
 // Directly import DocumentsPage to avoid dynamic import issues
 import DocumentsPage from "./pages/DocumentsPage";
+// Directly import EFilingPage to avoid the dynamic import error
+import EFilingPage from "./pages/EFilingPage";
 
 // Lazy load pages with prefetching for better UX
 const Index = lazy(() => import("./pages/Index"));
@@ -26,7 +28,6 @@ const ConBrandingPage = lazy(() => import("./pages/ConBrandingPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const CRMPage = lazy(() => import("./pages/CRMPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
-const EFilingPage = lazy(() => import("./pages/EFilingPage"));
 const PerformancePage = lazy(() => import("./pages/PerformancePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Support = lazy(() => import("./pages/Support"));
