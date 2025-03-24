@@ -1,8 +1,7 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   BarChart, 
-  Bar, A
+  Bar,
   LineChart, 
   Line, 
   XAxis, 

@@ -14,14 +14,13 @@ const LoadingPlaceholder = () => (
   </div>
 );
 
-// Directly import DocumentsPage to avoid dynamic import issues
+// Directly import pages that were having issues with dynamic imports
 import DocumentsPage from "./pages/DocumentsPage";
-// Directly import EFilingPage to avoid the dynamic import error
 import EFilingPage from "./pages/EFilingPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 
-// Lazy load pages with prefetching for better UX
+// Lazy load other pages with prefetching for better UX
 const Index = lazy(() => import("./pages/Index"));
-const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const ConBrandingPage = lazy(() => import("./pages/ConBrandingPage"));

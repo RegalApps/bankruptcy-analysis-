@@ -13,7 +13,7 @@ import { SystemUsageAnalytics } from "@/components/analytics/system/SystemUsageA
 import { GeographicAnalytics } from "@/components/analytics/geographic/GeographicAnalytics";
 import { SystemHealthAnalytics } from "@/components/analytics/health/SystemHealthAnalytics";
 
-export const AnalyticsPage = () => {
+const AnalyticsPage = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
@@ -106,5 +106,5 @@ export const AnalyticsPage = () => {
   );
 };
 
-// Add default export
+// Make sure to export the component as default
 export default AnalyticsPage;
