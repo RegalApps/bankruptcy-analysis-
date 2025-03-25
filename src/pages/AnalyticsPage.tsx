@@ -73,21 +73,20 @@ const AnalyticsPage = () => {
           </div>
 
           <div className="bg-card rounded-lg shadow-sm border border-border/50 p-5 mb-6">
-            <TabsList className="flex flex-wrap gap-1 h-auto p-1 mb-4 bg-muted/50">
-              {analyticsModules.map((module) => (
-                <TabsTrigger 
-                  key={module.id} 
-                  value={module.id}
-                  className="flex items-center gap-2 px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  onClick={() => setActiveTab(module.id)}
-                >
-                  <module.icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{module.name}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList className="flex flex-wrap gap-1 h-auto p-1 mb-4 bg-muted/50">
+                {analyticsModules.map((module) => (
+                  <TabsTrigger 
+                    key={module.id} 
+                    value={module.id}
+                    className="flex items-center gap-2 px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <module.icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{module.name}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
               {analyticsModules.map((module) => (
                 <TabsContent key={module.id} value={module.id} className="px-1 py-2 mt-0">
                   <div className="border-b border-border/50 pb-4 mb-6">
