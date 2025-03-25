@@ -13,10 +13,38 @@ import { TrusteePerformanceAnalytics } from "@/components/analytics/performance/
 import { SystemUsageAnalytics } from "@/components/analytics/system/SystemUsageAnalytics";
 import { GeographicAnalytics } from "@/components/analytics/geographic/GeographicAnalytics";
 import { SystemHealthAnalytics } from "@/components/analytics/health/SystemHealthAnalytics";
-import { BarChart2, Book, Shield, FileChart, TrendingUp, LineChart, Users, Activity, Map, Gauge } from "lucide-react";
+import { BarChart2, Book, Shield, FileText, TrendingUp, LineChart, Users, Activity, Map, Gauge } from "lucide-react";
 
 const AnalyticsPage = () => {
   const [activeTab, setActiveTab] = useState("client");
+
+  // Mock data for DocumentAnalytics component
+  const documentMockData = {
+    taskVolume: [
+      { month: "Jan", tasks: 120 },
+      { month: "Feb", tasks: 150 },
+      { month: "Mar", tasks: 180 },
+      { month: "Apr", tasks: 170 },
+      { month: "May", tasks: 190 },
+      { month: "Jun", tasks: 210 }
+    ],
+    timeSaved: [
+      { month: "Jan", hours: 45 },
+      { month: "Feb", hours: 50 },
+      { month: "Mar", hours: 65 },
+      { month: "Apr", hours: 70 },
+      { month: "May", hours: 85 },
+      { month: "Jun", hours: 95 }
+    ],
+    errorReduction: [
+      { month: "Jan", errors: 30 },
+      { month: "Feb", errors: 25 },
+      { month: "Mar", errors: 20 },
+      { month: "Apr", errors: 15 },
+      { month: "May", errors: 12 },
+      { month: "Jun", errors: 8 }
+    ]
+  };
 
   const analyticsModules = [
     { id: "client", name: "Client & Case Metrics", icon: Users, component: ClientManagementAnalytics },
@@ -26,7 +54,7 @@ const AnalyticsPage = () => {
     { id: "marketing", name: "Marketing & Leads", icon: TrendingUp, component: MarketingAnalytics },
     { id: "predictive", name: "Predictive Analytics", icon: LineChart, component: PredictiveAnalytics },
     { id: "trustees", name: "Trustee Performance", icon: Activity, component: TrusteePerformanceAnalytics },
-    { id: "usage", name: "System Usage", icon: FileChart, component: SystemUsageAnalytics },
+    { id: "usage", name: "System Usage", icon: FileText, component: SystemUsageAnalytics },
     { id: "geographic", name: "Geographic Analysis", icon: Map, component: GeographicAnalytics },
     { id: "health", name: "System Health", icon: Gauge, component: SystemHealthAnalytics }
   ];
@@ -71,7 +99,15 @@ const AnalyticsPage = () => {
                       {getTabDescription(module.id)}
                     </p>
                   </div>
-                  <module.component />
+                  {module.id === "documents" ? (
+                    <module.component 
+                      taskVolume={documentMockData.taskVolume}
+                      timeSaved={documentMockData.timeSaved}
+                      errorReduction={documentMockData.errorReduction}
+                    />
+                  ) : (
+                    <module.component />
+                  )}
                 </TabsContent>
               ))}
             </Tabs>
