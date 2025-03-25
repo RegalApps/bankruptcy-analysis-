@@ -50,7 +50,7 @@ const AnalyticsPage = () => {
     { id: "client", name: "Client & Case Metrics", icon: Users, component: ClientManagementAnalytics },
     { id: "operations", name: "Operational Efficiency", icon: BarChart2, component: OperationalEfficiencyAnalytics },
     { id: "compliance", name: "Compliance & Risk", icon: Shield, component: ComplianceAnalytics },
-    { id: "documents", name: "Document Management", icon: Book, component: DocumentAnalytics },
+    { id: "documents", name: "Document Management", icon: Book, component: DocumentAnalytics, data: documentMockData },
     { id: "marketing", name: "Marketing & Leads", icon: TrendingUp, component: MarketingAnalytics },
     { id: "predictive", name: "Predictive Analytics", icon: LineChart, component: PredictiveAnalytics },
     { id: "trustees", name: "Trustee Performance", icon: Activity, component: TrusteePerformanceAnalytics },
