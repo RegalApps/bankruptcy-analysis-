@@ -1,7 +1,7 @@
 
 export interface Document {
   id: string;
-  title?: string;
+  title: string; // Changed from optional to required
   description?: string;
   status?: string;
   created_at: string;
@@ -14,8 +14,8 @@ export interface Document {
   type?: string;
   tasks?: any[];
   versions?: any[];
-  size?: number; // Added size property
-  ai_processing_status?: string; // Added property used in useFolderRecommendations
+  size?: number;
+  ai_processing_status?: string;
 }
 
 export interface DocumentFolder {

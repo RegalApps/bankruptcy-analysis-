@@ -100,7 +100,7 @@ const DocumentsPage = () => {
               folderPath={folderPath}
               selectedItemId={selectedItemId}
               selectedItemType={selectedItemType}
-              onFolderClick={(id) => handleItemSelect(id, "file")}
+              onFolderClick={(id) => handleItemSelect(id, "folder")}
               documents={documents}
             />
             

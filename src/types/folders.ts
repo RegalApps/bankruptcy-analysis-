@@ -7,14 +7,15 @@ export interface FolderStructure {
   parentId?: string;
   isExpanded: boolean;
   level?: number;
-  metadata?: Record<string, any>; // Added metadata property
+  metadata?: Record<string, any>;
 }
 
 export interface FolderOperationResult {
   success: boolean;
   message: string;
   folder?: FolderStructure;
-  error?: string; // Added error property
+  error?: string;
+  folderId?: string; // Added to resolve property access errors
 }
 
 export interface FolderAIRecommendation {
@@ -25,7 +26,8 @@ export interface FolderAIRecommendation {
   documents: string[];
   suggestedFolderId?: string;
   suggestedPath?: string[];
-  alternatives?: { folderId: string; path: string[] }[]; // Changed to proper type
+  alternatives?: { folderId: string; path: string[] }[];
+  documentId?: string; // Added to resolve property access errors
 }
 
 export type UserRole = 'admin' | 'user' | 'viewer' | 'manager' | 'reviewer';

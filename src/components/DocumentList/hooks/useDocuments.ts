@@ -28,18 +28,19 @@ export function useDocuments() {
         throw error;
       }
       
-      // Transform data to match Document interface
+      // Transform data to match Document interface with proper type handling
       const transformedData: Document[] = data.map(item => ({
         id: item.id,
-        title: item.title || 'Untitled Document',
+        title: item.title || 'Untitled Document', // Ensure title is always a string
         created_at: item.created_at,
         updated_at: item.updated_at,
         is_folder: item.is_folder || false,
         folder_type: item.folder_type,
         parent_folder_id: item.parent_folder_id,
         storage_path: item.storage_path,
-        metadata: item.metadata || {},
+        metadata: typeof item.metadata === 'object' ? item.metadata : {}, // Ensure metadata is always an object
         type: item.type,
+        size: item.size || 0,
       }));
       
       setDocuments(transformedData);

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { FolderOperationResult } from "@/types/folders";
 
@@ -81,7 +80,7 @@ export const createClientFolder = async (
     return {
       success: false,
       message: "Failed to create client folder",
-      error
+      error: error instanceof Error ? error.message : String(error)
     };
   }
 };
@@ -171,7 +170,7 @@ export const organizeDocumentIntoFolders = async (
     return {
       success: false,
       message: "Failed to organize document",
-      error
+      error: error instanceof Error ? error.message : String(error)
     };
   }
 };

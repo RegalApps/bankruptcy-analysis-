@@ -38,12 +38,13 @@ export const folderService = {
     folders.forEach(folder => {
       folderMap[folder.id] = {
         id: folder.id,
-        name: folder.title,
+        name: folder.title || '',
         type: this.determineFolderType(folder),
         children: [],
         parentId: folder.parent_folder_id,
+        isExpanded: false, // Add this missing property
         level: 0,
-        metadata: folder.metadata
+        metadata: folder.metadata || {}
       };
     });
 
@@ -51,7 +52,7 @@ export const folderService = {
     Object.values(folderMap).forEach(folder => {
       if (folder.parentId && folderMap[folder.parentId]) {
         // Add to parent's children
-        folderMap[folder.parentId].children?.push(folder);
+        folderMap[folder.parentId].children.push(folder);
         // Set level based on parent
         folder.level = (folderMap[folder.parentId].level || 0) + 1;
       } else {
@@ -207,16 +208,21 @@ export const folderService = {
    */
   async getFolderPermissions(userId: string): Promise<FolderPermissionRule[]> {
     // In a real implementation, this would fetch from a database
-    // For now, return simulated permissions (all full access)
     try {
       const { data: folders } = await supabase
         .from('documents')
         .select('id')
         .eq('is_folder', true);
 
+      // Return properly shaped FolderPermissionRule objects
       return (folders || []).map(folder => ({
         folderId: folder.id,
         userId,
+        role: 'user' as UserRole, // Ensure we use the proper type
+        canCreate: true,
+        canDelete: true,
+        canRename: true,
+        canMove: true,
         permission: 'full'
       }));
     } catch (error) {
@@ -283,15 +289,17 @@ export const folderService = {
       const path = [clientFolder.name, targetFolder.name];
 
       return {
-        documentId,
-        suggestedFolderId: targetFolder.id,
+        id: targetFolder.id,
+        type: targetFolder.type,
+        reason: `Document appears to be a ${isFinancial ? 'financial document' : isForm ? 'form' : 'general document'}`,
         confidence: 0.85,
+        documents: [documentId], // Use the documents array instead of documentId property
+        suggestedFolderId: targetFolder.id,
         suggestedPath: path,
         alternatives: typeSubfolders
           .filter(f => f.id !== targetFolder?.id)
           .map(f => ({
             folderId: f.id,
-            confidence: 0.4,
             path: [clientFolder.name, f.name]
           }))
       };
