@@ -1,44 +1,77 @@
 
-import { useMemo } from 'react';
-import { Document } from '@/components/DocumentList/types';
-import { FolderStructure } from '@/types/folders';
+import { useState, useEffect } from "react";
+import { FolderStructure } from "@/types/folders";
+import { Document } from "@/components/DocumentList/types";
 
-export const useCreateFolderStructure = (documents: Document[]) => {
-  const folders = useMemo(() => {
-    // Extract all folders from documents
-    const folderDocs = documents.filter(doc => doc.is_folder);
+export function useCreateFolderStructure(documents: Document[]) {
+  const [folders, setFolders] = useState<FolderStructure[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (documents.length === 0) {
+      setFolders([]);
+      setIsLoading(false);
+      return;
+    }
+
+    // Create folder structure
+    setIsLoading(true);
     
-    // Create a map of folder IDs to folder objects
-    const folderMap: Record<string, FolderStructure> = {};
-    
-    // Initialize folders
-    folderDocs.forEach(doc => {
-      folderMap[doc.id] = {
+    try {
+      // Get folders from documents
+      const folderDocs = documents.filter(doc => doc.is_folder);
+      
+      // Map to FolderStructure
+      const folderStructures: FolderStructure[] = folderDocs.map(doc => ({
         id: doc.id,
         name: doc.title || 'Unnamed Folder',
-        type: doc.folder_type || 'default',
+        type: doc.folder_type || 'folder',
         children: [],
         parentId: doc.parent_folder_id,
-        isExpanded: false
+        isExpanded: false,
+        metadata: doc.metadata
+      }));
+      
+      // Build hierarchy
+      const rootFolders: FolderStructure[] = [];
+      const folderMap = new Map<string, FolderStructure>();
+      
+      // Add all folders to map
+      folderStructures.forEach(folder => {
+        folderMap.set(folder.id, folder);
+      });
+      
+      // Organize into hierarchy
+      folderStructures.forEach(folder => {
+        if (folder.parentId && folderMap.has(folder.parentId)) {
+          const parent = folderMap.get(folder.parentId);
+          if (parent) {
+            parent.children.push(folder);
+          }
+        } else {
+          rootFolders.push(folder);
+        }
+      });
+      
+      // Calculate levels for each folder
+      const addLevels = (folders: FolderStructure[], level: number) => {
+        folders.forEach(folder => {
+          folder.level = level;
+          if (folder.children.length > 0) {
+            addLevels(folder.children, level + 1);
+          }
+        });
       };
-    });
-    
-    // Build folder hierarchy
-    const rootFolders: FolderStructure[] = [];
-    
-    Object.values(folderMap).forEach(folder => {
-      if (!folder.parentId) {
-        rootFolders.push(folder);
-      } else if (folderMap[folder.parentId]) {
-        folderMap[folder.parentId].children.push(folder);
-      } else {
-        // Orphaned folder, add to root
-        rootFolders.push(folder);
-      }
-    });
-    
-    return rootFolders;
+      
+      addLevels(rootFolders, 0);
+      
+      setFolders(rootFolders);
+    } catch (error) {
+      console.error("Error creating folder structure:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [documents]);
-  
-  return { folders };
-};
+
+  return { folders, isLoading };
+}

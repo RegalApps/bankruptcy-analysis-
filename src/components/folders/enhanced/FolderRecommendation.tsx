@@ -42,7 +42,7 @@ export function FolderRecommendation({ document, onAccept, onReject }: FolderRec
     
     setIsSubmitting(true);
     try {
-      await onAccept(recommendation.suggestedFolderId);
+      await onAccept(recommendation.suggestedFolderId || '');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,7 +95,7 @@ export function FolderRecommendation({ document, onAccept, onReject }: FolderRec
             <div className="bg-accent/10 p-3 rounded-md mb-4 border border-border">
               <div className="font-medium flex items-center gap-2 text-primary">
                 <FolderTree className="h-4 w-4 text-primary/70" />
-                {recommendation.suggestedPath.join(' > ')}
+                {Array.isArray(recommendation.suggestedPath) ? recommendation.suggestedPath.join(' > ') : recommendation.suggestedPath}
               </div>
             </div>
             

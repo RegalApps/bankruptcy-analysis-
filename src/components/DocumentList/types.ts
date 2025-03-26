@@ -14,6 +14,8 @@ export interface Document {
   type?: string;
   tasks?: any[];
   versions?: any[];
+  size?: number; // Added size property
+  ai_processing_status?: string; // Added property used in useFolderRecommendations
 }
 
 export interface DocumentFolder {
@@ -22,4 +24,11 @@ export interface DocumentFolder {
   documents: Document[];
   subfolders: DocumentFolder[];
   parentFolderId?: string;
+}
+
+export interface DocumentNode {
+  id: string;
+  title: string;
+  type: string;
+  children?: DocumentNode[];
 }

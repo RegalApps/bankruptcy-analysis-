@@ -27,8 +27,8 @@ export const organizeDocumentsIntoTree = (docs: Document[]): DocumentNode[] => {
   const clientGroups = docs.reduce((acc, doc) => {
     if (doc.is_folder && doc.folder_type === 'client') {
       // This is a client folder
-      if (!acc[doc.title]) {
-        acc[doc.title] = {
+      if (!acc[doc.title || '']) {
+        acc[doc.title || ''] = {
           folder: doc,
           documents: []
         };
@@ -36,7 +36,7 @@ export const organizeDocumentsIntoTree = (docs: Document[]): DocumentNode[] => {
     } else if (doc.parent_folder_id) {
       // This is a document with a parent folder
       const parentDoc = docs.find(d => d.id === doc.parent_folder_id);
-      if (parentDoc) {
+      if (parentDoc && parentDoc.title) {
         if (!acc[parentDoc.title]) {
           acc[parentDoc.title] = {
             folder: parentDoc,
@@ -56,7 +56,6 @@ export const organizeDocumentsIntoTree = (docs: Document[]): DocumentNode[] => {
             is_folder: true,
             folder_type: 'uncategorized',
             storage_path: '',
-            size: 0,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -75,7 +74,7 @@ export const organizeDocumentsIntoTree = (docs: Document[]): DocumentNode[] => {
     type: 'client',
     children: documents.map(doc => ({
       id: doc.id,
-      title: doc.title,
+      title: doc.title || 'Untitled',
       type: doc.type || 'document'
     }))
   }));

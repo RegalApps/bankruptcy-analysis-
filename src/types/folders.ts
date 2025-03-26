@@ -7,12 +7,14 @@ export interface FolderStructure {
   parentId?: string;
   isExpanded: boolean;
   level?: number;
+  metadata?: Record<string, any>; // Added metadata property
 }
 
 export interface FolderOperationResult {
   success: boolean;
   message: string;
   folder?: FolderStructure;
+  error?: string; // Added error property
 }
 
 export interface FolderAIRecommendation {
@@ -22,8 +24,8 @@ export interface FolderAIRecommendation {
   confidence: number;
   documents: string[];
   suggestedFolderId?: string;
-  suggestedPath?: string;
-  alternatives?: string[];
+  suggestedPath?: string[];
+  alternatives?: { folderId: string; path: string[] }[]; // Changed to proper type
 }
 
 export type UserRole = 'admin' | 'user' | 'viewer' | 'manager' | 'reviewer';

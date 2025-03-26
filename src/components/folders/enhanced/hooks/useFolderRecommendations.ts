@@ -39,7 +39,7 @@ export const useFolderRecommendations = (
         const uncategorizedDoc = documents.find(doc => 
           !doc.is_folder && 
           !doc.parent_folder_id && 
-          doc.ai_processing_status === 'complete'
+          doc.metadata?.processingStatus === 'complete'
         );
 
         if (uncategorizedDoc) {
@@ -95,7 +95,7 @@ export const useFolderRecommendations = (
               setRecommendation({
                 documentId: uncategorizedDoc.id,
                 suggestedFolderId: targetFolderId,
-                documentTitle: uncategorizedDoc.title,
+                documentTitle: uncategorizedDoc.title || '',
                 folderPath: folderPath
               });
               
@@ -105,7 +105,7 @@ export const useFolderRecommendations = (
               await notifyFolderRecommendation(
                 user.id,
                 uncategorizedDoc.id,
-                uncategorizedDoc.title,
+                uncategorizedDoc.title || '',
                 targetFolderId,
                 folderPath
               );

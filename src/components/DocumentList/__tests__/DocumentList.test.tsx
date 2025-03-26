@@ -31,8 +31,8 @@ describe('DocumentList', () => {
       <BrowserRouter>
         <DocumentList 
           documents={mockDocuments}
-          searchQuery=""
-          onDocumentSelect={mockOnDocumentSelect}
+          isLoading={false}
+          onDocumentDoubleClick={mockOnDocumentSelect}
         />
       </BrowserRouter>
     );
@@ -45,12 +45,12 @@ describe('DocumentList', () => {
       <BrowserRouter>
         <DocumentList 
           documents={mockDocuments}
-          searchQuery=""
-          onDocumentSelect={mockOnDocumentSelect}
+          isLoading={false}
+          onDocumentDoubleClick={mockOnDocumentSelect}
         />
       </BrowserRouter>
     );
 
-    expect(screen.getByText('1.00 KB')).toBeInTheDocument();
+    expect(screen.getByText('1.00 MB')).toBeInTheDocument();
   });
 });
