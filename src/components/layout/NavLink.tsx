@@ -24,19 +24,30 @@ export const NavLink: React.FC<NavLinkProps> = ({
   const isActive = location.pathname === to || 
                   (to !== '/' && location.pathname.startsWith(to));
   
-  // Handle prefetching on hover
+  // Safer implementation of prefetching with error handling
   const handleMouseEnter = React.useCallback(() => {
     if (prefetch) {
-      // Implementation depends on your routing library
-      // This is a simple example for React Router
-      const path = to.startsWith('/') ? to.substring(1) : to;
-      
-      if (path === 'documents') {
-        import('../DocumentList/DocumentManagement').catch(() => {});
-      } else if (path === 'analytics') {
-        import('../../pages/AnalyticsPage').catch(() => {});
-      } else if (path === '' || path === 'index') {
-        import('../../pages/Index').catch(() => {});
+      try {
+        const path = to.startsWith('/') ? to.substring(1) : to;
+        
+        // Check path and import corresponding modules
+        if (path === 'documents' || path === 'documents/') {
+          import('../../pages/DocumentsPage').catch(err => 
+            console.warn('Error prefetching DocumentsPage:', err)
+          );
+        } 
+        else if (path === 'analytics' || path === 'analytics/') {
+          import('../../pages/AnalyticsPage').catch(err => 
+            console.warn('Error prefetching AnalyticsPage:', err)
+          );
+        }
+        else if (path === '' || path === 'index' || path === '/') {
+          import('../../pages/Index').catch(err => 
+            console.warn('Error prefetching IndexPage:', err)
+          );
+        }
+      } catch (error) {
+        console.warn('Prefetch error:', error);
       }
     }
   }, [to, prefetch]);

@@ -10,16 +10,36 @@ import { ThemeProvider as CustomThemeProvider } from "./contexts/ThemeContext";
 import { PageTransition } from "./components/navigation/PageTransition";
 import { AnimatePresence } from "framer-motion";
 
-// Lazy loaded pages with preloading
-const AnalyticsPage = lazy(() => {
-  const modulePromise = import("./pages/AnalyticsPage");
-  // Trigger preload on initial chunk load
-  setTimeout(() => import("./pages/DocumentsPage"), 1000);
-  return modulePromise;
-});
-const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
-const IndexPage = lazy(() => import("./pages/Index"));
-const NotFoundPage = lazy(() => import("./pages/NotFound"));
+// Custom Loading Component
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-screen bg-background">
+    <div className="space-y-4 text-center">
+      <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+      <p className="text-sm text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
+
+// Using React.lazy with explicit chunk names for better debugging
+const IndexPage = lazy(() => import("./pages/Index").catch(error => {
+  console.error("Error loading IndexPage:", error);
+  return import("./pages/NotFound");
+}));
+
+const DocumentsPage = lazy(() => import("./pages/DocumentsPage").catch(error => {
+  console.error("Error loading DocumentsPage:", error);
+  return import("./pages/NotFound");
+}));
+
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage").catch(error => {
+  console.error("Error loading AnalyticsPage:", error);
+  return import("./pages/NotFound");
+}));
+
+const NotFoundPage = lazy(() => import("./pages/NotFound").catch(error => {
+  console.error("Error loading NotFoundPage:", error);
+  return { default: () => <div>Page not found</div> };
+}));
 
 // Create a client for React Query with performance optimizations
 const queryClient = new QueryClient({
@@ -49,16 +69,6 @@ const RouteChangeTracker = () => {
   return null;
 };
 
-// Custom Loading Component
-const PageLoader = () => (
-  <div className="flex items-center justify-center h-screen bg-background">
-    <div className="space-y-4 text-center">
-      <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-      <p className="text-sm text-muted-foreground">Loading...</p>
-    </div>
-  </div>
-);
-
 function App() {
   useEffect(() => {
     // Initialize performance monitoring
@@ -67,13 +77,14 @@ function App() {
     // Preload main pages on idle
     if ('requestIdleCallback' in window) {
       window.requestIdleCallback(() => {
-        import("./pages/Index");
-        import("./pages/DocumentsPage");
+        // Preload with error handling
+        import("./pages/Index").catch(err => console.error("Preloading error:", err));
+        import("./pages/DocumentsPage").catch(err => console.error("Preloading error:", err));
       });
     } else {
       setTimeout(() => {
-        import("./pages/Index");
-        import("./pages/DocumentsPage");
+        import("./pages/Index").catch(err => console.error("Preloading error:", err));
+        import("./pages/DocumentsPage").catch(err => console.error("Preloading error:", err));
       }, 1000);
     }
   }, []);
@@ -86,35 +97,33 @@ function App() {
             <Router>
               <RouteChangeTracker />
               <Suspense fallback={<PageLoader />}>
-                <AnimatePresence mode="wait">
-                  <Routes>
-                    <Route path="/" element={
-                      <PageTransition>
-                        <IndexPage />
-                      </PageTransition>
-                    } />
-                    <Route path="/index" element={
-                      <PageTransition>
-                        <IndexPage />
-                      </PageTransition>
-                    } />
-                    <Route path="/analytics" element={
-                      <PageTransition>
-                        <AnalyticsPage />
-                      </PageTransition>
-                    } />
-                    <Route path="/documents" element={
-                      <PageTransition>
-                        <DocumentsPage />
-                      </PageTransition>
-                    } />
-                    <Route path="*" element={
-                      <PageTransition>
-                        <NotFoundPage />
-                      </PageTransition>
-                    } />
-                  </Routes>
-                </AnimatePresence>
+                <Routes>
+                  <Route path="/" element={
+                    <PageTransition>
+                      <IndexPage />
+                    </PageTransition>
+                  } />
+                  <Route path="/index" element={
+                    <PageTransition>
+                      <IndexPage />
+                    </PageTransition>
+                  } />
+                  <Route path="/analytics" element={
+                    <PageTransition>
+                      <AnalyticsPage />
+                    </PageTransition>
+                  } />
+                  <Route path="/documents" element={
+                    <PageTransition>
+                      <DocumentsPage />
+                    </PageTransition>
+                  } />
+                  <Route path="*" element={
+                    <PageTransition>
+                      <NotFoundPage />
+                    </PageTransition>
+                  } />
+                </Routes>
               </Suspense>
               <Toaster position="top-right" />
             </Router>
