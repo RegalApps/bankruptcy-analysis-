@@ -39,8 +39,7 @@ class AnalyticsService {
         this.trackEvent({
           category: 'Session',
           action: 'End',
-          value: Math.floor((Date.now() - this.sessionStartTime) / 1000),
-          timestamp: Date.now(),
+          value: Math.floor((Date.now() - this.sessionStartTime) / 1000)
         });
       });
     }
@@ -68,8 +67,7 @@ class AnalyticsService {
     this.trackEvent({
       category: 'Page',
       action: 'View',
-      label: pageName,
-      timestamp: Date.now(),
+      label: pageName
     });
     
     return () => {
@@ -79,8 +77,7 @@ class AnalyticsService {
           category: 'Page',
           action: 'Duration',
           label: pageName,
-          value: Math.floor(duration / 1000),
-          timestamp: Date.now(),
+          value: Math.floor(duration / 1000)
         });
         endTiming(`page-view-${pageName}`);
         delete this.pageViewTimes[pageName];
@@ -94,8 +91,7 @@ class AnalyticsService {
       category: 'Interaction',
       action: action,
       label: component,
-      metadata,
-      timestamp: Date.now(),
+      metadata
     });
   }
   

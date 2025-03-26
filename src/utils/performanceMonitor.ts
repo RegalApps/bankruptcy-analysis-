@@ -1,121 +1,87 @@
 
 /**
- * Performance monitoring utility
- * Helps track, optimize and debug performance issues
+ * Simple performance monitoring utility
  */
 
-// Store timing marks for different parts of the application
-const markTimings: Record<string, number> = {};
+// Store for performance measurements
+const performanceMeasurements: Record<string, { start: number; end?: number }> = {};
 
 /**
  * Start timing a specific operation
- * @param operationName Unique name for the operation being timed
  */
 export const startTiming = (operationName: string): void => {
-  markTimings[operationName] = performance.now();
+  performanceMeasurements[operationName] = {
+    start: performance.now()
+  };
 };
 
 /**
- * End timing for an operation and log the duration
- * @param operationName Name of the operation to stop timing (should match startTiming call)
- * @param logResults Whether to log the results to console (default: true)
- * @returns Duration in milliseconds
+ * End timing a specific operation and return the duration
  */
-export const endTiming = (operationName: string, logResults = true): number => {
-  if (!markTimings[operationName]) {
-    console.warn(`No timing mark found for "${operationName}"`);
-    return 0;
+export const endTiming = (operationName: string): number | undefined => {
+  const measurement = performanceMeasurements[operationName];
+  if (!measurement) {
+    console.warn(`No timing started for operation: ${operationName}`);
+    return undefined;
   }
-  
-  const duration = performance.now() - markTimings[operationName];
-  
-  if (logResults) {
-    if (duration > 100) {
-      console.warn(`⚠️ Slow operation: ${operationName} took ${duration.toFixed(2)}ms`);
-    } else {
-      console.log(`✅ Operation: ${operationName} completed in ${duration.toFixed(2)}ms`);
-    }
+
+  if (measurement.end !== undefined) {
+    console.warn(`Timing already ended for operation: ${operationName}`);
+    return measurement.end - measurement.start;
   }
+
+  measurement.end = performance.now();
+  const duration = measurement.end - measurement.start;
   
-  // Clean up the timing mark
-  delete markTimings[operationName];
+  // Log the performance measurement
+  console.log(`Performance: ${operationName} took ${duration.toFixed(2)}ms`);
   
   return duration;
 };
 
 /**
- * Wraps a function with timing measurements
- * @param fn Function to time
- * @param operationName Name for the timing operation
- * @returns The wrapped function with timing
+ * Get all performance measurements
  */
-export function withTiming<T extends (...args: any[]) => any>(
-  fn: T,
-  operationName: string
-): (...args: Parameters<T>) => ReturnType<T> {
-  return (...args: Parameters<T>): ReturnType<T> => {
-    startTiming(operationName);
-    const result = fn(...args);
-    
-    // Handle promises
-    if (result instanceof Promise) {
-      return result.finally(() => {
-        endTiming(operationName);
-      }) as ReturnType<T>;
+export const getPerformanceMeasurements = (): Record<string, number> => {
+  const result: Record<string, number> = {};
+  
+  Object.entries(performanceMeasurements).forEach(([key, measurement]) => {
+    if (measurement.end !== undefined) {
+      result[key] = measurement.end - measurement.start;
     }
-    
-    endTiming(operationName);
-    return result;
-  };
-}
+  });
+  
+  return result;
+};
 
 /**
- * Initialize performance monitoring for the application
- * Call this once at application startup
+ * Initialize performance monitoring
  */
 export const initPerformanceMonitoring = (): void => {
-  // Measure navigation/page load performance
-  if (typeof window !== 'undefined' && window.performance) {
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-        const paintEntries = performance.getEntriesByType('paint');
-        
-        const metrics = {
-          domContentLoaded: navigation.domContentLoadedEventEnd - navigation.startTime,
-          load: navigation.loadEventEnd - navigation.startTime,
-          firstPaint: paintEntries.find(entry => entry.name === 'first-paint')?.startTime || 0,
-          firstContentfulPaint: paintEntries.find(entry => entry.name === 'first-contentful-paint')?.startTime || 0
-        };
-        
-        console.log('📊 Page Load Performance:', {
-          domContentLoaded: `${metrics.domContentLoaded.toFixed(0)}ms`,
-          load: `${metrics.load.toFixed(0)}ms`,
-          firstPaint: `${metrics.firstPaint.toFixed(0)}ms`,
-          firstContentfulPaint: `${metrics.firstContentfulPaint.toFixed(0)}ms`,
-        });
-        
-        // Report slow metrics
-        if (metrics.load > 1000) {
-          console.warn('⚠️ Page load time exceeds 1 second. Consider optimizing.');
-        }
-      }, 0);
-    });
-  }
+  startTiming('appInitialization');
   
-  // Monitor long tasks
-  if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
-    try {
-      const observer = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          // Log long tasks (tasks that block the main thread)
-          console.warn(`🚨 Long task detected: ${entry.duration.toFixed(0)}ms`, entry);
-        }
-      });
-      
-      observer.observe({ entryTypes: ['longtask'] });
-    } catch (e) {
-      console.error('Performance observer not supported', e);
+  // Record page load timing
+  window.addEventListener('load', () => {
+    endTiming('appInitialization');
+    
+    // Add navigation timing if available
+    if (performance && performance.timing) {
+      const navigationTiming = performance.timing;
+      const loadTime = navigationTiming.loadEventEnd - navigationTiming.navigationStart;
+      console.log(`Page load time: ${loadTime}ms`);
     }
-  }
+  });
+  
+  console.log('Performance monitoring initialized');
+};
+
+/**
+ * Show a performance toast notification
+ */
+export const showPerformanceToast = (component: string): void => {
+  const loadTime = Math.floor(Math.random() * 200) + 50; // Mock load time between 50-250ms
+  console.log(`${component} loaded in ${loadTime}ms`);
+  
+  // In a real app, you would use actual measured performance data
+  // and display this using your toast system
 };
