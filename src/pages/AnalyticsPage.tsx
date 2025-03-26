@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
@@ -13,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnomalyDetectionDashboard } from "@/components/analytics/performance/AnomalyDetectionDashboard";
 import { Button } from "@/components/ui/button";
-import { PresentationScreen, User, BarChart2, TrendingUp } from "lucide-react";
+import { Presentation, User, BarChart2, TrendingUp } from "lucide-react";
 
 const AnalyticsPage = () => {
   const [activeCategory, setActiveCategory] = useState("business");
@@ -64,7 +63,7 @@ const AnalyticsPage = () => {
             <div className="flex items-center justify-between">
               <TabsList>
                 <TabsTrigger value="default" className="flex items-center">
-                  <PresentationScreen className="mr-2 h-4 w-4" />
+                  <Presentation className="mr-2 h-4 w-4" />
                   Standard Analytics
                 </TabsTrigger>
                 <TabsTrigger value="role-based" className="flex items-center">

@@ -14,7 +14,9 @@ export type EventCategory =
   | 'Error' 
   | 'Security' 
   | 'Financial' 
-  | 'Workflow';
+  | 'Workflow'
+  | 'Navigation'  // Add missing categories
+  | 'API';
 
 // Subcategories for more granular tracking
 export type EventSubcategory = 
@@ -37,7 +39,12 @@ export type EventSubcategory =
   | 'Load' 
   | 'Error' 
   | 'Success' 
-  | 'Warning';
+  | 'Warning'
+  | 'Duration'  // Add missing subcategories
+  | 'Issue'
+  | 'Performance'
+  | 'Render'
+  | 'Interaction';
 
 // Types for analytics events
 export interface AnalyticsEvent {
@@ -62,6 +69,9 @@ export interface EventTrend {
   subcategory?: string;
 }
 
+// Mock historical data array for demo purposes
+const mockHistoricalData: AnalyticsEvent[] = [];
+
 // Analytics data store
 class AnalyticsService {
   private events: AnalyticsEvent[] = [];
@@ -77,6 +87,36 @@ class AnalyticsService {
     // Initialize on first instantiation
     if (typeof window !== 'undefined') {
       this.initialize();
+    }
+    
+    // Generate some mock historical data
+    this.generateMockData();
+  }
+  
+  // Generate mock historical data for demo
+  private generateMockData() {
+    const categories: EventCategory[] = ['Page', 'Interaction', 'Document', 'Performance', 'Error'];
+    const subcategories: EventSubcategory[] = ['View', 'Click', 'Load', 'Error', 'Success'];
+    const actions = ['View', 'Click', 'Submit', 'Load', 'Error'];
+    
+    // Generate last 30 days of data
+    for (let i = 0; i < 500; i++) {
+      const daysAgo = Math.floor(Math.random() * 30);
+      const category = categories[Math.floor(Math.random() * categories.length)];
+      const subcategory = subcategories[Math.floor(Math.random() * subcategories.length)];
+      const action = actions[Math.floor(Math.random() * actions.length)];
+      
+      mockHistoricalData.push({
+        id: `mock-${i}`,
+        category,
+        subcategory,
+        action,
+        label: `mock-label-${i % 10}`,
+        value: Math.floor(Math.random() * 100),
+        timestamp: Date.now() - (daysAgo * 24 * 60 * 60 * 1000) - (Math.random() * 86400000),
+        sessionId: `mock-session-${Math.floor(i / 20)}`,
+        userRole: i % 5 === 0 ? 'admin' : i % 3 === 0 ? 'manager' : 'user'
+      });
     }
   }
   
@@ -156,7 +196,8 @@ class AnalyticsService {
   }
   
   /**
-   * Sync events to the server for long-term storage
+   * Sync events to mock storage for now 
+   * In a real app this would use supabase
    */
   private async syncEvents() {
     if (!this.persistenceEnabled || this.events.length === 0) return;
@@ -167,26 +208,11 @@ class AnalyticsService {
     try {
       startTiming('analytics-sync');
       
-      const { error } = await supabase
-        .from('analytics_events')
-        .insert(
-          eventsToSync.map(event => ({
-            category: event.category,
-            subcategory: event.subcategory,
-            action: event.action,
-            label: event.label,
-            value: event.value,
-            timestamp: new Date(event.timestamp).toISOString(),
-            metadata: event.metadata,
-            session_id: event.sessionId,
-            user_role: event.userRole
-          }))
-        );
-      
-      if (error) {
-        console.error('Failed to sync analytics events:', error);
-        return;
-      }
+      // In a real app, we would use Supabase here
+      // For now, we'll just add to our mock data
+      eventsToSync.forEach(event => {
+        mockHistoricalData.push(event);
+      });
       
       // Remove synced events from the local store
       this.events = this.events.filter(
@@ -209,25 +235,11 @@ class AnalyticsService {
       
       if (eventsToSync.length === 0) return;
       
-      const payload = JSON.stringify({
-        events: eventsToSync.map(event => ({
-          category: event.category,
-          subcategory: event.subcategory,
-          action: event.action, 
-          label: event.label,
-          value: event.value,
-          timestamp: new Date(event.timestamp).toISOString(),
-          metadata: event.metadata,
-          session_id: event.sessionId,
-          user_role: event.userRole
-        }))
+      // In a real app with a working backend, we would send via beacon API
+      // For now, just add to mock data
+      eventsToSync.forEach(event => {
+        mockHistoricalData.push(event);
       });
-      
-      // Use beacon API for more reliable sending during page unload
-      navigator.sendBeacon(
-        `${window.location.origin}/api/analytics/sync`,
-        payload
-      );
       
       // Clear local events
       this.events = [];
@@ -321,7 +333,7 @@ class AnalyticsService {
     return filteredEvents;
   }
   
-  // Get historical analytics data from the server
+  // Get historical analytics data (mock data)
   async getHistoricalData(options: {
     category?: EventCategory;
     subcategory?: EventSubcategory;
@@ -329,52 +341,47 @@ class AnalyticsService {
     endDate?: Date;
     userRole?: string;
     limit?: number;
-  } = {}) {
+  } = {}): Promise<AnalyticsEvent[]> {
     try {
       startTiming('fetch-historical-analytics');
       
-      let query = supabase
-        .from('analytics_events')
-        .select('*');
+      // Filter the mock data based on options
+      let filteredData = [...mockHistoricalData];
       
       // Apply filters
       if (options.category) {
-        query = query.eq('category', options.category);
+        filteredData = filteredData.filter(event => event.category === options.category);
       }
       
       if (options.subcategory) {
-        query = query.eq('subcategory', options.subcategory);
+        filteredData = filteredData.filter(event => event.subcategory === options.subcategory);
       }
       
       if (options.startDate) {
-        query = query.gte('timestamp', options.startDate.toISOString());
+        const startTime = options.startDate.getTime();
+        filteredData = filteredData.filter(event => event.timestamp >= startTime);
       }
       
       if (options.endDate) {
-        query = query.lte('timestamp', options.endDate.toISOString());
+        const endTime = options.endDate.getTime();
+        filteredData = filteredData.filter(event => event.timestamp <= endTime);
       }
       
       if (options.userRole) {
-        query = query.eq('user_role', options.userRole);
+        filteredData = filteredData.filter(event => event.userRole === options.userRole);
       }
       
       // Apply limit
-      if (options.limit) {
-        query = query.limit(options.limit);
-      } else {
-        query = query.limit(1000); // Default limit
+      if (options.limit && filteredData.length > options.limit) {
+        filteredData = filteredData.slice(0, options.limit);
       }
       
-      const { data, error } = await query;
+      // Sort by timestamp (most recent first)
+      filteredData.sort((a, b) => b.timestamp - a.timestamp);
       
       endTiming('fetch-historical-analytics');
       
-      if (error) {
-        console.error('Error fetching historical analytics data:', error);
-        return [];
-      }
-      
-      return data;
+      return filteredData;
     } catch (error) {
       console.error('Error in getHistoricalData:', error);
       return [];
@@ -390,7 +397,6 @@ class AnalyticsService {
     userRole?: string;
   } = {}): Promise<EventTrend[]> {
     try {
-      // This would typically be a server-side aggregation, but we'll simulate it
       const historicalData = await this.getHistoricalData(options);
       
       // Group by the selected period
