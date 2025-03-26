@@ -7,9 +7,9 @@ import { startTiming, endTiming } from "./performanceMonitor";
  */
 export const showPerformanceToast = (pageName: string) => {
   // End timing for page load
-  const loadTime = endTiming(`page-load-${pageName}`, false);
+  const loadTime = endTiming(`page-load-${pageName}`);
   
-  if (loadTime > 500) {
+  if (loadTime && loadTime > 500) {
     toast.info(
       `${pageName} loaded in ${(loadTime / 1000).toFixed(1)}s`, 
       { duration: 3000, position: 'bottom-right' }
@@ -24,7 +24,7 @@ export const showPerformanceToast = (pageName: string) => {
  * Measures and reports navigation performance
  */
 export const measureRouteChange = (from: string, to: string) => {
-  endTiming(`page-interact-${from}`, false);
+  endTiming(`page-interact-${from}`);
   startTiming(`page-load-${to}`);
   
   // Reset document load timings when changing routes
@@ -42,8 +42,8 @@ export const measureRouteChange = (from: string, to: string) => {
 export const measureDocumentLoad = (documentId: string) => {
   startTiming(`document-load-${documentId}`);
   return () => {
-    const loadTime = endTiming(`document-load-${documentId}`, false);
-    if (loadTime > 1000) {
+    const loadTime = endTiming(`document-load-${documentId}`);
+    if (loadTime && loadTime > 1000) {
       console.warn(`Document ${documentId} took ${(loadTime / 1000).toFixed(1)}s to load`);
     }
   };

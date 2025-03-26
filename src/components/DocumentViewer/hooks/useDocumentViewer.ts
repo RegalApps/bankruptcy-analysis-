@@ -109,7 +109,7 @@ export const useDocumentViewer = (documentId: string) => {
     // Cleanup function
     return () => {
       // Cancel any in-progress timing if component unmounts
-      endTiming(`document-load-${documentId}`, false);
+      endTiming(`document-load-${documentId}`);
       
       // Clear timeout if it exists
       if (timeoutRef.current) {
@@ -150,7 +150,7 @@ export const useDocumentViewer = (documentId: string) => {
           });
           
           // End timing
-          endTiming(`document-load-${documentId}`, false);
+          endTiming(`document-load-${documentId}`);
         }
       }, retryTime);
       

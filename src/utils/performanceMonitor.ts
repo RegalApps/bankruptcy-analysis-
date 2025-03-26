@@ -17,8 +17,11 @@ export const startTiming = (operationName: string): void => {
 
 /**
  * End timing a specific operation and return the duration
+ * @param operationName The name of the operation to end timing for
+ * @param logResult Whether to log the result (default: true)
+ * @returns The duration in milliseconds or undefined if no timing was started
  */
-export const endTiming = (operationName: string): number | undefined => {
+export const endTiming = (operationName: string, logResult: boolean = true): number | undefined => {
   const measurement = performanceMeasurements[operationName];
   if (!measurement) {
     console.warn(`No timing started for operation: ${operationName}`);
@@ -33,8 +36,10 @@ export const endTiming = (operationName: string): number | undefined => {
   measurement.end = performance.now();
   const duration = measurement.end - measurement.start;
   
-  // Log the performance measurement
-  console.log(`Performance: ${operationName} took ${duration.toFixed(2)}ms`);
+  // Log the performance measurement if requested
+  if (logResult) {
+    console.log(`Performance: ${operationName} took ${duration.toFixed(2)}ms`);
+  }
   
   return duration;
 };

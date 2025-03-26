@@ -90,8 +90,8 @@ export const useFilePreview = (document: Document | null, onDocumentOpen: (docum
         onDocumentOpen(document.id);
         
         // End timing
-        const openTime = endTiming(`document-open-${document.id}`, false);
-        if (openTime > 1000) {
+        const openTime = endTiming(`document-open-${document.id}`);
+        if (openTime && openTime > 1000) {
           console.warn(`Document ${document.id} took ${(openTime / 1000).toFixed(1)}s to open`);
         }
       } catch (error) {
