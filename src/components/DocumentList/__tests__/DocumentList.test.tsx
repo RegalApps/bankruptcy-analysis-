@@ -1,7 +1,7 @@
 
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DocumentList } from '../DocumentList';
+import { DocumentList } from '../../documents/DocumentList';
 import { BrowserRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 import type { Document } from '../types';
@@ -10,11 +10,11 @@ const mockDocuments: Document[] = [
   {
     id: '1',
     title: 'Test Document',
-    type: 'pdf', // This is now required
+    type: 'pdf', // This is required
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    size: 1024,
-    storage_path: 'test/path' // This is now required
+    size: 1024, // This is required
+    storage_path: 'test/path' // This is required
   }
 ];
 

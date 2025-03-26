@@ -26,7 +26,6 @@ export const useDocumentsPage = () => {
   
   // Create a wrapper function to map between the different type systems
   const handleItemSelect = (id: string, type: "folder" | "file") => {
-    // Map "file" to the appropriate type for the underlying function
     // This ensures consistency across the application
     originalHandleItemSelect(id, type);
   };

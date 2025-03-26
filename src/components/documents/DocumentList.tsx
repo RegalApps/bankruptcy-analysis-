@@ -6,7 +6,7 @@ import { Document } from "@/components/DocumentList/types";
 
 interface DocumentListProps {
   documents: Document[];
-  isLoading: boolean;
+  isLoading: boolean; // Added isLoading prop to match test usage
   onDocumentDoubleClick: (documentId: string) => void;
 }
 
