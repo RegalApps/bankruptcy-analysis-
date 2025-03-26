@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useMemo } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { AnalyticsSidebar } from "@/components/analytics/AnalyticsSidebar";
@@ -24,14 +25,16 @@ const AnalyticsPage = () => {
     enablePersistence: true
   });
 
-  // Get categories
-  const categories = getAnalyticsCategories();
+  // Get categories - memoize to prevent unnecessary recalculations
+  const categories = useMemo(() => getAnalyticsCategories(), []);
   
-  // Get mock data for DocumentAnalytics component
-  const documentMockData = getMockDocumentData();
+  // Get mock data for DocumentAnalytics component - memoize to prevent recreating on every render
+  const documentMockData = useMemo(() => getMockDocumentData(), []);
 
   // Handle category change
   const handleCategoryChange = (categoryId: string) => {
+    if (categoryId === activeCategory) return; // Prevent unnecessary state updates
+    
     setActiveCategory(categoryId);
     // Track the category change
     analytics.trackInteraction("AnalyticsSidebar", "CategoryChange", "Navigation", { categoryId });
@@ -40,6 +43,14 @@ const AnalyticsPage = () => {
     const firstModuleId = categories.find(c => c.id === categoryId)?.modules[0]?.id || "";
     setActiveModule(firstModuleId);
   };
+
+  // Handle module change with memoization to prevent recreating on every render
+  const handleModuleChange = useMemo(() => (moduleId: string) => {
+    if (moduleId === activeModule) return; // Prevent unnecessary state updates
+    
+    setActiveModule(moduleId);
+    analytics.trackInteraction("AnalyticsContent", "ModuleChange", "Navigation", { moduleId });
+  }, [activeModule, analytics]);
 
   useEffect(() => {
     // Show performance toast when dashboard loads
@@ -77,9 +88,13 @@ const AnalyticsPage = () => {
               </TabsList>
               
               <div>
-                <Button variant="outline" onClick={() => analytics.fetchTrendData()}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => analytics.fetchTrendData()}
+                  disabled={analytics.isLoadingTrends}
+                >
                   <BarChart2 className="mr-2 h-4 w-4" />
-                  Refresh Data
+                  {analytics.isLoadingTrends ? 'Refreshing...' : 'Refresh Data'}
                 </Button>
               </div>
             </div>
@@ -101,10 +116,7 @@ const AnalyticsPage = () => {
                     categories={categories}
                     activeCategory={activeCategory}
                     activeModule={activeModule}
-                    setActiveModule={(moduleId) => {
-                      setActiveModule(moduleId);
-                      analytics.trackInteraction("AnalyticsContent", "ModuleChange", "Navigation", { moduleId });
-                    }}
+                    setActiveModule={handleModuleChange}
                     documentMockData={documentMockData}
                   />
                 </div>

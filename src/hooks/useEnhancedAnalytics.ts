@@ -1,6 +1,7 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { analyticsService, EventCategory, EventSubcategory, EventTrend } from '@/services/analyticsService';
+import { useDebouncedCallback } from './useDebounce';
 
 interface UseEnhancedAnalyticsOptions {
   pageName?: string;
@@ -16,8 +17,9 @@ export const useEnhancedAnalytics = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [trendData, setTrendData] = useState<EventTrend[]>([]);
   const [isLoadingTrends, setIsLoadingTrends] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   
-  // Initialize analytics with configuration
+  // Initialize analytics with configuration - only run once on mount
   useEffect(() => {
     // Set user role for analytics
     analyticsService.setUserRole(userRole);
@@ -28,7 +30,7 @@ export const useEnhancedAnalytics = ({
     setIsInitialized(true);
   }, [userRole, enablePersistence]);
   
-  // Track page view if pageName is provided
+  // Track page view if pageName is provided - only run when pageName changes
   useEffect(() => {
     if (pageName && isInitialized) {
       // Track page view and return cleanup function
@@ -36,8 +38,8 @@ export const useEnhancedAnalytics = ({
     }
   }, [pageName, isInitialized]);
   
-  // Function to fetch trend data
-  const fetchTrendData = async (
+  // Function to fetch trend data with cache control
+  const fetchTrendData = useCallback(async (
     period: 'day' | 'week' | 'month' = 'day',
     options: {
       category?: EventCategory;
@@ -46,7 +48,14 @@ export const useEnhancedAnalytics = ({
       endDate?: Date;
     } = {}
   ) => {
+    // Prevent excessive fetches within a short time
+    const now = Date.now();
+    if (now - lastFetchTime < 3000 && isLoadingTrends) {
+      return; // Don't fetch if we've fetched in the last 3 seconds
+    }
+    
     setIsLoadingTrends(true);
+    setLastFetchTime(now);
     
     try {
       const trends = await analyticsService.getEventTrends(period, {
@@ -58,14 +67,26 @@ export const useEnhancedAnalytics = ({
     } catch (error) {
       console.error('Error fetching trend data:', error);
     } finally {
-      setIsLoadingTrends(false);
+      // Use setTimeout to prevent the flickering of loading state
+      setTimeout(() => {
+        setIsLoadingTrends(false);
+      }, 300);
     }
-  };
+  }, [userRole, lastFetchTime, isLoadingTrends]);
   
-  return {
+  // Debounced version of event tracking to prevent excessive calls
+  const debouncedTrackInteraction = useDebouncedCallback(
+    (component: string, action: string, subcategory: EventSubcategory = 'Click', metadata?: Record<string, any>) => {
+      analyticsService.trackInteraction(component, action, subcategory, metadata);
+    },
+    300
+  );
+  
+  // Create a memoized object to prevent unnecessary re-renders of components that use this hook
+  const analyticsApi = useMemo(() => ({
     // Event tracking methods
     trackEvent: analyticsService.trackEvent.bind(analyticsService),
-    trackInteraction: analyticsService.trackInteraction.bind(analyticsService),
+    trackInteraction: debouncedTrackInteraction,
     trackDocumentEvent: analyticsService.trackDocumentEvent.bind(analyticsService),
     trackClientEvent: analyticsService.trackClientEvent.bind(analyticsService),
     trackError: analyticsService.trackError.bind(analyticsService),
@@ -86,5 +107,12 @@ export const useEnhancedAnalytics = ({
     // Configuration
     setUserRole: analyticsService.setUserRole.bind(analyticsService),
     setPersistenceEnabled: analyticsService.setPersistenceEnabled.bind(analyticsService),
-  };
+  }), [
+    trendData, 
+    isLoadingTrends, 
+    fetchTrendData, 
+    debouncedTrackInteraction
+  ]);
+  
+  return analyticsApi;
 };
