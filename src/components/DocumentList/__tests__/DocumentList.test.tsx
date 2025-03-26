@@ -14,7 +14,7 @@ const mockDocuments: Document[] = [
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     size: 1024,
-    storage_path: 'test/path'
+    storage_path: 'test/path' // This is now required
   }
 ];
 

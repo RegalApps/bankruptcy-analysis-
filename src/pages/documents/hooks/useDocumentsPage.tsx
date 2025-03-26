@@ -27,8 +27,12 @@ export const useDocumentsPage = () => {
   // Create a wrapper function to map between the different type systems
   const handleItemSelect = (id: string, type: "folder" | "file" | "document") => {
     // If type is "document", map it to "file" for consistency
-    const normalizedType = type === "document" ? "file" : type;
-    originalHandleItemSelect(id, normalizedType as "folder" | "file");
+    // If type is "file", map it to "document" for the underlying function
+    if (type === "file") {
+      originalHandleItemSelect(id, "file" as any);
+    } else {
+      originalHandleItemSelect(id, type as any);
+    }
   };
   
   const {

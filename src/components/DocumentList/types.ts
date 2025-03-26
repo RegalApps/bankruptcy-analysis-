@@ -1,3 +1,4 @@
+
 export interface Document {
   id: string;
   title: string; // Changed from optional to required
@@ -8,7 +9,7 @@ export interface Document {
   is_folder?: boolean;
   folder_type?: string;
   parent_folder_id?: string;
-  storage_path?: string;
+  storage_path: string; // Changed from optional to required
   metadata?: Record<string, any>;
   type: string; // Changed from optional to required
   tasks?: any[];
