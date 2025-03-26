@@ -16,6 +16,21 @@ import { SystemHealthAnalytics } from "@/components/analytics/health/SystemHealt
 import { BarChart2, Book, Shield, FileText, TrendingUp, LineChart, Users, Activity, Map, Gauge } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
+// Define types for module data
+interface AnalyticsModule {
+  id: string;
+  name: string;
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  component: React.FC<any>;
+  data?: any;
+}
+
+interface CategoryData {
+  id: string;
+  name: string;
+  modules: AnalyticsModule[];
+}
+
 const AnalyticsPage = () => {
   const [activeCategory, setActiveCategory] = useState("business");
   const [activeModule, setActiveModule] = useState("client");
@@ -49,7 +64,7 @@ const AnalyticsPage = () => {
   };
 
   // Group analytics modules into categories
-  const categories = [
+  const categories: CategoryData[] = [
     { 
       id: "business",
       name: "Business Insights",

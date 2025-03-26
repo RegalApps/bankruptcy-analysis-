@@ -19,8 +19,8 @@ import DocumentsPage from "./pages/DocumentsPage";
 import EFilingPage from "./pages/EFilingPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 
-// Lazy load other pages with prefetching for better UX
-const Index = lazy(() => import("./pages/Index"));
+// Rename the import to match the file name exactly
+const HomePage = lazy(() => import("./pages/Index"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const ConBrandingPage = lazy(() => import("./pages/ConBrandingPage"));
@@ -53,7 +53,7 @@ const App: React.FC = () => {
           <BrowserRouter>
             <Suspense fallback={<LoadingPlaceholder />}>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<HomePage />} />
                 <Route path="/documents" element={<DocumentsPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/activity" element={<ActivityPage />} />
