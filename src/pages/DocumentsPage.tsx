@@ -76,7 +76,9 @@ const DocumentsPage = () => {
 
   // Update the function to use "file" instead of "document" for type
   const updateHandleItemSelect = (id: string, type: "folder" | "file") => {
-    handleItemSelect(id, type);
+    // Convert "document" to "file" for consistency across the application
+    const mappedType = type === "document" ? "file" : type;
+    handleItemSelect(id, mappedType);
   };
 
   return (

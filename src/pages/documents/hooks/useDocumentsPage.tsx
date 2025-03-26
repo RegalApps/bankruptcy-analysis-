@@ -25,14 +25,10 @@ export const useDocumentsPage = () => {
   } = useFolderNavigation(documents || []);
   
   // Create a wrapper function to map between the different type systems
-  const handleItemSelect = (id: string, type: "folder" | "file" | "document") => {
-    // If type is "document", map it to "file" for consistency
-    // If type is "file", map it to "document" for the underlying function
-    if (type === "file") {
-      originalHandleItemSelect(id, "file" as any);
-    } else {
-      originalHandleItemSelect(id, type as any);
-    }
+  const handleItemSelect = (id: string, type: "folder" | "file") => {
+    // Map "file" to the appropriate type for the underlying function
+    // This ensures consistency across the application
+    originalHandleItemSelect(id, type);
   };
   
   const {
