@@ -14,9 +14,11 @@ import { SystemUsageAnalytics } from "@/components/analytics/system/SystemUsageA
 import { GeographicAnalytics } from "@/components/analytics/geographic/GeographicAnalytics";
 import { SystemHealthAnalytics } from "@/components/analytics/health/SystemHealthAnalytics";
 import { BarChart2, Book, Shield, FileText, TrendingUp, LineChart, Users, Activity, Map, Gauge } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const AnalyticsPage = () => {
-  const [activeTab, setActiveTab] = useState("client");
+  const [activeCategory, setActiveCategory] = useState("business");
+  const [activeModule, setActiveModule] = useState("client");
 
   // Mock data for DocumentAnalytics component
   const documentMockData = {
@@ -46,18 +48,56 @@ const AnalyticsPage = () => {
     ]
   };
 
-  const analyticsModules = [
-    { id: "client", name: "Client & Case Metrics", icon: Users, component: ClientManagementAnalytics },
-    { id: "operations", name: "Operational Efficiency", icon: BarChart2, component: OperationalEfficiencyAnalytics },
-    { id: "compliance", name: "Compliance & Risk", icon: Shield, component: ComplianceAnalytics },
-    { id: "documents", name: "Document Management", icon: Book, component: DocumentAnalytics, data: documentMockData },
-    { id: "marketing", name: "Marketing & Leads", icon: TrendingUp, component: MarketingAnalytics },
-    { id: "predictive", name: "Predictive Analytics", icon: LineChart, component: PredictiveAnalytics },
-    { id: "trustees", name: "Trustee Performance", icon: Activity, component: TrusteePerformanceAnalytics },
-    { id: "usage", name: "System Usage", icon: FileText, component: SystemUsageAnalytics },
-    { id: "geographic", name: "Geographic Analysis", icon: Map, component: GeographicAnalytics },
-    { id: "health", name: "System Health", icon: Gauge, component: SystemHealthAnalytics }
+  // Group analytics modules into categories
+  const categories = [
+    { 
+      id: "business",
+      name: "Business Insights",
+      modules: [
+        { id: "client", name: "Client & Case Metrics", icon: Users, component: ClientManagementAnalytics },
+        { id: "operations", name: "Operational Efficiency", icon: BarChart2, component: OperationalEfficiencyAnalytics },
+        { id: "marketing", name: "Marketing & Leads", icon: TrendingUp, component: MarketingAnalytics },
+        { id: "trustees", name: "Trustee Performance", icon: Activity, component: TrusteePerformanceAnalytics }
+      ]
+    },
+    { 
+      id: "documents",
+      name: "Document Analytics",
+      modules: [
+        { id: "documents", name: "Document Management", icon: Book, component: DocumentAnalytics, data: documentMockData }
+      ]
+    },
+    { 
+      id: "compliance",
+      name: "Compliance & Risk",
+      modules: [
+        { id: "compliance", name: "Compliance & Risk", icon: Shield, component: ComplianceAnalytics }
+      ]
+    },
+    { 
+      id: "system",
+      name: "System & Infrastructure",
+      modules: [
+        { id: "usage", name: "System Usage", icon: FileText, component: SystemUsageAnalytics },
+        { id: "geographic", name: "Geographic Analysis", icon: Map, component: GeographicAnalytics },
+        { id: "health", name: "System Health", icon: Gauge, component: SystemHealthAnalytics },
+        { id: "predictive", name: "Predictive Analytics", icon: LineChart, component: PredictiveAnalytics }
+      ]
+    }
   ];
+
+  // Find the active module data
+  const activeModuleData = categories
+    .flatMap(category => category.modules)
+    .find(module => module.id === activeModule);
+
+  // Handle category change
+  const handleCategoryChange = (categoryId: string) => {
+    setActiveCategory(categoryId);
+    // Set the first module of the category as active
+    const firstModuleId = categories.find(c => c.id === categoryId)?.modules[0]?.id || "";
+    setActiveModule(firstModuleId);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -72,44 +112,90 @@ const AnalyticsPage = () => {
             </p>
           </div>
 
-          <div className="bg-card rounded-lg shadow-sm border border-border/50 p-5 mb-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="flex flex-wrap gap-1 h-auto p-1 mb-4 bg-muted/50">
-                {analyticsModules.map((module) => (
-                  <TabsTrigger 
-                    key={module.id} 
-                    value={module.id}
-                    className="flex items-center gap-2 px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    <module.icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{module.name}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+          <div className="grid grid-cols-12 gap-6">
+            {/* Categories sidebar */}
+            <div className="col-span-12 md:col-span-3">
+              <Card className="sticky top-4">
+                <CardContent className="p-4">
+                  <h2 className="font-medium text-lg mb-3">Analytics Categories</h2>
+                  <nav className="space-y-1">
+                    {categories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleCategoryChange(category.id)}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center ${
+                          activeCategory === category.id
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-muted transition-colors"
+                        }`}
+                      >
+                        {category.name}
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {category.modules.length}
+                        </span>
+                      </button>
+                    ))}
+                  </nav>
+                </CardContent>
+              </Card>
+            </div>
 
-              {analyticsModules.map((module) => (
-                <TabsContent key={module.id} value={module.id} className="px-1 py-2 mt-0">
-                  <div className="border-b border-border/50 pb-4 mb-6">
-                    <h2 className="text-2xl font-semibold flex items-center gap-2">
-                      <module.icon className="h-6 w-6 text-primary" />
-                      {module.name}
-                    </h2>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      {getTabDescription(module.id)}
-                    </p>
+            {/* Main content area */}
+            <div className="col-span-12 md:col-span-9">
+              <Card className="border border-border/50 shadow-sm">
+                <CardContent className="p-5">
+                  {/* Module tabs for the selected category */}
+                  <div className="mb-6">
+                    <Tabs value={activeModule} onValueChange={setActiveModule} className="space-y-4">
+                      <TabsList className="h-auto p-1 bg-muted/50 mb-2">
+                        {categories
+                          .find(c => c.id === activeCategory)
+                          ?.modules.map((module) => (
+                            <TabsTrigger 
+                              key={module.id} 
+                              value={module.id}
+                              className="flex items-center gap-2 px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                            >
+                              <module.icon className="h-4 w-4" />
+                              <span>{module.name}</span>
+                            </TabsTrigger>
+                          ))}
+                      </TabsList>
+                    </Tabs>
                   </div>
-                  {module.id === "documents" ? (
-                    <module.component 
-                      taskVolume={documentMockData.taskVolume}
-                      timeSaved={documentMockData.timeSaved}
-                      errorReduction={documentMockData.errorReduction}
-                    />
-                  ) : (
-                    <module.component />
+
+                  {/* Module title and description */}
+                  {activeModuleData && (
+                    <div className="border-b border-border/50 pb-4 mb-6">
+                      <h2 className="text-2xl font-semibold flex items-center gap-2">
+                        <activeModuleData.icon className="h-6 w-6 text-primary" />
+                        {activeModuleData.name}
+                      </h2>
+                      <p className="text-muted-foreground text-sm mt-1">
+                        {getTabDescription(activeModuleData.id)}
+                      </p>
+                    </div>
                   )}
-                </TabsContent>
-              ))}
-            </Tabs>
+
+                  {/* Module content */}
+                  {categories.map(category => (
+                    category.modules.map(module => (
+                      <div key={module.id} className={activeModule === module.id ? "block" : "hidden"}>
+                        {module.id === "documents" ? (
+                          <DocumentAnalytics 
+                            taskVolume={documentMockData.taskVolume}
+                            timeSaved={documentMockData.timeSaved}
+                            errorReduction={documentMockData.errorReduction}
+                          />
+                        ) : (
+                          <module.component />
+                        )}
+                      </div>
+                    ))
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </main>
       </div>
