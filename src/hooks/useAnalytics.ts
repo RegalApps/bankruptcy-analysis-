@@ -10,6 +10,14 @@ export interface AnalyticsHook {
   trackEvent: (eventName: string, data?: EventSubcategory) => void;
   trackPageView: (pageName: string) => void;
   trackUserAction: (action: string, data?: EventSubcategory) => void;
+  getMetrics: () => {
+    totalEvents: number;
+    pageViews: number;
+    uniquePages: number;
+    interactions: number;
+    sessionDuration: number;
+  };
+  getPageViewData: () => Array<{name: string, views: number}>;
 }
 
 // Analytics implementation
@@ -29,9 +37,32 @@ export function useAnalytics(): AnalyticsHook {
     // In a real implementation, this would track user actions
   };
 
+  const getMetrics = () => {
+    // Simplified mock implementation
+    return {
+      totalEvents: Math.floor(Math.random() * 100),
+      pageViews: Math.floor(Math.random() * 50),
+      uniquePages: Math.floor(Math.random() * 10),
+      interactions: Math.floor(Math.random() * 75),
+      sessionDuration: Math.floor(Math.random() * 300),
+    };
+  };
+
+  const getPageViewData = () => {
+    // Simplified mock implementation
+    return [
+      { name: 'Dashboard', views: Math.floor(Math.random() * 100) },
+      { name: 'Documents', views: Math.floor(Math.random() * 80) },
+      { name: 'Analytics', views: Math.floor(Math.random() * 60) },
+      { name: 'Settings', views: Math.floor(Math.random() * 40) },
+    ];
+  };
+
   return {
     trackEvent,
     trackPageView,
-    trackUserAction
+    trackUserAction,
+    getMetrics,
+    getPageViewData
   };
 }

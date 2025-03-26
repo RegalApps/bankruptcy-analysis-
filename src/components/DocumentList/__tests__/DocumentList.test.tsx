@@ -10,7 +10,7 @@ const mockDocuments: Document[] = [
   {
     id: '1',
     title: 'Test Document',
-    type: 'pdf',
+    type: 'pdf', // This is now required
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     size: 1024,

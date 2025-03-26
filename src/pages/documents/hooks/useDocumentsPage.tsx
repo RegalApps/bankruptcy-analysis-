@@ -20,9 +20,16 @@ export const useDocumentsPage = () => {
     selectedItemId,
     selectedItemType,
     folderPath,
-    handleItemSelect,
+    handleItemSelect: originalHandleItemSelect,
     handleOpenDocument
   } = useFolderNavigation(documents || []);
+  
+  // Create a wrapper function to map between the different type systems
+  const handleItemSelect = (id: string, type: "folder" | "file" | "document") => {
+    // If type is "document", map it to "file" for consistency
+    const normalizedType = type === "document" ? "file" : type;
+    originalHandleItemSelect(id, normalizedType as "folder" | "file");
+  };
   
   const {
     hasWriteAccess,

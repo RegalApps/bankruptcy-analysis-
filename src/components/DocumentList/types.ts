@@ -1,4 +1,3 @@
-
 export interface Document {
   id: string;
   title: string; // Changed from optional to required
@@ -11,11 +10,12 @@ export interface Document {
   parent_folder_id?: string;
   storage_path?: string;
   metadata?: Record<string, any>;
-  type?: string;
+  type: string; // Changed from optional to required
   tasks?: any[];
   versions?: any[];
   size?: number;
   ai_processing_status?: string;
+  folderId?: string; // Added for compatibility
 }
 
 export interface DocumentFolder {

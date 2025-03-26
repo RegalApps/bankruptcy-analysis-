@@ -30,12 +30,12 @@ export const DocumentAnalytics = ({ data }: DocumentAnalyticsProps) => {
   // Track tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    analytics.trackInteraction("DocumentAnalytics", "TabChange", { tab: value });
+    analytics.trackUserAction("TabChange", { tab: value });
   };
   
   useEffect(() => {
     // Track component view
-    analytics.trackInteraction("DocumentAnalytics", "View");
+    analytics.trackUserAction("View");
   }, [analytics]);
 
   return (
