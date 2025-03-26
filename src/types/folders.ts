@@ -6,7 +6,7 @@ export interface FolderStructure {
   children: FolderStructure[];
   parentId?: string;
   isExpanded: boolean;
-  level?: number; // Adding level property to fix type errors
+  level?: number;
 }
 
 export interface FolderOperationResult {
@@ -21,9 +21,12 @@ export interface FolderAIRecommendation {
   reason: string;
   confidence: number;
   documents: string[];
+  suggestedFolderId?: string;
+  suggestedPath?: string;
+  alternatives?: string[];
 }
 
-export type UserRole = 'admin' | 'user' | 'viewer';
+export type UserRole = 'admin' | 'user' | 'viewer' | 'manager' | 'reviewer';
 
 export interface FolderPermissionRule {
   role: UserRole;
@@ -31,4 +34,7 @@ export interface FolderPermissionRule {
   canDelete: boolean;
   canRename: boolean;
   canMove: boolean;
+  folderId?: string;
+  userId?: string;
+  permission?: string;
 }

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 export const useFolderNavigation = (documents: Document[] | undefined) => {
   const [selectedItemId, setSelectedItemId] = useState<string | undefined>();
-  const [selectedItemType, setSelectedItemType] = useState<"folder" | "document" | undefined>();
+  const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>();
   const [folderPath, setFolderPath] = useState<{id: string, name: string}[]>([]);
   const navigate = useNavigate();
 
@@ -45,7 +45,7 @@ export const useFolderNavigation = (documents: Document[] | undefined) => {
     setFolderPath(path);
   };
 
-  const handleItemSelect = (id: string, type: "folder" | "document") => {
+  const handleItemSelect = (id: string, type: "folder" | "file") => {
     setSelectedItemId(id);
     setSelectedItemType(type);
   };

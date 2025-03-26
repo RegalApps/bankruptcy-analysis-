@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Document } from "../types";
 import { useToast } from "@/hooks/use-toast";
@@ -8,11 +9,10 @@ export function useDocuments() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const analytics = useAnalytics();
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
@@ -32,8 +32,6 @@ export function useDocuments() {
       const transformedData: Document[] = data.map(item => ({
         id: item.id,
         title: item.title || 'Untitled Document',
-        description: item.description,
-        status: item.status,
         created_at: item.created_at,
         updated_at: item.updated_at,
         is_folder: item.is_folder || false,
@@ -59,18 +57,22 @@ export function useDocuments() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [analytics, toast]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    
     fetchDocuments();
-  }, []);
+    
+    return () => {
+      controller.abort();
+    };
+  }, [fetchDocuments]);
 
   return {
     documents,
     isLoading,
     error,
-    refetch: fetchDocuments,
-    searchQuery,
-    setSearchQuery
+    refetch: fetchDocuments
   };
 }
