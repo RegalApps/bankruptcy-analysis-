@@ -24,7 +24,19 @@ export const MainSidebar = () => {
     }
   }, [location.pathname, isMobile]);
 
-  const isActivePath = (path: string) => location.pathname === path;
+  const isActivePath = (path: string) => {
+    if (path === "/") {
+      return location.pathname === "/" || location.pathname === "/index";
+    }
+    return location.pathname === path;
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  };
 
   const navigationItems = [
     { icon: Home, label: "Home", path: "/" },
@@ -44,7 +56,7 @@ export const MainSidebar = () => {
         <Button
           variant="ghost"
           className="w-full justify-start px-2 py-4 hover:bg-transparent"
-          onClick={() => navigate('/')}
+          onClick={() => handleNavigation('/')}
         >
           <div className="flex items-center gap-2">
             <img 
@@ -72,10 +84,7 @@ export const MainSidebar = () => {
                 "hover:bg-accent/10 hover:text-accent transition-colors duration-200",
                 isActivePath(item.path) && "bg-accent/10 text-accent"
               )}
-              onClick={() => {
-                navigate(item.path);
-                if (isMobile) setIsSidebarOpen(false);
-              }}
+              onClick={() => handleNavigation(item.path)}
             >
               <item.icon className={cn(
                 "h-5 w-5",
@@ -99,10 +108,7 @@ export const MainSidebar = () => {
         <Button 
           variant="ghost"
           className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-accent/10 hover:text-accent"
-          onClick={() => {
-            navigate("/settings");
-            if (isMobile) setIsSidebarOpen(false);
-          }}
+          onClick={() => handleNavigation("/settings")}
         >
           <Settings className="h-5 w-5 text-muted-foreground" />
           <span className={cn(
@@ -114,10 +120,7 @@ export const MainSidebar = () => {
         <Button 
           variant="ghost"
           className="w-full justify-start gap-3 px-4 py-6 h-auto hover:bg-accent/10 hover:text-accent"
-          onClick={() => {
-            navigate("/profile");
-            if (isMobile) setIsSidebarOpen(false);
-          }}
+          onClick={() => handleNavigation("/profile")}
         >
           <User className="h-5 w-5 text-muted-foreground" />
           <span className={cn(

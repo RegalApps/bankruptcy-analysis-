@@ -11,6 +11,8 @@ import { ThemeProvider as CustomThemeProvider } from "./contexts/ThemeContext";
 // Lazy loaded pages
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
+const IndexPage = lazy(() => import("./pages/Index"));
+const NotFoundPage = lazy(() => import("./pages/NotFound"));
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -27,11 +29,13 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <TrackingProvider>
             <Router>
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
                 <Routes>
-                  <Route path="/" element={<AnalyticsPage />} />
+                  <Route path="/" element={<IndexPage />} />
+                  <Route path="/index" element={<IndexPage />} />
                   <Route path="/analytics" element={<AnalyticsPage />} />
                   <Route path="/documents" element={<DocumentsPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </Suspense>
             </Router>

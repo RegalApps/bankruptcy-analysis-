@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { useDocuments } from "./hooks/useDocuments";
+import { useDocumentsWithSearch } from "./hooks/useDocumentsWithSearch";
 import { cn } from "@/lib/utils";
 import { Toolbar } from "./components/Toolbar";
 import { Sidebar } from "./components/Sidebar";
@@ -13,7 +14,7 @@ interface DocumentManagementProps {
 }
 
 export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocumentSelect }) => {
-  const { documents, isLoading, searchQuery, setSearchQuery } = useDocuments();
+  const { documents, isLoading, searchQuery, setSearchQuery } = useDocumentsWithSearch();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isGridView, setIsGridView] = useState(true);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
@@ -22,8 +23,8 @@ export const DocumentManagement: React.FC<DocumentManagementProps> = ({ onDocume
 
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = !searchQuery || 
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.metadata?.client_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      (doc.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      doc.metadata?.client_name?.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesFolder = !selectedFolder ? true : 
       selectedFolder === 'Uncategorized' 
