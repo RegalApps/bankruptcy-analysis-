@@ -57,5 +57,30 @@ export const showPerformanceToast = debounce((pageName: string) => {
   startTiming(`page-interact-${pageName}`);
 }, 100);
 
-// Export other functions from performanceMonitor.ts
-export { measureRouteChange, measureDocumentLoad, measureApiCall, measureComponentRender } from './performanceMonitor';
+// Export functions from the performanceMonitor module
+export { 
+  measureRouteChange,
+  initPerformanceMonitoring,
+  startTiming,
+  endTiming,
+  getPerformanceMeasurements,
+  getAnomalyThresholds,
+  getPerformanceHistory,
+  resetPerformanceHistory
+} from './performanceMonitor';
+
+// Create and export additional measurement utility functions
+export const measureDocumentLoad = (documentId: string) => {
+  startTiming(`document-load-${documentId}`);
+  return () => endTiming(`document-load-${documentId}`);
+};
+
+export const measureApiCall = (endpoint: string) => {
+  startTiming(`api-${endpoint}`);
+  return () => endTiming(`api-${endpoint}`);
+};
+
+export const measureComponentRender = (componentName: string) => {
+  startTiming(`render-${componentName}`);
+  return () => endTiming(`render-${componentName}`);
+};
