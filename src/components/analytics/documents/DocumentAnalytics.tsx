@@ -100,7 +100,7 @@ export const DocumentAnalytics = ({ data }: DocumentAnalyticsProps) => {
               </CardHeader>
               <CardContent>
                 <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
                     <LineChart
                       data={data?.taskVolume}
                       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -131,7 +131,7 @@ export const DocumentAnalytics = ({ data }: DocumentAnalyticsProps) => {
                 </CardHeader>
                 <CardContent>
                   <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
                       <BarChart
                         data={data?.timeSaved}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -155,7 +155,7 @@ export const DocumentAnalytics = ({ data }: DocumentAnalyticsProps) => {
                 </CardHeader>
                 <CardContent>
                   <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
                       <LineChart
                         data={data?.errorReduction}
                         margin={{ top: 5, right: 30, left: 20, bottom: 5 }}

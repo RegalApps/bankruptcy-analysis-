@@ -101,7 +101,7 @@ export const AnomalyDetectionDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="h-[400px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
                 <BarChart data={anomaliesOnly}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={70} />
@@ -129,7 +129,7 @@ export const AnomalyDetectionDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="h-[400px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
               <BarChart data={thresholdData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={70} />

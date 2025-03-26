@@ -10,6 +10,7 @@ import { ThemeProvider as CustomThemeProvider } from "./contexts/ThemeContext";
 
 // Lazy loaded pages
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+const DocumentsPage = lazy(() => import("./pages/DocumentsPage"));
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<AnalyticsPage />} />
                   <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/documents" element={<DocumentsPage />} />
                 </Routes>
               </Suspense>
             </Router>

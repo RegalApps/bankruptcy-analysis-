@@ -1,74 +1,74 @@
 
-import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Document } from '../types';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { Document } from "../types";
+
+// Mock data for documents
+const MOCK_DOCUMENTS: Document[] = [
+  {
+    id: "doc1",
+    title: "Form 47 - Consumer Proposal",
+    is_folder: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    type: "pdf",
+    metadata: {
+      client_id: "client1",
+      client_name: "John Doe"
+    }
+  },
+  {
+    id: "folder1",
+    title: "Client Folders",
+    is_folder: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    folder_type: "root"
+  },
+  {
+    id: "folder2",
+    title: "John Doe",
+    is_folder: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    folder_type: "client",
+    parent_folder_id: "folder1"
+  }
+];
 
 export const useDocuments = () => {
-  const [state, setState] = useState({
-    documents: [] as Document[],
-    isLoading: true,
-    searchQuery: ''
-  });
+  const [documents, setDocuments] = useState<Document[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  const fetchDocuments = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true }));
+  const fetchDocuments = async () => {
+    setIsLoading(true);
+    setError(null);
     
     try {
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setState(prev => ({
-        ...prev,
-        documents: data || [],
-        isLoading: false
-      }));
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-      toast.error('Failed to fetch documents');
-      setState(prev => ({ ...prev, isLoading: false }));
+      // In a real app, this would be a call to an API or Supabase
+      // We're using mock data here for demonstration
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+      setDocuments(MOCK_DOCUMENTS);
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+      setError(err instanceof Error ? err : new Error("Failed to fetch documents"));
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
-
-  const setSearchQuery = useCallback((query: string) => {
-    setState(prev => ({ ...prev, searchQuery: query }));
-  }, []);
+  };
 
   useEffect(() => {
-    // Initial fetch
     fetchDocuments();
+  }, []);
 
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('document_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'documents'
-        },
-        () => {
-          fetchDocuments();
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscription
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchDocuments]);
+  const refetch = () => {
+    fetchDocuments();
+  };
 
   return {
-    documents: state.documents,
-    isLoading: state.isLoading,
-    searchQuery: state.searchQuery,
-    setSearchQuery,
-    refetch: fetchDocuments // Expose fetchDocuments as refetch
+    documents,
+    isLoading,
+    error,
+    refetch
   };
 };
