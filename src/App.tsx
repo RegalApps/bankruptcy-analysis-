@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect } from "react";
 import { TrackingProvider } from "./providers/TrackingProvider";
 import { initPerformanceMonitoring } from "./utils/performanceMonitor";
+import { ThemeProvider as CustomThemeProvider } from "./contexts/ThemeContext";
 
 // Lazy loaded pages
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
@@ -21,19 +22,21 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <QueryClientProvider client={queryClient}>
-        <TrackingProvider>
-          <Router>
-            <Suspense fallback={<div>Loading...</div>}>
-              <Routes>
-                <Route path="/" element={<AnalyticsPage />} />
-                <Route path="/analytics" element={<AnalyticsPage />} />
-              </Routes>
-            </Suspense>
-          </Router>
-          <Toaster position="top-right" />
-        </TrackingProvider>
-      </QueryClientProvider>
+      <CustomThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <TrackingProvider>
+            <Router>
+              <Suspense fallback={<div>Loading...</div>}>
+                <Routes>
+                  <Route path="/" element={<AnalyticsPage />} />
+                  <Route path="/analytics" element={<AnalyticsPage />} />
+                </Routes>
+              </Suspense>
+            </Router>
+            <Toaster position="top-right" />
+          </TrackingProvider>
+        </QueryClientProvider>
+      </CustomThemeProvider>
     </ThemeProvider>
   );
 }
