@@ -1,15 +1,18 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { AnalyticsSidebar } from "@/components/analytics/AnalyticsSidebar";
 import { AnalyticsContent } from "@/components/analytics/AnalyticsContent";
 import { getAnalyticsCategories } from "@/components/analytics/analyticsCategories";
 import { getMockDocumentData } from "@/components/analytics/utils";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { showPerformanceToast } from "@/utils/performance";
 
 const AnalyticsPage = () => {
   const [activeCategory, setActiveCategory] = useState("business");
   const [activeModule, setActiveModule] = useState("client");
+  const analytics = useAnalytics("AnalyticsDashboard");
 
   // Get categories
   const categories = getAnalyticsCategories();
@@ -20,10 +23,18 @@ const AnalyticsPage = () => {
   // Handle category change
   const handleCategoryChange = (categoryId: string) => {
     setActiveCategory(categoryId);
+    // Track the category change
+    analytics.trackInteraction("AnalyticsSidebar", "CategoryChange", { categoryId });
+    
     // Set the first module of the category as active
     const firstModuleId = categories.find(c => c.id === categoryId)?.modules[0]?.id || "";
     setActiveModule(firstModuleId);
   };
+
+  useEffect(() => {
+    // Show performance toast when dashboard loads
+    showPerformanceToast("Analytics Dashboard");
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -54,7 +65,10 @@ const AnalyticsPage = () => {
                 categories={categories}
                 activeCategory={activeCategory}
                 activeModule={activeModule}
-                setActiveModule={setActiveModule}
+                setActiveModule={(moduleId) => {
+                  setActiveModule(moduleId);
+                  analytics.trackInteraction("AnalyticsContent", "ModuleChange", { moduleId });
+                }}
                 documentMockData={documentMockData}
               />
             </div>

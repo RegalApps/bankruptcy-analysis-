@@ -1,76 +1,186 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DocumentMetricsGrid } from "./DocumentMetricsGrid";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { 
+  BarChart, 
+  Bar, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from "recharts";
+import { DocumentAnalyticsData } from "../types";
+import { RealTimeMetrics } from "../RealTimeMetrics";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, TrendingUp, ClockIcon } from "lucide-react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
-interface Props {
-  taskVolume: Array<{ month: string; tasks: number }>;
-  timeSaved: Array<{ month: string; hours: number }>;
-  errorReduction: Array<{ month: string; errors: number }>;
+interface DocumentAnalyticsProps {
+  data?: DocumentAnalyticsData;
 }
 
-export const DocumentAnalytics = ({ taskVolume, timeSaved, errorReduction }: Props) => {
-  return (
-    <div className="space-y-4">
-      <DocumentMetricsGrid />
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Task Volume Over Time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={taskVolume}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="tasks" stroke="#8884d8" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+export const DocumentAnalytics = ({ data }: DocumentAnalyticsProps) => {
+  const analytics = useAnalytics();
+  const [activeTab, setActiveTab] = useState("realtime");
+  
+  // Track tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    analytics.trackInteraction("DocumentAnalytics", "TabChange", { tab: value });
+  };
+  
+  useEffect(() => {
+    // Track component view
+    analytics.trackInteraction("DocumentAnalytics", "View");
+  }, [analytics]);
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Time Saved</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={timeSaved}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="hours" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
+  return (
+    <div className="space-y-6">
+      <Tabs defaultValue="realtime" onValueChange={handleTabChange}>
+        <TabsList>
+          <TabsTrigger value="realtime">Real-Time Metrics</TabsTrigger>
+          <TabsTrigger value="documents">Document Metrics</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="realtime" className="mt-6">
+          <RealTimeMetrics />
+        </TabsContent>
+        
+        <TabsContent value="documents" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Document Processing</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data?.taskVolume[data.taskVolume.length - 1]?.tasks || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Documents processed this month</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Time Saved</CardTitle>
+                <ClockIcon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data?.timeSaved[data.timeSaved.length - 1]?.hours || 0}h
+                </div>
+                <p className="text-xs text-muted-foreground">Hours saved through automation</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Error Reduction</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {data && data.errorReduction[0].errors - data.errorReduction[data.errorReduction.length - 1].errors}
+                </div>
+                <p className="text-xs text-muted-foreground">Fewer errors compared to start</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Document Processing Volume</CardTitle>
+                <CardDescription>Monthly processing volume over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={data?.taskVolume}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="tasks"
+                        stroke="#8884d8"
+                        activeDot={{ r: 8 }}
+                        name="Documents Processed"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Time Efficiency</CardTitle>
+                  <CardDescription>Hours saved through document automation</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={data?.timeSaved}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="hours" fill="#4ade80" name="Hours Saved" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Error Reduction</CardTitle>
+                  <CardDescription>Monthly errors in document processing</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={data?.errorReduction}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="errors"
+                          stroke="#ef4444"
+                          activeDot={{ r: 8 }}
+                          name="Processing Errors"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Error Reduction</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={errorReduction}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="errors" stroke="#ff7c43" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
