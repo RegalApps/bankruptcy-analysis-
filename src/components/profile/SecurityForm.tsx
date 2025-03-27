@@ -2,6 +2,7 @@
 import { PasswordSection } from "@/components/profile/security/PasswordSection";
 import { SecuritySettingsSection } from "@/components/profile/security/SecuritySettingsSection";
 import { ActiveSessionsSection } from "@/components/profile/security/ActiveSessionsSection";
+import { AdvancedSecuritySection } from "@/components/profile/security/AdvancedSecuritySection";
 import { SecurityFormProps } from "@/components/profile/security/types";
 
 export const SecurityForm = ({
@@ -21,9 +22,9 @@ export const SecurityForm = ({
       
       <SecuritySettingsSection />
       
-      <div className="card">
-        <ActiveSessionsSection />
-      </div>
+      <AdvancedSecuritySection />
+      
+      <ActiveSessionsSection />
     </div>
   );
 };
