@@ -1,188 +1,157 @@
 
-export interface Author {
-  id: string;
-  name: string;
-  avatar: string;
-}
-
-export interface Reply {
-  id: string;
-  author: Author;
-  content: string;
-  timestamp: string;
-  upvotes: number;
-}
-
-export interface Topic {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  timestamp: string;
-  upvotes: number;
-  author: Author;
-  replies: Reply[];
-  status: "open" | "resolved";
-}
-
 export const mockSupportData = {
   topics: [
     {
-      id: "1",
-      title: "Unable to upload PDF files larger than 10MB",
-      description: "I'm trying to upload a 12MB PDF file but keep getting an error message. The system says there's a 25MB limit, but I can't seem to get past 10MB. Has anyone else encountered this issue?",
+      id: "topic-1",
+      title: "How to upload multi-page documents",
       category: "general",
-      timestamp: "2 hours ago",
-      upvotes: 12,
-      author: {
-        id: "user1",
-        name: "John Doe",
-        avatar: "",
-      },
-      replies: [
-        {
-          id: "r1",
-          author: {
-            id: "user2",
-            name: "Admin User",
-            avatar: "",
-          },
-          content: "We're aware of this issue and our team is working on a fix. As a temporary workaround, you can try splitting the PDF into smaller files or compressing it before uploading.",
-          timestamp: "1 hour ago",
-          upvotes: 5,
-        },
-        {
-          id: "r2",
-          author: {
-            id: "user3",
-            name: "Sarah Connor",
-            avatar: "",
-          },
-          content: "I had the same problem and found that using a different browser solved it for me. Chrome worked when Firefox didn't.",
-          timestamp: "30 minutes ago",
-          upvotes: 3,
-        },
-      ],
-      status: "open",
-    },
-    {
-      id: "2",
-      title: "AI analysis not recognizing form fields correctly",
-      description: "The AI seems to be missing several fields when analyzing Form 76. It's consistently misreading the debtor information section. Is this a known issue?",
-      category: "ai",
-      timestamp: "1 day ago",
-      upvotes: 8,
-      author: {
-        id: "user4",
-        name: "Robert Johnson",
-        avatar: "",
-      },
-      replies: [
-        {
-          id: "r3",
-          author: {
-            id: "user5",
-            name: "AI Support Team",
-            avatar: "",
-          },
-          content: "This is a known issue with certain Form 76 templates. We're training our AI to better recognize these fields. In the meantime, you can manually enter this information, and our system will learn from your corrections.",
-          timestamp: "20 hours ago",
-          upvotes: 4,
-        },
-      ],
-      status: "open",
-    },
-    {
-      id: "3",
-      title: "Need help with BIA compliance for bankruptcy forms",
-      description: "I'm unsure if our generated forms are fully compliant with the latest BIA regulations. Are there any specific settings I should be aware of?",
-      category: "legal",
-      timestamp: "3 days ago",
-      upvotes: 15,
-      author: {
-        id: "user6",
-        name: "Jane Smith",
-        avatar: "",
-      },
-      replies: [
-        {
-          id: "r4",
-          author: {
-            id: "user7",
-            name: "Legal Team",
-            avatar: "",
-          },
-          content: "All forms generated through our platform are automatically updated to comply with the latest BIA regulations. The most recent update was on April 15, 2023. You can verify this in the document footer which should show the compliance version number.",
-          timestamp: "2 days ago",
-          upvotes: 7,
-        },
-        {
-          id: "r5",
-          author: {
-            id: "user8",
-            name: "Compliance Officer",
-            avatar: "",
-          },
-          content: "To add to what the Legal Team mentioned, you can also run a compliance check on any document by clicking the 'Verify Compliance' button in the document viewer. This will highlight any potential issues.",
-          timestamp: "2 days ago",
-          upvotes: 6,
-        },
-      ],
-      status: "resolved",
-    },
-    {
-      id: "4",
-      title: "Request for batch upload feature",
-      description: "It would be very helpful if we could upload multiple files at once, especially when dealing with large cases that require many supporting documents.",
-      category: "feature",
-      timestamp: "5 days ago",
-      upvotes: 27,
-      author: {
-        id: "user9",
-        name: "Michael Chen",
-        avatar: "",
-      },
-      replies: [
-        {
-          id: "r6",
-          author: {
-            id: "user10",
-            name: "Product Manager",
-            avatar: "",
-          },
-          content: "Thanks for the suggestion! We're actually working on a batch upload feature right now, which should be available in our next update. It will include folder uploads and multiple file selection.",
-          timestamp: "4 days ago",
-          upvotes: 15,
-        },
-      ],
-      status: "open",
-    },
-    {
-      id: "5",
-      title: "Dark mode implementation issues",
-      description: "The dark mode looks great, but I've noticed some text fields become hard to read. The contrast seems off in certain areas of the application.",
-      category: "general",
+      description: "Learn how to properly upload and process multi-page documents in the system for optimal analysis.",
+      upvotes: 24,
       timestamp: "2 days ago",
-      upvotes: 6,
       author: {
-        id: "user11",
-        name: "Emily Rodriguez",
-        avatar: "",
+        name: "John Smith",
+        avatar: ""
       },
       replies: [
         {
-          id: "r7",
-          author: {
-            id: "user12",
-            name: "UX Designer",
-            avatar: "",
-          },
-          content: "Thank you for bringing this to our attention! Could you please specify which sections are causing issues? Screenshots would be very helpful. We're committed to making dark mode fully accessible.",
-          timestamp: "1 day ago",
-          upvotes: 2,
+          id: "reply-1",
+          author: "Anna Johnson",
+          content: "You can upload multi-page PDFs directly. The system will automatically process each page.",
+          timestamp: "1 day ago"
         },
-      ],
-      status: "open",
+        {
+          id: "reply-2",
+          author: "Support Team",
+          content: "For best results, ensure your PDF is properly formatted and under 20MB in size.",
+          timestamp: "12 hours ago"
+        }
+      ]
     },
+    {
+      id: "topic-2",
+      title: "AI analysis not recognizing form fields correctly",
+      category: "ai",
+      description: "The AI seems to be missing key fields on my Form 47 documents. Is there a way to improve recognition?",
+      upvotes: 18,
+      timestamp: "3 days ago",
+      author: {
+        name: "Maria Garcia",
+        avatar: ""
+      },
+      replies: [
+        {
+          id: "reply-3",
+          author: "Technical Support",
+          content: "We've recently improved our Form 47 recognition. Try re-uploading your document or use the manual field entry feature.",
+          timestamp: "2 days ago"
+        }
+      ]
+    },
+    {
+      id: "topic-3",
+      title: "Best practices for organizing client documents",
+      category: "general",
+      description: "Looking for recommendations on how to efficiently organize large numbers of client documents in the system.",
+      upvotes: 32,
+      timestamp: "5 days ago",
+      author: {
+        name: "Robert Chen",
+        avatar: ""
+      },
+      replies: [
+        {
+          id: "reply-4",
+          author: "Emily Wilson",
+          content: "I use client name folders with subfolders for document types. The AI folder recommendations feature is also helpful.",
+          timestamp: "4 days ago"
+        },
+        {
+          id: "reply-5",
+          author: "Michael Brown",
+          content: "Don't forget you can set up automated workflows to sort new documents as they come in.",
+          timestamp: "3 days ago"
+        },
+        {
+          id: "reply-6",
+          author: "Support Team",
+          content: "Check out our KB article on document organization: link-to-article",
+          timestamp: "2 days ago"
+        }
+      ]
+    },
+    {
+      id: "topic-4",
+      title: "Compliance requirements for storing client financial data",
+      category: "legal",
+      description: "What are the key compliance requirements we need to follow when storing sensitive financial information?",
+      upvotes: 41,
+      timestamp: "1 week ago",
+      author: {
+        name: "Sarah Johnson",
+        avatar: ""
+      },
+      replies: [
+        {
+          id: "reply-7",
+          author: "Legal Team",
+          content: "Our system is fully compliant with PIPEDA requirements. Make sure you're using the secured client folders feature.",
+          timestamp: "6 days ago"
+        }
+      ]
+    },
+    {
+      id: "topic-5",
+      title: "Request for bulk document export feature",
+      category: "feature",
+      description: "It would be great to have a way to export multiple documents at once, especially for client file transfers.",
+      upvotes: 29,
+      timestamp: "2 weeks ago",
+      author: {
+        name: "Thomas Lee",
+        avatar: ""
+      },
+      replies: [
+        {
+          id: "reply-8",
+          author: "Product Team",
+          content: "Thanks for the suggestion! We're currently working on a bulk export feature scheduled for release next quarter.",
+          timestamp: "1 week ago"
+        }
+      ]
+    },
+    {
+      id: "topic-6",
+      title: "Integration with DocuSign best practices",
+      category: "general",
+      description: "Looking for tips on the most efficient workflow for sending documents for client signature via DocuSign.",
+      upvotes: 15,
+      timestamp: "3 days ago",
+      author: {
+        name: "Jessica Martinez",
+        avatar: ""
+      },
+      replies: [
+        {
+          id: "reply-9",
+          author: "William Turner",
+          content: "I've found that setting up templates for common documents saves a ton of time in the long run.",
+          timestamp: "2 days ago"
+        }
+      ]
+    }
   ],
+  faq: [
+    {
+      question: "How do I reset my password?",
+      answer: "You can reset your password by clicking on the 'Forgot Password' link on the login page. Follow the instructions sent to your email address."
+    },
+    {
+      question: "Can I share documents with clients directly from the platform?",
+      answer: "Yes, you can share documents using the 'Share' button on any document. You can set permissions and expiration dates for shared links."
+    },
+    {
+      question: "How secure is my data in the system?",
+      answer: "We use industry-standard encryption and security protocols. All data is encrypted both in transit and at rest, and we perform regular security audits."
+    }
+  ]
 };

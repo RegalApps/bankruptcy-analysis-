@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "./components/ui/theme-provider";
@@ -77,6 +78,11 @@ const TermsOfService = lazy(() => import("./pages/TermsOfService").catch(error =
 
 const Support = lazy(() => import("./pages/Support").catch(error => {
   console.error("Error loading Support:", error);
+  return import("./pages/NotFound");
+}));
+
+const NewSupportTicket = lazy(() => import("./pages/NewSupportTicket").catch(error => {
+  console.error("Error loading NewSupportTicket:", error);
   return import("./pages/NotFound");
 }));
 
@@ -170,6 +176,11 @@ function App() {
                   <Route path="/support" element={
                     <PageTransition>
                       <Support />
+                    </PageTransition>
+                  } />
+                  <Route path="/support/new" element={
+                    <PageTransition>
+                      <NewSupportTicket />
                     </PageTransition>
                   } />
                   <Route path="/notifications" element={

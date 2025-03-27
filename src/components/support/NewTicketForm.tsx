@@ -1,191 +1,175 @@
 
 import { useState } from "react";
-import { FileUp, Tags } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useTheme } from "@/contexts/ThemeContext";
+import { Input } from "@/components/ui/input";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { toast } from "sonner";
 
-const suggestedTags = [
-  "Upload Issue", "AI Error", "Form Recognition", "Account Access", 
-  "Billing", "Feature Request", "Bug Report", "API Integration"
-];
+const ticketSchema = z.object({
+  subject: z.string().min(5, "Subject must be at least 5 characters"),
+  category: z.string().min(1, "Please select a category"),
+  description: z.string().min(20, "Description must be at least 20 characters"),
+  priority: z.string().min(1, "Please select a priority"),
+});
+
+type TicketValues = z.infer<typeof ticketSchema>;
 
 export const NewTicketForm = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { theme } = useTheme();
-  const isDarkMode = theme === 'dark';
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<TicketValues>({
+    resolver: zodResolver(ticketSchema),
+    defaultValues: {
+      subject: "",
+      category: "",
+      description: "",
+      priority: "medium",
+    },
+  });
+
+  const onSubmit = async (values: TicketValues) => {
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
-      alert("Support ticket submitted successfully!");
+    try {
+      // In a real app, we would connect to the database
+      console.log("Submitting ticket:", values);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success("Support ticket created successfully");
+      navigate("/support");
+    } catch (error) {
+      console.error("Error creating ticket:", error);
+      toast.error("Failed to create support ticket. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      setTitle("");
-      setDescription("");
-      setCategory("");
-      setTags([]);
-    }, 1500);
-  };
-
-  const addTag = (tag: string) => {
-    if (!tags.includes(tag)) {
-      setTags([...tags, tag]);
     }
   };
 
-  const removeTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
-  };
-
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Create a New Support Ticket</CardTitle>
-        <CardDescription>
-          Describe your issue in detail to help us assist you more effectively
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label htmlFor="title" className="text-sm font-medium">
-              Title
-            </label>
-            <Input
-              id="title"
-              placeholder="Briefly describe your issue"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="category" className="text-sm font-medium">
-              Category
-            </label>
-            <Select
-              value={category}
-              onValueChange={setCategory}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="general">General Support</SelectItem>
-                <SelectItem value="ai">AI Issues</SelectItem>
-                <SelectItem value="legal">Legal Assistance</SelectItem>
-                <SelectItem value="feature">Feature Requests</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              Description
-            </label>
-            <Textarea
-              id="description"
-              placeholder="Provide as much detail as possible about your issue"
-              rows={6}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              className="resize-none"
-            />
-          </div>
-          
-          <div className="space-y-3">
-            <label className="text-sm font-medium flex items-center gap-1">
-              <Tags className="h-4 w-4" />
-              Tags
-            </label>
-            
-            <div className="flex flex-wrap gap-2 mb-2">
-              {tags.map((tag) => (
-                <Badge 
-                  key={tag} 
-                  variant="secondary"
-                  className="flex items-center gap-1"
-                >
-                  {tag}
-                  <button 
-                    type="button" 
-                    onClick={() => removeTag(tag)}
-                    className="text-xs ml-1 hover:text-destructive"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              ))}
-              {tags.length === 0 && (
-                <span className="text-xs text-muted-foreground">No tags selected</span>
-              )}
-            </div>
-            
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Suggested tags:</p>
-              <div className="flex flex-wrap gap-2">
-                {suggestedTags.map((tag) => (
-                  <Badge 
-                    key={tag} 
-                    variant="outline" 
-                    className={`cursor-pointer hover:bg-accent transition-colors ${
-                      tags.includes(tag) ? 'opacity-50' : ''
-                    }`}
-                    onClick={() => addTag(tag)}
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-1">
-              <FileUp className="h-4 w-4" />
-              Attachments
-            </label>
-            <div className={`border-2 border-dashed rounded-md p-6 text-center ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <Button type="button" variant="outline" className="mb-2">
-                <FileUp className="h-4 w-4 mr-2" />
-                Choose Files
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Drag and drop files here or click to browse (Max: 10MB per file)
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={() => window.history.back()}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || !title || !description || !category}
-            >
-              {isSubmitting ? "Submitting..." : "Submit Ticket"}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
+        <FormField
+          control={form.control}
+          name="subject"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Subject</FormLabel>
+              <FormControl>
+                <Input placeholder="Briefly describe your issue" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="general">General Support</SelectItem>
+                  <SelectItem value="ai">AI Issues</SelectItem>
+                  <SelectItem value="legal">Legal Assistance</SelectItem>
+                  <SelectItem value="feature">Feature Requests</SelectItem>
+                  <SelectItem value="billing">Billing & Payments</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="priority"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Priority</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Provide details about your issue" 
+                  className="min-h-32"
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/support")}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Create Ticket"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
