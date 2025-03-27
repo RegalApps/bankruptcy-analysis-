@@ -4,7 +4,7 @@ import { Document } from "@/components/DocumentList/types";
 
 export const useFolderNavigation = (documents: Document[]) => {
   const [selectedItemId, setSelectedItemId] = useState<string | undefined>(undefined);
-  const [selectedItemType, setSelectedItemType] = useState<"folder" | "document" | undefined>(undefined);
+  const [selectedItemType, setSelectedItemType] = useState<"folder" | "file" | undefined>(undefined);
   
   // Calculate the folder path based on selected folder
   const folderPath = useCallback(() => {
@@ -27,7 +27,7 @@ export const useFolderNavigation = (documents: Document[]) => {
     return path;
   }, [selectedItemId, selectedItemType, documents]);
   
-  const handleItemSelect = (itemId: string, type: "folder" | "document") => {
+  const handleItemSelect = (itemId: string, type: "folder" | "file") => {
     setSelectedItemId(itemId);
     setSelectedItemType(type);
   };
