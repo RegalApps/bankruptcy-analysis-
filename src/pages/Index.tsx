@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -39,7 +38,6 @@ const Index = () => {
     handleSignOut
   } = useAuthState();
 
-  // Effect to handle document selection from location state
   useEffect(() => {
     if (location.state?.selectedDocument) {
       console.log("Setting selected document from location state:", location.state.selectedDocument);
@@ -48,7 +46,6 @@ const Index = () => {
       const loadStart = performance.now();
       setLoadFailed(false);
       
-      // Validate document ID
       const docId = location.state.selectedDocument;
       if (!docId || typeof docId !== 'string') {
         toast.error("Invalid document ID provided");
@@ -56,7 +53,6 @@ const Index = () => {
         return;
       }
       
-      // Set document metadata
       if (location.state.isForm47) {
         setIsForm47(true);
         console.log("Document is Form 47");
@@ -67,16 +63,12 @@ const Index = () => {
         console.log("Document title:", location.state.documentTitle);
       }
       
-      // Force component re-render with a new key when opening a new document
       setDocumentKey(prev => prev + 1);
       setSelectedDocument(docId);
       
-      // In debug mode, we want to log the timing but might not want to clear the state
       if (isDebugMode()) {
         debugTiming('document-state-load', performance.now() - loadStart);
       } else {
-        // Clear the state to prevent issues with browser back navigation
-        // but keep the URL clean by using replace state instead of pushing a new state
         navigate('/', { replace: true });
       }
     }
@@ -94,13 +86,11 @@ const Index = () => {
     navigate('/', { replace: true });
   }, [navigate]);
 
-  // Handle document load failure
   const handleDocumentLoadFailure = useCallback(() => {
     console.log("Document load failed, showing error state");
     setLoadFailed(true);
   }, []);
 
-  // Debug to check if we're getting the document ID
   useEffect(() => {
     if (selectedDocument) {
       console.log("Selected document in Index.tsx:", selectedDocument);
@@ -132,7 +122,7 @@ const Index = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-background ${selectedDocument ? 'flex flex-col' : ''}`}>
+    <div className={`min-h-screen bg-background flex flex-col ${selectedDocument ? '' : 'h-screen'}`}>
       {selectedDocument ? (
         <div className="h-screen flex flex-col">
           <div className="mb-1 px-1 py-2">
@@ -163,7 +153,7 @@ const Index = () => {
           <MainLayout>
             <RecentlyAccessedPage />
           </MainLayout>
-          <Footer compact className="mt-auto" />
+          <Footer compact className="mt-auto w-full" />
         </div>
       )}
     </div>

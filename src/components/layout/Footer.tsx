@@ -25,13 +25,13 @@ export const Footer = ({ className, compact = false }: FooterProps) => {
   ];
 
   return (
-    <footer className={cn("border-t bg-background z-10", 
+    <footer className={cn("border-t bg-background z-10 w-full", 
       compact ? "py-2" : "py-4", 
       className
     )}>
       <div className={cn(
-        "container mx-auto px-4", 
-        compact ? "max-w-5xl" : "max-w-6xl"
+        "container mx-auto px-4 w-full", 
+        compact ? "max-w-full" : "max-w-full"
       )}>
         <div className="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
           {/* Legal Links */}
