@@ -71,7 +71,7 @@ export const MeetingsDashboard = () => {
   return (
     <HotkeysProvider>
       <div className="space-y-6 relative">
-        <MeetingsHeader activeTab={activeTab} setActiveTab={handleTabChange} />
+        <MeetingsHeader activeTab={activeTab} setActiveTab={handleTabChange} isActiveCall={isActiveCall} />
         
         <MeetingsTabs activeTab={activeTab} setActiveTab={handleTabChange} />
         
@@ -104,7 +104,6 @@ export const MeetingsDashboard = () => {
                   size="lg"
                   className="rounded-full h-14 w-14 shadow-lg flex items-center justify-center relative"
                 >
-                  <div className="absolute -top-2 -right-2 h-3 w-3 rounded-full bg-red-500 animate-pulse"></div>
                   <Video className="h-6 w-6" />
                 </Button>
               </PopoverTrigger>
