@@ -1,93 +1,40 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Video, Link, UserPlus, Link2 } from "lucide-react";
+import { JoinWithUrlForm } from "./join/JoinWithUrlForm";
+import { JoinWithIdForm } from "./join/JoinWithIdForm";
+import { MeetingServiceCard } from "./join/MeetingServiceCard";
 
 export const JoinMeetingPanel = () => {
-  const [meetingUrl, setMeetingUrl] = useState("");
-  const [meetingId, setMeetingId] = useState("");
-  const [meetingPassword, setMeetingPassword] = useState("");
-  const [name, setName] = useState("");
   const [activeTab, setActiveTab] = useState("url");
-  const { toast } = useToast();
   
-  const handleJoinWithUrl = () => {
-    if (!meetingUrl) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter a meeting URL",
-        variant: "destructive"
-      });
-      return;
+  const meetingServices = [
+    {
+      title: "Zoom",
+      icon: Link2,
+      url: "https://zoom.us/join",
+      bgColorClass: "bg-blue-100",
+      textColorClass: "text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+    },
+    {
+      title: "Google Meet",
+      icon: Video,
+      url: "https://meet.google.com",
+      bgColorClass: "bg-green-100",
+      textColorClass: "text-green-800 dark:bg-green-900 dark:text-green-300"
+    },
+    {
+      title: "TeamViewer",
+      icon: Link2,
+      url: "https://www.teamviewer.com/en-us/download/",
+      bgColorClass: "bg-purple-100",
+      textColorClass: "text-purple-800 dark:bg-purple-900 dark:text-purple-300"
     }
-    
-    // Validate URL format
-    try {
-      new URL(meetingUrl);
-    } catch (e) {
-      toast({
-        title: "Invalid URL",
-        description: "Please enter a valid meeting URL",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Open the meeting URL in a new tab
-    window.open(meetingUrl, "_blank");
-    
-    toast({
-      title: "Joining Meeting",
-      description: "Opening the meeting link in a new tab",
-    });
-  };
-  
-  const handleJoinWithId = () => {
-    if (!meetingId) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter a meeting ID",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!name) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter your name",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    let url: string;
-    
-    // Detect meeting service based on ID format
-    if (meetingId.includes("-")) {
-      // Likely Google Meet
-      url = `https://meet.google.com/${meetingId}`;
-    } else if (meetingId.length >= 9 && meetingId.length <= 11 && /^\d+$/.test(meetingId)) {
-      // Likely Zoom
-      url = `https://zoom.us/j/${meetingId}${meetingPassword ? `?pwd=${meetingPassword}` : ''}`;
-    } else {
-      // Generic format
-      url = `https://zoom.us/j/${meetingId}${meetingPassword ? `?pwd=${meetingPassword}` : ''}`;
-    }
-    
-    window.open(url, "_blank");
-    
-    toast({
-      title: "Joining Meeting",
-      description: "Opening the meeting in a new tab",
-    });
-  };
-  
+  ];
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold leading-tight">Join a Meeting</h2>
@@ -115,118 +62,28 @@ export const JoinMeetingPanel = () => {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="url" className="mt-4 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="meeting-url">Meeting URL</Label>
-                <Input
-                  id="meeting-url"
-                  placeholder="https://zoom.us/j/123456789 or https://meet.google.com/abc-xyz-123"
-                  value={meetingUrl}
-                  onChange={(e) => setMeetingUrl(e.target.value)}
-                />
-              </div>
+            <TabsContent value="url" className="mt-4">
+              <JoinWithUrlForm onJoin={() => {}} />
             </TabsContent>
             
-            <TabsContent value="id" className="mt-4 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Your Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="meeting-id">Meeting ID</Label>
-                <Input
-                  id="meeting-id"
-                  placeholder="123 456 7890 or abc-defg-hij"
-                  value={meetingId}
-                  onChange={(e) => setMeetingId(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="meeting-password">Password (Optional)</Label>
-                <Input
-                  id="meeting-password"
-                  placeholder="Enter meeting password if required"
-                  value={meetingPassword}
-                  onChange={(e) => setMeetingPassword(e.target.value)}
-                />
-              </div>
+            <TabsContent value="id" className="mt-4">
+              <JoinWithIdForm onJoin={() => {}} />
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button onClick={activeTab === "url" ? handleJoinWithUrl : handleJoinWithId} className="w-full sm:w-auto">
-            Join Meeting
-          </Button>
-        </CardFooter>
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-center">
-              <div className="p-2 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                <Link2 className="h-6 w-6" />
-              </div>
-            </div>
-            <CardTitle className="text-center text-base">Join Zoom</CardTitle>
-          </CardHeader>
-          <CardFooter>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => window.open("https://zoom.us/join", "_blank")}
-            >
-              Open Zoom
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-center">
-              <div className="p-2 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                <Video className="h-6 w-6" />
-              </div>
-            </div>
-            <CardTitle className="text-center text-base">Google Meet</CardTitle>
-          </CardHeader>
-          <CardFooter>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => window.open("https://meet.google.com", "_blank")}
-            >
-              Open Meet
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-center">
-              <div className="p-2 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
-                <Link2 className="h-6 w-6" />
-              </div>
-            </div>
-            <CardTitle className="text-center text-base">TeamViewer</CardTitle>
-          </CardHeader>
-          <CardFooter>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => window.open("https://www.teamviewer.com/en-us/download/", "_blank")}
-            >
-              Open TeamViewer
-            </Button>
-          </CardFooter>
-        </Card>
+        {meetingServices.map(service => (
+          <MeetingServiceCard
+            key={service.title}
+            title={service.title}
+            icon={service.icon}
+            url={service.url}
+            bgColorClass={service.bgColorClass}
+            textColorClass={service.textColorClass}
+          />
+        ))}
       </div>
     </div>
   );
