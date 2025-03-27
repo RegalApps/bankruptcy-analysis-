@@ -74,12 +74,6 @@ const DocumentsPage = () => {
     navigate('?debug=form47');
   };
 
-  // Update the function to use "file" instead of "document" for type
-  const updateHandleItemSelect = (id: string, type: "folder" | "file") => {
-    // Only pass through the type as is, since we've made the type systems consistent
-    handleItemSelect(id, type);
-  };
-
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
@@ -106,7 +100,7 @@ const DocumentsPage = () => {
               folderPath={folderPath}
               selectedItemId={selectedItemId}
               selectedItemType={selectedItemType}
-              onFolderClick={(id) => updateHandleItemSelect(id, "folder")}
+              onFolderClick={(id) => handleItemSelect(id, "folder")}
               documents={documents}
             />
             
