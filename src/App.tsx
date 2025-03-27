@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "./components/ui/theme-provider";
@@ -33,6 +32,16 @@ const DocumentsPage = lazy(() => import("./pages/DocumentsPage").catch(error => 
 
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage").catch(error => {
   console.error("Error loading AnalyticsPage:", error);
+  return import("./pages/NotFound");
+}));
+
+const SettingsPage = lazy(() => import("./pages/SettingsPage").catch(error => {
+  console.error("Error loading SettingsPage:", error);
+  return import("./pages/NotFound");
+}));
+
+const ProfilePage = lazy(() => import("./pages/ProfilePage").catch(error => {
+  console.error("Error loading ProfilePage:", error);
   return import("./pages/NotFound");
 }));
 
@@ -214,6 +223,16 @@ function App() {
                   <Route path="/meetings" element={
                     <PageTransition>
                       <MeetingsPage />
+                    </PageTransition>
+                  } />
+                  <Route path="/settings" element={
+                    <PageTransition>
+                      <SettingsPage />
+                    </PageTransition>
+                  } />
+                  <Route path="/profile" element={
+                    <PageTransition>
+                      <ProfilePage />
                     </PageTransition>
                   } />
                   <Route path="*" element={
