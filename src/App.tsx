@@ -40,7 +40,6 @@ const NotFoundPage = lazy(() => import("./pages/NotFound").catch(error => {
   return { default: () => <div>Page not found</div> };
 }));
 
-// Add missing page imports
 const SAFAPage = lazy(() => import("./pages/ConBrandingPage").catch(error => {
   console.error("Error loading SAFAPage:", error);
   return import("./pages/NotFound");
@@ -61,9 +60,23 @@ const EFilingPage = lazy(() => import("./pages/EFilingPage").catch(error => {
   return import("./pages/NotFound");
 }));
 
-// Add NotificationsPage import
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage").catch(error => {
   console.error("Error loading NotificationsPage:", error);
+  return import("./pages/NotFound");
+}));
+
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy").catch(error => {
+  console.error("Error loading PrivacyPolicy:", error);
+  return import("./pages/NotFound");
+}));
+
+const TermsOfService = lazy(() => import("./pages/TermsOfService").catch(error => {
+  console.error("Error loading TermsOfService:", error);
+  return import("./pages/NotFound");
+}));
+
+const Support = lazy(() => import("./pages/Support").catch(error => {
+  console.error("Error loading Support:", error);
   return import("./pages/NotFound");
 }));
 
@@ -144,13 +157,26 @@ function App() {
                       <DocumentsPage />
                     </PageTransition>
                   } />
-                  {/* Add NotificationsPage route */}
+                  <Route path="/privacy-policy" element={
+                    <PageTransition>
+                      <PrivacyPolicy />
+                    </PageTransition>
+                  } />
+                  <Route path="/terms-of-service" element={
+                    <PageTransition>
+                      <TermsOfService />
+                    </PageTransition>
+                  } />
+                  <Route path="/support" element={
+                    <PageTransition>
+                      <Support />
+                    </PageTransition>
+                  } />
                   <Route path="/notifications" element={
                     <PageTransition>
                       <NotificationsPage />
                     </PageTransition>
                   } />
-                  {/* Keep other routes */}
                   <Route path="/SAFA" element={
                     <PageTransition>
                       <SAFAPage />
