@@ -36,10 +36,8 @@ const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage").catch(error => 
   return import("./pages/NotFound");
 }));
 
-const NotFoundPage = lazy(() => import("./pages/NotFound").catch(error => {
-  console.error("Error loading NotFoundPage:", error);
-  return { default: () => <div>Page not found</div> };
-}));
+// Import NotFound directly without lazy loading to prevent circular dependency issues
+import NotFoundPage from "./pages/NotFound";
 
 const SAFAPage = lazy(() => import("./pages/ConBrandingPage").catch(error => {
   console.error("Error loading SAFAPage:", error);
