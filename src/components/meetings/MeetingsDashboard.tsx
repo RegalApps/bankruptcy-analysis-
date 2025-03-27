@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { MeetingsHeader } from "./MeetingsHeader";
 import { MeetingsTabs } from "./MeetingsTabs";
-import { IntegrationsPanel } from "./IntegrationsPanel";
 import { UpcomingMeetings } from "./UpcomingMeetings";
 import { JoinMeetingPanel } from "./JoinMeetingPanel";
 import { MeetingNotes } from "./MeetingNotes";
@@ -14,13 +13,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ExternalLink, Video, Clipboard, ListChecks, X } from "lucide-react";
 
 export const MeetingsDashboard = () => {
-  const [activeTab, setActiveTab] = useState<"upcoming" | "integrations" | "join" | "notes" | "agenda">("upcoming");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "join" | "notes" | "agenda">("upcoming");
   const [isActiveCall, setIsActiveCall] = useState(false);
   const { toast } = useToast();
   const analytics = useEnhancedAnalytics({ pageName: "Meetings" });
 
   // Track tab changes
-  const handleTabChange = (tab: "upcoming" | "integrations" | "join" | "notes" | "agenda") => {
+  const handleTabChange = (tab: "upcoming" | "join" | "notes" | "agenda") => {
     setActiveTab(tab);
     analytics.trackInteraction("MeetingsTabs", `Changed to ${tab} tab`);
   };
@@ -54,7 +53,6 @@ export const MeetingsDashboard = () => {
       
       <div className="mt-6">
         {activeTab === "upcoming" && <UpcomingMeetings />}
-        {activeTab === "integrations" && <IntegrationsPanel />}
         {activeTab === "join" && <JoinMeetingPanel />}
         {activeTab === "notes" && <MeetingNotes />}
         {activeTab === "agenda" && <MeetingAgenda />}

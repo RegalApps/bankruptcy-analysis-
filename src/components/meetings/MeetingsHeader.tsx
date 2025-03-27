@@ -1,10 +1,10 @@
 
 import { Button } from "@/components/ui/button";
-import { Video, Plus, FileText, BarChart, ClipboardList } from "lucide-react";
+import { Video, Plus, FileText, ClipboardList } from "lucide-react";
 
 interface MeetingsHeaderProps {
-  activeTab: "upcoming" | "integrations" | "join" | "notes" | "analytics" | "agenda";
-  setActiveTab: (tab: "upcoming" | "integrations" | "join" | "notes" | "analytics" | "agenda") => void;
+  activeTab: "upcoming" | "join" | "notes" | "analytics" | "agenda";
+  setActiveTab: (tab: "upcoming" | "join" | "notes" | "analytics" | "agenda") => void;
 }
 
 export const MeetingsHeader = ({ activeTab, setActiveTab }: MeetingsHeaderProps) => {

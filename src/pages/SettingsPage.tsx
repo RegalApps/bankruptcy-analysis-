@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IntegrationsSection } from "@/components/crm/integrations/IntegrationsSection";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { MeetingIntegrationsSection } from "@/components/settings/MeetingIntegrationsSection";
 import { useSettings } from "@/hooks/useSettings";
 
 export const SettingsPage = () => {
@@ -27,7 +28,8 @@ export const SettingsPage = () => {
             <Tabs defaultValue="general" className="space-y-6">
               <TabsList className="w-full justify-start">
                 <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="integrations">Integrations</TabsTrigger>
+                <TabsTrigger value="integrations">API Integrations</TabsTrigger>
+                <TabsTrigger value="meetings">Meeting Integrations</TabsTrigger>
                 <TabsTrigger value="security">Security</TabsTrigger>
               </TabsList>
 
@@ -41,6 +43,10 @@ export const SettingsPage = () => {
 
               <TabsContent value="integrations">
                 <IntegrationsSection />
+              </TabsContent>
+              
+              <TabsContent value="meetings">
+                <MeetingIntegrationsSection />
               </TabsContent>
 
               <TabsContent value="security">
