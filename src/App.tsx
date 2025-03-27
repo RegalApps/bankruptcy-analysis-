@@ -59,6 +59,11 @@ const EFilingPage = lazy(() => import("./pages/EFilingPage").catch(error => {
   return import("./pages/NotFound");
 }));
 
+const MeetingsPage = lazy(() => import("./pages/MeetingsPage").catch(error => {
+  console.error("Error loading MeetingsPage:", error);
+  return import("./pages/NotFound");
+}));
+
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage").catch(error => {
   console.error("Error loading NotificationsPage:", error);
   return import("./pages/NotFound");
@@ -204,6 +209,11 @@ function App() {
                   <Route path="/e-filing" element={
                     <PageTransition>
                       <EFilingPage />
+                    </PageTransition>
+                  } />
+                  <Route path="/meetings" element={
+                    <PageTransition>
+                      <MeetingsPage />
                     </PageTransition>
                   } />
                   <Route path="*" element={
