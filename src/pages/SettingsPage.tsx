@@ -7,9 +7,11 @@ import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { MeetingIntegrationsSection } from "@/components/settings/MeetingIntegrationsSection";
 import { useSettings } from "@/hooks/useSettings";
+import { useState } from "react";
 
 export const SettingsPage = () => {
-  const { isLoading, generalSettings, securitySettings, saveSettings } = useSettings();
+  const { isLoading, isSaving, generalSettings, securitySettings, saveSettings } = useSettings();
+  const [activeTab, setActiveTab] = useState("general");
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -25,7 +27,7 @@ export const SettingsPage = () => {
               </p>
             </div>
 
-            <Tabs defaultValue="general" className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="w-full justify-start">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="integrations">API Integrations</TabsTrigger>
@@ -37,7 +39,7 @@ export const SettingsPage = () => {
                 <GeneralSettings 
                   settings={generalSettings}
                   onSave={() => saveSettings("general")}
-                  isLoading={isLoading}
+                  isLoading={isLoading || (isSaving && activeTab === "general")}
                 />
               </TabsContent>
 
@@ -53,7 +55,7 @@ export const SettingsPage = () => {
                 <SecuritySettings 
                   settings={securitySettings}
                   onSave={() => saveSettings("security")}
-                  isLoading={isLoading}
+                  isLoading={isLoading || (isSaving && activeTab === "security")}
                 />
               </TabsContent>
             </Tabs>

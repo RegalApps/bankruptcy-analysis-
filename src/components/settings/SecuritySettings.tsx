@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Loader2, Save } from "lucide-react";
 
 interface SecuritySettingsProps {
   settings: {
@@ -25,6 +26,11 @@ interface SecuritySettingsProps {
 }
 
 export const SecuritySettings = ({ settings, onSave, isLoading }: SecuritySettingsProps) => {
+  const handleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onSave();
+  };
+
   return (
     <Card className="p-6">
       <div className="space-y-8">
@@ -146,10 +152,15 @@ export const SecuritySettings = ({ settings, onSave, isLoading }: SecuritySettin
           {/* Save Button */}
           <div className="mt-8 flex justify-end">
             <Button 
-              onClick={onSave}
+              onClick={handleSave}
               disabled={isLoading}
             >
-              {isLoading ? "Saving..." : "Save Security Settings"}
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Save Security Settings
             </Button>
           </div>
         </div>

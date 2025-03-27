@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 
 interface GeneralSettingsProps {
   settings: any;
@@ -15,6 +15,11 @@ interface GeneralSettingsProps {
 export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettingsProps) => {
   const { theme, toggleTheme } = useTheme();
   const isDarkMode = theme === "dark";
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onSave();
+  };
 
   return (
     <div className="space-y-6">
@@ -55,7 +60,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
               variant={settings?.language === "en" ? "default" : "outline"}
               className="w-full"
               onClick={() => {
-                if (settings) settings.language = "en";
+                if (settings) settings.setLanguage("en");
               }}
             >
               English
@@ -64,7 +69,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
               variant={settings?.language === "fr" ? "default" : "outline"}
               className="w-full"
               onClick={() => {
-                if (settings) settings.language = "fr";
+                if (settings) settings.setLanguage("fr");
               }}
             >
               French
@@ -74,8 +79,12 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={onSave} disabled={isLoading}>
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button onClick={handleSave} disabled={isLoading}>
+          {isLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="mr-2 h-4 w-4" />
+          )}
           Save Changes
         </Button>
       </div>

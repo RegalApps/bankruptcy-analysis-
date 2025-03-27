@@ -1,12 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { UserSettings } from "@/types/settings";
 import { useDebounce } from "@/hooks/use-debounce";
 
 export const useSettings = () => {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -27,10 +26,12 @@ export const useSettings = () => {
   const [passwordExpiry, setPasswordExpiry] = useState("90");
 
   const loadSettings = async () => {
+    setIsLoading(true);
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) {
-        throw new Error("No authenticated user");
+        console.log("No authenticated user found");
+        return;
       }
 
       const { data, error } = await supabase
@@ -39,7 +40,14 @@ export const useSettings = () => {
         .eq('user_id', session.session.user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code !== 'PGRST116') { // If it's not a "no rows returned" error
+          throw error;
+        }
+        // No settings found, using defaults
+        console.log("No settings found, using defaults");
+        return;
+      }
 
       if (data) {
         setTimeZone(data.timeZone || "UTC");
@@ -57,18 +65,15 @@ export const useSettings = () => {
       }
     } catch (error) {
       console.error("Error loading settings:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load settings. Please try again.",
-      });
+      toast.error("Failed to load settings. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const saveSettings = async (section: "general" | "security") => {
     if (isSaving) return; // Prevent multiple simultaneous saves
     
-    setIsLoading(true);
     setIsSaving(true);
     
     try {
@@ -105,30 +110,24 @@ export const useSettings = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: `${section === "general" ? "General" : "Security"} settings saved successfully.`,
-      });
+      toast.success(`${section === "general" ? "General" : "Security"} settings saved successfully.`);
 
       if (section === "security" && twoFactorEnabled) {
         console.log("2FA enabled - setup required");
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error saving ${section} settings:`, error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to save ${section} settings. Please try again.`,
-      });
+      toast.error(`Failed to save ${section} settings. Please try again.`);
     } finally {
-      setIsLoading(false);
       setIsSaving(false);
     }
   };
 
-  // Debounced save function to prevent multiple rapid saves
-  const debouncedSaveSettings = useDebounce(saveSettings, 1000);
+  // We'll use a regular function instead of a debounced one to fix the glitching issue
+  const handleSaveSettings = (section: "general" | "security") => {
+    return saveSettings(section);
+  };
 
   useEffect(() => {
     loadSettings();
@@ -136,6 +135,7 @@ export const useSettings = () => {
 
   return {
     isLoading,
+    isSaving,
     generalSettings: {
       timeZone,
       setTimeZone,
@@ -164,6 +164,6 @@ export const useSettings = () => {
       passwordExpiry,
       setPasswordExpiry,
     },
-    saveSettings: debouncedSaveSettings,
+    saveSettings: handleSaveSettings,
   };
 };
