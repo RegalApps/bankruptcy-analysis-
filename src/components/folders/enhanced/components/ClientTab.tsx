@@ -1,10 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ClientViewer } from "@/components/client/ClientViewer";
 import { ClientNotFound } from "@/components/client/components/ClientNotFound";
 import { NoClientSelected } from "@/components/activity/components/NoClientSelected";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface ClientTabProps {
   clientId: string;
@@ -16,13 +17,34 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const [loadError, setLoadError] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
   const [retryId, setRetryId] = useState<string>('');
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
+  const mountedRef = useRef<boolean>(true);
   const navigate = useNavigate();
   
+  // Reset states when client ID changes to prevent UI glitches
   useEffect(() => {
-    // Reset error state when client ID changes
     setLoadError(false);
     setRetryCount(0);
+    setIsTransitioning(true);
+    
+    // Add a small delay to prevent flickering/glitching during transitions
+    const timer = setTimeout(() => {
+      if (mountedRef.current) {
+        setIsTransitioning(false);
+      }
+    }, 150);
+    
+    return () => {
+      clearTimeout(timer);
+    };
   }, [clientId]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   
   useEffect(() => {
     // If we get an error but the client ID contains "josh" or "hart", 
@@ -43,6 +65,14 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   
   if (!effectiveClientId) {
     return <NoClientSelected />;
+  }
+  
+  if (isTransitioning) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <LoadingSpinner size="large" />
+      </div>
+    );
   }
   
   if (loadError) {

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FolderNavigation } from "./FolderNavigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { supabase } from "@/lib/supabase";
 import { ClientTab } from "./components/ClientTab";
 import { UncategorizedTab } from "./components/UncategorizedTab";
 import { FolderRecommendationSection } from "./components/FolderRecommendationSection";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
@@ -32,6 +34,7 @@ export const EnhancedFolderTab = ({
   const [activeTab, setActiveTab] = useState<string>("folders");
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>();
   const [viewingClientId, setViewingClientId] = useState<string | undefined>();
+  const [isClientLoading, setIsClientLoading] = useState<boolean>(false);
   const { toast } = useToast();
   
   const { folders, isLoading: foldersLoading } = useCreateFolderStructure(documents);
@@ -62,6 +65,7 @@ export const EnhancedFolderTab = ({
   const handleClientViewerAccess = async (clientId: string) => {
     try {
       console.log("Accessing client viewer for ID:", clientId);
+      setIsClientLoading(true);
       
       await supabase
         .from('document_access_history')
@@ -71,10 +75,14 @@ export const EnhancedFolderTab = ({
           access_source: 'client_viewer'
         });
       
-      setViewingClientId(clientId);
-      setSelectedFolderId(undefined);
-      setSelectedDocumentId(undefined);
-      setActiveTab("folders");
+      // Small delay to prevent UI glitches during transition
+      setTimeout(() => {
+        setViewingClientId(clientId);
+        setSelectedFolderId(undefined);
+        setSelectedDocumentId(undefined);
+        setActiveTab("folders");
+        setIsClientLoading(false);
+      }, 100);
     } catch (error) {
       console.error('Error logging client access:', error);
       toast({
@@ -83,8 +91,16 @@ export const EnhancedFolderTab = ({
         description: "Could not access client information"
       });
       
-      setViewingClientId(clientId);
+      // Even on error, still show the client viewer
+      setTimeout(() => {
+        setViewingClientId(clientId);
+        setIsClientLoading(false);
+      }, 100);
     }
+  };
+
+  const handleBackFromClient = () => {
+    setViewingClientId(undefined);
   };
 
   const handleAcceptRecommendation = async () => {
@@ -94,11 +110,21 @@ export const EnhancedFolderTab = ({
     onRefresh();
   };
 
+  if (isClientLoading) {
+    return (
+      <Card className="h-full">
+        <CardContent className="p-4 h-full flex items-center justify-center">
+          <LoadingSpinner size="large" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (viewingClientId) {
     return (
       <ClientTab 
         clientId={viewingClientId} 
-        onBack={() => setViewingClientId(undefined)}
+        onBack={handleBackFromClient}
         onDocumentOpen={onDocumentOpen}
       />
     );

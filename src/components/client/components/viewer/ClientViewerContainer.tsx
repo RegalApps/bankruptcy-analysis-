@@ -1,147 +1,77 @@
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ClientHeader } from "../ClientHeader";
-import { ClientSkeleton } from "../ClientSkeleton";
-import { ClientNotFound } from "../ClientNotFound";
+import { useEffect, useState } from "react";
 import { useClientData } from "../../hooks/useClientData";
+import { ClientHeader } from "./ClientHeader";
+import { ClientTabs } from "./ClientTabs";
+import { ClientTabContent } from "./ClientTabContent";
+import { ClientErrorState } from "../ClientErrorState";
 import { ClientViewerProps } from "../../types";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useIsTablet } from "@/hooks/use-tablet";
-import { MobileTabletView } from "./MobileTabletView";
-import { DesktopView } from "./DesktopView";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
-export const ClientViewerContainer = ({ clientId, onBack, onDocumentOpen, onError }: ClientViewerProps) => {
-  const { client, documents, isLoading, activeTab, setActiveTab, error } = useClientData(clientId, onBack);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-  const [openingDocument, setOpeningDocument] = useState(false);
-  const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
+export const ClientViewerContainer = ({ 
+  clientId, 
+  onBack,
+  onDocumentOpen,
+  onError
+}: ClientViewerProps) => {
+  const [isMounted, setIsMounted] = useState(false);
+  const { 
+    client, 
+    documents, 
+    isLoading, 
+    activeTab, 
+    setActiveTab,
+    error
+  } = useClientData(clientId, onBack);
 
+  // If there's an error, call the error callback
   useEffect(() => {
-    if (documents.length > 0 && !selectedDocumentId) {
-      // Prioritize Form 47 document if available
-      const form47Doc = documents.find(doc => 
-        doc.title?.toLowerCase().includes('form 47') || 
-        doc.title?.toLowerCase().includes('consumer proposal')
-      );
-      
-      if (form47Doc) {
-        console.log("Found Form 47 document, selecting automatically:", form47Doc.id);
-        setSelectedDocumentId(form47Doc.id);
-      } else {
-        setSelectedDocumentId(documents[0].id);
-      }
-      
-      toast.info(`${documents.length} documents loaded for ${client?.name || 'client'}`);
+    if (error && onError) {
+      onError();
     }
-  }, [documents, selectedDocumentId, client]);
+  }, [error, onError]);
 
-  if (error && onError) {
-    console.error("Client data error:", error);
-    onError();
-  }
-
-  if (isLoading) {
-    return <ClientSkeleton onBack={onBack} />;
-  }
-
-  if (!client) {
-    return <ClientNotFound onBack={onBack} />;
-  }
-
-  const selectedDocument = selectedDocumentId 
-    ? documents.find(doc => doc.id === selectedDocumentId)
-    : null;
-
-  const handleDocumentSelect = (documentId: string) => {
-    console.log("Selected document ID:", documentId);
-    setSelectedDocumentId(documentId);
-  };
-
-  const handleDocumentOpen = (documentId: string) => {
-    if (openingDocument || !documentId) {
-      console.log("Document open already in progress or invalid ID, ignoring request");
-      if (!documentId) toast.error("Cannot open document: Invalid ID");
-      return;
-    }
-
-    setOpeningDocument(true);
+  // Prevent flickering by delaying the mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
     
-    try {
-      const docToOpen = documents.find(doc => doc.id === documentId);
-      
-      if (!docToOpen) {
-        console.error("Document not found in list:", documentId);
-        toast.error("Document not found");
-        return;
-      }
-      
-      const isForm47 = docToOpen?.title?.toLowerCase().includes('form 47') || 
-                      docToOpen?.title?.toLowerCase().includes('consumer proposal');
-      
-      if (onDocumentOpen) {
-        onDocumentOpen(documentId);
-      }
-      
-      toast.success(`Opening ${docToOpen.title}`);
-    } catch (error) {
-      console.error("Error opening document:", error);
-      toast.error("Error opening document. Please try again.");
-    } finally {
-      setTimeout(() => setOpeningDocument(false), 1000);
-    }
-  };
+    return () => clearTimeout(timer);
+  }, []);
 
-  const lastActivityDate = documents.length > 0 
-    ? new Date(Math.max(...documents.map(d => new Date(d.updated_at).getTime()))).toISOString()
-    : undefined;
-
-  // Combined mobile and tablet view with tabs
-  if (isMobile || isTablet) {
+  if (!isMounted || isLoading) {
     return (
-      <Card className="h-full">
-        <CardHeader className="border-b pb-3 px-0 pt-0">
-          <ClientHeader onBack={onBack} clientName={client.name} />
-        </CardHeader>
-        <CardContent className="p-0">
-          <MobileTabletView
-            client={client}
-            documents={documents}
-            selectedDocument={selectedDocument}
-            selectedDocumentId={selectedDocumentId}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            onDocumentOpen={handleDocumentOpen}
-            onDocumentSelect={handleDocumentSelect}
-            lastActivityDate={lastActivityDate}
-            isMobile={isMobile}
-          />
-        </CardContent>
-      </Card>
+      <div className="h-full flex items-center justify-center">
+        <LoadingSpinner size="large" />
+      </div>
     );
   }
 
-  // Desktop view with resizable panels
+  if (error) {
+    return <ClientErrorState onBack={onBack} error={error} />;
+  }
+
+  if (!client) {
+    return <ClientErrorState onBack={onBack} message="Client information not found" />;
+  }
+
   return (
-    <Card className="h-full">
-      <CardHeader className="border-b pb-3 px-0 pt-0">
-        <ClientHeader onBack={onBack} clientName={client.name} />
-      </CardHeader>
-      <CardContent className="p-0">
-        <DesktopView
-          client={client}
-          documents={documents}
-          selectedDocument={selectedDocument}
-          selectedDocumentId={selectedDocumentId}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onDocumentOpen={handleDocumentOpen}
-          onDocumentSelect={handleDocumentSelect}
-          lastActivityDate={lastActivityDate}
-        />
-      </CardContent>
-    </Card>
+    <div className="h-full flex flex-col">
+      <ClientHeader client={client} onBack={onBack} />
+      
+      <div className="mt-6 flex-1 overflow-hidden flex flex-col">
+        <ClientTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        
+        <div className="mt-4 flex-1 overflow-auto">
+          <ClientTabContent
+            client={client}
+            documents={documents}
+            activeTab={activeTab}
+            onDocumentOpen={onDocumentOpen}
+          />
+        </div>
+      </div>
+    </div>
   );
 };
