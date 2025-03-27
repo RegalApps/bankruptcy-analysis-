@@ -44,10 +44,10 @@ export const MainSidebar = () => {
     { icon: MessageCircle, label: "SAFA", path: "/SAFA" },
     { icon: Users, label: "CRM", path: "/crm" },
     { icon: BrainCog, label: "Smart Income Expense", path: "/activity" },
-    { icon: PieChart, label: "Analytics", path: "/analytics" },
-    { icon: Video, label: "Meetings", path: "/meetings" },
-    { icon: Bell, label: "Notifications", path: "/notifications" },
     { icon: FileCheck, label: "Audit Trail", path: "/e-filing" },
+    { icon: Video, label: "Meetings", path: "/meetings" },
+    { icon: PieChart, label: "Analytics", path: "/analytics" },
+    { icon: Bell, label: "Notifications", path: "/notifications" },
   ];
 
   const SidebarContent = () => (
