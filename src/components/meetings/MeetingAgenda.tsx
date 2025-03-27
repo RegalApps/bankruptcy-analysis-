@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusCircle, Trash2, Save, Share2, FileEdit } from "lucide-react";
+import { PlusCircle, Trash2, Save, Share2, FileEdit, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AgendaItem {
@@ -15,7 +15,7 @@ interface AgendaItem {
   isEditing?: boolean;
 }
 
-export const MeetingAgenda = () => {
+export const MeetingAgenda = ({ isStandalone = false }) => {
   const [agendaItems, setAgendaItems] = useState<AgendaItem[]>([
     { id: "1", title: "Review previous meeting action items", completed: true },
     { id: "2", title: "Discuss client onboarding process improvements", completed: false },
@@ -96,9 +96,38 @@ export const MeetingAgenda = () => {
     });
   };
   
+  const openInNewWindow = () => {
+    const features = 'width=500,height=700,resizable=yes,scrollbars=yes';
+    const agendaWindow = window.open('/meetings/agenda-standalone', 'meetingAgenda', features);
+    
+    if (agendaWindow) {
+      agendaWindow.focus();
+    } else {
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups for this site to open the agenda in a new window.",
+        variant: "destructive"
+      });
+    }
+  };
+  
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold leading-tight">Interactive Meeting Agenda</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold leading-tight">Interactive Meeting Agenda</h2>
+        
+        {!isStandalone && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={openInNewWindow}
+            className="flex items-center gap-1"
+          >
+            <ExternalLink className="h-4 w-4" />
+            <span>Open in New Window</span>
+          </Button>
+        )}
+      </div>
       
       <Card>
         <CardHeader>
