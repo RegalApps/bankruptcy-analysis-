@@ -163,7 +163,7 @@ const Index = () => {
           <MainLayout>
             <RecentlyAccessedPage />
           </MainLayout>
-          <Footer className="mt-auto" />
+          <Footer compact className="mt-auto" />
         </div>
       )}
     </div>

@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 
 interface FooterProps {
   className?: string;
+  compact?: boolean;
 }
 
-export const Footer = ({ className }: FooterProps) => {
+export const Footer = ({ className, compact = false }: FooterProps) => {
   const legalLinks = [
     { label: "Privacy Policy", path: "/privacy-policy" },
     { label: "Terms of Service", path: "/terms-of-service" },
@@ -24,16 +25,22 @@ export const Footer = ({ className }: FooterProps) => {
   ];
 
   return (
-    <footer className={cn("border-t bg-background z-10", className)}>
-      <div className="container px-6 py-4 mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+    <footer className={cn("border-t bg-background z-10", 
+      compact ? "py-2" : "py-4", 
+      className
+    )}>
+      <div className={cn(
+        "container mx-auto px-4", 
+        compact ? "max-w-5xl" : "max-w-6xl"
+      )}>
+        <div className="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
           {/* Legal Links */}
-          <div className="flex flex-wrap gap-6">
+          <div className="flex flex-wrap gap-4 md:gap-6">
             {legalLinks.map((link) => (
               <Link
                 key={link.label}
                 to={link.path}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-xs md:text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
               </Link>
@@ -41,13 +48,16 @@ export const Footer = ({ className }: FooterProps) => {
           </div>
 
           {/* Social Media Links */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
             {socialLinks.map((social) => (
               <Button
                 key={social.label}
                 variant="ghost"
-                size="icon"
-                className="h-9 w-9 hover:text-foreground"
+                size={compact ? "icon" : "sm"}
+                className={cn(
+                  "hover:text-foreground",
+                  compact ? "h-7 w-7" : "h-8 w-8"
+                )}
                 asChild
               >
                 <a
@@ -56,7 +66,7 @@ export const Footer = ({ className }: FooterProps) => {
                   rel="noopener noreferrer"
                   aria-label={social.label}
                 >
-                  <social.icon className="h-4 w-4" />
+                  <social.icon className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
                 </a>
               </Button>
             ))}
@@ -64,8 +74,8 @@ export const Footer = ({ className }: FooterProps) => {
         </div>
 
         {/* Copyright */}
-        <div className="mt-4 text-center md:text-right">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-2 text-center md:text-right">
+          <p className="text-xs text-muted-foreground">
             ©2025 FileSecureAI. All rights reserved.
           </p>
         </div>
