@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "./components/ui/theme-provider";
@@ -59,6 +58,12 @@ const ActivityPage = lazy(() => import("./pages/ActivityPage").catch(error => {
 
 const EFilingPage = lazy(() => import("./pages/EFilingPage").catch(error => {
   console.error("Error loading EFilingPage:", error);
+  return import("./pages/NotFound");
+}));
+
+// Add NotificationsPage import
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage").catch(error => {
+  console.error("Error loading NotificationsPage:", error);
   return import("./pages/NotFound");
 }));
 
@@ -139,7 +144,13 @@ function App() {
                       <DocumentsPage />
                     </PageTransition>
                   } />
-                  {/* Add missing routes */}
+                  {/* Add NotificationsPage route */}
+                  <Route path="/notifications" element={
+                    <PageTransition>
+                      <NotificationsPage />
+                    </PageTransition>
+                  } />
+                  {/* Keep other routes */}
                   <Route path="/SAFA" element={
                     <PageTransition>
                       <SAFAPage />
