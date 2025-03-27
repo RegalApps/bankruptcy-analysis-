@@ -11,11 +11,14 @@ interface MeetingsHeaderProps {
 export const MeetingsHeader = ({ activeTab, setActiveTab, isActiveCall = false }: MeetingsHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-      <div className="flex items-center space-x-2">
-        <Video className="h-6 w-6 text-primary" />
+      <div className="flex items-center">
+        <Video className="h-6 w-6 text-primary mr-2" />
         <h1 className="text-2xl font-bold tracking-tight">Meetings</h1>
         {isActiveCall && (
-          <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse"></div>
+          <div className="flex items-center ml-3 bg-red-50 text-red-600 px-2 py-0.5 rounded-full text-sm font-medium">
+            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse mr-1.5"></div>
+            <span>Active Meeting</span>
+          </div>
         )}
       </div>
       
