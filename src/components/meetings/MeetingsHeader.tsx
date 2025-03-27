@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Video, Plus, FileText, ClipboardList } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface MeetingsHeaderProps {
   activeTab: "upcoming" | "join" | "notes" | "analytics" | "agenda";
@@ -15,10 +16,9 @@ export const MeetingsHeader = ({ activeTab, setActiveTab, isActiveCall = false }
         <Video className="h-6 w-6 text-primary mr-2" />
         <h1 className="text-2xl font-bold tracking-tight">Meetings</h1>
         {isActiveCall && (
-          <div className="flex items-center ml-3 bg-red-50 text-red-600 px-2 py-0.5 rounded-full text-sm font-medium">
-            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse mr-1.5"></div>
-            <span>Active Meeting</span>
-          </div>
+          <Badge variant="outline" className="ml-3 bg-red-50 text-red-600 border-red-100">
+            Active Meeting
+          </Badge>
         )}
       </div>
       
