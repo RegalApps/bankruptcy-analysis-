@@ -41,6 +41,27 @@ const NotFoundPage = lazy(() => import("./pages/NotFound").catch(error => {
   return { default: () => <div>Page not found</div> };
 }));
 
+// Add missing page imports
+const SAFAPage = lazy(() => import("./pages/ConBrandingPage").catch(error => {
+  console.error("Error loading SAFAPage:", error);
+  return import("./pages/NotFound");
+}));
+
+const CRMPage = lazy(() => import("./pages/CRMPage").catch(error => {
+  console.error("Error loading CRMPage:", error);
+  return import("./pages/NotFound");
+}));
+
+const ActivityPage = lazy(() => import("./pages/ActivityPage").catch(error => {
+  console.error("Error loading ActivityPage:", error);
+  return import("./pages/NotFound");
+}));
+
+const EFilingPage = lazy(() => import("./pages/EFilingPage").catch(error => {
+  console.error("Error loading EFilingPage:", error);
+  return import("./pages/NotFound");
+}));
+
 // Create a client for React Query with performance optimizations
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -116,6 +137,27 @@ function App() {
                   <Route path="/documents" element={
                     <PageTransition>
                       <DocumentsPage />
+                    </PageTransition>
+                  } />
+                  {/* Add missing routes */}
+                  <Route path="/SAFA" element={
+                    <PageTransition>
+                      <SAFAPage />
+                    </PageTransition>
+                  } />
+                  <Route path="/crm" element={
+                    <PageTransition>
+                      <CRMPage />
+                    </PageTransition>
+                  } />
+                  <Route path="/activity" element={
+                    <PageTransition>
+                      <ActivityPage />
+                    </PageTransition>
+                  } />
+                  <Route path="/e-filing" element={
+                    <PageTransition>
+                      <EFilingPage />
                     </PageTransition>
                   } />
                   <Route path="*" element={
