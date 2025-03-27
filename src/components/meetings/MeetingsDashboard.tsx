@@ -6,18 +6,17 @@ import { IntegrationsPanel } from "./IntegrationsPanel";
 import { UpcomingMeetings } from "./UpcomingMeetings";
 import { JoinMeetingPanel } from "./JoinMeetingPanel";
 import { MeetingNotes } from "./MeetingNotes";
-import { MeetingAnalytics } from "./MeetingAnalytics";
 import { MeetingAgenda } from "./MeetingAgenda";
 import { useToast } from "@/hooks/use-toast";
 import { useEnhancedAnalytics } from "@/hooks/useEnhancedAnalytics";
 
 export const MeetingsDashboard = () => {
-  const [activeTab, setActiveTab] = useState<"upcoming" | "integrations" | "join" | "notes" | "analytics" | "agenda">("upcoming");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "integrations" | "join" | "notes" | "agenda">("upcoming");
   const { toast } = useToast();
   const analytics = useEnhancedAnalytics({ pageName: "Meetings" });
 
   // Track tab changes
-  const handleTabChange = (tab: "upcoming" | "integrations" | "join" | "notes" | "analytics" | "agenda") => {
+  const handleTabChange = (tab: "upcoming" | "integrations" | "join" | "notes" | "agenda") => {
     setActiveTab(tab);
     analytics.trackInteraction("MeetingsTabs", `Changed to ${tab} tab`);
   };
@@ -33,7 +32,6 @@ export const MeetingsDashboard = () => {
         {activeTab === "integrations" && <IntegrationsPanel />}
         {activeTab === "join" && <JoinMeetingPanel />}
         {activeTab === "notes" && <MeetingNotes />}
-        {activeTab === "analytics" && <MeetingAnalytics />}
         {activeTab === "agenda" && <MeetingAgenda />}
       </div>
     </div>
