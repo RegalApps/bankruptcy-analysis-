@@ -6,21 +6,25 @@ import { UpcomingMeetings } from "./UpcomingMeetings";
 import { JoinMeetingPanel } from "./JoinMeetingPanel";
 import { MeetingNotes } from "./MeetingNotes";
 import { MeetingAgenda } from "./MeetingAgenda";
+import { MeetingAnalytics } from "./MeetingAnalytics";
+import { MeetingReviewForm } from "./MeetingReviewForm";
 import { useToast } from "@/hooks/use-toast";
 import { useEnhancedAnalytics } from "@/hooks/useEnhancedAnalytics";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ExternalLink, Video, Clipboard, ListChecks, X } from "lucide-react";
+import { ExternalLink, Video, Clipboard, ListChecks, X, BarChart2 } from "lucide-react";
 import { HotkeysProvider } from "@/hooks/useHotkeys";
 
 export const MeetingsDashboard = () => {
-  const [activeTab, setActiveTab] = useState<"upcoming" | "join" | "notes" | "agenda">("upcoming");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "join" | "notes" | "agenda" | "analytics">("upcoming");
   const [isActiveCall, setIsActiveCall] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
   const { toast } = useToast();
   const analytics = useEnhancedAnalytics({ pageName: "Meetings" });
 
   // Track tab changes
-  const handleTabChange = (tab: "upcoming" | "join" | "notes" | "agenda") => {
+  const handleTabChange = (tab: "upcoming" | "join" | "notes" | "agenda" | "analytics") => {
     setActiveTab(tab);
     analytics.trackInteraction("MeetingsTabs", `Changed to ${tab} tab`);
   };
@@ -46,6 +50,24 @@ export const MeetingsDashboard = () => {
     });
   };
 
+  const endActiveCallMode = () => {
+    setIsActiveCall(false);
+    setShowReviewDialog(true);
+  };
+
+  const handleReviewComplete = () => {
+    setShowReviewDialog(false);
+    
+    // After review completion, show a toast about analytics updates
+    toast({
+      title: "Analytics Updated",
+      description: "Meeting data has been processed. View the Analytics tab to see insights.",
+    });
+    
+    // Switch to analytics tab to show the updated information
+    setActiveTab("analytics");
+  };
+
   return (
     <HotkeysProvider>
       <div className="space-y-6 relative">
@@ -58,6 +80,7 @@ export const MeetingsDashboard = () => {
           {activeTab === "join" && <JoinMeetingPanel />}
           {activeTab === "notes" && <MeetingNotes />}
           {activeTab === "agenda" && <MeetingAgenda />}
+          {activeTab === "analytics" && <MeetingAnalytics />}
         </div>
 
         {/* Quick access floating button for active calls */}
@@ -93,7 +116,7 @@ export const MeetingsDashboard = () => {
                       variant="ghost" 
                       size="icon" 
                       className="h-8 w-8" 
-                      onClick={() => setIsActiveCall(false)}
+                      onClick={endActiveCallMode}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -117,12 +140,43 @@ export const MeetingsDashboard = () => {
                       <ListChecks className="h-4 w-4" />
                       <span>Agenda</span>
                     </Button>
+
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setActiveTab("analytics");
+                        analytics.trackInteraction("MeetingTools", "Opened Analytics", "Click");
+                      }}
+                      className="w-full flex items-center justify-start gap-2 col-span-2"
+                    >
+                      <BarChart2 className="h-4 w-4" />
+                      <span>View Analytics</span>
+                    </Button>
+
+                    <Button 
+                      variant="destructive" 
+                      onClick={endActiveCallMode} 
+                      className="w-full col-span-2"
+                    >
+                      End Meeting
+                    </Button>
                   </div>
                 </div>
               </PopoverContent>
             </Popover>
           </div>
         )}
+
+        {/* Meeting Review Dialog */}
+        <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+          <DialogContent className="sm:max-w-xl">
+            <MeetingReviewForm 
+              meetingId="recent-meeting-123"
+              meetingTitle="Weekly Team Sync"
+              onComplete={handleReviewComplete}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </HotkeysProvider>
   );
