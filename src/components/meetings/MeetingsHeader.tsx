@@ -1,10 +1,10 @@
 
 import { Button } from "@/components/ui/button";
-import { Video, Plus } from "lucide-react";
+import { Video, Plus, FileText, BarChart, ClipboardList } from "lucide-react";
 
 interface MeetingsHeaderProps {
-  activeTab: "upcoming" | "integrations" | "join";
-  setActiveTab: (tab: "upcoming" | "integrations" | "join") => void;
+  activeTab: "upcoming" | "integrations" | "join" | "notes" | "analytics" | "agenda";
+  setActiveTab: (tab: "upcoming" | "integrations" | "join" | "notes" | "analytics" | "agenda") => void;
 }
 
 export const MeetingsHeader = ({ activeTab, setActiveTab }: MeetingsHeaderProps) => {
@@ -15,15 +15,41 @@ export const MeetingsHeader = ({ activeTab, setActiveTab }: MeetingsHeaderProps)
         <h1 className="text-2xl font-bold tracking-tight">Meetings</h1>
       </div>
       
-      <div className="flex items-center space-x-2">
-        <Button 
-          size="sm" 
-          onClick={() => setActiveTab("join")}
-          className="flex items-center space-x-1"
-        >
-          <Video className="h-4 w-4" />
-          <span>Join Meeting</span>
-        </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        {activeTab !== "join" && (
+          <Button 
+            size="sm" 
+            onClick={() => setActiveTab("join")}
+            className="flex items-center space-x-1"
+          >
+            <Video className="h-4 w-4" />
+            <span>Join Meeting</span>
+          </Button>
+        )}
+        
+        {activeTab !== "notes" && (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => setActiveTab("notes")}
+            className="flex items-center space-x-1"
+          >
+            <FileText className="h-4 w-4" />
+            <span>Meeting Notes</span>
+          </Button>
+        )}
+        
+        {activeTab !== "agenda" && (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => setActiveTab("agenda")}
+            className="flex items-center space-x-1"
+          >
+            <ClipboardList className="h-4 w-4" />
+            <span>Agenda</span>
+          </Button>
+        )}
         
         <Button 
           size="sm" 
