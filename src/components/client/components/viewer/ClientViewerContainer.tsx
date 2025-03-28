@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useClientData } from "../../hooks/useClientData";
 import { ClientHeader } from "./ClientHeader";
 import { ClientTabs } from "./ClientTabs";
-import { ClientTabContent } from "./ClientTabContent";
 import { ClientErrorState } from "../ClientErrorState";
 import { ClientViewerProps } from "../../types";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -78,44 +77,30 @@ export const ClientViewerContainer = ({
       <ClientHeader client={client} onBack={onBack} />
       
       {(isMobile || isTablet) ? (
-        <div className="mt-2 flex-1 overflow-hidden flex flex-col">
-          <div className="px-2">
-            <ClientTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-          </div>
-          <div className="mt-2 flex-1 overflow-hidden">
-            <MobileTabletView 
-              client={client}
-              documents={documents}
-              selectedDocument={selectedDocument}
-              selectedDocumentId={selectedDocumentId}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onDocumentOpen={onDocumentOpen || (() => {})}
-              onDocumentSelect={handleDocumentSelect}
-              lastActivityDate={lastActivityDate}
-              isMobile={isMobile}
-            />
-          </div>
-        </div>
+        <MobileTabletView 
+          client={client}
+          documents={documents}
+          selectedDocument={selectedDocument}
+          selectedDocumentId={selectedDocumentId}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onDocumentOpen={onDocumentOpen || (() => {})}
+          onDocumentSelect={handleDocumentSelect}
+          lastActivityDate={lastActivityDate}
+          isMobile={isMobile}
+        />
       ) : (
-        <div className="mt-4 flex-1 overflow-hidden flex flex-col">
-          <div className="px-4 mb-4">
-            <ClientTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-          </div>
-          <div className="flex-1 overflow-hidden px-4 pb-4">
-            <DesktopView 
-              client={client}
-              documents={documents}
-              selectedDocument={selectedDocument}
-              selectedDocumentId={selectedDocumentId}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onDocumentOpen={onDocumentOpen || (() => {})}
-              onDocumentSelect={handleDocumentSelect}
-              lastActivityDate={lastActivityDate}
-            />
-          </div>
-        </div>
+        <DesktopView 
+          client={client}
+          documents={documents}
+          selectedDocument={selectedDocument}
+          selectedDocumentId={selectedDocumentId}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onDocumentOpen={onDocumentOpen || (() => {})}
+          onDocumentSelect={handleDocumentSelect}
+          lastActivityDate={lastActivityDate}
+        />
       )}
     </div>
   );

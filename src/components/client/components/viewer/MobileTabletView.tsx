@@ -1,7 +1,7 @@
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useState } from "react";
-import { ClientInfoPanel } from "../ClientInfoPanel";
+import { ClientSummaryPanel } from "../ClientSummaryPanel";
 import { DocumentsPanel } from "../DocumentsPanel";
 import { FilePreviewPanel } from "../FilePreview/FilePreviewPanel";
 import { Client, Document } from "../../types";
@@ -31,8 +31,7 @@ export const MobileTabletView = ({
   lastActivityDate,
   isMobile
 }: MobileTabletViewProps) => {
-  const [mobileTab, setMobileTab] = useState<string>("info");
-  const isSmallScreen = isMobile;
+  const [mobileTab, setMobileTab] = useState<string>("summary");
 
   // Update document selection handler to also switch to preview tab
   const handleDocumentSelect = (documentId: string) => {
@@ -43,23 +42,23 @@ export const MobileTabletView = ({
   return (
     <Tabs value={mobileTab} onValueChange={setMobileTab} className="w-full">
       <TabsList className="grid grid-cols-3 w-full rounded-none px-2 pt-2">
-        <TabsTrigger value="info">
-          {isSmallScreen ? "Info" : "Client Info"}
+        <TabsTrigger value="summary">
+          {isMobile ? "Summary" : "Client Summary"}
         </TabsTrigger>
         <TabsTrigger value="documents">
-          {isSmallScreen ? "Docs" : "Documents"}
+          {isMobile ? "Docs" : "Documents"}
         </TabsTrigger>
-        <TabsTrigger value="preview">Preview</TabsTrigger>
+        <TabsTrigger value="preview">
+          {isMobile ? "Preview" : "Document View"}
+        </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="info" className="m-0 p-4 h-[calc(100vh-10rem)]">
-        <ClientInfoPanel 
+      <TabsContent value="summary" className="m-0 p-0 h-[calc(100vh-10rem)]">
+        <ClientSummaryPanel 
           client={client} 
           documentCount={documents.length}
           lastActivityDate={lastActivityDate}
           documents={documents}
-          onDocumentSelect={handleDocumentSelect}
-          selectedDocumentId={selectedDocumentId}
         />
       </TabsContent>
       
