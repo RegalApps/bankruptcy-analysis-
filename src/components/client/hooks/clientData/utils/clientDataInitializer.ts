@@ -1,45 +1,44 @@
 
 import { Client, Document } from "../../../types";
 import { createClientData } from "./clientDataCreator";
-import { extractClientInfoFromDocument, extractClientNameFromId, isForm47Document } from "./documentFetcher";
+import { extractClientInfoFromDocument, extractClientNameFromId } from "./documentFetcher";
 
 /**
- * Creates client data from documents
+ * Initialize client data from documents
  */
-export const initializeClientFromDocuments = (
-  clientId: string, 
-  clientDocs: Document[]
-): Client => {
-  // If we have documents, use them to create client data
-  if (clientDocs && clientDocs.length > 0) {
-    // First check if any document is a Form 47 to prioritize it for client data
-    const form47Doc = clientDocs.find(doc => isForm47Document(doc));
+export const initializeClientFromDocuments = (clientId: string, documents: Document[]): Client => {
+  // Find the document with the most complete client information
+  let clientName = "";
+  let clientEmail = "";
+  let clientPhone = "";
+  
+  // Try to extract client info from each document, starting with the most recent
+  const sortedDocs = [...documents].sort((a, b) => 
+    new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
+  
+  for (const doc of sortedDocs) {
+    const { clientName: name, clientEmail: email, clientPhone: phone } = extractClientInfoFromDocument(doc);
     
-    // Use Form 47 if available or fall back to first document
-    const sourceDoc = form47Doc || clientDocs[0];
+    if (name && !clientName) clientName = name;
+    if (email && !clientEmail) clientEmail = email;
+    if (phone && !clientPhone) clientPhone = phone;
     
-    console.log("Using document for client data:", sourceDoc.title);
-    console.log("Document metadata:", sourceDoc.metadata);
-    
-    // Extract client info
-    const { clientName, clientEmail, clientPhone } = extractClientInfoFromDocument(sourceDoc);
-    
-    // If we couldn't find a name at all, try a last resort
-    const finalClientName = clientName || extractClientNameFromId(clientId);
-    
-    return createClientData(
-      clientId,
-      finalClientName || 'Unknown Client',
-      'active',
-      clientEmail,
-      clientPhone
-    );
+    // If we have all the info, break early
+    if (clientName && clientEmail && clientPhone) break;
   }
   
-  // Fallback to a basic client with name from ID
+  // If we still don't have a client name, try to extract from client ID
+  if (!clientName) {
+    clientName = extractClientNameFromId(clientId);
+  }
+  
+  // Create and return the client data
   return createClientData(
     clientId,
-    extractClientNameFromId(clientId),
-    'active'
+    clientName,
+    'active',
+    clientEmail,
+    clientPhone
   );
 };

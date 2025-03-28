@@ -1,35 +1,26 @@
 
+import { XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
 
 interface ClientErrorStateProps {
   onBack: () => void;
-  message?: string;
   error?: Error;
+  message?: string;
 }
 
-export const ClientErrorState = ({ onBack, message, error }: ClientErrorStateProps) => {
-  const errorMessage = message || error?.message || "An error occurred while loading client data";
-  
+export const ClientErrorState = ({ onBack, error, message }: ClientErrorStateProps) => {
   return (
-    <div className="h-full flex flex-col">
-      <div className="mb-4">
-        <Button variant="ghost" onClick={onBack} className="gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
+    <div className="h-full flex flex-col items-center justify-center p-6">
+      <div className="text-destructive">
+        <XCircle className="h-16 w-16 mx-auto mb-4" />
       </div>
-      
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center max-w-md p-6">
-          <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Client Loading Error</h3>
-          <p className="text-muted-foreground mb-4">{errorMessage}</p>
-          <Button variant="outline" onClick={onBack}>
-            Return to Folders
-          </Button>
-        </div>
-      </div>
+      <h2 className="text-xl font-semibold mb-2">Unable to load client data</h2>
+      <p className="text-muted-foreground text-center mb-6 max-w-md">
+        {message || error?.message || "There was an error loading the client information. Please try again."}
+      </p>
+      <Button onClick={onBack}>
+        Go Back
+      </Button>
     </div>
   );
 };

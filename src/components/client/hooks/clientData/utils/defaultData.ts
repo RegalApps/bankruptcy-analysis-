@@ -1,29 +1,47 @@
 
 import { Document } from "../../../types";
-import { v4 as uuidv4 } from "uuid";
 
+/**
+ * Get default documents for a client if none are found
+ */
 export const getDefaultDocuments = (clientName: string): Document[] => {
+  const now = new Date().toISOString();
+  const yesterday = new Date(Date.now() - 86400000).toISOString();
+  const lastWeek = new Date(Date.now() - 604800000).toISOString();
+  
   return [
     {
-      id: uuidv4(), // Generate a proper UUID instead of using a string ID
-      title: 'Form 47 - Consumer Proposal',
-      type: 'application/pdf',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      id: "form-47-doc",
+      title: "Form 47 - Consumer Proposal",
+      type: "form-47",
+      created_at: lastWeek,
+      updated_at: yesterday,
       metadata: {
-        formType: 'form-47',
         client_name: clientName,
-        storage_path: 'sample-documents/form-47-consumer-proposal.pdf' // Ensure storage path is set
+        client_id: clientName.toLowerCase().replace(/\s+/g, '-'),
+        formType: "form-47"
       }
     },
     {
-      id: uuidv4(), // Generate a proper UUID instead of using a string ID
-      title: 'Income Statement',
-      type: 'document',
-      created_at: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-      updated_at: new Date(Date.now() - 86400000).toISOString(),
+      id: "financial-statement",
+      title: "Financial Statement",
+      type: "financial",
+      created_at: lastWeek,
+      updated_at: now,
       metadata: {
-        client_name: clientName
+        client_name: clientName,
+        client_id: clientName.toLowerCase().replace(/\s+/g, '-')
+      }
+    },
+    {
+      id: "client-agreement",
+      title: "Client Agreement",
+      type: "legal",
+      created_at: lastWeek,
+      updated_at: lastWeek,
+      metadata: {
+        client_name: clientName,
+        client_id: clientName.toLowerCase().replace(/\s+/g, '-')
       }
     }
   ];

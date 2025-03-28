@@ -19,7 +19,7 @@ export interface Document {
   parent_folder_id?: string;
   is_folder?: boolean;
   folder_type?: string;
-  storage_path?: string; // Added this optional property
+  storage_path?: string;
 }
 
 export interface ClientViewerProps {
@@ -27,4 +27,20 @@ export interface ClientViewerProps {
   onBack: () => void;
   onDocumentOpen: (documentId: string) => void;
   onError?: () => void;
+}
+
+export interface FolderStructure {
+  id: string;
+  name: string;
+  type: 'client' | 'form' | 'financial' | 'general';
+  title?: string;
+  children: FolderStructure[];
+  parentId?: string;
+  parent_folder_id?: string;
+  isExpanded: boolean;
+  level: number;
+  metadata: Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
+  is_folder?: boolean;
 }
