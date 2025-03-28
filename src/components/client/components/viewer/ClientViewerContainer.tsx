@@ -51,7 +51,7 @@ export const ClientViewerContainer = ({ clientId, onBack }: ClientViewerProps) =
       <div className="p-6 text-center">
         <h3 className="text-lg font-medium mb-2">Error Loading Client</h3>
         <p className="text-muted-foreground">
-          {error || "Client information could not be loaded."}
+          {error ? error.toString() : "Client information could not be loaded."}
         </p>
         <button 
           className="mt-4 px-4 py-2 bg-primary text-white rounded-md"

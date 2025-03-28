@@ -1,23 +1,27 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Document } from "@/components/DocumentList/types";
-import { FolderStructure } from "@/types/folders";
-import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
-import { Button } from "@/components/ui/button";
+import { Client } from "@/components/client/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DocumentViewControls } from "./components/DocumentViewControls";
 import { DocumentSearchFilter } from "./components/DocumentSearchFilter";
-import { DocumentTree } from "./components/DocumentTree";
+import { FolderList } from "./components/FolderList";
 import { DocumentViewPanel } from "./components/DocumentViewPanel";
 import { FolderTools } from "./components/FolderTools";
-import { FileText, FolderOpen, UsersRound } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useFolderDragAndDrop } from "./hooks/useFolderDragAndDrop";
+import { useFolderActions } from "./hooks/useFolderActions";
+import { useFolderFilterAndExpand } from "./hooks/useFolderFilterAndExpand";
+import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
+import { ClientTab } from "./components/ClientTab";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
   onDocumentOpen: (documentId: string) => void;
-  onRefresh?: () => void;
+  onRefresh: () => void;
   onClientSelect?: (clientId: string) => void;
-  clients?: { id: string; name: string }[];
+  clients?: any[];
 }
 
 export const EnhancedFolderTab = ({
@@ -27,238 +31,184 @@ export const EnhancedFolderTab = ({
   onClientSelect,
   clients = []
 }: EnhancedFolderTabProps) => {
-  const { folders } = useCreateFolderStructure(documents);
+  const [activeTab, setActiveTab] = useState<string>("folders");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isGridView, setIsGridView] = useState(true);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
-  const [selectedClientId, setSelectedClientId] = useState<string | undefined>();
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | undefined>();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
-  const [displayMode, setDisplayMode] = useState<"list" | "grid">("list");
-  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<string | null>(null);
 
-  // Reset selection when documents change
-  useEffect(() => {
-    if (documents.length === 0) {
-      setSelectedFolderId(undefined);
-      setSelectedDocumentId(undefined);
-    }
-  }, [documents]);
+  const { folders, isLoading: isLoadingFolders } = useCreateFolderStructure(documents);
 
-  // Filter folders and documents based on search term
-  const filteredFolders = useMemo(() => {
-    if (!searchTerm) return folders;
+  const { filteredFolders, expandedFolders, toggleFolder } = useFolderFilterAndExpand({
+    folders,
+    searchQuery,
+  });
+
+  const { handleCreateFolder, handleRenameFolder, handleDeleteFolder } = useFolderActions({
+    onSuccess: onRefresh,
+  });
+
+  const {
+    dragOverFolder,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+  } = useFolderDragAndDrop({
+    onDropSuccess: onRefresh,
+  });
+
+  // Get documents in the currently selected folder
+  const folderDocuments = selectedFolderId
+    ? documents.filter(
+        (doc) => !doc.is_folder && doc.parent_folder_id === selectedFolderId
+      )
+    : documents.filter((doc) => !doc.is_folder && !doc.parent_folder_id);
+
+  // Further filter by type if filterType is set
+  const filteredDocuments = folderDocuments.filter(
+    (doc) => !filterType || doc.type === filterType
+  );
+
+  // Find Form 47 documents for special handling
+  const form47Documents = documents.filter(
+    doc => doc.metadata?.formType === 'form-47' || 
+          doc.title.toLowerCase().includes('form 47') ||
+          doc.title.toLowerCase().includes('consumer proposal')
+  );
+
+  // Calculate folder path for breadcrumb navigation
+  const calculateFolderPath = () => {
+    if (!selectedFolderId) return [];
     
-    return folders.filter(folder => 
-      folder.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [folders, searchTerm]);
-
-  // Filter documents based on selected folder or search term
-  const filteredDocuments = useMemo(() => {
-    let filtered = documents;
+    const path: { id: string; name: string }[] = [];
+    let currentFolderId = selectedFolderId;
     
-    if (searchTerm) {
-      filtered = filtered.filter(doc => 
-        doc.title.toLowerCase().includes(searchTerm.toLowerCase())
+    const findFolder = (folderId: string) => {
+      const folder = documents.find(
+        doc => doc.id === folderId && doc.is_folder
       );
-    }
-    
-    if (selectedFolderId) {
-      filtered = filtered.filter(doc => 
-        doc.parent_folder_id === selectedFolderId
-      );
-    } else if (selectedClientId) {
-      filtered = filtered.filter(doc => 
-        doc.metadata?.client_id === selectedClientId
-      );
-    }
-    
-    return filtered;
-  }, [documents, searchTerm, selectedFolderId, selectedClientId]);
-
-  // Identify Form 47 documents
-  const form47Documents = useMemo(() => {
-    return documents.filter(doc => 
-      doc.type === 'form-47' || 
-      (doc.title && doc.title.toLowerCase().includes('form 47')) ||
-      (doc.title && doc.title.toLowerCase().includes('consumer proposal'))
-    );
-  }, [documents]);
-
-  // Toggle folder expanded state
-  const toggleFolder = (folderId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setExpandedFolders(prev => ({
-      ...prev,
-      [folderId]: !prev[folderId]
-    }));
-  };
-
-  // Handle folder selection
-  const handleFolderSelect = (folderId: string) => {
-    setSelectedFolderId(prev => prev === folderId ? undefined : folderId);
-    setSelectedClientId(undefined);
-    setSelectedDocumentId(undefined);
-  };
-
-  // Handle document selection
-  const handleDocumentSelect = (documentId: string) => {
-    setSelectedDocumentId(prev => prev === documentId ? undefined : documentId);
-  };
-
-  // Handle client selection
-  const handleClientSelect = (clientId: string) => {
-    setSelectedClientId(prev => prev === clientId ? undefined : clientId);
-    setSelectedFolderId(undefined);
-    setSelectedDocumentId(undefined);
-    
-    // If a client detail viewer callback is provided, use it
-    if (clientId && onClientSelect) {
-      onClientSelect(clientId);
-    }
-  };
-
-  // Handle drag and drop
-  const handleDragStart = (id: string, type: 'folder' | 'document') => {
-    const event = new DragEvent('dragstart');
-    (event as any).dataTransfer = {
-      setData: jest.fn(),
-      effectAllowed: 'move'
-    };
-    (event as any).dataTransfer.setData('text/plain', JSON.stringify({ id, type }));
-  };
-
-  const handleDragOver = (e: React.DragEvent, folderId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverFolder(folderId);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverFolder(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, targetFolderId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverFolder(null);
-    
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-      console.log('Dropped', data, 'into folder', targetFolderId);
       
-      // In a real app, you would update the backend here
-      // For now, just show a message
-      // toast.success(`Moved ${data.type} to folder`);
-    } catch (err) {
-      console.error('Invalid drop data', err);
-    }
+      if (!folder) return;
+      
+      path.unshift({ id: folder.id, name: folder.title });
+      
+      if (folder.parent_folder_id) {
+        findFolder(folder.parent_folder_id);
+      }
+    };
+    
+    findFolder(currentFolderId);
+    return path;
+  };
+  
+  const folderPath = calculateFolderPath();
+
+  // Select document
+  const handleDocumentSelect = (documentId: string) => {
+    setSelectedDocumentId(documentId);
+  };
+
+  // Select folder
+  const handleFolderSelect = (folderId: string) => {
+    setSelectedFolderId(folderId);
+    setSelectedDocumentId(undefined);
+  };
+
+  // Test for demonstration purposes only
+  const handleRunTest = () => {
+    console.log("Running test function");
+    // This is just a placeholder - do not reference Jest here
+    const testResult = true;
+    return testResult;
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {/* Left sidebar - folders and clients */}
-      <div className="col-span-1">
-        {/* Client List */}
-        {clients.length > 0 && (
-          <Card className="mb-4">
-            <CardContent className="p-4">
-              <h3 className="text-lg font-medium mb-3 flex items-center">
-                <UsersRound className="h-5 w-5 mr-2 text-primary" />
-                Clients
-              </h3>
-              <div className="space-y-2">
-                {clients.map(client => (
-                  <div
-                    key={client.id}
-                    className={`
-                      p-2 rounded cursor-pointer flex items-center
-                      ${selectedClientId === client.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50'}
-                    `}
-                    onClick={() => handleClientSelect(client.id)}
-                  >
-                    <UsersRound className="h-4 w-4 mr-2" />
-                    <span className="truncate">{client.name}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+    <Card className="h-[calc(100vh-15rem)]">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+        <div className="flex justify-between items-center px-6 pt-6">
+          <TabsList>
+            <TabsTrigger value="folders">Folders</TabsTrigger>
+            <TabsTrigger value="clients">Clients</TabsTrigger>
+          </TabsList>
+          
+          {activeTab === "folders" ? (
+            <FolderTools
+              onCreateFolder={() => handleCreateFolder()}
+              onRefresh={onRefresh}
+            />
+          ) : (
+            <div /> // Placeholder for client tab actions
+          )}
+        </div>
         
-        {/* Folders */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-medium flex items-center">
-                <FolderOpen className="h-5 w-5 mr-2 text-primary" />
-                Folders
-              </h3>
-              <FolderTools onRefresh={onRefresh} />
-            </div>
-            
-            <DocumentSearchFilter
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-            />
-            
-            <DocumentTree
-              filteredFolders={filteredFolders}
-              filteredDocuments={filteredDocuments}
-              form47Documents={form47Documents}
-              selectedFolderId={selectedFolderId}
-              selectedClientId={selectedClientId}
-              expandedFolders={expandedFolders}
-              dragOverFolder={dragOverFolder}
-              onFolderSelect={handleFolderSelect}
-              onDocumentSelect={handleDocumentSelect}
-              onDocumentOpen={onDocumentOpen}
-              toggleFolder={toggleFolder}
-              handleDragStart={handleDragStart}
-              handleDragOver={handleDragOver}
-              handleDragLeave={handleDragLeave}
-              handleDrop={handleDrop}
-            />
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Right content area - document grid/list */}
-      <div className="col-span-1 md:col-span-2 lg:col-span-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-primary" />
-                Documents
-                {selectedFolderId && (
-                  <span className="ml-2 text-sm text-muted-foreground">
-                    in {folders.find(f => f.id === selectedFolderId)?.name}
-                  </span>
-                )}
-                {selectedClientId && (
-                  <span className="ml-2 text-sm text-muted-foreground">
-                    for {clients.find(c => c.id === selectedClientId)?.name}
-                  </span>
-                )}
-              </h3>
+        <CardContent className="flex-1 overflow-hidden p-6">
+          <TabsContent value="folders" className="h-full flex flex-col space-y-4 mt-0">
+            <div className="flex justify-between">
+              <DocumentSearchFilter
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onFilterChange={setFilterType}
+                selectedFilter={filterType}
+              />
               
               <DocumentViewControls
-                displayMode={displayMode}
-                setDisplayMode={setDisplayMode}
+                isGridView={isGridView}
+                setIsGridView={setIsGridView}
               />
             </div>
             
-            <DocumentViewPanel
-              documents={filteredDocuments}
-              displayMode={displayMode}
-              selectedDocumentId={selectedDocumentId}
-              onDocumentSelect={handleDocumentSelect}
+            <div className="flex-1 flex gap-4 h-[calc(100%-3rem)]">
+              <div className="w-1/3 border rounded-md overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="p-2">
+                    <FolderList
+                      folders={filteredFolders}
+                      documents={documents}
+                      onFolderSelect={handleFolderSelect}
+                      onDocumentSelect={handleDocumentSelect}
+                      onDocumentOpen={onDocumentOpen}
+                      selectedFolderId={selectedFolderId}
+                      expandedFolders={expandedFolders}
+                      toggleFolder={toggleFolder}
+                      handleDragStart={handleDragStart}
+                      handleDragOver={handleDragOver}
+                      handleDragLeave={handleDragLeave}
+                      handleDrop={handleDrop}
+                      dragOverFolder={dragOverFolder}
+                    />
+                  </div>
+                </ScrollArea>
+              </div>
+              
+              <div className="w-2/3 rounded-md">
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <DocumentViewPanel
+                      documents={filteredDocuments}
+                      isGridView={isGridView}
+                      onDocumentSelect={handleDocumentSelect}
+                      onDocumentOpen={onDocumentOpen}
+                      folderPath={folderPath}
+                      selectedDocumentId={selectedDocumentId}
+                    />
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="clients" className="h-full mt-0">
+            <ClientTab 
+              clients={clients || []} 
+              documents={documents}
+              onClientSelect={onClientSelect}
               onDocumentOpen={onDocumentOpen}
             />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </TabsContent>
+        </CardContent>
+      </Tabs>
+    </Card>
   );
 };

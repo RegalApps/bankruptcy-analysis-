@@ -18,15 +18,19 @@ export interface Document {
   type?: string;
   url?: string;
   updated_at: string;
+  created_at: string;  // Added missing property
   status?: string;
   metadata?: Record<string, any>;
   parent_folder_id?: string;
+  is_folder?: boolean;  // Added missing property
+  folder_type?: string; // Added missing property
 }
 
 // Props for the ClientViewer component
 export interface ClientViewerProps {
   clientId: string;
   onBack: () => void;
+  onDocumentOpen?: (documentId: string) => void; // Added optional property
 }
 
 // Additional interface types as needed
