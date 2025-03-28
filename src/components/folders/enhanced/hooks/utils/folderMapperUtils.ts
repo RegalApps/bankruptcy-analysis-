@@ -19,8 +19,9 @@ export const mapDocumentsToFolderStructure = (documents: Document[]): FolderStru
       is_folder: true,
       type: determineFolderType(doc),
       level: calculateFolderLevel(doc, documents),
-      metadata: doc.metadata || {},
-      children: []
+      children: [],
+      isExpanded: false,
+      metadata: doc.metadata || {}
     }));
 };
 
@@ -90,7 +91,7 @@ const calculateFolderLevel = (folder: Document, allFolders: Document[]): number 
 /**
  * Determine folder type from Document properties
  */
-const determineFolderType = (folder: Document): 'client' | 'form' | 'financial' | 'general' => {
+export const determineFolderType = (folder: Document): 'client' | 'form' | 'financial' | 'general' => {
   if (folder.folder_type === 'client') return 'client';
   if (folder.folder_type?.includes('Form') || folder.folder_type?.includes('form')) return 'form';
   if (folder.folder_type?.includes('Financial') || 

@@ -1,7 +1,7 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
+import AppSimple from './AppSimple'
 import './index.css'
 
 const root = document.getElementById('root')
@@ -9,6 +9,6 @@ if (!root) throw new Error('Root element not found')
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <App />
+    <AppSimple />
   </React.StrictMode>
 )
