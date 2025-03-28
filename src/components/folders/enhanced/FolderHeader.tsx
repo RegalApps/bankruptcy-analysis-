@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, FolderPlus, Users, Settings } from "lucide-react";
 import { FolderActionDropdown } from "./components/FolderActionDropdown";
@@ -24,20 +25,15 @@ export const FolderHeader = ({
 }: FolderHeaderProps) => {
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
 
-  const canCreateFolder = useMemo(() => {
-    return hasWriteAccess && ['admin', 'manager', 'user'].includes(userRole);
-  }, [hasWriteAccess, userRole]);
-
-  const canManagePermissions = useMemo(() => {
-    return userRole === 'admin' || userRole === 'manager';
-  }, [userRole]);
+  const canCreateFolder = ['admin', 'manager', 'user'].includes(userRole);
+  const canManagePermissions = userRole === 'admin' || userRole === 'manager';
 
   return (
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-2xl font-bold">Document Folders</h2>
       
       <div className="flex items-center gap-2">
-        {canCreateFolder && (
+        {hasWriteAccess && canCreateFolder && (
           <>
             <Button 
               variant="outline" 

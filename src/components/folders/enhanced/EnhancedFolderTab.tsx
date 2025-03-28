@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { Document } from "@/components/DocumentList/types";
 import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
@@ -70,6 +71,16 @@ export const EnhancedFolderTab = ({
     handleItemSelect(documentId, "file");
   }, [handleItemSelect]);
 
+  const handleCreateFolder = () => {
+    console.log("Create folder");
+    // Implementation would go here in a real app
+  };
+
+  const handleCreateDocument = () => {
+    console.log("Create document");
+    // Implementation would go here in a real app
+  };
+
   // Handle showing loading state
   if (isLoading) {
     return <LoadingState />;
@@ -82,7 +93,14 @@ export const EnhancedFolderTab = ({
 
   return (
     <div className="flex flex-col h-full">
-      <FolderHeader />
+      <FolderHeader 
+        onCreateFolder={handleCreateFolder}
+        onCreateDocument={handleCreateDocument}
+        selectedFolderId={selectedFolderId}
+        hasWriteAccess={true}
+        userRole="admin"
+        onRefresh={onRefresh}
+      />
       
       {showRecommendation && recommendation && (
         <FolderRecommendation

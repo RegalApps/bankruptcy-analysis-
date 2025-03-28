@@ -1,69 +1,50 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Folder, Check, X, AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { folderService } from "@/services/folderService";
-import { FolderAIRecommendation } from "@/types/folders";
+import { toast } from "sonner";
+import { FolderRecommendation as FolderRecommendationType } from "@/types/folders";
 
 interface FolderRecommendationProps {
-  recommendation: FolderAIRecommendation;
+  recommendation: FolderRecommendationType;
   onDismiss: () => void;
-  onMove: () => void;
+  onMoveToFolder: (documentId: string, folderId: string, folderPath: string) => Promise<void>;
+  setShowRecommendation: (show: boolean) => void;
 }
 
 export const FolderRecommendation = ({
   recommendation,
   onDismiss,
-  onMove
+  onMoveToFolder,
+  setShowRecommendation
 }: FolderRecommendationProps) => {
-  const { toast } = useToast();
   const [isMoving, setIsMoving] = useState(false);
 
   const handleMoveDocument = async () => {
     setIsMoving(true);
     try {
       if (!recommendation) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No recommendation available"
-        });
+        toast.error("No recommendation available");
         return;
       }
 
-      const success = await folderService.moveDocumentToFolder(
-        recommendation.documents[0],
-        recommendation.suggestedFolderId
+      await onMoveToFolder(
+        recommendation.documentId,
+        recommendation.suggestedFolderId,
+        recommendation.folderPath.join('/')
       );
-
-      if (success) {
-        toast({
-          title: "Success",
-          description: "Document moved successfully"
-        });
-        onMove();
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to move document"
-        });
-      }
+      toast.success("Document moved successfully");
     } catch (error) {
       console.error("Error moving document:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to move document"
-      });
+      toast.error("Failed to move document");
     } finally {
       setIsMoving(false);
     }
   };
 
   return (
-    <Card className="w-full bg-amber-50 border-amber-200">
+    <Card className="w-full bg-amber-50 border-amber-200 mb-4">
       <CardContent className="p-3 space-y-2">
         <div className="flex items-center space-x-2 text-sm">
           <AlertCircle className="h-4 w-4 text-amber-500" />
@@ -72,9 +53,9 @@ export const FolderRecommendation = ({
           </p>
         </div>
         <p className="text-sm text-gray-700">
-          Move this document to: 
-          <span className="font-semibold">
-            {recommendation?.suggestedPath?.join(' / ')}
+          Move "{recommendation.documentTitle}" to: 
+          <span className="font-semibold ml-1">
+            {recommendation.folderPath.join(' / ')}
           </span>
         </p>
         <div className="flex justify-end space-x-2">
