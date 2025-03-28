@@ -32,24 +32,29 @@ export const EnhancedFolderTab = ({
   const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false);
   const [showClientView, setShowClientView] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
+  // Get drag-and-drop functionality
   const {
     isDragging,
     handleDragStart,
     handleDragEnd,
     handleDragOver,
+    handleDragLeave,
     handleDrop
   } = useFolderDragAndDrop();
 
+  // Get folder management functionality
   const {
     folderPath,
     selectedFolder,
     handleFolderSelect,
     handleCreateFolder,
-    handleDeleteFolder,
-    handleRenameFolder
+    handleRenameFolder,
+    handleDeleteFolder
   } = useFolderActions(documents);
 
+  // Get folder filtering and expansion functionality
   const {
     visibleFolders,
     filteredDocuments,
@@ -102,6 +107,8 @@ export const EnhancedFolderTab = ({
         <DocumentSearchFilter 
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          onFilterChange={setSelectedFilter}
+          selectedFilter={selectedFilter}
           clients={clients}
           onClientSelect={handleClientClick}
         />

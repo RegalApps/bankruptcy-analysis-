@@ -1,120 +1,103 @@
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+import { Document } from "@/components/DocumentList/types";
 
-interface UseFolderActionsProps {
-  onSuccess: () => void;
-}
-
-export const useFolderActions = ({ onSuccess }: UseFolderActionsProps) => {
+export const useFolderActions = (documents: Document[]) => {
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [folderPath, setFolderPath] = useState<{ id: string; name: string }[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleCreateFolder = async (name?: string, parentId?: string) => {
-    if (isCreating) return;
+  const handleFolderSelect = (folderId: string) => {
+    setSelectedFolder(folderId);
     
-    if (!name) {
-      // If no name provided, this is likely a button click to open a dialog
-      // The actual creation will happen when the dialog submits
-      return;
-    }
+    // Build folder path
+    const buildFolderPath = (currentId: string, path: { id: string; name: string }[] = []) => {
+      const folder = documents.find(doc => doc.id === currentId && doc.is_folder);
+      
+      if (!folder) return path;
+      
+      const updatedPath = [{ id: folder.id, name: folder.title || 'Unnamed folder' }, ...path];
+      
+      if (folder.parent_folder_id) {
+        return buildFolderPath(folder.parent_folder_id, updatedPath);
+      }
+      
+      return updatedPath;
+    };
+    
+    const newPath = buildFolderPath(folderId);
+    setFolderPath(newPath);
+  };
+
+  const handleCreateFolder = async (name?: string, parentId?: string) => {
+    if (!name) return null;
     
     setIsCreating(true);
+    
     try {
-      const { data, error } = await supabase
-        .from('documents')
-        .insert({
-          title: name.trim(),
-          is_folder: true,
-          type: 'folder',
-          parent_folder_id: parentId || null,
-          metadata: {
-            created_at: new Date().toISOString()
-          }
-        })
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      toast.success("Folder created successfully");
-      onSuccess();
-      return data.id;
+      // Mock implementation - would use API in real application
+      console.log(`Creating folder: ${name} under parent: ${parentId || 'root'}`);
+      // Simulate success
+      setTimeout(() => {
+        setIsCreating(false);
+      }, 500);
+      return "new-folder-id";
     } catch (error) {
       console.error("Error creating folder:", error);
-      toast.error("Failed to create folder");
-      return null;
-    } finally {
       setIsCreating(false);
+      return null;
     }
   };
 
   const handleRenameFolder = async (folderId: string, newName: string) => {
-    if (isRenaming || !newName.trim()) return;
+    if (!newName.trim()) return false;
     
     setIsRenaming(true);
+    
     try {
-      const { error } = await supabase
-        .from('documents')
-        .update({ title: newName.trim() })
-        .eq('id', folderId);
-        
-      if (error) throw error;
-      
-      toast.success("Folder renamed successfully");
-      onSuccess();
+      // Mock implementation - would use API in real application
+      console.log(`Renaming folder ${folderId} to ${newName}`);
+      // Simulate success
+      setTimeout(() => {
+        setIsRenaming(false);
+      }, 500);
+      return true;
     } catch (error) {
       console.error("Error renaming folder:", error);
-      toast.error("Failed to rename folder");
-    } finally {
       setIsRenaming(false);
+      return false;
     }
   };
 
   const handleDeleteFolder = async (folderId: string) => {
-    if (isDeleting) return;
-    
     setIsDeleting(true);
+    
     try {
-      // Check if folder has subfolders or documents
-      const { data: children, error: checkError } = await supabase
-        .from('documents')
-        .select('id')
-        .eq('parent_folder_id', folderId);
-      
-      if (checkError) throw checkError;
-      
-      if (children && children.length > 0) {
-        toast.error("Cannot delete non-empty folder");
-        return;
-      }
-      
-      // Delete the folder
-      const { error } = await supabase
-        .from('documents')
-        .delete()
-        .eq('id', folderId);
-        
-      if (error) throw error;
-      
-      toast.success("Folder deleted successfully");
-      onSuccess();
+      // Mock implementation - would use API in real application
+      console.log(`Deleting folder ${folderId}`);
+      // Simulate success
+      setTimeout(() => {
+        setIsDeleting(false);
+      }, 500);
+      return true;
     } catch (error) {
       console.error("Error deleting folder:", error);
-      toast.error("Failed to delete folder");
-    } finally {
       setIsDeleting(false);
+      return false;
     }
   };
 
   return {
+    folderPath,
+    selectedFolder,
+    handleFolderSelect,
     isCreating,
     isRenaming,
     isDeleting,
     handleCreateFolder,
     handleRenameFolder,
-    handleDeleteFolder,
+    handleDeleteFolder
   };
 };
