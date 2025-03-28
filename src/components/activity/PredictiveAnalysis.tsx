@@ -5,11 +5,12 @@ import { usePredictiveData } from "./hooks/usePredictiveData";
 import { ForecastChart } from "./components/ForecastChart";
 import { PredictiveHeader } from "./components/PredictiveHeader";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EnhancedRiskAssessment } from "./components/EnhancedRiskAssessment";
 import { EnhancedOpportunityPanel } from "./components/EnhancedOpportunityPanel";
 import { AnalysisAlerts } from "./components/AnalysisAlerts";
+import { ChartBarIcon, TrendingUpIcon, BarChart } from "lucide-react";
 
 interface PredictiveAnalysisProps {
   selectedClient: Client | null;
@@ -28,6 +29,9 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
     lastRefreshed,
     refetch
   } = usePredictiveData(selectedClient);
+
+  // Memoize metrics to prevent unnecessary re-renders
+  const memoizedMetrics = useMemo(() => metrics, [metrics]);
 
   const handleRefresh = () => {
     refetch();
@@ -64,9 +68,18 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
             <TabsList>
-              <TabsTrigger value="forecast">Financial Forecast</TabsTrigger>
-              <TabsTrigger value="risk">Risk Assessment</TabsTrigger>
-              <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
+              <TabsTrigger value="forecast" className="flex items-center gap-1">
+                <BarChart className="h-4 w-4" />
+                Financial Forecast
+              </TabsTrigger>
+              <TabsTrigger value="risk" className="flex items-center gap-1">
+                <TrendingUpIcon className="h-4 w-4" />
+                Risk Assessment
+              </TabsTrigger>
+              <TabsTrigger value="opportunities" className="flex items-center gap-1">
+                <ChartBarIcon className="h-4 w-4" />
+                Opportunities
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="forecast" className="pt-4">
@@ -74,6 +87,7 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
                 <Skeleton className="h-[350px] w-full rounded-md" />
               ) : (
                 <ForecastChart
+                  key={`forecast-${refreshTrigger}`}
                   processedData={processedData}
                   categoryAnalysis={categoryAnalysis}
                   isLoading={isLoading}
@@ -86,6 +100,7 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
                 <Skeleton className="h-[450px] w-full rounded-md" />
               ) : (
                 <EnhancedRiskAssessment 
+                  key={`risk-${refreshTrigger}`}
                   riskMetrics={advancedRiskMetrics}
                   isLoading={isLoading}
                 />
@@ -97,6 +112,7 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
                 <Skeleton className="h-[450px] w-full rounded-md" />
               ) : (
                 <EnhancedOpportunityPanel 
+                  key={`opportunities-${refreshTrigger}`}
                   riskMetrics={advancedRiskMetrics}
                 />
               )}
@@ -106,38 +122,51 @@ export const PredictiveAnalysis = ({ selectedClient }: PredictiveAnalysisProps) 
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-base font-medium mb-2">Risk Assessment</h3>
-            <div className="text-2xl font-bold">{metrics?.riskLevel || "Low Risk"}</div>
-            <p className="text-sm text-muted-foreground mt-1">Based on cash flow stability</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-base font-medium mb-2">Current Surplus</h3>
-            <div className="text-2xl font-bold">${metrics?.currentSurplus || "0.00"}</div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {metrics?.surplusPercentage ? `${metrics.surplusPercentage}% of income` : "No data"}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-base font-medium mb-2">Seasonality Score</h3>
-            <div className="text-2xl font-bold">{metrics?.seasonalityScore || "0.0"}</div>
-            <p className="text-sm text-muted-foreground mt-1">Variance in monthly income</p>
-          </CardContent>
-        </Card>
+        {isLoading ? (
+          <>
+            <Skeleton className="h-32 w-full rounded-md" />
+            <Skeleton className="h-32 w-full rounded-md" />
+            <Skeleton className="h-32 w-full rounded-md" />
+          </>
+        ) : (
+          <>
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-base font-medium mb-2">Risk Assessment</h3>
+                <div className="text-2xl font-bold">{memoizedMetrics?.riskLevel || "Low Risk"}</div>
+                <p className="text-sm text-muted-foreground mt-1">Based on cash flow stability</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-base font-medium mb-2">Current Surplus</h3>
+                <div className="text-2xl font-bold">${memoizedMetrics?.currentSurplus || "0.00"}</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {memoizedMetrics?.surplusPercentage ? `${memoizedMetrics.surplusPercentage}% of income` : "No data"}
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-base font-medium mb-2">Seasonality Score</h3>
+                <div className="text-2xl font-bold">{memoizedMetrics?.seasonalityScore || "0.0"}</div>
+                <p className="text-sm text-muted-foreground mt-1">Variance in monthly income</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
       
-      {/* Risk & Opportunity Alerts */}
-      <AnalysisAlerts 
-        riskLevel={metrics?.riskLevel || "Low"}
-        seasonalityScore={metrics?.seasonalityScore ? metrics.seasonalityScore.toString() : null}
-      />
+      {/* Only render alerts when data is loaded */}
+      {!isLoading && (
+        <AnalysisAlerts 
+          key={`alerts-${refreshTrigger}`}
+          riskLevel={memoizedMetrics?.riskLevel || "Low"}
+          seasonalityScore={memoizedMetrics?.seasonalityScore ? memoizedMetrics.seasonalityScore.toString() : null}
+        />
+      )}
     </div>
   );
 };
