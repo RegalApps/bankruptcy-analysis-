@@ -5,6 +5,8 @@ export interface Client {
   email?: string;
   phone?: string;
   status?: string;
+  address?: string;
+  notes?: string;
   last_interaction?: string;
   engagement_score?: number;
 }

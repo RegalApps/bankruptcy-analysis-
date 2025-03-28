@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Client, Document } from "../types";
 import { toast } from "sonner";

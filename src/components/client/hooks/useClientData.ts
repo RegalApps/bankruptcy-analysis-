@@ -6,6 +6,7 @@ import { Client, Document } from "../types";
 
 export const useClientData = (clientId: string, onBack: () => void) => {
   const [error, setError] = useState<Error | null>(null);
+  const [lastActivityDate, setLastActivityDate] = useState<string | undefined>(undefined);
   
   const { 
     client, 
@@ -24,6 +25,7 @@ export const useClientData = (clientId: string, onBack: () => void) => {
     isLoading,
     activeTab,
     setActiveTab,
-    error
+    error,
+    lastActivityDate
   };
 };
