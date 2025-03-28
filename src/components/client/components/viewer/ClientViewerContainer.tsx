@@ -1,95 +1,73 @@
 
-import { useEffect, useState } from "react";
-import { useClientData } from "../../hooks/useClientData";
+import { useState } from "react";
 import { ClientHeader } from "./ClientHeader";
-import { ClientTabs } from "./ClientTabs";
-import { ClientErrorState } from "../ClientErrorState";
-import { ClientViewerProps } from "../../types";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useIsTablet } from "@/hooks/use-tablet";
 import { DesktopView } from "./DesktopView";
 import { MobileTabletView } from "./MobileTabletView";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Client, Document, ClientViewerProps } from "../../types";
+import { useClientData } from "../../hooks/useClientData";
 
-export const ClientViewerContainer = ({ 
-  clientId, 
-  onBack,
-  onDocumentOpen,
-  onError
-}: ClientViewerProps) => {
-  const [isMounted, setIsMounted] = useState(false);
+export const ClientViewerContainer = ({ clientId, onBack }: ClientViewerProps) => {
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const isMobile = useMediaQuery("(max-width: 640px)");
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-  const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
   
+  // Use the hook to fetch client data
   const { 
     client, 
     documents, 
     isLoading, 
+    error, 
     activeTab, 
     setActiveTab,
-    error,
-    lastActivityDate
+    lastActivityDate 
   } = useClientData(clientId, onBack);
-
-  // Handle document selection
+  
+  const selectedDocument = selectedDocumentId 
+    ? documents.find(doc => doc.id === selectedDocumentId) || null
+    : null;
+  
+  // Handle document opening (e.g., in a new tab or modal)
+  const handleDocumentOpen = (documentId: string) => {
+    window.open(`/documents/${documentId}`, '_blank');
+  };
+  
+  // Handle document selection (for preview)
   const handleDocumentSelect = (documentId: string) => {
     setSelectedDocumentId(documentId);
   };
   
-  // Find the selected document for preview
-  const selectedDocument = documents.find(doc => doc.id === selectedDocumentId) || null;
-
-  // If there's an error, call the error callback
-  useEffect(() => {
-    if (error && onError) {
-      onError();
-    }
-  }, [error, onError]);
-
-  // Prevent flickering by delaying the mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsMounted(true);
-    }, 100);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (!isMounted || isLoading) {
+  if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="flex items-center justify-center h-screen">
         <LoadingSpinner size="large" />
       </div>
     );
   }
-
-  if (error) {
-    return <ClientErrorState onBack={onBack} error={error} />;
+  
+  if (error || !client) {
+    return (
+      <div className="p-6 text-center">
+        <h3 className="text-lg font-medium mb-2">Error Loading Client</h3>
+        <p className="text-muted-foreground">
+          {error || "Client information could not be loaded."}
+        </p>
+        <button 
+          className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
+          onClick={onBack}
+        >
+          Go Back
+        </button>
+      </div>
+    );
   }
-
-  if (!client) {
-    return <ClientErrorState onBack={onBack} message="Client information not found" />;
-  }
-
+  
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="flex flex-col h-full bg-background">
       <ClientHeader client={client} onBack={onBack} />
       
-      {(isMobile || isTablet) ? (
-        <MobileTabletView 
-          client={client}
-          documents={documents}
-          selectedDocument={selectedDocument}
-          selectedDocumentId={selectedDocumentId}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onDocumentOpen={onDocumentOpen || (() => {})}
-          onDocumentSelect={handleDocumentSelect}
-          lastActivityDate={lastActivityDate}
-          isMobile={isMobile}
-        />
-      ) : (
+      {isDesktop ? (
         <DesktopView 
           client={client}
           documents={documents}
@@ -97,9 +75,22 @@ export const ClientViewerContainer = ({
           selectedDocumentId={selectedDocumentId}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          onDocumentOpen={onDocumentOpen || (() => {})}
+          onDocumentOpen={handleDocumentOpen}
           onDocumentSelect={handleDocumentSelect}
           lastActivityDate={lastActivityDate}
+        />
+      ) : (
+        <MobileTabletView 
+          client={client}
+          documents={documents}
+          selectedDocument={selectedDocument}
+          selectedDocumentId={selectedDocumentId}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onDocumentOpen={handleDocumentOpen}
+          onDocumentSelect={handleDocumentSelect}
+          lastActivityDate={lastActivityDate}
+          isMobile={isMobile}
         />
       )}
     </div>

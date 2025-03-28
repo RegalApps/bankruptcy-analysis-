@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
@@ -13,6 +13,7 @@ import { activateDebugMode, isDebugMode, debugTiming } from "@/utils/debugMode";
 import { Button } from "@/components/ui/button";
 import { Bug } from "lucide-react";
 import { toast } from "sonner";
+import { ClientViewer } from "@/components/client/ClientViewer";
 
 const DocumentsPage = () => {
   const navigate = useNavigate();
@@ -27,8 +28,11 @@ const DocumentsPage = () => {
     handleItemSelect,
     handleOpenDocument,
     toggleAccess,
-    handleClientSelect
+    handleClientSelect,
+    clients
   } = useDocumentsPage();
+  
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   useEffect(() => {
     // Measure and show performance metrics when the page loads
@@ -73,6 +77,34 @@ const DocumentsPage = () => {
   const handleDebugButtonClick = () => {
     navigate('?debug=form47');
   };
+  
+  // Handle client selection
+  const handleSelectClient = (clientId: string) => {
+    setSelectedClientId(clientId);
+  };
+  
+  // Handle back button from client viewer
+  const handleBackFromClient = () => {
+    setSelectedClientId(null);
+  };
+
+  // Show client viewer if a client is selected
+  if (selectedClientId) {
+    return (
+      <div className="flex h-screen overflow-hidden bg-background">
+        <MainSidebar />
+        <div className="flex-1 flex flex-col pl-64">
+          <MainHeader />
+          <main className="flex-1 overflow-y-auto">
+            <ClientViewer
+              clientId={selectedClientId}
+              onBack={handleBackFromClient}
+            />
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -123,6 +155,8 @@ const DocumentsPage = () => {
             documents={documents ?? []}
             onDocumentOpen={handleOpenDocument}
             onRefresh={refetch}
+            onClientSelect={handleSelectClient}
+            clients={clients}
           />
         </main>
       </div>

@@ -1,201 +1,264 @@
 
-import { useState } from "react";
-import { FolderNavigation } from "./FolderNavigation";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect, useMemo } from "react";
 import { Document } from "@/components/DocumentList/types";
+import { FolderStructure } from "@/types/folders";
 import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
-import { useFolderPermissions } from "./hooks/useFolderPermissions";
-import { useFolderRecommendations } from "./hooks/useFolderRecommendations";
-import { FolderOperations } from "./components/FolderOperations";
-import { FolderManagementTools } from "./FolderManagementTools";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Folder, FileQuestion } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
-import { ClientTab } from "./components/ClientTab";
-import { UncategorizedTab } from "./components/UncategorizedTab";
-import { FolderRecommendationSection } from "./components/FolderRecommendationSection";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Button } from "@/components/ui/button";
+import { DocumentViewControls } from "./components/DocumentViewControls";
+import { DocumentSearchFilter } from "./components/DocumentSearchFilter";
+import { DocumentTree } from "./components/DocumentTree";
+import { DocumentViewPanel } from "./components/DocumentViewPanel";
+import { FolderTools } from "./components/FolderTools";
+import { FileText, FolderOpen, UsersRound } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
   onDocumentOpen: (documentId: string) => void;
-  onRefresh: () => void;
+  onRefresh?: () => void;
+  onClientSelect?: (clientId: string) => void;
+  clients?: { id: string; name: string }[];
 }
 
-export const EnhancedFolderTab = ({ 
-  documents, 
+export const EnhancedFolderTab = ({
+  documents,
   onDocumentOpen,
-  onRefresh
+  onRefresh,
+  onClientSelect,
+  clients = []
 }: EnhancedFolderTabProps) => {
+  const { folders } = useCreateFolderStructure(documents);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | undefined>();
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<string>("folders");
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>();
-  const [viewingClientId, setViewingClientId] = useState<string | undefined>();
-  const [isClientLoading, setIsClientLoading] = useState<boolean>(false);
-  const { toast } = useToast();
-  
-  const { folders, isLoading: foldersLoading } = useCreateFolderStructure(documents);
-  const { userRole, folderPermissions } = useFolderPermissions();
-  const { 
-    showRecommendation, 
-    recommendation, 
-    setShowRecommendation,
-    dismissRecommendation
-  } = useFolderRecommendations(documents, folders);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | undefined>();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const [displayMode, setDisplayMode] = useState<"list" | "grid">("list");
+  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
 
+  // Reset selection when documents change
+  useEffect(() => {
+    if (documents.length === 0) {
+      setSelectedFolderId(undefined);
+      setSelectedDocumentId(undefined);
+    }
+  }, [documents]);
+
+  // Filter folders and documents based on search term
+  const filteredFolders = useMemo(() => {
+    if (!searchTerm) return folders;
+    
+    return folders.filter(folder => 
+      folder.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [folders, searchTerm]);
+
+  // Filter documents based on selected folder or search term
+  const filteredDocuments = useMemo(() => {
+    let filtered = documents;
+    
+    if (searchTerm) {
+      filtered = filtered.filter(doc => 
+        doc.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    if (selectedFolderId) {
+      filtered = filtered.filter(doc => 
+        doc.parent_folder_id === selectedFolderId
+      );
+    } else if (selectedClientId) {
+      filtered = filtered.filter(doc => 
+        doc.metadata?.client_id === selectedClientId
+      );
+    }
+    
+    return filtered;
+  }, [documents, searchTerm, selectedFolderId, selectedClientId]);
+
+  // Identify Form 47 documents
+  const form47Documents = useMemo(() => {
+    return documents.filter(doc => 
+      doc.type === 'form-47' || 
+      (doc.title && doc.title.toLowerCase().includes('form 47')) ||
+      (doc.title && doc.title.toLowerCase().includes('consumer proposal'))
+    );
+  }, [documents]);
+
+  // Toggle folder expanded state
+  const toggleFolder = (folderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedFolders(prev => ({
+      ...prev,
+      [folderId]: !prev[folderId]
+    }));
+  };
+
+  // Handle folder selection
   const handleFolderSelect = (folderId: string) => {
-    setSelectedFolderId(folderId);
+    setSelectedFolderId(prev => prev === folderId ? undefined : folderId);
+    setSelectedClientId(undefined);
     setSelectedDocumentId(undefined);
   };
 
+  // Handle document selection
   const handleDocumentSelect = (documentId: string) => {
-    setSelectedDocumentId(documentId);
+    setSelectedDocumentId(prev => prev === documentId ? undefined : documentId);
   };
 
+  // Handle client selection
   const handleClientSelect = (clientId: string) => {
-    setSelectedClientId(clientId);
+    setSelectedClientId(prev => prev === clientId ? undefined : clientId);
     setSelectedFolderId(undefined);
     setSelectedDocumentId(undefined);
-    setActiveTab("folders");
-  };
-
-  const handleClientViewerAccess = async (clientId: string) => {
-    try {
-      console.log("Accessing client viewer for ID:", clientId);
-      setIsClientLoading(true);
-      
-      await supabase
-        .from('document_access_history')
-        .insert({
-          document_id: clientId,
-          accessed_at: new Date().toISOString(),
-          access_source: 'client_viewer'
-        });
-      
-      // Small delay to prevent UI glitches during transition
-      setTimeout(() => {
-        setViewingClientId(clientId);
-        setSelectedFolderId(undefined);
-        setSelectedDocumentId(undefined);
-        setActiveTab("folders");
-        setIsClientLoading(false);
-      }, 100);
-    } catch (error) {
-      console.error('Error logging client access:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not access client information"
-      });
-      
-      // Even on error, still show the client viewer
-      setTimeout(() => {
-        setViewingClientId(clientId);
-        setIsClientLoading(false);
-      }, 100);
+    
+    // If a client detail viewer callback is provided, use it
+    if (clientId && onClientSelect) {
+      onClientSelect(clientId);
     }
   };
 
-  const handleBackFromClient = () => {
-    setViewingClientId(undefined);
+  // Handle drag and drop
+  const handleDragStart = (id: string, type: 'folder' | 'document') => {
+    const event = new DragEvent('dragstart');
+    (event as any).dataTransfer = {
+      setData: jest.fn(),
+      effectAllowed: 'move'
+    };
+    (event as any).dataTransfer.setData('text/plain', JSON.stringify({ id, type }));
   };
 
-  const handleAcceptRecommendation = async () => {
-    setShowRecommendation(false);
-    dismissRecommendation();
+  const handleDragOver = (e: React.DragEvent, folderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolder(folderId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverFolder(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetFolderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolder(null);
     
-    onRefresh();
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      console.log('Dropped', data, 'into folder', targetFolderId);
+      
+      // In a real app, you would update the backend here
+      // For now, just show a message
+      // toast.success(`Moved ${data.type} to folder`);
+    } catch (err) {
+      console.error('Invalid drop data', err);
+    }
   };
-
-  if (isClientLoading) {
-    return (
-      <Card className="h-full">
-        <CardContent className="p-4 h-full flex items-center justify-center">
-          <LoadingSpinner size="large" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (viewingClientId) {
-    return (
-      <ClientTab 
-        clientId={viewingClientId} 
-        onBack={handleBackFromClient}
-        onDocumentOpen={onDocumentOpen}
-      />
-    );
-  }
 
   return (
-    <Card className="h-full">
-      <CardContent className="p-4 h-full">
-        <FolderManagementTools 
-          documents={documents}
-          onRefresh={onRefresh}
-          selectedFolderId={selectedFolderId}
-        />
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Left sidebar - folders and clients */}
+      <div className="col-span-1">
+        {/* Client List */}
+        {clients.length > 0 && (
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              <h3 className="text-lg font-medium mb-3 flex items-center">
+                <UsersRound className="h-5 w-5 mr-2 text-primary" />
+                Clients
+              </h3>
+              <div className="space-y-2">
+                {clients.map(client => (
+                  <div
+                    key={client.id}
+                    className={`
+                      p-2 rounded cursor-pointer flex items-center
+                      ${selectedClientId === client.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50'}
+                    `}
+                    onClick={() => handleClientSelect(client.id)}
+                  >
+                    <UsersRound className="h-4 w-4 mr-2" />
+                    <span className="truncate">{client.name}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
-        <FolderRecommendationSection
-          showRecommendation={showRecommendation}
-          recommendation={recommendation}
-          onAcceptRecommendation={handleAcceptRecommendation}
-          onDismissRecommendation={dismissRecommendation}
-        />
-        
-        <FolderOperations
-          showRecommendation={showRecommendation}
-          recommendation={recommendation}
-          onAcceptRecommendation={handleAcceptRecommendation}
-          onDismissRecommendation={dismissRecommendation}
-          onRefresh={onRefresh}
-          setExpandedFolders={setExpandedFolders}
-        />
-        
-        <Tabs 
-          defaultValue="folders" 
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="mt-4"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="folders" className="flex items-center">
-              <Folder className="mr-2 h-4 w-4" />
-              Folders
-            </TabsTrigger>
-            <TabsTrigger value="uncategorized" className="flex items-center">
-              <FileQuestion className="mr-2 h-4 w-4" />
-              Uncategorized
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="folders" className="mt-4 space-y-4">
-            <FolderNavigation 
-              folders={folders}
-              documents={documents}
-              onFolderSelect={handleFolderSelect}
-              onDocumentSelect={handleDocumentSelect}
-              onDocumentOpen={onDocumentOpen}
-              onClientSelect={handleClientSelect}
-              onClientViewerAccess={handleClientViewerAccess}
+        {/* Folders */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-medium flex items-center">
+                <FolderOpen className="h-5 w-5 mr-2 text-primary" />
+                Folders
+              </h3>
+              <FolderTools onRefresh={onRefresh} />
+            </div>
+            
+            <DocumentSearchFilter
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+            />
+            
+            <DocumentTree
+              filteredFolders={filteredFolders}
+              filteredDocuments={filteredDocuments}
+              form47Documents={form47Documents}
               selectedFolderId={selectedFolderId}
               selectedClientId={selectedClientId}
               expandedFolders={expandedFolders}
-              setExpandedFolders={setExpandedFolders}
+              dragOverFolder={dragOverFolder}
+              onFolderSelect={handleFolderSelect}
+              onDocumentSelect={handleDocumentSelect}
+              onDocumentOpen={onDocumentOpen}
+              toggleFolder={toggleFolder}
+              handleDragStart={handleDragStart}
+              handleDragOver={handleDragOver}
+              handleDragLeave={handleDragLeave}
+              handleDrop={handleDrop}
             />
-          </TabsContent>
-          
-          <TabsContent value="uncategorized" className="mt-4 space-y-4">
-            <UncategorizedTab 
-              documents={documents}
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Right content area - document grid/list */}
+      <div className="col-span-1 md:col-span-2 lg:col-span-3">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-primary" />
+                Documents
+                {selectedFolderId && (
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    in {folders.find(f => f.id === selectedFolderId)?.name}
+                  </span>
+                )}
+                {selectedClientId && (
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    for {clients.find(c => c.id === selectedClientId)?.name}
+                  </span>
+                )}
+              </h3>
+              
+              <DocumentViewControls
+                displayMode={displayMode}
+                setDisplayMode={setDisplayMode}
+              />
+            </div>
+            
+            <DocumentViewPanel
+              documents={filteredDocuments}
+              displayMode={displayMode}
+              selectedDocumentId={selectedDocumentId}
+              onDocumentSelect={handleDocumentSelect}
               onDocumentOpen={onDocumentOpen}
             />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };

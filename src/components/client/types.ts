@@ -1,32 +1,32 @@
 
+// Client data structure
 export interface Client {
   id: string;
   name: string;
   email?: string;
   phone?: string;
-  status?: string;
+  status: 'active' | 'inactive';
   address?: string;
   notes?: string;
-  last_interaction?: string;
-  engagement_score?: number;
+  // Add any other client fields needed
 }
 
+// Document data structure
 export interface Document {
   id: string;
   title: string;
-  type: string;
-  created_at: string;
+  type?: string;
+  url?: string;
   updated_at: string;
+  status?: string;
   metadata?: Record<string, any>;
   parent_folder_id?: string;
-  is_folder?: boolean;
-  folder_type?: string;
-  storage_path?: string; // Added this optional property
 }
 
+// Props for the ClientViewer component
 export interface ClientViewerProps {
   clientId: string;
   onBack: () => void;
-  onDocumentOpen: (documentId: string) => void;
-  onError?: () => void;
 }
+
+// Additional interface types as needed
