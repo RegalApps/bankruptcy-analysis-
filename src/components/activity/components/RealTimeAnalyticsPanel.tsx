@@ -7,7 +7,7 @@ import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react"
 
 interface RealTimeAnalyticsPanelProps {
   formData: IncomeExpenseData;
-  previousMonthData?: any; // Made optional with the ? operator
+  previousMonthData?: any; // Optional with the ? operator
   historicalData: any;
 }
 
@@ -109,7 +109,7 @@ export const RealTimeAnalyticsPanel = ({
   }
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardContent className="p-4 space-y-3">
         {/* Income Analysis */}
         <div className="space-y-2">
