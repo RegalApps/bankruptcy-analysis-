@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from "react";
 import { Document } from "@/components/DocumentList/types";
 import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
@@ -80,10 +81,14 @@ export const EnhancedFolderTab = ({
     // Implementation would go here in a real app
   };
 
+  // Fixed: Modified the function to properly handle the Promise<boolean> from moveDocumentToFolder
   const handleMoveDocument = async (documentId: string, folderId: string, folderPath: string): Promise<void> => {
     try {
-      await moveDocumentToFolder(documentId, folderId, folderPath);
-      // If you need the boolean result, handle it here, but don't return it
+      // Call moveDocumentToFolder but ignore its boolean return value
+      const success = await moveDocumentToFolder(documentId, folderId, folderPath);
+      // We can still use the boolean for logging if needed
+      console.log(`Document move ${success ? 'succeeded' : 'failed'}`);
+      // But we don't return anything (void)
     } catch (error) {
       console.error("Error moving document to folder:", error);
     }
@@ -114,7 +119,7 @@ export const EnhancedFolderTab = ({
         <FolderRecommendation
           recommendation={recommendation}
           onDismiss={dismissRecommendation}
-          onMoveToFolder={moveDocumentToFolder}
+          onMoveToFolder={handleMoveDocument}
           setShowRecommendation={setShowRecommendation}
         />
       )}
