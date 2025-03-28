@@ -106,17 +106,38 @@ export const EnhancedFolderTab = ({
   
   // Handle client selection for the main view
   const handleClientSelect = (clientId: string) => {
-    handleItemSelect(clientId, "client");
+    console.log("Selected client in main view:", clientId);
+    // Don't use handleItemSelect which expects "folder" or "file" type
+    // Instead, we'll manage selection state directly
+    setSelectedViewerClientId(null); // Reset viewer client when selecting in main view
+    
+    // Instead of setting selectedItemId directly, we now toggle the client viewer
+    if (clientId) {
+      setShowClientViewer(false); // Ensure we're in the main view initially
+      
+      // Use setTimeout to ensure state updates before selecting
+      setTimeout(() => {
+        // This will change the selection in the sidebar without causing type errors
+        const clientDoc = documents.find(d => d.metadata?.client_id === clientId);
+        if (clientDoc) {
+          handleItemSelect(clientDoc.id, "file");
+        } else {
+          console.log("Client document not found for ID:", clientId);
+        }
+      }, 0);
+    }
   };
   
   // Handle opening the client viewer
   const handleOpenClientViewer = (clientId: string) => {
+    console.log("Opening client viewer for:", clientId);
     setSelectedViewerClientId(clientId);
     setShowClientViewer(true);
   };
   
   // Handle back button from client viewer
   const handleClientViewerBack = () => {
+    console.log("Returning from client viewer");
     setShowClientViewer(false);
     setSelectedViewerClientId(null);
   };
@@ -133,6 +154,7 @@ export const EnhancedFolderTab = ({
   
   // Show client viewer when selected
   if (showClientViewer && selectedViewerClientId) {
+    console.log("Rendering ClientTab for client:", selectedViewerClientId);
     return (
       <ClientTab 
         clientId={selectedViewerClientId} 

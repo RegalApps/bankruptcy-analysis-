@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ClientViewer } from "@/components/client/ClientViewer";
 import { ClientNotFound } from "@/components/client/components/ClientNotFound";
 import { NoClientSelected } from "@/components/activity/components/NoClientSelected";
@@ -17,9 +17,19 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const [loadError, setLoadError] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
   const [retryId, setRetryId] = useState<string>('');
-  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
   const mountedRef = useRef<boolean>(true);
   const navigate = useNavigate();
+  
+  // Enhanced error handler with better logging
+  const handleError = useCallback(() => {
+    console.error(`ClientTab: Error loading client ID: ${clientId}`);
+    setLoadError(true);
+    
+    toast.error("Could not load client information", {
+      description: "There was a problem retrieving client data"
+    });
+  }, [clientId]);
   
   // Reset states when client ID changes to prevent UI glitches
   useEffect(() => {
@@ -31,6 +41,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     // Add a small delay to prevent flickering/glitching during transitions
     const timer = setTimeout(() => {
       if (mountedRef.current) {
+        console.log("ClientTab: Transition complete, rendering client view");
         setIsTransitioning(false);
       }
     }, 150);
@@ -43,17 +54,19 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      console.log("ClientTab: Component unmounting");
       mountedRef.current = false;
     };
   }, []);
   
+  // Special handling for Josh Hart client
   useEffect(() => {
     // If we get an error but the client ID contains "josh" or "hart", 
     // it's likely our form-47 client and we can try to simplify the ID
     if (loadError && 
         (clientId.toLowerCase().includes('josh') || clientId.toLowerCase().includes('hart')) && 
         retryCount < 1) {
-      console.log("Detected Josh Hart client with error, simplifying ID for retry");
+      console.log("ClientTab: Detected Josh Hart client with error, simplifying ID for retry");
       setRetryCount(prev => prev + 1);
       setRetryId('josh-hart');
       setLoadError(false);
@@ -65,10 +78,12 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const effectiveClientId = retryCount > 0 && retryId ? retryId : clientId;
   
   if (!effectiveClientId) {
+    console.log("ClientTab: No client ID provided");
     return <NoClientSelected />;
   }
   
   if (isTransitioning) {
+    console.log("ClientTab: Showing transition loading state");
     return (
       <div className="flex h-full items-center justify-center">
         <LoadingSpinner size="large" />
@@ -123,10 +138,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
       clientId={effectiveClientId} 
       onBack={onBack}
       onDocumentOpen={handleDocumentOpen}
-      onError={() => {
-        console.error("ClientViewer reported an error");
-        setLoadError(true);
-      }}
+      onError={handleError}
     />
   );
 };
