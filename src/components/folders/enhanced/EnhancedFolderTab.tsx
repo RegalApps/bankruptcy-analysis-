@@ -13,6 +13,9 @@ import { LoadingState } from "./components/LoadingState";
 import { useFolderSearch } from "./hooks/useFolderSearch";
 import { useFolderRecommendation } from "./hooks/useFolderRecommendation";
 import { FolderRecommendation } from "./FolderRecommendation";
+import { ClientSidebar } from "./components/ClientSidebar";
+import { ClientTab } from "./components/ClientTab";
+import { extractClientsFromDocuments } from "./hooks/utils/clientExtractionUtils";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
@@ -54,6 +57,13 @@ export const EnhancedFolderTab = ({
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const selectedFolderId = selectedItemId && folders.find(f => f.id === selectedItemId) ? selectedItemId : undefined;
   const selectedClientId = selectedItemId && documents.find(d => d.id === selectedItemId)?.metadata?.client_id;
+  
+  // New state for client viewer
+  const [showClientViewer, setShowClientViewer] = useState(false);
+  const [selectedViewerClientId, setSelectedViewerClientId] = useState<string | null>(null);
+  
+  // Extract clients from documents
+  const clients = extractClientsFromDocuments(documents);
 
   const toggleFolder = (folderId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -93,6 +103,23 @@ export const EnhancedFolderTab = ({
       console.error("Error moving document to folder:", error);
     }
   };
+  
+  // Handle client selection for the main view
+  const handleClientSelect = (clientId: string) => {
+    handleItemSelect(clientId, "client");
+  };
+  
+  // Handle opening the client viewer
+  const handleOpenClientViewer = (clientId: string) => {
+    setSelectedViewerClientId(clientId);
+    setShowClientViewer(true);
+  };
+  
+  // Handle back button from client viewer
+  const handleClientViewerBack = () => {
+    setShowClientViewer(false);
+    setSelectedViewerClientId(null);
+  };
 
   // Handle showing loading state
   if (isLoading) {
@@ -102,6 +129,17 @@ export const EnhancedFolderTab = ({
   // Handle showing empty state
   if (documents.length === 0) {
     return <EmptyState onRefresh={onRefresh} />;
+  }
+  
+  // Show client viewer when selected
+  if (showClientViewer && selectedViewerClientId) {
+    return (
+      <ClientTab 
+        clientId={selectedViewerClientId} 
+        onBack={handleClientViewerBack}
+        onDocumentOpen={onDocumentOpen}
+      />
+    );
   }
 
   return (
@@ -130,24 +168,37 @@ export const EnhancedFolderTab = ({
         filterCategory={filterCategory}
         setFilterCategory={setFilterCategory}
       />
-
-      <DocumentTree
-        filteredFolders={filteredFolders}
-        filteredDocuments={filteredDocuments}
-        form47Documents={form47Documents}
-        selectedFolderId={selectedFolderId}
-        selectedClientId={selectedClientId}
-        expandedFolders={expandedFolders}
-        dragOverFolder={dragOverFolder}
-        onFolderSelect={handleFolderSelect}
-        onDocumentSelect={handleDocumentSelect}
-        onDocumentOpen={onDocumentOpen}
-        toggleFolder={toggleFolder}
-        handleDragStart={handleDragStart}
-        handleDragOver={handleDragOver}
-        handleDragLeave={handleDragLeave}
-        handleDrop={handleDrop}
-      />
+      
+      <div className="flex flex-1 overflow-hidden">
+        {/* Client sidebar on the left */}
+        <ClientSidebar
+          clients={clients}
+          onClientSelect={handleClientSelect}
+          onClientViewerAccess={handleOpenClientViewer}
+          selectedClientId={selectedClientId}
+        />
+        
+        {/* Document tree in the main area */}
+        <div className="flex-1 overflow-auto">
+          <DocumentTree
+            filteredFolders={filteredFolders}
+            filteredDocuments={filteredDocuments}
+            form47Documents={form47Documents}
+            selectedFolderId={selectedFolderId}
+            selectedClientId={selectedClientId}
+            expandedFolders={expandedFolders}
+            dragOverFolder={dragOverFolder}
+            onFolderSelect={handleFolderSelect}
+            onDocumentSelect={handleDocumentSelect}
+            onDocumentOpen={onDocumentOpen}
+            toggleFolder={toggleFolder}
+            handleDragStart={handleDragStart}
+            handleDragOver={handleDragOver}
+            handleDragLeave={handleDragLeave}
+            handleDrop={handleDrop}
+          />
+        </div>
+      </div>
     </div>
   );
 };

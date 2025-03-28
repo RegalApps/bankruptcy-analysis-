@@ -14,7 +14,11 @@ export const ClientSidebar = ({
   onClientViewerAccess,
   selectedClientId
 }: ClientSidebarProps) => {
-  if (clients.length === 0) return null;
+  if (clients.length === 0) {
+    return <div className="w-56 border-r bg-background/95 shrink-0 flex items-center justify-center p-4">
+      <p className="text-sm text-muted-foreground">No clients available</p>
+    </div>;
+  }
   
   return (
     <ClientSection 
@@ -22,6 +26,7 @@ export const ClientSidebar = ({
       onClientSelect={onClientSelect}
       onClientViewerAccess={onClientViewerAccess}
       selectedClientId={selectedClientId}
+      className="h-full border-r bg-background/95 w-56 shrink-0"
     />
   );
 };
