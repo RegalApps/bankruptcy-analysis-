@@ -8,6 +8,7 @@ import { DocumentSearchFilter } from "./components/DocumentSearchFilter";
 import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
 import { useFolderDragAndDrop } from "./hooks/useFolderDragAndDrop";
 import { useFolderFilterAndExpand } from "./hooks/useFolderFilterAndExpand";
+import { mapDocumentsToFolderStructure } from "./hooks/utils/folderMapperUtils";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
@@ -95,6 +96,9 @@ export const EnhancedFolderTab = ({
     ? documents.filter(doc => doc.parent_folder_id === selectedFolderId)
     : documents.filter(doc => !doc.parent_folder_id && !doc.is_folder);
 
+  // Convert Document[] to FolderStructure[] for the FolderTree component
+  const folderStructures = mapDocumentsToFolderStructure(filteredFolders);
+
   return (
     <div className="h-full flex flex-col">
       <FolderHeader 
@@ -114,7 +118,7 @@ export const EnhancedFolderTab = ({
           />
           
           <FolderTree
-            filteredFolders={filteredFolders}
+            filteredFolders={folderStructures}
             filteredDocuments={filteredDocuments}
             form47Documents={form47Documents}
             selectedFolderId={selectedFolderId}
