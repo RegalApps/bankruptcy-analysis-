@@ -1,5 +1,5 @@
 
-import { UserX } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ClientNotFoundProps {
@@ -9,15 +9,16 @@ interface ClientNotFoundProps {
 export const ClientNotFound = ({ onBack }: ClientNotFoundProps) => {
   return (
     <div className="h-full flex flex-col items-center justify-center p-6">
-      <div className="text-muted-foreground">
-        <UserX className="h-16 w-16 mx-auto mb-4" />
+      <div className="bg-primary/10 rounded-full p-3 mb-4">
+        <Search className="h-6 w-6 text-primary" />
       </div>
-      <h2 className="text-xl font-semibold mb-2">Client Not Found</h2>
-      <p className="text-muted-foreground text-center mb-6 max-w-md">
-        We couldn't find the client you're looking for. They may have been removed or you might not have permission to view their information.
+      <h2 className="text-xl font-medium mb-2">Client Not Found</h2>
+      <p className="text-center text-muted-foreground mb-6 max-w-md">
+        We couldn't find the client you're looking for. They may have been removed or you might not have access.
       </p>
-      <Button onClick={onBack}>
-        Go Back
+      <Button onClick={onBack} className="flex items-center">
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Documents
       </Button>
     </div>
   );

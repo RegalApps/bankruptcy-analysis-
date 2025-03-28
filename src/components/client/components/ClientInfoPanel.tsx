@@ -1,9 +1,9 @@
 
-import { User, Calendar, FileText, Phone, Mail, Clock, Folder } from "lucide-react";
 import { Client, Document } from "../types";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { User, Calendar, FileText, Phone, Mail, AlertCircle } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { DocumentTree } from "./DocumentTree";
 
 interface ClientInfoPanelProps {
   client: Client;
@@ -17,102 +17,92 @@ interface ClientInfoPanelProps {
 export const ClientInfoPanel = ({ 
   client, 
   documentCount, 
-  lastActivityDate, 
+  lastActivityDate,
   documents,
   onDocumentSelect,
   selectedDocumentId
 }: ClientInfoPanelProps) => {
-  // Group documents by type
-  const documentTypes = documents.reduce((acc, doc) => {
-    const type = doc.type || 'Other';
-    if (!acc[type]) acc[type] = 0;
-    acc[type]++;
-    return acc;
-  }, {} as Record<string, number>);
-
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b">
-        <div className="flex items-center mb-4">
-          <div className="bg-primary/10 p-3 rounded-full mr-3">
-            <User className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-medium">{client.name}</h3>
-            <p className="text-sm text-muted-foreground">
-              {client.status === 'active' ? 'Active Client' : 'Inactive Client'}
-            </p>
-          </div>
-        </div>
-        
-        <div className="space-y-2 text-sm">
-          {client.email && (
-            <div className="flex items-center">
-              <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span>{client.email}</span>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+      <div className="lg:col-span-1 space-y-6">
+        <Card className="p-6">
+          <div className="flex items-start">
+            <div className="bg-primary/10 p-3 rounded-full mr-4">
+              <User className="h-6 w-6 text-primary" />
             </div>
-          )}
-          
-          {client.phone && (
-            <div className="flex items-center">
-              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span>{client.phone}</span>
-            </div>
-          )}
-          
-          <div className="flex items-center">
-            <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span>{documentCount} Documents</span>
-          </div>
-          
-          {lastActivityDate && (
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span>Last activity: {format(new Date(lastActivityDate), 'MMM d, yyyy')}</span>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="p-4 border-b">
-        <h4 className="text-sm font-medium mb-2">Document Types</h4>
-        <div className="space-y-1">
-          {Object.entries(documentTypes).map(([type, count]) => (
-            <div key={type} className="flex items-center justify-between text-sm">
-              <div className="flex items-center">
-                <Folder className="h-4 w-4 mr-1.5 text-muted-foreground" />
-                <span>{type}</span>
-              </div>
-              <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-hidden">
-        <div className="p-4 border-b">
-          <h4 className="text-sm font-medium">Recent Documents</h4>
-        </div>
-        <ScrollArea className="h-[calc(100%-12rem)]">
-          <div className="p-2">
-            {documents.slice(0, 10).map((doc) => (
-              <div 
-                key={doc.id}
-                className={cn(
-                  "p-2 text-sm rounded cursor-pointer hover:bg-accent/50 transition-colors",
-                  selectedDocumentId === doc.id ? "bg-accent/60" : ""
+            <div>
+              <h3 className="text-xl font-medium">{client.name}</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Client ID: {client.id.substring(0, 8)}
+              </p>
+              <div className="mt-4 space-y-2">
+                {client.email && (
+                  <div className="flex items-center text-sm">
+                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>{client.email}</span>
+                  </div>
                 )}
-                onClick={() => onDocumentSelect(doc.id)}
-              >
-                <div className="font-medium truncate">{doc.title}</div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>{doc.type || 'Document'}</span>
-                  <span>{format(new Date(doc.updated_at), 'MMM d')}</span>
-                </div>
+                {client.phone && (
+                  <div className="flex items-center text-sm">
+                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>{client.phone}</span>
+                  </div>
+                )}
+                {client.status && (
+                  <div className="flex items-center text-sm">
+                    <AlertCircle className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>Status: <span className="capitalize">{client.status}</span></span>
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
           </div>
-        </ScrollArea>
+        </Card>
+        
+        <Card className="p-6">
+          <h4 className="font-medium mb-4">Client Overview</h4>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="text-sm">Documents</span>
+              </div>
+              <span className="font-medium">{documentCount}</span>
+            </div>
+            
+            {lastActivityDate && (
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span className="text-sm">Last Activity</span>
+                </div>
+                <span className="font-medium">
+                  {format(new Date(lastActivityDate), 'MMM d, yyyy')}
+                </span>
+              </div>
+            )}
+            
+            {client.engagement_score !== undefined && (
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span className="text-sm">Engagement Score</span>
+                </div>
+                <span className="font-medium">{client.engagement_score.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+      
+      <div className="lg:col-span-2">
+        <Card className="h-full p-6">
+          <h4 className="font-medium mb-4">Document Explorer</h4>
+          <DocumentTree 
+            documents={documents}
+            onDocumentSelect={onDocumentSelect}
+          />
+        </Card>
       </div>
     </div>
   );

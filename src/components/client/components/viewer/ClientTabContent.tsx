@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Client, Document } from "../../types";
 import { ClientInfoPanel } from "../ClientInfoPanel";
-import { DocumentList } from "../DocumentList";
+import { DocumentsPanel } from "../DocumentsPanel";
 import { ClientActivityLog } from "../ClientActivityLog";
 
 interface ClientTabContentProps {
@@ -55,8 +55,10 @@ export const ClientTabContent = ({
       )}
       
       {activeTab === "documents" && (
-        <DocumentList 
+        <DocumentsPanel 
           documents={documents}
+          activeTab="all"
+          setActiveTab={() => {}}
           onDocumentSelect={handleDocumentSelect}
           onDocumentOpen={handleDocumentOpen}
           selectedDocumentId={selectedDocumentId}

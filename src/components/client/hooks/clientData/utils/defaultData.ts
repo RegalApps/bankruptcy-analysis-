@@ -2,46 +2,55 @@
 import { Document } from "../../../types";
 
 /**
- * Get default documents for a client if none are found
+ * Creates a default set of documents for a client when no documents are found
  */
 export const getDefaultDocuments = (clientName: string): Document[] => {
   const now = new Date().toISOString();
-  const yesterday = new Date(Date.now() - 86400000).toISOString();
-  const lastWeek = new Date(Date.now() - 604800000).toISOString();
   
   return [
     {
-      id: "form-47-doc",
-      title: "Form 47 - Consumer Proposal",
-      type: "form-47",
-      created_at: lastWeek,
-      updated_at: yesterday,
-      metadata: {
-        client_name: clientName,
-        client_id: clientName.toLowerCase().replace(/\s+/g, '-'),
-        formType: "form-47"
-      }
-    },
-    {
-      id: "financial-statement",
-      title: "Financial Statement",
-      type: "financial",
-      created_at: lastWeek,
+      id: 'form-47-consumer-proposal',
+      title: 'Form 47 - Consumer Proposal',
+      type: 'Legal Document',
+      created_at: now,
       updated_at: now,
       metadata: {
         client_name: clientName,
-        client_id: clientName.toLowerCase().replace(/\s+/g, '-')
+        formType: 'form-47',
+        status: 'pending_review'
       }
     },
     {
-      id: "client-agreement",
-      title: "Client Agreement",
-      type: "legal",
-      created_at: lastWeek,
-      updated_at: lastWeek,
+      id: 'financial-statement',
+      title: 'Financial Statement',
+      type: 'Financial',
+      created_at: now,
+      updated_at: now,
       metadata: {
         client_name: clientName,
-        client_id: clientName.toLowerCase().replace(/\s+/g, '-')
+        status: 'completed'
+      }
+    },
+    {
+      id: 'income-verification',
+      title: 'Income Verification',
+      type: 'Financial',
+      created_at: now,
+      updated_at: now,
+      metadata: {
+        client_name: clientName,
+        status: 'pending'
+      }
+    },
+    {
+      id: 'id-verification',
+      title: 'ID Verification Documents',
+      type: 'Personal',
+      created_at: now,
+      updated_at: now,
+      metadata: {
+        client_name: clientName,
+        status: 'completed'
       }
     }
   ];
