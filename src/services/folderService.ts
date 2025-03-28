@@ -38,11 +38,16 @@ export const folderService = {
     folders.forEach(folder => {
       folderMap[folder.id] = {
         id: folder.id,
-        name: folder.title || '',
+        title: folder.title || '',
+        name: folder.title || '', // Keep name for backward compatibility
+        parent_folder_id: folder.parent_folder_id,
+        parentId: folder.parent_folder_id, // Keep parentId for backward compatibility
+        created_at: folder.created_at,
+        updated_at: folder.updated_at,
+        is_folder: true,
         type: this.determineFolderType(folder),
         children: [],
-        parentId: folder.parent_folder_id,
-        isExpanded: false, // Add this missing property
+        isExpanded: false,
         level: 0,
         metadata: folder.metadata || {}
       };
