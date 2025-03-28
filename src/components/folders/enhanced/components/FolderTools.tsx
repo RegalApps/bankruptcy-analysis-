@@ -1,20 +1,15 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { FolderPlus, RefreshCw, FolderInput } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { FolderPlus, RefreshCw } from "lucide-react";
 
 interface FolderToolsProps {
   onCreateFolder: () => void;
   onRefresh: () => void;
-  onImport?: () => void;
-  isRefreshing?: boolean;
 }
 
 export const FolderTools = ({
   onCreateFolder,
-  onRefresh,
-  onImport,
-  isRefreshing = false
+  onRefresh
 }: FolderToolsProps) => {
   return (
     <div className="flex items-center space-x-2">
@@ -22,33 +17,19 @@ export const FolderTools = ({
         variant="outline"
         size="sm"
         onClick={onCreateFolder}
-        className="gap-1"
+        className="flex items-center"
       >
-        <FolderPlus className="h-4 w-4" />
+        <FolderPlus className="h-4 w-4 mr-2" />
         New Folder
       </Button>
-
       <Button
         variant="ghost"
         size="sm"
         onClick={onRefresh}
-        className={isRefreshing ? 'animate-spin' : ''}
-        title="Refresh folder list"
+        className="h-8 w-8 p-0"
       >
         <RefreshCw className="h-4 w-4" />
       </Button>
-
-      {onImport && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onImport}
-          className="gap-1"
-        >
-          <FolderInput className="h-4 w-4" />
-          Import
-        </Button>
-      )}
     </div>
   );
 };

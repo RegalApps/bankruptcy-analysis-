@@ -1,53 +1,34 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Grid, List, UploadCloud } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Grid2X2, List } from "lucide-react";
 
 interface DocumentViewControlsProps {
   isGridView: boolean;
   setIsGridView: (isGrid: boolean) => void;
-  onUploadClick?: () => void;
 }
 
 export const DocumentViewControls = ({
   isGridView,
-  setIsGridView,
-  onUploadClick
+  setIsGridView
 }: DocumentViewControlsProps) => {
   return (
     <div className="flex items-center space-x-2">
-      <div className="bg-muted rounded-md p-1 flex">
-        <Button
-          variant={isGridView ? "default" : "ghost"}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => setIsGridView(true)}
-          title="Grid View"
-        >
-          <Grid className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={!isGridView ? "default" : "ghost"}
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={() => setIsGridView(false)}
-          title="List View"
-        >
-          <List className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      {onUploadClick && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onUploadClick}
-          className="ml-2"
-        >
-          <UploadCloud className="h-4 w-4 mr-1" />
-          Upload
-        </Button>
-      )}
+      <Button
+        variant={isGridView ? "default" : "outline"}
+        size="sm"
+        onClick={() => setIsGridView(true)}
+        className="h-8 w-8 p-0"
+      >
+        <Grid2X2 className="h-4 w-4" />
+      </Button>
+      <Button
+        variant={!isGridView ? "default" : "outline"}
+        size="sm"
+        onClick={() => setIsGridView(false)}
+        className="h-8 w-8 p-0"
+      >
+        <List className="h-4 w-4" />
+      </Button>
     </div>
   );
 };

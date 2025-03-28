@@ -7,12 +7,11 @@ export interface FolderStructure {
   parentId?: string;
   documentCount?: number;
   isExpanded?: boolean;
-  children?: FolderStructure[]; // Added missing property
-  level?: number; // Added missing property
-  metadata?: Record<string, any>; // Added missing property
+  children?: FolderStructure[]; 
+  level?: number; 
+  metadata?: Record<string, any>;
 }
 
-// Add missing types referenced in the errors
 export interface FolderAIRecommendation {
   id: string;
   type: string;
@@ -41,4 +40,5 @@ export interface FolderOperationResult {
   success: boolean;
   message?: string;
   folderId?: string;
+  error?: string; // Added the missing error property
 }

@@ -1,66 +1,45 @@
 
-import React from 'react';
-import { Search, Filter } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search } from "lucide-react";
 
 interface DocumentSearchFilterProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  onFilterChange?: (filter: string | null) => void;
-  availableFilters?: string[];
-  selectedFilter?: string | null;
+  onFilterChange: (filter: string | null) => void;
+  selectedFilter: string | null;
 }
 
 export const DocumentSearchFilter = ({
   searchQuery,
   setSearchQuery,
   onFilterChange,
-  availableFilters = ['PDF', 'Word', 'Excel', 'Image'],
   selectedFilter
 }: DocumentSearchFilterProps) => {
   return (
-    <div className="flex items-center gap-2">
-      <div className="relative flex-1">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+    <div className="flex items-center space-x-2">
+      <div className="relative flex-grow">
+        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          type="search"
-          placeholder="Search documents..."
-          className="pl-8"
+          placeholder="Search folders and documents..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-8"
         />
       </div>
       
-      {onFilterChange && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1">
-              <Filter className="h-4 w-4" />
-              {selectedFilter ? `Filter: ${selectedFilter}` : 'Filter'}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onFilterChange(null)}>
-              All Types
-            </DropdownMenuItem>
-            {availableFilters.map((filter) => (
-              <DropdownMenuItem 
-                key={filter}
-                onClick={() => onFilterChange(filter)}
-              >
-                {filter}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+      <Select value={selectedFilter || ''} onValueChange={(value) => onFilterChange(value || null)}>
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="Filter by type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">All types</SelectItem>
+          <SelectItem value="application/pdf">PDF</SelectItem>
+          <SelectItem value="image/jpeg">Images</SelectItem>
+          <SelectItem value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel</SelectItem>
+          <SelectItem value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Word</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 };
