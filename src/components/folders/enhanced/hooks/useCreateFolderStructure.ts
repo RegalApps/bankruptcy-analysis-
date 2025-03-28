@@ -1,78 +1,64 @@
 
 import { useState, useEffect } from "react";
-import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
+import { FolderStructure } from "@/components/client/types";
 
-export function useCreateFolderStructure(documents: Document[]) {
+export const useCreateFolderStructure = (documents: Document[]) => {
   const [folders, setFolders] = useState<FolderStructure[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Map documents to folder structure
     if (documents.length === 0) {
       setFolders([]);
-      setIsLoading(false);
       return;
     }
 
-    // Create folder structure
-    setIsLoading(true);
+    const folderMap = new Map();
     
-    try {
-      // Get folders from documents
-      const folderDocs = documents.filter(doc => doc.is_folder);
-      
-      // Map to FolderStructure
-      const folderStructures: FolderStructure[] = folderDocs.map(doc => ({
-        id: doc.id,
-        name: doc.title || 'Unnamed Folder',
-        type: doc.folder_type as any || 'general',
-        children: [],
-        parentId: doc.parent_folder_id,
-        isExpanded: false,
-        level: 0, // Add default level, it will be updated later
-        metadata: doc.metadata || {}
-      }));
-      
-      // Build hierarchy
-      const rootFolders: FolderStructure[] = [];
-      const folderMap = new Map<string, FolderStructure>();
-      
-      // Add all folders to map
-      folderStructures.forEach(folder => {
-        folderMap.set(folder.id, folder);
-      });
-      
-      // Organize into hierarchy
-      folderStructures.forEach(folder => {
-        if (folder.parentId && folderMap.has(folder.parentId)) {
-          const parent = folderMap.get(folder.parentId);
-          if (parent) {
-            parent.children.push(folder);
-          }
-        } else {
-          rootFolders.push(folder);
-        }
-      });
-      
-      // Calculate levels for each folder
-      const addLevels = (folders: FolderStructure[], level: number) => {
-        folders.forEach(folder => {
-          folder.level = level;
-          if (folder.children.length > 0) {
-            addLevels(folder.children, level + 1);
-          }
+    // First, collect all folder documents
+    documents.forEach(doc => {
+      if (doc.is_folder) {
+        folderMap.set(doc.id, {
+          id: doc.id,
+          name: doc.title,
+          type: doc.folder_type || 'general',
+          children: [],
+          parentId: doc.parent_folder_id || "",
+          isExpanded: false,
+          level: 0, // Default level, will be calculated properly later
+          metadata: doc.metadata || {}
         });
-      };
-      
-      addLevels(rootFolders, 0);
-      
-      setFolders(rootFolders);
-    } catch (error) {
-      console.error("Error creating folder structure:", error);
-    } finally {
-      setIsLoading(false);
-    }
+      }
+    });
+    
+    // Connect parent-child relationships
+    folderMap.forEach((folder) => {
+      if (folder.parentId && folderMap.has(folder.parentId)) {
+        const parent = folderMap.get(folder.parentId);
+        parent.children.push(folder);
+      }
+    });
+    
+    // Calculate levels for all folders
+    const calculateLevels = (folder: any, level: number) => {
+      folder.level = level;
+      folder.children.forEach((child: any) => {
+        calculateLevels(child, level + 1);
+      });
+    };
+    
+    // Get only root folders (those without parents or with non-existent parents)
+    const rootFolders = Array.from(folderMap.values()).filter(
+      folder => !folder.parentId || !folderMap.has(folder.parentId)
+    );
+    
+    // Calculate levels starting from the root
+    rootFolders.forEach(folder => {
+      calculateLevels(folder, 0);
+    });
+    
+    setFolders(rootFolders);
   }, [documents]);
 
-  return { folders, isLoading };
-}
+  return { folders };
+};

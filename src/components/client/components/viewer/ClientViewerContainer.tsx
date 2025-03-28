@@ -5,6 +5,7 @@ import { ClientHeader } from "./ClientHeader";
 import { ClientTabs } from "./ClientTabs";
 import { ClientTabContent } from "./ClientTabContent";
 import { ClientErrorState } from "../ClientErrorState";
+import { ClientNotFound } from "../ClientNotFound";
 import { ClientViewerProps } from "../../types";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
@@ -53,8 +54,10 @@ export const ClientViewerContainer = ({
   }
 
   if (!client) {
-    return <ClientErrorState onBack={onBack} message="Client information not found" />;
+    return <ClientNotFound onBack={onBack} />;
   }
+
+  console.log("ClientViewerContainer: Rendering client", client.name, "with", documents.length, "documents");
 
   return (
     <div className="h-full flex flex-col">

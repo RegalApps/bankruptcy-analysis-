@@ -23,6 +23,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   
   // Reset states when client ID changes to prevent UI glitches
   useEffect(() => {
+    console.log("ClientTab: Client ID changed to", clientId);
     setLoadError(false);
     setRetryCount(0);
     setIsTransitioning(true);
@@ -76,6 +77,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   }
   
   if (loadError) {
+    console.log("ClientTab: Showing not found state due to load error");
     return <ClientNotFound onBack={onBack} />;
   }
   
@@ -114,12 +116,17 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     }
   };
   
+  console.log("ClientTab: Rendering ClientViewer with ID:", effectiveClientId);
+  
   return (
     <ClientViewer 
       clientId={effectiveClientId} 
       onBack={onBack}
       onDocumentOpen={handleDocumentOpen}
-      onError={() => setLoadError(true)}
+      onError={() => {
+        console.error("ClientViewer reported an error");
+        setLoadError(true);
+      }}
     />
   );
 };

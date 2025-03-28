@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Client, Document } from "../../types";
 import { processClientDocuments } from "./utils/documentProcessor";
+import { toast } from "sonner";
 
 export const useClientFetching = (
   clientId: string, 
@@ -14,6 +15,7 @@ export const useClientFetching = (
 
   useEffect(() => {
     const fetchClientData = async () => {
+      console.log("Fetching client data for ID:", clientId);
       setIsLoading(true);
       setError(null);
       
@@ -23,13 +25,18 @@ export const useClientFetching = (
           await processClientDocuments(clientId);
         
         if (fetchedClient) {
+          console.log("Client data fetched successfully:", fetchedClient.name);
+          console.log("Document count:", fetchedDocuments.length);
           setClient(fetchedClient);
           setDocuments(fetchedDocuments);
         } else {
+          console.error("No client data found for ID:", clientId);
+          toast.error(`Could not find client information for ${clientId}`);
           setError(new Error("No client information found"));
         }
       } catch (error) {
         console.error('Error fetching client data:', error);
+        toast.error("Failed to load client data");
         setError(error instanceof Error ? error : new Error(String(error)));
       } finally {
         setIsLoading(false);

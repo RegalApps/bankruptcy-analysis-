@@ -1,111 +1,115 @@
-import { useState } from 'react';
-import { ChevronRight, ChevronDown, File, Folder } from 'lucide-react';
-import { Document } from '../types';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
+import { useState } from "react";
+import { Document } from "../types";
+import { ChevronRight, ChevronDown, FileText, Folder } from "lucide-react";
 
 interface DocumentTreeProps {
   documents: Document[];
   onDocumentSelect: (documentId: string) => void;
+  selectedDocument?: string;
 }
 
-interface Category {
-  name: string;
-  documents: Document[];
-}
-
-export const DocumentTree = ({ documents, onDocumentSelect }: DocumentTreeProps) => {
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    'Forms': true,
-    'Financials': false,
-    'Legal Docs': false,
-    'Contracts': false,
-    'Other': false,
-  });
-
-  const categorizeDocuments = (docs: Document[]): Record<string, Document[]> => {
-    const categories: Record<string, Document[]> = {
-      'Forms': [],
-      'Financials': [],
-      'Legal Docs': [],
-      'Contracts': [],
-      'Other': [],
-    };
-
-    docs.forEach(doc => {
-      const metadata = doc.metadata as Record<string, any> || {};
-      const title = doc.title?.toLowerCase() || '';
-      const type = doc.type?.toLowerCase() || '';
-      
-      if (metadata.formType || metadata.formNumber || title.includes('form') || title.includes('consumer proposal')) {
-        categories['Forms'].push(doc);
-      } else if (title.includes('financ') || title.includes('statement') || title.includes('income') || title.includes('expense')) {
-        categories['Financials'].push(doc);
-      } else if (title.includes('legal') || title.includes('court') || title.includes('case')) {
-        categories['Legal Docs'].push(doc);
-      } else if (title.includes('contract') || title.includes('agreement')) {
-        categories['Contracts'].push(doc);
+export const DocumentTree = ({ 
+  documents, 
+  onDocumentSelect,
+  selectedDocument 
+}: DocumentTreeProps) => {
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  
+  // Create a nested structure for the document tree
+  const createDocumentTree = () => {
+    const rootDocs: Document[] = [];
+    const docsByParent: Record<string, Document[]> = {};
+    
+    // First pass: organize documents by parent
+    documents.forEach(doc => {
+      if (doc.parent_folder_id) {
+        if (!docsByParent[doc.parent_folder_id]) {
+          docsByParent[doc.parent_folder_id] = [];
+        }
+        docsByParent[doc.parent_folder_id].push(doc);
       } else {
-        categories['Other'].push(doc);
+        rootDocs.push(doc);
       }
     });
-
-    return Object.fromEntries(
-      Object.entries(categories).filter(([_, docs]) => docs.length > 0)
-    );
-  };
-
-  const categorizedDocs = categorizeDocuments(documents);
-  
-  const toggleCategory = (category: string) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [category]: !prev[category]
-    }));
-  };
-
-  return (
-    <ScrollArea className="h-[calc(100%-2rem)]">
-      <div className="space-y-1">
-        {Object.entries(categorizedDocs).map(([category, docs]) => (
-          <div key={category} className="space-y-1">
-            <button
-              className="flex items-center w-full text-left text-sm p-1.5 rounded-md hover:bg-muted"
-              onClick={() => toggleCategory(category)}
-            >
-              {expandedCategories[category] ? (
-                <ChevronDown className="h-4 w-4 mr-1.5 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-4 w-4 mr-1.5 text-muted-foreground" />
-              )}
-              <Folder className="h-4 w-4 mr-1.5 text-muted-foreground" />
-              <span className="font-medium">{category}</span>
-              <span className="ml-auto text-xs text-muted-foreground">{docs.length}</span>
-            </button>
-            
-            {expandedCategories[category] && (
-              <div className="ml-7 space-y-1">
-                {docs.map(doc => (
-                  <button
-                    key={doc.id}
-                    className="flex items-center w-full text-left text-sm p-1.5 rounded-md hover:bg-muted group"
-                    onClick={() => onDocumentSelect(doc.id)}
-                    onDoubleClick={() => onDocumentSelect(doc.id)}
-                  >
-                    <File className="h-4 w-4 mr-1.5 text-muted-foreground" />
-                    <span className="truncate">{doc.title}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+    
+    // Sort documents by type (folders first) and then by title
+    const sortDocs = (docs: Document[]) => {
+      return [...docs].sort((a, b) => {
+        // Folders first
+        if (a.is_folder && !b.is_folder) return -1;
+        if (!a.is_folder && b.is_folder) return 1;
         
-        {Object.keys(categorizedDocs).length === 0 && (
-          <div className="text-sm text-muted-foreground py-2 text-center">
-            No documents to display
+        // Then by title
+        return a.title.localeCompare(b.title);
+      });
+    };
+    
+    // Recursive function to render a document and its children
+    const renderDocument = (doc: Document, level: number = 0) => {
+      const isFolder = doc.is_folder;
+      const hasChildren = isFolder && docsByParent[doc.id] && docsByParent[doc.id].length > 0;
+      const isExpanded = expandedFolders[doc.id] || false;
+      const isSelected = selectedDocument === doc.id;
+      
+      return (
+        <div key={doc.id} style={{ marginLeft: `${level * 16}px` }}>
+          <div 
+            className={`flex items-center py-1 px-2 rounded-md cursor-pointer hover:bg-accent/50 ${isSelected ? 'bg-accent' : ''}`}
+            onClick={() => {
+              if (isFolder) {
+                setExpandedFolders(prev => ({
+                  ...prev,
+                  [doc.id]: !prev[doc.id]
+                }));
+              } else {
+                onDocumentSelect(doc.id);
+              }
+            }}
+          >
+            {isFolder ? (
+              <>
+                {hasChildren ? (
+                  isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground mr-1" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground mr-1" />
+                  )
+                ) : (
+                  <span className="w-4 mr-1" />
+                )}
+                <Folder className="h-4 w-4 text-primary mr-2" />
+              </>
+            ) : (
+              <>
+                <span className="w-4 mr-1" />
+                <FileText className="h-4 w-4 text-muted-foreground mr-2" />
+              </>
+            )}
+            <span className="text-sm truncate">{doc.title}</span>
           </div>
-        )}
+          
+          {isFolder && isExpanded && hasChildren && (
+            <div>
+              {sortDocs(docsByParent[doc.id]).map(childDoc => 
+                renderDocument(childDoc, level + 1)
+              )}
+            </div>
+          )}
+        </div>
+      );
+    };
+    
+    return sortDocs(rootDocs).map(doc => renderDocument(doc));
+  };
+  
+  if (documents.length === 0) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        No documents found for this client.
       </div>
-    </ScrollArea>
-  );
+    );
+  }
+
+  return <div className="space-y-1">{createDocumentTree()}</div>;
 };
