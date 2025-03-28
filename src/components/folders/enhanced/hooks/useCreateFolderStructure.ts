@@ -1,15 +1,19 @@
 
 import { useState, useEffect } from "react";
 import { Document } from "@/components/DocumentList/types";
-import { FolderStructure } from "@/components/client/types";
+import { FolderStructure } from "@/types/folders";
 
 export const useCreateFolderStructure = (documents: Document[]) => {
   const [folders, setFolders] = useState<FolderStructure[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Map documents to folder structure
+    setIsLoading(true);
+    
     if (documents.length === 0) {
       setFolders([]);
+      setIsLoading(false);
       return;
     }
 
@@ -58,7 +62,8 @@ export const useCreateFolderStructure = (documents: Document[]) => {
     });
     
     setFolders(rootFolders);
+    setIsLoading(false);
   }, [documents]);
 
-  return { folders };
+  return { folders, isLoading };
 };
