@@ -45,7 +45,9 @@ export const FolderActionButtons = ({
             <SelectValue placeholder="Select a folder" />
           </SelectTrigger>
           <SelectContent>
-            {/* Removed the empty value SelectItem that was causing the error */}
+            {/* Fixed: Replacing the empty value SelectItem with a 
+                properly defined one with value "none" instead of "" */}
+            <SelectItem value="none">None (All Folders)</SelectItem>
             {folders.map(folder => (
               <SelectItem key={folder.id} value={folder.id}>
                 {folder.title}

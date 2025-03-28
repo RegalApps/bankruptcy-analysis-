@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { Document } from "@/components/DocumentList/types";
 import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
@@ -79,6 +78,15 @@ export const EnhancedFolderTab = ({
   const handleCreateDocument = () => {
     console.log("Create document");
     // Implementation would go here in a real app
+  };
+
+  const handleMoveDocument = async (documentId: string, folderId: string, folderPath: string): Promise<void> => {
+    try {
+      await moveDocumentToFolder(documentId, folderId, folderPath);
+      // If you need the boolean result, handle it here, but don't return it
+    } catch (error) {
+      console.error("Error moving document to folder:", error);
+    }
   };
 
   // Handle showing loading state

@@ -37,8 +37,8 @@ export const FolderFilterToolbar = ({
       </div>
       
       <Select
-        value={filterCategory || ""}
-        onValueChange={(value) => setFilterCategory(value === "" ? null : value)}
+        value={filterCategory || "all"}
+        onValueChange={(value) => setFilterCategory(value === "all" ? null : value)}
       >
         <SelectTrigger className="w-40">
           <div className="flex items-center">
@@ -47,7 +47,8 @@ export const FolderFilterToolbar = ({
           </div>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Documents</SelectItem>
+          {/* Changed empty string to "all" */}
+          <SelectItem value="all">All Documents</SelectItem>
           <SelectItem value="client">Client Folders</SelectItem>
           <SelectItem value="form">Forms</SelectItem>
           <SelectItem value="financial">Financial</SelectItem>
