@@ -1,81 +1,94 @@
 
-import { ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { FolderList } from "./FolderList";
 import { FolderStructure } from "@/types/folders";
+import { Document } from "@/components/DocumentList/types";
 
-interface FolderTreeProps {
-  folders: FolderStructure[];
-  selectedFolderId?: string;
+interface DocumentTreeProps {
+  filteredFolders: FolderStructure[];
+  filteredDocuments: Document[];
+  form47Documents: Document[];
+  selectedFolderId?: string | null;
+  selectedClientId?: string | null;
   expandedFolders: Record<string, boolean>;
+  dragOverFolder: string | null;
   onFolderSelect: (folderId: string) => void;
-  onToggleExpand: (folderId: string, e: React.MouseEvent) => void;
-  isDragging?: boolean;
+  onDocumentSelect: (documentId: string) => void;
+  onDocumentOpen: (documentId: string) => void;
+  toggleFolder: (folderId: string, e: React.MouseEvent) => void;
+  handleDragStart: (id: string, type: 'folder' | 'document') => void;
+  handleDragOver: (e: React.DragEvent, folderId: string) => void;
+  handleDragLeave: () => void;
+  handleDrop: (e: React.DragEvent, targetFolderId: string) => void;
 }
 
-export const FolderTree = ({
-  folders,
+export const DocumentTree = ({
+  filteredFolders,
+  filteredDocuments,
+  form47Documents,
   selectedFolderId,
+  selectedClientId,
   expandedFolders,
+  dragOverFolder,
   onFolderSelect,
-  onToggleExpand,
-  isDragging
-}: FolderTreeProps) => {
-  const renderFolder = (folder: FolderStructure, level = 0) => {
-    const isExpanded = expandedFolders[folder.id];
-    const isSelected = folder.id === selectedFolderId;
-    const hasChildren = folder.children && folder.children.length > 0;
-    
-    return (
-      <div key={folder.id} className="mb-1">
-        <div 
-          className={cn(
-            "flex items-center py-1 px-2 rounded-sm cursor-pointer",
-            isSelected ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50",
-            isDragging && "opacity-50"
-          )}
-          style={{ paddingLeft: `${(level * 16) + 8}px` }}
-          onClick={() => onFolderSelect(folder.id)}
-        >
-          <button 
-            className="mr-1 p-1 hover:bg-muted rounded-sm"
-            onClick={(e) => onToggleExpand(folder.id, e)}
-          >
-            {hasChildren ? (
-              isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )
-            ) : (
-              <span className="w-4 inline-block"></span>
-            )}
-          </button>
-          
-          {isExpanded ? (
-            <FolderOpen className="h-4 w-4 text-primary mr-2" />
-          ) : (
-            <Folder className="h-4 w-4 text-muted-foreground mr-2" />
-          )}
-          
-          <span className="text-sm truncate">{folder.name}</span>
-          
-          {folder.documentCount && (
-            <span className="ml-auto text-xs text-muted-foreground">{folder.documentCount}</span>
-          )}
-        </div>
+  onDocumentSelect,
+  onDocumentOpen,
+  toggleFolder,
+  handleDragStart,
+  handleDragOver,
+  handleDragLeave,
+  handleDrop
+}: DocumentTreeProps) => {
+  const hasForm47Documents = form47Documents.length > 0;
+
+  return (
+    <ScrollArea className="h-[calc(100vh-12rem)]">
+      <div className="pr-4 pl-2">
+        {hasForm47Documents && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+            <h3 className="font-medium text-sm mb-1">Consumer Proposals</h3>
+            <div className="space-y-1">
+              {form47Documents.map(doc => (
+                <div 
+                  key={doc.id}
+                  className="text-sm p-2 hover:bg-amber-100 rounded cursor-pointer"
+                  onClick={() => onDocumentOpen(doc.id)}
+                >
+                  {doc.title}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
-        {isExpanded && hasChildren && (
-          <div className="ml-4">
-            {folder.children.map(child => renderFolder(child, level + 1))}
+        {filteredFolders.length > 0 ? (
+          <FolderList
+            folders={filteredFolders}
+            documents={filteredDocuments}
+            onFolderSelect={onFolderSelect}
+            onDocumentSelect={onDocumentSelect}
+            onDocumentOpen={onDocumentOpen}
+            selectedFolderId={selectedFolderId}
+            expandedFolders={expandedFolders}
+            toggleFolder={toggleFolder}
+            handleDragStart={handleDragStart}
+            handleDragOver={handleDragOver}
+            handleDragLeave={handleDragLeave}
+            handleDrop={handleDrop}
+            dragOverFolder={dragOverFolder}
+          />
+        ) : (
+          <div className="text-center p-6 text-muted-foreground">
+            {selectedClientId ? (
+              <p>No folders available for this client</p>
+            ) : (
+              <p>No folders found</p>
+            )}
           </div>
         )}
       </div>
-    );
-  };
-
-  return (
-    <div className="space-y-1">
-      {folders.map(folder => renderFolder(folder))}
-    </div>
+    </ScrollArea>
   );
 };
+
+export const FolderTree = DocumentTree;

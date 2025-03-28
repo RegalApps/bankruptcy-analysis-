@@ -1,14 +1,18 @@
 
+import { useState } from "react";
+import { Search, Building, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DocumentSearchFilterProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  onFilterChange?: (filter: string | null) => void;
-  selectedFilter?: string | null;
   clients?: { id: string; name: string }[];
   onClientSelect?: (clientId: string) => void;
 }
@@ -16,57 +20,49 @@ interface DocumentSearchFilterProps {
 export const DocumentSearchFilter = ({
   searchQuery,
   setSearchQuery,
-  onFilterChange,
-  selectedFilter,
   clients = [],
   onClientSelect
 }: DocumentSearchFilterProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-      <div className="relative flex-grow w-full">
-        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="p-3 border-b space-y-3">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search folders and documents..."
+          type="search"
+          placeholder="Search folders & documents..."
+          className="pl-8"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8 w-full"
         />
       </div>
-      
-      {onFilterChange && (
-        <Select 
-          value={selectedFilter || ''} 
-          onValueChange={(value) => onFilterChange(value || null)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All types</SelectItem>
-            <SelectItem value="application/pdf">PDF</SelectItem>
-            <SelectItem value="image/jpeg">Images</SelectItem>
-            <SelectItem value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel</SelectItem>
-            <SelectItem value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Word</SelectItem>
-          </SelectContent>
-        </Select>
-      )}
 
-      {clients.length > 0 && onClientSelect && (
-        <Select onValueChange={(value) => onClientSelect(value)}>
-          <SelectTrigger className="w-[170px]">
-            <div className="flex items-center">
-              <Users className="mr-2 h-4 w-4" />
-              <span>Select Client</span>
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {clients.map(client => (
-              <SelectItem key={client.id} value={client.id}>
+      {clients && clients.length > 0 && (
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-full justify-start">
+              <Building className="mr-2 h-4 w-4" />
+              <span className="flex-1 text-left">Select Client</span>
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-full">
+            {clients.map((client) => (
+              <DropdownMenuItem
+                key={client.id}
+                onClick={() => {
+                  if (onClientSelect) {
+                    onClientSelect(client.id);
+                  }
+                  setIsOpen(false);
+                }}
+              >
                 {client.name}
-              </SelectItem>
+              </DropdownMenuItem>
             ))}
-          </SelectContent>
-        </Select>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </div>
   );

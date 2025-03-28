@@ -1,20 +1,18 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState } from "react";
 import { Document } from "@/components/DocumentList/types";
-import { ClientViewer } from "@/components/client/ClientViewer";
-import { DocumentViewControls } from "./components/DocumentViewControls";
-import { DocumentSearchFilter } from "./components/DocumentSearchFilter";
+import { FolderHeader } from "./components/FolderHeader";
 import { FolderTree } from "./components/FolderTree";
 import { DocumentViewPanel } from "./components/DocumentViewPanel";
-import { FolderTools } from "./components/FolderTools";
+import { DocumentSearchFilter } from "./components/DocumentSearchFilter";
+import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
 import { useFolderDragAndDrop } from "./hooks/useFolderDragAndDrop";
-import { useFolderActions } from "./hooks/useFolderActions";
 import { useFolderFilterAndExpand } from "./hooks/useFolderFilterAndExpand";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
   onDocumentOpen: (documentId: string) => void;
-  onRefresh: () => void;
+  onRefresh?: () => void;
   onClientSelect?: (clientId: string) => void;
   clients?: { id: string; name: string }[];
 }
@@ -26,17 +24,20 @@ export const EnhancedFolderTab = ({
   onClientSelect,
   clients = []
 }: EnhancedFolderTabProps) => {
-  const [isGridView, setIsGridView] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-  const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false);
-  const [showClientView, setShowClientView] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isGridView, setIsGridView] = useState(true);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
-  // Get drag-and-drop functionality
+  // Create folder structure from documents
+  const { folders, folderPath } = useCreateFolderStructure(documents, selectedFolderId);
+
+  // Drag and drop functionality
   const {
     isDragging,
+    draggedItem,
+    dragOverFolder,
     handleDragStart,
     handleDragEnd,
     handleDragOver,
@@ -44,103 +45,91 @@ export const EnhancedFolderTab = ({
     handleDrop
   } = useFolderDragAndDrop();
 
-  // Get folder management functionality
-  const {
-    folderPath,
-    selectedFolder,
-    handleFolderSelect,
-    handleCreateFolder,
-    handleRenameFolder,
-    handleDeleteFolder
-  } = useFolderActions(documents);
-
-  // Get folder filtering and expansion functionality
+  // Filter and expand functionality
   const {
     visibleFolders,
     filteredDocuments,
     expandedFolders,
-    toggleFolderExpanded,
-    filterDocumentsByFolder,
-    filterDocumentsBySearch
-  } = useFolderFilterAndExpand(documents, searchQuery, selectedFolder);
+    toggleFolderExpanded
+  } = useFolderFilterAndExpand(documents, searchQuery, selectedFolderId);
 
-  const handleClientClick = (clientId: string) => {
-    if (onClientSelect) {
-      setSelectedClientId(clientId);
-      setShowClientView(true);
-      onClientSelect(clientId);
-    }
-  };
-
-  const handleBackFromClient = () => {
-    setShowClientView(false);
-    setSelectedClientId(null);
-  };
-
+  // Handle document selection
   const handleDocumentSelect = (documentId: string) => {
     setSelectedDocumentId(documentId);
   };
 
-  // Handler for creating a new folder
-  const handleCreateFolderClick = () => {
-    setShowCreateFolderDialog(true);
+  // Handle folder selection
+  const handleFolderSelect = (folderId: string) => {
+    setSelectedFolderId(folderId);
+    setSelectedDocumentId(null);
   };
 
-  const handleRefresh = () => {
-    if (onRefresh) {
-      onRefresh();
+  // Handle client selection
+  const handleClientSelect = (clientId: string) => {
+    setSelectedClientId(clientId);
+    if (onClientSelect) {
+      onClientSelect(clientId);
     }
   };
 
-  if (showClientView && selectedClientId) {
-    return (
-      <ClientViewer 
-        clientId={selectedClientId} 
-        onBack={handleBackFromClient}
-      />
-    );
-  }
+  // Handle folder toggle
+  const handleToggleFolder = (folderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFolderExpanded(folderId);
+  };
+
+  // Filter Form 47 documents for quick access
+  const form47Documents = documents.filter(doc => 
+    doc.type === 'form-47' || 
+    doc.title?.toLowerCase().includes('form 47') ||
+    doc.title?.toLowerCase().includes('consumer proposal')
+  );
+
+  // Documents to display in the main panel
+  const documentsToDisplay = selectedFolderId
+    ? documents.filter(doc => doc.parent_folder_id === selectedFolderId)
+    : documents.filter(doc => !doc.parent_folder_id && !doc.is_folder);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <DocumentSearchFilter 
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          onFilterChange={setSelectedFilter}
-          selectedFilter={selectedFilter}
-          clients={clients}
-          onClientSelect={handleClientClick}
-        />
-        
-        <div className="flex gap-2 items-center justify-between md:justify-end">
-          <FolderTools 
-            onCreateFolder={handleCreateFolderClick}
-            onRefresh={handleRefresh}
+    <div className="h-full flex flex-col">
+      <FolderHeader 
+        isGridView={isGridView}
+        setIsGridView={setIsGridView}
+        selectedFolderId={selectedFolderId}
+        onRefresh={onRefresh}
+      />
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 flex-1">
+        <div className="md:col-span-1 border-r">
+          <DocumentSearchFilter
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            clients={clients}
+            onClientSelect={handleClientSelect}
           />
           
-          <DocumentViewControls 
-            isGridView={isGridView}
-            setIsGridView={setIsGridView}
-          />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="md:col-span-1 border rounded-lg p-4 bg-card h-[500px] overflow-y-auto">
-          <FolderTree 
-            folders={visibleFolders}
-            selectedFolderId={selectedFolder}
+          <FolderTree
+            filteredFolders={visibleFolders}
+            filteredDocuments={filteredDocuments}
+            form47Documents={form47Documents}
+            selectedFolderId={selectedFolderId}
+            selectedClientId={selectedClientId}
             expandedFolders={expandedFolders}
+            dragOverFolder={dragOverFolder}
             onFolderSelect={handleFolderSelect}
-            onToggleExpand={toggleFolderExpanded}
-            isDragging={isDragging}
+            onDocumentSelect={handleDocumentSelect}
+            onDocumentOpen={onDocumentOpen}
+            toggleFolder={handleToggleFolder}
+            handleDragStart={handleDragStart}
+            handleDragOver={handleDragOver}
+            handleDragLeave={handleDragLeave}
+            handleDrop={handleDrop}
           />
         </div>
         
-        <div className="md:col-span-3 border rounded-lg p-6 min-h-[500px]">
-          <DocumentViewPanel 
-            documents={filteredDocuments}
+        <div className="md:col-span-3">
+          <DocumentViewPanel
+            documents={documentsToDisplay}
             isGridView={isGridView}
             onDocumentSelect={handleDocumentSelect}
             onDocumentOpen={onDocumentOpen}
