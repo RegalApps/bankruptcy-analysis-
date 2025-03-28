@@ -1,8 +1,7 @@
-
 import { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, FileText, Calendar, Filter, SortAsc, SortDesc, Grid, List } from "lucide-react";
+import { Search, FileText, Calendar, Filter, SortAsc, SortDesc } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Document } from "../types";
 import { 
@@ -14,8 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
 interface DocumentsPanelProps {
   documents: Document[];
@@ -38,10 +35,7 @@ export const DocumentsPanel = ({
   const [sortBy, setSortBy] = useState<'date' | 'name'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterType, setFilterType] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'table'>('table');
-  const [filterCategory, setFilterCategory] = useState<string | null>(null);
   
-  // Get unique document types
   const documentTypes = useMemo(() => {
     const types = new Set<string>();
     documents.forEach(doc => {
@@ -49,19 +43,6 @@ export const DocumentsPanel = ({
     });
     return Array.from(types);
   }, [documents]);
-  
-  // Get unique document categories
-  const documentCategories = useMemo(() => {
-    const categories = new Set<string>();
-    documents.forEach(doc => {
-      if (doc.metadata?.category) categories.add(doc.metadata.category as string);
-    });
-    return Array.from(categories);
-  }, [documents]);
-  
-  const getDocumentStatus = (doc: Document): 'complete' | 'pending' | 'review' => {
-    return (doc.metadata?.status as any) || 'pending';
-  };
   
   const filteredDocuments = useMemo(() => {
     let filtered = documents;
@@ -78,10 +59,6 @@ export const DocumentsPanel = ({
       filtered = filtered.filter(doc => doc.type === filterType);
     }
     
-    if (filterCategory) {
-      filtered = filtered.filter(doc => doc.metadata?.category === filterCategory);
-    }
-    
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'date') {
         const dateA = new Date(a.updated_at).getTime();
@@ -95,22 +72,28 @@ export const DocumentsPanel = ({
     });
     
     return filtered;
-  }, [documents, searchTerm, filterType, filterCategory, sortBy, sortDirection]);
+  }, [documents, searchTerm, filterType, sortBy, sortDirection]);
   
   const toggleSortDirection = () => {
     setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
   
-  const getStatusBadge = (status: 'complete' | 'pending' | 'review') => {
-    switch (status) {
-      case 'complete':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Complete</Badge>;
-      case 'review':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Review</Badge>;
-      default:
-        return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Pending</Badge>;
-    }
-  };
+  const documentsByDate = useMemo(() => {
+    const grouped: Record<string, Document[]> = {};
+    
+    filteredDocuments.forEach(doc => {
+      const date = new Date(doc.updated_at);
+      const key = format(date, 'MMMM yyyy');
+      
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      
+      grouped[key].push(doc);
+    });
+    
+    return grouped;
+  }, [filteredDocuments]);
   
   return (
     <div className="h-full flex flex-col">
@@ -126,7 +109,7 @@ export const DocumentsPanel = ({
           />
         </div>
         
-        <div className="flex mt-3 gap-2 flex-wrap">
+        <div className="flex mt-3 gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="text-xs">
@@ -145,27 +128,6 @@ export const DocumentsPanel = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          
-          {documentCategories.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="text-xs">
-                  <Filter className="h-3 w-3 mr-1" />
-                  {filterCategory || "All Categories"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => setFilterCategory(null)}>
-                  All Categories
-                </DropdownMenuItem>
-                {documentCategories.map(category => (
-                  <DropdownMenuItem key={category} onClick={() => setFilterCategory(category)}>
-                    {category}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -196,136 +158,124 @@ export const DocumentsPanel = ({
               <SortDesc className="h-3 w-3" />
             )}
           </Button>
-          
-          <div className="ml-auto flex gap-1">
-            <Button
-              variant={viewMode === 'table' ? 'default' : 'outline'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setViewMode('table')}
-              title="Table View"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setViewMode('grid')}
-              title="Grid View"
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </div>
       
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
-          {filteredDocuments.length === 0 ? (
-            <div className="text-center p-6 text-muted-foreground">
-              No documents found
-            </div>
-          ) : viewMode === 'table' ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Modified</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDocuments.map(doc => (
-                  <TableRow 
-                    key={doc.id}
-                    className={cn(
-                      "cursor-pointer",
-                      selectedDocumentId === doc.id ? "bg-primary/10" : ""
-                    )}
-                    onClick={() => onDocumentSelect(doc.id)}
-                  >
-                    <TableCell className="font-medium">
-                      <div className="flex items-center">
-                        <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {doc.title}
-                      </div>
-                    </TableCell>
-                    <TableCell>{doc.type || '-'}</TableCell>
-                    <TableCell>
-                      {getStatusBadge(getDocumentStatus(doc))}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(doc.updated_at), 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDocumentOpen(doc.id);
-                        }}
-                      >
-                        Open
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className={cn(
-              "grid gap-4 p-4",
-              viewMode === 'grid' ? "grid-cols-2 md:grid-cols-3" : "grid-cols-1"
-            )}>
-              {filteredDocuments.map(doc => (
-                <div
-                  key={doc.id}
-                  className={cn(
-                    "border rounded-lg p-4 cursor-pointer transition-colors hover:bg-accent/50",
-                    selectedDocumentId === doc.id ? "ring-2 ring-primary" : ""
-                  )}
-                  onClick={() => onDocumentSelect(doc.id)}
-                >
-                  <div className="flex flex-col h-full">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center">
-                        <FileText className="h-5 w-5 text-primary mr-2" />
-                        <h4 className="font-medium text-sm line-clamp-1">{doc.title}</h4>
-                      </div>
-                      {getStatusBadge(getDocumentStatus(doc))}
-                    </div>
-                    
-                    <div className="text-xs text-muted-foreground mb-2">
-                      Type: {doc.type || 'Unknown'}
-                    </div>
-                    
-                    <div className="mt-auto pt-2 flex items-center justify-between border-t">
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(doc.updated_at), 'MMM d, yyyy')}
-                      </span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-xs h-6 px-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDocumentOpen(doc.id);
-                        }}
-                      >
-                        Open
-                      </Button>
-                    </div>
-                  </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-4 border-b">
+          <TabsList className="w-full">
+            <TabsTrigger value="all">All Documents</TabsTrigger>
+            <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          </TabsList>
+        </div>
+        
+        <TabsContent value="all" className="flex-1 overflow-hidden p-0 m-0">
+          <ScrollArea className="h-full">
+            <div className="p-2">
+              {filteredDocuments.length === 0 ? (
+                <div className="text-center p-6 text-muted-foreground">
+                  No documents found
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-1">
+                  {filteredDocuments.map((doc) => (
+                    <div 
+                      key={doc.id}
+                      className={cn(
+                        "p-3 rounded-md cursor-pointer hover:bg-accent/50 transition-colors",
+                        selectedDocumentId === doc.id ? "bg-accent" : ""
+                      )}
+                      onClick={() => onDocumentSelect(doc.id)}
+                      onDoubleClick={() => onDocumentOpen(doc.id)}
+                    >
+                      <div className="flex items-start">
+                        <div className="bg-muted rounded-md p-1.5 mr-3">
+                          <FileText className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium truncate">{doc.title}</h4>
+                            <span className="text-xs text-muted-foreground ml-2 shrink-0">
+                              {format(new Date(doc.updated_at), 'MMM d, yyyy')}
+                            </span>
+                          </div>
+                          <div className="flex items-center mt-1">
+                            <span className="text-xs text-muted-foreground">{doc.type || 'Document'}</span>
+                            <button 
+                              className="text-xs text-primary ml-auto hover:underline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDocumentOpen(doc.id);
+                              }}
+                            >
+                              Open
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </ScrollArea>
-      </div>
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="timeline" className="flex-1 overflow-hidden p-0 m-0">
+          <ScrollArea className="h-full">
+            <div className="p-4">
+              {Object.keys(documentsByDate).length === 0 ? (
+                <div className="text-center p-6 text-muted-foreground">
+                  No documents found
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {Object.entries(documentsByDate).map(([dateGroup, docs]) => (
+                    <div key={dateGroup}>
+                      <div className="flex items-center mb-2">
+                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <h3 className="font-medium">{dateGroup}</h3>
+                      </div>
+                      <div className="space-y-2 pl-6 border-l">
+                        {docs.map(doc => (
+                          <div 
+                            key={doc.id}
+                            className={cn(
+                              "p-3 rounded-md cursor-pointer hover:bg-accent/50 transition-colors",
+                              selectedDocumentId === doc.id ? "bg-accent" : ""
+                            )}
+                            onClick={() => onDocumentSelect(doc.id)}
+                            onDoubleClick={() => onDocumentOpen(doc.id)}
+                          >
+                            <div className="flex items-center">
+                              <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium">{doc.title}</h4>
+                                <div className="flex justify-between mt-1">
+                                  <span className="text-xs text-muted-foreground">{doc.type || 'Document'}</span>
+                                  <button 
+                                    className="text-xs text-primary hover:underline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDocumentOpen(doc.id);
+                                    }}
+                                  >
+                                    Open
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

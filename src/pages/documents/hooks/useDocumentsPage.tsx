@@ -7,8 +7,7 @@ import { useAccessPermissions } from "./useAccessPermissions";
 
 export const useDocumentsPage = () => {
   const { documents, refetch, isLoading } = useDocuments();
-  // Fix: Pass the second required parameter (selectedFolderId) to useCreateFolderStructure
-  const { folders, folderPath } = useCreateFolderStructure(documents || [], null);
+  const { folders } = useCreateFolderStructure(documents || []);
   
   const [clients, setClients] = useState<any[]>([]);
   
@@ -20,7 +19,7 @@ export const useDocumentsPage = () => {
   const {
     selectedItemId,
     selectedItemType,
-    folderPath: navigationFolderPath,
+    folderPath,
     handleItemSelect: originalHandleItemSelect,
     handleOpenDocument
   } = useFolderNavigation(documents || []);
@@ -69,7 +68,7 @@ export const useDocumentsPage = () => {
     // Navigation state
     selectedItemId,
     selectedItemType,
-    folderPath: navigationFolderPath, // Use folderPath from navigation hook
+    folderPath,
     
     // Access control
     hasWriteAccess,

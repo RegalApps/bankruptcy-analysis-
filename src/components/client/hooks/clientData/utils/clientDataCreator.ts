@@ -4,7 +4,7 @@ import { Client } from "../../../types";
 export const createClientData = (
   id: string,
   name: string,
-  status: 'active' | 'inactive' = 'active', // Fixed to use the correct type
+  status: string = 'active',
   email?: string,
   phone?: string
 ): Client => {

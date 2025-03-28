@@ -1,335 +1,354 @@
-import { supabase } from '@/lib/supabase';
-import { Document } from '@/components/DocumentList/types';
-import { FolderStructure } from '@/types/folders';
 
-/**
- * Creates a new folder in the database
- */
-export const createFolder = async (
-  folderName: string,
-  parentFolderId: string | null,
-  userId: string
-): Promise<FolderStructure | null> => {
-  try {
-    const { data, error } = await supabase.from('documents').insert({
-      title: folderName,
-      is_folder: true,
-      parent_folder_id: parentFolderId,
-      user_id: userId,
-      metadata: {},
-      type: 'folder'
-    }).select().single();
+import { supabase } from "@/lib/supabase";
+import { Document } from "@/components/DocumentList/types";
+import { FolderStructure, FolderAIRecommendation, FolderPermissionRule, UserRole } from "@/types/folders";
+import { toast } from "sonner";
 
-    if (error) {
-      console.error('Error creating folder:', error);
-      return null;
-    }
+export const folderService = {
+  /**
+   * Get all folders
+   */
+  async getFolders(): Promise<FolderStructure[]> {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('is_folder', true)
+        .order('created_at', { ascending: true });
 
-    if (!data) return null;
+      if (error) throw error;
 
-    // Convert the database document to a FolderStructure
-    return {
-      id: data.id,
-      title: data.title || '',
-      name: data.title || '', // Add name for components that use it
-      parent_folder_id: data.parent_folder_id,
-      parentId: data.parent_folder_id, // Add parentId for components that use it
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      is_folder: true,
-      type: 'general', // Default type
-      level: parentFolderId ? 1 : 0, // Default level
-      children: [],
-      isExpanded: false,
-      metadata: data.metadata || {}
-    };
-  } catch (error) {
-    console.error('Unexpected error creating folder:', error);
-    return null;
-  }
-};
-
-/**
- * Fetches a list of all folders for a user
- */
-export const getFolders = async (userId: string): Promise<FolderStructure[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_folder', true);
-
-    if (error) {
+      // Transform to FolderStructure
+      return this.buildFolderStructure(data || []);
+    } catch (error) {
       console.error('Error fetching folders:', error);
+      toast.error('Failed to load folders');
       return [];
     }
+  },
 
-    // Convert documents to folder structures
-    return data.map(doc => ({
-      id: doc.id,
-      title: doc.title || '',
-      name: doc.title || '', // For components that use name
-      parent_folder_id: doc.parent_folder_id,
-      parentId: doc.parent_folder_id, // For components that use parentId
-      created_at: doc.created_at,
-      updated_at: doc.updated_at,
-      is_folder: true,
-      type: doc.folder_type === 'client' ? 'client' : 
-            doc.folder_type?.includes('Form') ? 'form' :
-            doc.folder_type?.includes('Financial') ? 'financial' : 'general',
-      level: 0, // Will be calculated properly
-      children: [],
-      isExpanded: false,
-      metadata: doc.metadata || {}
-    }));
-  } catch (error) {
-    console.error('Unexpected error fetching folders:', error);
-    return [];
-  }
-};
+  /**
+   * Build folder hierarchy from flat array
+   */
+  buildFolderStructure(folders: Document[]): FolderStructure[] {
+    const folderMap: Record<string, FolderStructure> = {};
+    const rootFolders: FolderStructure[] = [];
 
-/**
- * Updates a folder's metadata
- */
-export const updateFolderMetadata = async (
-  folderId: string,
-  metadata: any
-): Promise<FolderStructure | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('documents')
-      .update({ metadata: metadata })
-      .eq('id', folderId)
-      .select()
-      .single();
+    // First pass: create folder objects
+    folders.forEach(folder => {
+      folderMap[folder.id] = {
+        id: folder.id,
+        name: folder.title || '',
+        type: this.determineFolderType(folder),
+        children: [],
+        parentId: folder.parent_folder_id,
+        isExpanded: false, // Add this missing property
+        level: 0,
+        metadata: folder.metadata || {}
+      };
+    });
 
-    if (error) {
-      console.error('Error updating folder metadata:', error);
-      return null;
-    }
-
-    if (!data) return null;
-
-    // Convert the database document to a FolderStructure
-    return {
-      id: data.id,
-      title: data.title || '',
-      name: data.title || '', // Add name for components that use it
-      parent_folder_id: data.parent_folder_id,
-      parentId: data.parent_folder_id, // Add parentId for components that use it
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      is_folder: true,
-      type: data.folder_type === 'client' ? 'client' : 
-            data.folder_type?.includes('Form') ? 'form' :
-            data.folder_type?.includes('Financial') ? 'financial' : 'general',
-      level: 0, // Will be calculated properly
-      children: [],
-      isExpanded: false,
-      metadata: data.metadata || {}
-    };
-  } catch (error) {
-    console.error('Unexpected error updating folder metadata:', error);
-    return null;
-  }
-};
-
-/**
- * Deletes a folder from the database
- */
-export const deleteFolder = async (folderId: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('documents')
-      .delete()
-      .eq('id', folderId);
-
-    if (error) {
-      console.error('Error deleting folder:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Unexpected error deleting folder:', error);
-    return false;
-  }
-};
-
-/**
- * Renames a folder in the database
- */
-export const renameFolder = async (folderId: string, newName: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('documents')
-      .update({ title: newName })
-      .eq('id', folderId);
-
-    if (error) {
-      console.error('Error renaming folder:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Unexpected error renaming folder:', error);
-    return false;
-  }
-};
-
-/**
- * Moves a folder to a different parent folder
- */
-export const moveFolder = async (folderId: string, newParentFolderId: string | null): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('documents')
-      .update({ parent_folder_id: newParentFolderId })
-      .eq('id', folderId);
-
-    if (error) {
-      console.error('Error moving folder:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Unexpected error moving folder:', error);
-    return false;
-  }
-};
-
-/**
- * Fetches a folder by its ID
- */
-export const getFolderById = async (folderId: string): Promise<FolderStructure | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('id', folderId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching folder:', error);
-      return null;
-    }
-
-    if (!data) return null;
-
-    // Convert the database document to a FolderStructure
-    return {
-      id: data.id,
-      title: data.title || '',
-      name: data.title || '', // Add name for components that use it
-      parent_folder_id: data.parent_folder_id,
-      parentId: data.parent_folder_id, // Add parentId for components that use it
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-      is_folder: true,
-      type: data.folder_type === 'client' ? 'client' : 
-            data.folder_type?.includes('Form') ? 'form' :
-            data.folder_type?.includes('Financial') ? 'financial' : 'general',
-      level: 0, // Will be calculated properly
-      children: [],
-      isExpanded: false,
-      metadata: data.metadata || {}
-    };
-  } catch (error) {
-    console.error('Unexpected error fetching folder:', error);
-    return null;
-  }
-};
-
-/**
- * Builds a hierarchical folder structure from a flat list
- */
-export const buildFolderHierarchy = (folders: FolderStructure[]): FolderStructure[] => {
-  // Create a map for quick lookup
-  const folderMap: Record<string, FolderStructure> = {};
-  
-  // First, add all folders to the map
-  folders.forEach(folder => {
-    folderMap[folder.id] = { ...folder, children: [] };
-  });
-  
-  // Root folders will be collected here
-  const rootFolders: FolderStructure[] = [];
-  
-  // Organize into hierarchy
-  Object.values(folderMap).forEach(folder => {
-    const parentId = folder.parentId || folder.parent_folder_id;
-    
-    if (parentId && folderMap[parentId]) {
-      // This folder has a parent, add it to parent's children
-      if (!folderMap[parentId].children) {
-        folderMap[parentId].children = [];
+    // Second pass: build the hierarchy
+    Object.values(folderMap).forEach(folder => {
+      if (folder.parentId && folderMap[folder.parentId]) {
+        // Add to parent's children
+        folderMap[folder.parentId].children.push(folder);
+        // Set level based on parent
+        folder.level = (folderMap[folder.parentId].level || 0) + 1;
+      } else {
+        // Root level folder
+        rootFolders.push(folder);
       }
-      folderMap[parentId].children!.push(folder);
-      
-      // Calculate level based on parent's level
-      folder.level = (folderMap[parentId].level || 0) + 1;
-    } else {
-      // This is a root folder
-      folder.level = 0;
-      rootFolders.push(folder);
+    });
+
+    return rootFolders;
+  },
+
+  /**
+   * Determine folder type from Document
+   */
+  determineFolderType(folder: Document): 'client' | 'form' | 'financial' | 'general' {
+    if (folder.folder_type === 'client') return 'client';
+    if (folder.folder_type?.includes('Form') || folder.folder_type?.includes('form')) return 'form';
+    if (folder.folder_type?.includes('Financial') || 
+        folder.folder_type?.includes('financial') || 
+        folder.folder_type?.includes('Income') || 
+        folder.folder_type?.includes('Expense')) return 'financial';
+    return 'general';
+  },
+
+  /**
+   * Move document to folder
+   */
+  async moveDocumentToFolder(documentId: string, folderId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('documents')
+        .update({ parent_folder_id: folderId })
+        .eq('id', documentId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error moving document:', error);
+      toast.error('Failed to move document');
+      return false;
     }
-  });
-  
-  return rootFolders;
-};
+  },
 
-/**
- * Maps Document objects to FolderStructure objects
- */
-export const mapDocumentsToFolderStructure = (documents: Document[]): FolderStructure[] => {
-  return documents
-    .filter(doc => doc.is_folder)
-    .map(doc => ({
-      id: doc.id,
-      title: doc.title || '',
-      name: doc.title || '', // Add name property for components that use it
-      parent_folder_id: doc.parent_folder_id,
-      parentId: doc.parent_folder_id, // Add parentId for components that use it
-      created_at: doc.created_at,
-      updated_at: doc.updated_at,
-      is_folder: true,
-      type: determineFolderType(doc),
-      level: calculateFolderLevel(doc, documents),
-      children: [],
-      isExpanded: false,
-      metadata: doc.metadata || {}
-    }));
-};
+  /**
+   * Create new folder
+   */
+  async createFolder(
+    name: string,
+    folderType: 'client' | 'form' | 'financial' | 'general',
+    parentId?: string
+  ): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .insert({
+          title: name,
+          is_folder: true,
+          folder_type: folderType,
+          parent_folder_id: parentId || null,
+          type: 'folder',
+          size: 0
+        })
+        .select('id')
+        .single();
 
-/**
- * Calculate folder level based on parent-child relationships
- */
-const calculateFolderLevel = (folder: Document, allFolders: Document[]): number => {
-  let level = 0;
-  let currentFolder = folder;
-  
-  while (currentFolder.parent_folder_id) {
-    level++;
-    const parentFolder = allFolders.find(f => f.id === currentFolder.parent_folder_id);
-    if (!parentFolder) break;
-    currentFolder = parentFolder;
+      if (error) throw error;
+      toast.success('Folder created successfully');
+      return data.id;
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      toast.error('Failed to create folder');
+      return null;
+    }
+  },
+
+  /**
+   * Delete folder (only if empty)
+   */
+  async deleteFolder(folderId: string): Promise<boolean> {
+    try {
+      // Check if folder has documents
+      const { data: documents, error: checkError } = await supabase
+        .from('documents')
+        .select('id')
+        .eq('parent_folder_id', folderId);
+
+      if (checkError) throw checkError;
+
+      if (documents && documents.length > 0) {
+        toast.error('Cannot delete non-empty folder');
+        return false;
+      }
+
+      // Delete the folder
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', folderId);
+
+      if (error) throw error;
+      toast.success('Folder deleted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      toast.error('Failed to delete folder');
+      return false;
+    }
+  },
+
+  /**
+   * Rename folder
+   */
+  async renameFolder(folderId: string, newName: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('documents')
+        .update({ title: newName })
+        .eq('id', folderId);
+
+      if (error) throw error;
+      toast.success('Folder renamed successfully');
+      return true;
+    } catch (error) {
+      console.error('Error renaming folder:', error);
+      toast.error('Failed to rename folder');
+      return false;
+    }
+  },
+
+  /**
+   * Get documents in folder
+   */
+  async getDocumentsInFolder(folderId: string): Promise<Document[]> {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('parent_folder_id', folderId)
+        .eq('is_folder', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching documents in folder:', error);
+      toast.error('Failed to load documents');
+      return [];
+    }
+  },
+
+  /**
+   * Get folder permissions
+   */
+  async getFolderPermissions(userId: string): Promise<FolderPermissionRule[]> {
+    // In a real implementation, this would fetch from a database
+    try {
+      const { data: folders } = await supabase
+        .from('documents')
+        .select('id')
+        .eq('is_folder', true);
+
+      // Return properly shaped FolderPermissionRule objects
+      return (folders || []).map(folder => ({
+        folderId: folder.id,
+        userId,
+        role: 'user' as UserRole, // Ensure we use the proper type
+        canCreate: true,
+        canDelete: true,
+        canRename: true,
+        canMove: true,
+        permission: 'full'
+      }));
+    } catch (error) {
+      console.error('Error fetching folder permissions:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get AI folder recommendations for a document
+   */
+  async getAIFolderRecommendation(documentId: string): Promise<FolderAIRecommendation | null> {
+    try {
+      // Get document details
+      const { data: document, error: docError } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('id', documentId)
+        .single();
+
+      if (docError) throw docError;
+
+      // In the real implementation, this would call an AI service
+      // For now, use title patterns to suggest folders
+      const folders = await this.getFolders();
+      const flatFolders = this.flattenFolderStructure(folders);
+
+      const clientName = document.metadata?.client_name || '';
+      const isFinancial = document.title.toLowerCase().includes('financial') || 
+                          document.title.toLowerCase().includes('income') ||
+                          document.title.toLowerCase().includes('expense') ||
+                          document.title.toLowerCase().includes('balance') ||
+                          document.title.toLowerCase().includes('sheet') ||
+                          document.type?.includes('excel');
+      
+      const isForm = document.title.toLowerCase().includes('form') ||
+                     document.title.toLowerCase().includes('agreement') ||
+                     document.title.toLowerCase().includes('contract');
+
+      // Find matching client folder
+      const clientFolder = flatFolders.find(f => 
+        f.type === 'client' && 
+        f.name.toLowerCase().includes(clientName.toLowerCase())
+      );
+
+      if (!clientFolder) return null;
+
+      // Look for matching document type subfolder
+      const typeSubfolders = flatFolders.filter(f => 
+        f.parentId === clientFolder.id
+      );
+
+      let targetFolder: FolderStructure | undefined;
+      
+      if (isFinancial) {
+        targetFolder = typeSubfolders.find(f => f.type === 'financial');
+      } else if (isForm) {
+        targetFolder = typeSubfolders.find(f => f.type === 'form');
+      }
+
+      if (!targetFolder) return null;
+
+      // Build path names
+      const path = [clientFolder.name, targetFolder.name];
+
+      return {
+        id: targetFolder.id,
+        type: targetFolder.type,
+        reason: `Document appears to be a ${isFinancial ? 'financial document' : isForm ? 'form' : 'general document'}`,
+        confidence: 0.85,
+        documents: [documentId], // Use the documents array instead of documentId property
+        suggestedFolderId: targetFolder.id,
+        suggestedPath: path,
+        alternatives: typeSubfolders
+          .filter(f => f.id !== targetFolder?.id)
+          .map(f => ({
+            folderId: f.id,
+            path: [clientFolder.name, f.name]
+          }))
+      };
+    } catch (error) {
+      console.error('Error getting AI folder recommendation:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Flatten folder hierarchy for easy searching
+   */
+  flattenFolderStructure(folders: FolderStructure[]): FolderStructure[] {
+    let result: FolderStructure[] = [];
+    
+    for (const folder of folders) {
+      result.push(folder);
+      if (folder.children && folder.children.length > 0) {
+        result = result.concat(this.flattenFolderStructure(folder.children));
+      }
+    }
+    
+    return result;
+  },
+
+  /**
+   * Check if user has permission for an action
+   */
+  hasPermission(
+    folderId: string, 
+    action: 'view' | 'edit' | 'delete', 
+    userRole: UserRole,
+    permissions: FolderPermissionRule[]
+  ): boolean {
+    // Admin has all permissions
+    if (userRole === 'admin') return true;
+    
+    // Check specific folder permission
+    const folderPermission = permissions.find(p => p.folderId === folderId);
+    if (folderPermission) {
+      if (folderPermission.permission === 'full') return true;
+      if (folderPermission.permission === 'edit' && (action === 'view' || action === 'edit')) return true;
+      if (folderPermission.permission === 'view' && action === 'view') return true;
+    }
+    
+    // Role-based fallback permissions
+    if (userRole === 'manager' && action !== 'delete') return true;
+    if (userRole === 'reviewer' && action === 'view') return true;
+    
+    return false;
   }
-  
-  return level;
-};
-
-/**
- * Determine folder type from Document properties
- */
-export const determineFolderType = (folder: Document): 'client' | 'form' | 'financial' | 'general' => {
-  if (folder.folder_type === 'client') return 'client';
-  if (folder.folder_type?.includes('Form') || folder.folder_type?.includes('form')) return 'form';
-  if (folder.folder_type?.includes('Financial') || 
-      folder.folder_type?.includes('financial') || 
-      folder.folder_type?.includes('Income') || 
-      folder.folder_type?.includes('Expense')) return 'financial';
-  return 'general';
 };

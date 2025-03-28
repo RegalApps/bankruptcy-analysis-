@@ -1,98 +1,77 @@
 
-import { useState } from "react";
-import { ClientHeader } from "./ClientHeader";
-import { DesktopView } from "./DesktopView";
-import { MobileTabletView } from "./MobileTabletView";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { Client, Document, ClientViewerProps } from "../../types";
+import { useEffect, useState } from "react";
 import { useClientData } from "../../hooks/useClientData";
+import { ClientHeader } from "./ClientHeader";
+import { ClientTabs } from "./ClientTabs";
+import { ClientTabContent } from "./ClientTabContent";
+import { ClientErrorState } from "../ClientErrorState";
+import { ClientViewerProps } from "../../types";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
-export const ClientViewerContainer = ({ clientId, onBack }: ClientViewerProps) => {
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const isMobile = useMediaQuery("(max-width: 640px)");
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-  
-  // Use the hook to fetch client data
+export const ClientViewerContainer = ({ 
+  clientId, 
+  onBack,
+  onDocumentOpen,
+  onError
+}: ClientViewerProps) => {
+  const [isMounted, setIsMounted] = useState(false);
   const { 
     client, 
     documents, 
     isLoading, 
-    error, 
     activeTab, 
     setActiveTab,
-    lastActivityDate 
+    error
   } = useClientData(clientId, onBack);
-  
-  const selectedDocument = selectedDocumentId 
-    ? documents.find(doc => doc.id === selectedDocumentId) || null
-    : null;
-  
-  // Handle document opening (e.g., in a new tab or modal)
-  const handleDocumentOpen = (documentId: string) => {
-    window.open(`/documents/${documentId}`, '_blank');
-  };
-  
-  // Handle document selection (for preview)
-  const handleDocumentSelect = (documentId: string) => {
-    setSelectedDocumentId(documentId);
-  };
-  
-  if (isLoading) {
+
+  // If there's an error, call the error callback
+  useEffect(() => {
+    if (error && onError) {
+      onError();
+    }
+  }, [error, onError]);
+
+  // Prevent flickering by delaying the mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isMounted || isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="h-full flex items-center justify-center">
         <LoadingSpinner size="large" />
       </div>
     );
   }
-  
-  if (error || !client) {
-    return (
-      <div className="p-6 text-center">
-        <h3 className="text-lg font-medium mb-2">Error Loading Client</h3>
-        <p className="text-muted-foreground">
-          {error ? error.toString() : "Client information could not be loaded."}
-        </p>
-        <button 
-          className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
-          onClick={onBack}
-        >
-          Go Back
-        </button>
-      </div>
-    );
+
+  if (error) {
+    return <ClientErrorState onBack={onBack} error={error} />;
   }
-  
+
+  if (!client) {
+    return <ClientErrorState onBack={onBack} message="Client information not found" />;
+  }
+
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="h-full flex flex-col">
       <ClientHeader client={client} onBack={onBack} />
       
-      {isDesktop ? (
-        <DesktopView 
-          client={client}
-          documents={documents}
-          selectedDocument={selectedDocument}
-          selectedDocumentId={selectedDocumentId}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onDocumentOpen={handleDocumentOpen}
-          onDocumentSelect={handleDocumentSelect}
-          lastActivityDate={lastActivityDate}
-        />
-      ) : (
-        <MobileTabletView 
-          client={client}
-          documents={documents}
-          selectedDocument={selectedDocument}
-          selectedDocumentId={selectedDocumentId}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onDocumentOpen={handleDocumentOpen}
-          onDocumentSelect={handleDocumentSelect}
-          lastActivityDate={lastActivityDate}
-          isMobile={isMobile}
-        />
-      )}
+      <div className="mt-6 flex-1 overflow-hidden flex flex-col">
+        <ClientTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        
+        <div className="mt-4 flex-1 overflow-auto">
+          <ClientTabContent
+            client={client}
+            documents={documents}
+            activeTab={activeTab}
+            onDocumentOpen={onDocumentOpen}
+          />
+        </div>
+      </div>
     </div>
   );
 };

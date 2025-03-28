@@ -1,47 +1,77 @@
 
-import { useMemo } from "react";
-import { Document } from "@/components/DocumentList/types";
+import { useState, useEffect } from "react";
 import { FolderStructure } from "@/types/folders";
-import { mapDocumentsToFolderStructure, buildFolderHierarchy } from "./utils/folderMapperUtils";
+import { Document } from "@/components/DocumentList/types";
 
-export const useCreateFolderStructure = (documents: Document[], selectedFolderId: string | null) => {
-  // Create folder structure from documents
-  const folders = useMemo(() => {
-    const folderStructures = mapDocumentsToFolderStructure(documents);
-    return buildFolderHierarchy(folderStructures);
-  }, [documents]);
+export function useCreateFolderStructure(documents: Document[]) {
+  const [folders, setFolders] = useState<FolderStructure[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Get all folders in flat structure for easier lookup
-  const allFolders = useMemo(() => {
-    return documents.filter(doc => doc.is_folder);
-  }, [documents]);
-
-  // Create folder path
-  const folderPath = useMemo(() => {
-    const path: { id: string; name: string }[] = [];
-
-    if (selectedFolderId) {
-      let currentFolder = allFolders.find(folder => folder.id === selectedFolderId);
-      
-      // Add the current folder to the path
-      if (currentFolder) {
-        path.unshift({ id: currentFolder.id, name: currentFolder.title || 'Unnamed' });
-      }
-
-      // Build the path by finding parent folders
-      while (currentFolder && currentFolder.parent_folder_id) {
-        const parent = allFolders.find(folder => folder.id === currentFolder?.parent_folder_id);
-        if (parent) {
-          path.unshift({ id: parent.id, name: parent.title || 'Unnamed' });
-          currentFolder = parent;
-        } else {
-          break;
-        }
-      }
+  useEffect(() => {
+    if (documents.length === 0) {
+      setFolders([]);
+      setIsLoading(false);
+      return;
     }
 
-    return path;
-  }, [allFolders, selectedFolderId]);
+    // Create folder structure
+    setIsLoading(true);
+    
+    try {
+      // Get folders from documents
+      const folderDocs = documents.filter(doc => doc.is_folder);
+      
+      // Map to FolderStructure
+      const folderStructures: FolderStructure[] = folderDocs.map(doc => ({
+        id: doc.id,
+        name: doc.title || 'Unnamed Folder',
+        type: doc.folder_type || 'folder',
+        children: [],
+        parentId: doc.parent_folder_id,
+        isExpanded: false,
+        metadata: doc.metadata
+      }));
+      
+      // Build hierarchy
+      const rootFolders: FolderStructure[] = [];
+      const folderMap = new Map<string, FolderStructure>();
+      
+      // Add all folders to map
+      folderStructures.forEach(folder => {
+        folderMap.set(folder.id, folder);
+      });
+      
+      // Organize into hierarchy
+      folderStructures.forEach(folder => {
+        if (folder.parentId && folderMap.has(folder.parentId)) {
+          const parent = folderMap.get(folder.parentId);
+          if (parent) {
+            parent.children.push(folder);
+          }
+        } else {
+          rootFolders.push(folder);
+        }
+      });
+      
+      // Calculate levels for each folder
+      const addLevels = (folders: FolderStructure[], level: number) => {
+        folders.forEach(folder => {
+          folder.level = level;
+          if (folder.children.length > 0) {
+            addLevels(folder.children, level + 1);
+          }
+        });
+      };
+      
+      addLevels(rootFolders, 0);
+      
+      setFolders(rootFolders);
+    } catch (error) {
+      console.error("Error creating folder structure:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [documents]);
 
-  return { folders, folderPath };
-};
+  return { folders, isLoading };
+}

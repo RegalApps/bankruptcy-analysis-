@@ -7,7 +7,7 @@ import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react"
 
 interface RealTimeAnalyticsPanelProps {
   formData: IncomeExpenseData;
-  previousMonthData?: any; // Optional with the ? operator
+  previousMonthData: any;
   historicalData: any;
 }
 
@@ -18,28 +18,18 @@ export const RealTimeAnalyticsPanel = ({
 }: RealTimeAnalyticsPanelProps) => {
   // Memoize calculations to prevent unnecessary recalculations
   const analytics = useMemo(() => {
-    if (!formData) {
+    if (!formData || !previousMonthData) {
       return null;
     }
 
-    // If previousMonthData is undefined, use empty values
-    const prevData = previousMonthData || {
-      total_monthly_income: "0",
-      spouse_total_monthly_income: "0",
-      total_essential_expenses: "0",
-      total_discretionary_expenses: "0",
-      total_savings: "0",
-      total_insurance: "0"
-    };
-    
     // Calculate total income
     const currentTotalIncome = 
       parseFloat(formData.total_monthly_income || "0") + 
       parseFloat(formData.spouse_total_monthly_income || "0");
     
     const previousTotalIncome = 
-      parseFloat(prevData.total_monthly_income || "0") + 
-      parseFloat(prevData.spouse_total_monthly_income || "0");
+      parseFloat(previousMonthData.total_monthly_income || "0") + 
+      parseFloat(previousMonthData.spouse_total_monthly_income || "0");
 
     // Calculate total expenses
     const currentTotalExpenses = 
@@ -49,10 +39,10 @@ export const RealTimeAnalyticsPanel = ({
       parseFloat(formData.total_insurance || "0");
     
     const previousTotalExpenses = 
-      parseFloat(prevData.total_essential_expenses || "0") + 
-      parseFloat(prevData.total_discretionary_expenses || "0") +
-      parseFloat(prevData.total_savings || "0") +
-      parseFloat(prevData.total_insurance || "0");
+      parseFloat(previousMonthData.total_essential_expenses || "0") + 
+      parseFloat(previousMonthData.total_discretionary_expenses || "0") +
+      parseFloat(previousMonthData.total_savings || "0") +
+      parseFloat(previousMonthData.total_insurance || "0");
 
     // Calculate surplus
     const currentSurplus = currentTotalIncome - currentTotalExpenses;
@@ -109,7 +99,7 @@ export const RealTimeAnalyticsPanel = ({
   }
 
   return (
-    <Card className="overflow-hidden">
+    <Card>
       <CardContent className="p-4 space-y-3">
         {/* Income Analysis */}
         <div className="space-y-2">

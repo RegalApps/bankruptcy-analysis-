@@ -1,6 +1,6 @@
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { ClientSummaryPanel } from "../ClientSummaryPanel";
+import { ClientInfoPanel } from "../ClientInfoPanel";
 import { DocumentsPanel } from "../DocumentsPanel";
 import { FilePreviewPanel } from "../FilePreview/FilePreviewPanel";
 import { Client, Document } from "../../types";
@@ -30,23 +30,23 @@ export const DesktopView = ({
 }: DesktopViewProps) => {
   return (
     <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)]">
-      {/* Left Panel: Client & Task Summary */}
-      <ResizablePanel defaultSize={25} minSize={20}>
-        <ClientSummaryPanel 
+      <ResizablePanel defaultSize={20} minSize={15}>
+        <ClientInfoPanel 
           client={client} 
           documentCount={documents.length}
           lastActivityDate={lastActivityDate}
           documents={documents}
+          onDocumentSelect={onDocumentSelect}
+          selectedDocumentId={selectedDocumentId}
         />
       </ResizablePanel>
       
       <ResizableHandle withHandle />
       
-      {/* Center Panel: Document Files */}
-      <ResizablePanel defaultSize={40}>
+      <ResizablePanel defaultSize={50}>
         <DocumentsPanel
           documents={documents}
-          activeTab="all"
+          activeTab={activeTab}
           setActiveTab={setActiveTab}
           onDocumentOpen={onDocumentOpen}
           onDocumentSelect={onDocumentSelect}
@@ -56,8 +56,7 @@ export const DesktopView = ({
       
       <ResizableHandle withHandle />
       
-      {/* Right Panel: Document Viewer, History, and Comments */}
-      <ResizablePanel defaultSize={35} minSize={25}>
+      <ResizablePanel defaultSize={30} minSize={20}>
         <FilePreviewPanel 
           document={selectedDocument} 
           onDocumentOpen={onDocumentOpen}

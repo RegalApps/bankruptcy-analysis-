@@ -1,79 +1,74 @@
 
-import React, { useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { FileText, Eye, MessageSquare, History } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Document } from "../../types";
-import { FilePreview } from "./FilePreview";
-import { CommentPanel } from "./CommentPanel";
-import { HistoryPanel } from "./HistoryPanel";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { File, FileQuestion } from "lucide-react";
+import { EmptyDocumentState } from "./EmptyDocumentState";
+import { DocumentHeader } from "./DocumentHeader";
+import { DocumentPreviewTab } from "./DocumentPreviewTab";
+import { CommentsTab } from "./CommentsTab";
+import { ActivityTab } from "./ActivityTab";
+import { useFilePreview } from "./useFilePreview";
 
 interface FilePreviewPanelProps {
   document: Document | null;
   onDocumentOpen: (documentId: string) => void;
 }
 
-export const FilePreviewPanel = ({ 
-  document, 
-  onDocumentOpen 
-}: FilePreviewPanelProps) => {
-  const [activeTab, setActiveTab] = useState("preview");
+export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelProps) => {
+  const {
+    activeTab,
+    setActiveTab,
+    hasStoragePath,
+    isLoading,
+    effectiveDocumentId,
+    getStoragePath,
+    handleDocumentOpen
+  } = useFilePreview(document, onDocumentOpen);
   
   if (!document) {
-    return (
-      <div className="h-full flex items-center justify-center bg-muted/30">
-        <div className="text-center p-6">
-          <FileQuestion className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No Document Selected</h3>
-          <p className="text-muted-foreground">
-            Select a document from the list to preview it here.
-          </p>
-        </div>
-      </div>
-    );
+    return <EmptyDocumentState />;
   }
-  
+
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b flex items-center justify-between">
-        <div className="flex items-center">
-          <File className="h-5 w-5 text-primary mr-2" />
-          <h3 className="font-medium">{document.title}</h3>
-        </div>
-      </div>
+    <div className="h-full flex flex-col p-4">
+      <DocumentHeader document={document} handleDocumentOpen={handleDocumentOpen} />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <div className="px-4 pt-2">
-          <TabsList className="w-full">
-            <TabsTrigger value="preview" className="flex-1">
-              Preview
-            </TabsTrigger>
-            <TabsTrigger value="comments" className="flex-1">
-              Comments
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex-1">
-              History
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="mb-4">
+          <TabsTrigger value="preview">
+            <FileText className="h-4 w-4 mr-1.5" />
+            Preview
+          </TabsTrigger>
+          <TabsTrigger value="comments">
+            <MessageSquare className="h-4 w-4 mr-1.5" />
+            Comments
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="h-4 w-4 mr-1.5" />
+            Activity
+          </TabsTrigger>
+        </TabsList>
         
-        <TabsContent value="preview" className="flex-1 mt-0">
-          <FilePreview 
-            document={document} 
-            onDocumentOpen={() => onDocumentOpen(document.id)} 
+        <TabsContent value="preview" className="mt-0 flex-1">
+          <DocumentPreviewTab 
+            document={document}
+            hasStoragePath={hasStoragePath}
+            effectiveDocumentId={effectiveDocumentId}
+            getStoragePath={getStoragePath}
+            handleDocumentOpen={handleDocumentOpen}
+            isLoading={isLoading}
           />
         </TabsContent>
         
-        <TabsContent value="comments" className="flex-1 mt-0">
-          <ScrollArea className="h-full">
-            <CommentPanel documentId={document.id} />
-          </ScrollArea>
+        <TabsContent value="comments" className="mt-0 flex-1 flex flex-col">
+          <CommentsTab 
+            document={document}
+            effectiveDocumentId={effectiveDocumentId}
+          />
         </TabsContent>
         
-        <TabsContent value="history" className="flex-1 mt-0">
-          <ScrollArea className="h-full">
-            <HistoryPanel documentId={document.id} />
-          </ScrollArea>
+        <TabsContent value="history" className="mt-0 flex-1">
+          <ActivityTab document={document} />
         </TabsContent>
       </Tabs>
     </div>
