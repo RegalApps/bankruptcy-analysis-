@@ -4,7 +4,7 @@ import { FolderList } from "./FolderList";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
 
-interface DocumentTreeProps {
+interface FolderTreeProps {
   filteredFolders: FolderStructure[];
   filteredDocuments: Document[];
   form47Documents: Document[];
@@ -22,7 +22,7 @@ interface DocumentTreeProps {
   handleDrop: (e: React.DragEvent, targetFolderId: string) => void;
 }
 
-export const DocumentTree = ({
+export const FolderTree = ({
   filteredFolders,
   filteredDocuments,
   form47Documents,
@@ -38,7 +38,7 @@ export const DocumentTree = ({
   handleDragOver,
   handleDragLeave,
   handleDrop
-}: DocumentTreeProps) => {
+}: FolderTreeProps) => {
   const hasForm47Documents = form47Documents.length > 0;
 
   return (
@@ -90,5 +90,3 @@ export const DocumentTree = ({
     </ScrollArea>
   );
 };
-
-export const FolderTree = DocumentTree;

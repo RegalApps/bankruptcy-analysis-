@@ -1,25 +1,33 @@
 
 import { useState } from "react";
+import { Document } from "@/components/DocumentList/types";
+
+export type DraggedItem = {
+  id: string;
+  type: "folder" | "document";
+};
 
 export const useFolderDragAndDrop = () => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedItem, setDraggedItem] = useState<{ id: string, type: 'folder' | 'document' } | null>(null);
+  const [draggedItem, setDraggedItem] = useState<DraggedItem | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
-  const handleDragStart = (id: string, type: 'folder' | 'document') => {
-    setIsDragging(true);
+  const handleDragStart = (id: string, type: "folder" | "document") => {
     setDraggedItem({ id, type });
+    setIsDragging(true);
   };
 
   const handleDragEnd = () => {
-    setIsDragging(false);
     setDraggedItem(null);
     setDragOverFolder(null);
+    setIsDragging(false);
   };
 
   const handleDragOver = (e: React.DragEvent, folderId: string) => {
     e.preventDefault();
-    setDragOverFolder(folderId);
+    if (draggedItem && draggedItem.id !== folderId) {
+      setDragOverFolder(folderId);
+    }
   };
 
   const handleDragLeave = () => {
@@ -28,24 +36,35 @@ export const useFolderDragAndDrop = () => {
 
   const handleDrop = async (e: React.DragEvent, targetFolderId: string) => {
     e.preventDefault();
-    setIsDragging(false);
     setDragOverFolder(null);
+    setIsDragging(false);
     
-    // Implementation for actual drop would go here in a full version
-    console.log(`Dropped item ${draggedItem?.id} of type ${draggedItem?.type} into folder ${targetFolderId}`);
+    if (!draggedItem) return;
     
-    // Reset state
+    console.log(`Dropped ${draggedItem.type} ${draggedItem.id} onto folder ${targetFolderId}`);
+    
+    // This would typically update the database to move the item
+    // For now, just log the action and you can implement the actual API call later
+    
     setDraggedItem(null);
+  };
+  
+  // Function to provide the setExpandedFolders from parent
+  let setExpandedFoldersFunction: React.Dispatch<React.SetStateAction<Record<string, boolean>>> | null = null;
+  
+  const setExpandedFoldersForDrag = (setter: React.Dispatch<React.SetStateAction<Record<string, boolean>>>) => {
+    setExpandedFoldersFunction = setter;
   };
 
   return {
-    isDragging,
     draggedItem,
     dragOverFolder,
+    isDragging,
     handleDragStart,
     handleDragEnd,
     handleDragOver,
     handleDragLeave,
-    handleDrop
+    handleDrop,
+    setExpandedFoldersFunction: setExpandedFoldersForDrag
   };
 };

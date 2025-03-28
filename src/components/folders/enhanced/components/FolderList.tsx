@@ -1,8 +1,8 @@
 
-import { ChevronRight, ChevronDown, Folder, FolderOpen, File } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronRight, ChevronDown, Folder, File } from "lucide-react";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
+import { cn } from "@/lib/utils";
 
 interface FolderListProps {
   folders: FolderStructure[];
@@ -20,7 +20,7 @@ interface FolderListProps {
   handleDrop: (e: React.DragEvent, targetFolderId: string) => void;
 }
 
-export const FolderList = ({
+export const FolderList: React.FC<FolderListProps> = ({
   folders,
   documents,
   selectedFolderId,
@@ -34,79 +34,88 @@ export const FolderList = ({
   handleDragOver,
   handleDragLeave,
   handleDrop
-}: FolderListProps) => {
-  return (
-    <div className="space-y-1">
-      {folders.map(folder => (
-        <div key={folder.id} className="mb-1">
-          <div
-            className={cn(
-              "flex items-center py-1 px-2 rounded-sm cursor-pointer",
-              selectedFolderId === folder.id ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent/50",
-              dragOverFolder === folder.id ? "bg-primary/5 border border-primary/20" : ""
-            )}
-            onClick={() => onFolderSelect(folder.id)}
-            draggable
-            onDragStart={() => handleDragStart(folder.id, 'folder')}
-            onDragOver={(e) => handleDragOver(e, folder.id)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, folder.id)}
+}) => {
+  // Get top-level folders
+  const topLevelFolders = folders.filter(folder => !folder.parent_folder_id);
+  
+  const renderFolder = (folder: FolderStructure) => {
+    const isExpanded = expandedFolders[folder.id];
+    const isSelected = selectedFolderId === folder.id;
+    const isDraggedOver = dragOverFolder === folder.id;
+    
+    // Get child folders and documents
+    const childFolders = folders.filter(f => f.parent_folder_id === folder.id);
+    const childDocuments = documents.filter(doc => doc.parent_folder_id === folder.id && !doc.is_folder);
+    
+    return (
+      <div key={folder.id} className="mb-1">
+        <div 
+          className={cn(
+            "flex items-center p-1.5 rounded-md cursor-pointer",
+            isSelected ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent",
+            isDraggedOver ? "bg-primary/5 border border-dashed border-primary" : ""
+          )}
+          onClick={() => onFolderSelect(folder.id)}
+          onDragOver={(e) => handleDragOver(e, folder.id)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, folder.id)}
+          draggable
+          onDragStart={() => handleDragStart(folder.id, 'folder')}
+        >
+          <button 
+            onClick={(e) => toggleFolder(folder.id, e)}
+            className="mr-1 p-0.5 rounded hover:bg-accent"
           >
-            <button
-              className="mr-1 p-1 hover:bg-muted rounded-sm"
-              onClick={(e) => toggleFolder(folder.id, e)}
-            >
-              {expandedFolders[folder.id] ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </button>
-
-            {expandedFolders[folder.id] ? (
-              <FolderOpen className="h-4 w-4 text-primary mr-2" />
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <Folder className="h-4 w-4 text-muted-foreground mr-2" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             )}
-
-            <span className="text-sm truncate">{folder.name}</span>
-
-            {folder.documentCount > 0 && (
-              <span className="ml-auto text-xs text-muted-foreground">{folder.documentCount}</span>
+          </button>
+          <Folder className="h-4 w-4 text-primary mr-1.5" />
+          <span className="truncate">{folder.title}</span>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {childFolders.length + childDocuments.length}
+          </span>
+        </div>
+        
+        {isExpanded && (
+          <div className="pl-6 ml-1 border-l mt-1">
+            {/* Render child folders recursively */}
+            {childFolders.map(childFolder => renderFolder(childFolder))}
+            
+            {/* Render documents in this folder */}
+            {childDocuments.map(doc => (
+              <div
+                key={doc.id}
+                className={cn(
+                  "flex items-center p-1.5 rounded-md cursor-pointer",
+                  "hover:bg-accent/50"
+                )}
+                onClick={() => onDocumentSelect(doc.id)}
+                onDoubleClick={() => onDocumentOpen(doc.id)}
+                draggable
+                onDragStart={() => handleDragStart(doc.id, 'document')}
+              >
+                <File className="h-4 w-4 text-muted-foreground mr-1.5" />
+                <span className="truncate">{doc.title}</span>
+              </div>
+            ))}
+            
+            {childFolders.length === 0 && childDocuments.length === 0 && (
+              <div className="text-xs text-muted-foreground py-1.5 px-2">
+                Empty folder
+              </div>
             )}
           </div>
-
-          {expandedFolders[folder.id] && (
-            <div className="ml-6 mt-1 space-y-1">
-              {/* Show documents in this folder */}
-              {documents
-                .filter(doc => doc.parent_folder_id === folder.id && !doc.is_folder)
-                .map(doc => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center py-1 px-2 rounded-sm cursor-pointer hover:bg-accent/50"
-                    onClick={() => onDocumentSelect(doc.id)}
-                    onDoubleClick={() => onDocumentOpen(doc.id)}
-                    draggable
-                    onDragStart={() => handleDragStart(doc.id, 'document')}
-                  >
-                    <File className="h-4 w-4 text-muted-foreground mr-2" />
-                    <span className="text-sm truncate">{doc.title}</span>
-                  </div>
-                ))}
-              
-              {/* Show folders in this folder (recursive) */}
-              {folders
-                .filter(subfolder => subfolder.parentId === folder.id)
-                .map(subfolder => (
-                  <div key={subfolder.id} className="mb-1">
-                    {/* Recursive rendering would go here */}
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      ))}
+        )}
+      </div>
+    );
+  };
+  
+  return (
+    <div className="pb-6">
+      {topLevelFolders.map(folder => renderFolder(folder))}
     </div>
   );
 };

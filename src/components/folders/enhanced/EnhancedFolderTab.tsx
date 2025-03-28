@@ -35,23 +35,28 @@ export const EnhancedFolderTab = ({
 
   // Drag and drop functionality
   const {
-    isDragging,
     draggedItem,
     dragOverFolder,
-    handleDragStart,
+    isDragging,
+    handleDragStart, 
     handleDragEnd,
     handleDragOver,
     handleDragLeave,
-    handleDrop
+    handleDrop,
+    setExpandedFoldersFunction
   } = useFolderDragAndDrop();
 
   // Filter and expand functionality
   const {
-    visibleFolders,
+    filteredFolders,
     filteredDocuments,
     expandedFolders,
-    toggleFolderExpanded
+    toggleFolderExpanded,
+    setExpandedFolders
   } = useFolderFilterAndExpand(documents, searchQuery, selectedFolderId);
+
+  // Provide the setExpandedFolders function to the drag-drop hook
+  setExpandedFoldersFunction(setExpandedFolders);
 
   // Handle document selection
   const handleDocumentSelect = (documentId: string) => {
@@ -109,7 +114,7 @@ export const EnhancedFolderTab = ({
           />
           
           <FolderTree
-            filteredFolders={visibleFolders}
+            filteredFolders={filteredFolders}
             filteredDocuments={filteredDocuments}
             form47Documents={form47Documents}
             selectedFolderId={selectedFolderId}
