@@ -52,3 +52,11 @@ export interface FolderRecommendationProps {
   onDismiss: () => void;
   isOpen: boolean;
 }
+
+// Add the missing FolderOperationResult interface
+export interface FolderOperationResult {
+  success: boolean;
+  message: string;
+  folderId?: string;
+  error?: string;
+}

@@ -82,7 +82,7 @@ export const useIncomeExpenseForm = (selectedClient: Client | null) => {
     isSubmitting,
     currentRecordId,
     historicalData,
-    previousMonthData,
+    previousMonthData, // Make sure we're returning this property
     selectedPeriod,
     isDataLoading,
     handleChange,

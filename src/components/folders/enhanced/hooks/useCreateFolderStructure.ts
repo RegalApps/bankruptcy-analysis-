@@ -25,11 +25,12 @@ export function useCreateFolderStructure(documents: Document[]) {
       const folderStructures: FolderStructure[] = folderDocs.map(doc => ({
         id: doc.id,
         name: doc.title || 'Unnamed Folder',
-        type: doc.folder_type || 'folder',
+        type: doc.folder_type as any || 'general',
         children: [],
         parentId: doc.parent_folder_id,
         isExpanded: false,
-        metadata: doc.metadata
+        level: 0, // Add default level, it will be updated later
+        metadata: doc.metadata || {}
       }));
       
       // Build hierarchy

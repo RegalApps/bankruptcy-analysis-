@@ -30,6 +30,7 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
     isSubmitting,
     historicalData,
     isDataLoading,
+    previousMonthData,
     handleSubmit,
   } = useIncomeExpenseForm(selectedClient);
 
@@ -91,6 +92,7 @@ export const ActivityDashboard = ({ selectedClient }: ActivityDashboardProps) =>
 
       <RealTimeAnalyticsPanel 
         formData={formData} 
+        previousMonthData={previousMonthData}
         historicalData={historicalData}
       />
 
