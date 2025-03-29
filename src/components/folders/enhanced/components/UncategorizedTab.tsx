@@ -11,10 +11,17 @@ interface UncategorizedTabProps {
 }
 
 export const UncategorizedTab = ({ 
-  documents, 
+  documents = [], 
   onDocumentOpen 
 }: UncategorizedTabProps) => {
   if (!documents || documents.length === 0) {
+    return null;
+  }
+
+  // Filter out any invalid documents
+  const validDocuments = documents.filter(doc => doc && doc.id);
+  
+  if (validDocuments.length === 0) {
     return null;
   }
 
@@ -22,7 +29,7 @@ export const UncategorizedTab = ({
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Uncategorized Documents</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {documents.map(doc => (
+        {validDocuments.map(doc => doc && (
           <Card 
             key={doc.id}
             className={cn(
@@ -47,7 +54,7 @@ export const UncategorizedTab = ({
               </div>
               
               <div className="mt-auto text-xs text-muted-foreground">
-                {new Date(doc.created_at).toLocaleDateString()}
+                {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : "No date available"}
               </div>
             </CardContent>
           </Card>

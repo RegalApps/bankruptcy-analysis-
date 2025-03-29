@@ -17,7 +17,7 @@ export const FolderItem = ({ folder, onDocumentOpen }: FolderItemProps) => {
   }
 
   const handleOpen = () => {
-    if (onDocumentOpen) {
+    if (onDocumentOpen && folder.id) {
       onDocumentOpen(folder.id);
     }
   };
@@ -46,7 +46,7 @@ export const FolderItem = ({ folder, onDocumentOpen }: FolderItemProps) => {
         </div>
         
         <div className="mt-auto text-xs text-muted-foreground">
-          {new Date(folder.created_at).toLocaleDateString()}
+          {folder.created_at ? new Date(folder.created_at).toLocaleDateString() : "No date available"}
         </div>
       </CardContent>
     </Card>

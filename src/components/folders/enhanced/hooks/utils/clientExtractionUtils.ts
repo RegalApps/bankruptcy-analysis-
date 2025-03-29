@@ -5,13 +5,17 @@ import { FolderStructure } from "@/types/folders";
 /**
  * Extracts unique clients from a list of documents
  */
-export const extractClientsFromDocuments = (documents: Document[]) => {
+export const extractClientsFromDocuments = (documents: Document[] = []) => {
+  if (!documents || !Array.isArray(documents)) {
+    return [];
+  }
+  
   // Create a map to store unique clients
   const clientMap = new Map<string, { id: string; name: string }>();
   
   // Iterate through documents to find client information
   documents.forEach(doc => {
-    if (doc.metadata && typeof doc.metadata === 'object') {
+    if (doc && doc.metadata && typeof doc.metadata === 'object') {
       const clientId = doc.metadata.client_id || doc.metadata.clientId;
       const clientName = doc.metadata.client_name || doc.metadata.clientName;
       
@@ -31,13 +35,17 @@ export const extractClientsFromDocuments = (documents: Document[]) => {
  * Filters documents based on selected client
  */
 export const filterDocumentsByClient = (
-  documents: Document[], 
+  documents: Document[] = [], 
   selectedClientId: string | null
 ): Document[] => {
+  if (!documents || !Array.isArray(documents)) {
+    return [];
+  }
+  
   if (!selectedClientId) return documents;
   
   return documents.filter(doc => {
-    if (!doc.metadata || typeof doc.metadata !== 'object') return false;
+    if (!doc || !doc.metadata || typeof doc.metadata !== 'object') return false;
     
     const clientId = doc.metadata.client_id || doc.metadata.clientId;
     return clientId === selectedClientId;
@@ -48,17 +56,23 @@ export const filterDocumentsByClient = (
  * Filters folders based on selected client and matching documents
  */
 export const filterFoldersByClient = (
-  folders: FolderStructure[],
-  filteredDocuments: Document[],
+  folders: FolderStructure[] = [],
+  filteredDocuments: Document[] = [],
   selectedClientId: string | null
 ): FolderStructure[] => {
+  if (!folders || !Array.isArray(folders)) {
+    return [];
+  }
+  
   if (!selectedClientId) return folders;
   
   // Get array of document IDs that are associated with the selected client
-  const documentIds = filteredDocuments.map(doc => doc.id);
+  const documentIds = filteredDocuments.map(doc => doc.id).filter(Boolean);
   
   // Filter folders that are related to the selected client
   return folders.filter(folder => {
+    if (!folder) return false;
+    
     // Check if this folder is directly associated with the client
     if (folder.metadata && typeof folder.metadata === 'object') {
       const folderClientId = folder.metadata.client_id || folder.metadata.clientId;
@@ -66,6 +80,6 @@ export const filterFoldersByClient = (
     }
     
     // Or check if this folder contains any documents that are associated with the client
-    return documentIds.includes(folder.id);
+    return !!folder.id && documentIds.includes(folder.id);
   });
 };

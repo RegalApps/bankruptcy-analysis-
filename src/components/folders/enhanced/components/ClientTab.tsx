@@ -1,12 +1,8 @@
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { ClientViewer } from "@/components/client/ClientViewer";
-import { ClientNotFound } from "@/components/client/components/ClientNotFound";
-import { ClientTemplate } from "@/components/client/components/ClientTemplate";
-import { NoClientSelected } from "@/components/activity/components/NoClientSelected";
-import { toast } from "sonner";
-import { useNavigate, useLocation } from "react-router-dom";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ClientTabProps {
   clientId: string;
@@ -14,194 +10,37 @@ interface ClientTabProps {
   onDocumentOpen?: (documentId: string) => void;
 }
 
-export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) => {
-  console.log("Rendering ClientTab for client:", clientId);
-  
-  const [loadError, setLoadError] = useState<boolean>(false);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [retryId, setRetryId] = useState<string>('');
-  const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
-  const mountedRef = useRef<boolean>(true);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const loadingTimeoutRef = useRef<number | null>(null);
-  const longLoadTimeoutRef = useRef<number | null>(null);
-  
-  const handleError = useCallback(() => {
-    console.error(`ClientTab: Error loading client ID: ${clientId}`);
-    
-    setIsTransitioning(false);
-    
-    toast.error("Could not load client information", {
-      description: "Using template mode instead"
-    });
-    
-    if (clientId.toLowerCase().includes('josh') || clientId.toLowerCase().includes('hart')) {
-      setRetryCount(prev => prev + 1);
-      setRetryId('josh-hart');
-      setLoadError(false);
-    }
-  }, [clientId]);
-  
-  // Safe back navigation that stays on current route
-  const handleBack = useCallback(() => {
-    console.log("ClientTab: Back button clicked, current path:", location.pathname);
-    
-    // Stay on the current page but clear client selection
-    if (location.pathname === '/documents') {
-      console.log("ClientTab: Staying on documents page");
-      onBack();
-      // Prevent default navigation
-      return;
-    }
-    
-    onBack();
-  }, [location.pathname, onBack]);
-  
-  useEffect(() => {
-    console.log("ClientTab: Client ID changed to", clientId);
-    setLoadError(false);
-    setRetryCount(0);
-    setIsTransitioning(true);
-    
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-    }
-    
-    if (longLoadTimeoutRef.current) {
-      clearTimeout(longLoadTimeoutRef.current);
-    }
-    
-    loadingTimeoutRef.current = window.setTimeout(() => {
-      if (mountedRef.current) {
-        console.log("ClientTab: Transition complete, rendering client view");
-        setIsTransitioning(false);
-      }
-    }, 400);
-    
-    longLoadTimeoutRef.current = window.setTimeout(() => {
-      if (mountedRef.current && !loadError) {
-        console.log("ClientTab: Loading taking too long, switching to template mode");
-        toast.info("Using template mode for faster viewing", {
-          description: "You can edit client information directly"
-        });
-      }
-    }, 2000);
-    
-    toast.info(`Loading ${clientId.includes('josh-hart') ? 'Josh Hart' : 'client'} information...`, {
-      duration: 2000,
-    });
-    
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-      
-      if (longLoadTimeoutRef.current) {
-        clearTimeout(longLoadTimeoutRef.current);
-        longLoadTimeoutRef.current = null;
-      }
-    };
-  }, [clientId, loadError]);
-  
-  useEffect(() => {
-    return () => {
-      console.log("ClientTab: Component unmounting");
-      mountedRef.current = false;
-      
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-      
-      if (longLoadTimeoutRef.current) {
-        clearTimeout(longLoadTimeoutRef.current);
-        longLoadTimeoutRef.current = null;
-      }
-    };
-  }, []);
-  
-  const effectiveClientId = retryCount > 0 && retryId ? retryId : clientId;
-  
-  if (!effectiveClientId) {
-    console.log("ClientTab: No client ID provided");
-    return <NoClientSelected />;
-  }
-  
-  if (isTransitioning) {
-    console.log("ClientTab: Showing transition loading state");
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <LoadingSpinner size="large" className="mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading client information...</p>
-          {clientId.toLowerCase().includes('josh') && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Loading Josh Hart's profile and documents
-            </p>
-          )}
+export const ClientTab = ({ 
+  clientId, 
+  onBack,
+  onDocumentOpen 
+}: ClientTabProps) => {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center space-x-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onBack}
+          className="h-8 px-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <h2 className="text-lg font-semibold">Client Details</h2>
+      </div>
+
+      <div className="p-6 border rounded-lg">
+        <h3 className="text-xl font-medium mb-4">Client ID: {clientId}</h3>
+        <p className="text-muted-foreground mb-6">
+          Loading client information...
+        </p>
+        
+        <div className="space-y-4">
+          <Skeleton className="h-[120px] w-full" />
+          <Skeleton className="h-[100px] w-full" />
         </div>
       </div>
-    );
-  }
-  
-  const handleDocumentOpen = (documentId: string) => {
-    console.log("ClientTab: Opening document:", documentId);
-    
-    if (!documentId) {
-      console.error("Invalid document ID received in ClientTab");
-      toast.error("Cannot open document: Invalid ID");
-      return;
-    }
-    
-    if (onDocumentOpen) {
-      onDocumentOpen(documentId);
-    } else {
-      let isForm47 = false;
-      let documentTitle = null;
-      
-      if (effectiveClientId === 'josh-hart') {
-        isForm47 = true;
-        documentTitle = "Form 47 - Consumer Proposal";
-        console.log("Opening Josh Hart's Form 47 document");
-        
-        toast.success("Opening Form 47 document", {
-          description: "Consumer Proposal document for Josh Hart"
-        });
-      }
-      
-      // Get the current path and safely navigate
-      try {
-        const currentPath = location.pathname || '';
-        
-        // Stay on current path when opening document
-        console.log(`Staying on '${currentPath}' when opening document`);
-        
-        // Just pass the document ID to be handled by the parent component
-        if (onDocumentOpen) {
-          onDocumentOpen(documentId);
-        }
-      } catch (navError) {
-        console.error("Navigation error:", navError);
-        toast.error("Error opening document");
-        
-        // Fallback to direct document opening
-        if (onDocumentOpen) {
-          onDocumentOpen(documentId);
-        }
-      }
-    }
-  };
-  
-  console.log("ClientTab: Rendering ClientTemplate with ID:", effectiveClientId);
-  
-  // Always use ClientTemplate for reliability
-  return (
-    <ClientTemplate 
-      clientId={effectiveClientId}
-      onBack={handleBack}
-      onDocumentOpen={handleDocumentOpen}
-    />
+    </div>
   );
 };

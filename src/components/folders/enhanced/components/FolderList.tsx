@@ -15,7 +15,7 @@ export const FolderList = ({ folders = [], onDocumentOpen }: FolderListProps) =>
   }
 
   // Filter to only include actual folders
-  const actualFolders = folders.filter(folder => folder.is_folder);
+  const actualFolders = folders.filter(folder => folder && folder.is_folder);
   
   if (actualFolders.length === 0) {
     return null;
@@ -25,7 +25,7 @@ export const FolderList = ({ folders = [], onDocumentOpen }: FolderListProps) =>
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Folders</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {actualFolders.map(folder => (
+        {actualFolders.map(folder => folder && (
           <FolderItem 
             key={folder.id}
             folder={folder}

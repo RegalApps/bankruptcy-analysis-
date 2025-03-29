@@ -15,7 +15,7 @@ interface EnhancedFolderTabProps {
   onRefresh?: () => void;
 }
 
-export const EnhancedFolderTab = ({ documents, onDocumentOpen, onRefresh }: EnhancedFolderTabProps) => {
+export const EnhancedFolderTab = ({ documents = [], onDocumentOpen, onRefresh }: EnhancedFolderTabProps) => {
   const location = useLocation();
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [clients, setClients] = useState<{id: string, name: string}[]>([]);
@@ -61,19 +61,19 @@ export const EnhancedFolderTab = ({ documents, onDocumentOpen, onRefresh }: Enha
     );
   }
 
-  if (documents.length === 0) {
+  if (!documents || documents.length === 0) {
     return <EmptyState onRefresh={onRefresh} />;
   }
 
   // Filter documents with folders for FolderList
-  const folderDocuments = documents.filter(doc => doc.is_folder || doc.parent_folder_id);
+  const folderDocuments = documents.filter(doc => doc && (doc.is_folder || doc.parent_folder_id));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
       {/* Client sidebar */}
       <div className="lg:col-span-1 h-full overflow-auto bg-muted/20 rounded-lg p-4">
         <ClientSection 
-          clients={clients}
+          clients={clients || []}
           onClientSelect={handleClientSelect}
           onClientViewerAccess={handleClientViewerAccess}
         />
@@ -84,12 +84,12 @@ export const EnhancedFolderTab = ({ documents, onDocumentOpen, onRefresh }: Enha
         <div className="flex-1 overflow-auto">
           <div className="space-y-8">
             <FolderList 
-              folders={folderDocuments.filter(doc => doc.is_folder)} 
+              folders={folderDocuments.filter(doc => doc && doc.is_folder)} 
               onDocumentOpen={onDocumentOpen}
             />
             
             <UncategorizedTab 
-              documents={documents.filter(doc => !doc.parent_folder_id && !doc.is_folder)}
+              documents={documents.filter(doc => doc && !doc.parent_folder_id && !doc.is_folder)}
               onDocumentOpen={onDocumentOpen}
             />
           </div>
