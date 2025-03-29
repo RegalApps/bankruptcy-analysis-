@@ -18,7 +18,7 @@ interface ClientSectionProps {
 }
 
 export const ClientSection = ({ 
-  clients, 
+  clients = [], // Provide default empty array to prevent undefined errors
   onClientSelect, 
   onClientViewerAccess,
   selectedClientId,
@@ -26,11 +26,15 @@ export const ClientSection = ({
 }: ClientSectionProps) => {
   // Create a Map to deduplicate clients by ID
   const uniqueClients = new Map<string, Client>();
-  clients.forEach(client => {
-    if (!uniqueClients.has(client.id)) {
-      uniqueClients.set(client.id, client);
-    }
-  });
+  
+  // Only try to iterate if clients is actually an array
+  if (Array.isArray(clients)) {
+    clients.forEach(client => {
+      if (!uniqueClients.has(client.id)) {
+        uniqueClients.set(client.id, client);
+      }
+    });
+  }
   
   // Convert Map back to array and sort by name
   const deduplicatedClients = Array.from(uniqueClients.values())
