@@ -1,193 +1,144 @@
 
 import { Document } from "@/components/DocumentList/types";
+import { FolderStructure } from "@/types/folders";
+
+/**
+ * Creates a hierarchical document structure with clients, estates, forms, and documents
+ */
+export function createDocumentHierarchy(documents: Document[]): Document[] {
+  // First, identify client documents/folders
+  const clientFolders = documents.filter(doc => 
+    doc.is_folder && (doc.folder_type === 'client' || doc.metadata?.client_name)
+  );
+  
+  // For each client folder, create the proper hierarchy
+  clientFolders.forEach(clientFolder => {
+    const clientName = clientFolder.title;
+    
+    // Find or create an estate folder for this client
+    const estateFolder = documents.find(doc => 
+      doc.is_folder && 
+      doc.folder_type === 'estate' && 
+      doc.parent_folder_id === clientFolder.id
+    );
+    
+    if (!estateFolder) {
+      // Create a default estate folder if none exists
+      const estateNumber = "Estate-47-2023";
+      const newEstateFolder: Document = {
+        id: `estate-${clientFolder.id}`,
+        title: estateNumber,
+        is_folder: true,
+        folder_type: 'estate',
+        parent_folder_id: clientFolder.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        type: 'folder',
+        storage_path: '',
+        size: 0,
+        metadata: {
+          estate_number: "47-2023",
+          client_id: clientFolder.id,
+          client_name: clientName
+        }
+      };
+      documents.push(newEstateFolder);
+      
+      // Create a Form 47 folder under the estate
+      const formFolder: Document = {
+        id: `form-${estateNumber}-${clientFolder.id}`,
+        title: "Form 47",
+        is_folder: true,
+        folder_type: 'form',
+        parent_folder_id: newEstateFolder.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        type: 'folder',
+        storage_path: '',
+        size: 0,
+        metadata: {
+          form_number: "47",
+          estate_number: "47-2023",
+          client_id: clientFolder.id,
+          client_name: clientName
+        }
+      };
+      documents.push(formFolder);
+      
+      // Move any Form 47 related documents under this form folder
+      documents.forEach(doc => {
+        if (!doc.is_folder && isForm47or76(doc) && 
+            (doc.metadata?.client_name === clientName || !doc.parent_folder_id)) {
+          doc.parent_folder_id = formFolder.id;
+          // Mark these documents as needing attention
+          if (!doc.metadata) doc.metadata = {};
+          doc.metadata.status = 'attention';
+        }
+      });
+    }
+  });
+  
+  return documents;
+}
 
 /**
  * Check if a document is a Form 47 or Form 76
  */
-export const isForm47or76 = (document: Document): boolean => {
-  return (
-    document.metadata?.formType === 'form-47' ||
-    document.metadata?.formType === 'form-76' ||
-    document.title?.toLowerCase().includes('form 47') ||
-    document.title?.toLowerCase().includes('form 76') ||
-    document.title?.toLowerCase().includes('consumer proposal') ||
-    document.title?.toLowerCase().includes('statement of affairs')
-  );
-};
-
-/**
- * Check if a document is locked
- */
-export const isDocumentLocked = (document: Document): boolean => {
-  return document.metadata?.locked === true || document.metadata?.system === true;
-};
+export function isForm47or76(document: Document): boolean {
+  if (!document) return false;
+  
+  const title = document.title?.toLowerCase() || '';
+  const metadata = document.metadata || {};
+  
+  return title.includes('form 47') || 
+         title.includes('form 76') ||
+         title.includes('consumer proposal') ||
+         metadata.formNumber === '47' ||
+         metadata.formNumber === '76' ||
+         metadata.formType === 'form-47' ||
+         metadata.formType === 'form-76';
+}
 
 /**
  * Check if a document needs attention
  */
-export const documentNeedsAttention = (document: Document): boolean => {
-  // Check if document has any pending tasks or requires attention
-  return (
-    document.metadata?.status === 'attention' ||
-    document.metadata?.status === 'pending' ||
-    document.metadata?.requiresAction === true ||
-    document.metadata?.signatureStatus === 'pending' ||
-    (document.metadata?.risks && Array.isArray(document.metadata.risks) && document.metadata.risks.length > 0)
-  );
-};
+export function documentNeedsAttention(document: Document): boolean {
+  if (!document) return false;
+  
+  // Check if status explicitly requires attention
+  if (document.metadata?.status === 'attention' || 
+      document.metadata?.status === 'critical') {
+    return true;
+  }
+  
+  // Form 47 and 76 need attention by default
+  if (isForm47or76(document) && document.metadata?.status !== 'approved') {
+    return true;
+  }
+  
+  // Documents with pending tasks need attention
+  if (document.tasks && document.tasks.length > 0) {
+    const hasPendingTasks = document.tasks.some(task => 
+      task.status === 'pending' || task.status === 'overdue'
+    );
+    if (hasPendingTasks) return true;
+  }
+  
+  return false;
+}
 
 /**
- * Creates the estate number from document metadata or defaults to a standard value
+ * Flatten folder structure for easy traversal
  */
-export const getEstateNumber = (document: Document): string => {
-  if (document.metadata?.estateNumber) {
-    return document.metadata.estateNumber;
-  }
+export function flattenFolderStructure(folders: FolderStructure[]): FolderStructure[] {
+  let result: FolderStructure[] = [];
   
-  // For demo purposes, generate an estate number for Josh Hart
-  if (document.metadata?.clientName === "Josh Hart" || 
-      document.metadata?.client_name === "Josh Hart") {
-    return "Estate-47-2023";
-  }
-  
-  return "Estate-Pending";
-};
-
-/**
- * Get document form type (47, 76, etc)
- */
-export const getFormType = (document: Document): string => {
-  if (document.metadata?.formNumber) {
-    return `Form ${document.metadata.formNumber}`;
-  }
-  
-  if (document.metadata?.formType === 'form-47') {
-    return "Form 47";
-  }
-  
-  if (document.metadata?.formType === 'form-76') {
-    return "Form 76";
-  }
-  
-  if (document.title?.toLowerCase().includes('form 47') || 
-      document.title?.toLowerCase().includes('consumer proposal')) {
-    return "Form 47";
-  }
-  
-  if (document.title?.toLowerCase().includes('form 76') || 
-      document.title?.toLowerCase().includes('statement of affairs')) {
-    return "Form 76";
-  }
-  
-  return "Documents";
-};
-
-/**
- * Generate a hierarchical structure for the document tree
- */
-export const createDocumentHierarchy = (documents: Document[]): Document[] => {
-  if (!documents || documents.length === 0) return [];
-  
-  const clientFolders: Record<string, Document> = {};
-  const estateFolders: Record<string, Document> = {};
-  const formFolders: Record<string, Document> = {};
-  
-  // Create special Josh Hart client for demonstration
-  const joshHartClientId = 'josh-hart-client';
-  const joshHartEstateId = 'josh-hart-estate';
-  const joshHartFormId = 'josh-hart-form47';
-  
-  // Create client folder for Josh Hart
-  clientFolders[joshHartClientId] = {
-    id: joshHartClientId,
-    title: "Josh Hart",
-    type: "folder",
-    is_folder: true,
-    folder_type: "client",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    storage_path: "",
-    size: 0,
-    metadata: {
-      clientName: "Josh Hart",
-      system: true
-    }
-  };
-  
-  // Create estate folder for Josh Hart
-  estateFolders[joshHartEstateId] = {
-    id: joshHartEstateId,
-    title: "Estate-47-2023",
-    type: "folder",
-    is_folder: true,
-    folder_type: "estate",
-    parent_folder_id: joshHartClientId,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    storage_path: "",
-    size: 0,
-    metadata: {
-      clientName: "Josh Hart",
-      estateNumber: "Estate-47-2023",
-      system: true
-    }
-  };
-  
-  // Create form folder for Josh Hart
-  formFolders[joshHartFormId] = {
-    id: joshHartFormId,
-    title: "Form 47",
-    type: "folder",
-    is_folder: true,
-    folder_type: "form",
-    parent_folder_id: joshHartEstateId,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    storage_path: "",
-    size: 0,
-    metadata: {
-      clientName: "Josh Hart",
-      estateNumber: "Estate-47-2023",
-      formType: "form-47",
-      formNumber: "47",
-      system: true
-    }
-  };
-  
-  // Find all Form 47 documents related to Josh Hart
-  const form47Docs = documents.filter(doc => 
-    (doc.metadata?.clientName === "Josh Hart" || doc.metadata?.client_name === "Josh Hart") && 
-    isForm47or76(doc) && 
-    !doc.is_folder
-  );
-  
-  // Assign each Form 47 document to the Josh Hart Form 47 folder
-  for (const doc of form47Docs) {
-    // Create a new document reference with updated parent folder
-    const updatedDoc = {
-      ...doc,
-      parent_folder_id: joshHartFormId,
-      metadata: {
-        ...doc.metadata,
-        clientName: "Josh Hart",
-        estateNumber: "Estate-47-2023",
-        formType: "form-47",
-        formNumber: "47",
-        status: "attention" // Mark as needing attention
-      }
-    };
-    
-    // Replace the original document with updated one
-    const index = documents.findIndex(d => d.id === doc.id);
-    if (index !== -1) {
-      documents[index] = updatedDoc;
+  for (const folder of folders) {
+    result.push(folder);
+    if (folder.children && folder.children.length > 0) {
+      result = result.concat(flattenFolderStructure(folder.children));
     }
   }
   
-  // Add our special folders to the document list
-  documents.push(clientFolders[joshHartClientId]);
-  documents.push(estateFolders[joshHartEstateId]);
-  documents.push(formFolders[joshHartFormId]);
-  
-  return documents;
-};
+  return result;
+}
