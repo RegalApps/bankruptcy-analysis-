@@ -35,37 +35,41 @@ export const useClientData = (clientId: string, onBack: () => void) => {
     if (clientId === 'josh-hart' && isLoading && !client) {
       console.log("useClientData: Setting fallback data for Josh Hart");
       
-      // Create fallback client data
+      // Create fallback client data with properties that match the Client type
       const fallbackClient: Client = {
         id: 'josh-hart',
         name: 'Josh Hart',
         email: 'josh.hart@example.com',
         phone: '(555) 123-4567',
-        address: '123 Main St, Toronto, ON',
+        status: 'active',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        status: 'active'
+        updated_at: new Date().toISOString()
+        // Removed 'address' which is not in the Client type
       };
       
-      // Create fallback documents
+      // Create fallback documents with metadata containing client information
       const fallbackDocuments: Document[] = [
         {
           id: 'form-47-doc',
           title: 'Form 47 - Consumer Proposal',
           type: 'form-47',
-          client_id: 'josh-hart',
-          storage_path: '/documents/form-47.pdf',
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          metadata: {
+            client_id: 'josh-hart',
+            client_name: 'Josh Hart'
+          }
         },
         {
           id: 'bank-statement',
           title: 'Bank Statement - March 2023',
           type: 'financial',
-          client_id: 'josh-hart',
-          storage_path: '/documents/bank-statement.pdf',
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          metadata: {
+            client_id: 'josh-hart',
+            client_name: 'Josh Hart'
+          }
         }
       ];
       
