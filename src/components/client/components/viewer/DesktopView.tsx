@@ -3,7 +3,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { ClientInfoPanel } from "../ClientInfoPanel";
 import { DocumentsPanel } from "../DocumentsPanel";
 import { FilePreviewPanel } from "../FilePreview/FilePreviewPanel";
-import { Client, Document } from "../../types";
+import { Client, Document, Task } from "../../types";
 
 interface DesktopViewProps {
   client: Client;
@@ -28,16 +28,36 @@ export const DesktopView = ({
   onDocumentSelect,
   lastActivityDate,
 }: DesktopViewProps) => {
+  // Mock tasks for the client
+  const mockTasks: Task[] = [
+    {
+      id: "task-1",
+      title: "Review client documents",
+      dueDate: new Date().toISOString(),
+      status: 'pending',
+      priority: 'medium'
+    },
+    {
+      id: "task-2",
+      title: "Follow up on deadlines",
+      dueDate: new Date(Date.now() + 86400000 * 2).toISOString(),
+      status: 'pending',
+      priority: 'high'
+    }
+  ];
+
   return (
     <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)] rounded-lg border">
       <ResizablePanel defaultSize={20} minSize={15} className="bg-muted/30">
         <ClientInfoPanel 
           client={client} 
+          tasks={mockTasks}
           documentCount={documents.length}
           lastActivityDate={lastActivityDate}
           documents={documents}
           onDocumentSelect={onDocumentSelect}
           selectedDocumentId={selectedDocumentId}
+          onClientUpdate={(updatedClient) => console.log("Client updated:", updatedClient)}
         />
       </ResizablePanel>
       

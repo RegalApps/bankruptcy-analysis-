@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -10,8 +9,8 @@ import { ClientInfoPanel } from "@/components/client/components/ClientInfoPanel"
 import { ClientDocumentsPanel } from "@/components/client/components/ClientDocumentsPanel";
 import { DocumentPreviewPanel } from "@/components/client/components/DocumentPreviewPanel";
 import { formatDate } from "@/utils/formatDate";
+import { Client, Document, Task } from "@/components/client/types";
 
-// Reuse the same document structure from DocumentsPage
 const JOSH_HART_DOCUMENTS = [
   {
     id: "josh-hart-root",
@@ -73,27 +72,6 @@ interface ClientDocument {
   fileSize: string;
 }
 
-interface Client {
-  id: string;
-  name: string;
-  status: string;
-  location: string;
-  email?: string;
-  phone?: string;
-  metrics: {
-    openTasks: number;
-    pendingDocuments: number;
-    urgentDeadlines: number;
-  };
-  tasks: {
-    id: string;
-    title: string;
-    dueDate: string;
-    status: 'pending' | 'completed' | 'overdue';
-    priority: 'low' | 'medium' | 'high';
-  }[];
-}
-
 const ClientViewerPage = () => {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
@@ -104,10 +82,8 @@ const ClientViewerPage = () => {
   const [recentActivities, setRecentActivities] = useState<{ id: string; action: string; user: string; timestamp: string; }[]>([]);
   
   useEffect(() => {
-    // Simulate loading client data
     setIsLoading(true);
     
-    // For this demo, we're just checking if the clientId is "josh-hart"
     setTimeout(() => {
       if (clientId === "josh-hart") {
         setClient({
@@ -117,34 +93,21 @@ const ClientViewerPage = () => {
           location: "Ontario",
           email: "josh.hart@example.com",
           phone: "(555) 123-4567",
+          address: "123 Maple Street",
+          city: "Toronto",
+          province: "Ontario",
+          postalCode: "M5V 2L7",
+          company: "ABC Corporation",
+          occupation: "Software Developer",
+          mobilePhone: "(555) 987-6543",
+          notes: "Josh is a priority client who needs regular updates on his case.",
           metrics: {
             openTasks: 3,
             pendingDocuments: 2,
             urgentDeadlines: 1
           },
-          tasks: [
-            {
-              id: "task-1",
-              title: "Review Form 47 submission",
-              dueDate: new Date().toISOString(),
-              status: 'pending',
-              priority: 'high'
-            },
-            {
-              id: "task-2",
-              title: "Collect additional financial documents",
-              dueDate: new Date(Date.now() + 86400000 * 3).toISOString(),
-              status: 'pending',
-              priority: 'medium'
-            },
-            {
-              id: "task-3",
-              title: "Schedule follow-up meeting",
-              dueDate: new Date(Date.now() + 86400000 * 5).toISOString(),
-              status: 'pending',
-              priority: 'low'
-            }
-          ]
+          last_interaction: new Date().toISOString(),
+          engagement_score: 92
         });
 
         setDocuments([
@@ -201,7 +164,6 @@ const ClientViewerPage = () => {
           }
         ]);
         
-        // Set the first document as selected by default
         setSelectedDocumentId("form47-file");
         
         toast.success("Client data loaded");
@@ -223,6 +185,30 @@ const ClientViewerPage = () => {
   };
 
   const selectedDocument = documents.find(doc => doc.id === selectedDocumentId);
+
+  const clientTasks: Task[] = [
+    {
+      id: "task-1",
+      title: "Review Form 47 submission",
+      dueDate: new Date().toISOString(),
+      status: 'pending',
+      priority: 'high'
+    },
+    {
+      id: "task-2",
+      title: "Collect additional financial documents",
+      dueDate: new Date(Date.now() + 86400000 * 3).toISOString(),
+      status: 'pending',
+      priority: 'medium'
+    },
+    {
+      id: "task-3",
+      title: "Schedule follow-up meeting",
+      dueDate: new Date(Date.now() + 86400000 * 5).toISOString(),
+      status: 'pending',
+      priority: 'low'
+    }
+  ];
   
   return (
     <MainLayout>
@@ -252,17 +238,21 @@ const ClientViewerPage = () => {
       ) : client ? (
         <div className="h-[calc(100vh-12rem)]">
           <ResizablePanelGroup direction="horizontal" className="border rounded-lg bg-card">
-            {/* Left Panel: Client & Task Summary */}
             <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
               <ClientInfoPanel 
                 client={client}
-                tasks={client.tasks}
+                tasks={clientTasks}
+                documentCount={documents.length}
+                lastActivityDate={client.last_interaction}
+                documents={documents as unknown as Document[]}
+                onDocumentSelect={handleDocumentSelect}
+                selectedDocumentId={selectedDocumentId}
+                onClientUpdate={(updatedClient) => setClient(updatedClient)}
               />
             </ResizablePanel>
             
             <ResizableHandle />
             
-            {/* Center Panel: Document Files */}
             <ResizablePanel defaultSize={40}>
               <ClientDocumentsPanel 
                 documents={documents}
@@ -273,7 +263,6 @@ const ClientViewerPage = () => {
             
             <ResizableHandle />
             
-            {/* Right Panel: Document Viewer, Recent History, and Comments */}
             <ResizablePanel defaultSize={35} minSize={25}>
               <DocumentPreviewPanel 
                 document={selectedDocument}

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,33 +6,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/utils/formatDate";
-import { User, Mail, Phone, CalendarClock, CheckCircle, AlertCircle, Search, XCircle } from "lucide-react";
-import { ClientInfoPanelProps, Task, Document } from "../types";
-
-interface Client {
-  id: string;
-  name: string;
-  status: string;
-  location: string;
-  email?: string;
-  phone?: string;
-  metrics: {
-    openTasks: number;
-    pendingDocuments: number;
-    urgentDeadlines: number;
-  };
-}
-
-interface ClientInfoPanelProps {
-  client: Client;
-  tasks: Task[];
-  documentCount: number;
-  lastActivityDate: string;
-  documents: Document[];
-  onDocumentSelect: (documentId: string) => void;
-  selectedDocumentId: string;
-  onClientUpdate: (client: Client) => void;
-}
+import { User, Mail, Phone, CalendarClock, CheckCircle, AlertCircle, Search, XCircle, MapPin, Building2, Briefcase, Smartphone } from "lucide-react";
+import { ClientInfoPanelProps, Task } from "../types";
+import { Textarea } from "@/components/ui/textarea";
 
 export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({ 
   client,
@@ -140,7 +117,7 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
         </div>
       </div>
 
-      <Card className="p-3 mb-4">
+      <Card className="p-3 mb-4 overflow-auto">
         <h3 className="text-sm font-medium mb-2">Contact Information</h3>
         <div className="space-y-2">
           {client.email && (
@@ -155,8 +132,48 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
               <span className="text-muted-foreground">{client.phone}</span>
             </div>
           )}
+          {client.mobilePhone && (
+            <div className="flex items-center text-sm">
+              <Smartphone className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span className="text-muted-foreground">{client.mobilePhone}</span>
+            </div>
+          )}
+          {client.address && (
+            <div className="flex items-start text-sm">
+              <MapPin className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
+              <div className="text-muted-foreground">
+                <div>{client.address}</div>
+                {client.city && client.province && client.postalCode && (
+                  <div>{client.city}, {client.province} {client.postalCode}</div>
+                )}
+              </div>
+            </div>
+          )}
+          {client.company && (
+            <div className="flex items-center text-sm">
+              <Building2 className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span className="text-muted-foreground">{client.company}</span>
+            </div>
+          )}
+          {client.occupation && (
+            <div className="flex items-center text-sm">
+              <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span className="text-muted-foreground">{client.occupation}</span>
+            </div>
+          )}
         </div>
       </Card>
+
+      {client.notes && (
+        <Card className="p-3 mb-4">
+          <h3 className="text-sm font-medium mb-2">Notes</h3>
+          <Textarea 
+            value={client.notes} 
+            readOnly 
+            className="min-h-[80px] resize-none bg-muted/50 text-sm"
+          />
+        </Card>
+      )}
 
       <Card className="p-3 mb-4">
         <h3 className="text-sm font-medium mb-2">Key Metrics</h3>

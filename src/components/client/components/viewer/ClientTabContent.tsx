@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Client, Document } from "../../types";
+import { Client, Document, Task } from "../../types";
 import { ClientInfoPanel } from "../ClientInfoPanel";
 import { DocumentsPanel } from "../DocumentsPanel";
 import { ClientActivityLog } from "../ClientActivityLog";
@@ -45,6 +45,24 @@ export const ClientTabContent = ({
     }, "");
   };
 
+  // Mock tasks for the client if none are available
+  const mockTasks: Task[] = [
+    {
+      id: "task-1",
+      title: "Review client information",
+      dueDate: new Date().toISOString(),
+      status: 'pending',
+      priority: 'medium'
+    },
+    {
+      id: "task-2",
+      title: "Schedule follow-up meeting",
+      dueDate: new Date(Date.now() + 86400000 * 3).toISOString(),
+      status: 'pending',
+      priority: 'low'
+    }
+  ];
+
   // If we don't have client data yet, show a skeleton loader for better UX
   if (!client || !client.id) {
     return (
@@ -83,6 +101,7 @@ export const ClientTabContent = ({
       {activeTab === "info" && (
         <ClientInfoPanel 
           client={client}
+          tasks={mockTasks}
           documentCount={documents.length}
           lastActivityDate={getLastActivityDate()}
           documents={documents}

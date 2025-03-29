@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ClientInfoPanel } from "../ClientInfoPanel";
 import { DocumentsPanel } from "../DocumentsPanel";
 import { FilePreviewPanel } from "../FilePreview/FilePreviewPanel";
-import { Client, Document } from "../../types";
+import { Client, Document, Task } from "../../types";
 
 interface MobileTabletViewProps {
   client: Client;
@@ -34,6 +34,24 @@ export const MobileTabletView = ({
   const [mobileTab, setMobileTab] = useState<string>("info");
   const isSmallScreen = isMobile;
 
+  // Mock tasks for the client
+  const mockTasks: Task[] = [
+    {
+      id: "task-1",
+      title: "Review client files",
+      dueDate: new Date().toISOString(),
+      status: 'pending',
+      priority: 'medium'
+    },
+    {
+      id: "task-2",
+      title: "Prepare for client meeting",
+      dueDate: new Date(Date.now() + 86400000 * 1).toISOString(), 
+      status: 'pending',
+      priority: 'high'
+    }
+  ];
+
   // Update document selection handler to also switch to preview tab
   const handleDocumentSelect = (documentId: string) => {
     onDocumentSelect(documentId);
@@ -56,11 +74,13 @@ export const MobileTabletView = ({
         <TabsContent value="info" className="m-0 p-4 h-full overflow-auto">
           <ClientInfoPanel 
             client={client} 
+            tasks={mockTasks}
             documentCount={documents.length}
             lastActivityDate={lastActivityDate}
             documents={documents}
             onDocumentSelect={handleDocumentSelect}
             selectedDocumentId={selectedDocumentId}
+            onClientUpdate={(updatedClient) => console.log("Client updated:", updatedClient)}
           />
         </TabsContent>
         
