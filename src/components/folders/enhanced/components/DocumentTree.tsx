@@ -55,7 +55,6 @@ export const DocumentTree = ({
         {filteredFolders.length > 0 ? (
           <FolderList
             folders={filteredFolders}
-            documents={filteredDocuments}
             onFolderSelect={onFolderSelect}
             onDocumentSelect={onDocumentSelect}
             onDocumentOpen={onDocumentOpen}

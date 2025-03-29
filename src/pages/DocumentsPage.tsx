@@ -1,11 +1,14 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { showPerformanceToast } from "@/utils/performance";
 import { EnhancedFolderTab } from "@/components/folders/enhanced/EnhancedFolderTab";
 import { BreadcrumbNavigation } from "./documents/components/BreadcrumbNavigation";
 import { useDocumentsPage } from "./documents/hooks/useDocumentsPage";
+import { ClientList } from "@/components/folders/enhanced/components/ClientList";
+import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 const DocumentsPage = () => {
   const {
@@ -17,13 +20,22 @@ const DocumentsPage = () => {
     folderPath,
     handleItemSelect,
     handleOpenDocument,
+    clients,
     handleClientSelect
   } = useDocumentsPage();
+  
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     // Measure and show performance metrics when the page loads
     showPerformanceToast("Documents Page");
   }, []);
+
+  const handleClientClick = (clientId: string) => {
+    // Navigate to client viewer page with the selected client
+    navigate(`/client-viewer/${clientId}`);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -42,11 +54,33 @@ const DocumentsPage = () => {
             />
           </div>
           
-          <EnhancedFolderTab 
-            documents={documents ?? []}
-            onDocumentOpen={handleOpenDocument}
-            onRefresh={refetch}
-          />
+          <div className="grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
+            {/* Client List Panel */}
+            <div className="col-span-3 border rounded-lg bg-card overflow-hidden">
+              <ClientList 
+                clients={clients} 
+                onClientSelect={handleClientClick}
+                selectedClientId={selectedClientId}
+              />
+            </div>
+            
+            {/* Main Content / Document Tree */}
+            <div className="col-span-9 border rounded-lg bg-card">
+              {selectedClientId ? (
+                <div className="p-6 text-center">
+                  <p className="text-muted-foreground">
+                    Redirecting to client viewer...
+                  </p>
+                </div>
+              ) : (
+                <EnhancedFolderTab 
+                  documents={documents ?? []}
+                  onDocumentOpen={handleOpenDocument}
+                  onRefresh={refetch}
+                />
+              )}
+            </div>
+          </div>
         </main>
       </div>
     </div>

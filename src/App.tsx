@@ -235,6 +235,7 @@ function App() {
                       <ProfilePage />
                     </PageTransition>
                   } />
+                  <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
                   <Route path="*" element={
                     <PageTransition>
                       <NotFoundPage />
