@@ -47,6 +47,7 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage").catch(error => {
 
 // Import NotFound directly without lazy loading to prevent circular dependency issues
 import NotFoundPage from "./pages/NotFound";
+import ClientViewerPage from "./pages/ClientViewerPage";
 
 const SAFAPage = lazy(() => import("./pages/ConBrandingPage").catch(error => {
   console.error("Error loading SAFAPage:", error);
