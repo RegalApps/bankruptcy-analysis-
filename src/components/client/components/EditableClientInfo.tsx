@@ -4,6 +4,7 @@ import { Client } from "../types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Save, X } from "lucide-react";
 
@@ -31,7 +32,7 @@ export const EditableClientInfo = ({ client, onSave }: EditableClientInfoProps) 
       if (field === 'status') {
         // Ensure status is one of the allowed values
         const status = value as 'active' | 'inactive' | 'pending';
-        return { ...prev, status };
+        return { ...prev, [field]: status };
       }
       return { ...prev, [field]: value };
     });
@@ -70,48 +71,153 @@ export const EditableClientInfo = ({ client, onSave }: EditableClientInfoProps) 
           )}
         </div>
         
-        <div>
-          <label className="text-sm font-medium mb-1 block">Email</label>
-          {isEditing ? (
-            <Input 
-              value={editedClient.email || ''} 
-              onChange={(e) => handleChange('email', e.target.value)} 
-            />
-          ) : (
-            <p>{client.email || 'Not provided'}</p>
-          )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium mb-1 block">Email</label>
+            {isEditing ? (
+              <Input 
+                value={editedClient.email || ''} 
+                onChange={(e) => handleChange('email', e.target.value)} 
+              />
+            ) : (
+              <p>{client.email || 'Not provided'}</p>
+            )}
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium mb-1 block">Phone</label>
+            {isEditing ? (
+              <Input 
+                value={editedClient.phone || ''} 
+                onChange={(e) => handleChange('phone', e.target.value)} 
+              />
+            ) : (
+              <p>{client.phone || 'Not provided'}</p>
+            )}
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium mb-1 block">Mobile Phone</label>
+            {isEditing ? (
+              <Input 
+                value={editedClient.mobilePhone || ''} 
+                onChange={(e) => handleChange('mobilePhone', e.target.value)} 
+              />
+            ) : (
+              <p>{client.mobilePhone || 'Not provided'}</p>
+            )}
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium mb-1 block">Status</label>
+            {isEditing ? (
+              <Select 
+                value={editedClient.status} 
+                onValueChange={(value) => handleChange('status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="capitalize">{client.status}</p>
+            )}
+          </div>
         </div>
         
         <div>
-          <label className="text-sm font-medium mb-1 block">Phone</label>
+          <label className="text-sm font-medium mb-1 block">Address</label>
           {isEditing ? (
             <Input 
-              value={editedClient.phone || ''} 
-              onChange={(e) => handleChange('phone', e.target.value)} 
+              value={editedClient.address || ''} 
+              onChange={(e) => handleChange('address', e.target.value)} 
             />
           ) : (
-            <p>{client.phone || 'Not provided'}</p>
+            <p>{client.address || 'Not provided'}</p>
           )}
         </div>
         
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="text-sm font-medium mb-1 block">City</label>
+            {isEditing ? (
+              <Input 
+                value={editedClient.city || ''} 
+                onChange={(e) => handleChange('city', e.target.value)} 
+              />
+            ) : (
+              <p>{client.city || 'Not provided'}</p>
+            )}
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium mb-1 block">Province/State</label>
+            {isEditing ? (
+              <Input 
+                value={editedClient.province || ''} 
+                onChange={(e) => handleChange('province', e.target.value)} 
+              />
+            ) : (
+              <p>{client.province || 'Not provided'}</p>
+            )}
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium mb-1 block">Postal Code</label>
+            {isEditing ? (
+              <Input 
+                value={editedClient.postalCode || ''} 
+                onChange={(e) => handleChange('postalCode', e.target.value)} 
+              />
+            ) : (
+              <p>{client.postalCode || 'Not provided'}</p>
+            )}
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium mb-1 block">Company</label>
+            {isEditing ? (
+              <Input 
+                value={editedClient.company || ''} 
+                onChange={(e) => handleChange('company', e.target.value)} 
+              />
+            ) : (
+              <p>{client.company || 'Not provided'}</p>
+            )}
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium mb-1 block">Occupation</label>
+            {isEditing ? (
+              <Input 
+                value={editedClient.occupation || ''} 
+                onChange={(e) => handleChange('occupation', e.target.value)} 
+              />
+            ) : (
+              <p>{client.occupation || 'Not provided'}</p>
+            )}
+          </div>
+        </div>
+        
         <div>
-          <label className="text-sm font-medium mb-1 block">Status</label>
+          <label className="text-sm font-medium mb-1 block">Notes</label>
           {isEditing ? (
-            <Select 
-              value={editedClient.status} 
-              onValueChange={(value) => handleChange('status', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
+            <Textarea 
+              value={editedClient.notes || ''} 
+              onChange={(e) => handleChange('notes', e.target.value)} 
+              className="min-h-[100px]"
+            />
           ) : (
-            <p className="capitalize">{client.status}</p>
+            <p className="whitespace-pre-line">{client.notes || 'No notes'}</p>
           )}
         </div>
       </div>

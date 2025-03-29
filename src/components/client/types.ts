@@ -6,6 +6,14 @@ export interface Client {
   location: string;
   email?: string;
   phone?: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  mobilePhone?: string;
+  notes?: string;
+  company?: string;
+  occupation?: string;
   metrics: {
     openTasks: number;
     pendingDocuments: number;

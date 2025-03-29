@@ -20,6 +20,15 @@ export const createClientData = (
     location: 'Unknown', // Default location
     email,
     phone,
+    // Default values for new fields
+    address: '',
+    city: '',
+    province: '',
+    postalCode: '',
+    mobilePhone: '',
+    notes: '',
+    company: '',
+    occupation: '',
     metrics: {
       openTasks: 0,
       pendingDocuments: 0,
