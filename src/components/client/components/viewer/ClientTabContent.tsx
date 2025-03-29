@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Client, Document, Task } from "../../types";
-import { ClientInfoPanel } from "../ClientInfoPanel";
+import { ClientInfoPanel } from "../ClientInfo";
 import { DocumentsPanel } from "../DocumentsPanel";
 import { ClientActivityLog } from "../ClientActivityLog";
 import { Card } from "@/components/ui/card";

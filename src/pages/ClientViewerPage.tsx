@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { ClientInfoPanel } from "@/components/client/components/ClientInfoPanel";
+import { ClientInfoPanel } from "@/components/client/components/ClientInfo";
 import { ClientDocumentsPanel } from "@/components/client/components/ClientDocumentsPanel";
 import { DocumentPreviewPanel } from "@/components/client/components/DocumentPreviewPanel";
 import { formatDate } from "@/utils/formatDate";
