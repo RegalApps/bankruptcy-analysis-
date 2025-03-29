@@ -10,12 +10,15 @@ import { toast } from "sonner";
 // Define a proper DocumentStatus type to match what DocumentTree expects
 type DocumentStatus = "needs-review" | "complete" | "needs-signature" | undefined;
 
+// Define FolderType to match what DocumentTree expects
+type FolderType = 'client' | 'estate' | 'form' | 'financials' | 'default';
+
 // Updated type definition for TreeNode that matches DocumentTree expectations
 interface TreeNode {
   id: string;
   name: string;
   type: "folder" | "file";
-  folderType?: string;
+  folderType?: FolderType;
   status?: DocumentStatus;
   children?: TreeNode[];
   filePath?: string;
@@ -118,7 +121,7 @@ const CLIENT_DOCUMENTS: TreeNode[] = [
         id: "tax-folder",
         name: "Tax Documents",
         type: "folder",
-        folderType: "financial",
+        folderType: "financials",
         children: [
           {
             id: "tax-return-file",
@@ -133,7 +136,7 @@ const CLIENT_DOCUMENTS: TreeNode[] = [
         id: "employment-folder",
         name: "Employment",
         type: "folder",
-        folderType: "documentation",
+        folderType: "form",
         children: [
           {
             id: "employment-verification",
@@ -172,7 +175,7 @@ const CLIENT_DOCUMENTS: TreeNode[] = [
         id: "bank-statement-folder",
         name: "Bank Statements",
         type: "folder",
-        folderType: "financial",
+        folderType: "financials",
         children: [
           {
             id: "q1-statements",
@@ -203,7 +206,7 @@ const CLIENT_DOCUMENTS: TreeNode[] = [
         id: "proposal-folder",
         name: "Consumer Proposal",
         type: "folder",
-        folderType: "proposal",
+        folderType: "form",
         children: [
           {
             id: "form43-file",
