@@ -1,10 +1,11 @@
+
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDate } from "@/utils/formatDate";
-import { User, Mail, Phone, CalendarClock, CheckCircle, AlertCircle, MapPin, Building2, Briefcase, Smartphone } from "lucide-react";
+import { User, Mail, Phone, CalendarClock, CheckCircle, AlertCircle, MapPin, Building2, Briefcase, Smartphone, X } from "lucide-react";
 import { ClientInfoPanelProps, Task } from "../types";
 
 export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({ 
@@ -75,7 +76,7 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
             <div className="flex justify-between items-center mb-2">
               <h4 className="text-sm font-medium">Open Tasks</h4>
               <Button variant="ghost" size="sm" onClick={() => setActiveMetric(null)}>
-                <XCircle className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
@@ -92,7 +93,7 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
             <div className="flex justify-between items-center mb-2">
               <h4 className="text-sm font-medium">Pending Documents</h4>
               <Button variant="ghost" size="sm" onClick={() => setActiveMetric(null)}>
-                <XCircle className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
@@ -109,7 +110,7 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
             <div className="flex justify-between items-center mb-2">
               <h4 className="text-sm font-medium">Urgent Deadlines</h4>
               <Button variant="ghost" size="sm" onClick={() => setActiveMetric(null)}>
-                <XCircle className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
