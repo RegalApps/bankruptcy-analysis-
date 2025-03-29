@@ -1,6 +1,6 @@
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { ClientInfoPanel } from "../ClientInfoPanel";
+import { ClientInfoPanel } from "../ClientInfo";
 import { DocumentsPanel } from "../DocumentsPanel";
 import { FilePreviewPanel } from "../FilePreview/FilePreviewPanel";
 import { Client, Document, Task } from "../../types";
