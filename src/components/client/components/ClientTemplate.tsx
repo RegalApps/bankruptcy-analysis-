@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ClientHeader } from "./viewer/ClientHeader";
 import { ClientTabs } from "./viewer/ClientTabs";
@@ -27,7 +26,14 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
     email: clientId === 'josh-hart' ? 'josh.hart@example.com' : '',
     phone: clientId === 'josh-hart' ? '(555) 123-4567' : '',
     status: 'active',
-    last_interaction: new Date().toISOString()
+    location: clientId === 'josh-hart' ? 'Ontario' : 'Unknown',
+    metrics: {
+      openTasks: 3,
+      pendingDocuments: 2,
+      urgentDeadlines: 1
+    },
+    last_interaction: new Date().toISOString(),
+    engagement_score: 85
   });
   
   const [activeTab, setActiveTab] = useState("info");
@@ -117,7 +123,7 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
                     </div>
                     <div className="flex justify-between">
                       <span className="text-xs text-muted-foreground">Engagement Score:</span>
-                      <span className="text-xs font-medium">85</span>
+                      <span className="text-xs font-medium">{client.engagement_score || 85}</span>
                     </div>
                   </div>
                 </Card>

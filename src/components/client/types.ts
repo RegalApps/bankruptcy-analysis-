@@ -12,6 +12,7 @@ export interface Client {
     urgentDeadlines: number;
   };
   last_interaction?: string;
+  engagement_score?: number;
 }
 
 export interface Document {
@@ -21,6 +22,9 @@ export interface Document {
   created_at: string;
   updated_at: string;
   metadata?: Record<string, any>;
+  is_folder?: boolean;
+  folder_type?: string;
+  parent_folder_id?: string;
 }
 
 export interface ClientViewerProps {
@@ -38,4 +42,15 @@ export interface Task {
   status: 'pending' | 'completed' | 'overdue';
   priority: 'low' | 'medium' | 'high';
   assignedTo?: string;
+}
+
+export interface ClientInfoPanelProps {
+  client: Client;
+  tasks?: Task[];
+  documentCount?: number;
+  lastActivityDate?: string;
+  documents?: Document[];
+  onDocumentSelect?: (documentId: string) => void;
+  selectedDocumentId?: string | null;
+  onClientUpdate?: (updatedClient: Client) => void;
 }

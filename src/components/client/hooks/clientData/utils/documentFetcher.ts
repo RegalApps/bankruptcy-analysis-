@@ -68,7 +68,9 @@ export const handleJoshHartClient = (clientId: string, searchClientId: string, d
       'Josh Hart', 
       'active', 
       'josh.hart@example.com', 
-      '(555) 123-4567'
+      '(555) 123-4567',
+      new Date().toISOString(),
+      85
     );
     
     // If documents are provided, use them, otherwise use default documents

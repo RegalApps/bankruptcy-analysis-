@@ -41,8 +41,15 @@ export const useClientData = (clientId: string, onBack: () => void) => {
         name: 'Josh Hart',
         email: 'josh.hart@example.com',
         phone: '(555) 123-4567',
-        status: 'active'
-        // No created_at or updated_at as they aren't in the Client type
+        status: 'active',
+        location: 'Ontario',
+        metrics: {
+          openTasks: 3,
+          pendingDocuments: 2,
+          urgentDeadlines: 1
+        },
+        last_interaction: new Date().toISOString(),
+        engagement_score: 85
       };
       
       // Create fallback documents with metadata containing client information

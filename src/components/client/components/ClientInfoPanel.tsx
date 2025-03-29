@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,14 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/utils/formatDate";
 import { User, Mail, Phone, CalendarClock, CheckCircle, AlertCircle, Search, XCircle } from "lucide-react";
-
-interface Task {
-  id: string;
-  title: string;
-  dueDate: string;
-  status: 'pending' | 'completed' | 'overdue';
-  priority: 'low' | 'medium' | 'high';
-}
+import { ClientInfoPanelProps, Task, Document } from "../types";
 
 interface Client {
   id: string;
@@ -33,9 +25,24 @@ interface Client {
 interface ClientInfoPanelProps {
   client: Client;
   tasks: Task[];
+  documentCount: number;
+  lastActivityDate: string;
+  documents: Document[];
+  onDocumentSelect: (documentId: string) => void;
+  selectedDocumentId: string;
+  onClientUpdate: (client: Client) => void;
 }
 
-export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({ client, tasks }) => {
+export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({ 
+  client,
+  tasks = [],
+  documentCount,
+  lastActivityDate,
+  documents = [],
+  onDocumentSelect,
+  selectedDocumentId,
+  onClientUpdate
+}) => {
   const [activeMetric, setActiveMetric] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   
