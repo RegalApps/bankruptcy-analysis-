@@ -1,16 +1,27 @@
 
-import { Folder } from "lucide-react";
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { FolderOpen } from "lucide-react";
 
-export const EmptyFolderState = () => {
+interface EmptyFolderStateProps {
+  onCreateFolder?: () => void;
+}
+
+export const EmptyFolderState = ({ onCreateFolder }: EmptyFolderStateProps) => {
   return (
-    <div className="flex flex-col items-center justify-center h-64 p-6">
-      <div className="bg-muted rounded-full p-3 mb-4">
-        <Folder className="h-6 w-6 text-muted-foreground" />
+    <div className="flex flex-col items-center justify-center p-10 h-[300px] text-center">
+      <div className="bg-primary/10 p-4 rounded-full mb-4">
+        <FolderOpen className="h-10 w-10 text-primary" />
       </div>
-      <h3 className="text-lg font-medium">No folders found</h3>
-      <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
-        No folders match your current search criteria. Try adjusting your search or filters.
+      <h3 className="text-xl font-semibold mb-2">No Folders Found</h3>
+      <p className="text-muted-foreground max-w-md mb-6">
+        You don't have any folders yet. Create a folder to organize your documents.
       </p>
+      {onCreateFolder && (
+        <Button onClick={onCreateFolder}>
+          Create Folder
+        </Button>
+      )}
     </div>
   );
 };

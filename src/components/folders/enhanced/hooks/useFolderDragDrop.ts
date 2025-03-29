@@ -1,116 +1,78 @@
 
-import { useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+import { useState } from "react";
+import { Document } from "@/components/client/types";
 
-export const useFolderDragDrop = (documents: any[]) => {
-  const [draggedItem, setDraggedItem] = useState<{ id: string, type: 'folder' | 'document' } | null>(null);
+export const useFolderDragDrop = (documents: Document[]) => {
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const handleDragStart = (id: string, type: 'folder' | 'document') => {
-    setDraggedItem({ id, type });
+  const [setExpandedFoldersFunction, setSetExpandedFoldersFunction] = useState<React.Dispatch<React.SetStateAction<Record<string, boolean>>> | null>(null);
+
+  // Set the setExpandedFolders function for later use
+  const setExpandedFolders = (func: React.Dispatch<React.SetStateAction<Record<string, boolean>>>) => {
+    setSetExpandedFoldersFunction(() => func);
   };
 
+  // Start drag operation
+  const handleDragStart = (id: string, type: 'folder' | 'document') => {
+    // Set data in the drag event
+    const event = window.event as DragEvent;
+    if (event.dataTransfer) {
+      event.dataTransfer.setData('text/plain', JSON.stringify({ id, type }));
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  };
+
+  // Handle drag over a folder
   const handleDragOver = (e: React.DragEvent, folderId: string) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverFolder(folderId);
     
-    // Auto-expand folder when dragging over it
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    // Expand the folder after hovering for a moment
+    if (setExpandedFoldersFunction) {
+      setTimeout(() => {
+        setExpandedFoldersFunction(prev => ({
+          ...prev,
+          [folderId]: true
+        }));
+      }, 1000);
     }
-    
-    timeoutRef.current = setTimeout(() => {
-      setExpandedFolders(prev => ({
-        ...prev,
-        [folderId]: true
-      }));
-    }, 1000); // Expand after hovering for 1 second
   };
 
+  // Handle drag leaving a folder
   const handleDragLeave = () => {
     setDragOverFolder(null);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
   };
 
-  const handleDrop = async (e: React.DragEvent, targetFolderId: string) => {
+  // Handle dropping an item onto a folder
+  const handleDrop = (e: React.DragEvent, targetFolderId: string) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverFolder(null);
     
-    if (!draggedItem) return;
-    
     try {
-      if (draggedItem.type === 'document') {
-        // Move document to target folder
-        const { error } = await supabase
-          .from('documents')
-          .update({ parent_folder_id: targetFolderId })
-          .eq('id', draggedItem.id);
-          
-        if (error) throw error;
-        
-        // Show success message
-        toast.success("Document moved successfully");
-      } else if (draggedItem.type === 'folder') {
-        // Validate: Can't move a folder into its own child
-        let isValidMove = true;
-        let currentFolderId = targetFolderId;
-        
-        // Check if target folder is a descendant of the dragged folder
-        while (currentFolderId) {
-          if (currentFolderId === draggedItem.id) {
-            isValidMove = false;
-            break;
-          }
-          
-          const parentFolder = documents.find(
-            doc => doc.is_folder && doc.id === currentFolderId
-          );
-          
-          currentFolderId = parentFolder?.parent_folder_id || null;
-        }
-        
-        if (!isValidMove) {
-          toast.error("Cannot move a folder into its own subfolder");
-          return;
-        }
-        
-        // Move folder to target folder
-        const { error } = await supabase
-          .from('documents')
-          .update({ parent_folder_id: targetFolderId })
-          .eq('id', draggedItem.id);
-          
-        if (error) throw error;
-        
-        // Show success message
-        toast.success("Folder moved successfully");
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      const { id, type } = data;
+      
+      if (id === targetFolderId) {
+        // Cannot drop onto itself
+        return;
       }
+      
+      console.log(`Moving ${type} with ID ${id} to folder ${targetFolderId}`);
+      
+      // TODO: Implement actual moveToFolder logic
+      // For now, we'll just log the operation
     } catch (error) {
-      console.error("Error moving item:", error);
-      toast.error("Failed to move item");
-    } finally {
-      setDraggedItem(null);
+      console.error('Error processing drop:', error);
     }
-  };
-
-  // Need to be passed in as a parameter since it's defined in the parent component
-  let setExpandedFolders: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-
-  const setExpandedFoldersFunction = (setter: React.Dispatch<React.SetStateAction<Record<string, boolean>>>) => {
-    setExpandedFolders = setter;
   };
 
   return {
-    draggedItem,
     dragOverFolder,
     handleDragStart,
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    setExpandedFoldersFunction
+    setExpandedFoldersFunction: setExpandedFolders
   };
 };
