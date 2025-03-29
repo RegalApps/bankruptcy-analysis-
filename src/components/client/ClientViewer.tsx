@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { toast } from "sonner";
 import { ClientViewerContainer } from "./components/viewer/ClientViewerContainer";
 import { ClientViewerProps } from "./types";
@@ -11,8 +11,8 @@ export const ClientViewer = (props: ClientViewerProps) => {
     hasDocumentCallback: !!props.onDocumentOpen 
   });
   
-  // If this is the Josh Hart client, show a toast to indicate special handling
-  React.useEffect(() => {
+  // Log more information when rendering special clients
+  useEffect(() => {
     if (props.clientId === 'josh-hart') {
       console.log("ClientViewer: Special handling for Josh Hart client");
       toast.success("Loading Josh Hart's client information", {

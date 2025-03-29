@@ -15,6 +15,8 @@ interface ClientTabProps {
 }
 
 export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) => {
+  console.log("Rendering ClientTab for client:", clientId);
+  
   const [loadError, setLoadError] = useState<boolean>(false);
   const [retryCount, setRetryCount] = useState<number>(0);
   const [retryId, setRetryId] = useState<string>('');
@@ -154,29 +156,42 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
         });
       }
       
-      // Get the current route from location
-      const currentPath = location.pathname;
-      
-      // Determine correct target path to prevent 404s
-      // If we're in /documents, stay there, otherwise go to home
-      const targetPath = currentPath.includes('/documents') ? '/documents' : '/';
-      
-      console.log(`Navigating from ${currentPath} to ${targetPath} with document state`);
-      
-      navigate(targetPath, { 
-        state: { 
-          selectedDocument: documentId,
-          source: 'client-tab',
-          isForm47: isForm47,
-          documentTitle: documentTitle
-        } 
-      });
+      // Get the current path and safely navigate
+      try {
+        const currentPath = location.pathname || '';
+        
+        // Default to home if we can't determine current path
+        let targetPath = '/';
+        
+        // Check if we're in a documents page
+        if (currentPath.includes('/documents')) {
+          targetPath = '/documents';
+        }
+        
+        console.log(`Navigating from '${currentPath}' to '${targetPath}' with document state`);
+        
+        navigate(targetPath, { 
+          state: { 
+            selectedDocument: documentId,
+            source: 'client-tab',
+            isForm47: isForm47,
+            documentTitle: documentTitle
+          },
+          replace: false  // Using replace: false to make sure we don't break history
+        });
+      } catch (navError) {
+        console.error("Navigation error:", navError);
+        toast.error("Error navigating to document view");
+        
+        // Fallback to direct navigation
+        navigate('/', { replace: true });
+      }
     }
   };
   
   console.log("ClientTab: Rendering ClientTemplate with ID:", effectiveClientId);
   
-  // Always use the template view for stability
+  // Always use ClientTemplate for reliability
   return (
     <ClientTemplate 
       clientId={effectiveClientId}

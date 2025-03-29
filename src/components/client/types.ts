@@ -1,10 +1,9 @@
-
 export interface Client {
   id: string;
   name: string;
   email?: string;
   phone?: string;
-  status?: string;
+  status: 'active' | 'inactive' | 'pending';
   last_interaction?: string;
   engagement_score?: number;
 }
@@ -15,18 +14,17 @@ export interface Document {
   type: string;
   created_at: string;
   updated_at: string;
-  metadata?: Record<string, any>;
-  parent_folder_id?: string;
-  is_folder?: boolean;
-  folder_type?: string;
-  storage_path?: string;
+  metadata?: {
+    client_name?: string;
+    storage_path?: string;
+    [key: string]: any;
+  };
 }
 
 export interface ClientViewerProps {
   clientId: string;
   onBack: () => void;
-  onDocumentOpen: (documentId: string) => void;
-  onError?: () => void;
+  onDocumentOpen?: (documentId: string) => void;
 }
 
 export interface FolderStructure {

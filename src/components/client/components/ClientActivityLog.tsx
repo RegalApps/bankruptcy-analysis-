@@ -19,6 +19,9 @@ export const ClientActivityLog = ({ client, documents }: ClientActivityLogProps)
     new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
   );
   
+  // Make sure client has last_interaction to avoid type issues
+  const clientLastInteraction = client.last_interaction || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  
   // Create a simulated activity log
   const activityItems = [
     // Client creation event
@@ -27,7 +30,7 @@ export const ClientActivityLog = ({ client, documents }: ClientActivityLogProps)
       type: 'client_created',
       title: 'Client profile created',
       icon: <User className="h-4 w-4 text-blue-500" />,
-      date: client.last_interaction || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      date: clientLastInteraction
     },
     // Document events from actual documents
     ...sortedDocuments.map(doc => ({
