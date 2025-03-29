@@ -93,10 +93,10 @@ export const ClientViewerContainer = ({
   console.log("ClientViewerContainer: Rendering client", client.name, "with", documents.length, "documents");
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-background">
       <ClientHeader client={client} onBack={onBack} />
       
-      <div className="mt-6 flex-1 overflow-hidden flex flex-col">
+      <div className="mt-4 flex-1 overflow-hidden flex flex-col px-4">
         <ClientTabs activeTab={activeTab} setActiveTab={setActiveTab} />
         
         <div className="mt-4 flex-1 overflow-auto">

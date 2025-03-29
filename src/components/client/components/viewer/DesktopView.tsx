@@ -29,8 +29,8 @@ export const DesktopView = ({
   lastActivityDate,
 }: DesktopViewProps) => {
   return (
-    <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)]">
-      <ResizablePanel defaultSize={20} minSize={15}>
+    <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)] rounded-lg border">
+      <ResizablePanel defaultSize={20} minSize={15} className="bg-muted/30">
         <ClientInfoPanel 
           client={client} 
           documentCount={documents.length}

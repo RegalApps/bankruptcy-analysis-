@@ -41,7 +41,7 @@ export const MobileTabletView = ({
   };
 
   return (
-    <Tabs value={mobileTab} onValueChange={setMobileTab} className="w-full">
+    <Tabs value={mobileTab} onValueChange={setMobileTab} className="w-full h-full flex flex-col">
       <TabsList className="grid grid-cols-3 w-full rounded-none px-2 pt-2">
         <TabsTrigger value="info">
           {isSmallScreen ? "Info" : "Client Info"}
@@ -52,34 +52,36 @@ export const MobileTabletView = ({
         <TabsTrigger value="preview">Preview</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="info" className="m-0 p-4 h-[calc(100vh-10rem)]">
-        <ClientInfoPanel 
-          client={client} 
-          documentCount={documents.length}
-          lastActivityDate={lastActivityDate}
-          documents={documents}
-          onDocumentSelect={handleDocumentSelect}
-          selectedDocumentId={selectedDocumentId}
-        />
-      </TabsContent>
-      
-      <TabsContent value="documents" className="m-0 p-0 h-[calc(100vh-10rem)]">
-        <DocumentsPanel
-          documents={documents}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onDocumentOpen={onDocumentOpen}
-          onDocumentSelect={handleDocumentSelect}
-          selectedDocumentId={selectedDocumentId}
-        />
-      </TabsContent>
-      
-      <TabsContent value="preview" className="m-0 p-0 h-[calc(100vh-10rem)]">
-        <FilePreviewPanel 
-          document={selectedDocument} 
-          onDocumentOpen={onDocumentOpen}
-        />
-      </TabsContent>
+      <div className="flex-1 overflow-hidden">
+        <TabsContent value="info" className="m-0 p-4 h-full overflow-auto">
+          <ClientInfoPanel 
+            client={client} 
+            documentCount={documents.length}
+            lastActivityDate={lastActivityDate}
+            documents={documents}
+            onDocumentSelect={handleDocumentSelect}
+            selectedDocumentId={selectedDocumentId}
+          />
+        </TabsContent>
+        
+        <TabsContent value="documents" className="m-0 p-0 h-full overflow-auto">
+          <DocumentsPanel
+            documents={documents}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onDocumentOpen={onDocumentOpen}
+            onDocumentSelect={handleDocumentSelect}
+            selectedDocumentId={selectedDocumentId}
+          />
+        </TabsContent>
+        
+        <TabsContent value="preview" className="m-0 p-0 h-full overflow-auto">
+          <FilePreviewPanel 
+            document={selectedDocument} 
+            onDocumentOpen={onDocumentOpen}
+          />
+        </TabsContent>
+      </div>
     </Tabs>
   );
 };

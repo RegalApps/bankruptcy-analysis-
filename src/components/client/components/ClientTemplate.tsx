@@ -27,7 +27,7 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
     email: clientId === 'josh-hart' ? 'josh.hart@example.com' : '',
     phone: clientId === 'josh-hart' ? '(555) 123-4567' : '',
     status: 'active',
-    last_interaction: new Date().toISOString() // Adding this to avoid type errors
+    last_interaction: new Date().toISOString()
   });
   
   const [activeTab, setActiveTab] = useState("info");
@@ -92,52 +92,50 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-background">
       <ClientHeader client={client} onBack={onBack} />
       
-      <div className="mt-6 flex-1 overflow-hidden flex flex-col">
+      <div className="mt-4 flex-1 overflow-hidden flex flex-col px-4">
         <ClientTabs activeTab={activeTab} setActiveTab={setActiveTab} />
         
         <ScrollArea className="mt-4 flex-1">
           <Tabs value={activeTab} className="w-full">
-            <TabsContent value="info" className="m-0">
-              <div className="space-y-6">
-                <EditableClientInfo client={client} onSave={handleClientUpdate} />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="bg-muted/50 p-4">
-                    <h3 className="text-sm font-medium mb-2">Client Summary</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-xs text-muted-foreground">Documents:</span>
-                        <span className="text-xs font-medium">{sampleDocuments.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs text-muted-foreground">Last Activity:</span>
-                        <span className="text-xs font-medium">{formatDate(new Date().toISOString())}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs text-muted-foreground">Engagement Score:</span>
-                        <span className="text-xs font-medium">85</span>
-                      </div>
+            <TabsContent value="info" className="m-0 space-y-6">
+              <EditableClientInfo client={client} onSave={handleClientUpdate} />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="bg-muted/50 p-4">
+                  <h3 className="text-sm font-medium mb-2">Client Summary</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-xs text-muted-foreground">Documents:</span>
+                      <span className="text-xs font-medium">{sampleDocuments.length}</span>
                     </div>
-                  </Card>
-                  
-                  <Card className="bg-muted/50 p-4">
-                    <h3 className="text-sm font-medium mb-2">Recent Documents</h3>
-                    <ul className="space-y-2">
-                      {sampleDocuments.slice(0, 3).map(doc => (
-                        <li 
-                          key={doc.id}
-                          className="text-xs p-2 rounded cursor-pointer hover:bg-muted"
-                          onClick={() => handleDocumentSelect(doc.id)}
-                        >
-                          {doc.title}
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-muted-foreground">Last Activity:</span>
+                      <span className="text-xs font-medium">{formatDate(new Date().toISOString())}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-xs text-muted-foreground">Engagement Score:</span>
+                      <span className="text-xs font-medium">85</span>
+                    </div>
+                  </div>
+                </Card>
+                
+                <Card className="bg-muted/50 p-4">
+                  <h3 className="text-sm font-medium mb-2">Recent Documents</h3>
+                  <ul className="space-y-2">
+                    {sampleDocuments.slice(0, 3).map(doc => (
+                      <li 
+                        key={doc.id}
+                        className="text-xs p-2 rounded cursor-pointer hover:bg-muted"
+                        onClick={() => handleDocumentSelect(doc.id)}
+                      >
+                        {doc.title}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
               </div>
             </TabsContent>
             

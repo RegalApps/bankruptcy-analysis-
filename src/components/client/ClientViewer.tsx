@@ -36,7 +36,7 @@ export const ClientViewer = (props: ClientViewerProps) => {
     });
   };
   
-  // Always use the template mode which is more reliable
+  // Always use the template mode which is more reliable and has better layout
   return useTemplate || hasError ? (
     <ClientTemplate 
       clientId={props.clientId} 
