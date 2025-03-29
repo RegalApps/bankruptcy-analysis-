@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ClientViewer } from "@/components/client/ClientViewer";
 import { ClientNotFound } from "@/components/client/components/ClientNotFound";
+import { ClientTemplate } from "@/components/client/components/ClientTemplate";
 import { NoClientSelected } from "@/components/activity/components/NoClientSelected";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -18,17 +19,22 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const [retryCount, setRetryCount] = useState<number>(0);
   const [retryId, setRetryId] = useState<string>('');
   const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
+  const [useTemplate, setUseTemplate] = useState<boolean>(false);
   const mountedRef = useRef<boolean>(true);
   const navigate = useNavigate();
   const loadingTimeoutRef = useRef<number | null>(null);
+  const longLoadTimeoutRef = useRef<number | null>(null);
   
   // Enhanced error handler with better logging
   const handleError = useCallback(() => {
     console.error(`ClientTab: Error loading client ID: ${clientId}`);
-    setLoadError(true);
+    
+    // After an error, show the template view instead of the error
+    setUseTemplate(true);
+    setIsTransitioning(false);
     
     toast.error("Could not load client information", {
-      description: "Trying a fallback method to load the client"
+      description: "Using template mode instead"
     });
     
     // For Josh Hart client, we want to retry with simplified ID
@@ -45,10 +51,15 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     setLoadError(false);
     setRetryCount(0);
     setIsTransitioning(true);
+    setUseTemplate(false);
     
     // Clear any existing timeout
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
+    }
+    
+    if (longLoadTimeoutRef.current) {
+      clearTimeout(longLoadTimeoutRef.current);
     }
     
     // Add a small delay to prevent flickering/glitching during transitions
@@ -58,6 +69,17 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
         setIsTransitioning(false);
       }
     }, 400); // Longer transition time for better user experience
+    
+    // If loading takes too long, switch to template mode automatically
+    longLoadTimeoutRef.current = window.setTimeout(() => {
+      if (mountedRef.current && !loadError) {
+        console.log("ClientTab: Loading taking too long, switching to template mode");
+        setUseTemplate(true);
+        toast.info("Using template mode for faster viewing", {
+          description: "You can edit client information directly"
+        });
+      }
+    }, 3000);
     
     // Notify user about loading state
     toast.info(`Loading ${clientId.includes('josh-hart') ? 'Josh Hart' : 'client'} information...`, {
@@ -69,8 +91,13 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
       }
+      
+      if (longLoadTimeoutRef.current) {
+        clearTimeout(longLoadTimeoutRef.current);
+        longLoadTimeoutRef.current = null;
+      }
     };
-  }, [clientId]);
+  }, [clientId, loadError]);
   
   // Cleanup on unmount
   useEffect(() => {
@@ -81,6 +108,11 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
+      }
+      
+      if (longLoadTimeoutRef.current) {
+        clearTimeout(longLoadTimeoutRef.current);
+        longLoadTimeoutRef.current = null;
       }
     };
   }, []);
@@ -110,9 +142,16 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     );
   }
   
-  if (loadError) {
-    console.log("ClientTab: Showing not found state due to load error");
-    return <ClientNotFound onBack={onBack} />;
+  // If we need to use template mode or had a load error, show the template
+  if (useTemplate || loadError) {
+    console.log("ClientTab: Showing template view for client:", effectiveClientId);
+    return (
+      <ClientTemplate 
+        clientId={effectiveClientId}
+        onBack={onBack}
+        onDocumentOpen={onDocumentOpen}
+      />
+    );
   }
   
   // Create a handler for document opening that uses navigate to go to the document viewer

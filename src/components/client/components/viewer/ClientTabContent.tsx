@@ -4,6 +4,8 @@ import { Client, Document } from "../../types";
 import { ClientInfoPanel } from "../ClientInfoPanel";
 import { DocumentsPanel } from "../DocumentsPanel";
 import { ClientActivityLog } from "../ClientActivityLog";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ClientTabContentProps {
   client: Client;
@@ -42,6 +44,39 @@ export const ClientTabContent = ({
       return !latest || docDate > new Date(latest) ? doc.updated_at : latest;
     }, "");
   };
+
+  // If we don't have client data yet, show a skeleton loader for better UX
+  if (!client || !client.id) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-6">
+          <Skeleton className="h-8 w-[200px] mb-4" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        </Card>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="p-4">
+            <Skeleton className="h-5 w-[120px] mb-4" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </Card>
+          <Card className="p-4">
+            <Skeleton className="h-5 w-[150px] mb-4" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full">

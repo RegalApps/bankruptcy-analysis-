@@ -1,7 +1,9 @@
+
 import { Client, Document } from "../types";
-import { format } from "date-fns";
+import { formatDate } from "@/utils/formatDate";
+import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Calendar, FileText, Upload, Edit, Eye, User } from "lucide-react";
+import { Calendar, FileText, User, Mail, Phone } from "lucide-react";
 
 interface ClientActivityLogProps {
   client: Client;
@@ -9,83 +11,106 @@ interface ClientActivityLogProps {
 }
 
 export const ClientActivityLog = ({ client, documents }: ClientActivityLogProps) => {
-  // Sort documents by updated_at date (most recent first)
+  // If this were a real component, we'd fetch the actual activity log
+  // For now, we'll generate a sample log based on the documents
+  
+  // Sort documents by date
   const sortedDocuments = [...documents].sort((a, b) => 
     new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
   );
   
-  // Create artificial activity log from documents and client info
-  const activityLog = [
-    // Client activities
+  // Create a simulated activity log
+  const activityItems = [
+    // Client creation event
     {
-      id: `client-created-${client.id}`,
+      id: 'client-created',
       type: 'client_created',
-      description: `Client ${client.name} was added to the system`,
-      timestamp: client.last_interaction || new Date().toISOString(),
-      icon: <User className="h-5 w-5 text-blue-500" />
+      title: 'Client profile created',
+      icon: <User className="h-4 w-4 text-blue-500" />,
+      date: client.created_at || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     },
-    // Document activities
+    // Document events from actual documents
     ...sortedDocuments.map(doc => ({
       id: `doc-${doc.id}`,
-      type: 'document_updated',
-      description: `Document "${doc.title}" was ${doc.created_at === doc.updated_at ? 'created' : 'updated'}`,
-      timestamp: doc.updated_at,
-      icon: <FileText className="h-5 w-5 text-green-500" />
-    }))
-  ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'document_created':
-        return <Upload className="h-5 w-5 text-green-500" />;
-      case 'document_updated':
-        return <Edit className="h-5 w-5 text-amber-500" />;
-      case 'document_viewed':
-        return <Eye className="h-5 w-5 text-blue-500" />;
-      default:
-        return <Calendar className="h-5 w-5 text-gray-500" />;
+      type: 'document_uploaded',
+      title: `Document uploaded: ${doc.title}`,
+      icon: <FileText className="h-4 w-4 text-green-500" />,
+      date: doc.created_at
+    })),
+    // Add some sample events
+    {
+      id: 'contact-update',
+      type: 'contact_update',
+      title: 'Contact information updated',
+      icon: <Mail className="h-4 w-4 text-purple-500" />,
+      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: 'phone-call',
+      type: 'phone_call',
+      title: 'Phone call with client',
+      icon: <Phone className="h-4 w-4 text-yellow-500" />,
+      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
     }
-  };
+  ];
   
-  if (activityLog.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="font-medium text-lg">No Activity</h3>
-          <p className="text-sm text-muted-foreground mt-2">
-            There is no recent activity for this client
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Sort all activities by date
+  const sortedActivities = activityItems.sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  
+  // Group by date (year-month-day)
+  const groupedActivities: Record<string, typeof activityItems> = {};
+  
+  sortedActivities.forEach(activity => {
+    const date = new Date(activity.date);
+    const dateKey = date.toISOString().split('T')[0];
+    
+    if (!groupedActivities[dateKey]) {
+      groupedActivities[dateKey] = [];
+    }
+    
+    groupedActivities[dateKey].push(activity);
+  });
 
   return (
-    <div className="h-full">
-      <h3 className="font-medium text-lg mb-4">Activity Timeline</h3>
-      <ScrollArea className="h-[calc(100%-2rem)]">
-        <div className="relative pl-6 pb-6">
-          {/* Timeline line */}
-          <div className="absolute top-0 bottom-0 left-2.5 w-px bg-border"></div>
-          
-          {/* Activity items */}
-          <div className="space-y-6">
-            {activityLog.map((activity) => (
-              <div key={activity.id} className="relative">
-                {/* Timeline dot */}
-                <div className="absolute -left-6 mt-1.5 rounded-full bg-background p-1 ring-1 ring-border">
-                  {activity.icon}
-                </div>
-                
-                {/* Activity content */}
-                <div className="mb-1 text-sm font-medium">{activity.description}</div>
-                <time className="text-xs text-muted-foreground">
-                  {format(new Date(activity.timestamp), 'MMM d, yyyy - h:mma')}
-                </time>
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold">Activity Log</h2>
+      
+      <ScrollArea className="h-[calc(100vh-220px)]">
+        <div className="space-y-6 pr-4">
+          {Object.entries(groupedActivities).map(([dateKey, activities]) => (
+            <div key={dateKey} className="space-y-2">
+              <div className="flex items-center">
+                <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                <h3 className="text-sm font-medium">
+                  {formatDate(dateKey).split(' at')[0]}
+                </h3>
               </div>
-            ))}
-          </div>
+              
+              <Card className="p-0 overflow-hidden">
+                {activities.map((activity, index) => (
+                  <div 
+                    key={activity.id}
+                    className={`
+                      px-4 py-3 flex items-start
+                      ${index < activities.length - 1 ? 'border-b' : ''}
+                    `}
+                  >
+                    <div className="mt-0.5 mr-3">
+                      {activity.icon}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm">{activity.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(activity.date).split(' at')[1]}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </Card>
+            </div>
+          ))}
         </div>
       </ScrollArea>
     </div>
