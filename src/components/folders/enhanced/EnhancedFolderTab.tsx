@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FolderList } from "./components/FolderList";
 import { Document } from "@/components/client/types";
 import { EmptyState } from "./components/EmptyState";
-import { ClientSection } from "./components/ClientSection";
+import { FolderRecommendation } from "./components/FolderRecommendation";
 import { ClientTab } from "./components/ClientTab";
+import { ClientSection } from "./components/ClientSection";
 import { useLocation } from "react-router-dom";
 import { UncategorizedTab } from "./components/UncategorizedTab";
-import { extractClientsFromDocuments } from "./hooks/utils/clientExtractionUtils";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
@@ -18,18 +18,9 @@ interface EnhancedFolderTabProps {
 export const EnhancedFolderTab = ({ documents, onDocumentOpen, onRefresh }: EnhancedFolderTabProps) => {
   const location = useLocation();
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
-  const [clients, setClients] = useState<{id: string, name: string}[]>([]);
-  
-  // Extract clients from documents
-  useEffect(() => {
-    if (documents && documents.length > 0) {
-      const extractedClients = extractClientsFromDocuments(documents);
-      setClients(extractedClients);
-    }
-  }, [documents]);
   
   // Check for selected client in location state
-  useEffect(() => {
+  React.useEffect(() => {
     const locationState = location.state as { selectedClient?: string } | null;
     if (locationState?.selectedClient) {
       setSelectedClient(locationState.selectedClient);
@@ -38,11 +29,6 @@ export const EnhancedFolderTab = ({ documents, onDocumentOpen, onRefresh }: Enha
 
   const handleClientSelect = (clientId: string) => {
     console.log("EnhancedFolderTab: Selected client:", clientId);
-    setSelectedClient(clientId);
-  };
-
-  const handleClientViewerAccess = (clientId: string) => {
-    console.log("EnhancedFolderTab: Opening client viewer for:", clientId);
     setSelectedClient(clientId);
   };
 
@@ -65,26 +51,27 @@ export const EnhancedFolderTab = ({ documents, onDocumentOpen, onRefresh }: Enha
     return <EmptyState onRefresh={onRefresh} />;
   }
 
-  // Filter documents with folders for FolderList
-  const folderDocuments = documents.filter(doc => doc.is_folder || doc.parent_folder_id);
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
       {/* Client sidebar */}
       <div className="lg:col-span-1 h-full overflow-auto bg-muted/20 rounded-lg p-4">
         <ClientSection 
-          clients={clients}
+          documents={documents}
           onClientSelect={handleClientSelect}
-          onClientViewerAccess={handleClientViewerAccess}
         />
       </div>
       
       {/* Main content */}
       <div className="lg:col-span-3 flex flex-col h-full">
+        <FolderRecommendation 
+          documents={documents} 
+          onRefresh={onRefresh}
+        />
+        
         <div className="flex-1 overflow-auto">
           <div className="space-y-8">
             <FolderList 
-              folders={folderDocuments.filter(doc => doc.is_folder)} 
+              documents={documents} 
               onDocumentOpen={onDocumentOpen}
             />
             
