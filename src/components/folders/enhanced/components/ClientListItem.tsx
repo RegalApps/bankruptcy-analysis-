@@ -26,6 +26,7 @@ export const ClientListItem = ({
     
     // Add visual feedback
     toast.info(`Opening ${client.name}'s profile`, {
+      description: "Loading client information and documents",
       duration: 2000
     });
   };

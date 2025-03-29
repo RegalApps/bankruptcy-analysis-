@@ -41,10 +41,8 @@ export const useClientData = (clientId: string, onBack: () => void) => {
         name: 'Josh Hart',
         email: 'josh.hart@example.com',
         phone: '(555) 123-4567',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-        // Removed 'address' which is not in the Client type
+        status: 'active'
+        // No created_at or updated_at as they aren't in the Client type
       };
       
       // Create fallback documents with metadata containing client information
@@ -89,6 +87,7 @@ export const useClientData = (clientId: string, onBack: () => void) => {
     isLoading,
     activeTab,
     setActiveTab,
-    error
+    error,
+    setClient // Export setClient to allow updating client data
   };
 };

@@ -10,13 +10,15 @@ interface ClientTabContentProps {
   documents: Document[];
   activeTab: string;
   onDocumentOpen: (documentId: string) => void;
+  onClientUpdate?: (updatedClient: Client) => void;
 }
 
 export const ClientTabContent = ({ 
   client, 
   documents, 
   activeTab,
-  onDocumentOpen
+  onDocumentOpen,
+  onClientUpdate
 }: ClientTabContentProps) => {
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   
@@ -51,6 +53,7 @@ export const ClientTabContent = ({
           documents={documents}
           onDocumentSelect={handleDocumentSelect}
           selectedDocumentId={selectedDocumentId}
+          onClientUpdate={onClientUpdate}
         />
       )}
       

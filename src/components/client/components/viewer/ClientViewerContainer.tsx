@@ -9,6 +9,7 @@ import { ClientNotFound } from "../ClientNotFound";
 import { ClientViewerProps } from "../../types";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { toast } from "sonner";
+import { Client } from "../../types";
 
 export const ClientViewerContainer = ({ 
   clientId, 
@@ -23,7 +24,8 @@ export const ClientViewerContainer = ({
     isLoading, 
     activeTab, 
     setActiveTab,
-    error
+    error,
+    setClient
   } = useClientData(clientId, onBack);
 
   // If there's an error, call the error callback
@@ -55,6 +57,19 @@ export const ClientViewerContainer = ({
       toast.success(`${client.name}'s information loaded`);
     }
   }, [client, isMounted, isLoading]);
+
+  const handleClientUpdate = (updatedClient: Client) => {
+    console.log("ClientViewerContainer: Updating client information:", updatedClient);
+    
+    // Update the client data in state
+    setClient(updatedClient);
+    
+    // In a real app, this would save to a database
+    // For now, we'll simulate successful saving with a toast
+    toast.success("Client information saved", {
+      description: "Changes will be persisted for this session"
+    });
+  };
 
   if (!isMounted || isLoading) {
     console.log("ClientViewerContainer: Still loading or not mounted yet");
@@ -90,6 +105,7 @@ export const ClientViewerContainer = ({
             documents={documents}
             activeTab={activeTab}
             onDocumentOpen={onDocumentOpen}
+            onClientUpdate={handleClientUpdate}
           />
         </div>
       </div>
