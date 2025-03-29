@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { FolderStructure } from "@/types/folders";
-import { Document } from "@/components/client/types";
+import { Document } from "@/components/DocumentList/types";
 import { useFolderDragDrop } from "./hooks/useFolderDragDrop";
 import { useFolderExpansion } from "./hooks/useFolderExpansion";
 import { ClientSidebar } from "./components/ClientSidebar";
@@ -64,10 +64,10 @@ export function FolderNavigation({
   const clients = extractClientsFromDocuments(documents);
 
   // Filter documents based on selected client using our utility function
-  const filteredDocuments = filterDocumentsByClient(documents, selectedClientId || null);
+  const filteredDocuments = filterDocumentsByClient(documents, selectedClientId);
 
   // Filter folders based on selected client using our utility function
-  const filteredFolders = filterFoldersByClient(folders, filteredDocuments, selectedClientId || null);
+  const filteredFolders = filterFoldersByClient(folders, filteredDocuments, selectedClientId);
 
   return (
     <div className="flex h-full">

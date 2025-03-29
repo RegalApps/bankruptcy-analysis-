@@ -5,7 +5,7 @@ import { EmptyFolderState } from "./EmptyFolderState";
 import { EmptyClientState } from "./EmptyClientState";
 import { Form47Alert } from "./Form47Alert";
 import { FolderStructure } from "@/types/folders";
-import { Document } from "@/components/client/types";
+import { Document } from "@/components/DocumentList/types";
 
 interface DocumentTreeProps {
   filteredFolders: FolderStructure[];
@@ -44,20 +44,6 @@ export const DocumentTree = ({
 }: DocumentTreeProps) => {
   const hasForm47Documents = form47Documents.length > 0;
 
-  // Helper function to convert FolderStructure to Document
-  const convertFolderStructureToDocument = (folders: FolderStructure[]): Document[] => {
-    return folders.map(folder => ({
-      id: folder.id,
-      title: folder.name,
-      type: folder.type,
-      created_at: folder.metadata?.created_at || new Date().toISOString(),
-      updated_at: folder.metadata?.updated_at || new Date().toISOString(),
-      is_folder: true,
-      metadata: folder.metadata || {},
-      parent_folder_id: folder.parentId
-    }));
-  };
-
   return (
     <ScrollArea className="h-[calc(100vh-10rem)]">
       <div className="pr-4 pl-2">
@@ -68,7 +54,7 @@ export const DocumentTree = ({
         
         {filteredFolders.length > 0 ? (
           <FolderList
-            folders={convertFolderStructureToDocument(filteredFolders)}
+            folders={filteredFolders}
             documents={filteredDocuments}
             onFolderSelect={onFolderSelect}
             onDocumentSelect={onDocumentSelect}

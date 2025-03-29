@@ -1,27 +1,16 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
 
-interface EmptyClientStateProps {
-  onUploadDocument?: () => void;
-}
-
-export const EmptyClientState = ({ onUploadDocument }: EmptyClientStateProps) => {
+export const EmptyClientState = () => {
   return (
-    <div className="flex flex-col items-center justify-center p-10 h-[300px] text-center">
-      <div className="bg-primary/10 p-4 rounded-full mb-4">
-        <Users className="h-10 w-10 text-primary" />
+    <div className="flex flex-col items-center justify-center h-64 p-6">
+      <div className="bg-muted rounded-full p-3 mb-4">
+        <Users className="h-6 w-6 text-muted-foreground" />
       </div>
-      <h3 className="text-xl font-semibold mb-2">No Documents for this Client</h3>
-      <p className="text-muted-foreground max-w-md mb-6">
-        This client doesn't have any documents yet. Upload a document to get started.
+      <h3 className="text-lg font-medium">No documents for this client</h3>
+      <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
+        This client doesn't have any documents or folders yet. Upload some documents to get started.
       </p>
-      {onUploadDocument && (
-        <Button onClick={onUploadDocument}>
-          Upload Document
-        </Button>
-      )}
     </div>
   );
 };
