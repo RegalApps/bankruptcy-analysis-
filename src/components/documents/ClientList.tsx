@@ -34,9 +34,13 @@ export const ClientList = ({ clients, selectedClientId, onClientSelect }: Client
   );
   
   const handleClientSelect = (clientId: string) => {
+    console.log("ClientList: Selected client ID:", clientId);
+    
     if (onClientSelect) {
+      console.log("Using onClientSelect callback");
       onClientSelect(clientId);
     } else {
+      console.log("Navigating to client viewer:", `/client-viewer/${clientId}`);
       navigate(`/client-viewer/${clientId}`);
     }
   };

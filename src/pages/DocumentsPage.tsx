@@ -248,8 +248,11 @@ const DocumentsPage = () => {
   };
   
   const handleClientSelect = (clientId: string) => {
+    console.log("DocumentsPage: Selected client:", clientId);
     setSelectedClient(clientId);
-    console.log("Selected client:", clientId);
+    
+    // Navigate to the client viewer page
+    navigate(`/client-viewer/${clientId}`);
   };
   
   const handleFileOpen = (node: any) => {
@@ -259,7 +262,7 @@ const DocumentsPage = () => {
     if (node.id) {
       const clientId = node.id.split("-")[0];
       if (clientId) {
-        navigate(`/client/${clientId}`);
+        navigate(`/client-viewer/${clientId}`);
       }
     }
   };
