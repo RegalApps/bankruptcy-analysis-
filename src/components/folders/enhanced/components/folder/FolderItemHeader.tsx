@@ -56,7 +56,7 @@ export const FolderItemHeader = ({
   setNewName
 }: FolderItemHeaderProps) => {
   // Check if this folder needs attention - if it contains Form 47 docs that need attention
-  const needsAttention = folder.folder_type === 'client' || 
+  const needsAttention = folder.type === 'client' || 
                         (form47Documents && form47Documents.length > 0);
   
   // Handle keyboard navigation
