@@ -48,6 +48,7 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage").catch(error => {
 // Import NotFound directly without lazy loading to prevent circular dependency issues
 import NotFoundPage from "./pages/NotFound";
 import ClientViewerPage from "./pages/ClientViewerPage";
+import DocumentViewerPage from "./pages/DocumentViewerPage";
 
 const SAFAPage = lazy(() => import("./pages/ConBrandingPage").catch(error => {
   console.error("Error loading SAFAPage:", error);
@@ -237,6 +238,7 @@ function App() {
                     </PageTransition>
                   } />
                   <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
+                  <Route path="/document-viewer/:documentId" element={<DocumentViewerPage />} />
                   <Route path="*" element={
                     <PageTransition>
                       <NotFoundPage />
