@@ -1,14 +1,11 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
 import { formatDate } from "@/utils/formatDate";
-import { User, Mail, Phone, CalendarClock, CheckCircle, AlertCircle, Search, XCircle, MapPin, Building2, Briefcase, Smartphone } from "lucide-react";
+import { User, Mail, Phone, CalendarClock, CheckCircle, AlertCircle, MapPin, Building2, Briefcase, Smartphone } from "lucide-react";
 import { ClientInfoPanelProps, Task } from "../types";
-import { Textarea } from "@/components/ui/textarea";
 
 export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({ 
   client,
@@ -21,7 +18,6 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
   onClientUpdate
 }) => {
   const [activeMetric, setActiveMetric] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   
   const getTaskPriorityClass = (priority: string) => {
     switch (priority) {
@@ -41,9 +37,31 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
     // In a real app, this would update the task status
   };
   
-  const filteredTasks = tasks.filter(task => 
-    task.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const templateTasks: Task[] = [
+    {
+      id: "template-1",
+      title: "Review client documentation",
+      dueDate: new Date(Date.now() + 86400000 * 2).toISOString(), // 2 days from now
+      status: 'pending',
+      priority: 'high'
+    },
+    {
+      id: "template-2",
+      title: "Schedule follow-up call",
+      dueDate: new Date(Date.now() + 86400000 * 5).toISOString(), // 5 days from now
+      status: 'pending',
+      priority: 'medium'
+    },
+    {
+      id: "template-3",
+      title: "Send welcome package",
+      dueDate: new Date(Date.now() + 86400000 * 1).toISOString(), // 1 day from now
+      status: 'pending',
+      priority: 'medium'
+    }
+  ];
+  
+  const displayTasks = tasks.length > 0 ? tasks : templateTasks;
   
   const handleMetricClick = (metricName: string) => {
     setActiveMetric(activeMetric === metricName ? null : metricName);
@@ -164,17 +182,6 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
         </div>
       </Card>
 
-      {client.notes && (
-        <Card className="p-3 mb-4">
-          <h3 className="text-sm font-medium mb-2">Notes</h3>
-          <Textarea 
-            value={client.notes} 
-            readOnly 
-            className="min-h-[80px] resize-none bg-muted/50 text-sm"
-          />
-        </Card>
-      )}
-
       <Card className="p-3 mb-4">
         <h3 className="text-sm font-medium mb-2">Key Metrics</h3>
         <div className="grid grid-cols-3 gap-2 text-center">
@@ -206,26 +213,15 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
         renderMetricDetails()
       ) : (
         <>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium">Task Management</h3>
             <Button variant="ghost" size="sm" className="h-6 text-xs">+ Add Task</Button>
-          </div>
-          
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search tasks..."
-              className="pl-9 text-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
           </div>
 
           <ScrollArea className="flex-1">
             <div className="space-y-2 pr-2">
-              {filteredTasks.length > 0 ? (
-                filteredTasks.map(task => (
+              {displayTasks.length > 0 ? (
+                displayTasks.map(task => (
                   <Card key={task.id} className="p-3 text-sm">
                     <div className="flex justify-between items-start mb-1">
                       <div className="font-medium">{task.title}</div>
@@ -251,7 +247,7 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
                 ))
               ) : (
                 <div className="text-center py-6 text-muted-foreground">
-                  {searchQuery ? "No tasks match your search" : "No tasks available"}
+                  Loading tasks...
                 </div>
               )}
             </div>
