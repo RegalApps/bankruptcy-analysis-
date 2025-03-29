@@ -64,8 +64,8 @@ export const TaskManagement: React.FC<TaskManagementProps> = ({ tasks }) => {
         <Button variant="ghost" size="sm" className="h-6 text-xs">+ Add Task</Button>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="space-y-2 pr-2">
+      <ScrollArea className="pr-2">
+        <div className="space-y-2">
           {displayTasks.length > 0 ? (
             displayTasks.map(task => (
               <Card key={task.id} className="p-2 text-sm">
@@ -92,7 +92,7 @@ export const TaskManagement: React.FC<TaskManagementProps> = ({ tasks }) => {
               </Card>
             ))
           ) : (
-            <div className="text-center py-6 text-muted-foreground text-sm">
+            <div className="text-center py-4 text-muted-foreground text-sm">
               Loading tasks...
             </div>
           )}
