@@ -9,6 +9,7 @@ import { ThemeProvider as CustomThemeProvider } from "./contexts/ThemeContext";
 import { PageTransition } from "./components/navigation/PageTransition";
 import { AnimatePresence } from "framer-motion";
 
+// Custom Loading Component
 const PageLoader = () => (
   <div className="flex items-center justify-center h-screen bg-background">
     <div className="space-y-4 text-center">
@@ -18,6 +19,7 @@ const PageLoader = () => (
   </div>
 );
 
+// Using React.lazy with explicit chunk names for better debugging
 const IndexPage = lazy(() => import("./pages/Index").catch(error => {
   console.error("Error loading IndexPage:", error);
   return import("./pages/NotFound");
@@ -43,6 +45,7 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage").catch(error => {
   return import("./pages/NotFound");
 }));
 
+// Import NotFound directly without lazy loading to prevent circular dependency issues
 import NotFoundPage from "./pages/NotFound";
 import ClientViewerPage from "./pages/ClientViewerPage";
 import DocumentViewerPage from "./pages/DocumentViewerPage";
@@ -97,6 +100,7 @@ const NewSupportTicket = lazy(() => import("./pages/NewSupportTicket").catch(err
   return import("./pages/NotFound");
 }));
 
+// Create a client for React Query with performance optimizations
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -107,6 +111,7 @@ const queryClient = new QueryClient({
   }
 });
 
+// Route change tracker component
 const RouteChangeTracker = () => {
   const location = useLocation();
   
@@ -125,10 +130,13 @@ const RouteChangeTracker = () => {
 
 function App() {
   useEffect(() => {
+    // Initialize performance monitoring
     initPerformanceMonitoring();
     
+    // Preload main pages on idle
     if ('requestIdleCallback' in window) {
       window.requestIdleCallback(() => {
+        // Preload with error handling
         import("./pages/Index").catch(err => console.error("Preloading error:", err));
         import("./pages/DocumentsPage").catch(err => console.error("Preloading error:", err));
       });

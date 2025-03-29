@@ -59,21 +59,21 @@ export const TaskManagement: React.FC<TaskManagementProps> = ({ tasks }) => {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium">Task Management</h3>
         <Button variant="ghost" size="sm" className="h-6 text-xs">+ Add Task</Button>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="space-y-2 pr-2">
+      <ScrollArea className="pr-2">
+        <div className="space-y-2">
           {displayTasks.length > 0 ? (
             displayTasks.map(task => (
-              <Card key={task.id} className="p-3 text-sm">
-                <div className="flex justify-between items-start mb-1">
-                  <div className="font-medium">{task.title}</div>
-                  <Badge className={getTaskPriorityClass(task.priority)}>{task.priority}</Badge>
+              <Card key={task.id} className="p-2 text-sm">
+                <div className="flex justify-between items-start">
+                  <div className="font-medium text-xs">{task.title}</div>
+                  <Badge className={`text-xs py-0 h-5 ${getTaskPriorityClass(task.priority)}`}>{task.priority}</Badge>
                 </div>
-                <div className="flex justify-between items-center mt-2">
+                <div className="flex justify-between items-center mt-1">
                   <div className="flex items-center text-xs text-muted-foreground">
                     <CalendarClock className="h-3 w-3 mr-1" />
                     <span>{formatDate(task.dueDate)}</span>
@@ -82,17 +82,17 @@ export const TaskManagement: React.FC<TaskManagementProps> = ({ tasks }) => {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-6 w-6 text-green-600" 
+                      className="h-5 w-5 text-green-600" 
                       onClick={() => handleCompleteTask(task.id)}
                     >
-                      <CheckCircle className="h-4 w-4" />
+                      <CheckCircle className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
               </Card>
             ))
           ) : (
-            <div className="text-center py-6 text-muted-foreground">
+            <div className="text-center py-4 text-muted-foreground text-sm">
               Loading tasks...
             </div>
           )}

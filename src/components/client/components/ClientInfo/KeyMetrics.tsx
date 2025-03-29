@@ -2,7 +2,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { ClientMetrics } from "../../types";
-import { CheckCircle2, FileText, AlertCircle } from "lucide-react";
+import { Check, FileText, Clock } from "lucide-react";
 
 interface KeyMetricsProps {
   metrics: ClientMetrics;
@@ -10,38 +10,48 @@ interface KeyMetricsProps {
 }
 
 export const KeyMetrics: React.FC<KeyMetricsProps> = ({ metrics, onMetricClick }) => {
+  const getUrgencyClass = (value: number, threshold: number = 1) => {
+    return value >= threshold ? "text-red-500" : "text-green-500";
+  };
+
   return (
-    <Card className="p-3 mb-4">
-      <h3 className="text-sm font-medium mb-2">Key Metrics</h3>
-      <div className="grid grid-cols-3 gap-2 text-center">
+    <Card className="p-2 mb-2">
+      <h3 className="text-sm font-medium mb-1 px-1">Key Metrics</h3>
+      <div className="grid grid-cols-3 gap-1">
         <div 
-          className="p-2 bg-blue-50 rounded-md cursor-pointer hover:bg-blue-100 transition-colors"
-          onClick={() => onMetricClick('openTasks')}
+          className="text-center p-1.5 rounded-md cursor-pointer hover:bg-accent transition-colors"
+          onClick={() => onMetricClick('tasks')}
         >
           <div className="flex justify-center mb-1">
-            <CheckCircle2 className="h-5 w-5 text-blue-500" />
+            <Check className={`h-4 w-4 ${getUrgencyClass(metrics.openTasks, 3)}`} />
           </div>
-          <div className="text-lg font-medium">{metrics.openTasks}</div>
-          <div className="text-xs text-muted-foreground">Open Tasks</div>
+          <div className={`text-lg font-semibold ${getUrgencyClass(metrics.openTasks, 3)}`}>
+            {metrics.openTasks}
+          </div>
+          <div className="text-xs text-muted-foreground">Tasks</div>
         </div>
         <div 
-          className="p-2 bg-amber-50 rounded-md cursor-pointer hover:bg-amber-100 transition-colors"
-          onClick={() => onMetricClick('pendingDocuments')}
+          className="text-center p-1.5 rounded-md cursor-pointer hover:bg-accent transition-colors"
+          onClick={() => onMetricClick('documents')}
         >
           <div className="flex justify-center mb-1">
-            <FileText className="h-5 w-5 text-amber-500" />
+            <FileText className={`h-4 w-4 ${getUrgencyClass(metrics.pendingDocuments, 2)}`} />
           </div>
-          <div className="text-lg font-medium">{metrics.pendingDocuments}</div>
+          <div className={`text-lg font-semibold ${getUrgencyClass(metrics.pendingDocuments, 2)}`}>
+            {metrics.pendingDocuments}
+          </div>
           <div className="text-xs text-muted-foreground">Pending Docs</div>
         </div>
         <div 
-          className="p-2 bg-red-50 rounded-md cursor-pointer hover:bg-red-100 transition-colors"
-          onClick={() => onMetricClick('urgentDeadlines')}
+          className="text-center p-1.5 rounded-md cursor-pointer hover:bg-accent transition-colors"
+          onClick={() => onMetricClick('deadlines')}
         >
           <div className="flex justify-center mb-1">
-            <AlertCircle className="h-5 w-5 text-red-500" />
+            <Clock className={`h-4 w-4 ${getUrgencyClass(metrics.urgentDeadlines)}`} />
           </div>
-          <div className="text-lg font-medium">{metrics.urgentDeadlines}</div>
+          <div className={`text-lg font-semibold ${getUrgencyClass(metrics.urgentDeadlines)}`}>
+            {metrics.urgentDeadlines}
+          </div>
           <div className="text-xs text-muted-foreground">Urgent</div>
         </div>
       </div>
