@@ -20,9 +20,10 @@ interface Client {
 interface ClientListProps {
   clients: Client[];
   selectedClientId?: string;
+  onClientSelect?: (clientId: string) => void;
 }
 
-export const ClientList = ({ clients, selectedClientId }: ClientListProps) => {
+export const ClientList = ({ clients, selectedClientId, onClientSelect }: ClientListProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   
@@ -33,7 +34,11 @@ export const ClientList = ({ clients, selectedClientId }: ClientListProps) => {
   );
   
   const handleClientSelect = (clientId: string) => {
-    navigate(`/client-viewer/${clientId}`);
+    if (onClientSelect) {
+      onClientSelect(clientId);
+    } else {
+      navigate(`/client-viewer/${clientId}`);
+    }
   };
   
   // Get status color for badge

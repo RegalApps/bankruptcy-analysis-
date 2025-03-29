@@ -155,28 +155,6 @@ const CLIENT_DOCUMENTS = [
             filePath: "/documents/form32.pdf"
           }
         ]
-      },
-      {
-        id: "bank-statement-folder",
-        name: "Bank Statements",
-        type: "folder" as const,
-        folderType: "financial" as const,
-        children: [
-          {
-            id: "q1-statements",
-            name: "Q1_2024_Statements.pdf",
-            type: "file" as const,
-            status: "complete" as const,
-            filePath: "/documents/q1statements.pdf"
-          }
-        ]
-      },
-      {
-        id: "credit-report",
-        name: "CreditReport.pdf",
-        type: "file" as const,
-        status: "complete" as const,
-        filePath: "/documents/creditreport.pdf"
       }
     ]
   },
@@ -200,22 +178,8 @@ const CLIENT_DOCUMENTS = [
             type: "file" as const,
             status: "needs-signature" as const,
             filePath: "/documents/form43.pdf"
-          },
-          {
-            id: "creditor-list",
-            name: "CreditorList.xlsx",
-            type: "file" as const,
-            status: "needs-review" as const,
-            filePath: "/documents/creditors.xlsx"
           }
         ]
-      },
-      {
-        id: "income-statement",
-        name: "IncomeExpenseStatement.pdf",
-        type: "file" as const,
-        status: "needs-review" as const,
-        filePath: "/documents/incomestatement.pdf"
       }
     ]
   }
@@ -244,12 +208,9 @@ const DocumentsPage = () => {
   const handleFileOpen = (node: any) => {
     console.log("Opening file:", node);
     
-    // Navigate to the client viewer with the appropriate client ID
+    // Navigate to the document viewer with the appropriate document ID
     if (node.id) {
-      const clientId = node.id.split("-")[0];
-      if (clientId) {
-        navigate(`/client/${clientId}`);
-      }
+      navigate(`/document-viewer/${node.id}`);
     }
   };
   
@@ -268,8 +229,8 @@ const DocumentsPage = () => {
           <div className="w-72 flex-shrink-0">
             <ClientList 
               clients={DEMO_CLIENTS}
-              onClientSelect={handleClientSelect}
               selectedClientId={selectedClient}
+              onClientSelect={handleClientSelect}
             />
           </div>
           
