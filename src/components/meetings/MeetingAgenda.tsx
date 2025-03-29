@@ -1,48 +1,46 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusCircle, Trash2, Save, Share2, FileEdit, ExternalLink } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Plus, ExternalLink, Clock, Trash2, Save, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AgendaItem {
   id: string;
-  title: string;
+  text: string;
   completed: boolean;
-  isEditing?: boolean;
+  timeEstimate: string;
 }
 
-export const MeetingAgenda = ({ isStandalone = false }) => {
+export const MeetingAgenda = () => {
   const [agendaItems, setAgendaItems] = useState<AgendaItem[]>([
-    { id: "1", title: "Review previous meeting action items", completed: true },
-    { id: "2", title: "Discuss client onboarding process improvements", completed: false },
-    { id: "3", title: "Review financial reports", completed: false },
-    { id: "4", title: "Schedule next meeting", completed: false }
+    { id: '1', text: 'Review previous meeting notes', completed: true, timeEstimate: '5 min' },
+    { id: '2', text: 'Discuss progress on consumer proposal documentation', completed: false, timeEstimate: '15 min' },
+    { id: '3', text: 'Review financial statements', completed: false, timeEstimate: '10 min' },
+    { id: '4', text: 'Plan next steps and deadline updates', completed: false, timeEstimate: '10 min' },
   ]);
-  const [newItemTitle, setNewItemTitle] = useState("");
+  const [newItemText, setNewItemText] = useState('');
+  const [newItemTime, setNewItemTime] = useState('5');
   const { toast } = useToast();
-  
-  const addAgendaItem = () => {
-    if (!newItemTitle.trim()) return;
+
+  const handleAddItem = () => {
+    if (!newItemText.trim()) return;
     
     const newItem: AgendaItem = {
       id: Date.now().toString(),
-      title: newItemTitle,
-      completed: false
+      text: newItemText,
+      completed: false,
+      timeEstimate: `${newItemTime} min`
     };
     
     setAgendaItems([...agendaItems, newItem]);
-    setNewItemTitle("");
-    toast({
-      title: "Agenda item added",
-      description: `"${newItemTitle}" added to the agenda.`,
-    });
+    setNewItemText('');
   };
   
-  const toggleItemCompleted = (id: string) => {
+  const handleToggleComplete = (id: string) => {
     setAgendaItems(
       agendaItems.map(item => 
         item.id === id ? { ...item, completed: !item.completed } : item
@@ -50,168 +48,170 @@ export const MeetingAgenda = ({ isStandalone = false }) => {
     );
   };
   
-  const deleteAgendaItem = (id: string) => {
+  const handleDeleteItem = (id: string) => {
     setAgendaItems(agendaItems.filter(item => item.id !== id));
-    toast({
-      title: "Agenda item removed",
-      description: "The agenda item has been removed.",
-    });
   };
   
-  const startEditing = (id: string) => {
-    setAgendaItems(
-      agendaItems.map(item => 
-        item.id === id ? { ...item, isEditing: true } : { ...item, isEditing: false }
-      )
-    );
-  };
-  
-  const updateItemTitle = (id: string, newTitle: string) => {
-    setAgendaItems(
-      agendaItems.map(item => 
-        item.id === id ? { ...item, title: newTitle, isEditing: false } : item
-      )
-    );
-  };
-  
-  const handleKeyDown = (e: React.KeyboardEvent, id: string, title: string) => {
-    if (e.key === 'Enter') {
-      updateItemTitle(id, title);
-    }
-  };
-  
-  const saveAgenda = () => {
-    // In a real app, this would save the agenda to a database
+  const handleSave = () => {
+    // In a real app, this would save to a database
+    localStorage.setItem('meeting-agenda', JSON.stringify(agendaItems));
     toast({
       title: "Agenda saved",
-      description: "Your meeting agenda has been saved successfully.",
+      description: "Your meeting agenda has been saved successfully",
     });
   };
   
-  const shareAgenda = () => {
-    // In a real app, this would open a sharing dialog
-    toast({
-      title: "Share agenda",
-      description: "Meeting agenda shared with participants.",
-    });
-  };
+  // Calculate estimated remaining time
+  const remainingTime = agendaItems
+    .filter(item => !item.completed)
+    .reduce((total, item) => {
+      const minutes = parseInt(item.timeEstimate.split(' ')[0], 10);
+      return total + minutes;
+    }, 0);
   
-  const openInNewWindow = () => {
-    const features = 'width=500,height=700,resizable=yes,scrollbars=yes';
-    const agendaWindow = window.open('/meetings/agenda-standalone', 'meetingAgenda', features);
-    
-    if (agendaWindow) {
-      agendaWindow.focus();
-    } else {
-      toast({
-        title: "Popup Blocked",
-        description: "Please allow popups for this site to open the agenda in a new window.",
-        variant: "destructive"
-      });
-    }
-  };
+  // Calculate estimated total time
+  const totalTime = agendaItems.reduce((total, item) => {
+    const minutes = parseInt(item.timeEstimate.split(' ')[0], 10);
+    return total + minutes;
+  }, 0);
   
+  // Calculate completion percentage
+  const completedItems = agendaItems.filter(item => item.completed).length;
+  const completionPercentage = agendaItems.length > 0 
+    ? Math.round((completedItems / agendaItems.length) * 100) 
+    : 0;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold leading-tight">Interactive Meeting Agenda</h2>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h2 className="text-xl font-bold">Meeting Agenda</h2>
+          <p className="text-sm text-muted-foreground">
+            Create and track agenda items for your meeting
+          </p>
+        </div>
         
-        {!isStandalone && (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={openInNewWindow}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => window.open('/meetings/agenda-standalone', '_blank')}
             className="flex items-center gap-1"
           >
             <ExternalLink className="h-4 w-4" />
-            <span>Open in New Window</span>
+            Pop Out
           </Button>
-        )}
+          
+          <Button 
+            onClick={handleSave}
+            className="flex items-center gap-1"
+          >
+            <Save className="h-4 w-4" />
+            Save Agenda
+          </Button>
+        </div>
       </div>
       
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Meeting Agenda</CardTitle>
-              <CardDescription>
-                Interactive checklist for keeping meetings on track
-              </CardDescription>
-            </div>
-            <div className="space-x-2">
-              <Button variant="outline" size="sm" onClick={saveAgenda} className="flex items-center gap-1">
-                <Save className="h-3.5 w-3.5" />
-                <span>Save</span>
-              </Button>
-              <Button variant="outline" size="sm" onClick={shareAgenda} className="flex items-center gap-1">
-                <Share2 className="h-3.5 w-3.5" />
-                <span>Share</span>
-              </Button>
-            </div>
-          </div>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center">
+            <FileText className="h-5 w-5 mr-2" />
+            Weekly Status Meeting
+          </CardTitle>
+          <CardDescription>
+            Track topics to cover and their estimated time
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[300px] pr-4">
-            <div className="space-y-3">
-              {agendaItems.map((item) => (
-                <div key={item.id} className="flex items-start gap-2 group">
-                  <Checkbox 
-                    id={`agenda-item-${item.id}`}
-                    checked={item.completed}
-                    onCheckedChange={() => toggleItemCompleted(item.id)}
-                    className="mt-1"
-                  />
-                  {item.isEditing ? (
-                    <Input 
-                      defaultValue={item.title}
-                      autoFocus
-                      onBlur={(e) => updateItemTitle(item.id, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, item.id, (e.target as HTMLInputElement).value)}
-                      className="flex-1"
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+            <div className="flex-1">
+              <Label htmlFor="agenda-item">New Agenda Item</Label>
+              <Input
+                id="agenda-item"
+                placeholder="Enter agenda item..."
+                value={newItemText}
+                onChange={(e) => setNewItemText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
+              />
+            </div>
+            <div className="w-full sm:w-24">
+              <Label htmlFor="time-estimate">Time (min)</Label>
+              <Input
+                id="time-estimate"
+                type="number"
+                min="1"
+                className="text-center"
+                value={newItemTime}
+                onChange={(e) => setNewItemTime(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleAddItem} className="sm:mt-0">
+              <Plus className="h-4 w-4 mr-1" />
+              Add Item
+            </Button>
+          </div>
+          
+          <div className="space-y-2 mt-4">
+            {agendaItems.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No agenda items added yet</p>
+              </div>
+            ) : (
+              agendaItems.map((item) => (
+                <div 
+                  key={item.id}
+                  className={`flex items-center justify-between p-3 border rounded-lg ${
+                    item.completed ? 'bg-muted/50' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <Checkbox
+                      checked={item.completed}
+                      onCheckedChange={() => handleToggleComplete(item.id)}
+                      id={`item-${item.id}`}
                     />
-                  ) : (
-                    <label 
-                      htmlFor={`agenda-item-${item.id}`}
-                      className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : ''}`}
+                    <Label 
+                      htmlFor={`item-${item.id}`}
+                      className={`${item.completed ? 'line-through text-muted-foreground' : ''} cursor-pointer`}
                     >
-                      {item.title}
-                    </label>
-                  )}
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+                      {item.text}
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm text-muted-foreground flex items-center">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {item.timeEstimate}
+                    </div>
                     <Button 
                       variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7" 
-                      onClick={() => startEditing(item.id)}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleDeleteItem(item.id)}
                     >
-                      <FileEdit className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 text-destructive" 
-                      onClick={() => deleteAgendaItem(item.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
+              ))
+            )}
+          </div>
         </CardContent>
-        <CardFooter className="flex space-x-2">
-          <Input
-            placeholder="Add a new agenda item"
-            value={newItemTitle}
-            onChange={(e) => setNewItemTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addAgendaItem()}
-            className="flex-1"
-          />
-          <Button onClick={addAgendaItem} className="flex items-center gap-1">
-            <PlusCircle className="h-4 w-4" />
-            <span>Add Item</span>
-          </Button>
+        <CardFooter className="flex-col sm:flex-row justify-between space-y-2 sm:space-y-0 border-t pt-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+            <div className="flex items-center text-sm">
+              <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+              <span className="text-muted-foreground">Total:</span>
+              <span className="ml-1 font-medium">{totalTime} min</span>
+            </div>
+            <div className="flex items-center text-sm">
+              <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+              <span className="text-muted-foreground">Remaining:</span>
+              <span className="ml-1 font-medium">{remainingTime} min</span>
+            </div>
+          </div>
+          <div className="text-sm">
+            <span className="text-muted-foreground">Completion:</span>
+            <span className="ml-1 font-medium">{completionPercentage}%</span>
+          </div>
         </CardFooter>
       </Card>
     </div>

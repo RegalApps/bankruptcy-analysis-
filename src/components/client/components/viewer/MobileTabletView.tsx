@@ -26,17 +26,17 @@ export const MobileTabletView = ({
   onDocumentOpen,
   onClientUpdate
 }: MobileTabletViewProps) => {
-  const handleDocumentOpen = (documentId: string) => {
-    if (onDocumentOpen) {
-      onDocumentOpen(documentId);
-    }
-  };
-
   // Add this state for document selection
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   
   const handleDocumentSelect = (documentId: string) => {
     setSelectedDocumentId(documentId);
+  };
+
+  const handleDocumentOpen = (documentId: string) => {
+    if (onDocumentOpen) {
+      onDocumentOpen(documentId);
+    }
   };
 
   return (
@@ -52,6 +52,8 @@ export const MobileTabletView = ({
               client={client}
               documents={documents}
               onClientUpdate={onClientUpdate}
+              onDocumentSelect={handleDocumentSelect}
+              selectedDocumentId={selectedDocumentId}
             />
           )}
           

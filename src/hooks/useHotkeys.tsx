@@ -1,62 +1,64 @@
 
-import { useEffect, ReactNode, createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from "react";
 
-interface HotkeysProviderProps {
-  children: ReactNode;
+interface HotkeysContextValue {
+  registerHotkey: (key: string, callback: () => void) => void;
+  unregisterHotkey: (key: string) => void;
 }
 
-interface HotkeysContextType {
-  // The context is just a wrapper for the provider to work
-}
+const HotkeysContext = createContext<HotkeysContextValue | undefined>(undefined);
 
-const HotkeysContext = createContext<HotkeysContextType>({});
-
-export function HotkeysProvider({ children }: HotkeysProviderProps) {
-  return (
-    <HotkeysContext.Provider value={{}}>
-      {children}
-    </HotkeysContext.Provider>
-  );
-}
-
-export function useHotkeys(
-  keys: string,
-  callback: () => void,
-  dependencies: any[] = []
-) {
-  const keyArray = keys.toLowerCase().split('+');
-
+export const HotkeysProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const hotkeys = new Map<string, () => void>();
+  
+  const registerHotkey = (key: string, callback: () => void) => {
+    hotkeys.set(key.toLowerCase(), callback);
+  };
+  
+  const unregisterHotkey = (key: string) => {
+    hotkeys.delete(key.toLowerCase());
+  };
+  
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const pressedKey = event.key.toLowerCase();
-      
-      // Check if all required keys are pressed
-      const shiftRequired = keyArray.includes('shift');
-      const ctrlRequired = keyArray.includes('ctrl');
-      const altRequired = keyArray.includes('alt');
-      const metaRequired = keyArray.includes('meta');
-      
-      const mainKey = keyArray.filter(
-        k => !['shift', 'ctrl', 'alt', 'meta'].includes(k)
-      )[0];
-      
+      // Skip if user is typing in an input, textarea, or contentEditable element
       if (
-        pressedKey === mainKey &&
-        event.shiftKey === shiftRequired &&
-        event.ctrlKey === ctrlRequired &&
-        event.altKey === altRequired &&
-        event.metaKey === metaRequired
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        (event.target instanceof HTMLElement && event.target.isContentEditable)
       ) {
+        return;
+      }
+      
+      const key = event.key.toLowerCase();
+      const callback = hotkeys.get(key);
+      
+      if (callback) {
         event.preventDefault();
         callback();
       }
     };
-
-    window.addEventListener('keydown', handleKeyDown);
     
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...dependencies]);
-}
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+  
+  return (
+    <HotkeysContext.Provider value={{ registerHotkey, unregisterHotkey }}>
+      {children}
+    </HotkeysContext.Provider>
+  );
+};
+
+export const useHotkeys = (key: string, callback: () => void, deps: React.DependencyList = []) => {
+  const context = useContext(HotkeysContext);
+  
+  if (!context) {
+    throw new Error("useHotkeys must be used within a HotkeysProvider");
+  }
+  
+  useEffect(() => {
+    context.registerHotkey(key, callback);
+    return () => context.unregisterHotkey(key);
+  }, [key, callback, context, ...deps]);
+};

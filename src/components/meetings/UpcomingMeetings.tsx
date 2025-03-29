@@ -1,520 +1,347 @@
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Video, Users, Calendar, Clock, ExternalLink, Search, Filter, ChevronDown } from "lucide-react";
-import { useState, useEffect, useCallback, KeyboardEvent } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, Video, Clock, Clipboard, ArrowRight, Link, User, MoreHorizontal } from "lucide-react";
+import { format, addDays, isSameDay } from "date-fns";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { HotkeysProvider, useHotkeys } from "@/hooks/useHotkeys";
 
-interface Meeting {
+interface MeetingProps {
   id: string;
   title: string;
+  time: string;
   date: Date;
-  startTime: string;
-  endTime: string;
-  provider: "zoom" | "google-meet" | "teamviewer" | "other";
-  url: string;
-  participants: string[];
-  description?: string;
-  organizer?: string;
+  duration: string;
+  attendees: string[];
+  type: string;
+  isExternal?: boolean;
+  platform?: string;
+  link?: string;
 }
 
 export const UpcomingMeetings = () => {
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
-  const [openDetailsId, setOpenDetailsId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("today");
+  const [activeDialog, setActiveDialog] = useState<MeetingProps | null>(null);
   const { toast } = useToast();
   
-  // Simulating data fetching
-  useEffect(() => {
-    const loadMeetings = () => {
-      setIsLoading(true);
-      
-      // Mock meetings data
-      setTimeout(() => {
-        const mockMeetings: Meeting[] = [
-          {
-            id: "1",
-            title: "Client Onboarding Call",
-            date: new Date(Date.now() + 3600000), // 1 hour from now
-            startTime: "10:00 AM",
-            endTime: "11:00 AM",
-            provider: "zoom",
-            url: "https://zoom.us/j/123456789",
-            participants: ["Jane Smith", "John Doe", "Alex Johnson"],
-            description: "Introduction call with new client to discuss their needs and set expectations.",
-            organizer: "Jane Smith"
-          },
-          {
-            id: "2",
-            title: "Weekly Team Sync",
-            date: new Date(Date.now() + 86400000), // 1 day from now
-            startTime: "9:00 AM",
-            endTime: "10:00 AM",
-            provider: "google-meet",
-            url: "https://meet.google.com/abc-defg-hij",
-            participants: ["Team Alpha", "Team Beta"],
-            description: "Regular team synchronization meeting to discuss progress and blockers.",
-            organizer: "Team Lead"
-          },
-          {
-            id: "3",
-            title: "Technical Support Session",
-            date: new Date(Date.now() + 172800000), // 2 days from now
-            startTime: "2:00 PM",
-            endTime: "3:30 PM",
-            provider: "teamviewer",
-            url: "https://teamviewer.com/s/123456789",
-            participants: ["Support Team", "Client: ACME Corp"],
-            description: "Technical support session to resolve client's issues with our software.",
-            organizer: "Support Manager"
-          },
-          {
-            id: "4",
-            title: "Product Demo",
-            date: new Date(Date.now() + 259200000), // 3 days from now
-            startTime: "11:00 AM",
-            endTime: "12:00 PM",
-            provider: "zoom",
-            url: "https://zoom.us/j/987654321",
-            participants: ["Sales Team", "Potential Client", "Product Manager"],
-            description: "Product demonstration for a potential client showcasing our latest features.",
-            organizer: "Sales Director"
-          },
-          {
-            id: "5",
-            title: "Strategic Planning",
-            date: new Date(Date.now() + 345600000), // 4 days from now
-            startTime: "1:00 PM",
-            endTime: "3:00 PM",
-            provider: "google-meet",
-            url: "https://meet.google.com/jkl-mnop-qrs",
-            participants: ["Executive Team", "Department Heads"],
-            description: "Strategic planning session to align on quarterly objectives and key results.",
-            organizer: "CEO"
-          }
-        ];
+  const today = new Date();
+  const tomorrow = addDays(today, 1);
+  
+  // Mock data for meetings
+  const meetings: MeetingProps[] = [
+    {
+      id: "1",
+      title: "Client Intake: Josh Hart",
+      time: "10:00 AM",
+      date: today,
+      duration: "45 minutes",
+      attendees: ["Josh Hart", "Sarah Johnson"],
+      type: "Initial Consultation",
+      platform: "Google Meet"
+    },
+    {
+      id: "2",
+      title: "Document Review: Form 47",
+      time: "1:30 PM",
+      date: today,
+      duration: "30 minutes",
+      attendees: ["Josh Hart", "John Smith", "Maria Garcia"],
+      type: "Document Review"
+    },
+    {
+      id: "3",
+      title: "Weekly Team Sync",
+      time: "9:00 AM",
+      date: tomorrow,
+      duration: "60 minutes",
+      attendees: ["All Staff"],
+      type: "Internal Meeting"
+    },
+    {
+      id: "4",
+      title: "Financial Planning Session",
+      time: "11:00 AM",
+      date: tomorrow,
+      duration: "60 minutes",
+      attendees: ["Maria Garcia", "Sarah Johnson"],
+      type: "Client Meeting",
+      isExternal: true,
+      platform: "Zoom",
+      link: "https://zoom.us/j/123456789"
+    }
+  ];
+  
+  const todayMeetings = meetings.filter(meeting => isSameDay(meeting.date, today));
+  const tomorrowMeetings = meetings.filter(meeting => isSameDay(meeting.date, tomorrow));
+  const upcomingMeetings = meetings.filter(meeting => !isSameDay(meeting.date, today) && !isSameDay(meeting.date, tomorrow));
+  
+  const handleJoinMeeting = (meeting: MeetingProps) => {
+    // In a real app, this would open the appropriate meeting link
+    const meetingUrl = meeting.link || "https://meet.google.com";
+    window.open(meetingUrl, "_blank");
+    
+    toast({
+      title: "Joining meeting",
+      description: `Opening ${meeting.title} in a new window`,
+    });
+  };
+  
+  const handleCopyMeetingDetails = (meeting: MeetingProps) => {
+    const details = `
+Meeting: ${meeting.title}
+Date: ${format(meeting.date, "PPP")}
+Time: ${meeting.time}
+Duration: ${meeting.duration}
+Type: ${meeting.type}
+Platform: ${meeting.platform || "Internal Meeting System"}
+Attendees: ${meeting.attendees.join(", ")}
+    `;
+    
+    navigator.clipboard.writeText(details.trim());
+    
+    toast({
+      title: "Meeting details copied",
+      description: "Meeting information has been copied to clipboard",
+    });
+  };
+  
+  const renderMeetingCard = (meeting: MeetingProps) => (
+    <Card key={meeting.id} className="mb-4">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-base">{meeting.title}</CardTitle>
+            <CardDescription className="flex items-center mt-1">
+              <Clock className="h-3 w-3 mr-1" />
+              {meeting.time} • {meeting.duration}
+            </CardDescription>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Meeting Options</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setActiveDialog(meeting)}>
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCopyMeetingDetails(meeting)}>
+                Copy Meeting Info
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleJoinMeeting(meeting)}>
+                Join Meeting
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="flex flex-wrap gap-1 mt-1">
+          {meeting.attendees.map((attendee, index) => (
+            <div key={index} className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-full">
+              <User className="h-3 w-3" />
+              {attendee}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+      <CardFooter className="pt-1 justify-between">
+        <span className="text-xs text-muted-foreground flex items-center">
+          {meeting.isExternal ? (
+            <>
+              <Link className="h-3 w-3 mr-1" />
+              {meeting.platform}
+            </>
+          ) : (
+            <>
+              <Video className="h-3 w-3 mr-1" />
+              {meeting.type}
+            </>
+          )}
+        </span>
+        <Button 
+          size="sm" 
+          className="h-8"
+          onClick={() => handleJoinMeeting(meeting)}
+        >
+          Join
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h2 className="text-xl font-bold">Upcoming Meetings</h2>
+          <p className="text-sm text-muted-foreground">
+            View and join your scheduled meetings
+          </p>
+        </div>
         
-        setMeetings(mockMeetings);
-        setFilteredMeetings(mockMeetings);
-        setIsLoading(false);
-      }, 1000);
-    };
-    
-    loadMeetings();
-  }, []);
-  
-  // Filter meetings based on search query and selected provider
-  useEffect(() => {
-    let result = meetings;
-    
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(meeting => 
-        meeting.title.toLowerCase().includes(query) || 
-        meeting.participants.some(p => p.toLowerCase().includes(query))
-      );
-    }
-    
-    if (selectedProvider) {
-      result = result.filter(meeting => meeting.provider === selectedProvider);
-    }
-    
-    setFilteredMeetings(result);
-  }, [searchQuery, selectedProvider, meetings]);
-  
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  };
-  
-  const getProviderLabel = (provider: Meeting['provider']) => {
-    switch(provider) {
-      case 'zoom': return 'Zoom';
-      case 'google-meet': return 'Google Meet';
-      case 'teamviewer': return 'TeamViewer';
-      default: return 'Other';
-    }
-  };
-  
-  const getProviderColorClass = (provider: Meeting['provider']) => {
-    switch(provider) {
-      case 'zoom': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'google-meet': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'teamviewer': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
-    }
-  };
-  
-  const joinMeeting = (meeting: Meeting) => {
-    toast({
-      title: "Joining Meeting",
-      description: `Opening ${getProviderLabel(meeting.provider)} meeting...`,
-    });
-    window.open(meeting.url, '_blank');
-  };
-
-  const copyMeetingLink = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast({
-      title: "Link Copied",
-      description: "Meeting link copied to clipboard.",
-    });
-  };
-
-  const shareMeeting = (meeting: Meeting) => {
-    const subject = encodeURIComponent(meeting.title);
-    const body = encodeURIComponent(`Join our meeting: ${meeting.url}\n\nDate: ${formatDate(meeting.date)}\nTime: ${meeting.startTime} - ${meeting.endTime}`);
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-  };
-
-  // Keyboard shortcut handler
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "/" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      const searchInput = document.getElementById('meeting-search');
-      if (searchInput) {
-        searchInput.focus();
-      }
-    }
-  }, []);
-
-  // Register hotkeys
-  useHotkeys("shift+j", () => {
-    if (filteredMeetings.length > 0) {
-      joinMeeting(filteredMeetings[0]);
-    }
-  }, [filteredMeetings]);
-
-  useHotkeys("shift+c", () => {
-    if (filteredMeetings.length > 0) {
-      copyMeetingLink(filteredMeetings[0].url);
-    }
-  }, [filteredMeetings]);
-
-  useHotkeys("shift+s", () => {
-    if (filteredMeetings.length > 0) {
-      shareMeeting(filteredMeetings[0]);
-    }
-  }, [filteredMeetings]);
-  
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-sm text-muted-foreground">Loading meetings...</p>
-      </div>
-    );
-  }
-  
-  if (meetings.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium">No upcoming meetings</h3>
-        <p className="text-sm text-muted-foreground mt-1 mb-4">
-          You don't have any scheduled meetings coming up.
-        </p>
         <Button onClick={() => window.open("https://calendar.google.com/calendar/u/0/r/eventedit", "_blank")}>
-          Schedule a Meeting
+          <Calendar className="h-4 w-4 mr-2" />
+          Schedule Meeting
         </Button>
       </div>
-    );
-  }
-  
-  return (
-    <div className="space-y-6" onKeyDown={handleKeyDown}>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold leading-tight">Upcoming Meetings</h2>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="today">
+            Today <span className="ml-1 text-xs bg-primary/20 px-1.5 rounded-full">{todayMeetings.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="tomorrow">
+            Tomorrow <span className="ml-1 text-xs bg-primary/20 px-1.5 rounded-full">{tomorrowMeetings.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+        </TabsList>
         
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          {/* Search input */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="meeting-search"
-              type="search"
-              placeholder="Search meetings... (⌘/Ctrl + /)"
-              className="w-full pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          {/* Filter dropdown */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-1">
-                <Filter className="h-4 w-4" />
-                <span>Filter</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-3">
-              <h4 className="font-medium mb-2">Platform</h4>
-              <div className="space-y-2">
-                <Button 
-                  variant={selectedProvider === null ? "default" : "outline"} 
-                  size="sm" 
-                  className="w-full justify-start"
-                  onClick={() => setSelectedProvider(null)}
-                >
-                  All platforms
+        <TabsContent value="today" className="space-y-4">
+          {todayMeetings.length > 0 ? (
+            todayMeetings.map(renderMeetingCard)
+          ) : (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p className="text-muted-foreground">No meetings scheduled for today</p>
+                <Button className="mt-4" variant="outline" onClick={() => window.open("https://calendar.google.com/calendar/u/0/r/eventedit", "_blank")}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Meeting
                 </Button>
-                <Button 
-                  variant={selectedProvider === "zoom" ? "default" : "outline"} 
-                  size="sm" 
-                  className="w-full justify-start"
-                  onClick={() => setSelectedProvider("zoom")}
-                >
-                  Zoom
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="tomorrow" className="space-y-4">
+          {tomorrowMeetings.length > 0 ? (
+            tomorrowMeetings.map(renderMeetingCard)
+          ) : (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p className="text-muted-foreground">No meetings scheduled for tomorrow</p>
+                <Button className="mt-4" variant="outline" onClick={() => window.open("https://calendar.google.com/calendar/u/0/r/eventedit", "_blank")}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Meeting
                 </Button>
-                <Button 
-                  variant={selectedProvider === "google-meet" ? "default" : "outline"} 
-                  size="sm" 
-                  className="w-full justify-start"
-                  onClick={() => setSelectedProvider("google-meet")}
-                >
-                  Google Meet
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="upcoming" className="space-y-4">
+          {upcomingMeetings.length > 0 ? (
+            upcomingMeetings.map(renderMeetingCard)
+          ) : (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p className="text-muted-foreground">No upcoming meetings scheduled</p>
+                <Button className="mt-4" variant="outline" onClick={() => window.open("https://calendar.google.com/calendar/u/0/r/eventedit", "_blank")}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Meeting
                 </Button>
-                <Button 
-                  variant={selectedProvider === "teamviewer" ? "default" : "outline"} 
-                  size="sm" 
-                  className="w-full justify-start"
-                  onClick={() => setSelectedProvider("teamviewer")}
-                >
-                  TeamViewer
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
-
-      {filteredMeetings.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 px-4 text-center bg-muted/20 rounded-lg">
-          <Search className="h-10 w-10 text-muted-foreground mb-3" />
-          <h3 className="text-lg font-medium">No meetings found</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Try changing your search or filter criteria.
-          </p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedProvider(null);
-            }}
-          >
-            Clear filters
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredMeetings.map((meeting) => (
-              <Card 
-                key={meeting.id} 
-                className="overflow-hidden group hover:shadow-md transition-shadow duration-200"
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200">
-                      {meeting.title}
-                    </CardTitle>
-                    <Badge className={getProviderColorClass(meeting.provider)}>
-                      {getProviderLabel(meeting.provider)}
-                    </Badge>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+      
+      <Dialog open={!!activeDialog} onOpenChange={(open) => !open && setActiveDialog(null)}>
+        <DialogContent className="sm:max-w-md">
+          {activeDialog && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{activeDialog.title}</DialogTitle>
+                <DialogDescription>
+                  {format(activeDialog.date, "PPPP")} at {activeDialog.time}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <h4 className="text-sm font-medium">Duration</h4>
+                    <p className="text-sm text-muted-foreground">{activeDialog.duration}</p>
                   </div>
-                  <CardDescription className="flex items-center mt-2">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {formatDate(meeting.date)}
-                  </CardDescription>
-                  <CardDescription className="flex items-center mt-1">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {meeting.startTime} - {meeting.endTime}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <div className="flex items-start mt-1">
-                    <Users className="h-4 w-4 mr-2 mt-1" />
-                    <div className="flex flex-wrap gap-1">
-                      {meeting.participants.slice(0, 3).map((participant, index) => (
-                        <Badge key={index} variant="outline" className="bg-secondary/20">
-                          {participant}
-                        </Badge>
+                </div>
+                
+                <div className="flex items-start gap-2">
+                  <User className="h-4 w-4 text-muted-foreground mt-1" />
+                  <div>
+                    <h4 className="text-sm font-medium">Attendees</h4>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {activeDialog.attendees.map((attendee, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback className="text-xs">
+                              {attendee.split(" ").map(n => n[0]).join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">{attendee}</span>
+                        </div>
                       ))}
-                      {meeting.participants.length > 3 && (
-                        <Badge variant="outline" className="bg-secondary/20">
-                          +{meeting.participants.length - 3} more
-                        </Badge>
-                      )}
                     </div>
                   </div>
-                </CardContent>
-                <CardFooter className="pt-2 flex justify-between">
+                </div>
+                
+                {activeDialog.isExternal && (
                   <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="text-xs flex items-center gap-1"
-                      onClick={() => copyMeetingLink(meeting.url)}
-                      title="Copy link (Shift+C)"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="text-xs flex items-center gap-1"
-                      onClick={() => shareMeeting(meeting)}
-                      title="Share (Shift+S)"
-                    >
-                      Share
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="text-xs flex items-center gap-1"
-                      onClick={() => setOpenDetailsId(meeting.id)}
-                    >
-                      Details
-                    </Button>
+                    <Link className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <h4 className="text-sm font-medium">Platform</h4>
+                      <p className="text-sm text-muted-foreground">{activeDialog.platform}</p>
+                    </div>
                   </div>
-                  <Button 
-                    size="sm"
-                    className="flex items-center space-x-1"
-                    onClick={() => joinMeeting(meeting)}
-                    title="Join meeting (Shift+J)"
-                  >
-                    <Video className="h-3.5 w-3.5" />
-                    <span>Join</span>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-
-          <div className="mt-4 p-2 bg-muted/30 rounded text-sm text-muted-foreground">
-            <p className="font-medium">Keyboard shortcuts:</p>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 mt-1">
-              <li><kbd className="px-1 rounded border">⌘ /</kbd> or <kbd className="px-1 rounded border">Ctrl /</kbd> - Focus search</li>
-              <li><kbd className="px-1 rounded border">Shift + J</kbd> - Join first meeting</li>
-              <li><kbd className="px-1 rounded border">Shift + C</kbd> - Copy first meeting link</li>
-              <li><kbd className="px-1 rounded border">Shift + S</kbd> - Share first meeting</li>
-            </ul>
-          </div>
-        </>
-      )}
-
-      {/* Meeting details dialog */}
-      {filteredMeetings.map(meeting => (
-        <Dialog 
-          key={`dialog-${meeting.id}`}
-          open={openDetailsId === meeting.id} 
-          onOpenChange={(open) => {
-            if (!open) setOpenDetailsId(null);
-          }}
-        >
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{meeting.title}</DialogTitle>
-              <DialogDescription>
-                <Badge className={`mt-2 ${getProviderColorClass(meeting.provider)}`}>
-                  {getProviderLabel(meeting.provider)}
-                </Badge>
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              {meeting.description && (
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Description</h4>
-                  <p className="text-sm text-muted-foreground">{meeting.description}</p>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Date</h4>
-                  <p className="text-sm text-muted-foreground flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {formatDate(meeting.date)}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Time</h4>
-                  <p className="text-sm text-muted-foreground flex items-center">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {meeting.startTime} - {meeting.endTime}
-                  </p>
+                )}
+                
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <h4 className="text-sm font-medium">Meeting Type</h4>
+                    <p className="text-sm text-muted-foreground">{activeDialog.type}</p>
+                  </div>
                 </div>
               </div>
               
-              <div>
-                <h4 className="text-sm font-medium mb-1">Participants</h4>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {meeting.participants.map((participant, index) => (
-                    <Badge key={index} variant="outline" className="bg-secondary/20">
-                      {participant}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              
-              {meeting.organizer && (
-                <div>
-                  <h4 className="text-sm font-medium mb-1">Organizer</h4>
-                  <p className="text-sm text-muted-foreground">{meeting.organizer}</p>
-                </div>
-              )}
-              
-              <div>
-                <h4 className="text-sm font-medium mb-1">Meeting Link</h4>
-                <div className="flex items-center mt-1">
-                  <Input value={meeting.url} readOnly />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="ml-2"
-                    onClick={() => copyMeetingLink(meeting.url)}
-                  >
-                    Copy
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-between mt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => shareMeeting(meeting)}
-              >
-                Share
-              </Button>
-              <Button 
-                onClick={() => {
-                  joinMeeting(meeting);
-                  setOpenDetailsId(null);
-                }}
-              >
-                <Video className="h-4 w-4 mr-2" />
-                Join Meeting
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      ))}
+              <DialogFooter className="flex sm:justify-between sm:space-x-0">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-1"
+                  onClick={() => handleCopyMeetingDetails(activeDialog)}
+                >
+                  <Clipboard className="h-4 w-4" />
+                  Copy Details
+                </Button>
+                <Button 
+                  className="flex items-center gap-1"
+                  onClick={() => {
+                    handleJoinMeeting(activeDialog);
+                    setActiveDialog(null);
+                  }}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Join Meeting
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
