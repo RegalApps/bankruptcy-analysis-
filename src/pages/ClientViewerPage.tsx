@@ -5,7 +5,11 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { DocumentTree } from "@/components/documents/DocumentTree";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ClientInfoPanel } from "@/components/client/components/ClientInfoPanel";
+import { ClientDocumentsPanel } from "@/components/client/components/ClientDocumentsPanel";
+import { DocumentPreviewPanel } from "@/components/client/components/DocumentPreviewPanel";
+import { formatDate } from "@/utils/formatDate";
 
 // Reuse the same document structure from DocumentsPage
 const JOSH_HART_DOCUMENTS = [
@@ -58,11 +62,36 @@ const JOSH_HART_DOCUMENTS = [
   }
 ];
 
+interface ClientDocument {
+  id: string;
+  title: string;
+  type: string;
+  status: 'complete' | 'pending-review' | 'needs-signature' | 'draft';
+  category: string;
+  dateModified: string;
+  fileType: string;
+  fileSize: string;
+}
+
 interface Client {
   id: string;
   name: string;
   status: string;
   location: string;
+  email?: string;
+  phone?: string;
+  metrics: {
+    openTasks: number;
+    pendingDocuments: number;
+    urgentDeadlines: number;
+  };
+  tasks: {
+    id: string;
+    title: string;
+    dueDate: string;
+    status: 'pending' | 'completed' | 'overdue';
+    priority: 'low' | 'medium' | 'high';
+  }[];
 }
 
 const ClientViewerPage = () => {
@@ -70,6 +99,9 @@ const ClientViewerPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [client, setClient] = useState<Client | null>(null);
+  const [documents, setDocuments] = useState<ClientDocument[]>([]);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
+  const [recentActivities, setRecentActivities] = useState<{ id: string; action: string; user: string; timestamp: string; }[]>([]);
   
   useEffect(() => {
     // Simulate loading client data
@@ -82,8 +114,95 @@ const ClientViewerPage = () => {
           id: "josh-hart",
           name: "Josh Hart",
           status: "active",
-          location: "Ontario"
+          location: "Ontario",
+          email: "josh.hart@example.com",
+          phone: "(555) 123-4567",
+          metrics: {
+            openTasks: 3,
+            pendingDocuments: 2,
+            urgentDeadlines: 1
+          },
+          tasks: [
+            {
+              id: "task-1",
+              title: "Review Form 47 submission",
+              dueDate: new Date().toISOString(),
+              status: 'pending',
+              priority: 'high'
+            },
+            {
+              id: "task-2",
+              title: "Collect additional financial documents",
+              dueDate: new Date(Date.now() + 86400000 * 3).toISOString(),
+              status: 'pending',
+              priority: 'medium'
+            },
+            {
+              id: "task-3",
+              title: "Schedule follow-up meeting",
+              dueDate: new Date(Date.now() + 86400000 * 5).toISOString(),
+              status: 'pending',
+              priority: 'low'
+            }
+          ]
         });
+
+        setDocuments([
+          {
+            id: "form47-file",
+            title: "Form 47 - Consumer Proposal",
+            type: "Legal",
+            status: "pending-review",
+            category: "Forms",
+            dateModified: new Date().toISOString(),
+            fileType: "PDF",
+            fileSize: "2.4 MB"
+          },
+          {
+            id: "budget-file",
+            title: "Budget 2025",
+            type: "Financial",
+            status: "draft",
+            category: "Financial",
+            dateModified: new Date(Date.now() - 86400000 * 2).toISOString(),
+            fileType: "XLSX",
+            fileSize: "1.8 MB"
+          },
+          {
+            id: "id-scan",
+            title: "ID Scan",
+            type: "Personal",
+            status: "complete",
+            category: "Identification",
+            dateModified: new Date(Date.now() - 86400000 * 5).toISOString(),
+            fileType: "JPG",
+            fileSize: "3.1 MB"
+          }
+        ]);
+
+        setRecentActivities([
+          {
+            id: "activity-1",
+            action: "Form 47 uploaded",
+            user: "Jane Smith",
+            timestamp: new Date().toISOString(),
+          },
+          {
+            id: "activity-2",
+            action: "Client information updated",
+            user: "John Doe",
+            timestamp: new Date(Date.now() - 86400000).toISOString(),
+          },
+          {
+            id: "activity-3",
+            action: "New task assigned",
+            user: "Alice Johnson",
+            timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+          }
+        ]);
+        
+        // Set the first document as selected by default
+        setSelectedDocumentId("form47-file");
         
         toast.success("Client data loaded");
       } else {
@@ -99,19 +218,11 @@ const ClientViewerPage = () => {
     navigate("/documents");
   };
   
-  const handleNodeSelect = (node: any) => {
-    console.log("Selected node:", node);
+  const handleDocumentSelect = (documentId: string) => {
+    setSelectedDocumentId(documentId);
   };
-  
-  const handleFileOpen = (node: any) => {
-    console.log("Opening file:", node);
-    
-    // For demonstration, let's only handle the Form47 file
-    if (node.id === "form47-file") {
-      // Navigate to the document viewer with the form47 document ID
-      navigate("/document-viewer/form47");
-    }
-  };
+
+  const selectedDocument = documents.find(doc => doc.id === selectedDocumentId);
   
   return (
     <MainLayout>
@@ -139,22 +250,37 @@ const ClientViewerPage = () => {
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
       ) : client ? (
-        <div>
-          <div className="border rounded-lg bg-card p-4 mb-4">
-            <h1 className="text-2xl font-bold">{client.name}</h1>
-            <div className="flex items-center mt-2">
-              <span className="text-sm text-muted-foreground mr-2">Location: {client.location}</span>
-              <span className="text-sm text-muted-foreground">Status: {client.status}</span>
-            </div>
-          </div>
-          
-          <div className="border rounded-lg shadow-sm overflow-hidden">
-            <DocumentTree 
-              rootNodes={JOSH_HART_DOCUMENTS}
-              onNodeSelect={handleNodeSelect}
-              onFileOpen={handleFileOpen}
-            />
-          </div>
+        <div className="h-[calc(100vh-12rem)]">
+          <ResizablePanelGroup direction="horizontal" className="border rounded-lg bg-card">
+            {/* Left Panel: Client & Task Summary */}
+            <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+              <ClientInfoPanel 
+                client={client}
+                tasks={client.tasks}
+              />
+            </ResizablePanel>
+            
+            <ResizableHandle />
+            
+            {/* Center Panel: Document Files */}
+            <ResizablePanel defaultSize={40}>
+              <ClientDocumentsPanel 
+                documents={documents}
+                onDocumentSelect={handleDocumentSelect}
+                selectedDocumentId={selectedDocumentId}
+              />
+            </ResizablePanel>
+            
+            <ResizableHandle />
+            
+            {/* Right Panel: Document Viewer, Recent History, and Comments */}
+            <ResizablePanel defaultSize={35} minSize={25}>
+              <DocumentPreviewPanel 
+                document={selectedDocument}
+                recentActivities={recentActivities}
+              />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
       ) : (
         <div className="border rounded-lg bg-card p-4 text-center">
