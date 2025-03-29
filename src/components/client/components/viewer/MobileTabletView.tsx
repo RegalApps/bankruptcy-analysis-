@@ -1,3 +1,5 @@
+
+import { useState } from "react";
 import { Client, Document } from "../../types";
 import { ClientTabs } from "./ClientTabs";
 import { ClientInfoPanel } from "../ClientInfo";
@@ -30,6 +32,13 @@ export const MobileTabletView = ({
     }
   };
 
+  // Add this state for document selection
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
+  
+  const handleDocumentSelect = (documentId: string) => {
+    setSelectedDocumentId(documentId);
+  };
+
   return (
     <div className="h-full flex flex-col bg-background">
       <ClientHeader client={client} onBack={onBack} />
@@ -52,6 +61,8 @@ export const MobileTabletView = ({
               activeTab="all"
               setActiveTab={() => {}}
               onDocumentOpen={handleDocumentOpen}
+              onDocumentSelect={handleDocumentSelect}
+              selectedDocumentId={selectedDocumentId}
             />
           )}
           

@@ -9,29 +9,39 @@ interface KeyMetricsProps {
 }
 
 export const KeyMetrics: React.FC<KeyMetricsProps> = ({ metrics, onMetricClick }) => {
+  const getUrgencyClass = (value: number, threshold: number = 1) => {
+    return value >= threshold ? "text-red-500" : "text-green-500";
+  };
+
   return (
-    <Card className="p-3 mb-4">
-      <h3 className="text-sm font-medium mb-2">Key Metrics</h3>
-      <div className="grid grid-cols-3 gap-2 text-center">
+    <Card className="p-2 mb-2 overflow-auto">
+      <h3 className="text-sm font-medium mb-1 px-1">Key Metrics</h3>
+      <div className="grid grid-cols-3 gap-1">
         <div 
-          className="p-2 bg-muted/40 rounded-md cursor-pointer hover:bg-muted/60 transition-colors"
-          onClick={() => onMetricClick('openTasks')}
+          className="text-center p-1.5 rounded-md cursor-pointer hover:bg-accent transition-colors"
+          onClick={() => onMetricClick('tasks')}
         >
-          <div className="text-lg font-medium">{metrics.openTasks}</div>
-          <div className="text-xs text-muted-foreground">Open Tasks</div>
+          <div className={`text-lg font-semibold ${getUrgencyClass(metrics.openTasks, 3)}`}>
+            {metrics.openTasks}
+          </div>
+          <div className="text-xs text-muted-foreground">Tasks</div>
         </div>
         <div 
-          className="p-2 bg-muted/40 rounded-md cursor-pointer hover:bg-muted/60 transition-colors"
-          onClick={() => onMetricClick('pendingDocuments')}
+          className="text-center p-1.5 rounded-md cursor-pointer hover:bg-accent transition-colors"
+          onClick={() => onMetricClick('documents')}
         >
-          <div className="text-lg font-medium">{metrics.pendingDocuments}</div>
+          <div className={`text-lg font-semibold ${getUrgencyClass(metrics.pendingDocuments, 2)}`}>
+            {metrics.pendingDocuments}
+          </div>
           <div className="text-xs text-muted-foreground">Pending Docs</div>
         </div>
         <div 
-          className="p-2 bg-muted/40 rounded-md cursor-pointer hover:bg-muted/60 transition-colors"
-          onClick={() => onMetricClick('urgentDeadlines')}
+          className="text-center p-1.5 rounded-md cursor-pointer hover:bg-accent transition-colors"
+          onClick={() => onMetricClick('deadlines')}
         >
-          <div className="text-lg font-medium">{metrics.urgentDeadlines}</div>
+          <div className={`text-lg font-semibold ${getUrgencyClass(metrics.urgentDeadlines)}`}>
+            {metrics.urgentDeadlines}
+          </div>
           <div className="text-xs text-muted-foreground">Urgent</div>
         </div>
       </div>
