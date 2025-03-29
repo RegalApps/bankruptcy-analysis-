@@ -24,8 +24,8 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col p-3">
-      <div className="mb-2">
+    <div className="h-full flex flex-col p-4">
+      <div className="mb-3">
         <h2 className="text-xl font-semibold">{client.name}</h2>
         <div className="flex items-center mt-1 text-sm text-muted-foreground">
           <Badge variant="outline" className="mr-2">{client.status}</Badge>
@@ -33,7 +33,8 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
         </div>
       </div>
 
-      <div className="flex-shrink-0 mb-2">
+      {/* Make the contact info take less vertical space */}
+      <div className="flex-shrink-0">
         <ContactInformation client={client} />
       </div>
       
@@ -44,7 +45,7 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
         />
       </div>
       
-      <div className="flex-1 min-h-0 overflow-auto pb-4">
+      <div className="flex-1 min-h-0 overflow-auto">
         {activeMetric ? (
           <MetricDetails 
             activeMetric={activeMetric} 

@@ -2,7 +2,6 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { ClientMetrics } from "../../types";
-import { Check, FileText, Clock } from "lucide-react";
 
 interface KeyMetricsProps {
   metrics: ClientMetrics;
@@ -15,16 +14,13 @@ export const KeyMetrics: React.FC<KeyMetricsProps> = ({ metrics, onMetricClick }
   };
 
   return (
-    <Card className="p-2 mb-2">
+    <Card className="p-2 mb-2 overflow-auto">
       <h3 className="text-sm font-medium mb-1 px-1">Key Metrics</h3>
       <div className="grid grid-cols-3 gap-1">
         <div 
           className="text-center p-1.5 rounded-md cursor-pointer hover:bg-accent transition-colors"
           onClick={() => onMetricClick('tasks')}
         >
-          <div className="flex justify-center mb-1">
-            <Check className={`h-4 w-4 ${getUrgencyClass(metrics.openTasks, 3)}`} />
-          </div>
           <div className={`text-lg font-semibold ${getUrgencyClass(metrics.openTasks, 3)}`}>
             {metrics.openTasks}
           </div>
@@ -34,9 +30,6 @@ export const KeyMetrics: React.FC<KeyMetricsProps> = ({ metrics, onMetricClick }
           className="text-center p-1.5 rounded-md cursor-pointer hover:bg-accent transition-colors"
           onClick={() => onMetricClick('documents')}
         >
-          <div className="flex justify-center mb-1">
-            <FileText className={`h-4 w-4 ${getUrgencyClass(metrics.pendingDocuments, 2)}`} />
-          </div>
           <div className={`text-lg font-semibold ${getUrgencyClass(metrics.pendingDocuments, 2)}`}>
             {metrics.pendingDocuments}
           </div>
@@ -46,9 +39,6 @@ export const KeyMetrics: React.FC<KeyMetricsProps> = ({ metrics, onMetricClick }
           className="text-center p-1.5 rounded-md cursor-pointer hover:bg-accent transition-colors"
           onClick={() => onMetricClick('deadlines')}
         >
-          <div className="flex justify-center mb-1">
-            <Clock className={`h-4 w-4 ${getUrgencyClass(metrics.urgentDeadlines)}`} />
-          </div>
           <div className={`text-lg font-semibold ${getUrgencyClass(metrics.urgentDeadlines)}`}>
             {metrics.urgentDeadlines}
           </div>
