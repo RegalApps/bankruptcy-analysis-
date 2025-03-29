@@ -3,7 +3,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FolderList } from "./FolderList";
 import { EmptyFolderState } from "./EmptyFolderState";
 import { EmptyClientState } from "./EmptyClientState";
-import { Form47Alert } from "./Form47Alert";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
 
@@ -42,15 +41,12 @@ export const DocumentTree = ({
   handleDragLeave,
   handleDrop
 }: DocumentTreeProps) => {
-  const hasForm47Documents = form47Documents.length > 0;
+  // We're not using form47Documents anymore, so no need to check its length
 
   return (
     <ScrollArea className="h-[calc(100vh-10rem)]">
       <div className="pr-4 pl-2">
-        {/* Show alert for Form 47 documents */}
-        {hasForm47Documents && (
-          <Form47Alert form47Documents={form47Documents} />
-        )}
+        {/* Removed Form47Alert */}
         
         {filteredFolders.length > 0 ? (
           <FolderList

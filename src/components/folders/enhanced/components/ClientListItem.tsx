@@ -1,9 +1,6 @@
 
-import { useState } from "react";
-import { User, ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { UserCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface ClientListItemProps {
   client: { id: string; name: string };
@@ -18,50 +15,30 @@ export const ClientListItem = ({
   onSelect,
   onViewerAccess
 }: ClientListItemProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  
-  const handleOpenViewer = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onViewerAccess(client.id);
-    
-    // Add visual feedback
-    toast.info(`Opening ${client.name}'s profile`, {
-      description: "Loading client information and documents",
-      duration: 2000
-    });
-  };
-  
   return (
     <div
-      className={cn(
-        "flex items-center justify-between px-3 py-2 rounded-md cursor-pointer relative transition-colors",
-        isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/30"
-      )}
+      className={`flex items-center justify-between px-3 py-2 cursor-pointer group ${
+        isSelected ? "bg-accent text-accent-foreground" : "hover:bg-muted/50"
+      }`}
       onClick={() => onSelect(client.id)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-center space-x-2 overflow-hidden">
-        <div className={cn(
-          "rounded-full p-1.5 flex-shrink-0",
-          isSelected ? "bg-primary/20" : "bg-muted"
-        )}>
-          <User className="h-3.5 w-3.5 opacity-70" />
-        </div>
-        <span className="text-sm font-medium truncate">{client.name}</span>
+      <div className="flex items-center">
+        <UserCircle className="h-4 w-4 mr-2 text-primary/70" />
+        <span className="text-sm truncate">{client.name}</span>
       </div>
       
-      {(isHovered || isSelected) && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={handleOpenViewer}
-          title={`Open ${client.name}'s details`}
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewerAccess(client.id);
+        }}
+        title="Open client viewer"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 };

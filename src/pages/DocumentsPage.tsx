@@ -6,9 +6,9 @@ import { showPerformanceToast } from "@/utils/performance";
 import { EnhancedFolderTab } from "@/components/folders/enhanced/EnhancedFolderTab";
 import { BreadcrumbNavigation } from "./documents/components/BreadcrumbNavigation";
 import { useDocumentsPage } from "./documents/hooks/useDocumentsPage";
-import { ClientList } from "@/components/folders/enhanced/components/ClientList";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { ClientSection } from "@/components/folders/enhanced/components/ClientSection";
 
 const DocumentsPage = () => {
   const {
@@ -36,6 +36,10 @@ const DocumentsPage = () => {
     // Navigate to client viewer page with the selected client
     navigate(`/client-viewer/${clientId}`);
   };
+  
+  const handleClientViewerAccess = (clientId: string) => {
+    navigate(`/client-viewer/${clientId}`);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -55,12 +59,14 @@ const DocumentsPage = () => {
           </div>
           
           <div className="grid grid-cols-12 gap-4 h-[calc(100vh-12rem)]">
-            {/* Client List Panel */}
+            {/* Enhanced Client Section Panel */}
             <div className="col-span-3 border rounded-lg bg-card overflow-hidden">
-              <ClientList 
+              <ClientSection
                 clients={clients} 
                 onClientSelect={handleClientClick}
-                selectedClientId={selectedClientId}
+                onClientViewerAccess={handleClientViewerAccess}
+                selectedClientId={selectedClientId || ""}
+                className=""
               />
             </div>
             

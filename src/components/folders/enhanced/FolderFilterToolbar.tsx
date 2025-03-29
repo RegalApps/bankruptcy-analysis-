@@ -29,7 +29,7 @@ export const FolderFilterToolbar = ({
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search folders and documents..."
+          placeholder="Search documents..."
           className="pl-8"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -47,10 +47,7 @@ export const FolderFilterToolbar = ({
           </div>
         </SelectTrigger>
         <SelectContent>
-          {/* Changed empty string to "all" */}
           <SelectItem value="all">All Documents</SelectItem>
-          <SelectItem value="client">Client Folders</SelectItem>
-          <SelectItem value="form">Forms</SelectItem>
           <SelectItem value="financial">Financial</SelectItem>
           <SelectItem value="uncategorized">Uncategorized</SelectItem>
         </SelectContent>
