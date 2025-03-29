@@ -1,69 +1,95 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Document } from "@/components/DocumentList/types";
 import { FolderStructure } from "@/types/folders";
 
 export const useCreateFolderStructure = (documents: Document[]) => {
   const [folders, setFolders] = useState<FolderStructure[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Map documents to folder structure
-    setIsLoading(true);
-    
-    if (documents.length === 0) {
-      setFolders([]);
-      setIsLoading(false);
-      return;
-    }
+    // Create folder structure from documents
+    const createStructure = () => {
+      if (!documents || documents.length === 0) {
+        setFolders([]);
+        return;
+      }
 
-    const folderMap = new Map();
-    
-    // First, collect all folder documents
-    documents.forEach(doc => {
-      if (doc.is_folder) {
-        folderMap.set(doc.id, {
+      // Extract all folders from documents
+      const folderDocs = documents.filter(doc => doc.is_folder);
+      
+      // Create map of folders by ID
+      const folderMap: Record<string, FolderStructure> = {};
+      
+      // First pass: create folder nodes
+      folderDocs.forEach(doc => {
+        folderMap[doc.id] = {
           id: doc.id,
           name: doc.title,
-          type: doc.folder_type || 'general',
+          type: doc.folder_type || 'folder', // Use folder_type or default to 'folder'
           children: [],
-          parentId: doc.parent_folder_id || "",
+          parentId: doc.parent_folder_id,
           isExpanded: false,
-          level: 0, // Default level, will be calculated properly later
-          metadata: doc.metadata || {}
-        });
-      }
-    });
-    
-    // Connect parent-child relationships
-    folderMap.forEach((folder) => {
-      if (folder.parentId && folderMap.has(folder.parentId)) {
-        const parent = folderMap.get(folder.parentId);
-        parent.children.push(folder);
-      }
-    });
-    
-    // Calculate levels for all folders
-    const calculateLevels = (folder: any, level: number) => {
-      folder.level = level;
-      folder.children.forEach((child: any) => {
-        calculateLevels(child, level + 1);
+          level: 0, // Will be calculated in second pass
+          metadata: doc.metadata
+        };
       });
+      
+      // Second pass: build folder hierarchy
+      const rootFolders: FolderStructure[] = [];
+      
+      Object.values(folderMap).forEach(folder => {
+        if (folder.parentId && folderMap[folder.parentId]) {
+          // Add as child to parent
+          folderMap[folder.parentId].children.push(folder);
+        } else {
+          // No parent, so it's a root folder
+          rootFolders.push(folder);
+        }
+      });
+      
+      // Third pass: calculate levels and sort
+      const setLevels = (folders: FolderStructure[], level: number) => {
+        folders.forEach(folder => {
+          folder.level = level;
+          
+          // Sort children by type and then alphabetically
+          folder.children.sort((a, b) => {
+            // First by type (client -> estate -> form -> other)
+            const typeOrder = { client: 0, estate: 1, form: 2 };
+            const aOrder = typeOrder[a.type as keyof typeof typeOrder] ?? 3;
+            const bOrder = typeOrder[b.type as keyof typeof typeOrder] ?? 3;
+            
+            if (aOrder !== bOrder) {
+              return aOrder - bOrder;
+            }
+            
+            // Then alphabetically
+            return a.name.localeCompare(b.name);
+          });
+          
+          if (folder.children.length > 0) {
+            setLevels(folder.children, level + 1);
+          }
+        });
+      };
+      
+      // Sort root folders by type and then alphabetically
+      rootFolders.sort((a, b) => {
+        if (a.type === 'client' && b.type !== 'client') return -1;
+        if (a.type !== 'client' && b.type === 'client') return 1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      setLevels(rootFolders, 0);
+      
+      setFolders(rootFolders);
     };
-    
-    // Get only root folders (those without parents or with non-existent parents)
-    const rootFolders = Array.from(folderMap.values()).filter(
-      folder => !folder.parentId || !folderMap.has(folder.parentId)
-    );
-    
-    // Calculate levels starting from the root
-    rootFolders.forEach(folder => {
-      calculateLevels(folder, 0);
-    });
-    
-    setFolders(rootFolders);
-    setIsLoading(false);
+
+    createStructure();
   }, [documents]);
 
-  return { folders, isLoading };
+  return { 
+    folders,
+    setFolders
+  };
 };

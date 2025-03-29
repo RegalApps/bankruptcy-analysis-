@@ -11,7 +11,7 @@ import { useState } from "react";
 import { StatusIndicator } from "./StatusIndicator";
 import { DocumentActions } from "./DocumentActions";
 import { DocumentContextMenu } from "./DocumentContextMenu";
-import { isDocumentLocked, isForm47or76 } from "../../utils/documentUtils";
+import { isDocumentLocked, isForm47or76, documentNeedsAttention } from "../../utils/documentUtils";
 
 interface DocumentItemProps {
   document: Document;
@@ -30,6 +30,7 @@ export const DocumentItem = ({
 }: DocumentItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(document.title);
+  const needsAttention = documentNeedsAttention(document);
 
   const handleRename = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -53,7 +54,8 @@ export const DocumentItem = ({
         <div
           className={cn(
             "flex items-center py-1 px-2 hover:bg-accent/50 rounded-sm cursor-pointer",
-            "group transition-colors duration-200"
+            "group transition-colors duration-200",
+            needsAttention ? "bg-orange-50" : ""
           )}
           onClick={() => onSelect(document.id)}
           onDoubleClick={() => handleDoubleClick()}

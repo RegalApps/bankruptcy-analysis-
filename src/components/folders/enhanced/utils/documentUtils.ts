@@ -1,3 +1,4 @@
+
 import { Document } from "@/components/DocumentList/types";
 import { FolderStructure } from "@/types/folders";
 
@@ -76,6 +77,87 @@ export function createDocumentHierarchy(documents: Document[]): Document[] {
       });
     }
   });
+  
+  // If there are no clients, let's create a demo client
+  if (clientFolders.length === 0) {
+    const demoClient: Document = {
+      id: 'josh-hart',
+      title: 'Josh Hart',
+      is_folder: true,
+      folder_type: 'client',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      type: 'folder',
+      storage_path: '',
+      size: 0,
+      metadata: {
+        client_id: 'josh-hart',
+        client_name: 'Josh Hart',
+        status: 'attention'
+      }
+    };
+    documents.push(demoClient);
+    
+    // Create estate folder
+    const estateFolder: Document = {
+      id: 'estate-josh-hart',
+      title: 'Estate-47-2023',
+      is_folder: true,
+      folder_type: 'estate',
+      parent_folder_id: demoClient.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      type: 'folder',
+      storage_path: '',
+      size: 0,
+      metadata: {
+        estate_number: '47-2023',
+        client_id: demoClient.id,
+        client_name: demoClient.title
+      }
+    };
+    documents.push(estateFolder);
+    
+    // Create form folder
+    const formFolder: Document = {
+      id: 'form-47-josh-hart',
+      title: 'Form 47',
+      is_folder: true,
+      folder_type: 'form',
+      parent_folder_id: estateFolder.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      type: 'folder',
+      storage_path: '',
+      size: 0,
+      metadata: {
+        form_number: '47',
+        estate_number: '47-2023',
+        client_id: demoClient.id,
+        client_name: demoClient.title
+      }
+    };
+    documents.push(formFolder);
+    
+    // Create sample PDF document
+    const pdfDocument: Document = {
+      id: 'form-47-pdf-josh-hart',
+      title: 'Josh Hart - Form 47.pdf',
+      is_folder: false,
+      parent_folder_id: formFolder.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      type: 'application/pdf',
+      storage_path: '',
+      size: 125000,
+      metadata: {
+        formNumber: '47',
+        client_name: demoClient.title,
+        status: 'attention'
+      }
+    };
+    documents.push(pdfDocument);
+  }
   
   return documents;
 }

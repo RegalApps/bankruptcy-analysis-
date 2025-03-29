@@ -1,21 +1,28 @@
 
 import { Document } from "@/components/DocumentList/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Circle, AlertCircle, Check, Clock } from "lucide-react";
 import { documentNeedsAttention } from "../../utils/documentUtils";
 
 interface StatusIndicatorProps {
   document: Document;
+  className?: string;
 }
 
-export const StatusIndicator = ({ document }: StatusIndicatorProps) => {
+export const StatusIndicator = ({ document, className = "" }: StatusIndicatorProps) => {
   const status = document.metadata?.status || 'pending';
   const needsAttention = documentNeedsAttention(document);
+  
+  // Make indicator larger and more visible
+  const baseClasses = `inline-flex h-4 w-4 items-center justify-center rounded-full ${className}`;
   
   if (needsAttention) {
     return <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+          <div className={`${baseClasses} bg-orange-500`}>
+            <AlertCircle className="h-3 w-3 text-white" />
+          </div>
         </TooltipTrigger>
         <TooltipContent>
           <p>Requires Attention</p>
@@ -29,7 +36,9 @@ export const StatusIndicator = ({ document }: StatusIndicatorProps) => {
       return <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+            <div className={`${baseClasses} bg-green-500`}>
+              <Check className="h-3 w-3 text-white" />
+            </div>
           </TooltipTrigger>
           <TooltipContent>
             <p>Approved / No Risks</p>
@@ -40,7 +49,9 @@ export const StatusIndicator = ({ document }: StatusIndicatorProps) => {
       return <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
+            <div className={`${baseClasses} bg-yellow-500`}>
+              <Clock className="h-3 w-3 text-white" />
+            </div>
           </TooltipTrigger>
           <TooltipContent>
             <p>Pending / Minor Issues</p>
@@ -51,7 +62,9 @@ export const StatusIndicator = ({ document }: StatusIndicatorProps) => {
       return <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+            <div className={`${baseClasses} bg-orange-500`}>
+              <AlertCircle className="h-3 w-3 text-white" />
+            </div>
           </TooltipTrigger>
           <TooltipContent>
             <p>Requires Attention</p>
@@ -62,7 +75,9 @@ export const StatusIndicator = ({ document }: StatusIndicatorProps) => {
       return <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+            <div className={`${baseClasses} bg-red-500`}>
+              <AlertCircle className="h-3 w-3 text-white" />
+            </div>
           </TooltipTrigger>
           <TooltipContent>
             <p>Critical Compliance Risks</p>
@@ -73,7 +88,9 @@ export const StatusIndicator = ({ document }: StatusIndicatorProps) => {
       return <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+            <div className={`${baseClasses} bg-gray-300`}>
+              <Circle className="h-3 w-3 text-white" />
+            </div>
           </TooltipTrigger>
           <TooltipContent>
             <p>No Status</p>

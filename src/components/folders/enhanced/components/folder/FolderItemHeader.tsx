@@ -1,12 +1,12 @@
 
-import React from "react";
-import { cn } from "@/lib/utils";
 import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FolderIcon } from "./FolderIcon";
-import { FolderLockIndicator } from "./FolderLockIndicator";
-import { FolderNameEditor } from "./FolderNameEditor";
+import { AlertCircle } from "lucide-react";
+import { getFolderTooltip } from "../../utils/folderUtils";
 
 interface FolderItemHeaderProps {
   folder: FolderStructure;
@@ -22,12 +22,14 @@ interface FolderItemHeaderProps {
   handleDoubleClick: (e: React.MouseEvent) => void;
   onFolderSelect: (folderId: string) => void;
   toggleFolder: (folderId: string, e: React.MouseEvent) => void;
-  handleRename: (updatedName: string) => void;
+  handleRename: (newName: string) => void;
   handleDragStart: (id: string, type: 'folder' | 'document') => void;
   handleDragOver: (e: React.DragEvent, folderId: string) => void;
   handleDragLeave: () => void;
   handleDrop: (e: React.DragEvent, targetFolderId: string) => void;
   cancelEditing: () => void;
+  newName?: string;
+  setNewName?: (name: string) => void;
 }
 
 export const FolderItemHeader = ({
@@ -49,110 +51,123 @@ export const FolderItemHeader = ({
   handleDragOver,
   handleDragLeave,
   handleDrop,
-  cancelEditing
+  cancelEditing,
+  newName,
+  setNewName
 }: FolderItemHeaderProps) => {
-  // For folder with children, show count
-  const hasChildren = folder.children && folder.children.length > 0;
-  const hasDocuments = folderDocuments.length > 0;
-  const folderType = folder.type;
+  // Check if this folder needs attention - if it contains Form 47 docs that need attention
+  const needsAttention = folder.folder_type === 'client' || 
+                        (form47Documents && form47Documents.length > 0);
   
-  // Display folder badge count if it has children or documents
-  const showBadge = hasChildren || hasDocuments;
-  const badgeCount = (hasChildren ? folder.children.length : 0) + folderDocuments.length;
-  
-  // Handle the click event
-  const handleFolderClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget || !(e.target as HTMLElement).classList.contains('chevron-icon')) {
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter') {
       onFolderSelect(folder.id);
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      toggleFolder(folder.id, {} as React.MouseEvent);
     }
   };
-  
-  // Handle expand/collapse
-  const handleToggleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toggleFolder(folder.id, e);
+
+  // Handle rename submit
+  const handleRenameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newName) {
+      handleRename(newName);
+    }
   };
 
-  // Has pending Form 47 or Form 76 documents
-  const hasForm47 = form47Documents.length > 0 || 
-                     folderType === 'form' && folder.name.includes('47');
-  
-  // Special indicator for folders with Form 47 documents
-  const hasFormDocuments = formDocuments.length > 0 || hasForm47;
+  // Get tooltip text for folder
+  const tooltipText = getFolderTooltip(folder, folderDocuments);
 
   return (
     <div
-      onClick={handleFolderClick}
+      className={cn(
+        "flex items-center py-1 px-2 rounded-sm cursor-pointer",
+        isSelected ? "bg-primary/10" : "hover:bg-accent/50",
+        isDragTarget && "border border-dashed border-primary bg-primary/5",
+        "transition-colors duration-200"
+      )}
+      onClick={() => onFolderSelect(folder.id)}
       onDoubleClick={handleDoubleClick}
       draggable={!isFolderLocked}
       onDragStart={() => handleDragStart(folder.id, 'folder')}
       onDragOver={(e) => handleDragOver(e, folder.id)}
       onDragLeave={handleDragLeave}
       onDrop={(e) => handleDrop(e, folder.id)}
-      className={cn(
-        "flex py-1 px-2 rounded-sm hover:bg-accent/50",
-        "group transition-colors duration-200 items-center",
-        isSelected && "bg-accent",
-        isDragTarget && "bg-accent/80 border border-dashed border-primary",
-        "cursor-pointer"
-      )}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
       data-folder-id={folder.id}
-      data-folder-type={folderType}
-      aria-selected={isSelected}
+      role="treeitem"
       aria-expanded={isExpanded}
     >
       {indentation}
-      
-      {/* Chevron for expand/collapse */}
-      <div 
-        onClick={handleToggleClick} 
-        className="flex items-center justify-center w-4 h-4 chevron-icon"
+      <div
+        className="mr-1 cursor-pointer p-1 hover:bg-accent rounded-sm"
+        onClick={(e) => toggleFolder(folder.id, e)}
       >
-        {(hasChildren || hasDocuments) ? (
-          isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )
-        ) : (
-          <div className="w-4" /> // Spacer when no chevron
-        )}
+        <FolderIcon type={folder.type} isExpanded={isExpanded} />
       </div>
-      
-      {/* Folder Icon based on type */}
-      <FolderIcon type={folderType} isExpanded={isExpanded} />
-      
-      {/* Folder Name */}
+
       {isEditing ? (
-        <FolderNameEditor
-          isEditing={isEditing}
-          name={folder.name}
-          onRename={handleRename}
-          onCancelEdit={cancelEditing}
-        />
+        <form onSubmit={handleRenameSubmit} className="flex-1">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName && setNewName(e.target.value)}
+            onBlur={cancelEditing}
+            autoFocus
+            className="text-sm px-1 py-0.5 border border-primary rounded w-full outline-none"
+          />
+        </form>
       ) : (
-        <span className="text-sm truncate">{folder.name}</span>
+        <div className="flex items-center justify-between flex-1">
+          <div className="flex items-center">
+            <span className="text-sm font-medium truncate max-w-[150px]">{folder.name}</span>
+            
+            {/* Status badge for client and form folders */}
+            {folder.type === 'client' && (
+              <Badge variant="outline" className="ml-2 text-xs bg-blue-50">Client</Badge>
+            )}
+            {folder.type === 'form' && (
+              <Badge variant="outline" className="ml-2 text-xs bg-green-50">Form</Badge>
+            )}
+            {folder.type === 'estate' && (
+              <Badge variant="outline" className="ml-2 text-xs bg-purple-50">Estate</Badge>
+            )}
+          </div>
+          
+          {/* Attention indicator for client folders or folders with Form 47 docs */}
+          {needsAttention && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="h-4 w-4 rounded-full bg-orange-500 flex items-center justify-center ml-2">
+                    <AlertCircle className="h-3 w-3 text-white" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {folder.type === 'client' ? 'Client requires attention' : 'Contains documents that need attention'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
+          {/* Show document count badge */}
+          {folderDocuments.length > 0 && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Badge variant="secondary" className="ml-2">{folderDocuments.length}</Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tooltipText}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       )}
-      
-      {/* Show form47 indicator next to the folder name */}
-      {hasFormDocuments && (
-        <span 
-          className="h-2.5 w-2.5 rounded-full bg-orange-500 ml-2" 
-          aria-label="Form 47 Documents Require Attention"
-        />
-      )}
-      
-      {/* Show badge count */}
-      {showBadge && (
-        <span className="ml-2 text-xs px-1.5 py-0.5 bg-accent rounded-full text-muted-foreground">
-          {badgeCount}
-        </span>
-      )}
-      
-      {/* Lock indicator for locked folders */}
-      <div className="ml-auto">
-        <FolderLockIndicator isLocked={isFolderLocked} />
-      </div>
     </div>
   );
 };
