@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 
 interface AuditEvent {
   id: string;
@@ -54,7 +55,7 @@ interface AuditEvent {
 export const AuditLogs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [eventType, setEventType] = useState<string>('all');
-  const [timeRange, setTimeRange] = useState<{from: Date, to: Date} | undefined>(undefined);
+  const [timeRange, setTimeRange] = useState<DateRange | undefined>(undefined);
 
   // Mock audit log data
   const auditLogs: AuditEvent[] = [
@@ -293,13 +294,18 @@ export const AuditLogs = () => {
     
     // Filter by date range
     let dateMatches = true;
-    if (timeRange) {
+    if (timeRange && timeRange.from) {
       const logDate = new Date(log.timestamp);
       const from = new Date(timeRange.from);
-      const to = new Date(timeRange.to);
-      to.setHours(23, 59, 59, 999); // Set to end of day
       
-      dateMatches = logDate >= from && logDate <= to;
+      if (timeRange.to) {
+        const to = new Date(timeRange.to);
+        to.setHours(23, 59, 59, 999); // Set to end of day
+        dateMatches = logDate >= from && logDate <= to;
+      } else {
+        // If only "from" is selected, match any date after "from"
+        dateMatches = logDate >= from;
+      }
     }
     
     return searchMatches && eventTypeMatches && dateMatches;
@@ -338,7 +344,7 @@ export const AuditLogs = () => {
           </Select>
           
           <DateRangePicker 
-            onChange={setTimeRange} 
+            onChange={(date) => setTimeRange(date)} 
             value={timeRange}
           />
           

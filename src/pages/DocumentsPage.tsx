@@ -7,6 +7,20 @@ import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { toast } from "sonner";
 
+// Define a proper DocumentStatus type to match what DocumentTree expects
+type DocumentStatus = "needs-review" | "complete" | "needs-signature" | undefined;
+
+// Updated type definition for TreeNode that matches DocumentTree expectations
+interface TreeNode {
+  id: string;
+  name: string;
+  type: "folder" | "file";
+  folderType?: string;
+  status?: DocumentStatus;
+  children?: TreeNode[];
+  filePath?: string;
+}
+
 // Hardcoded demo data for clients
 const DEMO_CLIENTS = [
   {
@@ -43,33 +57,33 @@ const DEMO_CLIENTS = [
   }
 ];
 
-// Document tree structure for all clients
-const CLIENT_DOCUMENTS = [
+// Document tree structure for all clients - fixed status to match DocumentStatus type
+const CLIENT_DOCUMENTS: TreeNode[] = [
   // Josh Hart's documents
   {
     id: "josh-hart-root",
     name: "Josh Hart",
-    type: "folder" as const,
-    folderType: "client" as const,
-    status: "needs-review" as const,
+    type: "folder",
+    folderType: "client",
+    status: "needs-review",
     children: [
       {
         id: "estate-folder",
         name: "Estate 2025-47",
-        type: "folder" as const,
-        folderType: "estate" as const,
+        type: "folder",
+        folderType: "estate",
         children: [
           {
             id: "form47-folder",
             name: "Form 47 - Consumer Proposal",
-            type: "folder" as const,
-            folderType: "form" as const,
+            type: "folder",
+            folderType: "form",
             children: [
               {
                 id: "form47-file",
                 name: "Form47_Draft1.pdf",
-                type: "file" as const,
-                status: "needs-review" as const,
+                type: "file",
+                status: "needs-review",
                 filePath: "/documents/form47.pdf"
               }
             ]
@@ -77,14 +91,14 @@ const CLIENT_DOCUMENTS = [
           {
             id: "financials-folder",
             name: "Financials",
-            type: "folder" as const,
-            folderType: "financials" as const,
+            type: "folder",
+            folderType: "financials",
             children: [
               {
                 id: "budget-file",
                 name: "Budget_2025.xlsx",
-                type: "file" as const,
-                status: "needs-review" as const,
+                type: "file",
+                status: "needs-review",
                 filePath: "/documents/budget.xlsx"
               }
             ]
@@ -97,21 +111,20 @@ const CLIENT_DOCUMENTS = [
   {
     id: "jane-smith-root",
     name: "Jane Smith",
-    type: "folder" as const,
-    folderType: "client" as const,
-    status: "active" as const,
+    type: "folder",
+    folderType: "client",
     children: [
       {
         id: "tax-folder",
         name: "Tax Documents",
-        type: "folder" as const,
-        folderType: "financial" as const,
+        type: "folder",
+        folderType: "financial",
         children: [
           {
             id: "tax-return-file",
             name: "TaxReturn2023.pdf",
-            type: "file" as const,
-            status: "complete" as const,
+            type: "file",
+            status: "complete",
             filePath: "/documents/taxreturn.pdf"
           }
         ]
@@ -119,14 +132,14 @@ const CLIENT_DOCUMENTS = [
       {
         id: "employment-folder",
         name: "Employment",
-        type: "folder" as const,
-        folderType: "documentation" as const,
+        type: "folder",
+        folderType: "documentation",
         children: [
           {
             id: "employment-verification",
             name: "EmploymentVerification.pdf",
-            type: "file" as const,
-            status: "complete" as const,
+            type: "file",
+            status: "complete",
             filePath: "/documents/employment.pdf"
           }
         ]
@@ -137,21 +150,20 @@ const CLIENT_DOCUMENTS = [
   {
     id: "robert-johnson-root",
     name: "Robert Johnson",
-    type: "folder" as const,
-    folderType: "client" as const,
-    status: "pending" as const,
+    type: "folder",
+    folderType: "client",
     children: [
       {
         id: "form32-folder",
         name: "Form 32 - Debt Restructuring",
-        type: "folder" as const,
-        folderType: "form" as const,
+        type: "folder",
+        folderType: "form",
         children: [
           {
             id: "form32-file",
             name: "Form32_Draft2.pdf",
-            type: "file" as const,
-            status: "needs-review" as const,
+            type: "file",
+            status: "needs-review",
             filePath: "/documents/form32.pdf"
           }
         ]
@@ -159,14 +171,14 @@ const CLIENT_DOCUMENTS = [
       {
         id: "bank-statement-folder",
         name: "Bank Statements",
-        type: "folder" as const,
-        folderType: "financial" as const,
+        type: "folder",
+        folderType: "financial",
         children: [
           {
             id: "q1-statements",
             name: "Q1_2024_Statements.pdf",
-            type: "file" as const,
-            status: "complete" as const,
+            type: "file",
+            status: "complete",
             filePath: "/documents/q1statements.pdf"
           }
         ]
@@ -174,8 +186,8 @@ const CLIENT_DOCUMENTS = [
       {
         id: "credit-report",
         name: "CreditReport.pdf",
-        type: "file" as const,
-        status: "complete" as const,
+        type: "file",
+        status: "complete",
         filePath: "/documents/creditreport.pdf"
       }
     ]
@@ -184,28 +196,27 @@ const CLIENT_DOCUMENTS = [
   {
     id: "maria-garcia-root",
     name: "Maria Garcia",
-    type: "folder" as const,
-    folderType: "client" as const,
-    status: "flagged" as const,
+    type: "folder",
+    folderType: "client",
     children: [
       {
         id: "proposal-folder",
         name: "Consumer Proposal",
-        type: "folder" as const,
-        folderType: "proposal" as const,
+        type: "folder",
+        folderType: "proposal",
         children: [
           {
             id: "form43-file",
             name: "Form43_ConsumerProposal.pdf",
-            type: "file" as const,
-            status: "needs-signature" as const,
+            type: "file",
+            status: "needs-signature",
             filePath: "/documents/form43.pdf"
           },
           {
             id: "creditor-list",
             name: "CreditorList.xlsx",
-            type: "file" as const,
-            status: "needs-review" as const,
+            type: "file",
+            status: "needs-review",
             filePath: "/documents/creditors.xlsx"
           }
         ]
@@ -213,8 +224,8 @@ const CLIENT_DOCUMENTS = [
       {
         id: "income-statement",
         name: "IncomeExpenseStatement.pdf",
-        type: "file" as const,
-        status: "needs-review" as const,
+        type: "file",
+        status: "needs-review",
         filePath: "/documents/incomestatement.pdf"
       }
     ]
