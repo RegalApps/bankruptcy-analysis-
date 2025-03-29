@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { ClientHeader } from "./viewer/ClientHeader";
 import { ClientTabs } from "./viewer/ClientTabs";
@@ -7,7 +6,7 @@ import { EditableClientInfo } from "./EditableClientInfo";
 import { Client, Document } from "../types";
 import { formatDate } from "@/utils/formatDate";
 import { toast } from "sonner";
-import { FileText, FileSpreadsheet, FilePdf, Calendar, PlusCircle } from "lucide-react";
+import { FileText, FileSpreadsheet, File, Calendar, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -19,7 +18,6 @@ interface ClientTemplateProps {
 }
 
 export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTemplateProps) => {
-  // Initialize with template data for the client
   const [client, setClient] = useState<Client>({
     id: clientId,
     name: clientId === 'josh-hart' ? 'Josh Hart' : formatClientName(clientId),
@@ -30,7 +28,6 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
   
   const [activeTab, setActiveTab] = useState("info");
   
-  // Sample documents for the template view
   const sampleDocuments: Document[] = clientId === 'josh-hart' ? [
     {
       id: 'form-47-doc',
@@ -65,7 +62,6 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
     }
   ];
   
-  // Handle client information updates
   const handleClientUpdate = (updatedClient: Client) => {
     setClient(updatedClient);
     toast.success("Client information updated", {
@@ -73,9 +69,7 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
     });
   };
   
-  // Handle document selection or viewing
   const handleDocumentSelect = (documentId: string) => {
-    // This would typically store the selection state
     console.log("Selected document:", documentId);
   };
   
@@ -156,7 +150,7 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
                           {doc.type === 'financial' ? (
                             <FileSpreadsheet className="h-5 w-5 text-blue-500" />
                           ) : doc.type === 'form-47' ? (
-                            <FilePdf className="h-5 w-5 text-red-500" />
+                            <File className="h-5 w-5 text-red-500" />
                           ) : (
                             <FileText className="h-5 w-5 text-gray-500" />
                           )}
@@ -207,7 +201,6 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
   );
 };
 
-// Helper function to format client name from ID
 function formatClientName(clientId: string): string {
   return clientId
     .split('-')

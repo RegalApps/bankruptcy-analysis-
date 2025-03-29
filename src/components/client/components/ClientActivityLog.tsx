@@ -27,7 +27,7 @@ export const ClientActivityLog = ({ client, documents }: ClientActivityLogProps)
       type: 'client_created',
       title: 'Client profile created',
       icon: <User className="h-4 w-4 text-blue-500" />,
-      date: client.created_at || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      date: client.last_interaction || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     },
     // Document events from actual documents
     ...sortedDocuments.map(doc => ({
