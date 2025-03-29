@@ -4,7 +4,6 @@ import { FolderStructure } from "@/types/folders";
 import { Document } from "@/components/DocumentList/types";
 import { useFolderDragDrop } from "./hooks/useFolderDragDrop";
 import { useFolderExpansion } from "./hooks/useFolderExpansion";
-import { ClientSidebar } from "./components/ClientSidebar";
 import { DocumentTree } from "./components/DocumentTree";
 import { 
   extractClientsFromDocuments,
@@ -71,16 +70,6 @@ export function FolderNavigation({
 
   return (
     <div className="flex h-full">
-      {/* Client Sidebar */}
-      {clients.length > 0 && onClientSelect && onClientViewerAccess && (
-        <ClientSidebar
-          clients={clients}
-          onClientSelect={onClientSelect}
-          onClientViewerAccess={onClientViewerAccess}
-          selectedClientId={selectedClientId}
-        />
-      )}
-      
       {/* Document Tree */}
       <div className="flex-1">
         <DocumentTree

@@ -1,6 +1,5 @@
 
-import { Search, Filter } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -25,17 +24,6 @@ export const FolderFilterToolbar = ({
 }: FolderFilterToolbarProps) => {
   return (
     <div className="flex space-x-2 mb-4">
-      <div className="relative flex-1">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search documents..."
-          className="pl-8"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-      
       <Select
         value={filterCategory || "all"}
         onValueChange={(value) => setFilterCategory(value === "all" ? null : value)}
@@ -55,13 +43,12 @@ export const FolderFilterToolbar = ({
       
       <Button 
         variant="outline" 
-        size="icon" 
         onClick={() => {
           setSearchQuery("");
           setFilterCategory(null);
         }}
       >
-        <Search className="h-4 w-4" />
+        Clear Filters
       </Button>
     </div>
   );

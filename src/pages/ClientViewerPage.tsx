@@ -80,7 +80,7 @@ const ClientViewerPage = () => {
             <DocumentTree
               filteredFolders={folders}
               filteredDocuments={documents || []}
-              form47Documents={[]} // Empty array to remove the Consumer Proposal warning
+              form47Documents={[]} 
               selectedFolderId={selectedItemId && selectedItemType === "folder" ? selectedItemId : undefined}
               selectedClientId={clientId}
               expandedFolders={expandedFolders}
