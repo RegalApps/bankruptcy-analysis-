@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -237,7 +236,7 @@ const ClientViewerPage = () => {
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
       ) : client ? (
-        <div className="h-[calc(100vh-9rem)]">
+        <div className="h-[calc(100vh-12rem)]">
           <ResizablePanelGroup direction="horizontal" className="border rounded-lg bg-card">
             <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
               <ClientInfoPanel 

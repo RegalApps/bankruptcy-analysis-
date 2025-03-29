@@ -1,53 +1,51 @@
 
-import React, { useState, useEffect } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
-import { Button } from "@/components/ui/button";
-import { Plus, Search, FileText, FolderOpen } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { useEffect, useState } from "react";
 import { ClientList } from "@/components/documents/ClientList";
 import { DocumentTree } from "@/components/documents/DocumentTree";
-import { DocumentList } from "@/components/documents/DocumentList";
+import { useNavigate } from "react-router-dom";
+import { MainHeader } from "@/components/header/MainHeader";
+import { MainSidebar } from "@/components/layout/MainSidebar";
 import { toast } from "sonner";
 
-// Mock data for clients
-const CLIENTS_DATA = [
+// Hardcoded demo data for clients
+const DEMO_CLIENTS = [
   {
     id: "josh-hart",
     name: "Josh Hart",
     status: "active" as const,
-    location: "Toronto, ON",
-    lastActivity: "2 hours ago",
+    location: "Ontario",
+    lastActivity: "2024-06-01",
     needsAttention: true
   },
   {
     id: "jane-smith",
     name: "Jane Smith",
     status: "active" as const,
-    location: "Vancouver, BC",
-    lastActivity: "1 day ago",
+    location: "British Columbia",
+    lastActivity: "2024-05-28",
     needsAttention: false
   },
   {
     id: "robert-johnson",
     name: "Robert Johnson",
     status: "pending" as const,
-    location: "Montreal, QC",
-    lastActivity: "3 days ago",
-    needsAttention: true
+    location: "Alberta",
+    lastActivity: "2024-05-25",
+    needsAttention: false
   },
   {
     id: "maria-garcia",
     name: "Maria Garcia",
-    status: "inactive" as const,
-    location: "Calgary, AB",
-    lastActivity: "2 weeks ago",
-    needsAttention: false
+    status: "flagged" as const,
+    location: "Quebec",
+    lastActivity: "2024-05-20",
+    needsAttention: true
   }
 ];
 
-// Mock document tree data
-const JOSH_HART_DOCUMENTS = [
+// Document tree structure for all clients
+const CLIENT_DOCUMENTS = [
+  // Josh Hart's documents
   {
     id: "josh-hart-root",
     name: "Josh Hart",
@@ -94,10 +92,8 @@ const JOSH_HART_DOCUMENTS = [
         ]
       }
     ]
-  }
-];
-
-const JANE_SMITH_DOCUMENTS = [
+  },
+  // Jane Smith's documents
   {
     id: "jane-smith-root",
     name: "Jane Smith",
@@ -106,214 +102,201 @@ const JANE_SMITH_DOCUMENTS = [
     status: "active" as const,
     children: [
       {
-        id: "financial-folder-jane",
-        name: "Financial Documents",
+        id: "tax-folder",
+        name: "Tax Documents",
         type: "folder" as const,
         folderType: "financial" as const,
         children: [
           {
-            id: "tax-return-2024",
-            name: "Tax Return 2024.pdf",
+            id: "tax-return-file",
+            name: "TaxReturn2023.pdf",
             type: "file" as const,
             status: "complete" as const,
-            filePath: "/documents/jane-tax-return.pdf"
-          },
-          {
-            id: "income-statement",
-            name: "Income Statement.xlsx",
-            type: "file" as const,
-            status: "complete" as const,
-            filePath: "/documents/jane-income.xlsx"
+            filePath: "/documents/taxreturn.pdf"
           }
         ]
       },
       {
-        id: "legal-folder-jane",
-        name: "Legal Documents",
+        id: "employment-folder",
+        name: "Employment",
         type: "folder" as const,
-        folderType: "legal" as const,
+        folderType: "documentation" as const,
         children: [
           {
-            id: "contract-file",
-            name: "Service Contract.pdf",
+            id: "employment-verification",
+            name: "EmploymentVerification.pdf",
             type: "file" as const,
-            status: "needs-signature" as const,
-            filePath: "/documents/jane-contract.pdf"
+            status: "complete" as const,
+            filePath: "/documents/employment.pdf"
           }
         ]
       }
     ]
-  }
-];
-
-const ROBERT_JOHNSON_DOCUMENTS = [
+  },
+  // Robert Johnson's documents
   {
     id: "robert-johnson-root",
     name: "Robert Johnson",
     type: "folder" as const,
     folderType: "client" as const,
-    status: "pending-review" as const,
+    status: "pending" as const,
     children: [
       {
-        id: "application-folder-robert",
-        name: "Application Documents",
+        id: "form32-folder",
+        name: "Form 32 - Debt Restructuring",
         type: "folder" as const,
-        folderType: "application" as const,
+        folderType: "form" as const,
         children: [
           {
-            id: "application-form",
-            name: "Application Form.pdf",
+            id: "form32-file",
+            name: "Form32_Draft2.pdf",
             type: "file" as const,
-            status: "pending-review" as const,
-            filePath: "/documents/robert-application.pdf"
-          },
-          {
-            id: "credit-report",
-            name: "Credit Report.pdf",
-            type: "file" as const,
-            status: "complete" as const,
-            filePath: "/documents/robert-credit.pdf"
+            status: "needs-review" as const,
+            filePath: "/documents/form32.pdf"
           }
         ]
+      },
+      {
+        id: "bank-statement-folder",
+        name: "Bank Statements",
+        type: "folder" as const,
+        folderType: "financial" as const,
+        children: [
+          {
+            id: "q1-statements",
+            name: "Q1_2024_Statements.pdf",
+            type: "file" as const,
+            status: "complete" as const,
+            filePath: "/documents/q1statements.pdf"
+          }
+        ]
+      },
+      {
+        id: "credit-report",
+        name: "CreditReport.pdf",
+        type: "file" as const,
+        status: "complete" as const,
+        filePath: "/documents/creditreport.pdf"
       }
     ]
-  }
-];
-
-const MARIA_GARCIA_DOCUMENTS = [
+  },
+  // Maria Garcia's documents
   {
     id: "maria-garcia-root",
     name: "Maria Garcia",
     type: "folder" as const,
     folderType: "client" as const,
-    status: "inactive" as const,
+    status: "flagged" as const,
     children: [
       {
-        id: "case-folder-maria",
-        name: "Case #2023-568",
+        id: "proposal-folder",
+        name: "Consumer Proposal",
         type: "folder" as const,
-        folderType: "case" as const,
+        folderType: "proposal" as const,
         children: [
           {
-            id: "final-report",
-            name: "Final Report.pdf",
+            id: "form43-file",
+            name: "Form43_ConsumerProposal.pdf",
             type: "file" as const,
-            status: "complete" as const,
-            filePath: "/documents/maria-report.pdf"
+            status: "needs-signature" as const,
+            filePath: "/documents/form43.pdf"
           },
           {
-            id: "closing-documents",
-            name: "Closing Documents.pdf",
+            id: "creditor-list",
+            name: "CreditorList.xlsx",
             type: "file" as const,
-            status: "complete" as const,
-            filePath: "/documents/maria-closing.pdf"
+            status: "needs-review" as const,
+            filePath: "/documents/creditors.xlsx"
           }
         ]
+      },
+      {
+        id: "income-statement",
+        name: "IncomeExpenseStatement.pdf",
+        type: "file" as const,
+        status: "needs-review" as const,
+        filePath: "/documents/incomestatement.pdf"
       }
     ]
   }
 ];
 
 const DocumentsPage = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [selectedDocuments, setSelectedDocuments] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
   
   useEffect(() => {
-    // Load documents based on selected client
-    if (selectedClientId === "josh-hart") {
-      setSelectedDocuments(JOSH_HART_DOCUMENTS);
-    } else if (selectedClientId === "jane-smith") {
-      setSelectedDocuments(JANE_SMITH_DOCUMENTS);
-    } else if (selectedClientId === "robert-johnson") {
-      setSelectedDocuments(ROBERT_JOHNSON_DOCUMENTS);
-    } else if (selectedClientId === "maria-garcia") {
-      setSelectedDocuments(MARIA_GARCIA_DOCUMENTS);
-    } else {
-      setSelectedDocuments([]);
-    }
-  }, [selectedClientId]);
+    // Show a toast when the page loads
+    toast.success("Documents loaded", {
+      description: "Document tree is now visible"
+    });
+  }, []);
+  
+  const handleNodeSelect = (node: any) => {
+    console.log("Selected node:", node);
+  };
   
   const handleClientSelect = (clientId: string) => {
-    setSelectedClientId(clientId);
-    toast.success(`Loaded documents for ${clientId}`);
+    setSelectedClient(clientId);
+    console.log("Selected client:", clientId);
   };
   
-  const handleCreateDocument = () => {
-    toast.success("Create document clicked");
+  const handleFileOpen = (node: any) => {
+    console.log("Opening file:", node);
+    
+    // Navigate to the client viewer with the appropriate client ID
+    if (node.id) {
+      const clientId = node.id.split("-")[0];
+      if (clientId) {
+        navigate(`/client/${clientId}`);
+      }
+    }
   };
+  
+  // Filter documents based on selected client
+  const filteredDocuments = selectedClient 
+    ? CLIENT_DOCUMENTS.filter(doc => doc.id.startsWith(selectedClient))
+    : CLIENT_DOCUMENTS;
   
   return (
-    <MainLayout>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Documents</h1>
-        <Button onClick={handleCreateDocument}>
-          <Plus className="mr-2 h-4 w-4" /> Create Document
-        </Button>
-      </div>
-      
-      <div className="mb-4">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search documents..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-      
-      <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-14rem)] rounded-lg border">
-        <ResizablePanel defaultSize={20} minSize={15}>
-          <div className="h-full p-4 bg-card">
-            <h2 className="text-lg font-semibold mb-4">Clients</h2>
+    <div className="flex h-screen overflow-hidden bg-background">
+      <MainSidebar />
+      <div className="flex-1 flex flex-col pl-64">
+        <MainHeader />
+        <main className="flex-1 flex overflow-hidden">
+          {/* Left Panel: Client List */}
+          <div className="w-72 flex-shrink-0">
             <ClientList 
-              clients={CLIENTS_DATA}
-              selectedClientId={selectedClientId}
-              onSelectClient={handleClientSelect}
+              clients={DEMO_CLIENTS}
+              onClientSelect={handleClientSelect}
+              selectedClientId={selectedClient}
             />
           </div>
-        </ResizablePanel>
-        
-        <ResizableHandle withHandle />
-        
-        <ResizablePanel defaultSize={30}>
-          <div className="h-full p-4 bg-card">
-            <h2 className="text-lg font-semibold mb-4">Folders</h2>
-            {selectedClientId ? (
+          
+          {/* Right Panel: Document Tree */}
+          <div className="flex-1 border-l p-4">
+            <h2 className="text-xl font-semibold mb-4">
+              {selectedClient 
+                ? `${DEMO_CLIENTS.find(c => c.id === selectedClient)?.name}'s Documents` 
+                : "All Documents"}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              {selectedClient 
+                ? "Client-specific documents and folders" 
+                : "System-wide view of all document activity. Click a client on the left to view their dedicated page."}
+            </p>
+            
+            <div className="border rounded-lg shadow-sm overflow-hidden">
               <DocumentTree 
-                documents={selectedDocuments} 
+                rootNodes={filteredDocuments}
+                onNodeSelect={handleNodeSelect}
+                onFileOpen={handleFileOpen}
               />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-[calc(100%-2rem)] text-center p-4">
-                <FolderOpen className="h-12 w-12 text-muted-foreground mb-2" />
-                <h3 className="text-lg font-medium">No Client Selected</h3>
-                <p className="text-sm text-muted-foreground mt-1">Select a client to view their documents</p>
-              </div>
-            )}
+            </div>
           </div>
-        </ResizablePanel>
-        
-        <ResizableHandle withHandle />
-        
-        <ResizablePanel defaultSize={50}>
-          <div className="h-full p-4 bg-card">
-            <h2 className="text-lg font-semibold mb-4">Documents</h2>
-            {selectedClientId ? (
-              <DocumentList />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-[calc(100%-2rem)] text-center p-4">
-                <FileText className="h-12 w-12 text-muted-foreground mb-2" />
-                <h3 className="text-lg font-medium">No Documents to Display</h3>
-                <p className="text-sm text-muted-foreground mt-1">Select a client and folder to view documents</p>
-              </div>
-            )}
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    </MainLayout>
+        </main>
+      </div>
+    </div>
   );
 };
 

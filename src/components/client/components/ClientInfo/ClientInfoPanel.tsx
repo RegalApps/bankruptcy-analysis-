@@ -24,8 +24,8 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col p-3">
-      <div className="mb-2">
+    <div className="h-full flex flex-col p-4">
+      <div className="mb-4">
         <h2 className="text-xl font-semibold">{client.name}</h2>
         <div className="flex items-center mt-1 text-sm text-muted-foreground">
           <Badge variant="outline" className="mr-2">{client.status}</Badge>
@@ -33,30 +33,24 @@ export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({
         </div>
       </div>
 
-      <div className="flex-shrink-0 mb-2">
-        <ContactInformation client={client} />
-      </div>
+      <ContactInformation client={client} />
       
-      <div className="flex-shrink-0 mb-2">
-        <KeyMetrics 
+      <KeyMetrics 
+        metrics={client.metrics} 
+        onMetricClick={handleMetricClick} 
+      />
+      
+      {activeMetric ? (
+        <MetricDetails 
+          activeMetric={activeMetric} 
           metrics={client.metrics} 
-          onMetricClick={handleMetricClick} 
+          onClose={() => setActiveMetric(null)}
         />
-      </div>
-      
-      <div className="flex-1 min-h-0 overflow-auto pb-4">
-        {activeMetric ? (
-          <MetricDetails 
-            activeMetric={activeMetric} 
-            metrics={client.metrics} 
-            onClose={() => setActiveMetric(null)}
-          />
-        ) : (
-          <TaskManagement 
-            tasks={tasks} 
-          />
-        )}
-      </div>
+      ) : (
+        <TaskManagement 
+          tasks={tasks} 
+        />
+      )}
     </div>
   );
 };
