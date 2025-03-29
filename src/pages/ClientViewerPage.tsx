@@ -17,7 +17,12 @@ const ClientViewerPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { documents, refetch } = useDocuments();
   const { folders } = useCreateFolderStructure(documents || []);
-  const { selectedItemId, selectedItemType, handleItemSelect, handleOpenDocument } = useFolderNavigation(documents || []);
+  const { 
+    selectedItemId, 
+    selectedItemType, 
+    handleItemSelect, 
+    handleOpenDocument 
+  } = useFolderNavigation(documents || []);
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   
   // Use client extraction utilities

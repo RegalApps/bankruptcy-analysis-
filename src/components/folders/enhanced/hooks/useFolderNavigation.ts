@@ -29,10 +29,17 @@ export const useFolderNavigation = (documents: Document[]) => {
     setSelectedItemType(type);
   };
   
+  // Add handleOpenDocument function
+  const handleOpenDocument = (documentId: string) => {
+    console.log(`Opening document: ${documentId}`);
+    // This would typically navigate to the document viewer
+  };
+  
   return {
     selectedItemId,
     selectedItemType,
     folderPath: calculateFolderPath(),
-    handleItemSelect
+    handleItemSelect,
+    handleOpenDocument
   };
 };
