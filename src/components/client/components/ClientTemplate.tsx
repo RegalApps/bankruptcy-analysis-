@@ -19,12 +19,15 @@ interface ClientTemplateProps {
 }
 
 export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTemplateProps) => {
+  console.log("ClientTemplate: Initializing with client ID:", clientId);
+  
   const [client, setClient] = useState<Client>({
     id: clientId,
     name: clientId === 'josh-hart' ? 'Josh Hart' : formatClientName(clientId),
     email: clientId === 'josh-hart' ? 'josh.hart@example.com' : '',
     phone: clientId === 'josh-hart' ? '(555) 123-4567' : '',
-    status: 'active'
+    status: 'active',
+    last_interaction: new Date().toISOString() // Adding this to avoid type errors
   });
   
   const [activeTab, setActiveTab] = useState("info");
@@ -64,6 +67,7 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
   ];
   
   const handleClientUpdate = (updatedClient: Client) => {
+    console.log("ClientTemplate: Client update received:", updatedClient);
     setClient(updatedClient);
     toast.success("Client information updated", {
       description: "Your changes have been saved"
@@ -77,8 +81,10 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
   const handleDocumentOpen = (documentId: string) => {
     console.log("ClientTemplate: Document open requested:", documentId);
     if (onDocumentOpen) {
+      console.log("ClientTemplate: Using provided onDocumentOpen callback");
       onDocumentOpen(documentId);
     } else {
+      console.log("ClientTemplate: No document open callback provided, showing toast only");
       toast.info("Opening document", {
         description: `Opening ${sampleDocuments.find(d => d.id === documentId)?.title || 'document'}`
       });

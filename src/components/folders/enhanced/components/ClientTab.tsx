@@ -19,7 +19,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const [retryCount, setRetryCount] = useState<number>(0);
   const [retryId, setRetryId] = useState<string>('');
   const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
-  const [useTemplate, setUseTemplate] = useState<boolean>(true); // Always start with template mode
   const mountedRef = useRef<boolean>(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,7 +28,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const handleError = useCallback(() => {
     console.error(`ClientTab: Error loading client ID: ${clientId}`);
     
-    setUseTemplate(true);
     setIsTransitioning(false);
     
     toast.error("Could not load client information", {
@@ -67,12 +65,11 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     longLoadTimeoutRef.current = window.setTimeout(() => {
       if (mountedRef.current && !loadError) {
         console.log("ClientTab: Loading taking too long, switching to template mode");
-        setUseTemplate(true);
         toast.info("Using template mode for faster viewing", {
           description: "You can edit client information directly"
         });
       }
-    }, 2000); // Reduced from 3000ms to 2000ms for faster feedback
+    }, 2000);
     
     toast.info(`Loading ${clientId.includes('josh-hart') ? 'Josh Hart' : 'client'} information...`, {
       duration: 2000,
@@ -132,7 +129,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     );
   }
   
-  // Always use template as the default view
   const handleDocumentOpen = (documentId: string) => {
     console.log("ClientTab: Opening document:", documentId);
     
@@ -158,9 +154,14 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
         });
       }
       
-      // Fixed navigation to prevent 404 errors by checking the current route
+      // Get the current route from location
       const currentPath = location.pathname;
+      
+      // Determine correct target path to prevent 404s
+      // If we're in /documents, stay there, otherwise go to home
       const targetPath = currentPath.includes('/documents') ? '/documents' : '/';
+      
+      console.log(`Navigating from ${currentPath} to ${targetPath} with document state`);
       
       navigate(targetPath, { 
         state: { 
@@ -173,8 +174,9 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     }
   };
   
-  console.log("ClientTab: Using template view with ID:", effectiveClientId);
+  console.log("ClientTab: Rendering ClientTemplate with ID:", effectiveClientId);
   
+  // Always use the template view for stability
   return (
     <ClientTemplate 
       clientId={effectiveClientId}
