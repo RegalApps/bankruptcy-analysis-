@@ -10,6 +10,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DocumentListItemProps {
   documents: Document[];
@@ -68,15 +69,60 @@ export const DocumentListItem = ({
     
     switch (status) {
       case 'approved':
-        return <span className="h-2.5 w-2.5 rounded-full bg-green-500" title="Approved / No Risks" />;
+        return <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Approved / No Risks</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>;
       case 'pending':
-        return <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" title="Pending / Minor Issues" />;
+        return <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Pending / Minor Issues</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>;
       case 'attention':
-        return <span className="h-2.5 w-2.5 rounded-full bg-orange-500" title="Requires Attention" />;
+        return <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Requires Attention</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>;
       case 'critical':
-        return <span className="h-2.5 w-2.5 rounded-full bg-red-500" title="Critical Compliance Risks" />;
+        return <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Critical Compliance Risks</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>;
       default:
-        return <span className="h-2.5 w-2.5 rounded-full bg-gray-300" title="No Status" />;
+        return <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>No Status</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>;
     }
   };
 
@@ -122,7 +168,16 @@ export const DocumentListItem = ({
                   <span className="text-sm truncate">{doc.title}</span>
                   {getStatusIndicator(doc)}
                   {isDocumentLocked(doc) && (
-                    <Lock className="h-3 w-3 text-muted-foreground" title="This document is locked" />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Lock className="h-3 w-3 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This document is locked</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                   {doc.metadata?.version && (
                     <span className="text-xs text-muted-foreground">v{doc.metadata.version}</span>
@@ -131,32 +186,59 @@ export const DocumentListItem = ({
               )}
 
               <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Eye 
-                  className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDocumentOpen(doc.id);
-                  }}
-                  aria-label="View Document"
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Eye 
+                        className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDocumentOpen(doc.id);
+                        }}
+                        aria-label="View Document"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>View Document</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 {!isDocumentLocked(doc) && (
-                  <Edit2
-                    className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDoubleClick(doc);
-                    }}
-                    aria-label="Rename Document"
-                  />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Edit2
+                          className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDoubleClick(doc);
+                          }}
+                          aria-label="Rename Document"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Rename Document</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
-                <History
-                  className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log("View history for", doc.id);
-                  }}
-                  aria-label="View History"
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <History
+                        className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log("View history for", doc.id);
+                        }}
+                        aria-label="View History"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>View History</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           </ContextMenuTrigger>

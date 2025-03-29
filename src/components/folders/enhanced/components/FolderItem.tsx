@@ -12,6 +12,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FolderItemProps {
   folder: FolderStructure;
@@ -125,13 +126,49 @@ export const FolderItem = ({
     
     switch (status) {
       case 'approved':
-        return <span className="h-2.5 w-2.5 rounded-full bg-green-500" title="Approved / No Risks" />;
+        return <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Approved / No Risks</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>;
       case 'pending':
-        return <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" title="Pending / Minor Issues" />;
+        return <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Pending / Minor Issues</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>;
       case 'attention':
-        return <span className="h-2.5 w-2.5 rounded-full bg-orange-500" title="Requires Attention" />;
+        return <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Requires Attention</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>;
       case 'critical':
-        return <span className="h-2.5 w-2.5 rounded-full bg-red-500" title="Critical Compliance Risks" />;
+        return <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Critical Compliance Risks</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>;
       default:
         return null;
     }
@@ -153,7 +190,7 @@ export const FolderItem = ({
             onDragOver={(e) => handleDragOver(e, folder.id)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, folder.id)}
-            title={getFolderTooltip()}
+            aria-label={getFolderTooltip()}
           >
             {indentation}
             
@@ -189,7 +226,16 @@ export const FolderItem = ({
                 <span className="text-sm truncate">{folder.name}</span>
                 {getFolderStatus()}
                 {isFolderLocked && (
-                  <Lock className="h-3 w-3 text-muted-foreground" title="This folder is locked" />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>This folder is locked</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             )}
@@ -197,19 +243,37 @@ export const FolderItem = ({
             {/* Action icons */}
             {!isEditing && !isFolderLocked && (
               <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Edit2
-                  className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
-                  onClick={handleDoubleClick}
-                  aria-label="Rename Folder"
-                />
-                <MessageCircle
-                  className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log("Add comment to folder", folder.id);
-                  }}
-                  aria-label="Add Comment"
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Edit2
+                        className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                        onClick={handleDoubleClick}
+                        aria-label="Rename Folder"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Rename Folder</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <MessageCircle
+                        className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log("Add comment to folder", folder.id);
+                        }}
+                        aria-label="Add Comment"
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add Comment</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
             
