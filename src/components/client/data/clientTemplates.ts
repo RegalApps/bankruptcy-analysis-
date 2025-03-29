@@ -1,0 +1,374 @@
+
+import { Client, Document, Task } from "../types";
+
+// Helper function to get ISO date string based on days ago
+const getDateFromDaysAgo = (daysAgo: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString();
+};
+
+// Template tasks for each client
+export const getClientTasks = (clientId: string): Task[] => {
+  switch (clientId) {
+    case 'jane-smith':
+      return [
+        {
+          id: "jane-task-1",
+          title: "Review financial statement",
+          dueDate: getDateFromDaysAgo(0),
+          status: 'pending',
+          priority: 'high'
+        },
+        {
+          id: "jane-task-2",
+          title: "Schedule quarterly meeting",
+          dueDate: getDateFromDaysAgo(-7), // 7 days in the future
+          status: 'pending',
+          priority: 'medium'
+        }
+      ];
+    case 'robert-johnson':
+      return [
+        {
+          id: "robert-task-1",
+          title: "Complete Form 32 processing",
+          dueDate: getDateFromDaysAgo(2),
+          status: 'overdue',
+          priority: 'high'
+        },
+        {
+          id: "robert-task-2",
+          title: "Request updated bank statements",
+          dueDate: getDateFromDaysAgo(-3), // 3 days in the future
+          status: 'pending',
+          priority: 'medium'
+        },
+        {
+          id: "robert-task-3",
+          title: "Prepare monthly report",
+          dueDate: getDateFromDaysAgo(-10), // 10 days in the future
+          status: 'pending',
+          priority: 'low'
+        }
+      ];
+    case 'maria-garcia':
+      return [
+        {
+          id: "maria-task-1",
+          title: "Follow up on missing documents",
+          dueDate: getDateFromDaysAgo(1),
+          status: 'pending',
+          priority: 'high'
+        },
+        {
+          id: "maria-task-2",
+          title: "Process debt consolidation agreement",
+          dueDate: getDateFromDaysAgo(-5), // 5 days in the future
+          status: 'pending',
+          priority: 'high'
+        }
+      ];
+    default:
+      return [];
+  }
+};
+
+// Template documents for each client
+export const getClientDocuments = (clientId: string): Document[] => {
+  const now = getDateFromDaysAgo(0);
+  const oneWeekAgo = getDateFromDaysAgo(7);
+  const twoWeeksAgo = getDateFromDaysAgo(14);
+  const oneMonthAgo = getDateFromDaysAgo(30);
+  
+  switch (clientId) {
+    case 'jane-smith':
+      return [
+        {
+          id: 'jane-folder',
+          title: 'Jane Smith',
+          type: 'folder',
+          created_at: oneMonthAgo,
+          updated_at: now,
+          is_folder: true,
+          folder_type: 'client',
+          metadata: {
+            client_name: 'Jane Smith',
+            client_id: 'jane-smith'
+          }
+        },
+        {
+          id: 'jane-financial-folder',
+          title: 'Financial Documents',
+          type: 'folder',
+          created_at: oneMonthAgo,
+          updated_at: now,
+          is_folder: true,
+          folder_type: 'financial',
+          parent_folder_id: 'jane-folder',
+          metadata: {
+            client_name: 'Jane Smith',
+            client_id: 'jane-smith'
+          }
+        },
+        {
+          id: 'jane-tax-return',
+          title: 'Tax Return 2023',
+          type: 'financial',
+          created_at: oneWeekAgo,
+          updated_at: oneWeekAgo,
+          parent_folder_id: 'jane-financial-folder',
+          metadata: {
+            client_name: 'Jane Smith',
+            client_id: 'jane-smith',
+            document_type: 'tax_return'
+          }
+        },
+        {
+          id: 'jane-employment-letter',
+          title: 'Employment Verification Letter',
+          type: 'document',
+          created_at: twoWeeksAgo,
+          updated_at: twoWeeksAgo,
+          parent_folder_id: 'jane-folder',
+          metadata: {
+            client_name: 'Jane Smith',
+            client_id: 'jane-smith',
+            document_type: 'employment_verification'
+          }
+        }
+      ];
+    case 'robert-johnson':
+      return [
+        {
+          id: 'robert-folder',
+          title: 'Robert Johnson',
+          type: 'folder',
+          created_at: oneMonthAgo,
+          updated_at: now,
+          is_folder: true,
+          folder_type: 'client',
+          metadata: {
+            client_name: 'Robert Johnson',
+            client_id: 'robert-johnson'
+          }
+        },
+        {
+          id: 'robert-form-folder',
+          title: 'Forms',
+          type: 'folder',
+          created_at: oneMonthAgo,
+          updated_at: now,
+          is_folder: true,
+          folder_type: 'forms',
+          parent_folder_id: 'robert-folder',
+          metadata: {
+            client_name: 'Robert Johnson',
+            client_id: 'robert-johnson'
+          }
+        },
+        {
+          id: 'robert-form-32',
+          title: 'Form 32 - Debt Restructuring',
+          type: 'form',
+          created_at: oneWeekAgo,
+          updated_at: oneWeekAgo,
+          parent_folder_id: 'robert-form-folder',
+          metadata: {
+            client_name: 'Robert Johnson',
+            client_id: 'robert-johnson',
+            document_type: 'form',
+            form_number: '32'
+          }
+        },
+        {
+          id: 'robert-bank-statements',
+          title: 'Bank Statements - Q1 2024',
+          type: 'financial',
+          created_at: twoWeeksAgo,
+          updated_at: twoWeeksAgo,
+          parent_folder_id: 'robert-folder',
+          metadata: {
+            client_name: 'Robert Johnson',
+            client_id: 'robert-johnson',
+            document_type: 'bank_statement'
+          }
+        },
+        {
+          id: 'robert-credit-report',
+          title: 'Credit Report',
+          type: 'document',
+          created_at: oneMonthAgo,
+          updated_at: oneMonthAgo,
+          parent_folder_id: 'robert-folder',
+          metadata: {
+            client_name: 'Robert Johnson',
+            client_id: 'robert-johnson',
+            document_type: 'credit_report'
+          }
+        }
+      ];
+    case 'maria-garcia':
+      return [
+        {
+          id: 'maria-folder',
+          title: 'Maria Garcia',
+          type: 'folder',
+          created_at: oneMonthAgo,
+          updated_at: now,
+          is_folder: true,
+          folder_type: 'client',
+          metadata: {
+            client_name: 'Maria Garcia',
+            client_id: 'maria-garcia'
+          }
+        },
+        {
+          id: 'maria-proposal-folder',
+          title: 'Consumer Proposal',
+          type: 'folder',
+          created_at: oneMonthAgo,
+          updated_at: now,
+          is_folder: true,
+          folder_type: 'proposal',
+          parent_folder_id: 'maria-folder',
+          metadata: {
+            client_name: 'Maria Garcia',
+            client_id: 'maria-garcia'
+          }
+        },
+        {
+          id: 'maria-form-43',
+          title: 'Form 43 - Consumer Proposal',
+          type: 'form',
+          created_at: oneWeekAgo,
+          updated_at: oneWeekAgo,
+          parent_folder_id: 'maria-proposal-folder',
+          metadata: {
+            client_name: 'Maria Garcia',
+            client_id: 'maria-garcia',
+            document_type: 'form',
+            form_number: '43'
+          }
+        },
+        {
+          id: 'maria-creditor-list',
+          title: 'Creditor List',
+          type: 'document',
+          created_at: twoWeeksAgo,
+          updated_at: twoWeeksAgo,
+          parent_folder_id: 'maria-proposal-folder',
+          metadata: {
+            client_name: 'Maria Garcia',
+            client_id: 'maria-garcia',
+            document_type: 'creditor_list'
+          }
+        },
+        {
+          id: 'maria-income-statement',
+          title: 'Income and Expense Statement',
+          type: 'financial',
+          created_at: oneMonthAgo,
+          updated_at: oneMonthAgo,
+          parent_folder_id: 'maria-folder',
+          metadata: {
+            client_name: 'Maria Garcia',
+            client_id: 'maria-garcia',
+            document_type: 'income_statement'
+          }
+        }
+      ];
+    default:
+      return [];
+  }
+};
+
+// Client data
+export const getClientData = (clientId: string): Client => {
+  switch (clientId) {
+    case 'jane-smith':
+      return {
+        id: 'jane-smith',
+        name: 'Jane Smith',
+        status: 'active',
+        location: 'British Columbia',
+        email: 'jane.smith@example.com',
+        phone: '(555) 987-6543',
+        address: '456 Pine Avenue',
+        city: 'Vancouver',
+        province: 'British Columbia',
+        postalCode: 'V6C 1G8',
+        company: 'XYZ Ltd.',
+        occupation: 'Marketing Director',
+        mobilePhone: '(555) 555-1234',
+        notes: 'Jane is a returning client with excellent communication.',
+        metrics: {
+          openTasks: 2,
+          pendingDocuments: 1,
+          urgentDeadlines: 0
+        },
+        last_interaction: getDateFromDaysAgo(3),
+        engagement_score: 88
+      };
+    case 'robert-johnson':
+      return {
+        id: 'robert-johnson',
+        name: 'Robert Johnson',
+        status: 'pending',
+        location: 'Alberta',
+        email: 'robert.johnson@example.com',
+        phone: '(555) 222-3333',
+        address: '789 Maple Drive',
+        city: 'Calgary',
+        province: 'Alberta',
+        postalCode: 'T2P 2M5',
+        company: 'Johnson Construction',
+        occupation: 'Contractor',
+        mobilePhone: '(555) 444-5555',
+        notes: 'Robert needs help with file organization and documentation.',
+        metrics: {
+          openTasks: 3,
+          pendingDocuments: 2,
+          urgentDeadlines: 1
+        },
+        last_interaction: getDateFromDaysAgo(5),
+        engagement_score: 72
+      };
+    case 'maria-garcia':
+      return {
+        id: 'maria-garcia',
+        name: 'Maria Garcia',
+        status: 'flagged',
+        location: 'Quebec',
+        email: 'maria.garcia@example.com',
+        phone: '(555) 666-7777',
+        address: '321 Oak Boulevard',
+        city: 'Montreal',
+        province: 'Quebec',
+        postalCode: 'H3B 2Y5',
+        company: 'Garcia Designs',
+        occupation: 'Graphic Designer',
+        mobilePhone: '(555) 888-9999',
+        notes: 'Maria requires urgent attention with her proposal documentation.',
+        metrics: {
+          openTasks: 2,
+          pendingDocuments: 3,
+          urgentDeadlines: 2
+        },
+        last_interaction: getDateFromDaysAgo(1),
+        engagement_score: 65
+      };
+    default:
+      return {
+        id: clientId,
+        name: clientId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        status: 'active',
+        location: 'Unknown',
+        metrics: {
+          openTasks: 0,
+          pendingDocuments: 0,
+          urgentDeadlines: 0
+        }
+      };
+  }
+};

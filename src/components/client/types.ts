@@ -14,13 +14,15 @@ export interface Client {
   notes?: string;
   company?: string;
   occupation?: string;
-  metrics: {
-    openTasks: number;
-    pendingDocuments: number;
-    urgentDeadlines: number;
-  };
+  metrics: ClientMetrics;
   last_interaction?: string;
   engagement_score?: number;
+}
+
+export interface ClientMetrics {
+  openTasks: number;
+  pendingDocuments: number;
+  urgentDeadlines: number;
 }
 
 export interface Document {

@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { Document, Client } from "../../../types";
 import { createClientData } from "./clientDataCreator";
 import { getDefaultDocuments } from "./defaultData";
+import { getClientData, getClientDocuments } from "../../../data/clientTemplates";
 
 /**
  * Fetches documents for a specific client ID
@@ -11,7 +12,13 @@ export const fetchClientDocuments = async (clientId: string, searchClientId: str
   console.log("Fetching client documents for:", clientId);
   
   try {
-    // First attempt with direct exact matching
+    // First check if we have template data for this client
+    if (['jane-smith', 'robert-johnson', 'maria-garcia'].includes(searchClientId)) {
+      console.log(`Using template data for ${searchClientId}`);
+      return getClientDocuments(searchClientId);
+    }
+    
+    // If not a template client, try the database
     const { data: clientDocs, error: docsError } = await supabase
       .from('documents')
       .select('*')
@@ -57,7 +64,7 @@ export const fetchForm47Documents = async () => {
 };
 
 /**
- * Handles special case for Josh Hart client
+ * Handles special case for clients
  */
 export const handleJoshHartClient = (clientId: string, searchClientId: string, documents?: Document[]) => {
   if (searchClientId === 'josh-hart' || clientId.toLowerCase().includes('josh')) {
@@ -81,6 +88,17 @@ export const handleJoshHartClient = (clientId: string, searchClientId: string, d
     return { 
       clientData, 
       clientDocs 
+    };
+  }
+  
+  // Handle other template clients
+  if (['jane-smith', 'robert-johnson', 'maria-garcia'].includes(searchClientId)) {
+    const clientData = getClientData(searchClientId);
+    const clientDocs = getClientDocuments(searchClientId);
+    
+    return {
+      clientData,
+      clientDocs
     };
   }
   

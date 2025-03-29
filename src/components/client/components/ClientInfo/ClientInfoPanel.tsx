@@ -5,6 +5,7 @@ import { ContactInformation } from "./ContactInformation";
 import { KeyMetrics } from "./KeyMetrics";
 import { MetricDetails } from "./MetricDetails";
 import { TaskManagement } from "./TaskManagement";
+import { Badge } from "@/components/ui/badge";
 
 export const ClientInfoPanel: React.FC<ClientInfoPanelProps> = ({ 
   client,

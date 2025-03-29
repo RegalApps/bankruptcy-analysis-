@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { ClientMetrics } from "../../types";
@@ -15,59 +16,57 @@ export const MetricDetails: React.FC<MetricDetailsProps> = ({
   metrics, 
   onClose 
 }) => {
-  switch (activeMetric) {
-    case 'openTasks':
-      return (
-        <div className="p-3 bg-muted/30 rounded-md">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="text-sm font-medium">Open Tasks</h4>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mb-2">
-            There are {metrics.openTasks} open tasks that require attention.
-          </p>
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" className="text-xs">View All Tasks</Button>
-          </div>
-        </div>
-      );
-    case 'pendingDocuments':
-      return (
-        <div className="p-3 bg-muted/30 rounded-md">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="text-sm font-medium">Pending Documents</h4>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mb-2">
-            {metrics.pendingDocuments} documents are awaiting review or signature.
-          </p>
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" className="text-xs">Review Documents</Button>
-          </div>
-        </div>
-      );
-    case 'urgentDeadlines':
-      return (
-        <div className="p-3 bg-muted/30 rounded-md">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="text-sm font-medium">Urgent Deadlines</h4>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mb-2">
-            {metrics.urgentDeadlines} deadlines require immediate attention.
-          </p>
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" className="text-xs">View Calendar</Button>
-          </div>
-        </div>
-      );
-    default:
-      return null;
-  }
+  const getMetricDetails = () => {
+    switch (activeMetric) {
+      case 'openTasks':
+        return {
+          title: 'Open Tasks',
+          value: metrics.openTasks,
+          description: 'Tasks that need to be completed for this client.',
+          action: 'View All Tasks'
+        };
+      case 'pendingDocuments':
+        return {
+          title: 'Pending Documents',
+          value: metrics.pendingDocuments,
+          description: 'Documents that are awaiting review or signature.',
+          action: 'View Documents'
+        };
+      case 'urgentDeadlines':
+        return {
+          title: 'Urgent Deadlines',
+          value: metrics.urgentDeadlines,
+          description: 'Tasks or documents with upcoming deadlines.',
+          action: 'View Deadlines'
+        };
+      default:
+        return {
+          title: 'Unknown Metric',
+          value: 0,
+          description: 'No details available.',
+          action: 'Close'
+        };
+    }
+  };
+
+  const details = getMetricDetails();
+
+  return (
+    <Card className="p-4 mb-4 relative">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="absolute top-2 right-2 h-6 w-6" 
+        onClick={onClose}
+      >
+        <X className="h-4 w-4" />
+      </Button>
+      
+      <h3 className="text-lg font-medium mb-2">{details.title}</h3>
+      <div className="text-3xl font-bold mb-2">{details.value}</div>
+      <p className="text-sm text-muted-foreground mb-4">{details.description}</p>
+      
+      <Button size="sm" className="w-full">{details.action}</Button>
+    </Card>
+  );
 };

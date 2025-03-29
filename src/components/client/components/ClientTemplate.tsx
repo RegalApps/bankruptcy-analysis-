@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { ClientHeader } from "./viewer/ClientHeader";
 import { ClientTabs } from "./viewer/ClientTabs";
 import { Card } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { FileText, FileSpreadsheet, File, Calendar, PlusCircle } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { getClientData, getClientDocuments, getClientTasks } from "../data/clientTemplates";
 
 interface ClientTemplateProps {
   clientId: string;
@@ -20,57 +22,25 @@ interface ClientTemplateProps {
 export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTemplateProps) => {
   console.log("ClientTemplate: Initializing with client ID:", clientId);
   
-  const [client, setClient] = useState<Client>({
-    id: clientId,
-    name: clientId === 'josh-hart' ? 'Josh Hart' : formatClientName(clientId),
-    email: clientId === 'josh-hart' ? 'josh.hart@example.com' : '',
-    phone: clientId === 'josh-hart' ? '(555) 123-4567' : '',
-    status: 'active',
-    location: clientId === 'josh-hart' ? 'Ontario' : 'Unknown',
-    metrics: {
-      openTasks: 3,
-      pendingDocuments: 2,
-      urgentDeadlines: 1
-    },
-    last_interaction: new Date().toISOString(),
-    engagement_score: 85
-  });
-  
+  const [client, setClient] = useState<Client>(getClientData(clientId));
+  const [documents, setDocuments] = useState<Document[]>(getClientDocuments(clientId));
   const [activeTab, setActiveTab] = useState("info");
   
-  const sampleDocuments: Document[] = clientId === 'josh-hart' ? [
-    {
-      id: 'form-47-doc',
-      title: 'Form 47 - Consumer Proposal',
-      type: 'form-47',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      metadata: {
-        client_name: client.name
-      }
-    },
-    {
-      id: 'bank-statement',
-      title: 'Bank Statement - March 2023',
-      type: 'financial',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      metadata: {
-        client_name: client.name
-      }
-    }
-  ] : [
-    {
-      id: 'sample-doc-1',
-      title: 'Sample Document 1',
-      type: 'document',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      metadata: {
-        client_name: client.name
-      }
-    }
-  ];
+  // Load client data based on clientId
+  useEffect(() => {
+    // Get client data from our templates
+    const clientData = getClientData(clientId);
+    setClient(clientData);
+    
+    // Get documents for this client
+    const clientDocuments = getClientDocuments(clientId);
+    setDocuments(clientDocuments);
+    
+    // Show toast when client data is loaded
+    toast.success(`${clientData.name}'s profile loaded`, {
+      description: "Client data retrieved successfully"
+    });
+  }, [clientId]);
   
   const handleClientUpdate = (updatedClient: Client) => {
     console.log("ClientTemplate: Client update received:", updatedClient);
@@ -92,7 +62,7 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
     } else {
       console.log("ClientTemplate: No document open callback provided, showing toast only");
       toast.info("Opening document", {
-        description: `Opening ${sampleDocuments.find(d => d.id === documentId)?.title || 'document'}`
+        description: `Opening ${documents.find(d => d.id === documentId)?.title || 'document'}`
       });
     }
   };
@@ -115,11 +85,11 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-xs text-muted-foreground">Documents:</span>
-                      <span className="text-xs font-medium">{sampleDocuments.length}</span>
+                      <span className="text-xs font-medium">{documents.length}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-xs text-muted-foreground">Last Activity:</span>
-                      <span className="text-xs font-medium">{formatDate(new Date().toISOString())}</span>
+                      <span className="text-xs font-medium">{formatDate(client.last_interaction || new Date().toISOString())}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-xs text-muted-foreground">Engagement Score:</span>
@@ -131,7 +101,7 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
                 <Card className="bg-muted/50 p-4">
                   <h3 className="text-sm font-medium mb-2">Recent Documents</h3>
                   <ul className="space-y-2">
-                    {sampleDocuments.slice(0, 3).map(doc => (
+                    {documents.slice(0, 3).map(doc => (
                       <li 
                         key={doc.id}
                         className="text-xs p-2 rounded cursor-pointer hover:bg-muted"
@@ -140,6 +110,9 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
                         {doc.title}
                       </li>
                     ))}
+                    {documents.length === 0 && (
+                      <li className="text-xs p-2 text-muted-foreground">No documents found</li>
+                    )}
                   </ul>
                 </Card>
               </div>
@@ -155,13 +128,13 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
                 </div>
                 
                 <div className="grid grid-cols-1 gap-3">
-                  {sampleDocuments.map(doc => (
+                  {documents.map(doc => (
                     <Card key={doc.id} className="p-3 hover:bg-accent/10 cursor-pointer" onClick={() => handleDocumentOpen(doc.id)}>
                       <div className="flex items-start">
                         <div className="bg-muted rounded-md p-2 mr-3">
                           {doc.type === 'financial' ? (
                             <FileSpreadsheet className="h-5 w-5 text-blue-500" />
-                          ) : doc.type === 'form-47' ? (
+                          ) : doc.type === 'form' ? (
                             <File className="h-5 w-5 text-red-500" />
                           ) : (
                             <FileText className="h-5 w-5 text-gray-500" />
@@ -180,6 +153,15 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
                       </div>
                     </Card>
                   ))}
+                  {documents.length === 0 && (
+                    <div className="text-center p-6 text-muted-foreground">
+                      <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                      <p>No documents found for this client</p>
+                      <Button variant="outline" size="sm" className="mt-2">
+                        <PlusCircle className="h-4 w-4 mr-1.5" /> Add First Document
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </TabsContent>
@@ -191,16 +173,18 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
                 <Card className="p-4">
                   <div className="space-y-3">
                     <div className="border-l-2 border-blue-500 pl-3 py-1">
-                      <p className="text-sm">Document viewed: Form 47 - Consumer Proposal</p>
+                      <p className="text-sm">Client information updated</p>
                       <p className="text-xs text-muted-foreground">{formatDate(new Date().toISOString())}</p>
                     </div>
-                    <div className="border-l-2 border-green-500 pl-3 py-1">
-                      <p className="text-sm">Client information updated</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(new Date(Date.now() - 86400000).toISOString())}</p>
-                    </div>
+                    {documents.length > 0 && (
+                      <div className="border-l-2 border-green-500 pl-3 py-1">
+                        <p className="text-sm">Document uploaded: {documents[0].title}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(documents[0].created_at)}</p>
+                      </div>
+                    )}
                     <div className="border-l-2 border-orange-500 pl-3 py-1">
-                      <p className="text-sm">Document uploaded: Bank Statement - March 2023</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(new Date(Date.now() - 172800000).toISOString())}</p>
+                      <p className="text-sm">Client profile created</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(client.last_interaction || new Date(Date.now() - 604800000).toISOString())}</p>
                     </div>
                   </div>
                 </Card>
@@ -212,10 +196,3 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
     </div>
   );
 };
-
-function formatClientName(clientId: string): string {
-  return clientId
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}

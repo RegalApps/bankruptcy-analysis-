@@ -1,10 +1,17 @@
-
 import { Document } from "../../../types";
+import { getClientDocuments } from "../../../data/clientTemplates";
 
 /**
  * Returns default document for a specific client
  */
 export const getDefaultDocuments = (clientName: string): Document[] => {
+  // Check if we have template documents for this client
+  const clientId = clientName.toLowerCase().replace(/\s+/g, '-');
+  if (['josh-hart', 'jane-smith', 'robert-johnson', 'maria-garcia'].includes(clientId)) {
+    return getClientDocuments(clientId);
+  }
+
+  // Otherwise use generic documents
   const now = new Date().toISOString();
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();

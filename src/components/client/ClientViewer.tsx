@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ClientViewerContainer } from "./components/viewer/ClientViewerContainer";
 import { ClientViewerProps } from "./types";
 import { ClientTemplate } from "./components/ClientTemplate";
+import { getClientData } from "./data/clientTemplates";
 
 export const ClientViewer = (props: ClientViewerProps) => {
   const [hasError, setHasError] = useState(false);
@@ -16,12 +17,21 @@ export const ClientViewer = (props: ClientViewerProps) => {
     currentRoute: window.location.pathname
   });
   
-  // Log more information when rendering special clients
+  // Load client data and show appropriate toast
   useEffect(() => {
-    if (props.clientId === 'josh-hart') {
-      console.log("ClientViewer: Special handling for Josh Hart client");
-      toast.success("Loading Josh Hart's client information", {
-        description: "Demo client data loaded from local storage"
+    try {
+      const clientData = getClientData(props.clientId);
+      console.log(`ClientViewer: Loading data for ${clientData.name}`);
+      
+      toast.success(`Loading ${clientData.name}'s client information`, {
+        description: `Client profile loaded successfully`
+      });
+    } catch (error) {
+      console.error("ClientViewer: Error loading client data:", error);
+      setHasError(true);
+      
+      toast.error("Had trouble loading client data", {
+        description: "Using simplified view instead"
       });
     }
   }, [props.clientId]);
