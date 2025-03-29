@@ -1,5 +1,6 @@
 
 import { FolderStructure } from "@/types/folders";
+import { Document } from "@/components/DocumentList/types";
 import { FolderItem } from "./FolderItem";
 
 interface FolderListProps {
@@ -15,6 +16,7 @@ interface FolderListProps {
   handleDragLeave: () => void;
   handleDrop: (e: React.DragEvent, targetFolderId: string) => void;
   dragOverFolder: string | null;
+  documents?: Document[];
 }
 
 export const FolderList = ({
@@ -29,7 +31,8 @@ export const FolderList = ({
   handleDragOver,
   handleDragLeave,
   handleDrop,
-  dragOverFolder
+  dragOverFolder,
+  documents = []
 }: FolderListProps) => {
   return (
     <>
@@ -37,7 +40,7 @@ export const FolderList = ({
         <FolderItem
           key={folder.id}
           folder={folder}
-          documents={[]} // Pass an empty array for now until we fix the type issues
+          documents={documents}
           onFolderSelect={onFolderSelect}
           onDocumentSelect={onDocumentSelect}
           onDocumentOpen={onDocumentOpen}

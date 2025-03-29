@@ -6,7 +6,6 @@ import { showPerformanceToast } from "@/utils/performance";
 import { EnhancedFolderTab } from "@/components/folders/enhanced/EnhancedFolderTab";
 import { BreadcrumbNavigation } from "./documents/components/BreadcrumbNavigation";
 import { useDocumentsPage } from "./documents/hooks/useDocumentsPage";
-import { useNavigate } from "react-router-dom";
 
 const DocumentsPage = () => {
   const {
@@ -17,22 +16,13 @@ const DocumentsPage = () => {
     selectedItemType,
     folderPath,
     handleItemSelect,
-    handleOpenDocument,
-    clients,
-    handleClientSelect
+    handleOpenDocument
   } = useDocumentsPage();
-  
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   React.useEffect(() => {
     // Measure and show performance metrics when the page loads
     showPerformanceToast("Documents Page");
   }, []);
-
-  const handleClientViewerAccess = (clientId: string) => {
-    navigate(`/client-viewer/${clientId}`);
-  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -53,19 +43,11 @@ const DocumentsPage = () => {
           
           {/* Main Content / Document Tree */}
           <div className="border rounded-lg bg-card">
-            {selectedClientId ? (
-              <div className="p-6 text-center">
-                <p className="text-muted-foreground">
-                  Redirecting to client viewer...
-                </p>
-              </div>
-            ) : (
-              <EnhancedFolderTab 
-                documents={documents ?? []}
-                onDocumentOpen={handleOpenDocument}
-                onRefresh={refetch}
-              />
-            )}
+            <EnhancedFolderTab 
+              documents={documents ?? []}
+              onDocumentOpen={handleOpenDocument}
+              onRefresh={refetch}
+            />
           </div>
         </main>
       </div>

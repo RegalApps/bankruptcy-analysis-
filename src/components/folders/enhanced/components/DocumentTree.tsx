@@ -41,13 +41,9 @@ export const DocumentTree = ({
   handleDragLeave,
   handleDrop
 }: DocumentTreeProps) => {
-  // We're not using form47Documents anymore, so no need to check its length
-
   return (
     <ScrollArea className="h-[calc(100vh-10rem)]">
       <div className="pr-4 pl-2">
-        {/* Removed Form47Alert */}
-        
         {filteredFolders.length > 0 ? (
           <FolderList
             folders={filteredFolders}

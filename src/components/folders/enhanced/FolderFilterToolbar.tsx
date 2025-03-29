@@ -10,15 +10,11 @@ import {
 } from "@/components/ui/select";
 
 interface FolderFilterToolbarProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
   filterCategory: string | null;
   setFilterCategory: (category: string | null) => void;
 }
 
 export const FolderFilterToolbar = ({
-  searchQuery,
-  setSearchQuery,
   filterCategory,
   setFilterCategory,
 }: FolderFilterToolbarProps) => {
@@ -44,7 +40,6 @@ export const FolderFilterToolbar = ({
       <Button 
         variant="outline" 
         onClick={() => {
-          setSearchQuery("");
           setFilterCategory(null);
         }}
       >

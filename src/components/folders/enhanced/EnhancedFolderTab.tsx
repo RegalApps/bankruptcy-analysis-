@@ -13,8 +13,6 @@ import { LoadingState } from "./components/LoadingState";
 import { useFolderSearch } from "./hooks/useFolderSearch";
 import { useFolderRecommendation } from "./hooks/useFolderRecommendation";
 import { FolderRecommendation } from "./FolderRecommendation";
-import { ClientSidebar } from "./components/ClientSidebar";
-import { ClientTab } from "./components/ClientTab";
 import { extractClientsFromDocuments } from "./hooks/utils/clientExtractionUtils";
 
 interface EnhancedFolderTabProps {
@@ -58,10 +56,6 @@ export const EnhancedFolderTab = ({
   const selectedFolderId = selectedItemId && folders.find(f => f.id === selectedItemId) ? selectedItemId : undefined;
   const selectedClientId = selectedItemId && documents.find(d => d.id === selectedItemId)?.metadata?.client_id;
   
-  // New state for client viewer
-  const [showClientViewer, setShowClientViewer] = useState(false);
-  const [selectedViewerClientId, setSelectedViewerClientId] = useState<string | null>(null);
-  
   // Extract clients from documents
   const clients = extractClientsFromDocuments(documents);
 
@@ -103,44 +97,6 @@ export const EnhancedFolderTab = ({
       console.error("Error moving document to folder:", error);
     }
   };
-  
-  // Handle client selection for the main view
-  const handleClientSelect = (clientId: string) => {
-    console.log("Selected client in main view:", clientId);
-    // Don't use handleItemSelect which expects "folder" or "file" type
-    // Instead, we'll manage selection state directly
-    setSelectedViewerClientId(null); // Reset viewer client when selecting in main view
-    
-    // Instead of setting selectedItemId directly, we now toggle the client viewer
-    if (clientId) {
-      setShowClientViewer(false); // Ensure we're in the main view initially
-      
-      // Use setTimeout to ensure state updates before selecting
-      setTimeout(() => {
-        // This will change the selection in the sidebar without causing type errors
-        const clientDoc = documents.find(d => d.metadata?.client_id === clientId);
-        if (clientDoc) {
-          handleItemSelect(clientDoc.id, "file");
-        } else {
-          console.log("Client document not found for ID:", clientId);
-        }
-      }, 0);
-    }
-  };
-  
-  // Handle opening the client viewer
-  const handleOpenClientViewer = (clientId: string) => {
-    console.log("Opening client viewer for:", clientId);
-    setSelectedViewerClientId(clientId);
-    setShowClientViewer(true);
-  };
-  
-  // Handle back button from client viewer
-  const handleClientViewerBack = () => {
-    console.log("Returning from client viewer");
-    setShowClientViewer(false);
-    setSelectedViewerClientId(null);
-  };
 
   // Handle showing loading state
   if (isLoading) {
@@ -150,18 +106,6 @@ export const EnhancedFolderTab = ({
   // Handle showing empty state
   if (documents.length === 0) {
     return <EmptyState onRefresh={onRefresh} />;
-  }
-  
-  // Show client viewer when selected
-  if (showClientViewer && selectedViewerClientId) {
-    console.log("Rendering ClientTab for client:", selectedViewerClientId);
-    return (
-      <ClientTab 
-        clientId={selectedViewerClientId} 
-        onBack={handleClientViewerBack}
-        onDocumentOpen={onDocumentOpen}
-      />
-    );
   }
 
   return (
@@ -185,22 +129,12 @@ export const EnhancedFolderTab = ({
       )}
 
       <FolderFilterToolbar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
         filterCategory={filterCategory}
         setFilterCategory={setFilterCategory}
       />
       
-      <div className="flex flex-1 overflow-hidden">
-        {/* Client sidebar on the left */}
-        <ClientSidebar
-          clients={clients}
-          onClientSelect={handleClientSelect}
-          onClientViewerAccess={handleOpenClientViewer}
-          selectedClientId={selectedClientId}
-        />
-        
-        {/* Document tree in the main area */}
+      <div className="flex-1 overflow-hidden">
+        {/* Document tree takes full width */}
         <div className="flex-1 overflow-auto">
           <DocumentTree
             filteredFolders={filteredFolders}
