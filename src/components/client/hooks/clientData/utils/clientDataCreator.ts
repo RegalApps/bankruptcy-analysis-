@@ -2,23 +2,24 @@
 import { Client } from "../../../types";
 
 /**
- * Creates standardized client data object
+ * Creates a new client data object with the given properties
  */
 export const createClientData = (
   id: string,
   name: string,
-  status?: string,
+  status: 'active' | 'inactive' | 'pending',
   email?: string,
   phone?: string,
+  lastInteraction?: string,
   engagementScore?: number
 ): Client => {
   return {
     id,
     name,
-    status: status || 'active',
+    status,
     email,
     phone,
-    engagement_score: engagementScore || 5.0,
-    last_interaction: new Date().toISOString()
+    last_interaction: lastInteraction || new Date().toISOString(),
+    engagement_score: engagementScore || 85
   };
 };

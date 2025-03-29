@@ -37,8 +37,8 @@ export const DocumentTree = ({
     const sortDocs = (docs: Document[]) => {
       return [...docs].sort((a, b) => {
         // Folders first
-        if (a.is_folder && !b.is_folder) return -1;
-        if (!a.is_folder && b.is_folder) return 1;
+        if ((a.is_folder ?? false) && !(b.is_folder ?? false)) return -1;
+        if (!(a.is_folder ?? false) && (b.is_folder ?? false)) return 1;
         
         // Then by title
         return a.title.localeCompare(b.title);
@@ -47,7 +47,7 @@ export const DocumentTree = ({
     
     // Recursive function to render a document and its children
     const renderDocument = (doc: Document, level: number = 0) => {
-      const isFolder = doc.is_folder;
+      const isFolder = doc.is_folder ?? false;
       const hasChildren = isFolder && docsByParent[doc.id] && docsByParent[doc.id].length > 0;
       const isExpanded = expandedFolders[doc.id] || false;
       const isSelected = selectedDocument === doc.id;

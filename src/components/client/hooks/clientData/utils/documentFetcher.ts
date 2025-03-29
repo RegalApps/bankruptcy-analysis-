@@ -1,7 +1,6 @@
 
 import { supabase } from "@/lib/supabase";
-import { Document } from "../../../types";
-import { toast } from "sonner";
+import { Document, Client } from "../../../types";
 import { createClientData } from "./clientDataCreator";
 import { getDefaultDocuments } from "./defaultData";
 
@@ -9,38 +8,52 @@ import { getDefaultDocuments } from "./defaultData";
  * Fetches documents for a specific client ID
  */
 export const fetchClientDocuments = async (clientId: string, searchClientId: string) => {
-  // First attempt with direct exact matching
-  const { data: clientDocs, error: docsError } = await supabase
-    .from('documents')
-    .select('*')
-    .or(`metadata->client_id.eq.${searchClientId},metadata->client_name.ilike.%${clientId}%`)
-    .order('created_at', { ascending: false });
-    
-  if (docsError) {
-    console.error("Error fetching documents:", docsError);
-    throw docsError;
-  }
+  console.log("Fetching client documents for:", clientId);
   
-  return clientDocs || [];
+  try {
+    // First attempt with direct exact matching
+    const { data: clientDocs, error: docsError } = await supabase
+      .from('documents')
+      .select('*')
+      .or(`metadata->client_id.eq.${searchClientId},metadata->client_name.ilike.%${clientId}%`)
+      .order('created_at', { ascending: false });
+      
+    if (docsError) {
+      console.error("Error fetching documents:", docsError);
+      throw docsError;
+    }
+    
+    return clientDocs || [];
+  } catch (error) {
+    console.error("Failed to fetch client documents:", error);
+    throw error;
+  }
 };
 
 /**
  * Tries to fetch Form 47 documents if no direct client matches are found
  */
 export const fetchForm47Documents = async () => {
-  // Look specifically for Form 47 or Consumer Proposal documents
-  const { data: form47Docs, error: form47Error } = await supabase
-    .from('documents')
-    .select('*')
-    .or('metadata->formType.eq.form-47,metadata->formNumber.eq.47,title.ilike.%consumer proposal%,title.ilike.%form 47%')
-    .order('created_at', { ascending: false });
-    
-  if (form47Error) {
-    console.error("Error fetching Form 47 documents:", form47Error);
-    throw form47Error;
-  }
+  console.log("Fetching Form 47 documents as fallback");
   
-  return form47Docs || [];
+  try {
+    // Look specifically for Form 47 or Consumer Proposal documents
+    const { data: form47Docs, error: form47Error } = await supabase
+      .from('documents')
+      .select('*')
+      .or('metadata->formType.eq.form-47,metadata->formNumber.eq.47,title.ilike.%consumer proposal%,title.ilike.%form 47%')
+      .order('created_at', { ascending: false });
+      
+    if (form47Error) {
+      console.error("Error fetching Form 47 documents:", form47Error);
+      throw form47Error;
+    }
+    
+    return form47Docs || [];
+  } catch (error) {
+    console.error("Failed to fetch Form 47 documents:", error);
+    return [];
+  }
 };
 
 /**
@@ -48,9 +61,9 @@ export const fetchForm47Documents = async () => {
  */
 export const handleJoshHartClient = (clientId: string, searchClientId: string, documents?: Document[]) => {
   if (searchClientId === 'josh-hart' || clientId.toLowerCase().includes('josh')) {
-    console.log("Detected Josh Hart client ID");
+    console.log("Detected Josh Hart client ID, providing fallback data");
     
-    const clientData = createClientData(
+    const clientData: Client = createClientData(
       'josh-hart', 
       'Josh Hart', 
       'active', 

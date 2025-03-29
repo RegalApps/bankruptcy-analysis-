@@ -1,3 +1,4 @@
+
 export interface Client {
   id: string;
   name: string;
@@ -14,6 +15,9 @@ export interface Document {
   type: string;
   created_at: string;
   updated_at: string;
+  is_folder?: boolean;
+  folder_type?: string;
+  parent_folder_id?: string;
   metadata?: {
     client_name?: string;
     storage_path?: string;
@@ -25,6 +29,7 @@ export interface ClientViewerProps {
   clientId: string;
   onBack: () => void;
   onDocumentOpen?: (documentId: string) => void;
+  onError?: () => void;
 }
 
 export interface FolderStructure {

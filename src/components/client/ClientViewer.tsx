@@ -1,14 +1,19 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ClientViewerContainer } from "./components/viewer/ClientViewerContainer";
 import { ClientViewerProps } from "./types";
+import { ClientTemplate } from "./components/ClientTemplate";
 
 export const ClientViewer = (props: ClientViewerProps) => {
+  const [hasError, setHasError] = useState(false);
+  const [useTemplate, setUseTemplate] = useState(true);
+  
   console.log("ClientViewer: Rendering with props:", {
     clientId: props.clientId,
     hasCallback: !!props.onBack,
-    hasDocumentCallback: !!props.onDocumentOpen 
+    hasDocumentCallback: !!props.onDocumentOpen,
+    currentRoute: window.location.pathname
   });
   
   // Log more information when rendering special clients
@@ -20,6 +25,28 @@ export const ClientViewer = (props: ClientViewerProps) => {
       });
     }
   }, [props.clientId]);
+
+  // Handle errors in the client viewer
+  const handleError = () => {
+    console.log("ClientViewer: Error detected, switching to template mode");
+    setHasError(true);
+    setUseTemplate(true);
+    toast.error("Had trouble loading client data", {
+      description: "Using simplified view instead"
+    });
+  };
   
-  return <ClientViewerContainer {...props} />;
+  // Always use the template mode which is more reliable
+  return useTemplate || hasError ? (
+    <ClientTemplate 
+      clientId={props.clientId} 
+      onBack={props.onBack}
+      onDocumentOpen={props.onDocumentOpen}
+    />
+  ) : (
+    <ClientViewerContainer 
+      {...props} 
+      onError={handleError}
+    />
+  );
 };
