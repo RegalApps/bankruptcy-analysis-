@@ -1,224 +1,98 @@
 
-import { useState, useCallback, useEffect } from "react";
-import { Document } from "@/components/DocumentList/types";
-import { useCreateFolderStructure } from "./hooks/useCreateFolderStructure";
-import { FolderHeader } from "./FolderHeader";
-import { FolderFilterToolbar } from "./FolderFilterToolbar";
-import { FolderStructure } from "@/types/folders";
-import { useFolderNavigation } from "./hooks/useFolderNavigation";
-import { useDocumentDragDrop } from "./hooks/useDocumentDragDrop";
-import { DocumentTree } from "./components/DocumentTree";
+import React, { useState, useEffect } from "react";
+import { FolderList } from "./components/FolderList";
+import { Document } from "@/components/client/types";
 import { EmptyState } from "./components/EmptyState";
-import { LoadingState } from "./components/LoadingState";
-import { useFolderSearch } from "./hooks/useFolderSearch";
-import { useFolderRecommendation } from "./hooks/useFolderRecommendation";
-import { FolderRecommendation } from "./FolderRecommendation";
-import { ClientSidebar } from "./components/ClientSidebar";
+import { ClientSection } from "./components/ClientSection";
 import { ClientTab } from "./components/ClientTab";
+import { useLocation } from "react-router-dom";
+import { UncategorizedTab } from "./components/UncategorizedTab";
 import { extractClientsFromDocuments } from "./hooks/utils/clientExtractionUtils";
 
 interface EnhancedFolderTabProps {
   documents: Document[];
-  onDocumentOpen: (documentId: string) => void;
-  onRefresh: () => void;
+  onDocumentOpen?: (documentId: string) => void;
+  onRefresh?: () => void;
 }
 
-export const EnhancedFolderTab = ({
-  documents,
-  onDocumentOpen,
-  onRefresh
-}: EnhancedFolderTabProps) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState<string | null>(null);
-  const { folders, isLoading } = useCreateFolderStructure(documents);
-  const {
-    selectedItemId,
-    handleItemSelect
-  } = useFolderNavigation(documents);
-  const {
-    handleDragStart,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-    dragOverFolder
-  } = useDocumentDragDrop(onRefresh);
-  const {
-    filteredFolders,
-    filteredDocuments,
-    form47Documents
-  } = useFolderSearch(folders, documents, searchQuery, filterCategory);
-  const {
-    showRecommendation,
-    recommendation,
-    setShowRecommendation,
-    dismissRecommendation,
-    moveDocumentToFolder
-  } = useFolderRecommendation(documents, folders);
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
-  const selectedFolderId = selectedItemId && folders.find(f => f.id === selectedItemId) ? selectedItemId : undefined;
-  const selectedClientId = selectedItemId && documents.find(d => d.id === selectedItemId)?.metadata?.client_id;
-  
-  // New state for client viewer
-  const [showClientViewer, setShowClientViewer] = useState(false);
-  const [selectedViewerClientId, setSelectedViewerClientId] = useState<string | null>(null);
+export const EnhancedFolderTab = ({ documents, onDocumentOpen, onRefresh }: EnhancedFolderTabProps) => {
+  const location = useLocation();
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [clients, setClients] = useState<{id: string, name: string}[]>([]);
   
   // Extract clients from documents
-  const clients = extractClientsFromDocuments(documents);
-
-  const toggleFolder = (folderId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setExpandedFolders(prev => ({
-      ...prev,
-      [folderId]: !prev[folderId]
-    }));
-  };
-
-  const handleFolderSelect = useCallback((folderId: string) => {
-    handleItemSelect(folderId, "folder");
-  }, [handleItemSelect]);
-
-  const handleDocumentSelect = useCallback((documentId: string) => {
-    handleItemSelect(documentId, "file");
-  }, [handleItemSelect]);
-
-  const handleCreateFolder = () => {
-    console.log("Create folder");
-    // Implementation would go here in a real app
-  };
-
-  const handleCreateDocument = () => {
-    console.log("Create document");
-    // Implementation would go here in a real app
-  };
-
-  // Fixed: Modified the function to properly handle the Promise<boolean> from moveDocumentToFolder
-  const handleMoveDocument = async (documentId: string, folderId: string, folderPath: string): Promise<void> => {
-    try {
-      // Call moveDocumentToFolder but ignore its boolean return value
-      const success = await moveDocumentToFolder(documentId, folderId, folderPath);
-      // We can still use the boolean for logging if needed
-      console.log(`Document move ${success ? 'succeeded' : 'failed'}`);
-      // But we don't return anything (void)
-    } catch (error) {
-      console.error("Error moving document to folder:", error);
+  useEffect(() => {
+    if (documents && documents.length > 0) {
+      const extractedClients = extractClientsFromDocuments(documents);
+      setClients(extractedClients);
     }
-  };
+  }, [documents]);
   
-  // Handle client selection for the main view
+  // Check for selected client in location state
+  useEffect(() => {
+    const locationState = location.state as { selectedClient?: string } | null;
+    if (locationState?.selectedClient) {
+      setSelectedClient(locationState.selectedClient);
+    }
+  }, [location]);
+
   const handleClientSelect = (clientId: string) => {
-    console.log("Selected client in main view:", clientId);
-    // Don't use handleItemSelect which expects "folder" or "file" type
-    // Instead, we'll manage selection state directly
-    setSelectedViewerClientId(null); // Reset viewer client when selecting in main view
-    
-    // Instead of setting selectedItemId directly, we now toggle the client viewer
-    if (clientId) {
-      setShowClientViewer(false); // Ensure we're in the main view initially
-      
-      // Use setTimeout to ensure state updates before selecting
-      setTimeout(() => {
-        // This will change the selection in the sidebar without causing type errors
-        const clientDoc = documents.find(d => d.metadata?.client_id === clientId);
-        if (clientDoc) {
-          handleItemSelect(clientDoc.id, "file");
-        } else {
-          console.log("Client document not found for ID:", clientId);
-        }
-      }, 0);
-    }
-  };
-  
-  // Handle opening the client viewer
-  const handleOpenClientViewer = (clientId: string) => {
-    console.log("Opening client viewer for:", clientId);
-    setSelectedViewerClientId(clientId);
-    setShowClientViewer(true);
-  };
-  
-  // Handle back button from client viewer
-  const handleClientViewerBack = () => {
-    console.log("Returning from client viewer");
-    setShowClientViewer(false);
-    setSelectedViewerClientId(null);
+    console.log("EnhancedFolderTab: Selected client:", clientId);
+    setSelectedClient(clientId);
   };
 
-  // Handle showing loading state
-  if (isLoading) {
-    return <LoadingState />;
-  }
+  const handleClientViewerAccess = (clientId: string) => {
+    console.log("EnhancedFolderTab: Opening client viewer for:", clientId);
+    setSelectedClient(clientId);
+  };
 
-  // Handle showing empty state
-  if (documents.length === 0) {
-    return <EmptyState onRefresh={onRefresh} />;
-  }
-  
-  // Show client viewer when selected
-  if (showClientViewer && selectedViewerClientId) {
-    console.log("Rendering ClientTab for client:", selectedViewerClientId);
+  const handleBackFromClient = () => {
+    console.log("EnhancedFolderTab: Back from client view");
+    setSelectedClient(null);
+  };
+
+  if (selectedClient) {
     return (
       <ClientTab 
-        clientId={selectedViewerClientId} 
-        onBack={handleClientViewerBack}
+        clientId={selectedClient}
+        onBack={handleBackFromClient}
         onDocumentOpen={onDocumentOpen}
       />
     );
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      <FolderHeader 
-        onCreateFolder={handleCreateFolder}
-        onCreateDocument={handleCreateDocument}
-        selectedFolderId={selectedFolderId}
-        hasWriteAccess={true}
-        userRole="admin"
-        onRefresh={onRefresh}
-      />
-      
-      {showRecommendation && recommendation && (
-        <FolderRecommendation
-          recommendation={recommendation}
-          onDismiss={dismissRecommendation}
-          onMoveToFolder={handleMoveDocument}
-          setShowRecommendation={setShowRecommendation}
-        />
-      )}
+  if (documents.length === 0) {
+    return <EmptyState onRefresh={onRefresh} />;
+  }
 
-      <FolderFilterToolbar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        filterCategory={filterCategory}
-        setFilterCategory={setFilterCategory}
-      />
-      
-      <div className="flex flex-1 overflow-hidden">
-        {/* Client sidebar on the left */}
-        <ClientSidebar
+  // Filter documents with folders for FolderList
+  const folderDocuments = documents.filter(doc => doc.is_folder || doc.parent_folder_id);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
+      {/* Client sidebar */}
+      <div className="lg:col-span-1 h-full overflow-auto bg-muted/20 rounded-lg p-4">
+        <ClientSection 
           clients={clients}
           onClientSelect={handleClientSelect}
-          onClientViewerAccess={handleOpenClientViewer}
-          selectedClientId={selectedClientId}
+          onClientViewerAccess={handleClientViewerAccess}
         />
-        
-        {/* Document tree in the main area */}
+      </div>
+      
+      {/* Main content */}
+      <div className="lg:col-span-3 flex flex-col h-full">
         <div className="flex-1 overflow-auto">
-          <DocumentTree
-            filteredFolders={filteredFolders}
-            filteredDocuments={filteredDocuments}
-            form47Documents={form47Documents}
-            selectedFolderId={selectedFolderId}
-            selectedClientId={selectedClientId}
-            expandedFolders={expandedFolders}
-            dragOverFolder={dragOverFolder}
-            onFolderSelect={handleFolderSelect}
-            onDocumentSelect={handleDocumentSelect}
-            onDocumentOpen={onDocumentOpen}
-            toggleFolder={toggleFolder}
-            handleDragStart={handleDragStart}
-            handleDragOver={handleDragOver}
-            handleDragLeave={handleDragLeave}
-            handleDrop={handleDrop}
-          />
+          <div className="space-y-8">
+            <FolderList 
+              folders={folderDocuments.filter(doc => doc.is_folder)} 
+              onDocumentOpen={onDocumentOpen}
+            />
+            
+            <UncategorizedTab 
+              documents={documents.filter(doc => !doc.parent_folder_id && !doc.is_folder)}
+              onDocumentOpen={onDocumentOpen}
+            />
+          </div>
         </div>
       </div>
     </div>
