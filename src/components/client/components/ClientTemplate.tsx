@@ -75,6 +75,7 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
   };
   
   const handleDocumentOpen = (documentId: string) => {
+    console.log("ClientTemplate: Document open requested:", documentId);
     if (onDocumentOpen) {
       onDocumentOpen(documentId);
     } else {

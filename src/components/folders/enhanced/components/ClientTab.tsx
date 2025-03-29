@@ -1,10 +1,11 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ClientViewer } from "@/components/client/ClientViewer";
 import { ClientNotFound } from "@/components/client/components/ClientNotFound";
 import { ClientTemplate } from "@/components/client/components/ClientTemplate";
 import { NoClientSelected } from "@/components/activity/components/NoClientSelected";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface ClientTabProps {
@@ -18,9 +19,10 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const [retryCount, setRetryCount] = useState<number>(0);
   const [retryId, setRetryId] = useState<string>('');
   const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
-  const [useTemplate, setUseTemplate] = useState<boolean>(true);
+  const [useTemplate, setUseTemplate] = useState<boolean>(true); // Always start with template mode
   const mountedRef = useRef<boolean>(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const loadingTimeoutRef = useRef<number | null>(null);
   const longLoadTimeoutRef = useRef<number | null>(null);
   
@@ -46,7 +48,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     setLoadError(false);
     setRetryCount(0);
     setIsTransitioning(true);
-    setUseTemplate(true);
     
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
@@ -71,7 +72,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
           description: "You can edit client information directly"
         });
       }
-    }, 3000);
+    }, 2000); // Reduced from 3000ms to 2000ms for faster feedback
     
     toast.info(`Loading ${clientId.includes('josh-hart') ? 'Josh Hart' : 'client'} information...`, {
       duration: 2000,
@@ -131,17 +132,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     );
   }
   
-  if (useTemplate || loadError) {
-    console.log("ClientTab: Showing template view for client:", effectiveClientId);
-    return (
-      <ClientTemplate 
-        clientId={effectiveClientId}
-        onBack={onBack}
-        onDocumentOpen={onDocumentOpen}
-      />
-    );
-  }
-  
+  // Always use template as the default view
   const handleDocumentOpen = (documentId: string) => {
     console.log("ClientTab: Opening document:", documentId);
     
@@ -167,7 +158,11 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
         });
       }
       
-      navigate('/', { 
+      // Fixed navigation to prevent 404 errors by checking the current route
+      const currentPath = location.pathname;
+      const targetPath = currentPath.includes('/documents') ? '/documents' : '/';
+      
+      navigate(targetPath, { 
         state: { 
           selectedDocument: documentId,
           source: 'client-tab',
@@ -178,14 +173,13 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     }
   };
   
-  console.log("ClientTab: Rendering ClientViewer with ID:", effectiveClientId);
+  console.log("ClientTab: Using template view with ID:", effectiveClientId);
   
   return (
-    <ClientViewer 
-      clientId={effectiveClientId} 
+    <ClientTemplate 
+      clientId={effectiveClientId}
       onBack={onBack}
       onDocumentOpen={handleDocumentOpen}
-      onError={handleError}
     />
   );
 };
