@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useCreateFolderStructure } from "@/components/folders/enhanced/hooks/useCreateFolderStructure";
 import { useFolderNavigation } from "./useFolderNavigation";
-import { useAccessPermissions } from "./useAccessPermissions";
 
 export const useDocumentsPage = () => {
   const { documents, refetch, isLoading } = useDocuments();
@@ -29,12 +28,6 @@ export const useDocumentsPage = () => {
     // This ensures consistency across the application
     originalHandleItemSelect(id, type);
   };
-  
-  const {
-    hasWriteAccess,
-    userRole,
-    toggleAccess
-  } = useAccessPermissions();
 
   // Extract clients from documents
   useEffect(() => {
@@ -70,17 +63,12 @@ export const useDocumentsPage = () => {
     selectedItemType,
     folderPath,
     
-    // Access control
-    hasWriteAccess,
-    userRole,
-    
     // Client data
     clients,
     
     // Event handlers
     handleItemSelect,
     handleOpenDocument,
-    toggleAccess,
     handleClientSelect
   };
 };

@@ -20,6 +20,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
   const mountedRef = useRef<boolean>(true);
   const navigate = useNavigate();
+  const loadingTimeoutRef = useRef<number | null>(null);
   
   // Enhanced error handler with better logging
   const handleError = useCallback(() => {
@@ -27,8 +28,15 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     setLoadError(true);
     
     toast.error("Could not load client information", {
-      description: "There was a problem retrieving client data"
+      description: "Trying a fallback method to load the client"
     });
+    
+    // For Josh Hart client, we want to retry with simplified ID
+    if (clientId.toLowerCase().includes('josh') || clientId.toLowerCase().includes('hart')) {
+      setRetryCount(prev => prev + 1);
+      setRetryId('josh-hart');
+      setLoadError(false);
+    }
   }, [clientId]);
   
   // Reset states when client ID changes to prevent UI glitches
@@ -38,16 +46,29 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     setRetryCount(0);
     setIsTransitioning(true);
     
+    // Clear any existing timeout
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+    
     // Add a small delay to prevent flickering/glitching during transitions
-    const timer = setTimeout(() => {
+    loadingTimeoutRef.current = window.setTimeout(() => {
       if (mountedRef.current) {
         console.log("ClientTab: Transition complete, rendering client view");
         setIsTransitioning(false);
       }
-    }, 150);
+    }, 400); // Longer transition time for better user experience
+    
+    // Notify user about loading state
+    toast.info(`Loading ${clientId.includes('josh-hart') ? 'Josh Hart' : 'client'} information...`, {
+      duration: 2000,
+    });
     
     return () => {
-      clearTimeout(timer);
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
     };
   }, [clientId]);
   
@@ -56,23 +77,13 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     return () => {
       console.log("ClientTab: Component unmounting");
       mountedRef.current = false;
+      
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
     };
   }, []);
-  
-  // Special handling for Josh Hart client
-  useEffect(() => {
-    // If we get an error but the client ID contains "josh" or "hart", 
-    // it's likely our form-47 client and we can try to simplify the ID
-    if (loadError && 
-        (clientId.toLowerCase().includes('josh') || clientId.toLowerCase().includes('hart')) && 
-        retryCount < 1) {
-      console.log("ClientTab: Detected Josh Hart client with error, simplifying ID for retry");
-      setRetryCount(prev => prev + 1);
-      setRetryId('josh-hart');
-      setLoadError(false);
-      toast.info("Retrying client data load with simplified ID");
-    }
-  }, [loadError, clientId, retryCount]);
   
   // Use the retry ID if we're retrying, otherwise use the original client ID
   const effectiveClientId = retryCount > 0 && retryId ? retryId : clientId;
@@ -86,7 +97,15 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     console.log("ClientTab: Showing transition loading state");
     return (
       <div className="flex h-full items-center justify-center">
-        <LoadingSpinner size="large" />
+        <div className="text-center">
+          <LoadingSpinner size="large" className="mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading client information...</p>
+          {clientId.toLowerCase().includes('josh') && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Loading Josh Hart's profile and documents
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -117,6 +136,10 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
         isForm47 = true;
         documentTitle = "Form 47 - Consumer Proposal";
         console.log("Opening Josh Hart's Form 47 document");
+        
+        toast.success("Opening Form 47 document", {
+          description: "Consumer Proposal document for Josh Hart"
+        });
       }
       
       // If no callback is provided, navigate directly to the home page with the selected document
