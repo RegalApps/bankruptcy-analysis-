@@ -1,33 +1,46 @@
 
-/**
- * Formats a date string into a more readable format
- * @param dateString - ISO date string
- * @returns Formatted date string
- */
-export const formatDate = (dateString: string): string => {
-  if (!dateString) return 'N/A';
+export function formatDate(dateString: string): string {
+  if (!dateString) return "Unknown date";
   
   try {
     const date = new Date(dateString);
     
-    // Check if date is valid
+    // Check if the date is valid
     if (isNaN(date.getTime())) {
-      return 'Invalid date';
+      return "Invalid date";
     }
     
-    // Format: "Jan 1, 2023 at 10:30 AM"
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }) + ' at ' + 
-    date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+    // Get current date for comparison
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Format date part
+    let datePart: string;
+    
+    if (date >= today) {
+      datePart = "Today";
+    } else if (date >= yesterday) {
+      datePart = "Yesterday";
+    } else {
+      // Use locale date formatting
+      datePart = date.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+    
+    // Format time part
+    const timePart = date.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit'
     });
+    
+    return `${datePart} at ${timePart}`;
   } catch (error) {
     console.error("Error formatting date:", error);
-    return 'Error formatting date';
+    return dateString || "Unknown date";
   }
-};
+}
