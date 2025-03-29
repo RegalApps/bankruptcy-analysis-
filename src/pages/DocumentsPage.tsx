@@ -15,7 +15,7 @@ const DEMO_CLIENTS = [
     status: "active" as const,
     location: "Ontario",
     lastActivity: "2024-06-01",
-    needsAttention: true
+    needsAttention: false // Changed to false to remove orange icon
   },
   {
     id: "client-2",
@@ -39,7 +39,7 @@ const DEMO_CLIENTS = [
     status: "flagged" as const,
     location: "Quebec",
     lastActivity: "2024-05-20",
-    needsAttention: true
+    needsAttention: false // Changed to false to remove orange icon
   }
 ];
 
@@ -125,20 +125,22 @@ const DocumentsPage = () => {
         <MainHeader />
         <main className="flex-1 flex overflow-hidden">
           {/* Left Panel: Client List */}
-          <div className="w-72 flex-shrink-0">
+          <div className="w-80 flex-shrink-0 border-r bg-card/50">
             <ClientList 
               clients={DEMO_CLIENTS} 
             />
           </div>
           
           {/* Right Panel: Document Tree */}
-          <div className="flex-1 border-l p-4">
-            <h2 className="text-xl font-semibold mb-4">Document Tree</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              System-wide view of all document activity. Click a client on the left to view their dedicated page.
-            </p>
+          <div className="flex-1 p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold mb-2">Document Tree</h2>
+              <p className="text-sm text-muted-foreground">
+                System-wide view of all document activity. Click a client on the left to view their dedicated page.
+              </p>
+            </div>
             
-            <div className="border rounded-lg shadow-sm overflow-hidden">
+            <div className="border rounded-lg shadow-sm overflow-hidden bg-card">
               <DocumentTree 
                 rootNodes={JOSH_HART_DOCUMENTS}
                 onNodeSelect={handleNodeSelect}

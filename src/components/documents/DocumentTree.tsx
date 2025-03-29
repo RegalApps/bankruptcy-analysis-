@@ -32,7 +32,11 @@ export const DocumentTree = ({
   onFileOpen
 }: DocumentTreeProps) => {
   // Track expanded nodes
-  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({
+    // Pre-expand Josh Hart's folder
+    "josh-hart-root": true,
+    "estate-folder": true
+  });
   
   // Toggle node expansion
   const toggleNode = (nodeId: string) => {
@@ -76,15 +80,15 @@ export const DocumentTree = ({
       <div key={node.id} className="select-none">
         <div 
           className={cn(
-            "flex items-center py-1 px-2 hover:bg-accent/50 rounded cursor-pointer",
+            "flex items-center py-2 px-2 hover:bg-accent/50 rounded-md cursor-pointer",
             "transition-colors duration-100"
           )}
-          style={{ paddingLeft: `${(level * 16) + 8}px` }}
+          style={{ paddingLeft: `${(level * 20) + 8}px` }}
           onDoubleClick={() => handleDoubleClick(node)}
         >
           {/* Toggle icon or spacer */}
           <div 
-            className="mr-1 w-4 h-4 flex items-center justify-center"
+            className="mr-1.5 w-5 h-5 flex items-center justify-center"
             onClick={(e) => {
               e.stopPropagation();
               if (hasChildren) handleNodeClick(node, true);
@@ -100,7 +104,7 @@ export const DocumentTree = ({
           </div>
           
           {/* Folder/File icon */}
-          <div className="mr-2" onClick={() => handleNodeClick(node, false)}>
+          <div className="mr-2.5" onClick={() => handleNodeClick(node, false)}>
             <FolderIcon 
               type={node.folderType || 'default'} 
               isExpanded={isNodeExpanded}
@@ -110,7 +114,7 @@ export const DocumentTree = ({
           
           {/* Node name */}
           <div 
-            className="flex-1 truncate" 
+            className="flex-1 truncate font-medium text-sm" 
             onClick={() => handleNodeClick(node, false)}
           >
             {node.name}
@@ -135,7 +139,7 @@ export const DocumentTree = ({
   };
   
   return (
-    <div className="p-2">
+    <div className="p-4">
       {rootNodes.map(node => renderNode(node))}
     </div>
   );

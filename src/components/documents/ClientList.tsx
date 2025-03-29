@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Search, AlertCircle, UserCircle, MapPin } from "lucide-react";
+import { Search, UserCircle, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -51,15 +51,15 @@ export const ClientList = ({ clients, selectedClientId }: ClientListProps) => {
   };
   
   return (
-    <div className="h-full flex flex-col border-r">
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold mb-4">Clients</h2>
+    <div className="h-full flex flex-col">
+      <div className="p-5 border-b">
+        <h2 className="text-xl font-semibold mb-4">Clients</h2>
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search clients..."
-            className="pl-8"
+            className="pl-9 bg-background"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -67,27 +67,22 @@ export const ClientList = ({ clients, selectedClientId }: ClientListProps) => {
       </div>
       
       <ScrollArea className="flex-1">
-        <div className="p-2">
+        <div className="p-3 space-y-1">
           {filteredClients.length > 0 ? (
             filteredClients.map((client) => (
               <div
                 key={client.id}
                 className={cn(
-                  "flex items-center justify-between p-3 my-1 rounded-md cursor-pointer transition-colors",
+                  "flex items-center justify-between p-3 rounded-md cursor-pointer transition-all",
                   selectedClientId === client.id 
-                    ? "bg-primary/10" 
-                    : "hover:bg-accent/50"
+                    ? "bg-primary/10 shadow-sm" 
+                    : "hover:bg-accent/40"
                 )}
                 onClick={() => handleClientSelect(client.id)}
               >
                 <div className="flex items-center min-w-0">
                   <div className="relative">
-                    <UserCircle className="h-8 w-8 text-primary/70 mr-3" />
-                    {client.needsAttention && (
-                      <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-orange-500 flex items-center justify-center">
-                        <AlertCircle className="h-3 w-3 text-white" />
-                      </div>
-                    )}
+                    <UserCircle className="h-9 w-9 text-primary/70 mr-3" />
                   </div>
                   
                   <div className="min-w-0">
