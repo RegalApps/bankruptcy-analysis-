@@ -1,16 +1,8 @@
 
-import { File, FileText, Eye, Lock, Edit2, MessageCircle, History } from "lucide-react";
 import { Document } from "@/components/DocumentList/types";
-import { cn } from "@/lib/utils";
 import { useState } from "react";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DocumentItem } from "./documents/DocumentItem";
+import { isForm47or76 } from "../utils/documentUtils";
 
 interface DocumentListItemProps {
   documents: Document[];
@@ -27,9 +19,6 @@ export const DocumentListItem = ({
   onDocumentOpen,
   handleDragStart
 }: DocumentListItemProps) => {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [newName, setNewName] = useState<string>('');
-
   // Create indentation based on level
   const indentation = Array(indentationLevel).fill(0).map((_, i) => (
     <div key={i} className="w-6" />
@@ -48,248 +37,18 @@ export const DocumentListItem = ({
     return a.title.localeCompare(b.title);
   });
 
-  const handleDoubleClick = (document: Document) => {
-    if (isDocumentLocked(document)) return;
-    setEditingId(document.id);
-    setNewName(document.title);
-  };
-
-  const handleRename = (id: string, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      // In a real app, you would call an API to update the document title
-      console.log(`Renamed document ${id} to ${newName}`);
-      setEditingId(null);
-    } else if (e.key === 'Escape') {
-      setEditingId(null);
-    }
-  };
-
-  const getStatusIndicator = (document: Document) => {
-    const status = document.metadata?.status || 'pending';
-    
-    switch (status) {
-      case 'approved':
-        return <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Approved / No Risks</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>;
-      case 'pending':
-        return <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Pending / Minor Issues</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>;
-      case 'attention':
-        return <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Requires Attention</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>;
-      case 'critical':
-        return <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Critical Compliance Risks</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>;
-      default:
-        return <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>No Status</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>;
-    }
-  };
-
-  const isDocumentLocked = (document: Document) => {
-    return document.metadata?.locked || document.metadata?.signed || document.title.toLowerCase().includes('signed') || 
-      document.metadata?.submitted || document.metadata?.approved;
-  };
-
   return (
     <div className="ml-10">
       {sortedDocuments.map(doc => (
-        <ContextMenu key={doc.id}>
-          <ContextMenuTrigger>
-            <div
-              className={cn(
-                "flex items-center py-1 px-2 hover:bg-accent/50 rounded-sm cursor-pointer",
-                "group transition-colors duration-200"
-              )}
-              onClick={() => onDocumentSelect(doc.id)}
-              onDoubleClick={() => handleDoubleClick(doc)}
-              draggable
-              onDragStart={() => handleDragStart(doc.id, 'document')}
-            >
-              {indentation}
-              {isForm47or76(doc) ? (
-                <FileText className="h-4 w-4 text-primary mr-2" />
-              ) : (
-                <File className="h-4 w-4 text-muted-foreground mr-2" />
-              )}
-              
-              {editingId === doc.id ? (
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => handleRename(doc.id, e)}
-                  onBlur={() => setEditingId(null)}
-                  autoFocus
-                  className="text-sm px-1 py-0.5 border border-primary rounded flex-1 outline-none"
-                />
-              ) : (
-                <div className="flex items-center flex-1 space-x-2">
-                  <span className="text-sm truncate">{doc.title}</span>
-                  {getStatusIndicator(doc)}
-                  {isDocumentLocked(doc) && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Lock className="h-3 w-3 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>This document is locked</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                  {doc.metadata?.version && (
-                    <span className="text-xs text-muted-foreground">v{doc.metadata.version}</span>
-                  )}
-                </div>
-              )}
-
-              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Eye 
-                        className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDocumentOpen(doc.id);
-                        }}
-                        aria-label="View Document"
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>View Document</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                {!isDocumentLocked(doc) && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Edit2
-                          className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDoubleClick(doc);
-                          }}
-                          aria-label="Rename Document"
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Rename Document</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <History
-                        className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log("View history for", doc.id);
-                        }}
-                        aria-label="View History"
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>View History</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          </ContextMenuTrigger>
-          <ContextMenuContent className="min-w-[160px]">
-            <ContextMenuItem onClick={() => onDocumentOpen(doc.id)}>
-              <Eye className="h-4 w-4 mr-2" />
-              Open
-            </ContextMenuItem>
-            {!isDocumentLocked(doc) && (
-              <>
-                <ContextMenuItem onClick={() => handleDoubleClick(doc)}>
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Rename
-                </ContextMenuItem>
-                <ContextMenuItem>
-                  <Lock className="h-4 w-4 mr-2" />
-                  Lock Document
-                </ContextMenuItem>
-              </>
-            )}
-            <ContextMenuSeparator />
-            <ContextMenuItem>
-              <History className="h-4 w-4 mr-2" />
-              View History
-            </ContextMenuItem>
-            <ContextMenuItem>
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Add Comment
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
+        <DocumentItem
+          key={doc.id}
+          document={doc}
+          indentation={indentation}
+          onSelect={onDocumentSelect}
+          onOpen={onDocumentOpen}
+          handleDragStart={handleDragStart}
+        />
       ))}
     </div>
   );
 };
-
-// Helper function to identify Form 47 or Form 76 documents
-function isForm47or76(doc: Document): boolean {
-  // Check document title
-  if (doc.title?.toLowerCase().includes('form 47') || 
-      doc.title?.toLowerCase().includes('form 76') ||
-      doc.title?.toLowerCase().includes('consumer proposal') ||
-      doc.title?.toLowerCase().includes('statement of affairs')) {
-    return true;
-  }
-  
-  // Check metadata
-  if (doc.metadata?.formType === 'form-47' || 
-      doc.metadata?.formType === 'form-76') {
-    return true;
-  }
-  
-  return false;
-}
