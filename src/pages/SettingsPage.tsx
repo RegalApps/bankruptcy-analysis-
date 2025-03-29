@@ -6,6 +6,7 @@ import { IntegrationsSection } from "@/components/crm/integrations/IntegrationsS
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { MeetingIntegrationsSection } from "@/components/settings/MeetingIntegrationsSection";
+import { AccessControlSettings } from "@/components/settings/AccessControlSettings";
 import { useSettings } from "@/hooks/useSettings";
 import { useState } from "react";
 
@@ -33,6 +34,7 @@ export const SettingsPage = () => {
                 <TabsTrigger value="integrations">API Integrations</TabsTrigger>
                 <TabsTrigger value="meetings">Meeting Integrations</TabsTrigger>
                 <TabsTrigger value="security">Security</TabsTrigger>
+                <TabsTrigger value="access-control">Access Control</TabsTrigger>
               </TabsList>
 
               <TabsContent value="general">
@@ -57,6 +59,10 @@ export const SettingsPage = () => {
                   onSave={() => saveSettings("security")}
                   isLoading={isLoading || (isSaving && activeTab === "security")}
                 />
+              </TabsContent>
+              
+              <TabsContent value="access-control">
+                <AccessControlSettings />
               </TabsContent>
             </Tabs>
           </div>
