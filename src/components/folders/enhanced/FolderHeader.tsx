@@ -1,9 +1,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, FolderPlus, Users, Settings } from "lucide-react";
+import { Plus, FolderPlus, Settings } from "lucide-react";
 import { FolderActionDropdown } from "./components/FolderActionDropdown";
-import { FolderPermissionsDialog } from "./dialogs/FolderPermissionsDialog";
 import { UserRole } from "@/types/folders";
 
 interface FolderHeaderProps {
@@ -23,10 +22,7 @@ export const FolderHeader = ({
   userRole,
   onRefresh
 }: FolderHeaderProps) => {
-  const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
-
   const canCreateFolder = ['admin', 'manager', 'user'].includes(userRole);
-  const canManagePermissions = userRole === 'admin' || userRole === 'manager';
 
   return (
     <div className="flex items-center justify-between mb-4">
@@ -55,17 +51,6 @@ export const FolderHeader = ({
           </>
         )}
         
-        {canManagePermissions && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowPermissionsDialog(true)}
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Permissions
-          </Button>
-        )}
-        
         <FolderActionDropdown 
           selectedFolderId={selectedFolderId}
           hasWriteAccess={hasWriteAccess}
@@ -73,14 +58,6 @@ export const FolderHeader = ({
           onRefresh={onRefresh}
         />
       </div>
-      
-      {showPermissionsDialog && (
-        <FolderPermissionsDialog
-          open={showPermissionsDialog}
-          onOpenChange={setShowPermissionsDialog}
-          folderId={selectedFolderId}
-        />
-      )}
     </div>
   );
 };
