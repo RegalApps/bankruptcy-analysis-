@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ClientViewer } from "@/components/client/ClientViewer";
 import { ClientNotFound } from "@/components/client/components/ClientNotFound";
@@ -19,17 +18,15 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   const [retryCount, setRetryCount] = useState<number>(0);
   const [retryId, setRetryId] = useState<string>('');
   const [isTransitioning, setIsTransitioning] = useState<boolean>(true);
-  const [useTemplate, setUseTemplate] = useState<boolean>(false);
+  const [useTemplate, setUseTemplate] = useState<boolean>(true);
   const mountedRef = useRef<boolean>(true);
   const navigate = useNavigate();
   const loadingTimeoutRef = useRef<number | null>(null);
   const longLoadTimeoutRef = useRef<number | null>(null);
   
-  // Enhanced error handler with better logging
   const handleError = useCallback(() => {
     console.error(`ClientTab: Error loading client ID: ${clientId}`);
     
-    // After an error, show the template view instead of the error
     setUseTemplate(true);
     setIsTransitioning(false);
     
@@ -37,7 +34,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
       description: "Using template mode instead"
     });
     
-    // For Josh Hart client, we want to retry with simplified ID
     if (clientId.toLowerCase().includes('josh') || clientId.toLowerCase().includes('hart')) {
       setRetryCount(prev => prev + 1);
       setRetryId('josh-hart');
@@ -45,15 +41,13 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     }
   }, [clientId]);
   
-  // Reset states when client ID changes to prevent UI glitches
   useEffect(() => {
     console.log("ClientTab: Client ID changed to", clientId);
     setLoadError(false);
     setRetryCount(0);
     setIsTransitioning(true);
-    setUseTemplate(false);
+    setUseTemplate(true);
     
-    // Clear any existing timeout
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
     }
@@ -62,15 +56,13 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
       clearTimeout(longLoadTimeoutRef.current);
     }
     
-    // Add a small delay to prevent flickering/glitching during transitions
     loadingTimeoutRef.current = window.setTimeout(() => {
       if (mountedRef.current) {
         console.log("ClientTab: Transition complete, rendering client view");
         setIsTransitioning(false);
       }
-    }, 400); // Longer transition time for better user experience
+    }, 400);
     
-    // If loading takes too long, switch to template mode automatically
     longLoadTimeoutRef.current = window.setTimeout(() => {
       if (mountedRef.current && !loadError) {
         console.log("ClientTab: Loading taking too long, switching to template mode");
@@ -81,7 +73,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
       }
     }, 3000);
     
-    // Notify user about loading state
     toast.info(`Loading ${clientId.includes('josh-hart') ? 'Josh Hart' : 'client'} information...`, {
       duration: 2000,
     });
@@ -99,7 +90,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     };
   }, [clientId, loadError]);
   
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       console.log("ClientTab: Component unmounting");
@@ -117,7 +107,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     };
   }, []);
   
-  // Use the retry ID if we're retrying, otherwise use the original client ID
   const effectiveClientId = retryCount > 0 && retryId ? retryId : clientId;
   
   if (!effectiveClientId) {
@@ -142,7 +131,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     );
   }
   
-  // If we need to use template mode or had a load error, show the template
   if (useTemplate || loadError) {
     console.log("ClientTab: Showing template view for client:", effectiveClientId);
     return (
@@ -154,7 +142,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     );
   }
   
-  // Create a handler for document opening that uses navigate to go to the document viewer
   const handleDocumentOpen = (documentId: string) => {
     console.log("ClientTab: Opening document:", documentId);
     
@@ -167,7 +154,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     if (onDocumentOpen) {
       onDocumentOpen(documentId);
     } else {
-      // Check if it's the Form 47 document for josh-hart client
       let isForm47 = false;
       let documentTitle = null;
       
@@ -181,7 +167,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
         });
       }
       
-      // If no callback is provided, navigate directly to the home page with the selected document
       navigate('/', { 
         state: { 
           selectedDocument: documentId,
