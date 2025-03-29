@@ -1,13 +1,12 @@
 
-import { ChevronDown, ChevronRight } from "lucide-react";
+import React from "react";
 import { cn } from "@/lib/utils";
 import { FolderStructure } from "@/types/folders";
+import { Document } from "@/components/DocumentList/types";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import { FolderIcon } from "./FolderIcon";
-import { FolderStatusIndicator } from "./FolderStatusIndicator";
 import { FolderLockIndicator } from "./FolderLockIndicator";
 import { FolderNameEditor } from "./FolderNameEditor";
-import { FolderActions } from "./FolderActions";
-import { FolderBadges } from "./FolderBadges";
 
 interface FolderItemHeaderProps {
   folder: FolderStructure;
@@ -17,17 +16,17 @@ interface FolderItemHeaderProps {
   isDragTarget: boolean;
   isFolderLocked: boolean;
   indentation: JSX.Element[];
-  form47Documents: any[];
-  formDocuments: any[];
-  folderDocuments: any[];
+  form47Documents: Document[];
+  formDocuments: Document[];
+  folderDocuments: Document[];
   handleDoubleClick: (e: React.MouseEvent) => void;
   onFolderSelect: (folderId: string) => void;
   toggleFolder: (folderId: string, e: React.MouseEvent) => void;
-  handleRename: (newName: string) => void;
+  handleRename: (updatedName: string) => void;
   handleDragStart: (id: string, type: 'folder' | 'document') => void;
   handleDragOver: (e: React.DragEvent, folderId: string) => void;
   handleDragLeave: () => void;
-  handleDrop: (e: React.DragEvent, folderId: string) => void;
+  handleDrop: (e: React.DragEvent, targetFolderId: string) => void;
   cancelEditing: () => void;
 }
 
@@ -52,84 +51,108 @@ export const FolderItemHeader = ({
   handleDrop,
   cancelEditing
 }: FolderItemHeaderProps) => {
-  const handleCommentClick = (e: React.MouseEvent) => {
+  // For folder with children, show count
+  const hasChildren = folder.children && folder.children.length > 0;
+  const hasDocuments = folderDocuments.length > 0;
+  const folderType = folder.type;
+  
+  // Display folder badge count if it has children or documents
+  const showBadge = hasChildren || hasDocuments;
+  const badgeCount = (hasChildren ? folder.children.length : 0) + folderDocuments.length;
+  
+  // Handle the click event
+  const handleFolderClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget || !(e.target as HTMLElement).classList.contains('chevron-icon')) {
+      onFolderSelect(folder.id);
+    }
+  };
+  
+  // Handle expand/collapse
+  const handleToggleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("Add comment to folder", folder.id);
+    toggleFolder(folder.id, e);
   };
 
-  const getFolderTooltip = () => {
-    if (form47Documents.length > 0) {
-      return `Contains ${form47Documents.length} Form 47 document${form47Documents.length > 1 ? 's' : ''}`;
-    }
-    if (formDocuments.length > 0) {
-      return `Contains ${formDocuments.length} form document${formDocuments.length > 1 ? 's' : ''}`;
-    }
-    if (folderDocuments.length > 0) {
-      return `Contains ${folderDocuments.length} document${folderDocuments.length > 1 ? 's' : ''}`;
-    }
-    return "Empty folder";
-  };
+  // Has pending Form 47 or Form 76 documents
+  const hasForm47 = form47Documents.length > 0 || 
+                     folderType === 'form' && folder.name.includes('47');
+  
+  // Special indicator for folders with Form 47 documents
+  const hasFormDocuments = formDocuments.length > 0 || hasForm47;
 
   return (
-    <div 
-      className={cn(
-        "flex items-center py-1 px-2 hover:bg-accent/40 rounded-sm cursor-pointer group",
-        isSelected && "bg-accent/60",
-        isDragTarget && "bg-primary/20 border border-dashed border-primary"
-      )}
-      onClick={() => onFolderSelect(folder.id)}
+    <div
+      onClick={handleFolderClick}
+      onDoubleClick={handleDoubleClick}
       draggable={!isFolderLocked}
-      onDragStart={() => !isFolderLocked && handleDragStart(folder.id, 'folder')}
+      onDragStart={() => handleDragStart(folder.id, 'folder')}
       onDragOver={(e) => handleDragOver(e, folder.id)}
       onDragLeave={handleDragLeave}
       onDrop={(e) => handleDrop(e, folder.id)}
-      aria-label={getFolderTooltip()}
+      className={cn(
+        "flex py-1 px-2 rounded-sm hover:bg-accent/50",
+        "group transition-colors duration-200 items-center",
+        isSelected && "bg-accent",
+        isDragTarget && "bg-accent/80 border border-dashed border-primary",
+        "cursor-pointer"
+      )}
+      data-folder-id={folder.id}
+      data-folder-type={folderType}
+      aria-selected={isSelected}
+      aria-expanded={isExpanded}
     >
       {indentation}
       
-      <button 
-        className="p-1 rounded-sm hover:bg-muted/60 mr-1"
-        onClick={(e) => toggleFolder(folder.id, e)}
+      {/* Chevron for expand/collapse */}
+      <div 
+        onClick={handleToggleClick} 
+        className="flex items-center justify-center w-4 h-4 chevron-icon"
       >
-        {folder.children && folder.children.length > 0 ? (
-          isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+        {(hasChildren || hasDocuments) ? (
+          isExpanded ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )
         ) : (
-          <div className="w-4" />
+          <div className="w-4" /> // Spacer when no chevron
         )}
-      </button>
+      </div>
       
-      <FolderIcon type={folder.type} isExpanded={isExpanded} />
+      {/* Folder Icon based on type */}
+      <FolderIcon type={folderType} isExpanded={isExpanded} />
       
+      {/* Folder Name */}
       {isEditing ? (
-        <FolderNameEditor 
-          isEditing={isEditing} 
-          name={folder.name} 
-          onRename={handleRename} 
-          onCancelEdit={cancelEditing} 
+        <FolderNameEditor
+          isEditing={isEditing}
+          name={folder.name}
+          onRename={handleRename}
+          onCancelEdit={cancelEditing}
         />
       ) : (
-        <div className="flex items-center flex-1 space-x-2">
-          <span className="text-sm truncate">{folder.name}</span>
-          <FolderStatusIndicator status={folder.metadata?.status} />
-          <FolderLockIndicator isLocked={isFolderLocked} />
-        </div>
+        <span className="text-sm truncate">{folder.name}</span>
       )}
       
-      {/* Action icons */}
-      {!isEditing && (
-        <FolderActions 
-          isFolderLocked={isFolderLocked} 
-          onRenameClick={handleDoubleClick} 
-          onCommentClick={handleCommentClick} 
+      {/* Show form47 indicator next to the folder name */}
+      {hasFormDocuments && (
+        <span 
+          className="h-2.5 w-2.5 rounded-full bg-orange-500 ml-2" 
+          aria-label="Form 47 Documents Require Attention"
         />
       )}
       
-      <FolderBadges 
-        folderType={folder.type} 
-        form47Count={form47Documents.length} 
-        formDocumentsCount={formDocuments.length} 
-        documentsCount={folderDocuments.length} 
-      />
+      {/* Show badge count */}
+      {showBadge && (
+        <span className="ml-2 text-xs px-1.5 py-0.5 bg-accent rounded-full text-muted-foreground">
+          {badgeCount}
+        </span>
+      )}
+      
+      {/* Lock indicator for locked folders */}
+      <div className="ml-auto">
+        <FolderLockIndicator isLocked={isFolderLocked} />
+      </div>
     </div>
   );
 };

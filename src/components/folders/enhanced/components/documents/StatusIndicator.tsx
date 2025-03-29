@@ -1,6 +1,7 @@
 
 import { Document } from "@/components/DocumentList/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { documentNeedsAttention } from "../../utils/documentUtils";
 
 interface StatusIndicatorProps {
   document: Document;
@@ -8,6 +9,20 @@ interface StatusIndicatorProps {
 
 export const StatusIndicator = ({ document }: StatusIndicatorProps) => {
   const status = document.metadata?.status || 'pending';
+  const needsAttention = documentNeedsAttention(document);
+  
+  if (needsAttention) {
+    return <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Requires Attention</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>;
+  }
   
   switch (status) {
     case 'approved':

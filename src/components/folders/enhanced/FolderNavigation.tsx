@@ -10,6 +10,7 @@ import {
   filterDocumentsByClient,
   filterFoldersByClient
 } from "./hooks/utils/clientExtractionUtils";
+import { createDocumentHierarchy } from "./utils/documentUtils";
 
 interface FolderNavigationProps {
   folders: FolderStructure[];
@@ -38,6 +39,9 @@ export function FolderNavigation({
   expandedFolders,
   setExpandedFolders
 }: FolderNavigationProps) {
+  // Process documents to create hierarchy
+  const processedDocuments = createDocumentHierarchy(documents || []);
+  
   // Get drag and drop functionality from hook
   const {
     dragOverFolder,
@@ -46,12 +50,12 @@ export function FolderNavigation({
     handleDragLeave,
     handleDrop,
     setExpandedFoldersFunction
-  } = useFolderDragDrop(documents);
+  } = useFolderDragDrop(processedDocuments);
   
   // Get folder expansion functionality from hook
   const { toggleFolder, form47Documents } = useFolderExpansion(
     folders,
-    documents,
+    processedDocuments,
     expandedFolders,
     setExpandedFolders
   );
@@ -60,10 +64,10 @@ export function FolderNavigation({
   setExpandedFoldersFunction(setExpandedFolders);
   
   // Extract unique clients from documents using our utility function
-  const clients = extractClientsFromDocuments(documents);
+  const clients = extractClientsFromDocuments(processedDocuments);
 
   // Filter documents based on selected client using our utility function
-  const filteredDocuments = filterDocumentsByClient(documents, selectedClientId);
+  const filteredDocuments = filterDocumentsByClient(processedDocuments, selectedClientId);
 
   // Filter folders based on selected client using our utility function
   const filteredFolders = filterFoldersByClient(folders, filteredDocuments, selectedClientId);

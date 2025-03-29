@@ -127,7 +127,7 @@ export const FolderItem = ({
         <FolderContextMenu
           isExpanded={isExpanded}
           isFolderLocked={isFolderLocked}
-          onToggleExpand={(e) => toggleFolder(folder.id, e as any)}
+          onToggleExpand={() => toggleFolder(folder.id, {} as React.MouseEvent)}
           onRenameClick={handleDoubleClick}
           onLockClick={handleLockFolder}
           onCommentClick={handleAddComment}

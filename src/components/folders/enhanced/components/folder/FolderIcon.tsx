@@ -1,5 +1,5 @@
 
-import { Folder, FolderOpen, FileText, Users } from "lucide-react";
+import { Folder, FolderOpen, FileText, Users, Hash, FileCheck } from "lucide-react";
 
 interface FolderIconProps {
   type: string;
@@ -7,17 +7,22 @@ interface FolderIconProps {
 }
 
 export const FolderIcon = ({ type, isExpanded }: FolderIconProps) => {
-  if (type === 'client') {
-    return isExpanded ? 
-      <Users className="h-4 w-4 text-blue-500 mr-2" /> : 
-      <Users className="h-4 w-4 text-muted-foreground mr-2" />;
-  } else if (type === 'form') {
-    return isExpanded ? 
-      <FileText className="h-4 w-4 text-green-500 mr-2" /> : 
-      <FileText className="h-4 w-4 text-muted-foreground mr-2" />;
-  } else {
-    return isExpanded ? 
-      <FolderOpen className="h-4 w-4 text-primary mr-2" /> : 
-      <Folder className="h-4 w-4 text-muted-foreground mr-2" />;
+  switch (type) {
+    case 'client':
+      return isExpanded ? 
+        <Users className="h-4 w-4 text-blue-500 mr-2" /> : 
+        <Users className="h-4 w-4 text-muted-foreground mr-2" />;
+    case 'estate':
+      return isExpanded ? 
+        <Hash className="h-4 w-4 text-purple-500 mr-2" /> : 
+        <Hash className="h-4 w-4 text-muted-foreground mr-2" />;
+    case 'form':
+      return isExpanded ? 
+        <FileCheck className="h-4 w-4 text-green-500 mr-2" /> : 
+        <FileCheck className="h-4 w-4 text-muted-foreground mr-2" />;
+    default:
+      return isExpanded ? 
+        <FolderOpen className="h-4 w-4 text-primary mr-2" /> : 
+        <Folder className="h-4 w-4 text-muted-foreground mr-2" />;
   }
 };
