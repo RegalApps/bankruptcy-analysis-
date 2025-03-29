@@ -36,27 +36,16 @@ export const ClientViewer = (props: ClientViewerProps) => {
     });
   };
   
-  // Ensure the onBack callback doesn't trigger navigation to wrong routes
-  const handleBack = () => {
-    console.log("ClientViewer: Back button clicked");
-    if (props.onBack) {
-      // Prevent default navigation behavior if needed
-      const event = { preventDefault: () => console.log("Preventing default navigation") };
-      props.onBack();
-    }
-  };
-  
   // Always use the template mode which is more reliable and has better layout
   return useTemplate || hasError ? (
     <ClientTemplate 
       clientId={props.clientId} 
-      onBack={handleBack}
+      onBack={props.onBack}
       onDocumentOpen={props.onDocumentOpen}
     />
   ) : (
     <ClientViewerContainer 
       {...props} 
-      onBack={handleBack}
       onError={handleError}
     />
   );

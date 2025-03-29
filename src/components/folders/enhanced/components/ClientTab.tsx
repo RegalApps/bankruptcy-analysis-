@@ -43,21 +43,6 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     }
   }, [clientId]);
   
-  // Safe back navigation that stays on current route
-  const handleBack = useCallback(() => {
-    console.log("ClientTab: Back button clicked, current path:", location.pathname);
-    
-    // Stay on the current page but clear client selection
-    if (location.pathname === '/documents') {
-      console.log("ClientTab: Staying on documents page");
-      onBack();
-      // Prevent default navigation
-      return;
-    }
-    
-    onBack();
-  }, [location.pathname, onBack]);
-  
   useEffect(() => {
     console.log("ClientTab: Client ID changed to", clientId);
     setLoadError(false);
@@ -175,21 +160,31 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
       try {
         const currentPath = location.pathname || '';
         
-        // Stay on current path when opening document
-        console.log(`Staying on '${currentPath}' when opening document`);
+        // Default to home if we can't determine current path
+        let targetPath = '/';
         
-        // Just pass the document ID to be handled by the parent component
-        if (onDocumentOpen) {
-          onDocumentOpen(documentId);
+        // Check if we're in a documents page
+        if (currentPath.includes('/documents')) {
+          targetPath = '/documents';
         }
+        
+        console.log(`Navigating from '${currentPath}' to '${targetPath}' with document state`);
+        
+        navigate(targetPath, { 
+          state: { 
+            selectedDocument: documentId,
+            source: 'client-tab',
+            isForm47: isForm47,
+            documentTitle: documentTitle
+          },
+          replace: false  // Using replace: false to make sure we don't break history
+        });
       } catch (navError) {
         console.error("Navigation error:", navError);
-        toast.error("Error opening document");
+        toast.error("Error navigating to document view");
         
-        // Fallback to direct document opening
-        if (onDocumentOpen) {
-          onDocumentOpen(documentId);
-        }
+        // Fallback to direct navigation
+        navigate('/', { replace: true });
       }
     }
   };
@@ -200,7 +195,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
   return (
     <ClientTemplate 
       clientId={effectiveClientId}
-      onBack={handleBack}
+      onBack={onBack}
       onDocumentOpen={handleDocumentOpen}
     />
   );
