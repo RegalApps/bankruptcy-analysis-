@@ -1,4 +1,3 @@
-
 import { Document } from "@/components/DocumentList/types";
 import { FolderStructure } from "@/types/folders";
 
@@ -141,4 +140,26 @@ export function flattenFolderStructure(folders: FolderStructure[]): FolderStruct
   }
   
   return result;
+}
+
+/**
+ * Check if a document is locked for editing
+ */
+export function isDocumentLocked(document: Document): boolean {
+  if (!document) return false;
+  
+  // Document is locked if explicitly marked as locked
+  if (document.metadata?.locked === true) return true;
+  
+  // Document is locked if it's a system document
+  if (document.metadata?.system === true) return true;
+  
+  // Document is locked if it's in a specific state that requires protection
+  if (document.metadata?.status === 'approved' || 
+      document.metadata?.status === 'submitted' ||
+      document.metadata?.status === 'filed') {
+    return true;
+  }
+  
+  return false;
 }
