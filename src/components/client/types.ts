@@ -2,11 +2,16 @@
 export interface Client {
   id: string;
   name: string;
+  status: string;
+  location: string;
   email?: string;
   phone?: string;
-  status: 'active' | 'inactive' | 'pending';
+  metrics: {
+    openTasks: number;
+    pendingDocuments: number;
+    urgentDeadlines: number;
+  };
   last_interaction?: string;
-  engagement_score?: number;
 }
 
 export interface Document {
@@ -15,35 +20,22 @@ export interface Document {
   type: string;
   created_at: string;
   updated_at: string;
-  is_folder?: boolean;
-  folder_type?: string;
-  parent_folder_id?: string;
-  metadata?: {
-    client_name?: string;
-    storage_path?: string;
-    [key: string]: any;
-  };
+  metadata?: Record<string, any>;
 }
 
 export interface ClientViewerProps {
   clientId: string;
-  onBack: () => void;
+  onBack?: () => void;
   onDocumentOpen?: (documentId: string) => void;
   onError?: () => void;
 }
 
-export interface FolderStructure {
+export interface Task {
   id: string;
-  name: string;
-  type: 'client' | 'form' | 'financial' | 'general';
-  title?: string;
-  children: FolderStructure[];
-  parentId?: string;
-  parent_folder_id?: string;
-  isExpanded: boolean;
-  level: number;
-  metadata: Record<string, any>;
-  created_at?: string;
-  updated_at?: string;
-  is_folder?: boolean;
+  title: string;
+  description?: string;
+  dueDate: string;
+  status: 'pending' | 'completed' | 'overdue';
+  priority: 'low' | 'medium' | 'high';
+  assignedTo?: string;
 }

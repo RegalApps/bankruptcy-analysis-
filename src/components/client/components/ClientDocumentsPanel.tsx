@@ -79,11 +79,6 @@ export const ClientDocumentsPanel: React.FC<ClientDocumentsPanelProps> = ({
   
   return (
     <div className="h-full flex flex-col p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Documents</h2>
-        <Button size="sm">Upload Document</Button>
-      </div>
-      
       <div className="mb-4 flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -95,18 +90,20 @@ export const ClientDocumentsPanel: React.FC<ClientDocumentsPanelProps> = ({
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid grid-cols-3">
-              <TabsTrigger value="all" onClick={() => setCategoryFilter(null)}>All</TabsTrigger>
-              <TabsTrigger value="forms" onClick={() => setCategoryFilter("Forms")}>Forms</TabsTrigger>
-              <TabsTrigger value="financial" onClick={() => setCategoryFilter("Financial")}>Financial</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button size="sm">Upload Document</Button>
+      </div>
+      
+      <div className="mb-4 flex flex-col sm:flex-row gap-2">
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid grid-cols-3">
+            <TabsTrigger value="all" onClick={() => setCategoryFilter(null)}>All</TabsTrigger>
+            <TabsTrigger value="forms" onClick={() => setCategoryFilter("Forms")}>Forms</TabsTrigger>
+            <TabsTrigger value="financial" onClick={() => setCategoryFilter("Financial")}>Financial</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Button variant="outline" size="icon">
+          <Filter className="h-4 w-4" />
+        </Button>
       </div>
       
       <ScrollArea className="flex-1">
