@@ -3,9 +3,10 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { FileText, Mic, MicOff, Download, ExternalLink } from "lucide-react";
+import { FileText, Mic, MicOff, ExternalLink } from "lucide-react";
 import { useTranscription } from "./notes/useTranscription";
 import { Badge } from "@/components/ui/badge";
+import { NotesControls } from "./notes/NotesControls";
 
 export const MeetingNotes = () => {
   const {
@@ -16,11 +17,15 @@ export const MeetingNotes = () => {
     activeTab,
     setActiveTab,
     toggleRecording,
-    exportNotes
+    saveNotes,
+    printNotes,
+    exportPdf,
+    exportNotes,
+    contentRef
   } = useTranscription();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={contentRef}>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold">Meeting Notes</h2>
@@ -165,12 +170,15 @@ export const MeetingNotes = () => {
       </Tabs>
       
       {(transcription || summary || (actionItems && actionItems.length > 0)) && (
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={exportNotes} className="flex items-center gap-1">
-            <Download className="h-4 w-4" />
-            Export Notes
-          </Button>
-        </div>
+        <NotesControls 
+          isRecording={isRecording}
+          toggleRecording={toggleRecording}
+          hasTranscription={!!transcription}
+          onExportNotes={exportNotes}
+          onSaveNotes={saveNotes}
+          onPrintNotes={printNotes}
+          onExportPdf={exportPdf}
+        />
       )}
     </div>
   );

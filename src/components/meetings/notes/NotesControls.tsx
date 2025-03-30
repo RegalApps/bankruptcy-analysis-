@@ -1,5 +1,5 @@
 
-import { Mic, MicOff, FileText } from "lucide-react";
+import { Mic, MicOff, FileText, Save, Printer, FileArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NotesControlsProps {
@@ -7,13 +7,19 @@ interface NotesControlsProps {
   toggleRecording: () => void;
   hasTranscription: boolean;
   onExportNotes: () => void;
+  onSaveNotes: () => void;
+  onPrintNotes: () => void;
+  onExportPdf: () => void;
 }
 
 export const NotesControls = ({ 
   isRecording, 
   toggleRecording, 
   hasTranscription, 
-  onExportNotes 
+  onExportNotes,
+  onSaveNotes,
+  onPrintNotes,
+  onExportPdf
 }: NotesControlsProps) => {
   return (
     <div className="flex items-center justify-between">
@@ -27,14 +33,43 @@ export const NotesControls = ({
       </Button>
       
       {hasTranscription && (
-        <Button 
-          variant="outline" 
-          onClick={onExportNotes}
-          className="flex items-center gap-2"
-        >
-          <FileText className="h-4 w-4" />
-          Export Notes
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={onSaveNotes}
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save Notes
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={onPrintNotes}
+            className="flex items-center gap-2"
+          >
+            <Printer className="h-4 w-4" />
+            Print
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={onExportPdf}
+            className="flex items-center gap-2"
+          >
+            <FileArrowDown className="h-4 w-4" />
+            Export PDF
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={onExportNotes}
+            className="flex items-center gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Export Text
+          </Button>
+        </div>
       )}
     </div>
   );
