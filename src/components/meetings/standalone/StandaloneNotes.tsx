@@ -1,10 +1,9 @@
-
 import React, { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Save, Copy, Printer, FileArrowDown } from "lucide-react";
+import { FileText, Save, Copy, Printer, Download } from "lucide-react";
 import { jsPDF } from "jspdf";
 
 export const StandaloneNotes = () => {
@@ -208,7 +207,7 @@ ${lastEntry.actionItems.map((item: string, i: number) => `${i + 1}. ${item}`).jo
               onClick={handleExportPdf}
               className="flex items-center gap-1"
             >
-              <FileArrowDown className="h-4 w-4" />
+              <Download className="h-4 w-4" />
               PDF
             </Button>
             

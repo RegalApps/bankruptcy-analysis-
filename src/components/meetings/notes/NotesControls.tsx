@@ -1,5 +1,5 @@
 
-import { Mic, MicOff, FileText, Save, Printer, FileArrowDown } from "lucide-react";
+import { Mic, MicOff, FileText, Save, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NotesControlsProps {
@@ -57,7 +57,7 @@ export const NotesControls = ({
             onClick={onExportPdf}
             className="flex items-center gap-2"
           >
-            <FileArrowDown className="h-4 w-4" />
+            <Download className="h-4 w-4" />
             Export PDF
           </Button>
           
