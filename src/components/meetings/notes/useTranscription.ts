@@ -1,8 +1,7 @@
 
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { jsPDF } from "jspdf";
-import 'jspdf-autotable';
+import { printNotes, exportAsPdf, exportAsText, copyToClipboard } from "../utils/exportUtils";
 
 export const useTranscription = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -100,178 +99,22 @@ export const useTranscription = () => {
       description: "Meeting notes have been saved successfully.",
     });
   };
+
+  // Use the new utility functions for exporting and printing
+  const copyNotes = () => {
+    copyToClipboard(transcription);
+  };
   
-  const printNotes = () => {
-    const printWindow = window.open('', '_blank');
-    
-    if (printWindow) {
-      const currentDate = new Date().toLocaleDateString();
-      const content = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Meeting Notes - ${currentDate}</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
-            h1, h2 { color: #333; }
-            .section { margin-bottom: 30px; }
-            .action-item { margin: 10px 0; padding-left: 20px; position: relative; }
-            .action-item:before { content: "•"; position: absolute; left: 0; }
-          </style>
-        </head>
-        <body>
-          <h1>Meeting Notes - ${currentDate}</h1>
-          
-          <div class="section">
-            <h2>Transcription</h2>
-            <p>${transcription.replace(/\n/g, '<br>')}</p>
-          </div>
-          
-          ${summary ? `
-          <div class="section">
-            <h2>Summary</h2>
-            <p>${summary}</p>
-          </div>
-          ` : ''}
-          
-          ${actionItems.length > 0 ? `
-          <div class="section">
-            <h2>Action Items</h2>
-            ${actionItems.map(item => `<div class="action-item">${item}</div>`).join('')}
-          </div>
-          ` : ''}
-        </body>
-        </html>
-      `;
-      
-      printWindow.document.open();
-      printWindow.document.write(content);
-      printWindow.document.close();
-      
-      // Wait for content to load then print
-      printWindow.onload = function() {
-        printWindow.print();
-      };
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Print failed",
-        description: "Unable to open print window. Check your browser settings.",
-      });
-    }
-    
-    toast({
-      title: "Print initiated",
-      description: "Print dialog should appear shortly.",
-    });
+  const printNotesHandler = () => {
+    printNotes(transcription);
   };
   
   const exportPdf = () => {
-    try {
-      const doc = new jsPDF();
-      const currentDate = new Date().toLocaleDateString();
-      
-      // Add title
-      doc.setFontSize(20);
-      doc.text(`Meeting Notes - ${currentDate}`, 20, 20);
-      
-      // Add transcription
-      if (transcription) {
-        doc.setFontSize(16);
-        doc.text('Transcription', 20, 40);
-        doc.setFontSize(12);
-        
-        // Split text into lines that fit on the page
-        const splitTranscription = doc.splitTextToSize(transcription, 170);
-        doc.text(splitTranscription, 20, 50);
-      }
-      
-      // Add summary on a new page if needed
-      if (summary) {
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.text('Summary', 20, 20);
-        doc.setFontSize(12);
-        const splitSummary = doc.splitTextToSize(summary, 170);
-        doc.text(splitSummary, 20, 30);
-      }
-      
-      // Add action items
-      if (actionItems.length > 0) {
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.text('Action Items', 20, 20);
-        doc.setFontSize(12);
-        
-        // Using jspdf-autotable for better formatting
-        const tableData = actionItems.map((item, index) => [`${index + 1}`, item]);
-        
-        (doc as any).autoTable({
-          startY: 30,
-          head: [['No.', 'Task']],
-          body: tableData,
-          theme: 'grid',
-          headStyles: { fillColor: [66, 139, 202] }
-        });
-      }
-      
-      // Save PDF
-      doc.save(`meeting-notes-${currentDate.replace(/\//g, '-')}.pdf`);
-      
-      toast({
-        title: "PDF exported",
-        description: "Meeting notes have been exported as PDF.",
-      });
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      toast({
-        variant: "destructive",
-        title: "Export failed",
-        description: "There was a problem generating the PDF.",
-      });
-    }
+    exportAsPdf(transcription, undefined, summary, actionItems);
   };
   
   const exportNotes = () => {
-    try {
-      // Create a text file with all notes
-      const currentDate = new Date().toLocaleDateString();
-      const content = `
-MEETING NOTES - ${currentDate}
-
-TRANSCRIPTION:
-${transcription}
-
-${summary ? `SUMMARY:
-${summary}
-
-` : ''}${actionItems.length > 0 ? `ACTION ITEMS:
-${actionItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}` : ''}
-`;
-      
-      // Create and download the text file
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `meeting-notes-${currentDate.replace(/\//g, '-')}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Notes exported",
-        description: "Meeting notes have been exported as a text file.",
-      });
-    } catch (error) {
-      console.error('Export error:', error);
-      toast({
-        variant: "destructive",
-        title: "Export failed",
-        description: "There was a problem exporting the notes.",
-      });
-    }
+    exportAsText(transcription, undefined, summary, actionItems);
   };
   
   return {
@@ -283,9 +126,10 @@ ${actionItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}` : ''}
     setActiveTab,
     toggleRecording,
     saveNotes,
-    printNotes,
+    printNotes: printNotesHandler,
     exportPdf,
     exportNotes,
+    copyNotes,
     contentRef
   };
 };
