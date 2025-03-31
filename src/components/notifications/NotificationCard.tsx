@@ -53,7 +53,7 @@ export const NotificationCard = ({ notification, onMarkAsRead }: NotificationCar
           "p-2 rounded-full",
           notification.priority === 'high' 
             ? "bg-destructive/10 text-destructive" 
-            : `${categorySettings.bgColor} ${categorySettings.color}`
+            : `${categorySettings?.bgColor || ''} ${categorySettings?.color || ''}`
         )}>
           <Icon className="h-5 w-5" />
         </div>
