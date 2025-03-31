@@ -234,7 +234,6 @@ export const MeetingFeedbackForm = ({
       setIsCompleted(true);
       
       toast({
-        title: "Feedback submitted",
         description: "Thank you for your valuable feedback!",
       });
       
@@ -248,7 +247,6 @@ export const MeetingFeedbackForm = ({
     } catch (error) {
       console.error("Error submitting feedback:", error);
       toast({
-        title: "Submission failed",
         description: "Unable to submit your feedback. Please try again.",
         variant: "destructive"
       });
