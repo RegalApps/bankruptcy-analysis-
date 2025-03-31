@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { Video, Plus, FileText, ClipboardList } from "lucide-react";
+import { Video, Plus, FileText, ClipboardList, Share } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ShareButton } from "./share/ShareButton";
 
 interface MeetingsHeaderProps {
   activeTab: "upcoming" | "join" | "notes" | "analytics" | "agenda";
@@ -57,6 +58,11 @@ export const MeetingsHeader = ({ activeTab, setActiveTab, isActiveCall = false }
             <span>Agenda</span>
           </Button>
         )}
+        
+        <ShareButton 
+          meetingId="current-meeting" 
+          meetingTitle="Weekly Status Meeting" 
+        />
         
         <Button 
           size="sm" 

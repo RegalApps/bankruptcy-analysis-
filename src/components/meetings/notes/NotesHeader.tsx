@@ -1,7 +1,8 @@
 
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { ShareButton } from "../share/ShareButton";
 
 interface NotesHeaderProps {
   title: string;
@@ -25,7 +26,6 @@ export const NotesHeader = ({ title, isStandalone }: NotesHeaderProps) => {
       }
     } else {
       toast({
-        title: "Popup Blocked",
         description: "Please allow popups for this site to open the notes in a new window.",
         variant: "destructive"
       });
@@ -36,17 +36,24 @@ export const NotesHeader = ({ title, isStandalone }: NotesHeaderProps) => {
     <div className="flex items-center justify-between">
       <h2 className="text-xl font-semibold leading-tight">{title}</h2>
       
-      {!isStandalone && (
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={openInNewWindow}
-          className="flex items-center gap-1"
-        >
-          <ExternalLink className="h-4 w-4" />
-          <span>Open in New Window</span>
-        </Button>
-      )}
+      <div className="flex items-center gap-2">
+        {!isStandalone && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={openInNewWindow}
+            className="flex items-center gap-1"
+          >
+            <ExternalLink className="h-4 w-4" />
+            <span>Open in New Window</span>
+          </Button>
+        )}
+        
+        <ShareButton 
+          meetingId="current-meeting" 
+          meetingTitle={title} 
+        />
+      </div>
     </div>
   );
 };

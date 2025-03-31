@@ -7,16 +7,43 @@ export const useNotes = () => {
   const [notes, setNotes] = useState<string>("");
   const { toast } = useToast();
   
+  // Parse meeting ID from URL if available
+  const getMeetingIdFromUrl = (): string | null => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('meeting');
+    }
+    return null;
+  };
+  
   // Load notes from localStorage on component mount
   useEffect(() => {
-    const savedNotes = localStorage.getItem("standalone-notes");
-    if (savedNotes) {
-      setNotes(savedNotes);
+    // Check if we have a meeting ID in the URL
+    const meetingId = getMeetingIdFromUrl();
+    
+    // If we have a meeting ID, try to load shared notes
+    if (meetingId) {
+      const sharedNotes = localStorage.getItem(`meeting-notes-${meetingId}`);
+      if (sharedNotes) {
+        setNotes(sharedNotes);
+      } else {
+        setNotes("Notes for this meeting will appear here once they've been saved by the organizer.");
+      }
+    } else {
+      // No meeting ID - load local notes
+      const savedNotes = localStorage.getItem("standalone-notes");
+      if (savedNotes) {
+        setNotes(savedNotes);
+      }
     }
     
     // Set up storage event listener to sync notes between windows
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "standalone-notes" && e.newValue) {
+      const meetingId = getMeetingIdFromUrl();
+      
+      if (meetingId && e.key === `meeting-notes-${meetingId}` && e.newValue) {
+        setNotes(e.newValue);
+      } else if (!meetingId && e.key === "standalone-notes" && e.newValue) {
         setNotes(e.newValue);
       }
     };
@@ -34,12 +61,20 @@ export const useNotes = () => {
   };
   
   const handleSaveNotes = () => {
+    const meetingId = getMeetingIdFromUrl();
+    
+    // If we have a meeting ID, save to that specific key
+    if (meetingId) {
+      localStorage.setItem(`meeting-notes-${meetingId}`, notes);
+    }
+    
+    // Save to the regular standalone notes storage
     localStorage.setItem("standalone-notes", notes);
-    // Also save to the regular notes storage for sync with main app
+    
+    // Also save to the meeting notes storage for sync with main app
     localStorage.setItem("meeting-notes", notes);
     
     toast({
-      title: "Notes saved",
       description: "Your notes have been saved successfully.",
     });
   };
@@ -67,6 +102,7 @@ export const useNotes = () => {
     handleCopyNotes,
     handlePrintNotes,
     handleExportPdf,
-    handleExportText
+    handleExportText,
+    isSharedMeeting: !!getMeetingIdFromUrl()
   };
 };
