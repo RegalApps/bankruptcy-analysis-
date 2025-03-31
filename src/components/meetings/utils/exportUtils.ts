@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import { toast } from "@/hooks/use-toast";
 import 'jspdf-autotable';
@@ -8,7 +7,7 @@ export const printNotes = (content: string) => {
   
   if (printWindow) {
     const currentDate = new Date().toLocaleDateString();
-    const content = `
+    const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -33,7 +32,7 @@ export const printNotes = (content: string) => {
     `;
     
     printWindow.document.open();
-    printWindow.document.write(content);
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
     
     // Wait for content to load then print
