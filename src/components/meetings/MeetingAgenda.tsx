@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,18 @@ export const MeetingAgenda = () => {
   const [newItemText, setNewItemText] = useState('');
   const [newItemTime, setNewItemTime] = useState('5');
   const { toast } = useToast();
+
+  // Load saved agenda if available
+  useEffect(() => {
+    const savedAgenda = localStorage.getItem('meeting-agenda');
+    if (savedAgenda) {
+      try {
+        setAgendaItems(JSON.parse(savedAgenda));
+      } catch (error) {
+        console.error("Failed to parse saved agenda:", error);
+      }
+    }
+  }, []);
 
   const handleAddItem = () => {
     if (!newItemText.trim()) return;
@@ -53,12 +65,24 @@ export const MeetingAgenda = () => {
   };
   
   const handleSave = () => {
-    // In a real app, this would save to a database
     localStorage.setItem('meeting-agenda', JSON.stringify(agendaItems));
     toast({
       title: "Agenda saved",
       description: "Your meeting agenda has been saved successfully",
     });
+  };
+
+  const openStandaloneWindow = () => {
+    const features = 'width=500,height=700,resizable=yes,scrollbars=yes';
+    const agendaWindow = window.open('/meetings/agenda-standalone', 'meetingAgenda', features);
+    
+    if (!agendaWindow) {
+      toast({
+        variant: "destructive",
+        title: "Popup Blocked",
+        description: "Please allow popups for this site to open the agenda in a new window.",
+      });
+    }
   };
   
   // Calculate estimated remaining time
@@ -94,7 +118,7 @@ export const MeetingAgenda = () => {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => window.open('/meetings/agenda-standalone', '_blank')}
+            onClick={openStandaloneWindow}
             className="flex items-center gap-1"
           >
             <ExternalLink className="h-4 w-4" />

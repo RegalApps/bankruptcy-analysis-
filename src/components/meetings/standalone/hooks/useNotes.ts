@@ -13,14 +13,31 @@ export const useNotes = () => {
     if (savedNotes) {
       setNotes(savedNotes);
     }
+    
+    // Set up storage event listener to sync notes between windows
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "standalone-notes" && e.newValue) {
+        setNotes(e.newValue);
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
   
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNotes(e.target.value);
+    const newNotes = e.target.value;
+    setNotes(newNotes);
   };
   
   const handleSaveNotes = () => {
     localStorage.setItem("standalone-notes", notes);
+    // Also save to the regular notes storage for sync with main app
+    localStorage.setItem("meeting-notes", notes);
+    
     toast({
       title: "Notes saved",
       description: "Your notes have been saved successfully.",

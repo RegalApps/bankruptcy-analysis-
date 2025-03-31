@@ -31,12 +31,37 @@ export const MeetingsDashboard = () => {
 
   const openNotesWindow = () => {
     const features = 'width=800,height=700,resizable=yes,scrollbars=yes';
-    window.open('/meetings/notes-standalone', 'meetingNotes', features);
+    const notesWindow = window.open('/meetings/notes-standalone', 'meetingNotes', features);
+    
+    if (notesWindow) {
+      notesWindow.focus();
+      // Store current notes in localStorage to make them available in the new window
+      const currentNotes = localStorage.getItem('meeting-notes');
+      if (currentNotes) {
+        localStorage.setItem('standalone-notes', currentNotes);
+      }
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Popup Blocked",
+        description: "Please allow popups for this site to open the notes in a new window.",
+      });
+    }
   };
 
   const openAgendaWindow = () => {
     const features = 'width=500,height=700,resizable=yes,scrollbars=yes';
-    window.open('/meetings/agenda-standalone', 'meetingAgenda', features);
+    const agendaWindow = window.open('/meetings/agenda-standalone', 'meetingAgenda', features);
+    
+    if (agendaWindow) {
+      agendaWindow.focus();
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Popup Blocked",
+        description: "Please allow popups for this site to open the agenda in a new window.",
+      });
+    }
   };
 
   const startActiveCallMode = () => {

@@ -30,6 +30,23 @@ export const StandaloneAgenda = () => {
         console.error("Failed to parse saved agenda:", error);
       }
     }
+    
+    // Set up storage event listener to sync with main app
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "meeting-agenda" && e.newValue) {
+        try {
+          setAgendaItems(JSON.parse(e.newValue));
+        } catch (error) {
+          console.error("Failed to parse updated agenda:", error);
+        }
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
   
   // Save agenda items to localStorage whenever they change

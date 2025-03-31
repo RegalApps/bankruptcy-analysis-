@@ -17,6 +17,12 @@ export const NotesHeader = ({ title, isStandalone }: NotesHeaderProps) => {
     
     if (notesWindow) {
       notesWindow.focus();
+      
+      // Transfer current notes to the standalone window via localStorage
+      const currentNotes = localStorage.getItem('meeting-notes');
+      if (currentNotes) {
+        localStorage.setItem('standalone-notes', currentNotes);
+      }
     } else {
       toast({
         title: "Popup Blocked",

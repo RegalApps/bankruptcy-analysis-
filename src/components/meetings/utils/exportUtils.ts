@@ -1,5 +1,6 @@
+
 import { jsPDF } from "jspdf";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import 'jspdf-autotable';
 
 export const printNotes = (content: string) => {
@@ -18,6 +19,11 @@ export const printNotes = (content: string) => {
           .section { margin-bottom: 30px; }
           .action-item { margin: 10px 0; padding-left: 20px; position: relative; }
           .action-item:before { content: "•"; position: absolute; left: 0; }
+          @media print {
+            body { font-size: 12pt; }
+            h1 { font-size: 18pt; }
+            h2 { font-size: 16pt; }
+          }
         </style>
       </head>
       <body>
@@ -159,9 +165,17 @@ export const exportAsText = (content: string, title?: string, summary?: string, 
 };
 
 export const copyToClipboard = (content: string) => {
-  navigator.clipboard.writeText(content);
-  toast({
-    title: "Copied to clipboard",
-    description: "Meeting notes copied to clipboard successfully.",
+  navigator.clipboard.writeText(content).then(() => {
+    toast({
+      title: "Copied to clipboard",
+      description: "Meeting notes copied to clipboard successfully.",
+    });
+  }).catch(err => {
+    console.error('Copy to clipboard failed:', err);
+    toast({
+      variant: "destructive",
+      title: "Copy failed",
+      description: "Unable to copy to clipboard. Try again or use another method.",
+    });
   });
 };
