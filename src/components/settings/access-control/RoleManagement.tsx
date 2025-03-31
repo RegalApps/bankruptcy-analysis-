@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Table, 
   TableBody, 
@@ -61,6 +60,10 @@ interface UserWithRole {
   status: 'active' | 'invited' | 'inactive';
 }
 
+interface RoleManagementProps {
+  newUsers?: any[];
+}
+
 // Map role to appropriate icon
 const getRoleIcon = (role: UserRole) => {
   switch (role) {
@@ -101,15 +104,16 @@ const formatRoleName = (role: UserRole): string => {
   }
 };
 
-export const RoleManagement = () => {
+export const RoleManagement: React.FC<RoleManagementProps> = ({ newUsers = [] }) => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserWithRole | null>(null);
+  const [users, setUsers] = useState<UserWithRole[]>([]);
 
   // Mock user data
-  const users: UserWithRole[] = [
+  const initialUsers: UserWithRole[] = [
     {
       id: '1',
       name: 'Jane Smith',
@@ -175,6 +179,21 @@ export const RoleManagement = () => {
     },
   ];
 
+  // Initialize users with initial data
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, []);
+
+  // Add new users when they are received from props
+  useEffect(() => {
+    if (newUsers && newUsers.length > 0) {
+      const latestNewUser = newUsers[newUsers.length - 1];
+      if (latestNewUser && !users.some(user => user.id === latestNewUser.id)) {
+        setUsers(prevUsers => [...prevUsers, latestNewUser]);
+      }
+    }
+  }, [newUsers, users]);
+
   // Filter users based on search term
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -188,11 +207,19 @@ export const RoleManagement = () => {
 
   const handleSaveUser = () => {
     if (currentUser) {
-      // In a real app, save to database
+      // Update the user in the users array
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === currentUser.id ? currentUser : user
+        )
+      );
+      
+      // Show success toast
       toast({
         title: "User updated",
         description: `${currentUser.name}'s role has been updated to ${formatRoleName(currentUser.role)}`,
       });
+      
       setEditDialogOpen(false);
     }
   };
@@ -213,20 +240,50 @@ export const RoleManagement = () => {
     }
   };
 
+  const handleDeleteUser = (userId: string, userName: string) => {
+    // Remove user from the users array
+    setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+    
+    // Update selected users if needed
+    setSelectedUsers(prev => prev.filter(id => id !== userId));
+    
+    // Show success toast
+    toast({
+      title: "User deleted",
+      description: `${userName} has been removed from the system`,
+    });
+  };
+
   const handleBulkAction = (action: 'activate' | 'deactivate' | 'delete') => {
-    // In a real app, perform bulk action on selectedUsers
+    let updatedUsers = [...users];
     let message = '';
+    
     switch (action) {
       case 'activate':
+        updatedUsers = users.map(user => 
+          selectedUsers.includes(user.id) 
+            ? { ...user, status: 'active' as const } 
+            : user
+        );
         message = `${selectedUsers.length} users activated`;
         break;
+        
       case 'deactivate':
+        updatedUsers = users.map(user => 
+          selectedUsers.includes(user.id) 
+            ? { ...user, status: 'inactive' as const } 
+            : user
+        );
         message = `${selectedUsers.length} users deactivated`;
         break;
+        
       case 'delete':
+        updatedUsers = users.filter(user => !selectedUsers.includes(user.id));
         message = `${selectedUsers.length} users deleted`;
         break;
     }
+    
+    setUsers(updatedUsers);
     
     toast({
       title: "Bulk action completed",
@@ -361,12 +418,7 @@ export const RoleManagement = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => {
-                        toast({
-                          title: "User deleted",
-                          description: `${user.name} has been removed from the system`,
-                        });
-                      }}
+                      onClick={() => handleDeleteUser(user.id, user.name)}
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Delete</span>

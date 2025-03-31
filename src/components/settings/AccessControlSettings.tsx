@@ -10,11 +10,19 @@ import { AccessRequests } from "./access-control/AccessRequests";
 import { AuditLogs } from "./access-control/AuditLogs";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { AddUserDialog } from "./access-control/AddUserDialog";
 
 export const AccessControlSettings = () => {
   const [activeTab, setActiveTab] = useState("roles");
   const { toast } = useToast();
   const [pendingRequests, setPendingRequests] = useState(3);
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+
+  const handleAddUser = (userData: any) => {
+    // Add the new user to the users state
+    setUsers(prev => [...prev, userData]);
+  };
 
   return (
     <div className="space-y-6">
@@ -25,7 +33,7 @@ export const AccessControlSettings = () => {
             Manage user roles, permissions, and document access
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsAddUserDialogOpen(true)}>
           <UserPlus className="h-4 w-4 mr-2" />
           Add New User
         </Button>
@@ -65,7 +73,7 @@ export const AccessControlSettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RoleManagement />
+              <RoleManagement newUsers={users} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -128,6 +136,12 @@ export const AccessControlSettings = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AddUserDialog 
+        open={isAddUserDialogOpen}
+        onOpenChange={setIsAddUserDialogOpen}
+        onUserAdded={handleAddUser}
+      />
     </div>
   );
 };
