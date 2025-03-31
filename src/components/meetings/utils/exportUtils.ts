@@ -1,7 +1,9 @@
 
 import { jsPDF } from "jspdf";
-import { toast } from "sonner";
 import 'jspdf-autotable';
+
+// Using the toast function from the hooks directory
+import { toast } from "@/hooks/use-toast";
 
 export const printNotes = (content: string) => {
   const printWindow = window.open('', '_blank');
@@ -47,14 +49,12 @@ export const printNotes = (content: string) => {
     };
   } else {
     toast({
-      variant: "destructive",
-      title: "Print failed",
       description: "Unable to open print window. Check your browser settings.",
+      variant: "destructive",
     });
   }
   
   toast({
-    title: "Print initiated",
     description: "Print dialog should appear shortly.",
   });
 };
@@ -112,15 +112,13 @@ export const exportAsPdf = (content: string, title?: string, summary?: string, a
     doc.save(`meeting-notes-${currentDate.replace(/\//g, '-')}.pdf`);
     
     toast({
-      title: "PDF exported",
       description: "Meeting notes have been exported as PDF.",
     });
   } catch (error) {
     console.error('PDF generation error:', error);
     toast({
-      variant: "destructive",
-      title: "Export failed",
       description: "There was a problem generating the PDF.",
+      variant: "destructive",
     });
   }
 };
@@ -151,15 +149,13 @@ export const exportAsText = (content: string, title?: string, summary?: string, 
     URL.revokeObjectURL(url);
     
     toast({
-      title: "Notes exported",
       description: "Meeting notes have been exported as a text file.",
     });
   } catch (error) {
     console.error('Export error:', error);
     toast({
-      variant: "destructive",
-      title: "Export failed",
       description: "There was a problem exporting the notes.",
+      variant: "destructive",
     });
   }
 };
@@ -167,15 +163,13 @@ export const exportAsText = (content: string, title?: string, summary?: string, 
 export const copyToClipboard = (content: string) => {
   navigator.clipboard.writeText(content).then(() => {
     toast({
-      title: "Copied to clipboard",
       description: "Meeting notes copied to clipboard successfully.",
     });
   }).catch(err => {
     console.error('Copy to clipboard failed:', err);
     toast({
-      variant: "destructive",
-      title: "Copy failed",
       description: "Unable to copy to clipboard. Try again or use another method.",
+      variant: "destructive",
     });
   });
 };

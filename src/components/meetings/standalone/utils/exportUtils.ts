@@ -2,10 +2,9 @@
 import { jsPDF } from "jspdf";
 import { toast } from "@/hooks/use-toast";
 
-export const copyNotesToClipboard = (notes: string) => {
+export const copyToClipboard = (notes: string) => {
   navigator.clipboard.writeText(notes);
   toast({
-    title: "Copied to clipboard",
     description: "Meeting notes copied to clipboard successfully",
   });
 };
@@ -43,14 +42,12 @@ export const printNotes = (notes: string) => {
     };
     
     toast({
-      title: "Print initiated",
       description: "Print dialog should appear shortly.",
     });
   } else {
     toast({
-      variant: "destructive",
-      title: "Print failed",
       description: "Unable to open print window. Check your browser settings.",
+      variant: "destructive",
     });
   }
 };
@@ -73,15 +70,13 @@ export const exportAsPdf = (notes: string) => {
     doc.save(`meeting-notes-${currentDate.replace(/\//g, '-')}.pdf`);
     
     toast({
-      title: "PDF exported",
       description: "Meeting notes have been exported as PDF.",
     });
   } catch (error) {
     console.error('PDF generation error:', error);
     toast({
-      variant: "destructive",
-      title: "Export failed",
       description: "There was a problem generating the PDF.",
+      variant: "destructive",
     });
   }
 };
@@ -103,15 +98,13 @@ export const exportAsText = (notes: string) => {
     URL.revokeObjectURL(url);
     
     toast({
-      title: "Notes exported",
       description: "Meeting notes have been exported as a text file.",
     });
   } catch (error) {
     console.error('Export error:', error);
     toast({
-      variant: "destructive",
-      title: "Export failed",
       description: "There was a problem exporting the notes.",
+      variant: "destructive",
     });
   }
 };
