@@ -222,7 +222,7 @@ function App() {
                       <EFilingPage />
                     </PageTransition>
                   } />
-                  <Route path="/meetings" element={
+                  <Route path="/meetings/*" element={
                     <PageTransition>
                       <MeetingsPage />
                     </PageTransition>

@@ -11,7 +11,7 @@ const MeetingsPage = () => {
     <Routes>
       <Route path="notes-standalone" element={<NotesStandalonePage />} />
       <Route path="agenda-standalone" element={<AgendaStandalonePage />} />
-      <Route path="*" element={
+      <Route path="/" element={
         <div className="flex flex-col min-h-screen">
           <MainLayout>
             <MeetingsDashboard />
