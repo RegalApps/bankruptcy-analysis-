@@ -44,15 +44,10 @@ export const NotificationsList = ({ notifications, isLoading, onMarkAsRead }: No
         notificationIds.forEach(id => onMarkAsRead(id));
       }
       
-      toast({
-        description: "All notifications marked as read",
-      });
+      toast("All notifications marked as read");
     } catch (error) {
       console.error('Error marking all as read:', error);
-      toast({
-        description: "Failed to mark notifications as read",
-        variant: "destructive"
-      });
+      toast("Failed to mark notifications as read");
     }
   };
 

@@ -135,10 +135,7 @@ export const NotificationBell = () => {
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      toast({
-        description: "Failed to mark notification as read",
-        variant: "destructive"
-      });
+      toast("Failed to mark notification as read");
     }
   };
 

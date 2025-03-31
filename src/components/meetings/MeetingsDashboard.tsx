@@ -8,18 +8,20 @@ import { MeetingNotes } from "./MeetingNotes";
 import { MeetingAgenda } from "./MeetingAgenda";
 import { MeetingAnalytics } from "./MeetingAnalytics";
 import { MeetingReviewForm } from "./MeetingReviewForm";
+import { MeetingFeedbackDialog } from "./feedback/MeetingFeedbackDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useEnhancedAnalytics } from "@/hooks/useEnhancedAnalytics";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ExternalLink, Video, Clipboard, ListChecks, X, BarChart2 } from "lucide-react";
+import { ExternalLink, Video, Clipboard, ListChecks, X, BarChart2, MessageSquare } from "lucide-react";
 import { HotkeysProvider } from "@/hooks/useHotkeys";
 
 export const MeetingsDashboard = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "join" | "notes" | "agenda" | "analytics">("upcoming");
   const [isActiveCall, setIsActiveCall] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const { toast } = useToast();
   const analytics = useEnhancedAnalytics({ pageName: "Meetings" });
 
@@ -42,9 +44,9 @@ export const MeetingsDashboard = () => {
       }
     } else {
       toast({
-        variant: "destructive",
         title: "Popup Blocked",
         description: "Please allow popups for this site to open the notes in a new window.",
+        variant: "destructive"
       });
     }
   };
@@ -57,9 +59,9 @@ export const MeetingsDashboard = () => {
       agendaWindow.focus();
     } else {
       toast({
-        variant: "destructive",
         title: "Popup Blocked",
         description: "Please allow popups for this site to open the agenda in a new window.",
+        variant: "destructive"
       });
     }
   };
@@ -71,7 +73,7 @@ export const MeetingsDashboard = () => {
     
     toast({
       title: "Meeting Mode Activated",
-      description: "Meeting tools opened in separate windows for easy access during your call.",
+      description: "Meeting tools opened in separate windows for easy access during your call."
     });
   };
 
@@ -86,17 +88,36 @@ export const MeetingsDashboard = () => {
     // After review completion, show a toast about analytics updates
     toast({
       title: "Analytics Updated",
-      description: "Meeting data has been processed. View the Analytics tab to see insights.",
+      description: "Meeting data has been processed. View the Analytics tab to see insights."
     });
+    
+    // Prompt for client feedback
+    setTimeout(() => {
+      setShowFeedbackDialog(true);
+    }, 1000);
     
     // Switch to analytics tab to show the updated information
     setActiveTab("analytics");
   };
 
+  const handleRequestFeedback = () => {
+    setShowFeedbackDialog(true);
+    
+    toast({
+      title: "Feedback Request",
+      description: "A feedback form has been opened. You can also send this to the client via email."
+    });
+  };
+
   return (
     <HotkeysProvider>
       <div className="space-y-6 relative">
-        <MeetingsHeader activeTab={activeTab} setActiveTab={handleTabChange} isActiveCall={isActiveCall} />
+        <MeetingsHeader 
+          activeTab={activeTab} 
+          setActiveTab={handleTabChange} 
+          isActiveCall={isActiveCall} 
+          onRequestFeedback={handleRequestFeedback}
+        />
         
         <MeetingsTabs activeTab={activeTab} setActiveTab={handleTabChange} />
         
@@ -118,6 +139,15 @@ export const MeetingsDashboard = () => {
             />
           </DialogContent>
         </Dialog>
+        
+        {/* Meeting Feedback Dialog */}
+        <MeetingFeedbackDialog
+          open={showFeedbackDialog}
+          onOpenChange={setShowFeedbackDialog}
+          meetingId="recent-meeting-123"
+          meetingTitle="Weekly Team Sync"
+          clientName="John Smith"
+        />
       </div>
     </HotkeysProvider>
   );
