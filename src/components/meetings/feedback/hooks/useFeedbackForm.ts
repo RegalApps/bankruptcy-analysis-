@@ -58,7 +58,7 @@ export const useFeedbackForm = ({ meetingId, onComplete, feedbackQuestions }: Us
   
   // Check if current category is complete
   const isCategoryComplete = (category: string) => {
-    const questions = feedbackQuestions[category as keyof typeof feedbackQuestions];
+    const questions = feedbackQuestions[category];
     return questions.every(q => responses[q.id] !== undefined);
   };
   

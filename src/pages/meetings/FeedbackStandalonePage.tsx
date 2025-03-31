@@ -15,6 +15,7 @@ const FeedbackStandalonePage = () => {
   const meetingId = queryParams.get('id') || 'unknown-meeting';
   const meetingTitle = queryParams.get('title') || 'Meeting Feedback';
   const clientName = queryParams.get('client') || undefined;
+  const editMode = queryParams.get('edit') === 'true';
   
   const handleComplete = () => {
     window.close();
@@ -35,7 +36,9 @@ const FeedbackStandalonePage = () => {
       
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Meeting Feedback</CardTitle>
+          <CardTitle>
+            {editMode ? "Edit Feedback Questions" : "Meeting Feedback"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <MeetingFeedbackForm
@@ -43,6 +46,7 @@ const FeedbackStandalonePage = () => {
             meetingTitle={meetingTitle}
             clientName={clientName}
             onComplete={handleComplete}
+            editMode={editMode}
           />
         </CardContent>
       </Card>

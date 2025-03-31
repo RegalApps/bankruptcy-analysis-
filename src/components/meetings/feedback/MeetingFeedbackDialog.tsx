@@ -18,7 +18,7 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import { MeetingFeedbackForm } from "./MeetingFeedbackForm";
-import { Send, Copy, Mail } from "lucide-react";
+import { Send, Copy, Mail, Pencil } from "lucide-react";
 import { 
   shareFeedbackFormViaEmail, 
   copyFeedbackFormLink 
@@ -41,6 +41,7 @@ export const MeetingFeedbackDialog = ({
 }: MeetingFeedbackDialogProps) => {
   const [showShareOptions, setShowShareOptions] = useState(false);
   const [clientEmail, setClientEmail] = useState("");
+  const [editMode, setEditMode] = useState(false);
   
   const handleComplete = () => {
     onOpenChange(false);
@@ -68,15 +69,42 @@ export const MeetingFeedbackDialog = ({
     setShowShareOptions(false);
   };
 
+  const toggleEditMode = () => {
+    setEditMode(!editMode);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Meeting Feedback</DialogTitle>
+          <div className="flex justify-between items-center">
+            <DialogTitle>Meeting Feedback</DialogTitle>
+            {!showShareOptions && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={toggleEditMode}
+                      className={editMode ? "bg-muted" : ""}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{editMode ? "Exit edit mode" : "Edit feedback questions"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
           <DialogDescription>
             {showShareOptions 
               ? "Share this form with your client to collect their feedback" 
-              : "Your feedback helps us improve our services"}
+              : editMode 
+                ? "Customize the feedback questions for your client"
+                : "Your feedback helps us improve our services"}
           </DialogDescription>
         </DialogHeader>
         
@@ -142,6 +170,7 @@ export const MeetingFeedbackDialog = ({
               meetingTitle={meetingTitle}
               clientName={clientName}
               onComplete={handleComplete}
+              editMode={editMode}
             />
             
             <DialogFooter className="sm:justify-between">
