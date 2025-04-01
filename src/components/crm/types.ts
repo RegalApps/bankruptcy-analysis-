@@ -27,7 +27,6 @@ export interface ClientInsightData {
     type: string;
     description: string;
   }[];
-  // Add the missing properties from the error
   riskLevel?: string;
   riskScore?: number;
   complianceStatus?: string;
@@ -36,6 +35,35 @@ export interface ClientInsightData {
   nextFollowUp?: string;
   caseStatus?: string;
   assignedTrustee?: string;
+  // Add the missing properties
+  pendingTasks?: {
+    id: string;
+    title: string;
+    dueDate: string;
+    priority: string;
+  }[];
+  missingDocuments?: {
+    id: string;
+    name: string;
+    requiredBy: string;
+  }[];
+  recentActivities?: {
+    id: string;
+    type: string;
+    description: string;
+    date: string;
+  }[];
+  aiSuggestions?: {
+    id: string;
+    text: string;
+    type: string;
+  }[];
+  upcomingDeadlines?: {
+    id: string;
+    title: string;
+    date: string;
+    type: string;
+  }[];
 }
 
 export interface ClientInfo {
