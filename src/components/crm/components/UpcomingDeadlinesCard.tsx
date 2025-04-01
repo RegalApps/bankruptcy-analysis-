@@ -37,7 +37,7 @@ export const UpcomingDeadlinesCard = ({ insights }: UpcomingDeadlinesCardProps) 
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {upcomingDeadlines.length > 0 ? (
+          {upcomingDeadlines?.length > 0 ? (
             upcomingDeadlines.map((deadline) => {
               const daysRemaining = getDaysRemaining(deadline.date);
               

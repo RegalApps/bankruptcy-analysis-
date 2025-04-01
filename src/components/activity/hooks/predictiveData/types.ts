@@ -43,9 +43,64 @@ export interface ClientInsightData {
     name: string;
     completed: boolean;
   }[];
+  // Adding upcomingDeadlines field to fix the error
+  upcomingDeadlines: {
+    id: string;
+    title: string;
+    date: string;
+    priority: 'low' | 'medium' | 'high';
+  }[];
 }
 
 export interface InsightDataResponse {
   status: string;
   data: ClientInsightData;
+}
+
+// Adding missing AdvancedRiskMetrics type
+export interface AdvancedRiskMetrics {
+  riskLevel: 'low' | 'medium' | 'high';
+  overallRiskScore: number;
+  primaryRiskFactor: string;
+  detailedRiskScores: {
+    creditUtilization: number;
+    debtToIncome: number;
+    emergencyFund: number;
+    incomeStability: number;
+    expenseVolatility: number;
+  };
+  scenarioAnalysis: {
+    bestCase: {
+      surplusIncrease: string;
+      debtReduction: string;
+      timeFrame: string;
+    };
+    worstCase: {
+      surplusDecrease: string;
+      debtIncrease: string;
+      recoveryTime: string;
+    };
+  };
+  improvementSuggestions: string[];
+  opportunities: {
+    id: string;
+    type: 'saving' | 'growth';
+    title: string;
+    description: string;
+    potentialSavings?: string;
+    potentialGains?: string;
+    confidence: string;
+  }[];
+}
+
+// Adding missing PredictiveData interface
+export interface PredictiveData {
+  isLoading: boolean;
+  processedData: any[];
+  metrics: any;
+  lastRefreshed: Date | null;
+  financialRecords: any[];
+  categoryAnalysis: any[];
+  advancedRiskMetrics: AdvancedRiskMetrics | null;
+  refetch: () => void;
 }

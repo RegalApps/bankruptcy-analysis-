@@ -30,6 +30,7 @@ const ResizablePanel = React.forwardRef<
 ))
 ResizablePanel.displayName = "ResizablePanel"
 
+// Fixed type for the handle component
 const ResizableHandle = React.forwardRef<
   React.ElementRef<typeof ResizablePrimitive.PanelResizeHandle>,
   React.ComponentPropsWithoutRef<typeof ResizablePrimitive.PanelResizeHandle> & {

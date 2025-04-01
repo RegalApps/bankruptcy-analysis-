@@ -6,7 +6,7 @@ import { ClientActivityPanel } from "./components/profile/ClientActivityPanel";
 import { ClientIntelligencePanel } from "./components/profile/ClientIntelligencePanel";
 import { ClientGridView } from "./components/ClientGridView";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Info, LayoutGrid, User, Activity, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, UserPlus } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CRMTabs } from "./page/CRMTabs";
 
 interface ClientDashboardProps {
   clientId?: string;
@@ -27,6 +29,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
   const [searchQuery, setSearchQuery] = useState("");
   const [view, setView] = useState<"detail" | "grid">("detail");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("profile");
   const { insightData, isLoading, error } = useClientInsights(selectedClientId);
 
   // Mock client list - in a real app, this would come from an API
@@ -138,54 +141,132 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
   // Render detailed client profile view
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold">{selectedClientName}'s Profile</h1>
-          <Badge 
-            variant={insightData.riskLevel === "high" ? "destructive" : insightData.riskLevel === "medium" ? "outline" : "secondary"}
-            className="text-xs"
-          >
-            {insightData.riskLevel === "high" ? "At Risk" : insightData.riskLevel === "medium" ? "Needs Attention" : "Healthy"}
-          </Badge>
-        </div>
-        
-        <div className="flex gap-2">
-          <Select value={selectedClientId} onValueChange={handleClientChange}>
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="Select a client" />
-            </SelectTrigger>
-            <SelectContent>
-              {clients.map(client => (
-                <SelectItem key={client.id} value={client.id}>
-                  {client.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Main CRM Navigation Tabs */}
+      <Tabs defaultValue="client" className="w-full">
+        <TabsList className="w-full justify-start mb-6 bg-muted/30">
+          <TabsTrigger value="client" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <User className="h-4 w-4 mr-2" />
+            Client Profile
+          </TabsTrigger>
+          <TabsTrigger value="dashboard" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <LayoutGrid className="h-4 w-4 mr-2" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Activity className="h-4 w-4 mr-2" />
+            Activity
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <FileText className="h-4 w-4 mr-2" />
+            Documents
+          </TabsTrigger>
+        </TabsList>
 
-          <Button variant="outline" onClick={() => setView("grid")}>
-            View All Clients
-          </Button>
-        </div>
-      </div>
+        <TabsContent value="client" className="mt-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">{selectedClientName}'s Profile</h1>
+              <Badge 
+                variant={insightData.riskLevel === "high" ? "destructive" : insightData.riskLevel === "medium" ? "outline" : "secondary"}
+                className="text-xs"
+              >
+                {insightData.riskLevel === "high" ? "At Risk" : insightData.riskLevel === "medium" ? "Needs Attention" : "Healthy"}
+              </Badge>
+            </div>
+            
+            <div className="flex gap-2">
+              <Select value={selectedClientId} onValueChange={handleClientChange}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Select a client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map(client => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-      <ResizablePanelGroup direction="horizontal" className="min-h-[500px] rounded-lg border">
-        <ResizablePanel defaultSize={25} minSize={20}>
-          <ClientProfilePanel insights={insightData} clientName={selectedClientName} />
-        </ResizablePanel>
-        
-        <ResizableHandle withHandle />
-        
-        <ResizablePanel defaultSize={45} minSize={30}>
-          <ClientActivityPanel insights={insightData} />
-        </ResizablePanel>
-        
-        <ResizableHandle withHandle />
-        
-        <ResizablePanel defaultSize={30} minSize={20}>
-          <ClientIntelligencePanel insights={insightData} />
-        </ResizablePanel>
-      </ResizablePanelGroup>
+              <Button variant="outline" onClick={() => setView("grid")}>
+                View All Clients
+              </Button>
+            </div>
+          </div>
+
+          <ResizablePanelGroup direction="horizontal" className="min-h-[500px] rounded-lg border">
+            <ResizablePanel defaultSize={25} minSize={20}>
+              <ClientProfilePanel insights={insightData} clientName={selectedClientName} />
+            </ResizablePanel>
+            
+            <ResizableHandle withHandle />
+            
+            <ResizablePanel defaultSize={45} minSize={30}>
+              <ClientActivityPanel insights={insightData} />
+            </ResizablePanel>
+            
+            <ResizableHandle withHandle />
+            
+            <ResizablePanel defaultSize={30} minSize={20}>
+              <ClientIntelligencePanel insights={insightData} />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </TabsContent>
+
+        <TabsContent value="dashboard" className="mt-0">
+          <CRMTabs />
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-0">
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Client Activity Timeline</h2>
+            <p className="text-muted-foreground">View all interactions, communications, and events related to {selectedClientName}.</p>
+            
+            <div className="bg-card p-6 rounded-lg border">
+              <div className="space-y-4">
+                {insightData.recentActivities.map((activity, index) => (
+                  <div key={activity.id} className="flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium">{activity.action}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(activity.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="documents" className="mt-0">
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Client Documents</h2>
+            <p className="text-muted-foreground">Manage all documents related to {selectedClientName}.</p>
+            
+            <div className="bg-card p-6 rounded-lg border">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium">Missing Documents</h3>
+                  <Button size="sm" variant="outline">Upload Document</Button>
+                </div>
+                
+                <div className="grid gap-2">
+                  {insightData.missingDocuments.map((doc, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-md">
+                      <p>{doc}</p>
+                      <Button size="sm" variant="ghost">Request</Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
