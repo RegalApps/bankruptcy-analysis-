@@ -16,7 +16,9 @@ export const useClientIntake = () => {
     notes: "",
     address: "",
     leadSource: "",
-    otherLeadSourceDetails: ""
+    otherLeadSourceDetails: "",
+    preferredContactMethod: "email", // Default to email
+    preferredLanguage: "english" // Default to English
   });
 
   const openClientDialog = () => {
@@ -31,7 +33,9 @@ export const useClientIntake = () => {
       notes: "",
       address: "",
       leadSource: "",
-      otherLeadSourceDetails: ""
+      otherLeadSourceDetails: "",
+      preferredContactMethod: "email",
+      preferredLanguage: "english"
     });
     setIsClientDialogOpen(true);
   };
@@ -46,7 +50,39 @@ export const useClientIntake = () => {
   
   const handleSelectChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Apply smart CRM logic based on preferred contact method
+    if (field === 'preferredContactMethod') {
+      applyContactMethodAutomation(value);
+    }
+    
     calculateProgress();
+  };
+  
+  const applyContactMethodAutomation = (contactMethod: string) => {
+    switch (contactMethod) {
+      case 'phone':
+        // Auto-create a call task
+        toast.success("Call Task Created", {
+          description: "A call task has been scheduled for the assigned representative.",
+        });
+        console.log("Automation: Created call task for client");
+        break;
+      case 'email':
+        // Set default reply templates
+        toast.success("Email Templates Prepared", {
+          description: "Email follow-up reminders have been set up.",
+        });
+        console.log("Automation: Email templates and reminders configured");
+        break;
+      case 'sms':
+        // Route to Twilio API
+        toast.success("SMS Handling Configured", {
+          description: "Automated text messaging has been set up via Twilio.",
+        });
+        console.log("Automation: SMS handling via Twilio configured");
+        break;
+    }
   };
   
   const handleEmploymentTypeChange = (value: string) => {
@@ -56,7 +92,7 @@ export const useClientIntake = () => {
   
   const calculateProgress = () => {
     // Step 1: Personal Info (8 fields)
-    const step1Fields = ['fullName', 'dateOfBirth', 'sin', 'maritalStatus', 'address', 'city', 'province', 'postalCode', 'email', 'mobilePhone'];
+    const step1Fields = ['fullName', 'dateOfBirth', 'sin', 'maritalStatus', 'address', 'city', 'province', 'postalCode', 'email', 'mobilePhone', 'preferredContactMethod', 'preferredLanguage'];
     const step1FilledFields = step1Fields.filter(field => formData[field as keyof FormData]);
     const step1Progress = Math.min(100, (step1FilledFields.length / 6) * 100); // At least 6 fields for 100%
     

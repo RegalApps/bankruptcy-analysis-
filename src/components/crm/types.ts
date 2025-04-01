@@ -19,6 +19,8 @@ export interface FormData {
   mobilePhone?: string;
   leadSource?: string;
   otherLeadSourceDetails?: string;
+  preferredContactMethod?: string;
+  preferredLanguage?: string;
   
   // Spouse Information (if married/common-law)
   spouseName?: string;

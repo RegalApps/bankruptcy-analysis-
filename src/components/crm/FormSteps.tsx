@@ -77,6 +77,41 @@ export const FormSteps = ({
               </div>
             </div>
             
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="preferredContactMethod">How do you prefer to be contacted?</Label>
+                <Select 
+                  value={formData.preferredContactMethod} 
+                  onValueChange={(value) => handleSelectChange('preferredContactMethod', value)}
+                >
+                  <SelectTrigger id="preferredContactMethod">
+                    <SelectValue placeholder="Select contact method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="phone">Phone Call</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="sms">SMS Text Message</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="preferredLanguage">What language do you prefer to communicate in?</Label>
+                <Select 
+                  value={formData.preferredLanguage} 
+                  onValueChange={(value) => handleSelectChange('preferredLanguage', value)}
+                >
+                  <SelectTrigger id="preferredLanguage">
+                    <SelectValue placeholder="Select preferred language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="english">English</SelectItem>
+                    <SelectItem value="french">French</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="leadSource">How did you hear about us?</Label>
               <Select 

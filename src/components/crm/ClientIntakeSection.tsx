@@ -58,6 +58,26 @@ export const ClientIntakeSection = () => {
     setProgress((filledFields / Object.keys(formData).length) * 100);
   };
 
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    // Update progress based on filled fields
+    const filledFields = Object.values(formData).filter(val => val.length > 0).length;
+    setProgress((filledFields / Object.keys(formData).length) * 100);
+  };
+
+  const handleEmploymentTypeChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      employmentType: value
+    }));
+    // Update progress based on filled fields
+    const filledFields = Object.values(formData).filter(val => val.length > 0).length;
+    setProgress((filledFields / Object.keys(formData).length) * 100);
+  };
+
   const handleNextStep = async () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
@@ -180,6 +200,8 @@ export const ClientIntakeSection = () => {
                 currentStep={currentStep}
                 formData={formData}
                 handleInputChange={handleInputChange}
+                handleSelectChange={handleSelectChange}
+                handleEmploymentTypeChange={handleEmploymentTypeChange}
               />
             </Tabs>
 
