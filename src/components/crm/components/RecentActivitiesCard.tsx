@@ -11,14 +11,12 @@ interface RecentActivitiesCardProps {
 export const RecentActivitiesCard = ({ insights }: RecentActivitiesCardProps) => {
   const { recentActivities } = insights;
   
-  // Updated to handle any string type
-  const getActivityIcon = (type: string) => {
+  const getActivityIcon = (type: 'document' | 'meeting' | 'payment' | 'communication') => {
     switch (type) {
       case 'document': return <FileText className="h-4 w-4 text-blue-500" />;
       case 'meeting': return <Calendar className="h-4 w-4 text-green-500" />;
       case 'payment': return <DollarSign className="h-4 w-4 text-purple-500" />;
       case 'communication': return <MessageSquare className="h-4 w-4 text-amber-500" />;
-      default: return <Activity className="h-4 w-4 text-gray-500" />; // Default icon for unknown types
     }
   };
   

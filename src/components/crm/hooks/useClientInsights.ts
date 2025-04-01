@@ -118,27 +118,6 @@ export const useClientInsights = (clientId: string) => {
             { name: "Proposal Sent", completed: true },
             { name: "Contract Negotiation", completed: false },
             { name: "Deal Closed", completed: false }
-          ],
-          // Adding required upcomingDeadlines field
-          upcomingDeadlines: [
-            {
-              id: "1",
-              title: "Submit Financial Documents",
-              date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString().split('T')[0],
-              priority: "high"
-            },
-            {
-              id: "2",
-              title: "Compliance Review Meeting",
-              date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString().split('T')[0],
-              priority: "medium"
-            },
-            {
-              id: "3",
-              title: "Contract Signing",
-              date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString().split('T')[0],
-              priority: "low"
-            }
           ]
         };
 

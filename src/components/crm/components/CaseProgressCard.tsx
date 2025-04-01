@@ -39,11 +39,11 @@ export const CaseProgressCard = ({ insights }: CaseProgressCardProps) => {
         <CaseProgressExplanation progress={caseProgress} />
         
         <div className="grid grid-cols-2 gap-4 mt-4">
-          <PendingTasksSection pendingTasks={pendingTasks.length} />
-          <MissingDocumentsSection missingDocuments={missingDocuments.length} />
+          <PendingTasksSection pendingTasks={pendingTasks} />
+          <MissingDocumentsSection missingDocuments={missingDocuments} />
         </div>
         
-        <NextStepsSection pendingTasks={pendingTasks.length} missingDocuments={missingDocuments.length} />
+        <NextStepsSection pendingTasks={pendingTasks} missingDocuments={missingDocuments} />
       </CardContent>
     </Card>
   );
