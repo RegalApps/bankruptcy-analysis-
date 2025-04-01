@@ -32,7 +32,20 @@ export const ClientIntakeSection = () => {
     phone: "",
     address: "",
     businessType: "",
-    notes: ""
+    notes: "",
+    mobilePhone: "",
+    city: "",
+    province: "",
+    postalCode: "",
+    dateOfBirth: "",
+    sin: "",
+    maritalStatus: "",
+    leadSource: "",
+    otherLeadSourceDetails: "",
+    leadDescription: "",
+    accountStatus: "lead",
+    preferredContactMethod: "email",
+    preferredLanguage: "english"
   });
 
   const handleTranscriptionUpdate = (text: string) => {
@@ -54,7 +67,7 @@ export const ClientIntakeSection = () => {
       [name]: value
     }));
     // Update progress based on filled fields
-    const filledFields = Object.values(formData).filter(val => val.length > 0).length;
+    const filledFields = Object.values(formData).filter(val => val && typeof val === 'string' && val.length > 0).length;
     setProgress((filledFields / Object.keys(formData).length) * 100);
   };
 
@@ -64,7 +77,7 @@ export const ClientIntakeSection = () => {
       [field]: value
     }));
     // Update progress based on filled fields
-    const filledFields = Object.values(formData).filter(val => val.length > 0).length;
+    const filledFields = Object.values(formData).filter(val => val && typeof val === 'string' && val.length > 0).length;
     setProgress((filledFields / Object.keys(formData).length) * 100);
   };
 
@@ -74,7 +87,7 @@ export const ClientIntakeSection = () => {
       employmentType: value
     }));
     // Update progress based on filled fields
-    const filledFields = Object.values(formData).filter(val => val.length > 0).length;
+    const filledFields = Object.values(formData).filter(val => val && typeof val === 'string' && val.length > 0).length;
     setProgress((filledFields / Object.keys(formData).length) * 100);
   };
 
@@ -103,7 +116,20 @@ export const ClientIntakeSection = () => {
           phone: "",
           address: "",
           businessType: "",
-          notes: ""
+          notes: "",
+          mobilePhone: "",
+          city: "",
+          province: "",
+          postalCode: "",
+          dateOfBirth: "",
+          sin: "",
+          maritalStatus: "",
+          leadSource: "",
+          otherLeadSourceDetails: "",
+          leadDescription: "",
+          accountStatus: "lead",
+          preferredContactMethod: "email",
+          preferredLanguage: "english"
         });
         setCurrentStep(1);
         setProgress(0);

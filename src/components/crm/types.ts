@@ -27,6 +27,15 @@ export interface ClientInsightData {
     type: string;
     description: string;
   }[];
+  // Add the missing properties from the error
+  riskLevel?: string;
+  riskScore?: number;
+  complianceStatus?: string;
+  caseProgress?: number;
+  lastContactDate?: string;
+  nextFollowUp?: string;
+  caseStatus?: string;
+  assignedTrustee?: string;
 }
 
 export interface ClientInfo {
@@ -37,4 +46,42 @@ export interface ClientInfo {
   company?: string;
   status?: string;
   tags?: string[];
+}
+
+// Add FormData interface
+export interface FormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  mobilePhone: string;
+  companyName: string;
+  businessType: string;
+  notes: string;
+  address: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  dateOfBirth: string;
+  sin: string;
+  maritalStatus: string;
+  leadSource: string;
+  otherLeadSourceDetails: string;
+  leadDescription: string;
+  accountStatus: string;
+  preferredContactMethod: string;
+  preferredLanguage: string;
+  employmentType?: string;
+  employer?: string;
+  occupation?: string;
+  monthlyIncome?: string;
+  incomeFrequency?: string;
+  businessName?: string;
+  annualRevenue?: string;
+  unsecuredDebt?: string;
+  securedDebt?: string;
+  taxDebt?: string;
+  realEstate?: string;
+  vehicles?: string;
+  bankAccounts?: string;
+  [key: string]: string | undefined;
 }
