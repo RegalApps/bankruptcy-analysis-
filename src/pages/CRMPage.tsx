@@ -4,10 +4,11 @@ import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { ClientIntakeDialog } from "@/components/crm/intake-dialog/ClientIntakeDialog";
 import { ClientDashboard } from "@/components/crm/ClientDashboard";
-import { useClientIntake } from "@/components/crm/hooks/useClientIntake";
 import { CRMTabs } from "@/components/crm/page/CRMTabs";
+import { CRMHeader } from "@/components/crm/page/CRMHeader";
 import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { useClientIntake } from "@/components/crm/hooks/useClientIntake";
 
 export const CRMPage = () => {
   const [view, setView] = useState<"overview" | "client-detail">("overview");
@@ -52,22 +53,28 @@ export const CRMPage = () => {
       <div className="flex-1 flex flex-col ml-64">
         <MainHeader />
         <div className="container mx-auto p-6 space-y-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">
-              {view === "overview" ? "Client Management" : "Client Profile"}
-            </h1>
-            <Button onClick={openClientDialog} className="gap-2">
-              <UserPlus className="h-4 w-4" />
-              Add New Client
-            </Button>
-          </div>
-
           {view === "overview" ? (
-            <ClientDashboard 
-              onSelectClient={handleClientSelect} 
-            />
+            <>
+              <CRMHeader openClientDialog={openClientDialog} />
+              <ClientDashboard 
+                onSelectClient={handleClientSelect} 
+              />
+            </>
           ) : (
-            <CRMTabs onBack={handleBackToOverview} />
+            <>
+              <div className="flex items-center mb-6">
+                <Button 
+                  onClick={handleBackToOverview} 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Client List
+                </Button>
+                <h1 className="text-2xl font-bold ml-4">Client Profile</h1>
+              </div>
+              <CRMTabs />
+            </>
           )}
         </div>
       </div>

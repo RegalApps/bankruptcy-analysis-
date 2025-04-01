@@ -3,29 +3,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IntelligentScheduling } from "@/components/crm/IntelligentScheduling";
 import { DocumentVault } from "@/components/crm/DocumentVault";
 import { AIWorkflow } from "@/components/crm/AIWorkflow";
-import { Calendar, FileCheck, BrainCog, BarChart, ArrowLeft } from "lucide-react";
+import { Calendar, FileCheck, BrainCog, BarChart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
-interface CRMTabsProps {
-  onBack?: () => void;
-}
-
-export const CRMTabs = ({ onBack }: CRMTabsProps) => {
+export const CRMTabs = () => {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold">Dashboard Modules</h2>
-          <p className="text-muted-foreground">Access tools and features to manage your clients efficiently.</p>
-        </div>
-        
-        {onBack && (
-          <Button variant="outline" size="sm" onClick={onBack} className="gap-1">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Overview
-          </Button>
-        )}
+      <div>
+        <h2 className="text-xl font-bold">Dashboard Modules</h2>
+        <p className="text-muted-foreground">Access tools and features to manage your clients efficiently.</p>
       </div>
       
       <Tabs defaultValue="scheduling" className="space-y-6">
