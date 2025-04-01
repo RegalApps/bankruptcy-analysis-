@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, UserPlus } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CRMTabs } from "./page/CRMTabs";
@@ -21,13 +21,18 @@ import { CRMTabs } from "./page/CRMTabs";
 interface ClientDashboardProps {
   clientId?: string;
   clientName?: string;
+  onSelectClient: (clientId: string) => void;
 }
 
-export const ClientDashboard = ({ clientId: propClientId, clientName: propClientName }: ClientDashboardProps) => {
+export const ClientDashboard = ({ 
+  clientId: propClientId, 
+  clientName: propClientName,
+  onSelectClient
+}: ClientDashboardProps) => {
   const [selectedClientId, setSelectedClientId] = useState<string>(propClientId || "1");
   const [selectedClientName, setSelectedClientName] = useState<string>(propClientName || "John Doe");
   const [searchQuery, setSearchQuery] = useState("");
-  const [view, setView] = useState<"detail" | "grid">("detail");
+  const [view, setView] = useState<"detail" | "grid">("grid");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [activeTab, setActiveTab] = useState<string>("profile");
   const { insightData, isLoading, error } = useClientInsights(selectedClientId);
@@ -46,6 +51,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
       setSelectedClientName(client.name);
     }
     setView("detail");
+    onSelectClient(clientId);
   };
 
   useEffect(() => {
@@ -57,7 +63,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
     }
   }, [propClientId, propClientName]);
 
-  if (isLoading) {
+  if (isLoading && view === "detail") {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-64 mb-4" />
@@ -70,7 +76,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
     );
   }
 
-  if (error) {
+  if (error && view === "detail") {
     return (
       <Alert>
         <Info className="h-4 w-4" />
@@ -79,24 +85,11 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
     );
   }
 
-  if (!insightData) {
-    return (
-      <div className="space-y-4">
-        <div className="text-center p-6">
-          <h3 className="text-lg font-medium">No Client Selected</h3>
-          <p className="text-muted-foreground">Please select a client to view their dashboard.</p>
-        </div>
-      </div>
-    );
-  }
-
   // Render grid view for multiple clients
   if (view === "grid") {
     return (
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold">Client Management</h1>
-          
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
             <div className="relative w-full md:w-[250px]">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -120,19 +113,14 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
                 <SelectItem value="at_risk">At Risk</SelectItem>
               </SelectContent>
             </Select>
-            
-            <Button onClick={() => setView("detail")} className="w-full md:w-auto">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Client
-            </Button>
           </div>
         </div>
 
         <ClientGridView 
           clients={clients} 
-          onSelectClient={handleClientChange}
-          searchQuery={searchQuery}
-          filterStatus={filterStatus}
+          onSelectClient={handleClientChange} 
+          searchQuery={searchQuery} 
+          filterStatus={filterStatus} 
         />
       </div>
     );
@@ -167,10 +155,10 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">{selectedClientName}'s Profile</h1>
               <Badge 
-                variant={insightData.riskLevel === "high" ? "destructive" : insightData.riskLevel === "medium" ? "outline" : "secondary"}
+                variant={insightData?.riskLevel === "high" ? "destructive" : insightData?.riskLevel === "medium" ? "outline" : "secondary"}
                 className="text-xs"
               >
-                {insightData.riskLevel === "high" ? "At Risk" : insightData.riskLevel === "medium" ? "Needs Attention" : "Healthy"}
+                {insightData?.riskLevel === "high" ? "At Risk" : insightData?.riskLevel === "medium" ? "Needs Attention" : "Healthy"}
               </Badge>
             </div>
             
@@ -224,7 +212,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
             
             <div className="bg-card p-6 rounded-lg border">
               <div className="space-y-4">
-                {insightData.recentActivities.map((activity, index) => (
+                {insightData?.recentActivities.map((activity, index) => (
                   <div key={activity.id} className="flex items-start gap-4">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                       {index + 1}
@@ -255,7 +243,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
                 </div>
                 
                 <div className="grid gap-2">
-                  {insightData.missingDocuments.map((doc, index) => (
+                  {insightData?.missingDocuments.map((doc, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-md">
                       <p>{doc}</p>
                       <Button size="sm" variant="ghost">Request</Button>

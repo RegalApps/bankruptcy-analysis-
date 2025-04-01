@@ -25,14 +25,14 @@ export const ClientIntelligencePanel = ({ insights }: ClientIntelligencePanelPro
   };
 
   const getRiskIndicator = () => {
-    if (insights.riskLevel === 'high') {
+    if (insights?.riskLevel === 'high') {
       return (
         <div className="flex items-center gap-2 text-red-600">
           <AlertTriangle className="h-4 w-4" />
           <span className="text-sm">No activity in 30 days.</span>
         </div>
       );
-    } else if (insights.riskLevel === 'medium') {
+    } else if (insights?.riskLevel === 'medium') {
       return (
         <div className="flex items-center gap-2 text-amber-600">
           <AlertTriangle className="h-4 w-4" />
@@ -48,6 +48,14 @@ export const ClientIntelligencePanel = ({ insights }: ClientIntelligencePanelPro
       );
     }
   };
+
+  if (!insights) {
+    return (
+      <div className="h-full p-4 flex items-center justify-center">
+        <p className="text-muted-foreground">Select a client to view insights</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full p-4 overflow-auto">
