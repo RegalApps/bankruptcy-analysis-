@@ -66,15 +66,105 @@ export const FormSteps = ({
               </div>
               
               <div>
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="mobilePhone">Mobile Phone</Label>
                 <Input
-                  id="address"
-                  name="address"
-                  value={formData.address}
+                  id="mobilePhone"
+                  name="mobilePhone"
+                  value={formData.mobilePhone}
                   onChange={handleInputChange}
-                  placeholder="Enter address"
+                  placeholder="Enter mobile phone number"
                 />
               </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                placeholder="Enter street address"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  placeholder="Enter city"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="province">Province</Label>
+                <Input
+                  id="province"
+                  name="province"
+                  value={formData.province}
+                  onChange={handleInputChange}
+                  placeholder="Enter province"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="postalCode">Postal Code</Label>
+                <Input
+                  id="postalCode"
+                  name="postalCode"
+                  value={formData.postalCode}
+                  onChange={handleInputChange}
+                  placeholder="Enter postal code"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Input
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="sin">Social Insurance Number (SIN)</Label>
+                <Input
+                  id="sin"
+                  name="sin"
+                  value={formData.sin}
+                  onChange={handleInputChange}
+                  placeholder="Enter SIN"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="maritalStatus">Marital Status</Label>
+              <Select 
+                value={formData.maritalStatus} 
+                onValueChange={(value) => handleSelectChange('maritalStatus', value)}
+              >
+                <SelectTrigger id="maritalStatus">
+                  <SelectValue placeholder="Select marital status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">Single</SelectItem>
+                  <SelectItem value="married">Married</SelectItem>
+                  <SelectItem value="common_law">Common Law</SelectItem>
+                  <SelectItem value="separated">Separated</SelectItem>
+                  <SelectItem value="divorced">Divorced</SelectItem>
+                  <SelectItem value="widowed">Widowed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

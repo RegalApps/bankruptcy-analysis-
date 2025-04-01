@@ -11,10 +11,17 @@ export const useClientIntake = () => {
     fullName: "",
     email: "",
     phone: "",
+    mobilePhone: "",
     companyName: "",
     businessType: "",
     notes: "",
     address: "",
+    city: "",
+    province: "",
+    postalCode: "",
+    dateOfBirth: "",
+    sin: "",
+    maritalStatus: "",
     leadSource: "",
     otherLeadSourceDetails: "",
     preferredContactMethod: "email", // Default to email
@@ -28,10 +35,17 @@ export const useClientIntake = () => {
       fullName: "",
       email: "",
       phone: "",
+      mobilePhone: "",
       companyName: "",
       businessType: "",
       notes: "",
       address: "",
+      city: "",
+      province: "",
+      postalCode: "",
+      dateOfBirth: "",
+      sin: "",
+      maritalStatus: "",
       leadSource: "",
       otherLeadSourceDetails: "",
       preferredContactMethod: "email",
@@ -92,7 +106,7 @@ export const useClientIntake = () => {
   
   const calculateProgress = () => {
     // Step 1: Personal Info (8 fields)
-    const step1Fields = ['fullName', 'dateOfBirth', 'sin', 'maritalStatus', 'address', 'city', 'province', 'postalCode', 'email', 'mobilePhone', 'preferredContactMethod', 'preferredLanguage'];
+    const step1Fields = ['fullName', 'dateOfBirth', 'sin', 'maritalStatus', 'address', 'city', 'province', 'postalCode', 'email', 'phone', 'mobilePhone', 'preferredContactMethod', 'preferredLanguage'];
     const step1FilledFields = step1Fields.filter(field => formData[field as keyof FormData]);
     const step1Progress = Math.min(100, (step1FilledFields.length / 6) * 100); // At least 6 fields for 100%
     
