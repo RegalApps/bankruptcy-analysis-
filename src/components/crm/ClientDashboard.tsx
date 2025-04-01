@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useClientInsights } from "./hooks/useClientInsights";
 import { ClientProfilePanel } from "./components/profile/ClientProfilePanel";
@@ -6,14 +5,14 @@ import { ClientActivityPanel } from "./components/profile/ClientActivityPanel";
 import { ClientIntelligencePanel } from "./components/profile/ClientIntelligencePanel";
 import { ClientGridView } from "./components/ClientGridView";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, LayoutGrid, User, Activity, FileText } from "lucide-react";
+import { Info, LayoutGrid, User, Activity, FileText, UserPlus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, UserPlus } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CRMTabs } from "./page/CRMTabs";
@@ -45,6 +44,10 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
     if (client) {
       setSelectedClientName(client.name);
     }
+    setView("detail");
+  };
+
+  const handleExitGridView = () => {
     setView("detail");
   };
 
@@ -133,6 +136,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
           onSelectClient={handleClientChange}
           searchQuery={searchQuery}
           filterStatus={filterStatus}
+          onExitGridView={handleExitGridView}
         />
       </div>
     );
@@ -244,7 +248,13 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
 
         <TabsContent value="documents" className="mt-0">
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">Client Documents</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Client Documents</h2>
+              <Button size="sm" className="flex items-center gap-1">
+                <UserPlus className="h-4 w-4" />
+                Add New Client
+              </Button>
+            </div>
             <p className="text-muted-foreground">Manage all documents related to {selectedClientName}.</p>
             
             <div className="bg-card p-6 rounded-lg border">

@@ -26,7 +26,7 @@ export const CRMPage = () => {
       <div className="flex-1 flex flex-col ml-64">
         <MainHeader />
         <div className="container mx-auto p-6 space-y-8">
-          {/* Client Dashboard with the new 3-panel layout */}
+          {/* Client Dashboard with improved navigation */}
           <ClientDashboard />
         </div>
       </div>

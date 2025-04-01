@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowUp, ArrowDown, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { ArrowUp, ArrowDown, AlertTriangle, CheckCircle, Clock, ArrowLeft } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 
@@ -21,13 +21,15 @@ interface ClientGridViewProps {
   onSelectClient: (clientId: string) => void;
   searchQuery: string;
   filterStatus: string;
+  onExitGridView: () => void; // New prop for exiting grid view
 }
 
 export const ClientGridView = ({ 
   clients, 
   onSelectClient,
   searchQuery,
-  filterStatus
+  filterStatus,
+  onExitGridView
 }: ClientGridViewProps) => {
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [sortField, setSortField] = useState<string>("name");
@@ -138,21 +140,33 @@ export const ClientGridView = ({
 
   return (
     <div className="space-y-4">
-      {selectedClients.length > 0 && (
-        <div className="bg-muted p-2 rounded-md flex items-center justify-between">
-          <span className="text-sm">{selectedClients.length} clients selected</span>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline">Assign</Button>
-            <Button size="sm" variant="outline">Email</Button>
-            <Button size="sm" variant="outline">Add Tags</Button>
-            <Button size="sm" variant="outline" 
-              onClick={() => setSelectedClients([])}
-            >
-              Clear Selection
-            </Button>
+      <div className="flex justify-between items-center">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-1"
+          onClick={onExitGridView}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Return to Client Profile
+        </Button>
+        
+        {selectedClients.length > 0 && (
+          <div className="bg-muted p-2 rounded-md flex items-center justify-between">
+            <span className="text-sm">{selectedClients.length} clients selected</span>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline">Assign</Button>
+              <Button size="sm" variant="outline">Email</Button>
+              <Button size="sm" variant="outline">Add Tags</Button>
+              <Button size="sm" variant="outline" 
+                onClick={() => setSelectedClients([])}
+              >
+                Clear Selection
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       
       <div className="rounded-md border">
         <Table>
