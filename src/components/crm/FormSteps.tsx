@@ -146,28 +146,28 @@ export const FormSteps = ({
               </div>
             </div>
             
-            <div>
-              <Label htmlFor="maritalStatus">Marital Status</Label>
-              <Select 
-                value={formData.maritalStatus} 
-                onValueChange={(value) => handleSelectChange('maritalStatus', value)}
-              >
-                <SelectTrigger id="maritalStatus">
-                  <SelectValue placeholder="Select marital status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="single">Single</SelectItem>
-                  <SelectItem value="married">Married</SelectItem>
-                  <SelectItem value="common_law">Common Law</SelectItem>
-                  <SelectItem value="separated">Separated</SelectItem>
-                  <SelectItem value="divorced">Divorced</SelectItem>
-                  <SelectItem value="widowed">Widowed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div>
+                <Label htmlFor="maritalStatus">Marital Status</Label>
+                <Select 
+                  value={formData.maritalStatus} 
+                  onValueChange={(value) => handleSelectChange('maritalStatus', value)}
+                >
+                  <SelectTrigger id="maritalStatus">
+                    <SelectValue placeholder="Select marital status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single">Single</SelectItem>
+                    <SelectItem value="married">Married</SelectItem>
+                    <SelectItem value="common_law">Common Law</SelectItem>
+                    <SelectItem value="separated">Separated</SelectItem>
+                    <SelectItem value="divorced">Divorced</SelectItem>
+                    <SelectItem value="widowed">Widowed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
                 <Label htmlFor="preferredContactMethod">How do you prefer to be contacted?</Label>
                 <Select 
                   value={formData.preferredContactMethod} 
@@ -183,8 +183,10 @@ export const FormSteps = ({
                   </SelectContent>
                 </Select>
               </div>
-              
-              <div className="space-y-2">
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <Label htmlFor="preferredLanguage">What language do you prefer to communicate in?</Label>
                 <Select 
                   value={formData.preferredLanguage} 
