@@ -9,6 +9,7 @@ import { CRMHeader } from "@/components/crm/page/CRMHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useClientIntake } from "@/components/crm/hooks/useClientIntake";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 export const CRMPage = () => {
   const [view, setView] = useState<"overview" | "client-detail">("overview");
@@ -48,35 +49,31 @@ export const CRMPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <MainSidebar />
-      <div className="flex-1 flex flex-col ml-64">
-        <MainHeader />
-        <div className="container mx-auto p-6 space-y-8">
-          {view === "overview" ? (
-            <>
-              <CRMHeader openClientDialog={openClientDialog} />
-              <ClientDashboard 
-                onSelectClient={handleClientSelect} 
-              />
-            </>
-          ) : (
-            <>
-              <div className="flex items-center mb-6">
-                <Button 
-                  onClick={handleBackToOverview} 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to Client List
-                </Button>
-                <h1 className="text-2xl font-bold ml-4">Client Profile</h1>
-              </div>
-              <CRMTabs />
-            </>
-          )}
-        </div>
+    <MainLayout>
+      <div className="container mx-auto p-6 space-y-8">
+        {view === "overview" ? (
+          <>
+            <CRMHeader openClientDialog={openClientDialog} />
+            <ClientDashboard 
+              onSelectClient={handleClientSelect} 
+            />
+          </>
+        ) : (
+          <>
+            <div className="flex items-center mb-6">
+              <Button 
+                onClick={handleBackToOverview} 
+                variant="outline" 
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Client List
+              </Button>
+              <h1 className="text-2xl font-bold ml-4">Client Profile</h1>
+            </div>
+            <CRMTabs />
+          </>
+        )}
       </div>
 
       {/* Enhanced AI-Powered Client Intake Dialog */}
@@ -95,7 +92,7 @@ export const CRMPage = () => {
         handleSelectChange={handleSelectChange}
         handleEmploymentTypeChange={handleEmploymentTypeChange}
       />
-    </div>
+    </MainLayout>
   );
 };
 
