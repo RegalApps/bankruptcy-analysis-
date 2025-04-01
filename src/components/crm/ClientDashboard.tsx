@@ -5,6 +5,7 @@ import { ClientProfilePanel } from "./components/profile/ClientProfilePanel";
 import { ClientActivityPanel } from "./components/profile/ClientActivityPanel";
 import { ClientIntelligencePanel } from "./components/profile/ClientIntelligencePanel";
 import { ClientGridView } from "./components/ClientGridView";
+import { DocumentSignaturesPanel } from "./components/documents/DocumentSignaturesPanel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, LayoutGrid, User, Activity, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";

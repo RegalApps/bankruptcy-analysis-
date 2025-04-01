@@ -91,7 +91,7 @@ export const ClientProfilePanel = ({ insights, clientName }: ClientProfilePanelP
         </div>
 
         {/* Lead Description Section */}
-        {insights.clientProfile?.leadDescription && (
+        {insights.clientProfile && 'leadDescription' in insights.clientProfile && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium">Lead Information</h3>
             <Card className="overflow-hidden">
@@ -99,15 +99,15 @@ export const ClientProfilePanel = ({ insights, clientName }: ClientProfilePanelP
                 <div className="flex items-start gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm">{insights.clientProfile.leadDescription}</p>
-                    {insights.clientProfile?.leadSource && (
+                    <p className="text-sm">{(insights.clientProfile as any).leadDescription}</p>
+                    {'leadSource' in insights.clientProfile && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Source: {insights.clientProfile.leadSource}
+                        Source: {(insights.clientProfile as any).leadSource}
                       </p>
                     )}
-                    {insights.clientProfile?.accountStatus && (
+                    {'accountStatus' in insights.clientProfile && (
                       <p className="text-xs text-muted-foreground">
-                        Status: <Badge variant="outline" className="text-xs py-0 px-1">{insights.clientProfile.accountStatus}</Badge>
+                        Status: <Badge variant="outline" className="text-xs py-0 px-1">{(insights.clientProfile as any).accountStatus}</Badge>
                       </p>
                     )}
                   </div>
