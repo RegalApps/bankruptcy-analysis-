@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileSignature, Send, Clock, CheckCircle2, AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 
 interface Document {
@@ -112,7 +112,7 @@ export const DocumentSignaturesPanel = ({ clientId, clientName, clientEmail }: D
       // Show signature status
       toast({
         title: "Signature Status",
-        description: `${data.signed.length}/${data.required.length} signatures collected`
+        description: `${data.signed ? data.signed.length : 0}/${data.required ? data.required.length : 0} signatures collected`
       });
     } catch (error) {
       console.error('Error checking signature status:', error);
