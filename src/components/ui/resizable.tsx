@@ -30,9 +30,8 @@ const ResizablePanel = React.forwardRef<
 ))
 ResizablePanel.displayName = "ResizablePanel"
 
-type ResizableHandleProps = React.ComponentPropsWithoutRef<
-  typeof ResizablePrimitive.PanelResizeHandle
-> & {
+// The issue is in this type definition, we need to correctly type it for forwardRef
+interface ResizableHandleProps extends React.ComponentPropsWithoutRef<typeof ResizablePrimitive.PanelResizeHandle> {
   withHandle?: boolean
 }
 
