@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ClientInsightData } from "../../../activity/hooks/predictiveData/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Phone, Globe, User, Tag } from "lucide-react";
+import { Mail, Phone, Globe, User, Tag, FileText } from "lucide-react";
 
 interface ClientProfilePanelProps {
   insights: ClientInsightData;
@@ -89,6 +89,33 @@ export const ClientProfilePanel = ({ insights, clientName }: ClientProfilePanelP
             )}
           </div>
         </div>
+
+        {/* Lead Description Section */}
+        {insights.clientProfile?.leadDescription && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Lead Information</h3>
+            <Card className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm">{insights.clientProfile.leadDescription}</p>
+                    {insights.clientProfile?.leadSource && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Source: {insights.clientProfile.leadSource}
+                      </p>
+                    )}
+                    {insights.clientProfile?.accountStatus && (
+                      <p className="text-xs text-muted-foreground">
+                        Status: <Badge variant="outline" className="text-xs py-0 px-1">{insights.clientProfile.accountStatus}</Badge>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
