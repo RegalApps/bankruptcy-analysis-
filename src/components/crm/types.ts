@@ -17,6 +17,8 @@ export interface FormData {
   province?: string;
   postalCode?: string;
   mobilePhone?: string;
+  leadSource?: string;
+  otherLeadSourceDetails?: string;
   
   // Spouse Information (if married/common-law)
   spouseName?: string;

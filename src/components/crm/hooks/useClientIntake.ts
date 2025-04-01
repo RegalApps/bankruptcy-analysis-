@@ -14,7 +14,9 @@ export const useClientIntake = () => {
     companyName: "",
     businessType: "",
     notes: "",
-    address: ""
+    address: "",
+    leadSource: "",
+    otherLeadSourceDetails: ""
   });
 
   const openClientDialog = () => {
@@ -27,7 +29,9 @@ export const useClientIntake = () => {
       companyName: "",
       businessType: "",
       notes: "",
-      address: ""
+      address: "",
+      leadSource: "",
+      otherLeadSourceDetails: ""
     });
     setIsClientDialogOpen(true);
   };
