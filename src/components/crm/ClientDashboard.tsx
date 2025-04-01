@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useClientInsights } from "./hooks/useClientInsights";
 import { ClientProfilePanel } from "./components/profile/ClientProfilePanel";
@@ -5,7 +6,7 @@ import { ClientActivityPanel } from "./components/profile/ClientActivityPanel";
 import { ClientIntelligencePanel } from "./components/profile/ClientIntelligencePanel";
 import { ClientGridView } from "./components/ClientGridView";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, LayoutGrid, User, Activity, FileText, UserPlus } from "lucide-react";
+import { Info, LayoutGrid, User, Activity, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -123,11 +124,6 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
                 <SelectItem value="at_risk">At Risk</SelectItem>
               </SelectContent>
             </Select>
-            
-            <Button onClick={() => setView("detail")} className="w-full md:w-auto">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Client
-            </Button>
           </div>
         </div>
 
@@ -250,10 +246,6 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold">Client Documents</h2>
-              <Button size="sm" className="flex items-center gap-1">
-                <UserPlus className="h-4 w-4" />
-                Add New Client
-              </Button>
             </div>
             <p className="text-muted-foreground">Manage all documents related to {selectedClientName}.</p>
             
