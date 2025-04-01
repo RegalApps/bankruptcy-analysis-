@@ -2,9 +2,7 @@
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { ClientIntakeDialog } from "@/components/crm/intake-dialog/ClientIntakeDialog";
-import { CRMHeader } from "@/components/crm/page/CRMHeader";
-import { ClientStats } from "@/components/crm/page/ClientStats";
-import { CRMTabs } from "@/components/crm/page/CRMTabs";
+import { ClientDashboard } from "@/components/crm/ClientDashboard";
 import { useClientIntake } from "@/components/crm/hooks/useClientIntake";
 
 export const CRMPage = () => {
@@ -28,14 +26,8 @@ export const CRMPage = () => {
       <div className="flex-1 flex flex-col ml-64">
         <MainHeader />
         <div className="container mx-auto p-6 space-y-8">
-          {/* Header Section */}
-          <CRMHeader openClientDialog={openClientDialog} />
-
-          {/* Quick Stats */}
-          <ClientStats />
-
-          {/* Main Content Tabs */}
-          <CRMTabs />
+          {/* Client Dashboard with the new 3-panel layout */}
+          <ClientDashboard />
         </div>
       </div>
 
