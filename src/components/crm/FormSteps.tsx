@@ -1,4 +1,3 @@
-
 import { FormData } from "./types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -236,6 +235,36 @@ export const FormSteps = ({
                 />
               </div>
             )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="leadDescription">Lead Description</Label>
+              <Textarea
+                id="leadDescription"
+                name="leadDescription"
+                value={formData.leadDescription}
+                onChange={handleInputChange}
+                placeholder="Enter additional details about how this lead was acquired"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="accountStatus">Account Status</Label>
+              <Select 
+                value={formData.accountStatus} 
+                onValueChange={(value) => handleSelectChange('accountStatus', value)}
+              >
+                <SelectTrigger id="accountStatus">
+                  <SelectValue placeholder="Select account status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lead">Lead</SelectItem>
+                  <SelectItem value="prospect">Prospect</SelectItem>
+                  <SelectItem value="qualified">Qualified</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         );
       

@@ -22,6 +22,10 @@ export interface FormData {
   preferredContactMethod?: string;
   preferredLanguage?: string;
   
+  // Lead Information
+  leadDescription?: string;
+  accountStatus?: string;
+  
   // Spouse Information (if married/common-law)
   spouseName?: string;
   spouseSin?: string;

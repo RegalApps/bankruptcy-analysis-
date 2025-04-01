@@ -34,7 +34,6 @@ type ResizableHandleProps = React.ComponentPropsWithoutRef<typeof ResizablePrimi
   withHandle?: boolean
 }
 
-// Fix: Properly type and implement the ResizableHandle component with forwardRef
 const ResizableHandle = React.forwardRef<
   React.ElementRef<typeof ResizablePrimitive.PanelResizeHandle>,
   ResizableHandleProps

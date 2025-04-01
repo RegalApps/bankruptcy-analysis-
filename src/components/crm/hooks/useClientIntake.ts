@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FormData } from "../types";
 import { toast } from "sonner";
@@ -24,6 +23,8 @@ export const useClientIntake = () => {
     maritalStatus: "",
     leadSource: "",
     otherLeadSourceDetails: "",
+    leadDescription: "",
+    accountStatus: "lead",
     preferredContactMethod: "email", // Default to email
     preferredLanguage: "english" // Default to English
   });
@@ -48,6 +49,8 @@ export const useClientIntake = () => {
       maritalStatus: "",
       leadSource: "",
       otherLeadSourceDetails: "",
+      leadDescription: "",
+      accountStatus: "lead",
       preferredContactMethod: "email",
       preferredLanguage: "english"
     });
@@ -106,9 +109,9 @@ export const useClientIntake = () => {
   
   const calculateProgress = () => {
     // Step 1: Personal Info (8 fields)
-    const step1Fields = ['fullName', 'dateOfBirth', 'sin', 'maritalStatus', 'address', 'city', 'province', 'postalCode', 'email', 'phone', 'mobilePhone', 'preferredContactMethod', 'preferredLanguage'];
+    const step1Fields = ['fullName', 'dateOfBirth', 'sin', 'maritalStatus', 'address', 'city', 'province', 'postalCode', 'email', 'phone', 'mobilePhone', 'preferredContactMethod', 'preferredLanguage', 'leadSource', 'leadDescription', 'accountStatus'];
     const step1FilledFields = step1Fields.filter(field => formData[field as keyof FormData]);
-    const step1Progress = Math.min(100, (step1FilledFields.length / 6) * 100); // At least 6 fields for 100%
+    const step1Progress = Math.min(100, (step1FilledFields.length / 8) * 100); // At least 8 fields for 100%
     
     // Step 2: Employment & Income (5 fields)
     const step2Fields = ['employmentType', 'employer', 'occupation', 'monthlyIncome', 'incomeFrequency'];
