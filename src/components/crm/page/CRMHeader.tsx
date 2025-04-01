@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Bell, Users, ArrowRight } from "lucide-react";
+import { Bell, Users, ArrowRight, Plus } from "lucide-react";
 
 interface CRMHeaderProps {
   openClientDialog: () => void;
@@ -20,10 +20,14 @@ export const CRMHeader = ({ openClientDialog }: CRMHeaderProps) => {
           <Bell className="h-4 w-4" />
           Notifications
         </Button>
-        <Button variant="default" className="gap-2" onClick={openClientDialog} size="lg">
-          <Users className="h-5 w-5" />
+        <Button 
+          variant="default" 
+          className="gap-2 bg-primary hover:bg-primary/90" 
+          onClick={openClientDialog} 
+          size="lg"
+        >
+          <Plus className="h-5 w-5" />
           Add New Client
-          <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
     </div>

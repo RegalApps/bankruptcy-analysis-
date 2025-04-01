@@ -7,7 +7,7 @@ import { ClientDashboard } from "@/components/crm/ClientDashboard";
 import { CRMTabs } from "@/components/crm/page/CRMTabs";
 import { CRMHeader } from "@/components/crm/page/CRMHeader";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LayoutDashboard } from "lucide-react";
 import { useClientIntake } from "@/components/crm/hooks/useClientIntake";
 import { MainLayout } from "@/components/layout/MainLayout";
 
@@ -60,16 +60,26 @@ export const CRMPage = () => {
           </>
         ) : (
           <>
-            <div className="flex items-center mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <Button 
+                  onClick={handleBackToOverview} 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Client List
+                </Button>
+                <h1 className="text-2xl font-bold">Client Profile</h1>
+              </div>
               <Button 
-                onClick={handleBackToOverview} 
-                variant="outline" 
+                onClick={handleBackToOverview}
+                variant="default"
                 className="flex items-center gap-2"
               >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Client List
+                <LayoutDashboard className="h-4 w-4" />
+                Return to CRM Dashboard
               </Button>
-              <h1 className="text-2xl font-bold ml-4">Client Profile</h1>
             </div>
             <CRMTabs />
           </>
