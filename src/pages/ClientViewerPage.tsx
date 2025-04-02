@@ -84,8 +84,12 @@ const ClientViewerPage = () => {
   useEffect(() => {
     setIsLoading(true);
     
+    console.log("ClientViewerPage: Loading client with ID:", clientId);
+    
     setTimeout(() => {
-      if (clientId === "josh-hart") {
+      const normalizedClientId = clientId?.toLowerCase().replace(/\s+/g, '-') || '';
+      
+      if (normalizedClientId === "josh-hart") {
         setClient({
           id: "josh-hart",
           name: "Josh Hart",

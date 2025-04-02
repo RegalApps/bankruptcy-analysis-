@@ -36,6 +36,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
       description: "Using template mode instead"
     });
     
+    // Check for any variation of josh hart
     if (clientId.toLowerCase().includes('josh') || clientId.toLowerCase().includes('hart')) {
       setRetryCount(prev => prev + 1);
       setRetryId('josh-hart');

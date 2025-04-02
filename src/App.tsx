@@ -29,6 +29,7 @@ export default function App() {
         <Route path="/activity" element={<ActivityPage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/client/:clientId" element={<ClientViewerPage />} />
+        <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
         <Route path="/crm" element={<CRMPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
