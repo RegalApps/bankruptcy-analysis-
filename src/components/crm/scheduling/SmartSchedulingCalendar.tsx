@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,16 +14,16 @@ import {
 import { Link } from "react-router-dom";
 
 // Import components
-import { CalendarView } from "./scheduling/CalendarView";
-import { AppointmentsList } from "./scheduling/AppointmentsList";
-import { AIRecommendations } from "./scheduling/AIRecommendations";
-import { StaffAvailability } from "./scheduling/StaffAvailability";
-import { QuickActions } from "./scheduling/QuickActions";
-import { FilterDialog } from "./scheduling/FilterDialog";
-import { QuickBookDialog } from "./scheduling/QuickBookDialog";
+import { CalendarView } from "./calendar/CalendarView";
+import { AppointmentsList } from "./AppointmentsList";
+import { AIRecommendations } from "./AIRecommendations";
+import { StaffAvailability } from "./StaffAvailability";
+import { QuickActions } from "./QuickActions";
+import { FilterDialog } from "./FilterDialog";
+import { QuickBookDialog } from "./QuickBookDialog";
 
-// Import mock data from the new location
-import { appointments, staffAvailability, aiSuggestions } from "./scheduling/mockData";
+// Import mock data
+import { appointments, staffAvailability, aiSuggestions } from "./mockData";
 
 interface SmartSchedulingCalendarProps {
   clientId?: string;
