@@ -1,4 +1,3 @@
-
 export interface ClientInsightData {
   riskLevel: 'low' | 'medium' | 'high';
   riskScore: number;
@@ -9,7 +8,7 @@ export interface ClientInsightData {
     title: string;
     priority: 'low' | 'medium' | 'high';
   }[];
-  missingDocuments: {
+  missingDocuments?: {
     id: string;
     name: string;
     requiredBy: string;
@@ -61,7 +60,6 @@ export interface InsightDataResponse {
   data: ClientInsightData;
 }
 
-// Adding missing AdvancedRiskMetrics type
 export interface AdvancedRiskMetrics {
   riskLevel: 'low' | 'medium' | 'high';
   overallRiskScore: number;
@@ -97,7 +95,6 @@ export interface AdvancedRiskMetrics {
   }[];
 }
 
-// Adding missing PredictiveData interface
 export interface PredictiveData {
   isLoading: boolean;
   processedData: any[];

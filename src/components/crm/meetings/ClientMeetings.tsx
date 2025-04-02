@@ -1,692 +1,449 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Calendar, 
-  Phone, 
-  Mail, 
-  MessageSquare, 
-  Plus, 
+  Clock, 
   Video, 
+  Users, 
   FileText, 
-  Mic, 
-  MicOff, 
-  Download, 
-  Save, 
-  Copy,
-  Clock
+  CheckCircle, 
+  AlertCircle,
+  MessageSquare,
+  ChevronRight
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { RequestFeedbackDialog } from "@/components/meetings/feedback/RequestFeedbackDialog";
-
-interface Meeting {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  duration: string;
-  type: string;
-  status: string;
-  hasNotes?: boolean;
-}
+import { RequestFeedbackDialog } from "../feedback/RequestFeedbackDialog";
 
 interface ClientMeetingsProps {
-  clientName: string;
+  clientName?: string;
 }
 
-export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
-  const [activeTab, setActiveTab] = useState<string>("upcoming");
+export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) => {
+  const [activeTab, setActiveTab] = useState("upcoming");
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
-  const [meetingNotes, setMeetingNotes] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcription, setTranscription] = useState("");
-  const [summary, setSummary] = useState("");
-  const [actionItems, setActionItems] = useState<string[]>([]);
-  const [activeTranscriptionTab, setActiveTranscriptionTab] = useState("transcription");
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
-  const [showRequestFeedbackDialog, setShowRequestFeedbackDialog] = useState(false);
-  const [showAgendaDialog, setShowAgendaDialog] = useState(false);
-  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
-  const [agendaItems, setAgendaItems] = useState([
-    { id: '1', text: 'Introduction and status update', completed: false, timeEstimate: '5 min' },
-    { id: '2', text: 'Review of financial documents', completed: false, timeEstimate: '15 min' },
-    { id: '3', text: 'Discussion of options and next steps', completed: false, timeEstimate: '20 min' },
-    { id: '4', text: 'Questions and closing', completed: false, timeEstimate: '10 min' },
-  ]);
-  const [feedbackRating, setFeedbackRating] = useState<number>(0);
-  const [feedbackComment, setFeedbackComment] = useState("");
+  const [isRequestFeedbackOpen, setIsRequestFeedbackOpen] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState<{
+    id: string;
+    title: string;
+    date: string;
+    clientName: string;
+  } | null>(null);
 
+  // Mock data for upcoming meetings
   const upcomingMeetings = [
-    { 
-      id: "1", 
-      title: "Initial Consultation", 
-      date: new Date(Date.now() + 86400000).toISOString(), // tomorrow
-      time: "10:00 AM", 
+    {
+      id: "meet-1",
+      title: "Initial Consultation",
+      date: "2023-07-15T10:00:00",
+      time: "10:00 AM",
       duration: "45 minutes",
+      clientName: clientName,
       type: "video",
-      status: "confirmed"
+      status: "confirmed",
+      participants: ["Jane Smith (Trustee)", clientName]
     },
-    { 
-      id: "2", 
-      title: "Financial Review", 
-      date: new Date(Date.now() + 345600000).toISOString(), // 4 days later
-      time: "2:30 PM", 
+    {
+      id: "meet-2",
+      title: "Document Review Session",
+      date: "2023-07-18T14:30:00",
+      time: "2:30 PM",
       duration: "60 minutes",
+      clientName: clientName,
       type: "in-person",
-      status: "pending"
+      status: "tentative",
+      participants: ["John Doe (Legal Advisor)", "Jane Smith (Trustee)", clientName]
     }
   ];
 
+  // Mock data for past meetings
   const pastMeetings = [
-    { 
-      id: "3", 
-      title: "Document Review", 
-      date: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-      time: "11:15 AM", 
+    {
+      id: "past-1",
+      title: "Initial Contact",
+      date: "2023-07-01T11:00:00",
+      time: "11:00 AM",
       duration: "30 minutes",
-      type: "video",
-      status: "completed",
-      hasNotes: true
-    },
-    { 
-      id: "4", 
-      title: "Introductory Call", 
-      date: new Date(Date.now() - 604800000).toISOString(), // 1 week ago
-      time: "3:00 PM", 
-      duration: "15 minutes",
+      clientName: clientName,
       type: "phone",
       status: "completed",
-      hasNotes: false
+      hasNotes: true,
+      hasRecording: false
+    },
+    {
+      id: "past-2",
+      title: "Financial Assessment",
+      date: "2023-07-05T15:00:00",
+      time: "3:00 PM",
+      duration: "45 minutes",
+      clientName: clientName,
+      type: "video",
+      status: "completed",
+      hasNotes: true,
+      hasRecording: true,
+      hasFeedback: false
     }
   ];
 
   const handleJoinMeeting = (meetingId: string) => {
-    setIsJoinDialogOpen(true);
+    const meeting = upcomingMeetings.find(m => m.id === meetingId);
+    if (meeting) {
+      setSelectedMeeting({
+        id: meeting.id,
+        title: meeting.title,
+        date: meeting.date,
+        clientName: meeting.clientName
+      });
+      setIsJoinDialogOpen(true);
+    }
   };
 
   const handleViewNotes = (meetingId: string) => {
-    setMeetingNotes("Client expressed interest in debt consolidation options. Need to prepare Form 47 and review at next meeting. Follow up with documentation request by email.");
-    setIsNotesDialogOpen(true);
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return "Invalid date";
-      }
-      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return "Invalid date";
+    const meeting = pastMeetings.find(m => m.id === meetingId);
+    if (meeting) {
+      setSelectedMeeting({
+        id: meeting.id,
+        title: meeting.title,
+        date: meeting.date,
+        clientName: meeting.clientName
+      });
+      setIsNotesDialogOpen(true);
     }
   };
 
-  const toggleRecording = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      generateSummary();
-      toast("Recording stopped - Transcription complete. Summary and action items generated.");
-    } else {
-      setIsRecording(true);
-      toast("Recording started - Meeting transcription is now in progress.");
-      simulateTranscription();
+  const handleRequestFeedback = (meetingId: string) => {
+    const meeting = pastMeetings.find(m => m.id === meetingId);
+    if (meeting) {
+      setSelectedMeeting({
+        id: meeting.id,
+        title: meeting.title,
+        date: meeting.date,
+        clientName: meeting.clientName
+      });
+      setIsRequestFeedbackOpen(true);
     }
   };
-  
-  const simulateTranscription = () => {
-    const transcripts = [
-      `${clientName}: I'm considering the different options we discussed last time.`,
-      "You: That's great. Have you had a chance to review the documents I sent?",
-      `${clientName}: Yes, I have some questions about the form requirements.`,
-      "You: Let's go through them one by one. Which section was unclear?",
-      `${clientName}: The section about assets and liabilities was confusing.`,
-      "You: I can explain that in more detail. Let me walk you through how to complete it properly.",
-      `${clientName}: That would be helpful. Also, what's the timeline once I submit everything?`,
-      "You: Once all documents are submitted, we typically process within 7-10 business days.",
-    ];
+
+  const joinMeeting = () => {
+    // In a real app, this would connect to a meeting service
+    toast.success("Joining meeting...");
+    setIsJoinDialogOpen(false);
+  };
+
+  const sendFeedbackRequest = (email: string) => {
+    if (!selectedMeeting) return;
     
-    let currentIndex = 0;
-    
-    const interval = setInterval(() => {
-      if (currentIndex < transcripts.length && isRecording) {
-        setTranscription(prev => prev + transcripts[currentIndex] + "\n\n");
-        currentIndex++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 3000);
-  };
-  
-  const generateSummary = () => {
-    setTimeout(() => {
-      setSummary(
-        `Meeting with ${clientName} focused on reviewing previously discussed options and clarifying documentation requirements, particularly the assets and liabilities section. Client is preparing to submit forms and inquired about processing timeline (7-10 business days after submission).`
-      );
-      
-      setActionItems([
-        "Send simplified guide for completing the assets and liabilities section",
-        "Follow up with timeline confirmation email",
-        "Schedule check-in call in 5 days to verify document submission progress",
-        "Prepare for processing in approximately 7-10 business days"
-      ]);
-    }, 1500);
-  };
-
-  const handleSaveTranscription = () => {
-    toast("Transcription saved to client records");
-  };
-
-  const handleCopyTranscription = () => {
-    navigator.clipboard.writeText(transcription);
-    toast("Transcription copied to clipboard");
-  };
-
-  const handleDownloadTranscription = () => {
-    const blob = new Blob([transcription], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `meeting-with-${clientName.replace(/\s+/g, '-').toLowerCase()}-transcription.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast("Transcription downloaded as text file");
-  };
-
-  const handleToggleAgendaItem = (id: string) => {
-    setAgendaItems(
-      agendaItems.map(item => 
-        item.id === id ? { ...item, completed: !item.completed } : item
-      )
-    );
-  };
-
-  const handleRequestFeedback = (meeting: Meeting) => {
-    setSelectedMeeting(meeting);
-    setShowRequestFeedbackDialog(true);
-  };
-
-  const handleSubmitFeedback = () => {
-    toast("Thank you for providing your feedback");
-    setShowFeedbackDialog(false);
-  };
-
-  const handleViewAgenda = () => {
-    setShowAgendaDialog(true);
-  };
-
-  const calculateAgendaProgress = () => {
-    const completedCount = agendaItems.filter(item => item.completed).length;
-    return agendaItems.length > 0 ? Math.round((completedCount / agendaItems.length) * 100) : 0;
+    toast.success(`Feedback request sent to ${email}`);
+    setIsRequestFeedbackOpen(false);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Meetings with {clientName}</h2>
-        <Button>
-          <Calendar className="h-4 w-4 mr-2" />
-          Schedule Meeting
-        </Button>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Meetings</h2>
+          <p className="text-muted-foreground">Schedule and manage meetings with {clientName}</p>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Calendar className="h-4 w-4 mr-2" />
+            Schedule Meeting
+          </Button>
+        </div>
       </div>
 
-      <Tabs 
-        defaultValue={activeTab} 
-        value={activeTab} 
-        onValueChange={setActiveTab} 
-        className="space-y-4"
-      >
-        <TabsList className="grid grid-cols-3 w-[400px]">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="past">Past Meetings</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="upcoming" className="space-y-4">
-          {upcomingMeetings.length === 0 ? (
-            <Card className="p-6 text-center">
-              <h3 className="text-lg font-medium mb-2">No Upcoming Meetings</h3>
-              <p className="text-muted-foreground">Schedule a meeting with {clientName}.</p>
-              <Button className="mt-4">Schedule Now</Button>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
+
+        <TabsContent value="upcoming" className="mt-6">
+          {upcomingMeetings.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {upcomingMeetings.map((meeting) => (
-                <Card key={meeting.id}>
-                  <CardContent className="p-6">
+                <Card key={meeting.id} className="flex flex-col">
+                  <CardHeader>
                     <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-lg">{meeting.title}</h3>
-                          <Badge variant={meeting.status === "confirmed" ? "default" : "outline"}>
-                            {meeting.status === "confirmed" ? "Confirmed" : "Pending"}
-                          </Badge>
-                        </div>
-                        <div className="text-muted-foreground space-y-1">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDate(meeting.date)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{meeting.time} ({meeting.duration})</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Video className="h-4 w-4" />
-                            <span>{meeting.type === "video" ? "Video Call" : meeting.type === "phone" ? "Phone Call" : "In-Person"}</span>
-                          </div>
-                        </div>
+                      <Badge variant={meeting.status === "confirmed" ? "default" : "outline"} className="mb-2">
+                        {meeting.status === "confirmed" ? "Confirmed" : "Tentative"}
+                      </Badge>
+                      <Badge variant="outline" className="bg-primary/5">
+                        {meeting.type === "video" ? "Video" : meeting.type === "in-person" ? "In-person" : "Phone"}
+                      </Badge>
+                    </div>
+                    <CardTitle>{meeting.title}</CardTitle>
+                    <CardDescription>
+                      <div className="flex items-center mt-1">
+                        <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
+                        <span>
+                          {new Date(meeting.date).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric"
+                          })}
+                        </span>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="flex items-center gap-1"
-                          onClick={handleViewAgenda}
-                        >
-                          <FileText className="h-4 w-4" />
-                          Agenda
-                        </Button>
-                        <Button 
-                          variant="default" 
-                          size="sm"
-                          className="flex items-center gap-1"
-                          onClick={() => handleJoinMeeting(meeting.id)}
-                        >
-                          <Video className="h-4 w-4" />
-                          Join
-                        </Button>
+                      <div className="flex items-center mt-1">
+                        <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                        <span>{meeting.time} ({meeting.duration})</span>
+                      </div>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <div className="space-y-2">
+                      <Label>Participants</Label>
+                      <div className="text-sm space-y-1">
+                        {meeting.participants.map((participant, i) => (
+                          <div key={i} className="flex items-center">
+                            <Users className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                            <span>{participant}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <Button variant="outline" size="sm">Reschedule</Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleJoinMeeting(meeting.id)}
+                      disabled={new Date(meeting.date).getTime() > Date.now() + 1000 * 60 * 10} // Enable 10 minutes before
+                    >
+                      <Video className="h-4 w-4 mr-1" />
+                      Join
+                    </Button>
+                  </CardFooter>
                 </Card>
               ))}
             </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="past" className="space-y-4">
-          {pastMeetings.length === 0 ? (
-            <Card className="p-6 text-center">
-              <h3 className="text-lg font-medium">No Past Meetings</h3>
-              <p className="text-muted-foreground">You haven't had any meetings with {clientName} yet.</p>
-            </Card>
           ) : (
-            <div className="grid gap-4">
-              {pastMeetings.map((meeting) => (
-                <Card key={meeting.id}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-lg">{meeting.title}</h3>
-                          <Badge variant="secondary">Completed</Badge>
-                        </div>
-                        <div className="text-muted-foreground space-y-1">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDate(meeting.date)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{meeting.time} ({meeting.duration})</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        {meeting.hasNotes ? (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="flex items-center gap-1"
-                            onClick={() => handleViewNotes(meeting.id)}
-                          >
-                            <FileText className="h-4 w-4" />
-                            View Notes
-                          </Button>
-                        ) : (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="flex items-center gap-1"
-                            onClick={() => handleViewNotes(meeting.id)}
-                          >
-                            <FileText className="h-4 w-4" />
-                            Add Notes
-                          </Button>
-                        )}
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="flex items-center gap-1"
-                          onClick={() => handleRequestFeedback(meeting)}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                          Request Feedback
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="text-center py-12 border rounded-lg bg-card/50">
+              <h3 className="font-medium mb-2">No upcoming meetings</h3>
+              <p className="text-muted-foreground mb-4">Schedule a meeting with {clientName}</p>
+              <Button>
+                <Calendar className="h-4 w-4 mr-2" />
+                Schedule Meeting
+              </Button>
             </div>
           )}
         </TabsContent>
-        
-        <TabsContent value="analytics" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Meeting Analytics</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <h3 className="font-medium mb-1">Total Meetings</h3>
-                  <p className="text-2xl font-bold">{pastMeetings.length + upcomingMeetings.length}</p>
-                </div>
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <h3 className="font-medium mb-1">Avg. Duration</h3>
-                  <p className="text-2xl font-bold">37.5 min</p>
-                </div>
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <h3 className="font-medium mb-1">Completion Rate</h3>
-                  <p className="text-2xl font-bold">100%</p>
-                </div>
-              </div>
-              
-              <div className="mt-6 text-center p-6 border rounded-lg">
-                <p className="text-muted-foreground">Detailed analytics visualization will appear here</p>
-              </div>
-            </CardContent>
-          </Card>
+
+        <TabsContent value="past" className="mt-6">
+          {pastMeetings.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {pastMeetings.map((meeting) => (
+                <Card key={meeting.id} className="flex flex-col">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <Badge variant="outline" className="mb-2 bg-muted">
+                        Completed
+                      </Badge>
+                      <Badge variant="outline" className="bg-primary/5">
+                        {meeting.type === "video" ? "Video" : meeting.type === "in-person" ? "In-person" : "Phone"}
+                      </Badge>
+                    </div>
+                    <CardTitle>{meeting.title}</CardTitle>
+                    <CardDescription>
+                      <div className="flex items-center mt-1">
+                        <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
+                        <span>
+                          {new Date(meeting.date).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric"
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center mt-1">
+                        <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                        <span>{meeting.time} ({meeting.duration})</span>
+                      </div>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <div className="space-y-2">
+                      <Label>Meeting resources</Label>
+                      <div className="text-sm space-y-1">
+                        {meeting.hasNotes && (
+                          <div className="flex items-center">
+                            <FileText className="h-3.5 w-3.5 mr-1 text-blue-500" />
+                            <span className="text-blue-500 cursor-pointer hover:underline" onClick={() => handleViewNotes(meeting.id)}>
+                              Meeting notes
+                            </span>
+                          </div>
+                        )}
+                        {meeting.hasRecording && (
+                          <div className="flex items-center">
+                            <Video className="h-3.5 w-3.5 mr-1 text-blue-500" />
+                            <span className="text-blue-500 cursor-pointer hover:underline">
+                              Recording
+                            </span>
+                          </div>
+                        )}
+                        {'hasFeedback' in meeting && (
+                          <div className="flex items-center">
+                            {meeting.hasFeedback ? (
+                              <>
+                                <CheckCircle className="h-3.5 w-3.5 mr-1 text-green-500" />
+                                <span>Feedback received</span>
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="h-3.5 w-3.5 mr-1 text-amber-500" />
+                                <span className="text-amber-500">Feedback pending</span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleRequestFeedback(meeting.id)}
+                      disabled={'hasFeedback' in meeting && meeting.hasFeedback}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-1" />
+                      Request Feedback
+                    </Button>
+                    <Button 
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleViewNotes(meeting.id)}
+                      disabled={!meeting.hasNotes}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      View Details
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 border rounded-lg bg-card/50">
+              <h3 className="font-medium mb-2">No past meetings</h3>
+              <p className="text-muted-foreground">Previous meetings with {clientName} will appear here</p>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between">
-            <span>Meeting Transcription</span>
-            <Button 
-              variant={isRecording ? "destructive" : "default"}
-              size="sm"
-              onClick={toggleRecording}
-              className="flex items-center gap-1"
-            >
-              {isRecording ? (
-                <>
-                  <MicOff className="h-4 w-4" />
-                  Stop Recording
-                </>
-              ) : (
-                <>
-                  <Mic className="h-4 w-4" />
-                  Start Recording
-                </>
-              )}
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isRecording && (
-            <div className="bg-red-50 text-red-600 px-3 py-2 rounded-md text-sm flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>
-              Recording in progress...
-            </div>
-          )}
-          
-          <Tabs value={activeTranscriptionTab} onValueChange={setActiveTranscriptionTab}>
-            <TabsList>
-              <TabsTrigger value="transcription">Transcription</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-              <TabsTrigger value="action-items">Action Items</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="transcription" className="mt-4">
-              <div className="border rounded-md p-4 min-h-[200px] max-h-[300px] overflow-y-auto whitespace-pre-wrap">
-                {transcription ? transcription : (
-                  <span className="text-muted-foreground">
-                    {isRecording ? "Recording in progress. Transcription will appear here..." : 
-                      "Click 'Start Recording' to begin transcribing the meeting."}
-                  </span>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="summary" className="mt-4">
-              <div className="border rounded-md p-4 min-h-[200px] max-h-[300px] overflow-y-auto">
-                {summary ? summary : (
-                  <span className="text-muted-foreground">
-                    {isRecording ? "Summary will be generated when recording stops." : 
-                      "Record a meeting to generate an AI summary."}
-                  </span>
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="action-items" className="mt-4">
-              <div className="border rounded-md p-4 min-h-[200px] max-h-[300px] overflow-y-auto">
-                {actionItems.length > 0 ? (
-                  <ul className="space-y-2">
-                    {actionItems.map((item, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs">
-                          {index + 1}
-                        </div>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <span className="text-muted-foreground">
-                    {isRecording ? "Action items will be identified when recording stops." : 
-                      "Record a meeting to generate action items."}
-                  </span>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-          
-          {(transcription || summary || actionItems.length > 0) && (
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleCopyTranscription}
-                className="flex items-center gap-1"
-              >
-                <Copy className="h-4 w-4" />
-                Copy
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleDownloadTranscription}
-                className="flex items-center gap-1"
-              >
-                <Download className="h-4 w-4" />
-                Download
-              </Button>
-              <Button 
-                size="sm"
-                onClick={handleSaveTranscription}
-                className="flex items-center gap-1"
-              >
-                <Save className="h-4 w-4" />
-                Save
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <RequestFeedbackDialog 
-        open={showRequestFeedbackDialog}
-        onOpenChange={setShowRequestFeedbackDialog}
-        meetingId={selectedMeeting?.id || ""}
-        meetingTitle={selectedMeeting?.title || "Meeting"}
-        clientName={clientName}
-      />
-
-      <Sheet open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Join Meeting</SheetTitle>
-            <SheetDescription>
-              You're about to join a meeting with {clientName}.
-            </SheetDescription>
-          </SheetHeader>
-          
-          <div className="space-y-4 py-6">
-            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-              <div className="flex items-center gap-2">
-                <Video className="h-5 w-5 text-primary" />
-                <h3 className="font-medium">Initial Consultation</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Scheduled for today at 10:00 AM (45 minutes)
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-medium">Meeting Options</h4>
-              <div className="flex flex-col gap-3">
-                <Button className="justify-start">
-                  <Video className="h-4 w-4 mr-2" />
-                  Join with Video
-                </Button>
-                <Button variant="outline" className="justify-start">
-                  <Phone className="h-4 w-4 mr-2" />
-                  Join with Audio Only
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          <SheetFooter>
-            <Button variant="outline" onClick={() => setIsJoinDialogOpen(false)}>
-              Cancel
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Meeting Notes</SheetTitle>
-            <SheetDescription>
-              Notes from your meeting with {clientName}.
-            </SheetDescription>
-          </SheetHeader>
-          
-          <div className="space-y-4 py-6">
-            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <h3 className="font-medium">Document Review</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {formatDate(pastMeetings[0].date)} at {pastMeetings[0].time}
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-medium">Notes</h4>
-              <div className="border rounded-md p-4">
-                <p className="whitespace-pre-wrap">{meetingNotes}</p>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-medium">Edit Notes</h4>
-              <Textarea
-                value={meetingNotes}
-                onChange={(e) => setMeetingNotes(e.target.value)}
-                className="h-32"
-              />
-            </div>
-          </div>
-          
-          <SheetFooter>
-            <Button variant="outline" onClick={() => setIsNotesDialogOpen(false)}>
-              Close
-            </Button>
-            <Button onClick={() => {
-              toast("Notes saved successfully");
-              setIsNotesDialogOpen(false);
-            }}>Save Changes</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      <Dialog open={showAgendaDialog} onOpenChange={setShowAgendaDialog}>
-        <DialogContent className="sm:max-w-md">
+      {/* Join Meeting Dialog */}
+      <Dialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Meeting Agenda</DialogTitle>
+            <DialogTitle>Join Meeting</DialogTitle>
             <DialogDescription>
-              Agenda for your upcoming meeting with {clientName}.
+              You are about to join a meeting with {selectedMeeting?.clientName}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
-            <h4 className="text-sm font-medium mb-3">Meeting Items ({calculateAgendaProgress()}% complete)</h4>
-            <div className="w-full h-2 bg-muted rounded-full mb-4">
-              <div 
-                className="h-2 bg-primary rounded-full" 
-                style={{ width: `${calculateAgendaProgress()}%` }}
-              ></div>
+          <div className="space-y-4 py-4">
+            <div className="grid gap-2">
+              <Label>Meeting details</Label>
+              <div className="text-sm space-y-1">
+                <div className="font-medium">{selectedMeeting?.title}</div>
+                <div className="text-muted-foreground">
+                  {selectedMeeting?.date && new Date(selectedMeeting.date).toLocaleString()}
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-2">
-              {agendaItems.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="flex items-start gap-3 p-3 border rounded-md"
-                >
-                  <div className="flex items-center h-5 mt-1">
-                    <input
-                      type="checkbox"
-                      checked={item.completed}
-                      onChange={() => handleToggleAgendaItem(item.id)}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`text-sm ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
-                      {item.text}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {item.timeEstimate}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="grid gap-2">
+              <Label htmlFor="meeting-url">Meeting URL</Label>
+              <div className="flex gap-2">
+                <Input 
+                  id="meeting-url" 
+                  value="https://meeting.example.com/join/12345"
+                  readOnly
+                  className="flex-1"
+                />
+                <Button variant="outline" size="sm" className="shrink-0" onClick={() => {
+                  navigator.clipboard.writeText("https://meeting.example.com/join/12345");
+                  toast.success("Meeting URL copied to clipboard");
+                }}>
+                  Copy
+                </Button>
+              </div>
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAgendaDialog(false)}>
-              Close
-            </Button>
-            <Button onClick={() => {
-              toast("Agenda has been shared with the client");
-              setShowAgendaDialog(false);
-            }}>
-              Share with Client
-            </Button>
+            <Button variant="outline" onClick={() => setIsJoinDialogOpen(false)}>Cancel</Button>
+            <Button onClick={joinMeeting}>Join Now</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* View Notes Dialog */}
+      <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Meeting Notes</DialogTitle>
+            <DialogDescription>
+              Notes from meeting with {selectedMeeting?.clientName} on {selectedMeeting?.date && new Date(selectedMeeting.date).toLocaleDateString()}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label>Meeting details</Label>
+                <Badge variant="outline">Complete</Badge>
+              </div>
+              <div className="text-sm space-y-1">
+                <div className="font-medium">{selectedMeeting?.title}</div>
+                <div className="text-muted-foreground">
+                  {selectedMeeting?.date && new Date(selectedMeeting.date).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label>Notes summary</Label>
+              <div className="p-4 rounded-md border bg-muted/50 text-sm">
+                <p>
+                  Discussed the client's financial situation and potential options available. Client expressed concerns about 
+                  maintaining his current residence while going through the process. Explained how the consumer proposal 
+                  could help them achieve their goals while protecting key assets.
+                </p>
+                <div className="mt-4 space-y-2">
+                  <div className="font-medium">Action items:</div>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Client to gather last 3 months of bank statements</li>
+                    <li>Schedule follow-up meeting next week to review documents</li>
+                    <li>Prepare preliminary proposal draft for review</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNotesDialogOpen(false)}>Close</Button>
+            <Button>Export Notes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Request Feedback Dialog */}
+      <RequestFeedbackDialog 
+        open={isRequestFeedbackOpen}
+        onOpenChange={setIsRequestFeedbackOpen}
+        meeting={selectedMeeting}
+        onSubmit={sendFeedbackRequest}
+      />
     </div>
   );
 };
