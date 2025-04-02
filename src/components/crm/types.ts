@@ -1,4 +1,3 @@
-
 export interface ClientInsightData {
   id?: string;
   clientProfile?: {
@@ -56,9 +55,10 @@ export interface ClientInsightData {
   }[];
   aiSuggestions?: {
     id: string;
-    text: string;
-    type: string;
+    type: 'urgent' | 'warning' | 'info';
     message?: string;
+    text?: string;
+    action?: string;
   }[];
   upcomingDeadlines?: {
     id: string;
@@ -123,7 +123,6 @@ export interface FormData {
   [key: string]: string | undefined;
 }
 
-// Adding MeetingFeedback interface for the feedback request feature
 export interface MeetingFeedback {
   id: string;
   meetingId: string;

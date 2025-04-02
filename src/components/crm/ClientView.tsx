@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientProfilePanel } from "./components/profile/ClientProfilePanel";
@@ -76,7 +75,9 @@ const mockClientData: ClientInsightData = {
       name: "Asset Declaration",
       requiredBy: "2023-07-22"
     }
-  ]
+  ],
+  // Adding an empty array to ensure type compatibility
+  aiSuggestions: []
 };
 
 interface ClientViewProps {
