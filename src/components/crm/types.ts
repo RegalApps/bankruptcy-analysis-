@@ -1,3 +1,4 @@
+
 export interface ClientInsightData {
   id?: string;
   clientProfile?: {
@@ -28,7 +29,7 @@ export interface ClientInsightData {
   }[];
   riskLevel: "high" | "medium" | "low"; // Required field
   riskScore: number; // Required field
-  complianceStatus: string; // Required field
+  complianceStatus: "compliant" | "issues" | "critical"; // Updated to use string literal types
   caseProgress: number; // Required field
   lastContactDate?: string;
   nextFollowUp?: string;
@@ -50,17 +51,28 @@ export interface ClientInsightData {
     type: string;
     description: string;
     date: string;
+    action?: string;  // Add this optional field
+    timestamp?: string; // Add this optional field for compatibility
   }[];
   aiSuggestions?: {
     id: string;
     text: string;
     type: string;
+    message?: string; // Add for compatibility with other components
   }[];
   upcomingDeadlines?: {
     id: string;
     title: string;
     date: string;
     type: string;
+    priority?: 'low' | 'medium' | 'high'; // Add for compatibility
+  }[];
+  clientNotes?: {
+    id: string;
+    title: string;
+    content: string;
+    timestamp: string;
+    attachments?: string[];
   }[];
 }
 

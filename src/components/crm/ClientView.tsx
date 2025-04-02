@@ -46,6 +46,11 @@ const mockClientData: ClientInsightData = {
       description: "In-person meeting to review documents",
     },
   ],
+  // Add required fields to fix type errors
+  riskLevel: "low",
+  riskScore: 75,
+  complianceStatus: "compliant",
+  caseProgress: 65
 };
 
 interface ClientViewProps {
@@ -95,7 +100,6 @@ export const ClientView = ({ clientId = '1' }: ClientViewProps) => {
           <TabsContent value="interactions" className="mt-0 h-full">
             <ClientInteractionsPanel
               clientId={clientId}
-              interactions={mockClientData.interactions || []}
             />
           </TabsContent>
 
