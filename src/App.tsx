@@ -14,18 +14,8 @@ import { NotificationsPage as SettingsPage } from "./pages/NotificationsPage"; /
 import { NotificationsPage as ProfilePage } from "./pages/NotificationsPage"; // Temporary placeholder
 import { NotificationsPage as AuthPage } from "./pages/NotificationsPage"; // Temporary placeholder
 import NotFound from "./pages/NotFound";
-
-// Let's create a temporary SupportPage component as well
-const SupportPage = () => {
-  return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-bold">Support Page</h1>
-      <p className="text-muted-foreground mt-2">
-        Get help with your account or application
-      </p>
-    </div>
-  );
-};
+import SupportPage from "./pages/SupportPage";
+import MeetingsPage from "./pages/MeetingsPage";
 
 export default function App() {
   return (
@@ -43,6 +33,7 @@ export default function App() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/meetings/*" element={<MeetingsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
