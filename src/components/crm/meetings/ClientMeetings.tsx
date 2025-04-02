@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +18,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { RequestFeedbackDialog } from "../feedback/RequestFeedbackDialog";
+import { MeetingDetailDialog } from "./MeetingDetailDialog";
 
 interface ClientMeetingsProps {
   clientName?: string;
@@ -28,13 +27,16 @@ interface ClientMeetingsProps {
 export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) => {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
-  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
-  const [isRequestFeedbackOpen, setIsRequestFeedbackOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<{
     id: string;
     title: string;
     date: string;
     clientName: string;
+    type?: string;
+    duration?: string;
+    description?: string;
+    status?: string;
   } | null>(null);
 
   // Mock data for upcoming meetings
@@ -42,24 +44,26 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
     {
       id: "meet-1",
       title: "Initial Consultation",
-      date: "2023-07-15T10:00:00",
+      date: "2025-07-15T10:00:00",
       time: "10:00 AM",
       duration: "45 minutes",
       clientName: clientName,
       type: "video",
       status: "confirmed",
-      participants: ["Jane Smith (Trustee)", clientName]
+      participants: ["Jane Smith (Trustee)", clientName],
+      description: "Initial consultation to discuss financial situation and explore available options. Will need to gather basic information about debts, income, and assets."
     },
     {
       id: "meet-2",
       title: "Document Review Session",
-      date: "2023-07-18T14:30:00",
+      date: "2025-07-18T14:30:00",
       time: "2:30 PM",
       duration: "60 minutes",
       clientName: clientName,
       type: "in-person",
       status: "tentative",
-      participants: ["John Doe (Legal Advisor)", "Jane Smith (Trustee)", clientName]
+      participants: ["John Doe (Legal Advisor)", "Jane Smith (Trustee)", clientName],
+      description: "Review all required documentation including income verification, asset statements, and credit reports. Explain next steps in the process."
     }
   ];
 
@@ -68,19 +72,20 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
     {
       id: "past-1",
       title: "Initial Contact",
-      date: "2023-07-01T11:00:00",
+      date: "2025-03-01T11:00:00",
       time: "11:00 AM",
       duration: "30 minutes",
       clientName: clientName,
       type: "phone",
       status: "completed",
       hasNotes: true,
-      hasRecording: false
+      hasRecording: false,
+      description: "First contact with client to briefly discuss their financial situation and schedule an in-depth consultation."
     },
     {
       id: "past-2",
       title: "Financial Assessment",
-      date: "2023-07-05T15:00:00",
+      date: "2025-03-05T15:00:00",
       time: "3:00 PM",
       duration: "45 minutes",
       clientName: clientName,
@@ -88,7 +93,8 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
       status: "completed",
       hasNotes: true,
       hasRecording: true,
-      hasFeedback: false
+      hasFeedback: false,
+      description: "Detailed financial assessment covering income sources, debt obligations, and potential consumer proposal options."
     }
   ];
 
@@ -99,35 +105,30 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
         id: meeting.id,
         title: meeting.title,
         date: meeting.date,
-        clientName: meeting.clientName
+        clientName: meeting.clientName,
+        type: meeting.type,
+        duration: meeting.duration,
+        description: meeting.description
       });
       setIsJoinDialogOpen(true);
     }
   };
 
-  const handleViewNotes = (meetingId: string) => {
-    const meeting = pastMeetings.find(m => m.id === meetingId);
+  const handleViewDetails = (meetingId: string, isPast: boolean = false) => {
+    const meetingList = isPast ? pastMeetings : upcomingMeetings;
+    const meeting = meetingList.find(m => m.id === meetingId);
     if (meeting) {
       setSelectedMeeting({
         id: meeting.id,
         title: meeting.title,
         date: meeting.date,
-        clientName: meeting.clientName
+        clientName: meeting.clientName,
+        type: meeting.type,
+        duration: meeting.duration,
+        description: meeting.description,
+        status: meeting.status
       });
-      setIsNotesDialogOpen(true);
-    }
-  };
-
-  const handleRequestFeedback = (meetingId: string) => {
-    const meeting = pastMeetings.find(m => m.id === meetingId);
-    if (meeting) {
-      setSelectedMeeting({
-        id: meeting.id,
-        title: meeting.title,
-        date: meeting.date,
-        clientName: meeting.clientName
-      });
-      setIsRequestFeedbackOpen(true);
+      setIsDetailDialogOpen(true);
     }
   };
 
@@ -135,13 +136,6 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
     // In a real app, this would connect to a meeting service
     toast.success("Joining meeting...");
     setIsJoinDialogOpen(false);
-  };
-
-  const sendFeedbackRequest = (email: string) => {
-    if (!selectedMeeting) return;
-    
-    toast.success(`Feedback request sent to ${email}`);
-    setIsRequestFeedbackOpen(false);
   };
 
   return (
@@ -212,7 +206,13 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between">
-                    <Button variant="outline" size="sm">Reschedule</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewDetails(meeting.id)}
+                    >
+                      Details
+                    </Button>
                     <Button 
                       size="sm" 
                       onClick={() => handleJoinMeeting(meeting.id)}
@@ -276,7 +276,7 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
                         {meeting.hasNotes && (
                           <div className="flex items-center">
                             <FileText className="h-3.5 w-3.5 mr-1 text-blue-500" />
-                            <span className="text-blue-500 cursor-pointer hover:underline" onClick={() => handleViewNotes(meeting.id)}>
+                            <span className="text-blue-500 cursor-pointer hover:underline" onClick={() => handleViewDetails(meeting.id, true)}>
                               Meeting notes
                             </span>
                           </div>
@@ -311,17 +311,7 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => handleRequestFeedback(meeting.id)}
-                      disabled={'hasFeedback' in meeting && meeting.hasFeedback}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      Request Feedback
-                    </Button>
-                    <Button 
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleViewNotes(meeting.id)}
-                      disabled={!meeting.hasNotes}
+                      onClick={() => handleViewDetails(meeting.id, true)}
                     >
                       <FileText className="h-4 w-4 mr-1" />
                       View Details
@@ -344,9 +334,9 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Join Meeting</DialogTitle>
-            <DialogDescription>
+            <CardDescription>
               You are about to join a meeting with {selectedMeeting?.clientName}
-            </DialogDescription>
+            </CardDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
@@ -386,63 +376,11 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
         </DialogContent>
       </Dialog>
 
-      {/* View Notes Dialog */}
-      <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Meeting Notes</DialogTitle>
-            <DialogDescription>
-              Notes from meeting with {selectedMeeting?.clientName} on {selectedMeeting?.date && new Date(selectedMeeting.date).toLocaleDateString()}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="grid gap-2">
-              <div className="flex items-center justify-between">
-                <Label>Meeting details</Label>
-                <Badge variant="outline">Complete</Badge>
-              </div>
-              <div className="text-sm space-y-1">
-                <div className="font-medium">{selectedMeeting?.title}</div>
-                <div className="text-muted-foreground">
-                  {selectedMeeting?.date && new Date(selectedMeeting.date).toLocaleString()}
-                </div>
-              </div>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label>Notes summary</Label>
-              <div className="p-4 rounded-md border bg-muted/50 text-sm">
-                <p>
-                  Discussed the client's financial situation and potential options available. Client expressed concerns about 
-                  maintaining his current residence while going through the process. Explained how the consumer proposal 
-                  could help them achieve their goals while protecting key assets.
-                </p>
-                <div className="mt-4 space-y-2">
-                  <div className="font-medium">Action items:</div>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Client to gather last 3 months of bank statements</li>
-                    <li>Schedule follow-up meeting next week to review documents</li>
-                    <li>Prepare preliminary proposal draft for review</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNotesDialogOpen(false)}>Close</Button>
-            <Button>Export Notes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Request Feedback Dialog */}
-      <RequestFeedbackDialog 
-        open={isRequestFeedbackOpen}
-        onOpenChange={setIsRequestFeedbackOpen}
+      {/* Meeting Detail Dialog */}
+      <MeetingDetailDialog 
+        open={isDetailDialogOpen}
+        onOpenChange={setIsDetailDialogOpen}
         meeting={selectedMeeting}
-        onSubmit={sendFeedbackRequest}
       />
     </div>
   );

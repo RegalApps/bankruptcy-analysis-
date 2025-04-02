@@ -1,3 +1,4 @@
+
 export interface ClientInsightData {
   riskLevel: 'low' | 'medium' | 'high';
   riskScore: number;
@@ -13,11 +14,13 @@ export interface ClientInsightData {
     name: string;
     requiredBy: string;
   }[];
-  recentActivities: {
+  recentActivities?: {
     id: string;
     type: string;
-    action: string;
-    timestamp: string;
+    description?: string;
+    date?: string;
+    action?: string;
+    timestamp?: string;
   }[];
   aiSuggestions: {
     id: string;
