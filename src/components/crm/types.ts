@@ -27,15 +27,14 @@ export interface ClientInsightData {
     type: string;
     description: string;
   }[];
-  riskLevel?: "high" | "medium" | "low";
-  riskScore?: number;
-  complianceStatus?: string;
-  caseProgress?: number;
+  riskLevel: "high" | "medium" | "low"; // Made required
+  riskScore: number; // Made required
+  complianceStatus: string; // Made required
+  caseProgress: number; // Made required
   lastContactDate?: string;
   nextFollowUp?: string;
   caseStatus?: string;
   assignedTrustee?: string;
-  // Add the missing properties
   pendingTasks?: {
     id: string;
     title: string;
@@ -76,7 +75,6 @@ export interface ClientInfo {
   tags?: string[];
 }
 
-// Add FormData interface
 export interface FormData {
   fullName: string;
   email: string;
