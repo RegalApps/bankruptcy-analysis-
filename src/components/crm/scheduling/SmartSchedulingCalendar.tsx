@@ -14,7 +14,7 @@ import {
 import { Link } from "react-router-dom";
 
 // Import components
-import { CalendarView } from "./calendar/CalendarView";
+import { CalendarView } from "@/components/crm/scheduling/CalendarView";
 import { AppointmentsList } from "./AppointmentsList";
 import { AIRecommendations } from "./AIRecommendations";
 import { StaffAvailability } from "./StaffAvailability";
