@@ -1,43 +1,37 @@
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import HomePage from "@/pages/HomePage";
+import DocumentsPage from "@/pages/DocumentsPage";
+import SupportPage from "@/pages/SupportPage";
+import NewSupportTicket from "@/pages/NewSupportTicket";
+import DocumentViewerPage from "@/pages/DocumentViewerPage";
+import ActivityPage from "@/pages/ActivityPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
+import ClientViewerPage from "@/pages/ClientViewerPage";
+import CRMPage from "@/pages/CRMPage";
+import SettingsPage from "@/pages/SettingsPage";
+import ProfilePage from "@/pages/ProfilePage";
+import AuthPage from "@/pages/AuthPage";
+import NotFoundPage from "@/pages/NotFoundPage";
 
-import { Routes, Route } from "react-router-dom";
-import CRMPage from "./pages/CRMPage";
-import DocumentsPage from "./pages/documents/DocumentsPage";
-import NotFound from "./pages/NotFound";
-import CalendarFullscreenPage from "./pages/CalendarFullscreenPage";
-import Index from "./pages/Index";
-import EFilingPage from "./pages/EFilingPage";
-import ActivityPage from "./pages/ActivityPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import ProfilePage from "./pages/ProfilePage";
-import SettingsPage from "./pages/SettingsPage";
-import ClientViewerPage from "./pages/ClientViewerPage";
-import NotificationsPage from "./pages/NotificationsPage";
-import ConBrandingPage from "./pages/ConBrandingPage";
-import Support from "./pages/Support";
-import NewSupportTicket from "./pages/NewSupportTicket";
-import "./App.css";
-
-function App() {
+export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/index" element={<Index />} />
-      <Route path="/crm" element={<CRMPage />} />
-      <Route path="/documents/*" element={<DocumentsPage />} />
-      <Route path="/calendar-fullscreen" element={<CalendarFullscreenPage />} />
-      <Route path="/e-filing" element={<EFilingPage />} />
-      <Route path="/activity" element={<ActivityPage />} />
-      <Route path="/analytics" element={<AnalyticsPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
-      <Route path="/notifications" element={<NotificationsPage />} />
-      <Route path="/SAFA" element={<ConBrandingPage />} />
-      <Route path="/support" element={<Support />} />
-      <Route path="/support/new" element={<NewSupportTicket />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/documents" element={<DocumentsPage />} />
+        <Route path="/support" element={<SupportPage />} />
+        <Route path="/support/new" element={<NewSupportTicket />} />
+        <Route path="/viewer/:documentId" element={<DocumentViewerPage />} />
+        <Route path="/activity" element={<ActivityPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
+        <Route path="/client/:clientId" element={<ClientViewerPage />} />
+        <Route path="/crm" element={<CRMPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;

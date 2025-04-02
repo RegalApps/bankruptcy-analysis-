@@ -130,7 +130,7 @@ export const DocumentTemplateEditor: React.FC<DocumentTemplateEditorProps> = ({
             <Badge className="bg-blue-500/10 text-blue-500">Variables Available</Badge>
           </div>
           <div className="bg-muted/30 p-2 rounded-md mb-2 text-xs text-muted-foreground">
-            Use {{client_name}}, {{client_address}}, {{matter_number}}, {{today_date}}, etc. for dynamic content.
+            Use &#123;&#123;client_name&#125;&#125;, &#123;&#123;client_address&#125;&#125;, &#123;&#123;matter_number&#125;&#125;, &#123;&#123;today_date&#125;&#125;, etc. for dynamic content.
           </div>
           <Textarea
             id="template-content"
