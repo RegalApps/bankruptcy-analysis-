@@ -7,12 +7,21 @@ import { Calendar, FileCheck, BrainCog, BarChart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useParams, useLocation } from "react-router-dom";
 
-export const CRMTabs = () => {
+interface CRMTabsProps {
+  clientId?: string;
+  clientName?: string;
+}
+
+export const CRMTabs = ({ clientId: propClientId, clientName: propClientName }: CRMTabsProps = {}) => {
   // Extract client information from URL if available
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const clientId = params.get('clientId') || undefined;
-  const clientName = params.get('clientName') || undefined;
+  const urlClientId = params.get('clientId') || undefined;
+  const urlClientName = params.get('clientName') || undefined;
+  
+  // Use props if provided, fallback to URL params
+  const clientId = propClientId || urlClientId;
+  const clientName = propClientName || urlClientName;
 
   return (
     <div className="space-y-6">
