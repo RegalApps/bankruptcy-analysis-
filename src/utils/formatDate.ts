@@ -1,46 +1,42 @@
+import { format, formatDistanceToNow, isValid } from "date-fns";
 
-export function formatDate(dateString: string): string {
-  if (!dateString) return "Unknown date";
-  
+/**
+ * Formats a date string in a human-readable format
+ * 
+ * @param dateString ISO date string or any valid date format
+ * @param showTime Whether to show the time in the formatted date
+ * @returns Formatted date string
+ */
+export const formatDate = (dateString: string, showTime = false): string => {
   try {
     const date = new Date(dateString);
     
-    // Check if the date is valid
-    if (isNaN(date.getTime())) {
+    if (!isValid(date)) {
       return "Invalid date";
     }
     
-    // Get current date for comparison
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    // If it's today, show relative time
+    const isToday = new Date().toDateString() === date.toDateString();
     
-    // Format date part
-    let datePart: string;
-    
-    if (date >= today) {
-      datePart = "Today";
-    } else if (date >= yesterday) {
-      datePart = "Yesterday";
-    } else {
-      // Use locale date formatting
-      datePart = date.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
+    if (isToday) {
+      return showTime 
+        ? `Today at ${format(date, "h:mm a")}`
+        : "Today";
     }
     
-    // Format time part
-    const timePart = date.toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // If it's within the last week, show relative time
+    const isRecent = Date.now() - date.getTime() < 7 * 24 * 60 * 60 * 1000;
     
-    return `${datePart} at ${timePart}`;
+    if (isRecent) {
+      return formatDistanceToNow(date, { addSuffix: true });
+    }
+    
+    // Otherwise, show the actual date
+    return showTime
+      ? format(date, "MMM d, yyyy 'at' h:mm a")
+      : format(date, "MMM d, yyyy");
   } catch (error) {
     console.error("Error formatting date:", error);
-    return dateString || "Unknown date";
+    return "Invalid date";
   }
-}
+};
