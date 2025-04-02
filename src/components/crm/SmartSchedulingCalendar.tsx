@@ -8,8 +8,10 @@ import {
   CalendarIcon,
   AlertCircle,
   CheckCircle2,
-  Clock4
+  Clock4,
+  Maximize2
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 // Import components
 import { CalendarView } from "./scheduling/CalendarView";
@@ -82,6 +84,17 @@ export const SmartSchedulingCalendar = () => {
               <div className="flex items-center justify-between">
                 <CardTitle>AI-Powered Calendar</CardTitle>
                 <div className="flex gap-2">
+                  <Link 
+                    to="/calendar-fullscreen" 
+                    state={{ 
+                      initialDate: selectedDate,
+                      initialView: "week"
+                    }}
+                  >
+                    <Button variant="ghost" size="icon" title="Open fullscreen calendar">
+                      <Maximize2 className="h-4 w-4" />
+                    </Button>
+                  </Link>
                   <TabsList>
                     <TabsTrigger 
                       value="day" 

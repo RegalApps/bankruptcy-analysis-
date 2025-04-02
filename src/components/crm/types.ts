@@ -27,7 +27,7 @@ export interface ClientInsightData {
     type: string;
     description: string;
   }[];
-  riskLevel?: string;
+  riskLevel?: "high" | "medium" | "low";
   riskScore?: number;
   complianceStatus?: string;
   caseProgress?: number;
