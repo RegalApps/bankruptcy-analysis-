@@ -13,6 +13,8 @@ import SettingsPage from "./pages/SettingsPage";
 import ClientViewerPage from "./pages/ClientViewerPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ConBrandingPage from "./pages/ConBrandingPage";
+import Support from "./pages/Support";
+import NewSupportTicket from "./pages/NewSupportTicket";
 import "./App.css";
 
 function App() {
@@ -31,6 +33,8 @@ function App() {
       <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
       <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/SAFA" element={<ConBrandingPage />} />
+      <Route path="/support" element={<Support />} />
+      <Route path="/support/new" element={<NewSupportTicket />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
