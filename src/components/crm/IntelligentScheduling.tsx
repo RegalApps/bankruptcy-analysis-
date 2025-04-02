@@ -5,7 +5,12 @@ import { SchedulingAnalytics } from "@/components/crm/scheduling/SchedulingAnaly
 import { ClientBookingPortal } from "@/components/crm/scheduling/ClientBookingPortal";
 import { useSchedulingTabs } from "./hooks/useSchedulingTabs";
 
-export const IntelligentScheduling = () => {
+interface IntelligentSchedulingProps {
+  clientId?: string;
+  clientName?: string;
+}
+
+export const IntelligentScheduling = ({ clientId, clientName }: IntelligentSchedulingProps = {}) => {
   const { activeTab, setActiveTab } = useSchedulingTabs();
 
   return (
@@ -18,15 +23,15 @@ export const IntelligentScheduling = () => {
         </TabsList>
 
         <TabsContent value="calendar">
-          <SmartSchedulingCalendar />
+          <SmartSchedulingCalendar clientId={clientId} clientName={clientName} />
         </TabsContent>
         
         <TabsContent value="client">
-          <ClientBookingPortal />
+          <ClientBookingPortal clientId={clientId} clientName={clientName} />
         </TabsContent>
         
         <TabsContent value="analytics">
-          <SchedulingAnalytics />
+          <SchedulingAnalytics clientId={clientId} clientName={clientName} />
         </TabsContent>
       </Tabs>
     </div>

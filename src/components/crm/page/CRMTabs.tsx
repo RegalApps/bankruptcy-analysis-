@@ -49,7 +49,7 @@ export const CRMTabs = ({ clientId: propClientId, clientName: propClientName }: 
         </TabsList>
         
         <TabsContent value="scheduling" className="space-y-4">
-          <IntelligentScheduling clientId={clientId} clientName={clientName} />
+          <IntelligentScheduling />
         </TabsContent>
         
         <TabsContent value="documents" className="space-y-4">
