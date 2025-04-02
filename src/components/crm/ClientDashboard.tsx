@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useClientInsights } from "./hooks/useClientInsights";
 import { ClientProfilePanel } from "./components/profile/ClientProfilePanel";
@@ -7,7 +6,7 @@ import { ClientIntelligencePanel } from "./components/profile/ClientIntelligence
 import { ClientGridView } from "./components/ClientGridView";
 import { DocumentSignaturesPanel } from "./components/documents/DocumentSignaturesPanel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, LayoutGrid, User, Activity, FileText } from "lucide-react";
+import { Info, LayoutGrid, User, Activity, FileText, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +17,8 @@ import { Search, Filter } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CRMTabs } from "./page/CRMTabs";
+import { DocumentVault } from "./DocumentVault";
+import { ClientMeetings } from "./meetings/ClientMeetings";
 
 interface ClientDashboardProps {
   clientId?: string;
@@ -161,6 +162,10 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
             <FileText className="h-4 w-4 mr-2" />
             Documents
           </TabsTrigger>
+          <TabsTrigger value="meetings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Calendar className="h-4 w-4 mr-2" />
+            Meetings
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="client" className="mt-0">
@@ -225,15 +230,15 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
             
             <div className="bg-card p-6 rounded-lg border">
               <div className="space-y-4">
-                {insightData.recentActivities.map((activity, index) => (
+                {insightData.recentActivities && insightData.recentActivities.map((activity, index) => (
                   <div key={activity.id} className="flex items-start gap-4">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                       {index + 1}
                     </div>
                     <div>
-                      <p className="font-medium">{activity.action}</p>
+                      <p className="font-medium">{activity.description}</p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(activity.timestamp).toLocaleString()}
+                        {new Date(activity.date).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -244,30 +249,11 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
         </TabsContent>
 
         <TabsContent value="documents" className="mt-0">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Client Documents</h2>
-            </div>
-            <p className="text-muted-foreground">Manage all documents related to {selectedClientName}.</p>
-            
-            <div className="bg-card p-6 rounded-lg border">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium">Missing Documents</h3>
-                  <Button size="sm" variant="outline">Upload Document</Button>
-                </div>
-                
-                <div className="grid gap-2">
-                  {insightData.missingDocuments.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-md">
-                      <p>{doc}</p>
-                      <Button size="sm" variant="ghost">Request</Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <DocumentVault />
+        </TabsContent>
+
+        <TabsContent value="meetings" className="mt-0">
+          <ClientMeetings clientName={selectedClientName} />
         </TabsContent>
       </Tabs>
     </div>
