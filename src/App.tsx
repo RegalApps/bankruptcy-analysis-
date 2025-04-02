@@ -24,6 +24,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/documents" element={<DocumentsPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/support" element={<SupportPage />} />
         <Route path="/support/new" element={<NewSupportTicket />} />
         <Route path="/viewer/:documentId" element={<DocumentViewerPage />} />
