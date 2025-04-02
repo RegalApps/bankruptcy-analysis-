@@ -50,7 +50,21 @@ const mockClientData: ClientInsightData = {
   riskLevel: "low",
   riskScore: 75,
   complianceStatus: "compliant",
-  caseProgress: 65
+  caseProgress: 65,
+  pendingTasks: [
+    {
+      id: "task-1",
+      title: "Submit income verification",
+      dueDate: "2023-07-15",
+      priority: "high"
+    },
+    {
+      id: "task-2",
+      title: "Complete financial assessment",
+      dueDate: "2023-07-20",
+      priority: "medium"
+    }
+  ]
 };
 
 interface ClientViewProps {

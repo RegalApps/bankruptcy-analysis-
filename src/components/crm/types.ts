@@ -1,4 +1,3 @@
-
 export interface ClientInsightData {
   id?: string;
   clientProfile?: {
@@ -39,7 +38,7 @@ export interface ClientInsightData {
     id: string;
     title: string;
     dueDate: string;
-    priority: string;
+    priority: "high" | "medium" | "low";
   }[];
   missingDocuments?: {
     id: string;
