@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientProfilePanel } from "./components/profile/ClientProfilePanel";
@@ -76,8 +77,19 @@ const mockClientData: ClientInsightData = {
       requiredBy: "2023-07-22"
     }
   ],
-  // Adding an empty array to ensure type compatibility
-  aiSuggestions: []
+  // Adding the required aiSuggestions array with the correct type structure
+  aiSuggestions: [
+    {
+      id: "sug-1",
+      type: "warning",
+      message: "Client hasn't submitted financial documents that are due in 5 days"
+    },
+    {
+      id: "sug-2",
+      type: "info",
+      message: "Based on client profile, recommend discussing debt consolidation options"
+    }
+  ]
 };
 
 interface ClientViewProps {

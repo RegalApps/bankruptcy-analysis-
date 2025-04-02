@@ -105,13 +105,13 @@ export const useClientInsights = (clientId: string) => {
             {
               id: "sug-1",
               text: "Client hasn't submitted financial documents that are due in 5 days",
-              type: "warning", // Fixed type to match the union type
+              type: "warning",
               message: "Client hasn't submitted financial documents that are due in 5 days"
             },
             {
               id: "sug-2",
               text: "Based on client profile, recommend discussing debt consolidation options",
-              type: "info", // Fixed type to match the union type
+              type: "info",
               message: "Based on client profile, recommend discussing debt consolidation options"
             }
           ],

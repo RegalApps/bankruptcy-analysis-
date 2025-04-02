@@ -16,7 +16,9 @@ import {
   X,
   FileText,
   ListChecks,
-  MessageSquare
+  MessageSquare,
+  Mail,
+  Phone
 } from "lucide-react";
 
 interface MeetingsHeaderProps {
@@ -25,6 +27,7 @@ interface MeetingsHeaderProps {
   isActiveCall: boolean;
   onRequestFeedback: () => void;
   onSubmitFeedback?: () => void;
+  onInviteClient?: () => void;
 }
 
 export const MeetingsHeader = ({
@@ -32,7 +35,8 @@ export const MeetingsHeader = ({
   setActiveTab,
   isActiveCall,
   onRequestFeedback,
-  onSubmitFeedback
+  onSubmitFeedback,
+  onInviteClient
 }: MeetingsHeaderProps) => {
   const [totalNotifications] = useState(3);
 
@@ -71,9 +75,13 @@ export const MeetingsHeader = ({
               </Tooltip>
             </TooltipProvider>
 
-            <Button variant="outline" onClick={() => {}}>
-              <Calendar className="h-4 w-4 mr-2" />
-              Schedule
+            <Button 
+              variant="outline" 
+              onClick={onInviteClient}
+              className="flex items-center gap-2"
+            >
+              <Mail className="h-4 w-4" />
+              Invite Client
             </Button>
 
             <DropdownMenu>

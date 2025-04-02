@@ -1,3 +1,4 @@
+
 export interface ClientInsightData {
   id?: string;
   clientProfile?: {
@@ -53,10 +54,10 @@ export interface ClientInsightData {
     action?: string;
     timestamp?: string;
   }[];
-  aiSuggestions?: {
+  aiSuggestions: {
     id: string;
     type: 'urgent' | 'warning' | 'info';
-    message?: string;
+    message: string;
     text?: string;
     action?: string;
   }[];
