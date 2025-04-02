@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,15 +50,12 @@ export const ClientInfoPanel = ({
   onDocumentSelect,
   selectedDocumentId
 }: ClientInfoPanelProps) => {
-  // Extract client info from client object or use provided clientInfo
-  // Handle missing properties in Client type
   const effectiveClientInfo = clientInfo || (client ? {
     id: client.id,
     name: client.name,
     email: client.email,
     phone: client.phone,
     address: client.address,
-    // Access these properties safely as they might not exist on Client type
     language: client.metadata?.language || "english",
     filing_date: client.metadata?.filing_date || new Date().toISOString(),
     status: client.status
@@ -86,7 +82,6 @@ export const ClientInfoPanel = ({
     }
     
     if (onClientUpdate && client) {
-      // For client object, store language and filing_date in metadata
       if (name === 'language' || name === 'filing_date') {
         onClientUpdate({
           ...client,
@@ -109,7 +104,6 @@ export const ClientInfoPanel = ({
     }
     
     if (onClientUpdate && client) {
-      // For client object, store language and filing_date in metadata
       if (name === 'language' || name === 'filing_date') {
         onClientUpdate({
           ...client,
@@ -288,23 +282,18 @@ export const ClientInfoPanel = ({
             <Button onClick={() => {
               if (onUpdate) onUpdate(formData);
               if (onClientUpdate && client) {
-                // For client updates, handle language and filing_date in metadata
                 const updatedClient = { ...client };
                 
-                // Update normal properties
                 updatedClient.name = formData.name;
                 updatedClient.email = formData.email;
                 updatedClient.phone = formData.phone;
+                updatedClient.address = formData.address;
                 
-                // Ensure metadata exists
                 updatedClient.metadata = updatedClient.metadata || {};
                 
-                // Update metadata properties
-                updatedClient.metadata.address = formData.address;
                 updatedClient.metadata.language = formData.language;
                 updatedClient.metadata.filing_date = formData.filing_date;
                 
-                // Update status directly
                 updatedClient.status = formData.status;
                 
                 onClientUpdate(updatedClient);

@@ -17,6 +17,7 @@ export interface Client {
   metrics: ClientMetrics;
   last_interaction?: string;
   engagement_score?: number;
+  metadata?: Record<string, any>; // Add metadata property
 }
 
 export interface ClientMetrics {
@@ -55,12 +56,26 @@ export interface Task {
 }
 
 export interface ClientInfoPanelProps {
-  client: Client;
+  client?: Client;
+  clientId?: string;
+  clientName?: string;
+  clientInfo?: {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    language?: string;
+    filing_date?: string;
+    status?: string;
+  };
   tasks?: Task[];
   documentCount?: number;
   lastActivityDate?: string;
   documents?: Document[];
   onDocumentSelect?: (documentId: string) => void;
   selectedDocumentId?: string | null;
-  onClientUpdate?: (updatedClient: Client) => void;
+  readOnly?: boolean;
+  onClientUpdate?: (updatedClient: any) => void;
+  onUpdate?: (data: any) => void;
 }
