@@ -1,23 +1,20 @@
 
+import React from "react";
+import { format, isSameDay } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  AlertCircle,
-  Clock
-} from "lucide-react";
-import { format } from "date-fns";
+import { Clock, User, Calendar, AlertTriangle, CheckCircle } from "lucide-react";
 
-// Mock appointment data types
-export interface Appointment {
+// Define the appointment type
+interface Appointment {
   id: string;
-  clientName: string;
-  type: string;
-  time: string;
+  title: string;
   date: Date;
+  startTime: string;
+  endTime: string;
+  clientName?: string;
+  status: 'confirmed' | 'pending' | 'cancelled' | 'completed' | 'self-booked';
   priority: 'high' | 'medium' | 'normal';
-  status: 'confirmed' | 'pending' | 'self-booked';
-  documents: 'complete' | 'incomplete' | 'pending';
-  alert: string | null;
-  color: string;
 }
 
 interface AppointmentsListProps {
@@ -25,90 +22,99 @@ interface AppointmentsListProps {
   selectedDate: Date;
 }
 
-export const AppointmentsList = ({ appointments, selectedDate }: AppointmentsListProps) => {
-  // Get appointments for the selected date
-  const todayAppointments = appointments.filter(apt => 
-    apt.date.getDate() === selectedDate.getDate() &&
-    apt.date.getMonth() === selectedDate.getMonth() &&
-    apt.date.getFullYear() === selectedDate.getFullYear()
-  ).sort((a, b) => {
-    const timeA = parseInt(a.time.split(':')[0]);
-    const timeB = parseInt(b.time.split(':')[0]);
-    return timeA - timeB;
+export const AppointmentsList: React.FC<AppointmentsListProps> = ({
+  appointments,
+  selectedDate
+}) => {
+  // Filter appointments for the selected date
+  const filteredAppointments = appointments.filter(appointment => 
+    isSameDay(new Date(appointment.date), selectedDate)
+  );
+
+  // Sort appointments by start time
+  const sortedAppointments = [...filteredAppointments].sort((a, b) => {
+    return a.startTime.localeCompare(b.startTime);
   });
 
-  // Get priority badge color
-  const getPriorityColor = (priority: string) => {
-    switch(priority) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'normal': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-blue-100 text-blue-800 border-blue-200';
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return <Badge variant="destructive" className="ml-2">High</Badge>;
+      case 'medium':
+        return <Badge variant="default" className="ml-2 bg-amber-500">Medium</Badge>;
+      default:
+        return null;
     }
   };
 
-  // Get status badge
-  const getStatusBadge = (status: string) => {
-    switch(status) {
-      case 'confirmed': return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Confirmed</Badge>;
-      case 'pending': return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Pending</Badge>;
-      case 'self-booked': return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Self-booked</Badge>;
-      default: return <Badge variant="outline">Unknown</Badge>;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-amber-500" />;
+      case 'cancelled':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-blue-500" />;
+      case 'self-booked':
+        return <Calendar className="h-4 w-4 text-indigo-500" />;
+      default:
+        return null;
     }
   };
 
-  const getAppointmentColorClass = (appointment: Appointment) => {
-    switch(appointment.priority) {
-      case 'high': return 'border-l-4 border-red-500';
-      case 'medium': return 'border-l-4 border-amber-500';
-      case 'normal': return appointment.status === 'self-booked' ? 'border-l-4 border-blue-500' : 'border-l-4 border-green-500';
-      default: return 'border-l-4 border-gray-500';
-    }
-  };
+  if (sortedAppointments.length === 0) {
+    return (
+      <div className="mt-4 text-center text-muted-foreground">
+        No appointments scheduled for {format(selectedDate, "MMMM d, yyyy")}
+      </div>
+    );
+  }
 
   return (
-    <div className="mt-6">
-      <h3 className="text-sm font-medium mb-3">Appointments for {format(selectedDate, "MMM d, yyyy")}</h3>
+    <div className="mt-4 space-y-3">
+      <h3 className="font-medium">
+        Appointments for {format(selectedDate, "MMMM d, yyyy")}
+      </h3>
       
-      {todayAppointments.length > 0 ? (
-        <div className="space-y-3">
-          {todayAppointments.map((appointment) => (
-            <div 
-              key={appointment.id} 
-              className={`p-3 bg-white rounded-md border ${getAppointmentColorClass(appointment)} flex justify-between hover:shadow-md transition-shadow`}
-            >
-              <div className="flex items-start gap-3">
-                <div className={`rounded-full p-2 ${appointment.color} text-white`}>
-                  <Clock className="h-4 w-4" />
+      {sortedAppointments.map((appointment) => (
+        <Card key={appointment.id} className="overflow-hidden">
+          <div className={`h-1 ${
+            appointment.priority === 'high' ? 'bg-red-500' :
+            appointment.priority === 'medium' ? 'bg-amber-500' :
+            'bg-green-500'
+          }`} />
+          <CardContent className="p-3">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <div className="font-medium flex items-center">
+                  {appointment.title}
+                  {getPriorityBadge(appointment.priority)}
                 </div>
-                <div>
-                  <div className="font-medium">{appointment.clientName}</div>
-                  <div className="text-sm text-gray-500">{appointment.type}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge className={getPriorityColor(appointment.priority)}>
-                      {appointment.priority.charAt(0).toUpperCase() + appointment.priority.slice(1)}
-                    </Badge>
-                    {getStatusBadge(appointment.status)}
+                <div className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {appointment.startTime} - {appointment.endTime}
+                </div>
+                {appointment.clientName && (
+                  <div className="text-sm text-muted-foreground flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    {appointment.clientName}
                   </div>
-                  {appointment.alert && (
-                    <div className="flex items-center gap-1 mt-2 text-xs text-red-600">
-                      <AlertCircle className="h-3 w-3" />
-                      {appointment.alert}
-                    </div>
-                  )}
+                )}
+              </div>
+              <div className="flex items-center">
+                <div className="flex items-center gap-1.5">
+                  {getStatusIcon(appointment.status)}
+                  <span className="text-xs capitalize">
+                    {appointment.status.replace('-', ' ')}
+                  </span>
                 </div>
               </div>
-              <div className="text-sm font-medium">{appointment.time}</div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center p-6 border border-dashed rounded-md">
-          <div className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-          <h3 className="text-sm font-medium">No appointments scheduled</h3>
-          <p className="text-xs text-gray-500 mt-1">Click "Quick Book" to schedule a meeting</p>
-        </div>
-      )}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };
