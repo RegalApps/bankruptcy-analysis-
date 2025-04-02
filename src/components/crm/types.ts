@@ -3,8 +3,8 @@ export interface ClientInsightData {
   id?: string;
   clientProfile?: {
     name?: string;
-    email?: string;
-    phone?: string;
+    email: string; // Making this required as per the error
+    phone: string; // Making this required as per the error
     company?: string;
     role?: string;
     website?: string;

@@ -10,8 +10,8 @@ import { ClientInsightData } from "./types";
 const mockClientData: ClientInsightData = {
   clientProfile: {
     name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
+    email: "john.doe@example.com", // Now required
+    phone: "+1 (555) 123-4567", // Now required
     company: "Acme Inc.",
     role: "Chief Technology Officer",
     website: "www.acmeinc.com",

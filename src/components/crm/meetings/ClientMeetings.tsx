@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,12 +13,14 @@ import {
   CheckCircle, 
   AlertCircle,
   MessageSquare,
-  ChevronRight
+  ChevronRight,
+  Mail
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { MeetingDetailDialog } from "./MeetingDetailDialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { InviteClientDialog } from "./InviteClientDialog";
 
 interface ClientMeetingsProps {
   clientName?: string;
@@ -29,6 +30,7 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
   const [activeTab, setActiveTab] = useState("upcoming");
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<{
     id: string;
     title: string;
@@ -40,7 +42,6 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
     status?: string;
   } | null>(null);
 
-  // Mock data for upcoming meetings
   const upcomingMeetings = [
     {
       id: "meet-1",
@@ -68,7 +69,6 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
     }
   ];
 
-  // Mock data for past meetings
   const pastMeetings = [
     {
       id: "past-1",
@@ -133,8 +133,23 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
     }
   };
 
+  const handleInviteClient = (meetingId: string) => {
+    const meeting = upcomingMeetings.find(m => m.id === meetingId);
+    if (meeting) {
+      setSelectedMeeting({
+        id: meeting.id,
+        title: meeting.title,
+        date: meeting.date,
+        clientName: meeting.clientName,
+        type: meeting.type,
+        duration: meeting.duration,
+        description: meeting.description
+      });
+      setIsInviteDialogOpen(true);
+    }
+  };
+
   const joinMeeting = () => {
-    // In a real app, this would connect to a meeting service
     toast.success("Joining meeting...");
     setIsJoinDialogOpen(false);
   };
@@ -151,6 +166,10 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
           <Button variant="outline">
             <Calendar className="h-4 w-4 mr-2" />
             Schedule Meeting
+          </Button>
+          <Button variant="outline">
+            <Mail className="h-4 w-4 mr-2" />
+            Invite to Meeting
           </Button>
         </div>
       </div>
@@ -330,7 +349,6 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
         </TabsContent>
       </Tabs>
 
-      {/* Join Meeting Dialog */}
       <Dialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -377,11 +395,25 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
         </DialogContent>
       </Dialog>
 
-      {/* Meeting Detail Dialog */}
       <MeetingDetailDialog 
         open={isDetailDialogOpen}
         onOpenChange={setIsDetailDialogOpen}
         meeting={selectedMeeting}
+      />
+
+      <InviteClientDialog
+        open={isInviteDialogOpen}
+        onOpenChange={setIsInviteDialogOpen}
+        clientName={clientName}
+        meetingTitle={selectedMeeting?.title}
+        meetingId={selectedMeeting?.id}
+        meetingDate={selectedMeeting?.date ? new Date(selectedMeeting.date).toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }) : "scheduled time"}
       />
     </div>
   );
