@@ -61,12 +61,12 @@ export interface ClientInsightData {
     text?: string;
     action?: string;
   }[];
-  upcomingDeadlines?: {
+  upcomingDeadlines: {  // Changed from optional to required
     id: string;
     title: string;
     date: string;
     type: string;
-    priority: 'low' | 'medium' | 'high'; // Changed from optional to required
+    priority: 'low' | 'medium' | 'high';
   }[];
   clientNotes?: {
     id: string;

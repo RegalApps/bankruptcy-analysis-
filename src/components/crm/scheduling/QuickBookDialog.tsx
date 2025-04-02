@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,16 +12,25 @@ import { format } from "date-fns";
 interface QuickBookDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultClientName?: string;
 }
 
 export const QuickBookDialog: React.FC<QuickBookDialogProps> = ({
   open,
-  onOpenChange
+  onOpenChange,
+  defaultClientName = ""
 }) => {
-  const [clientName, setClientName] = useState("");
+  const [clientName, setClientName] = useState(defaultClientName);
   const [meetingType, setMeetingType] = useState("initial-consultation");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState("09:00");
+  
+  // Update client name when defaultClientName changes or dialog opens
+  useEffect(() => {
+    if (open && defaultClientName) {
+      setClientName(defaultClientName);
+    }
+  }, [open, defaultClientName]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +39,10 @@ export const QuickBookDialog: React.FC<QuickBookDialogProps> = ({
     toast.success(`Appointment scheduled with ${clientName} on ${format(selectedDate, "MMMM d, yyyy")} at ${selectedTime}`);
     onOpenChange(false);
     
-    // Reset form
-    setClientName("");
+    // Reset form (except client name if provided by default)
+    if (!defaultClientName) {
+      setClientName("");
+    }
     setMeetingType("initial-consultation");
     setSelectedDate(new Date());
     setSelectedTime("09:00");
@@ -41,7 +52,7 @@ export const QuickBookDialog: React.FC<QuickBookDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Quick Book Appointment</DialogTitle>
+          <DialogTitle>Schedule Appointment</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit}>

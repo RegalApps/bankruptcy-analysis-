@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +21,7 @@ import { toast } from "sonner";
 import { MeetingDetailDialog } from "./MeetingDetailDialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InviteClientDialog } from "../meetings/InviteClientDialog";
+import { QuickBookDialog } from "../scheduling/QuickBookDialog";
 
 interface ClientMeetingsProps {
   clientName?: string;
@@ -152,11 +152,7 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
   };
   
   const handleScheduleMeeting = () => {
-    // In a real app, this would open a scheduling dialog
-    toast.success("Opening meeting scheduler...");
-    // This is a placeholder for showing a success message
-    // In a production app, you would set isScheduleDialogOpen to true
-    // and render a scheduling dialog component
+    setIsScheduleDialogOpen(true);
   };
 
   const joinMeeting = () => {
@@ -424,6 +420,12 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
           hour: "2-digit",
           minute: "2-digit"
         }) : "scheduled time"}
+      />
+
+      <QuickBookDialog 
+        open={isScheduleDialogOpen}
+        onOpenChange={setIsScheduleDialogOpen}
+        defaultClientName={clientName}
       />
     </div>
   );
