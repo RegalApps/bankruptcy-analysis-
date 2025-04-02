@@ -40,7 +40,7 @@ export const useClientInsights = (clientId: string) => {
           },
           riskLevel: "low",
           riskScore: 75,
-          complianceStatus: "compliant", // Fixed string literal type
+          complianceStatus: "compliant",
           caseProgress: 65,
           lastContactDate: "2023-06-10",
           nextFollowUp: "2023-06-25",
@@ -51,19 +51,19 @@ export const useClientInsights = (clientId: string) => {
               id: "task-1",
               title: "Submit financial documents",
               dueDate: "2023-06-20",
-              priority: "high" // Fixed string literal type
+              priority: "high"
             },
             {
               id: "task-2",
               title: "Complete assessment form",
               dueDate: "2023-06-18",
-              priority: "medium" // Fixed string literal type
+              priority: "medium"
             },
             {
               id: "task-3",
               title: "Schedule follow-up meeting",
               dueDate: "2023-06-25",
-              priority: "low" // Fixed string literal type
+              priority: "low"
             }
           ],
           missingDocuments: [

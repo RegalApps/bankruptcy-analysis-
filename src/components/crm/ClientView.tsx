@@ -46,7 +46,7 @@ const mockClientData: ClientInsightData = {
       description: "In-person meeting to review documents",
     },
   ],
-  // Add required fields to fix type errors
+  // Required fields to fix type errors
   riskLevel: "low",
   riskScore: 75,
   complianceStatus: "compliant",

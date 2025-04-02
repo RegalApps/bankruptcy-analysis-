@@ -3,7 +3,21 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Phone, Mail, MessageSquare, Plus, Video, FileText, Mic, MicOff, Download, Save, Copy } from "lucide-react";
+import { 
+  Calendar, 
+  Phone, 
+  Mail, 
+  MessageSquare, 
+  Plus, 
+  Video, 
+  FileText, 
+  Mic, 
+  MicOff, 
+  Download, 
+  Save, 
+  Copy,
+  Clock
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";

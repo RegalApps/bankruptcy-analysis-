@@ -26,15 +26,15 @@ export interface ClientInsightData {
     type: string;
     description: string;
   }[];
-  riskLevel: "high" | "medium" | "low"; // Required field
-  riskScore: number; // Required field
-  complianceStatus: "compliant" | "issues" | "critical"; // Updated to use string literal types
-  caseProgress: number; // Required field
+  riskLevel: "high" | "medium" | "low";
+  riskScore: number;
+  complianceStatus: "compliant" | "issues" | "critical";
+  caseProgress: number;
   lastContactDate?: string;
   nextFollowUp?: string;
   caseStatus?: string;
   assignedTrustee?: string;
-  pendingTasks?: {
+  pendingTasks: {
     id: string;
     title: string;
     dueDate: string;
@@ -50,21 +50,21 @@ export interface ClientInsightData {
     type: string;
     description: string;
     date: string;
-    action?: string;  // Add this optional field
-    timestamp?: string; // Add this optional field for compatibility
+    action?: string;
+    timestamp?: string;
   }[];
   aiSuggestions?: {
     id: string;
     text: string;
     type: string;
-    message?: string; // Add for compatibility with other components
+    message?: string;
   }[];
   upcomingDeadlines?: {
     id: string;
     title: string;
     date: string;
     type: string;
-    priority?: 'low' | 'medium' | 'high'; // Add for compatibility
+    priority?: 'low' | 'medium' | 'high';
   }[];
   clientNotes?: {
     id: string;
