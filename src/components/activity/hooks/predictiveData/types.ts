@@ -27,6 +27,7 @@ export interface ClientInsightData {
     type: 'urgent' | 'warning' | 'info';
     message: string;
     action?: string;
+    text?: string;
   }[];
   // New fields for enhanced client profile
   clientProfile?: {
