@@ -52,7 +52,7 @@ export const MainHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
+    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6 shadow-sm">
       <div className="w-full flex items-center justify-between">
         {/* Search button that expands on tablet */}
         {isTablet && (
