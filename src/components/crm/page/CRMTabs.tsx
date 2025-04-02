@@ -5,8 +5,16 @@ import { DocumentVault } from "@/components/crm/DocumentVault";
 import { AIWorkflow } from "@/components/crm/AIWorkflow";
 import { Calendar, FileCheck, BrainCog, BarChart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useParams, useLocation } from "react-router-dom";
+import { DocumentTemplates } from "@/components/crm/components/templates/DocumentTemplates";
 
 export const CRMTabs = () => {
+  // Extract client information from URL if available
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const clientId = params.get('clientId') || undefined;
+  const clientName = params.get('clientName') || undefined;
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold">Dashboard Modules</h2>
@@ -33,15 +41,15 @@ export const CRMTabs = () => {
         </TabsList>
         
         <TabsContent value="scheduling" className="space-y-4">
-          <IntelligentScheduling />
+          <IntelligentScheduling clientId={clientId} clientName={clientName} />
         </TabsContent>
         
         <TabsContent value="documents" className="space-y-4">
-          <DocumentVault />
+          <DocumentVault clientId={clientId} clientName={clientName} />
         </TabsContent>
         
         <TabsContent value="workflow" className="space-y-4">
-          <AIWorkflow />
+          <AIWorkflow clientId={clientId} clientName={clientName} />
         </TabsContent>
         
         <TabsContent value="analytics" className="space-y-4">

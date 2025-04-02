@@ -18,20 +18,21 @@ import { FileText, FileUp, Download, Printer, Mail, Search, Check, Clock, Info }
 interface DocumentTemplatesProps {
   clientId?: string;
   clientName?: string;
+  clientEmail?: string;
 }
 
-export const DocumentTemplates = ({ clientId, clientName }: DocumentTemplatesProps) => {
+export const DocumentTemplates = ({ clientId, clientName, clientEmail }: DocumentTemplatesProps) => {
   const [activeTemplate, setActiveTemplate] = useState("agreement");
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Mock client info - in a real app, fetch this from API
+  // Create client info object for the templates
   const clientInfo = {
-    id: clientId || "1",
-    name: clientName || "John Doe",
-    email: "client@example.com",
-    phone: "(555) 123-4567",
-    address: "123 Main St, Anytown, USA",
-    language: "english",
+    id: clientId || "",
+    name: clientName || "",
+    email: clientEmail || "",
+    phone: "", // This would come from your client data
+    address: "", // This would come from your client data
+    language: "english", // Default language
     filing_date: new Date().toISOString(),
     status: "active"
   };
