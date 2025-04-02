@@ -1,88 +1,74 @@
 
-import React from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, UserPlus, AlertCircle } from "lucide-react";
-import { formatDate } from "@/utils/formatDate";
+import { Search, UserCircle, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
-export type ClientStatus = "active" | "pending" | "flagged" | "inactive";
-
+// Client type definition
 interface Client {
   id: string;
   name: string;
-  status: ClientStatus;
+  status: 'active' | 'pending' | 'flagged';
   location: string;
-  lastActivity: string;
-  needsAttention?: boolean;
+  lastActivity?: string;
+  needsAttention: boolean;
 }
 
 interface ClientListProps {
   clients: Client[];
-  onClientSelect?: (clientId: string) => void;
   selectedClientId?: string | null;
+  onClientSelect?: (clientId: string) => void;
 }
 
-export const ClientList = ({ clients, onClientSelect, selectedClientId }: ClientListProps) => {
+export const ClientList = ({ clients, selectedClientId, onClientSelect }: ClientListProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   
+  // Filter clients based on search query
   const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.location.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const handleClientClick = (clientId: string) => {
+  const handleClientSelect = (clientId: string) => {
+    console.log("ClientList: Selected client ID:", clientId);
+    
     if (onClientSelect) {
+      console.log("Using onClientSelect callback");
       onClientSelect(clientId);
     } else {
-      // Navigate directly to client page for direct client viewers
-      if (clientId === "jane-smith") {
-        navigate("/clients/jane-smith");
-      } else if (clientId === "robert-johnson") {
-        navigate("/clients/robert-johnson");
-      } else if (clientId === "maria-garcia") {
-        navigate("/clients/maria-garcia");
-      } else {
-        navigate(`/client-viewer/${clientId}`);
-      }
+      console.log("Navigating to client viewer:", `/client-viewer/${clientId}`);
+      navigate(`/client-viewer/${clientId}`);
     }
   };
   
-  const getStatusClasses = (status: ClientStatus) => {
+  // Get status color for badge
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-blue-100 text-blue-800";
-      case "flagged":
-        return "bg-red-100 text-red-800";
-      case "inactive":
-        return "bg-gray-100 text-gray-800";
+      case 'active':
+        return "bg-green-100 text-green-800 hover:bg-green-200";
+      case 'pending':
+        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200";
+      case 'flagged':
+        return "bg-red-100 text-red-800 hover:bg-red-200";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 hover:bg-gray-200";
     }
   };
   
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b flex items-center justify-between">
-        <h3 className="font-semibold">Clients</h3>
-        <Button size="sm" variant="ghost">
-          <UserPlus className="h-4 w-4" />
-          <span className="sr-only">Add Client</span>
-        </Button>
-      </div>
-      
-      <div className="p-4 border-b">
+      <div className="p-5 border-b">
+        <h2 className="text-xl font-semibold mb-4">Clients</h2>
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search clients..."
-            className="pl-8"
+            className="pl-9 bg-background"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -90,45 +76,48 @@ export const ClientList = ({ clients, onClientSelect, selectedClientId }: Client
       </div>
       
       <ScrollArea className="flex-1">
-        <div className="divide-y">
-          {filteredClients.map(client => (
-            <div 
-              key={client.id}
-              className={cn(
-                "p-4 cursor-pointer hover:bg-accent/10 transition-colors",
-                selectedClientId === client.id && "bg-accent/20"
-              )}
-              onClick={() => handleClientClick(client.id)}
-            >
-              <div className="flex justify-between">
-                <h4 className="font-medium">{client.name}</h4>
-                {client.needsAttention && (
-                  <AlertCircle className="h-4 w-4 text-red-500" />
+        <div className="p-3 space-y-1">
+          {filteredClients.length > 0 ? (
+            filteredClients.map((client) => (
+              <div
+                key={client.id}
+                className={cn(
+                  "flex items-center justify-between p-3 rounded-md cursor-pointer transition-all",
+                  selectedClientId === client.id 
+                    ? "bg-primary/10 shadow-sm" 
+                    : "hover:bg-accent/40"
                 )}
-              </div>
-              
-              <div className="flex justify-between mt-1 items-center">
-                <span className={cn(
-                  "text-xs px-2 py-0.5 rounded-full",
-                  getStatusClasses(client.status)
+                onClick={() => handleClientSelect(client.id)}
+              >
+                <div className="flex items-center min-w-0">
+                  <div className="relative">
+                    <UserCircle className="h-9 w-9 text-primary/70 mr-3" />
+                  </div>
+                  
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{client.name}</div>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      <span>{client.location}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <Badge className={cn(
+                  "ml-2 capitalize",
+                  getStatusColor(client.status)
                 )}>
                   {client.status}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {formatDate(client.lastActivity)}
-                </span>
+                </Badge>
               </div>
-              
-              <div className="mt-1 text-xs text-muted-foreground">
-                {client.location}
-              </div>
+            ))
+          ) : (
+            <div className="p-4 text-center text-muted-foreground">
+              No clients found
             </div>
-          ))}
+          )}
         </div>
       </ScrollArea>
     </div>
   );
 };
-
-// Fix the useState import
-import { useState } from "react";

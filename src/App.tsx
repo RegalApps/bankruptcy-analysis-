@@ -11,9 +11,6 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import ClientViewerPage from "./pages/ClientViewerPage";
-import JaneSmithPage from "./pages/clients/JaneSmithPage";
-import RobertJohnsonPage from "./pages/clients/RobertJohnsonPage";
-import MariaGarciaPage from "./pages/clients/MariaGarciaPage";
 import "./App.css";
 
 function App() {
@@ -30,9 +27,6 @@ function App() {
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
-      <Route path="/clients/jane-smith" element={<JaneSmithPage />} />
-      <Route path="/clients/robert-johnson" element={<RobertJohnsonPage />} />
-      <Route path="/clients/maria-garcia" element={<MariaGarciaPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
