@@ -6,7 +6,6 @@ import { AIWorkflow } from "@/components/crm/AIWorkflow";
 import { Calendar, FileCheck, BrainCog, BarChart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useParams, useLocation } from "react-router-dom";
-import { DocumentTemplates } from "@/components/crm/components/templates/DocumentTemplates";
 
 export const CRMTabs = () => {
   // Extract client information from URL if available
