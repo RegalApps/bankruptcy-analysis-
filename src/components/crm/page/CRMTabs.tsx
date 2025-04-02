@@ -1,27 +1,12 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IntelligentScheduling } from "@/components/crm/IntelligentScheduling";
 import { DocumentVault } from "@/components/crm/DocumentVault";
 import { AIWorkflow } from "@/components/crm/AIWorkflow";
 import { Calendar, FileCheck, BrainCog, BarChart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useParams, useLocation } from "react-router-dom";
 
-interface CRMTabsProps {
-  clientId?: string;
-  clientName?: string;
-}
-
-export const CRMTabs = ({ clientId: propClientId, clientName: propClientName }: CRMTabsProps = {}) => {
-  // Extract client information from URL if available
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const urlClientId = params.get('clientId') || undefined;
-  const urlClientName = params.get('clientName') || undefined;
-  
-  // Use props if provided, fallback to URL params
-  const clientId = propClientId || urlClientId;
-  const clientName = propClientName || urlClientName;
-
+export const CRMTabs = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold">Dashboard Modules</h2>
@@ -48,15 +33,15 @@ export const CRMTabs = ({ clientId: propClientId, clientName: propClientName }: 
         </TabsList>
         
         <TabsContent value="scheduling" className="space-y-4">
-          <IntelligentScheduling clientId={clientId} clientName={clientName} />
+          <IntelligentScheduling />
         </TabsContent>
         
         <TabsContent value="documents" className="space-y-4">
-          <DocumentVault clientId={clientId} clientName={clientName} />
+          <DocumentVault />
         </TabsContent>
         
         <TabsContent value="workflow" className="space-y-4">
-          <AIWorkflow clientId={clientId} clientName={clientName} />
+          <AIWorkflow />
         </TabsContent>
         
         <TabsContent value="analytics" className="space-y-4">

@@ -1,16 +1,11 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SmartSchedulingCalendar } from "@/components/crm/scheduling/SmartSchedulingCalendar";
+import { SmartSchedulingCalendar } from "@/components/crm/SmartSchedulingCalendar";
 import { SchedulingAnalytics } from "@/components/crm/scheduling/SchedulingAnalytics";
 import { ClientBookingPortal } from "@/components/crm/scheduling/ClientBookingPortal";
 import { useSchedulingTabs } from "./hooks/useSchedulingTabs";
 
-interface IntelligentSchedulingProps {
-  clientId?: string;
-  clientName?: string;
-}
-
-export const IntelligentScheduling = ({ clientId, clientName }: IntelligentSchedulingProps = {}) => {
+export const IntelligentScheduling = () => {
   const { activeTab, setActiveTab } = useSchedulingTabs();
 
   return (
@@ -23,15 +18,15 @@ export const IntelligentScheduling = ({ clientId, clientName }: IntelligentSched
         </TabsList>
 
         <TabsContent value="calendar">
-          <SmartSchedulingCalendar clientId={clientId} clientName={clientName} />
+          <SmartSchedulingCalendar />
         </TabsContent>
         
         <TabsContent value="client">
-          <ClientBookingPortal clientId={clientId} clientName={clientName} />
+          <ClientBookingPortal />
         </TabsContent>
         
         <TabsContent value="analytics">
-          <SchedulingAnalytics clientId={clientId} clientName={clientName} />
+          <SchedulingAnalytics />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,30 +13,30 @@ import { FinancialReviewTemplate } from "./FinancialReviewTemplate";
 import { ClientOnboardingTemplate } from "./ClientOnboardingTemplate";
 import { RiskAssessmentTemplate } from "./RiskAssessmentTemplate";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FileText, FileUp, Download, Printer, Mail, Search, Check, Clock, Info, Folder, Filter } from "lucide-react";
+import { FileText, FileUp, Download, Printer, Mail, Search, Check, Clock, Info } from "lucide-react";
 
 interface DocumentTemplatesProps {
   clientId?: string;
   clientName?: string;
-  clientEmail?: string;
 }
 
-export const DocumentTemplates = ({ clientId, clientName, clientEmail }: DocumentTemplatesProps) => {
+export const DocumentTemplates = ({ clientId, clientName }: DocumentTemplatesProps) => {
   const [activeTemplate, setActiveTemplate] = useState("agreement");
   const [searchQuery, setSearchQuery] = useState("");
-  const [templateView, setTemplateView] = useState<"grid" | "list">("grid");
   
+  // Mock client info - in a real app, fetch this from API
   const clientInfo = {
-    id: clientId || "",
-    name: clientName || "",
-    email: clientEmail || "",
-    phone: "", // This would come from your client data
-    address: "", // This would come from your client data
-    language: "english", // Default language
+    id: clientId || "1",
+    name: clientName || "John Doe",
+    email: "client@example.com",
+    phone: "(555) 123-4567",
+    address: "123 Main St, Anytown, USA",
+    language: "english",
     filing_date: new Date().toISOString(),
     status: "active"
   };
   
+  // Mock templates data
   const templates = [
     { id: "agreement", name: "Client Agreement Form", icon: <FileText className="h-4 w-4" />, category: "legal" },
     { id: "financial", name: "Financial Review", icon: <FileText className="h-4 w-4" />, category: "financial" },
@@ -43,9 +44,9 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
     { id: "risk", name: "Risk Assessment", icon: <FileText className="h-4 w-4" />, category: "risk" },
   ];
   
+  // Filter templates based on search query
   const filteredTemplates = templates.filter(template => 
-    template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    template.category.toLowerCase().includes(searchQuery.toLowerCase())
+    template.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const renderTemplate = () => {
@@ -68,57 +69,48 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
   };
   
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Document Templates</h2>
-          <p className="text-muted-foreground">Create, customize, and send professional documents</p>
-        </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Document Templates</h2>
+        <div className="flex items-center gap-2">
+          <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search templates..."
-              className="pl-8 w-full sm:w-[200px]"
+              className="pl-8 w-[200px]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon" onClick={() => setTemplateView(templateView === "grid" ? "list" : "grid")}>
-            {templateView === "grid" ? 
-              <Filter className="h-4 w-4" /> : 
-              <Folder className="h-4 w-4" />
-            }
-          </Button>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="space-y-4 lg:col-span-1">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="space-y-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Template Categories</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-1.5">
-                <Button variant="ghost" size="sm" className="w-full justify-start" 
+              <div className="space-y-2">
+                <Button variant="ghost" className="w-full justify-start" 
                   onClick={() => setSearchQuery("")}>
                   All Templates
                 </Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start" 
+                <Button variant="ghost" className="w-full justify-start" 
                   onClick={() => setSearchQuery("legal")}>
                   Legal Documents
                 </Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start" 
+                <Button variant="ghost" className="w-full justify-start" 
                   onClick={() => setSearchQuery("financial")}>
                   Financial Documents
                 </Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start" 
+                <Button variant="ghost" className="w-full justify-start" 
                   onClick={() => setSearchQuery("process")}>
                   Process Documents
                 </Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start" 
+                <Button variant="ghost" className="w-full justify-start" 
                   onClick={() => setSearchQuery("risk")}>
                   Risk Assessment
                 </Button>
@@ -131,8 +123,8 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
               <CardTitle className="text-sm font-medium">Available Templates</CardTitle>
               <CardDescription>Select a template to use</CardDescription>
             </CardHeader>
-            <CardContent className="p-2">
-              <div className="space-y-1">
+            <CardContent>
+              <div className="space-y-2">
                 {filteredTemplates.map((template) => (
                   <div
                     key={template.id}
@@ -143,7 +135,7 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
                   >
                     <div className="flex items-center gap-2">
                       {template.icon}
-                      <span className="text-sm">{template.name}</span>
+                      <span>{template.name}</span>
                     </div>
                     {activeTemplate === template.id && (
                       <Check className="h-4 w-4 text-primary" />
@@ -164,11 +156,11 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Recent Documents</CardTitle>
             </CardHeader>
-            <CardContent className="p-2">
-              <div className="space-y-1">
+            <CardContent>
+              <div className="space-y-2">
                 <div className="flex items-center justify-between p-2 rounded-md hover:bg-accent/40">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary/70" />
+                    <FileText className="h-4 w-4" />
                     <div>
                       <p className="text-sm font-medium">Client Agreement - John Doe</p>
                       <p className="text-xs text-muted-foreground">Created 2 days ago</p>
@@ -179,7 +171,7 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
                 
                 <div className="flex items-center justify-between p-2 rounded-md hover:bg-accent/40">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary/70" />
+                    <FileText className="h-4 w-4" />
                     <div>
                       <p className="text-sm font-medium">Financial Review - Maria Garcia</p>
                       <p className="text-xs text-muted-foreground">Created 1 week ago</p>
@@ -190,7 +182,7 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
                 
                 <div className="flex items-center justify-between p-2 rounded-md hover:bg-accent/40">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary/70" />
+                    <FileText className="h-4 w-4" />
                     <div>
                       <p className="text-sm font-medium">Onboarding - Robert Johnson</p>
                       <p className="text-xs text-muted-foreground">Created 1 month ago</p>
@@ -203,27 +195,22 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
           </Card>
         </div>
         
-        <div className="lg:col-span-3 space-y-4">
-          <Card className="h-full">
+        <div className="md:col-span-3 space-y-4">
+          <Card>
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{templates.find(t => t.id === activeTemplate)?.name || "Document Template"}</CardTitle>
-                <CardDescription>
-                  {clientName ? `Preparing document for ${clientName}` : 'Select a client to generate document'}
-                </CardDescription>
-              </div>
+              <CardTitle>{templates.find(t => t.id === activeTemplate)?.name || "Document Template"}</CardTitle>
               
-              <div className="flex items-center gap-2 flex-wrap justify-end">
-                <Button variant="outline" size="sm" className="h-8">
-                  <Download className="h-3.5 w-3.5 mr-1" />
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
-                <Button variant="outline" size="sm" className="h-8">
-                  <Printer className="h-3.5 w-3.5 mr-1" />
+                <Button variant="outline" size="sm">
+                  <Printer className="h-4 w-4 mr-2" />
                   Print
                 </Button>
-                <Button size="sm" className="h-8">
-                  <Mail className="h-3.5 w-3.5 mr-1" />
+                <Button size="sm">
+                  <Mail className="h-4 w-4 mr-2" />
                   Send
                 </Button>
               </div>
@@ -232,7 +219,7 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
               {clientId ? (
                 renderTemplate()
               ) : (
-                <Alert className="bg-muted/40 border-none">
+                <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
                     Please select a client to generate document templates.

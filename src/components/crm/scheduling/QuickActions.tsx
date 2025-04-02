@@ -1,46 +1,26 @@
 
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { 
-  CalendarPlus, 
-  UserPlus, 
-  Clock, 
-  Users
+  CalendarIcon,
+  Clock3,
+  BellRing
 } from "lucide-react";
 
-export const QuickActions: React.FC = () => {
-  const actions = [
-    { 
-      icon: <CalendarPlus className="h-4 w-4" />, 
-      label: "Schedule Meeting" 
-    },
-    { 
-      icon: <UserPlus className="h-4 w-4" />, 
-      label: "Add Client" 
-    },
-    { 
-      icon: <Clock className="h-4 w-4" />, 
-      label: "Block Time Slot" 
-    },
-    { 
-      icon: <Users className="h-4 w-4" />, 
-      label: "Team Availability" 
-    }
-  ];
-
+export const QuickActions = () => {
   return (
-    <div className="grid grid-cols-1 gap-2">
-      {actions.map((action, index) => (
-        <Button
-          key={index}
-          variant="outline"
-          className="justify-start"
-          size="sm"
-        >
-          <span className="mr-2">{action.icon}</span>
-          {action.label}
-        </Button>
-      ))}
+    <div className="flex flex-col gap-2">
+      <Button className="w-full justify-start gap-2" size="sm">
+        <CalendarIcon className="h-4 w-4" />
+        Schedule a New Meeting
+      </Button>
+      <Button variant="outline" className="w-full justify-start gap-2" size="sm">
+        <Clock3 className="h-4 w-4" />
+        Find Earliest Available Slot
+      </Button>
+      <Button variant="outline" className="w-full justify-start gap-2" size="sm">
+        <BellRing className="h-4 w-4" />
+        Send Appointment Reminders
+      </Button>
     </div>
   );
 };

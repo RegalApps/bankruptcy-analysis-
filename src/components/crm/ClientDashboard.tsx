@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useClientInsights } from "./hooks/useClientInsights";
 import { ClientProfilePanel } from "./components/profile/ClientProfilePanel";
@@ -250,7 +249,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
         </TabsContent>
 
         <TabsContent value="documents" className="mt-0">
-          <DocumentVault clientId={selectedClientId} clientName={selectedClientName} />
+          <DocumentVault />
         </TabsContent>
 
         <TabsContent value="meetings" className="mt-0">

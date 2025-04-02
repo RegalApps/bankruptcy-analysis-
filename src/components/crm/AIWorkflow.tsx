@@ -1,120 +1,131 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { DocumentTemplates } from "./components/templates/DocumentTemplates";
-import { FileText, Brain, MessageSquare, PenLine, Sparkles } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { BrainCog, MessageSquare, Bot, FileText, GanttChart, Plus, Trash2, Save } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { DocumentAutomation } from "./ai-workflow/DocumentAutomation";
 
-interface AIWorkflowProps {
-  clientId?: string;
-  clientName?: string;
-  clientEmail?: string;
-}
+export const AIWorkflow = () => {
+  const [activeTab, setActiveTab] = useState("assistant");
 
-export const AIWorkflow = ({ clientId, clientName, clientEmail }: AIWorkflowProps) => {
   return (
-    <Card className="border-none shadow-none">
-      <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-xl">AI-Powered Workflow Automation</CardTitle>
-        <CardDescription>Streamline your client management with intelligent automation</CardDescription>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BrainCog className="h-5 w-5 text-primary" />
+          AI-Powered Workflow Automation
+        </CardTitle>
+        <CardDescription>
+          Leverage AI to automate repetitive tasks and enhance client interactions
+        </CardDescription>
       </CardHeader>
-      <CardContent className="p-0">
-        <Tabs defaultValue="templates" className="pt-0">
-          <TabsList className="mb-4">
-            <TabsTrigger value="templates" className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
-              Document Templates
-            </TabsTrigger>
-            <TabsTrigger value="assistant" className="flex items-center gap-1">
-              <Brain className="h-4 w-4" />
-              AI Assistant
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="flex items-center gap-1">
-              <PenLine className="h-4 w-4" />
-              Smart Notes
-            </TabsTrigger>
+      <CardContent>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
+            <TabsTrigger value="templates">Document Templates</TabsTrigger>
+            <TabsTrigger value="automations">Workflow Automations</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="templates">
-            <DocumentTemplates clientId={clientId} clientName={clientName} clientEmail={clientEmail} />
-          </TabsContent>
-          
-          <TabsContent value="assistant">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
-                <CardContent className="p-6">
-                  <div className="flex flex-col h-full justify-between">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-primary/20 p-1.5 rounded-md">
-                          <MessageSquare className="h-5 w-5 text-primary" />
-                        </div>
-                        <h3 className="font-semibold text-lg">Client Communication Assistant</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Generate professional client communications with AI assistance.
-                        Draft emails, letters, and messages with context-aware suggestions.
-                      </p>
-                    </div>
-                    <Button className="mt-6 w-full sm:w-auto">
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Start Drafting
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800">
-                <CardContent className="p-6">
-                  <div className="flex flex-col h-full justify-between">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-blue-100 dark:bg-blue-800/40 p-1.5 rounded-md">
-                          <Brain className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <h3 className="font-semibold text-lg">Regulatory Compliance Check</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Verify documents against current regulations automatically.
-                        Get instant alerts for potential compliance issues.
-                      </p>
-                    </div>
-                    <Button className="mt-6 w-full sm:w-auto" variant="secondary">
-                      <Brain className="mr-2 h-4 w-4" />
-                      Run Compliance Check
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="notes">
-            <Card className="border border-muted">
-              <CardContent className="p-6">
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="bg-muted p-1.5 rounded-md">
-                      <PenLine className="h-5 w-5 text-foreground/80" />
-                    </div>
-                    <h3 className="font-semibold text-lg">Meeting Notes Transcription</h3>
-                  </div>
+          <TabsContent value="assistant" className="space-y-4">
+            <div className="bg-muted/30 p-6 rounded-lg border">
+              <div className="flex items-start gap-4">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <Bot className="h-5 w-5" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-medium">AI Assistant</h3>
                   <p className="text-sm text-muted-foreground">
-                    Upload audio or text from meetings to generate structured notes and action items.
-                    AI automatically identifies key points, commitments, and deadlines.
+                    Use our AI assistant to help with client queries, document analysis, and more.
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-3 mt-2">
-                    <Button className="flex-1">
-                      <PenLine className="mr-2 h-4 w-4" />
-                      New Transcription
+                  <div className="flex gap-2 mt-4">
+                    <Button size="sm">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Start Chat
                     </Button>
-                    <Button variant="outline" className="flex-1">
-                      View Previous Notes
+                    <Button size="sm" variant="outline">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Analyze Document
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+            
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium mb-2">Recent AI Conversations</h3>
+              <div className="space-y-2">
+                <div className="p-3 bg-muted/30 rounded-md">
+                  <p className="font-medium text-sm">Client Payment Schedule</p>
+                  <p className="text-xs text-muted-foreground">Yesterday at 3:45 PM</p>
+                </div>
+                <div className="p-3 bg-muted/30 rounded-md">
+                  <p className="font-medium text-sm">Document Analysis: Financial Statement</p>
+                  <p className="text-xs text-muted-foreground">June 12, 2023</p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="templates" className="space-y-4">
+            <DocumentAutomation />
+          </TabsContent>
+          
+          <TabsContent value="automations" className="space-y-4">
+            <div className="border rounded-lg p-6">
+              <div className="flex items-start gap-4">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <GanttChart className="h-5 w-5" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-medium">Workflow Automations</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Create automated workflows to handle repetitive tasks and client follow-ups.
+                  </p>
+                  <div className="mt-4">
+                    <Button>
+                      Create New Workflow
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="font-medium">Active Workflows</h3>
+              
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Client Onboarding</h4>
+                    <p className="text-sm text-muted-foreground">Automatically sends welcome emails and document requests</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">Active</Badge>
+                    <Button size="sm" variant="ghost">Edit</Button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Payment Reminders</h4>
+                    <p className="text-sm text-muted-foreground">Sends timely payment reminders based on due dates</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">Active</Badge>
+                    <Button size="sm" variant="ghost">Edit</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </CardContent>

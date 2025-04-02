@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -27,7 +28,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DocumentTemplates } from "./components/templates/DocumentTemplates";
 
 interface Document {
   id: string;
@@ -36,13 +36,7 @@ interface Document {
   created_at: string;
 }
 
-interface DocumentVaultProps {
-  clientId?: string;
-  clientName?: string;
-  clientEmail?: string;
-}
-
-export const DocumentVault = ({ clientId, clientName, clientEmail }: DocumentVaultProps) => {
+export const DocumentVault = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<string>("");
@@ -54,12 +48,14 @@ export const DocumentVault = ({ clientId, clientName, clientEmail }: DocumentVau
   const [activeTab, setActiveTab] = useState("documents");
   const { toast } = useToast();
 
+  // Mock documents for demonstration
   const mockDocuments = [
     { id: "doc1", title: "Form 47 - Consumer Proposal", status: "draft", created_at: "2024-06-15" },
     { id: "doc2", title: "Form 76 - Debt Assessment", status: "completed", created_at: "2024-06-10" },
     { id: "doc3", title: "Client Contract", status: "pending-signature", created_at: "2024-06-08" },
   ];
 
+  // Mock signature requests for demonstration
   const signatureRequests = [
     { id: "sig1", document: "Client Contract", recipient: "john.doe@example.com", status: "pending", sent_at: "2024-06-08" },
     { id: "sig2", document: "Form 32 - Agreement", recipient: "jane.smith@example.com", status: "completed", sent_at: "2024-06-01" },
@@ -143,6 +139,7 @@ export const DocumentVault = ({ clientId, clientName, clientEmail }: DocumentVau
         description: "The document has been sent for signature"
       });
       
+      // Reset form and close dialog
       setSelectedDocument("");
       setRecipientEmail("");
       setVerificationCode("");
@@ -162,111 +159,108 @@ export const DocumentVault = ({ clientId, clientName, clientEmail }: DocumentVau
 
   return (
     <div className="space-y-4">
-      {activeTab === "documents" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Secure Document Signature Vault</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs 
-              defaultValue={activeTab} 
-              value={activeTab} 
-              onValueChange={setActiveTab} 
-              className="space-y-6"
-            >
-              <TabsList className="grid grid-cols-2">
-                <TabsTrigger value="documents">Documents</TabsTrigger>
-                <TabsTrigger value="signatures">Signature Requests</TabsTrigger>
-              </TabsList>
+      <Card>
+        <CardHeader>
+          <CardTitle>Secure Document Signature Vault</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs 
+            defaultValue={activeTab} 
+            value={activeTab} 
+            onValueChange={setActiveTab} 
+            className="space-y-6"
+          >
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="signatures">Signature Requests</TabsTrigger>
+            </TabsList>
 
-              <TabsContent value="documents" className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <DocumentStats pendingCount={mockDocuments.filter(d => d.status === 'pending-signature').length} />
-                  <Button onClick={() => setIsSignatureDialogOpen(true)}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Request Signature
-                  </Button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search documents..."
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {mockDocuments.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between p-3 bg-muted/40 rounded-md">
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-5 w-5 text-primary/70" />
-                          <div>
-                            <p className="font-medium">{doc.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Created: {new Date(doc.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge variant={
-                          doc.status === 'draft' ? 'outline' : 
-                          doc.status === 'pending-signature' ? 'secondary' : 
-                          'default'
-                        }>
-                          {doc.status === 'draft' ? 'Draft' : 
-                          doc.status === 'pending-signature' ? 'Pending Signature' : 
-                          'Completed'}
-                        </Badge>
-                      </div>
-                    ))}
+            <TabsContent value="documents" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <DocumentStats pendingCount={mockDocuments.filter(d => d.status === 'pending-signature').length} />
+                <Button onClick={() => setIsSignatureDialogOpen(true)}>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Request Signature
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search documents..."
+                      className="pl-9"
+                    />
                   </div>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="signatures" className="space-y-6">
-                <Alert>
-                  <ShieldCheck className="h-4 w-4" />
-                  <AlertDescription>
-                    All signature requests are secured with email verification.
-                  </AlertDescription>
-                </Alert>
                 
                 <div className="space-y-2">
-                  {signatureRequests.map((request) => (
-                    <div key={request.id} className="flex items-center justify-between p-3 bg-muted/40 rounded-md">
+                  {mockDocuments.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-3 bg-muted/40 rounded-md">
                       <div className="flex items-center gap-3">
-                        <Clock className="h-5 w-5 text-primary/70" />
+                        <FileText className="h-5 w-5 text-primary/70" />
                         <div>
-                          <p className="font-medium">{request.document}</p>
+                          <p className="font-medium">{doc.title}</p>
                           <p className="text-xs text-muted-foreground">
-                            Sent to: {request.recipient} on {new Date(request.sent_at).toLocaleDateString()}
+                            Created: {new Date(doc.created_at).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      <Badge variant={request.status === 'pending' ? 'secondary' : 'default'}>
-                        {request.status === 'pending' ? 'Awaiting Signature' : 'Signed'}
+                      <Badge variant={
+                        doc.status === 'draft' ? 'outline' : 
+                        doc.status === 'pending-signature' ? 'secondary' : 
+                        'default'
+                      }>
+                        {doc.status === 'draft' ? 'Draft' : 
+                        doc.status === 'pending-signature' ? 'Pending Signature' : 
+                        'Completed'}
                       </Badge>
                     </div>
                   ))}
                 </div>
-                
-                <div className="text-center mt-4">
-                  <Button onClick={() => setIsSignatureDialogOpen(true)}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Send New Request
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      ) : (
-        <DocumentTemplates clientId={clientId} clientName={clientName} clientEmail={clientEmail} />
-      )}
+              </div>
+            </TabsContent>
 
+            <TabsContent value="signatures" className="space-y-6">
+              <Alert>
+                <ShieldCheck className="h-4 w-4" />
+                <AlertDescription>
+                  All signature requests are secured with email verification.
+                </AlertDescription>
+              </Alert>
+              
+              <div className="space-y-2">
+                {signatureRequests.map((request) => (
+                  <div key={request.id} className="flex items-center justify-between p-3 bg-muted/40 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-5 w-5 text-primary/70" />
+                      <div>
+                        <p className="font-medium">{request.document}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Sent to: {request.recipient} on {new Date(request.sent_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={request.status === 'pending' ? 'secondary' : 'default'}>
+                      {request.status === 'pending' ? 'Awaiting Signature' : 'Signed'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="text-center mt-4">
+                <Button onClick={() => setIsSignatureDialogOpen(true)}>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send New Request
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Secure Signature Request Dialog */}
       <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
