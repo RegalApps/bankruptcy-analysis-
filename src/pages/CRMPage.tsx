@@ -5,7 +5,6 @@ import { ClientIntakeDialog } from "@/components/crm/intake-dialog/ClientIntakeD
 import { ClientDashboard } from "@/components/crm/ClientDashboard";
 import { useClientIntake } from "@/components/crm/hooks/useClientIntake";
 import { CRMHeader } from "@/components/crm/page/CRMHeader";
-import { SecureSignatureVault } from "@/components/crm/SecureSignatureVault";
 
 export const CRMPage = () => {
   const {
@@ -30,9 +29,6 @@ export const CRMPage = () => {
         <div className="container mx-auto p-6 space-y-8">
           {/* CRM Header with Add New Client button */}
           <CRMHeader openClientDialog={openClientDialog} />
-          
-          {/* Secure Signature Vault */}
-          <SecureSignatureVault />
           
           {/* Client Dashboard with improved navigation */}
           <ClientDashboard />
