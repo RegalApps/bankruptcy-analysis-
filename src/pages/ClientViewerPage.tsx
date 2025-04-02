@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -172,6 +173,7 @@ const ClientViewerPage = () => {
         
         toast.success("Client data loaded");
       } else {
+        console.error("Client not found:", normalizedClientId);
         toast.error("Client not found");
         navigate("/documents");
       }

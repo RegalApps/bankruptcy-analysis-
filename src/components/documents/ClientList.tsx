@@ -40,8 +40,8 @@ export const ClientList = ({ clients, selectedClientId, onClientSelect }: Client
       console.log("Using onClientSelect callback");
       onClientSelect(clientId);
     } else {
-      console.log("Navigating to client viewer:", `/client-viewer/${clientId}`);
-      navigate(`/client-viewer/${clientId}`);
+      console.log("Navigating to client viewer:", `/client/${clientId}`);
+      navigate(`/client/${clientId}`);
     }
   };
   
