@@ -1,3 +1,4 @@
+
 export interface ClientInsightData {
   id?: string;
   clientProfile?: {
@@ -120,4 +121,16 @@ export interface FormData {
   vehicles?: string;
   bankAccounts?: string;
   [key: string]: string | undefined;
+}
+
+// Adding MeetingFeedback interface for the feedback request feature
+export interface MeetingFeedback {
+  id: string;
+  meetingId: string;
+  clientId: string;
+  clientName: string;
+  ratings: Record<string, number>;
+  comments: string;
+  submittedAt: string;
+  status: 'pending' | 'completed';
 }

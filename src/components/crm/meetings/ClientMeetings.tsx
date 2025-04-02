@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,10 +20,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { RequestFeedbackDialog } from "@/components/meetings/feedback/RequestFeedbackDialog";
 
-// Mock interfaces for type safety
 interface Meeting {
   id: string;
   title: string;
@@ -51,7 +50,9 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
   const [actionItems, setActionItems] = useState<string[]>([]);
   const [activeTranscriptionTab, setActiveTranscriptionTab] = useState("transcription");
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showRequestFeedbackDialog, setShowRequestFeedbackDialog] = useState(false);
   const [showAgendaDialog, setShowAgendaDialog] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [agendaItems, setAgendaItems] = useState([
     { id: '1', text: 'Introduction and status update', completed: false, timeEstimate: '5 min' },
     { id: '2', text: 'Review of financial documents', completed: false, timeEstimate: '15 min' },
@@ -60,9 +61,7 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
   ]);
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
   const [feedbackComment, setFeedbackComment] = useState("");
-  const { toast } = useToast();
-  
-  // Mock meetings data
+
   const upcomingMeetings = [
     { 
       id: "1", 
@@ -109,11 +108,9 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
 
   const handleJoinMeeting = (meetingId: string) => {
     setIsJoinDialogOpen(true);
-    // In a real app, this would prepare the meeting join URL or connection
   };
 
   const handleViewNotes = (meetingId: string) => {
-    // In a real app, fetch notes for this meeting ID
     setMeetingNotes("Client expressed interest in debt consolidation options. Need to prepare Form 47 and review at next meeting. Follow up with documentation request by email.");
     setIsNotesDialogOpen(true);
   };
@@ -134,7 +131,6 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
   const toggleRecording = () => {
     if (isRecording) {
       setIsRecording(false);
-      // Simulate generating summary and action items
       generateSummary();
       toast({
         title: "Recording stopped",
@@ -146,13 +142,11 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
         title: "Recording started",
         description: "Meeting transcription is now in progress.",
       });
-      // Simulate real-time transcription
       simulateTranscription();
     }
   };
   
   const simulateTranscription = () => {
-    // This is a simulation - in a real app, this would connect to a transcription API
     const transcripts = [
       `${clientName}: I'm considering the different options we discussed last time.`,
       "You: That's great. Have you had a chance to review the documents I sent?",
@@ -177,7 +171,6 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
   };
   
   const generateSummary = () => {
-    // Simulate AI processing delay
     setTimeout(() => {
       setSummary(
         `Meeting with ${clientName} focused on reviewing previously discussed options and clarifying documentation requirements, particularly the assets and liabilities section. Client is preparing to submit forms and inquired about processing timeline (7-10 business days after submission).`
@@ -193,7 +186,6 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
   };
 
   const handleSaveTranscription = () => {
-    // In a real app, this would save to a database
     toast({
       title: "Transcription saved",
       description: "Meeting transcription has been saved to client records.",
@@ -208,7 +200,6 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
   };
 
   const handleDownloadTranscription = () => {
-    // Create a text file with the transcription
     const blob = new Blob([transcription], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -232,8 +223,9 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
     );
   };
 
-  const handleRequestFeedback = () => {
-    setShowFeedbackDialog(true);
+  const handleRequestFeedback = (meeting: Meeting) => {
+    setSelectedMeeting(meeting);
+    setShowRequestFeedbackDialog(true);
   };
 
   const handleSubmitFeedback = () => {
@@ -392,10 +384,10 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
                           variant="outline" 
                           size="sm"
                           className="flex items-center gap-1"
-                          onClick={handleRequestFeedback}
+                          onClick={() => handleRequestFeedback(meeting)}
                         >
                           <MessageSquare className="h-4 w-4" />
-                          Feedback
+                          Request Feedback
                         </Button>
                       </div>
                     </div>
@@ -435,7 +427,6 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
         </TabsContent>
       </Tabs>
 
-      {/* Transcription and Recording Panel */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
@@ -553,7 +544,14 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
         </CardContent>
       </Card>
 
-      {/* Join Meeting Dialog */}
+      <RequestFeedbackDialog 
+        open={showRequestFeedbackDialog}
+        onOpenChange={setShowRequestFeedbackDialog}
+        meetingId={selectedMeeting?.id || ""}
+        meetingTitle={selectedMeeting?.title || "Meeting"}
+        clientName={clientName}
+      />
+
       <Sheet open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
         <SheetContent>
           <SheetHeader>
@@ -597,7 +595,6 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
         </SheetContent>
       </Sheet>
 
-      {/* Meeting Notes Dialog */}
       <Sheet open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
         <SheetContent>
           <SheetHeader>
@@ -649,7 +646,6 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
         </SheetContent>
       </Sheet>
 
-      {/* Meeting Agenda Dialog */}
       <Dialog open={showAgendaDialog} onOpenChange={setShowAgendaDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -706,85 +702,6 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
               setShowAgendaDialog(false);
             }}>
               Share with Client
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Feedback Dialog */}
-      <Dialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Request Client Feedback</DialogTitle>
-            <DialogDescription>
-              Send a feedback request to {clientName}.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-2">Preview Feedback Form</h4>
-                
-                <div className="border rounded-md p-4 space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">How would you rate the meeting?</label>
-                    <div className="flex gap-2">
-                      {[1, 2, 3, 4, 5].map((rating) => (
-                        <button
-                          key={rating}
-                          type="button"
-                          onClick={() => setFeedbackRating(rating)}
-                          className={`w-8 h-8 rounded-full ${
-                            feedbackRating >= rating 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-muted text-muted-foreground'
-                          }`}
-                        >
-                          {rating}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Comments or suggestions</label>
-                    <Textarea
-                      placeholder="Share your thoughts about the meeting..."
-                      value={feedbackComment}
-                      onChange={(e) => setFeedbackComment(e.target.value)}
-                      className="h-20"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              className="sm:flex-1"
-              onClick={() => {
-                toast({
-                  description: "Feedback form copied to clipboard.",
-                });
-              }}
-            >
-              <Copy className="h-4 w-4 mr-2" />
-              Copy Link
-            </Button>
-            <Button
-              className="sm:flex-1"
-              onClick={() => {
-                toast({
-                  description: "Feedback request sent to client.",
-                });
-                setShowFeedbackDialog(false);
-              }}
-            >
-              <Mail className="h-4 w-4 mr-2" />
-              Email Client
             </Button>
           </DialogFooter>
         </DialogContent>

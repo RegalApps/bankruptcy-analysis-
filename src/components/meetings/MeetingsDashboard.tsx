@@ -9,6 +9,7 @@ import { MeetingAgenda } from "./MeetingAgenda";
 import { MeetingAnalytics } from "./MeetingAnalytics";
 import { MeetingReviewForm } from "./MeetingReviewForm";
 import { MeetingFeedbackDialog } from "./feedback/MeetingFeedbackDialog";
+import { RequestFeedbackDialog } from "./feedback/RequestFeedbackDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useEnhancedAnalytics } from "@/hooks/useEnhancedAnalytics";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ export const MeetingsDashboard = () => {
   const [isActiveCall, setIsActiveCall] = useState(false);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showRequestFeedbackDialog, setShowRequestFeedbackDialog] = useState(false);
   const { toast } = useToast();
   const analytics = useEnhancedAnalytics({ pageName: "Meetings" });
 
@@ -93,7 +95,7 @@ export const MeetingsDashboard = () => {
     
     // Prompt for client feedback
     setTimeout(() => {
-      setShowFeedbackDialog(true);
+      setShowRequestFeedbackDialog(true);
     }, 1000);
     
     // Switch to analytics tab to show the updated information
@@ -101,11 +103,20 @@ export const MeetingsDashboard = () => {
   };
 
   const handleRequestFeedback = () => {
-    setShowFeedbackDialog(true);
+    setShowRequestFeedbackDialog(true);
     
     toast({
       title: "Feedback Request",
-      description: "A feedback form has been opened. You can also send this to the client via email."
+      description: "Prepare a feedback request to send to your client."
+    });
+  };
+
+  const handleSubmitFeedback = () => {
+    setShowFeedbackDialog(true);
+    
+    toast({
+      title: "Submit Feedback",
+      description: "Submit your own feedback for this meeting."
     });
   };
 
@@ -117,6 +128,7 @@ export const MeetingsDashboard = () => {
           setActiveTab={handleTabChange} 
           isActiveCall={isActiveCall} 
           onRequestFeedback={handleRequestFeedback}
+          onSubmitFeedback={handleSubmitFeedback}
         />
         
         <MeetingsTabs activeTab={activeTab} setActiveTab={handleTabChange} />
@@ -144,6 +156,15 @@ export const MeetingsDashboard = () => {
         <MeetingFeedbackDialog
           open={showFeedbackDialog}
           onOpenChange={setShowFeedbackDialog}
+          meetingId="recent-meeting-123"
+          meetingTitle="Weekly Team Sync"
+          clientName="John Smith"
+        />
+        
+        {/* Request Feedback Dialog */}
+        <RequestFeedbackDialog 
+          open={showRequestFeedbackDialog}
+          onOpenChange={setShowRequestFeedbackDialog}
           meetingId="recent-meeting-123"
           meetingTitle="Weekly Team Sync"
           clientName="John Smith"

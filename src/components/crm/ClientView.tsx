@@ -64,6 +64,18 @@ const mockClientData: ClientInsightData = {
       dueDate: "2023-07-20",
       priority: "medium"
     }
+  ],
+  missingDocuments: [
+    {
+      id: "doc-1",
+      name: "Income Verification",
+      requiredBy: "2023-07-15"
+    },
+    {
+      id: "doc-2",
+      name: "Asset Declaration",
+      requiredBy: "2023-07-22"
+    }
   ]
 };
 
