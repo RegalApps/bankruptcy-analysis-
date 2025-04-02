@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { FileText, User, Phone, Mail, Home, Calendar, CheckCircle2, Languages } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/utils/formatDate";
+import { Client, Document, Task } from "../../types";
 
-interface ClientInfoPanelProps {
+export interface ClientInfoPanelProps {
+  client?: Client;
   clientId?: string;
   clientName?: string;
   clientInfo?: {
@@ -23,25 +24,53 @@ interface ClientInfoPanelProps {
     filing_date?: string;
     status?: string;
   };
+  tasks?: Task[];
+  documentCount?: number;
+  lastActivityDate?: string;
+  documents?: Document[];
+  onDocumentSelect?: (documentId: string) => void;
+  selectedDocumentId?: string | null;
   readOnly?: boolean;
+  onClientUpdate?: (updatedClient: any) => void;
   onUpdate?: (data: any) => void;
 }
 
 export const ClientInfoPanel = ({ 
+  client,
   clientId,
-  clientName = "Client Name",
+  clientName,
   clientInfo,
   readOnly = true,
-  onUpdate
+  onUpdate,
+  onClientUpdate,
+  tasks,
+  documentCount,
+  lastActivityDate,
+  documents,
+  onDocumentSelect,
+  selectedDocumentId
 }: ClientInfoPanelProps) => {
+  const effectiveClientInfo = clientInfo || (client ? {
+    id: client.id,
+    name: client.name,
+    email: client.email,
+    phone: client.phone,
+    address: client.address,
+    language: client.language,
+    filing_date: client.filing_date,
+    status: client.status
+  } : null);
+  
+  const effectiveClientName = effectiveClientInfo?.name || clientName || "Client Name";
+  
   const [formData, setFormData] = useState({
-    name: clientInfo?.name || clientName,
-    email: clientInfo?.email || "",
-    phone: clientInfo?.phone || "",
-    address: clientInfo?.address || "",
-    language: clientInfo?.language || "english",
-    filing_date: clientInfo?.filing_date || new Date().toISOString(),
-    status: clientInfo?.status || "active"
+    name: effectiveClientInfo?.name || effectiveClientName,
+    email: effectiveClientInfo?.email || "",
+    phone: effectiveClientInfo?.phone || "",
+    address: effectiveClientInfo?.address || "",
+    language: effectiveClientInfo?.language || "english",
+    filing_date: effectiveClientInfo?.filing_date || new Date().toISOString(),
+    status: effectiveClientInfo?.status || "active"
   });
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,6 +80,10 @@ export const ClientInfoPanel = ({
     if (onUpdate) {
       onUpdate({ ...formData, [name]: value });
     }
+    
+    if (onClientUpdate && client) {
+      onClientUpdate({ ...client, [name]: value });
+    }
   };
   
   const handleSelectChange = (name: string, value: string) => {
@@ -58,6 +91,10 @@ export const ClientInfoPanel = ({
     
     if (onUpdate) {
       onUpdate({ ...formData, [name]: value });
+    }
+    
+    if (onClientUpdate && client) {
+      onClientUpdate({ ...client, [name]: value });
     }
   };
   
@@ -222,7 +259,10 @@ export const ClientInfoPanel = ({
         
         {!readOnly && (
           <div className="flex justify-end pt-2">
-            <Button onClick={() => onUpdate && onUpdate(formData)}>
+            <Button onClick={() => {
+              if (onUpdate) onUpdate(formData);
+              if (onClientUpdate && client) onClientUpdate({...client, ...formData});
+            }}>
               Update Client Information
             </Button>
           </div>
