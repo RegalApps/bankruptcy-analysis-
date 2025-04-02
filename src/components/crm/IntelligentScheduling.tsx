@@ -1,6 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SmartSchedulingCalendar } from "@/components/crm/SmartSchedulingCalendar";
+import { SmartSchedulingCalendar } from "@/components/crm/scheduling/SmartSchedulingCalendar";
 import { SchedulingAnalytics } from "@/components/crm/scheduling/SchedulingAnalytics";
 import { ClientBookingPortal } from "@/components/crm/scheduling/ClientBookingPortal";
 import { useSchedulingTabs } from "./hooks/useSchedulingTabs";
