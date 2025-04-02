@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { ClientInsightData } from "../../activity/hooks/predictiveData/types";
+import { ClientInsightData } from "../types";
 
 export const useClientInsights = (clientId: string) => {
   const [insightData, setInsightData] = useState<ClientInsightData | null>(null);
@@ -8,151 +8,143 @@ export const useClientInsights = (clientId: string) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchInsights = async () => {
+    const fetchClientInsights = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        // In a real app, this would be an API call
-        // For demo purposes, we'll simulate a delay and return mock data
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Simulate API call with timeout
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Mock client insight data tailored to our new dashboard
-        const mockInsightData: ClientInsightData = {
-          riskLevel: Math.random() > 0.7 ? "high" : Math.random() > 0.4 ? "medium" : "low",
-          riskScore: Math.floor(Math.random() * 100),
-          complianceStatus: Math.random() > 0.7 ? "critical" : Math.random() > 0.4 ? "issues" : "compliant",
-          caseProgress: Math.floor(Math.random() * 100),
+        // Mock data based on client ID
+        const mockData: ClientInsightData = {
+          id: clientId,
+          clientProfile: {
+            name: clientId === "1" ? "John Doe" : clientId === "2" ? "Jane Smith" : "Robert Johnson",
+            email: clientId === "1" ? "john.doe@example.com" : clientId === "2" ? "jane.smith@example.com" : "robert.johnson@example.com",
+            phone: "+1 (555) 123-4567",
+            company: clientId === "1" ? "Acme Inc." : clientId === "2" ? "Tech Solutions" : "Global Services",
+            role: "CEO",
+            website: "www.example.com",
+            avatarUrl: "",
+            tags: ["VIP", "Long-term"],
+            assignedAgent: "Mark Wilson",
+            leadDescription: "Seeking debt relief options",
+            leadSource: "Website Inquiry",
+            accountStatus: "Active",
+          },
+          financialData: {
+            income: 75000,
+            expenses: 65000,
+            assets: 120000,
+            liabilities: 180000,
+            creditScore: 680,
+          },
+          interactions: [
+            {
+              date: "2023-05-15",
+              type: "email",
+              description: "Sent follow-up regarding document requirements",
+            },
+            {
+              date: "2023-05-10",
+              type: "phone",
+              description: "Initial consultation call to discuss situation",
+            },
+          ],
+          riskLevel: clientId === "1" ? "low" : clientId === "2" ? "medium" : "high",
+          riskScore: clientId === "1" ? 85 : clientId === "2" ? 45 : 62,
+          complianceStatus: clientId === "1" ? "Compliant" : clientId === "2" ? "Needs Review" : "Issues Detected",
+          caseProgress: clientId === "1" ? 75 : clientId === "2" ? 25 : 50,
+          lastContactDate: "2023-06-01",
+          nextFollowUp: "2023-06-15",
+          caseStatus: "Active",
+          assignedTrustee: "Jane Roberts",
           pendingTasks: [
-            { id: "1", title: "Review financial documents", priority: "high" },
-            { id: "2", title: "Schedule follow-up call", priority: "medium" },
+            {
+              id: "task1",
+              title: "Complete Form 47",
+              dueDate: "2023-06-20",
+              priority: "high",
+            },
+            {
+              id: "task2",
+              title: "Schedule creditor meeting",
+              dueDate: "2023-06-25",
+              priority: "medium",
+            },
           ],
           missingDocuments: [
-            "Bank Statement",
-            "Tax Returns",
+            {
+              id: "doc1",
+              name: "Tax Return (2022)",
+              requiredBy: "2023-06-30",
+            },
+            {
+              id: "doc2",
+              name: "Bank Statements (Last 3 months)",
+              requiredBy: "2023-06-15",
+            },
           ],
           recentActivities: [
-            { 
-              id: "1", 
-              type: "email", 
-              action: "Email opened: Monthly Newsletter", 
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() 
+            {
+              id: "act1",
+              type: "document",
+              description: "Uploaded Financial Statement",
+              date: "2023-06-05T10:30:00Z",
             },
-            { 
-              id: "2", 
-              type: "form", 
-              action: "Form submitted: Contact Request", 
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() 
+            {
+              id: "act2",
+              type: "meeting",
+              description: "Completed initial consultation",
+              date: "2023-06-01T14:00:00Z",
             },
-            { 
-              id: "3", 
-              type: "call", 
-              action: "Call completed: Initial consultation", 
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString() 
+            {
+              id: "act3",
+              type: "email",
+              description: "Sent welcome package",
+              date: "2023-05-28T09:15:00Z",
             },
-            { 
-              id: "4", 
-              type: "meeting", 
-              action: "Meeting booked: Financial planning session", 
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() 
-            }
           ],
           aiSuggestions: [
             {
-              id: "1",
-              type: "info",
-              message: "Client hasn't been contacted in 14 days.",
-              action: "Schedule follow-up"
+              id: "sugg1",
+              text: "Client may qualify for expedited processing based on financial situation",
+              type: "opportunity",
             },
             {
-              id: "2",
-              type: "info",
-              message: "Last touchpoint was a form submission on " + 
-                new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toLocaleDateString() + 
-                ". Consider follow-up.",
-              action: "Send follow-up email"
+              id: "sugg2",
+              text: "Consider discussing debt consolidation options at next meeting",
+              type: "action",
             },
-            {
-              id: "3",
-              type: "warning",
-              message: "Client has opened 3 emails but hasn't responded.",
-              action: "Try a different communication channel"
-            },
-            {
-              id: "4",
-              type: "urgent",
-              message: "High churn risk detected based on engagement patterns.",
-              action: "Escalate to account manager"
-            }
           ],
-          // New fields for our enhanced client profile
-          clientProfile: {
-            email: "client@example.com",
-            phone: "(555) 123-4567",
-            website: "www.clientwebsite.com",
-            company: "Acme Corporation",
-            role: "Chief Financial Officer",
-            assignedAgent: "Sarah Johnson",
-            avatarUrl: "",
-            tags: ["Lead", "Financial Services", "High Value"]
-          },
-          // Client notes for the activity tab
-          clientNotes: [
-            {
-              title: "Initial Consultation Notes",
-              content: "Client expressed interest in our premium services. Discussed timeline and budget constraints.",
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-              attachments: ["meeting_notes.pdf", "initial_proposal.docx"]
-            },
-            {
-              title: "Follow-up Call",
-              content: "Addressed client's concerns about implementation timeline. They requested a more detailed breakdown of costs.",
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-              attachments: []
-            }
-          ],
-          // Milestones for case progress
-          milestones: [
-            { name: "Initial Contact Made", completed: true },
-            { name: "Needs Assessment", completed: true },
-            { name: "Proposal Sent", completed: true },
-            { name: "Contract Negotiation", completed: false },
-            { name: "Deal Closed", completed: false }
-          ],
-          // Adding required upcomingDeadlines field
           upcomingDeadlines: [
             {
-              id: "1",
-              title: "Submit Financial Documents",
-              date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString().split('T')[0],
-              priority: "high"
+              id: "deadline1",
+              title: "Document submission deadline",
+              date: "2023-06-30",
+              type: "regulatory",
             },
             {
-              id: "2",
-              title: "Compliance Review Meeting",
-              date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString().split('T')[0],
-              priority: "medium"
+              id: "deadline2",
+              title: "45-day follow-up required",
+              date: "2023-07-15",
+              type: "internal",
             },
-            {
-              id: "3",
-              title: "Contract Signing",
-              date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString().split('T')[0],
-              priority: "low"
-            }
-          ]
+          ],
         };
 
-        setInsightData(mockInsightData);
+        setInsightData(mockData);
       } catch (err) {
         console.error("Error fetching client insights:", err);
-        setError("Failed to load client insights. Please try again later.");
+        setError("Failed to load client insights. Please try again.");
       } finally {
         setIsLoading(false);
       }
     };
 
     if (clientId) {
-      fetchInsights();
+      fetchClientInsights();
     } else {
       setIsLoading(false);
     }

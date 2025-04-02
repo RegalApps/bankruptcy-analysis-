@@ -1,4 +1,3 @@
-
 export interface ClientInsightData {
   id?: string;
   clientProfile?: {
