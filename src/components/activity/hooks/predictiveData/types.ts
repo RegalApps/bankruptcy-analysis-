@@ -9,7 +9,11 @@ export interface ClientInsightData {
     title: string;
     priority: 'low' | 'medium' | 'high';
   }[];
-  missingDocuments: string[];
+  missingDocuments: {
+    id: string;
+    name: string;
+    requiredBy: string;
+  }[];
   recentActivities: {
     id: string;
     type: string;

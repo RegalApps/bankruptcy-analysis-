@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -132,16 +133,10 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
     if (isRecording) {
       setIsRecording(false);
       generateSummary();
-      toast({
-        title: "Recording stopped",
-        description: "Transcription complete. Summary and action items generated.",
-      });
+      toast("Recording stopped - Transcription complete. Summary and action items generated.");
     } else {
       setIsRecording(true);
-      toast({
-        title: "Recording started",
-        description: "Meeting transcription is now in progress.",
-      });
+      toast("Recording started - Meeting transcription is now in progress.");
       simulateTranscription();
     }
   };
@@ -186,17 +181,12 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
   };
 
   const handleSaveTranscription = () => {
-    toast({
-      title: "Transcription saved",
-      description: "Meeting transcription has been saved to client records.",
-    });
+    toast("Transcription saved to client records");
   };
 
   const handleCopyTranscription = () => {
     navigator.clipboard.writeText(transcription);
-    toast({
-      description: "Transcription copied to clipboard.",
-    });
+    toast("Transcription copied to clipboard");
   };
 
   const handleDownloadTranscription = () => {
@@ -210,9 +200,7 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    toast({
-      description: "Transcription downloaded as text file.",
-    });
+    toast("Transcription downloaded as text file");
   };
 
   const handleToggleAgendaItem = (id: string) => {
@@ -229,10 +217,7 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
   };
 
   const handleSubmitFeedback = () => {
-    toast({
-      title: "Feedback submitted",
-      description: "Thank you for providing your feedback.",
-    });
+    toast("Thank you for providing your feedback");
     setShowFeedbackDialog(false);
   };
 
@@ -637,9 +622,7 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
               Close
             </Button>
             <Button onClick={() => {
-              toast({
-                description: "Notes saved successfully.",
-              });
+              toast("Notes saved successfully");
               setIsNotesDialogOpen(false);
             }}>Save Changes</Button>
           </SheetFooter>
@@ -696,9 +679,7 @@ export const ClientMeetings = ({ clientName }: ClientMeetingsProps) => {
               Close
             </Button>
             <Button onClick={() => {
-              toast({
-                description: "Agenda has been shared with the client.",
-              });
+              toast("Agenda has been shared with the client");
               setShowAgendaDialog(false);
             }}>
               Share with Client
