@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +25,6 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
   const [searchQuery, setSearchQuery] = useState("");
   const [templateView, setTemplateView] = useState<"grid" | "list">("grid");
   
-  // Create client info object for the templates
   const clientInfo = {
     id: clientId || "",
     name: clientName || "",
@@ -38,7 +36,6 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
     status: "active"
   };
   
-  // Mock templates data
   const templates = [
     { id: "agreement", name: "Client Agreement Form", icon: <FileText className="h-4 w-4" />, category: "legal" },
     { id: "financial", name: "Financial Review", icon: <FileText className="h-4 w-4" />, category: "financial" },
@@ -46,7 +43,6 @@ export const DocumentTemplates = ({ clientId, clientName, clientEmail }: Documen
     { id: "risk", name: "Risk Assessment", icon: <FileText className="h-4 w-4" />, category: "risk" },
   ];
   
-  // Filter templates based on search query
   const filteredTemplates = templates.filter(template => 
     template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     template.category.toLowerCase().includes(searchQuery.toLowerCase())

@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IntelligentScheduling } from "@/components/crm/IntelligentScheduling";
 import { DocumentVault } from "@/components/crm/DocumentVault";
@@ -49,7 +48,7 @@ export const CRMTabs = ({ clientId: propClientId, clientName: propClientName }: 
         </TabsList>
         
         <TabsContent value="scheduling" className="space-y-4">
-          <IntelligentScheduling />
+          <IntelligentScheduling clientId={clientId} clientName={clientName} />
         </TabsContent>
         
         <TabsContent value="documents" className="space-y-4">
