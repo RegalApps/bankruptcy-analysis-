@@ -11,6 +11,8 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import ClientViewerPage from "./pages/ClientViewerPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import ConBrandingPage from "./pages/ConBrandingPage";
 import "./App.css";
 
 function App() {
@@ -27,6 +29,8 @@ function App() {
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
+      <Route path="/notifications" element={<NotificationsPage />} />
+      <Route path="/SAFA" element={<ConBrandingPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
