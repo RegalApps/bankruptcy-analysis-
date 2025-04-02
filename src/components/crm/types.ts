@@ -66,7 +66,7 @@ export interface ClientInsightData {
     title: string;
     date: string;
     type: string;
-    priority?: 'low' | 'medium' | 'high';
+    priority: 'low' | 'medium' | 'high'; // Changed from optional to required
   }[];
   clientNotes?: {
     id: string;

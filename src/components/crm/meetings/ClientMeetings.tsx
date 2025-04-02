@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { MeetingDetailDialog } from "./MeetingDetailDialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { InviteClientDialog } from "./InviteClientDialog";
+import { InviteClientDialog } from "../meetings/InviteClientDialog";
 
 interface ClientMeetingsProps {
   clientName?: string;
@@ -31,6 +32,7 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<{
     id: string;
     title: string;
@@ -148,6 +150,14 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
       setIsInviteDialogOpen(true);
     }
   };
+  
+  const handleScheduleMeeting = () => {
+    // In a real app, this would open a scheduling dialog
+    toast.success("Opening meeting scheduler...");
+    // This is a placeholder for showing a success message
+    // In a production app, you would set isScheduleDialogOpen to true
+    // and render a scheduling dialog component
+  };
 
   const joinMeeting = () => {
     toast.success("Joining meeting...");
@@ -163,11 +173,11 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleScheduleMeeting}>
             <Calendar className="h-4 w-4 mr-2" />
             Schedule Meeting
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setIsInviteDialogOpen(true)}>
             <Mail className="h-4 w-4 mr-2" />
             Invite to Meeting
           </Button>
@@ -405,8 +415,8 @@ export const ClientMeetings = ({ clientName = "Client" }: ClientMeetingsProps) =
         open={isInviteDialogOpen}
         onOpenChange={setIsInviteDialogOpen}
         clientName={clientName}
-        meetingTitle={selectedMeeting?.title}
-        meetingId={selectedMeeting?.id}
+        meetingTitle={selectedMeeting?.title || "Meeting"}
+        meetingId={selectedMeeting?.id || "meeting-123"}
         meetingDate={selectedMeeting?.date ? new Date(selectedMeeting.date).toLocaleDateString("en-US", {
           weekday: "long",
           month: "long",

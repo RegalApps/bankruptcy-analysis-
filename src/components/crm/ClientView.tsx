@@ -89,6 +89,22 @@ const mockClientData: ClientInsightData = {
       type: "info",
       message: "Based on client profile, recommend discussing debt consolidation options"
     }
+  ],
+  upcomingDeadlines: [
+    {
+      id: "deadline-1",
+      title: "Financial Statement Submission",
+      date: "2023-07-30",
+      type: "document",
+      priority: "high"
+    },
+    {
+      id: "deadline-2",
+      title: "Creditor Meeting",
+      date: "2023-08-15",
+      type: "meeting",
+      priority: "medium"
+    }
   ]
 };
 
