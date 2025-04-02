@@ -27,10 +27,10 @@ export interface ClientInsightData {
     type: string;
     description: string;
   }[];
-  riskLevel: "high" | "medium" | "low"; // Made required
-  riskScore: number; // Made required
-  complianceStatus: string; // Made required
-  caseProgress: number; // Made required
+  riskLevel: "high" | "medium" | "low"; // Required field
+  riskScore: number; // Required field
+  complianceStatus: string; // Required field
+  caseProgress: number; // Required field
   lastContactDate?: string;
   nextFollowUp?: string;
   caseStatus?: string;
