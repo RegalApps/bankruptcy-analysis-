@@ -1,43 +1,35 @@
 
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import DocumentsPage from "./pages/DocumentsPage";
-import { NotificationsPage } from "./pages/NotificationsPage";
-import NewSupportTicket from "./pages/NewSupportTicket";
-import DocumentViewerPage from "./pages/DocumentViewerPage";
-import { ActivityPage } from "./pages/ActivityPage";
-import { NotificationsPage as AnalyticsPage } from "./pages/NotificationsPage"; // Temporary placeholder
-import ClientViewerPage from "./pages/ClientViewerPage";
+import { Routes, Route } from "react-router-dom";
 import CRMPage from "./pages/CRMPage";
-import { NotificationsPage as SettingsPage } from "./pages/NotificationsPage"; // Temporary placeholder
-import { NotificationsPage as ProfilePage } from "./pages/NotificationsPage"; // Temporary placeholder
-import { NotificationsPage as AuthPage } from "./pages/NotificationsPage"; // Temporary placeholder
+import DocumentsPage from "./pages/documents/DocumentsPage";
 import NotFound from "./pages/NotFound";
-import SupportPage from "./pages/SupportPage";
 import MeetingsPage from "./pages/MeetingsPage";
-import CalendarFullscreenPage from "./pages/CalendarFullscreenPage"; // Add import for the calendar fullscreen page
+import CalendarFullscreenPage from "./pages/CalendarFullscreenPage";
+import Index from "./pages/Index";
+import EFilingPage from "./pages/EFilingPage";
+import ActivityPage from "./pages/ActivityPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
+import "./App.css";
 
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/documents" element={<DocumentsPage />} />
-        <Route path="/support" element={<SupportPage />} />
-        <Route path="/support/new" element={<NewSupportTicket />} />
-        <Route path="/viewer/:documentId" element={<DocumentViewerPage />} />
-        <Route path="/activity" element={<ActivityPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/client/:clientId" element={<ClientViewerPage />} />
-        <Route path="/crm" element={<CRMPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/meetings/*" element={<MeetingsPage />} />
-        <Route path="/calendar-fullscreen" element={<CalendarFullscreenPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/index" element={<Index />} />
+      <Route path="/crm" element={<CRMPage />} />
+      <Route path="/documents/*" element={<DocumentsPage />} />
+      <Route path="/meetings/*" element={<MeetingsPage />} />
+      <Route path="/calendar-fullscreen" element={<CalendarFullscreenPage />} />
+      <Route path="/e-filing" element={<EFilingPage />} />
+      <Route path="/activity" element={<ActivityPage />} />
+      <Route path="/analytics" element={<AnalyticsPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
+
+export default App;

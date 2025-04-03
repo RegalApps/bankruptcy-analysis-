@@ -1,19 +1,11 @@
 
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BrainCog, MessageSquare, Bot, FileText, GanttChart, Plus, Trash2, Save } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { DocumentAutomation } from "./ai-workflow/DocumentAutomation";
+import { BrainCog, MessageSquare, Bot, FileText, GanttChart } from "lucide-react";
 
 export const AIWorkflow = () => {
-  const [activeTab, setActiveTab] = useState("assistant");
-
   return (
     <Card>
       <CardHeader>
@@ -26,7 +18,7 @@ export const AIWorkflow = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs defaultValue="assistant" className="space-y-4">
           <TabsList>
             <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
             <TabsTrigger value="templates">Document Templates</TabsTrigger>
@@ -74,7 +66,59 @@ export const AIWorkflow = () => {
           </TabsContent>
           
           <TabsContent value="templates" className="space-y-4">
-            <DocumentAutomation />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-500" />
+                    <h3 className="font-medium">Client Agreement</h3>
+                  </div>
+                  <Button size="sm" variant="ghost">Use</Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Standard agreement template with customizable terms
+                </p>
+              </Card>
+              
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-green-500" />
+                    <h3 className="font-medium">Financial Review</h3>
+                  </div>
+                  <Button size="sm" variant="ghost">Use</Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Financial status report with auto-generated insights
+                </p>
+              </Card>
+              
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-purple-500" />
+                    <h3 className="font-medium">Risk Assessment</h3>
+                  </div>
+                  <Button size="sm" variant="ghost">Use</Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  AI-powered risk evaluation with mitigation recommendations
+                </p>
+              </Card>
+              
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-amber-500" />
+                    <h3 className="font-medium">Client Onboarding</h3>
+                  </div>
+                  <Button size="sm" variant="ghost">Use</Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Streamlined onboarding process with required document checklist
+                </p>
+              </Card>
+            </div>
           </TabsContent>
           
           <TabsContent value="automations" className="space-y-4">

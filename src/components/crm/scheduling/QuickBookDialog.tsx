@@ -1,166 +1,132 @@
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
-import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
-export interface QuickBookDialogProps {
+interface QuickBookDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultClientName?: string;
 }
 
-export const QuickBookDialog = ({
+export const QuickBookDialog: React.FC<QuickBookDialogProps> = ({
   open,
   onOpenChange,
   defaultClientName = ""
-}: QuickBookDialogProps) => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedTime, setSelectedTime] = useState<string>("09:00");
-  const [duration, setDuration] = useState<string>("60");
-  const [clientName, setClientName] = useState<string>(defaultClientName);
-  const [meetingType, setMeetingType] = useState<string>("consultation");
-  const [notes, setNotes] = useState<string>("");
-
-  const handleSubmit = () => {
-    if (!selectedDate || !clientName) {
-      toast.error("Please fill in all required fields");
-      return;
+}) => {
+  const [clientName, setClientName] = useState(defaultClientName);
+  const [meetingType, setMeetingType] = useState("initial-consultation");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState("09:00");
+  
+  // Update client name when defaultClientName changes or dialog opens
+  useEffect(() => {
+    if (open && defaultClientName) {
+      setClientName(defaultClientName);
     }
-
-    // Format date for display in toast
-    const formattedDate = format(selectedDate, "MMMM d, yyyy");
+  }, [open, defaultClientName]);
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // Here you would typically save the appointment
-    toast.success(`Appointment scheduled with ${clientName} on ${formattedDate} at ${selectedTime}`);
-    
-    // Close dialog and reset form
+    // In a real app, this would create an appointment
+    toast.success(`Appointment scheduled with ${clientName} on ${format(selectedDate, "MMMM d, yyyy")} at ${selectedTime}`);
     onOpenChange(false);
-    resetForm();
-  };
-
-  const resetForm = () => {
+    
+    // Reset form (except client name if provided by default)
+    if (!defaultClientName) {
+      setClientName("");
+    }
+    setMeetingType("initial-consultation");
     setSelectedDate(new Date());
     setSelectedTime("09:00");
-    setDuration("60");
-    setClientName(defaultClientName);
-    setMeetingType("consultation");
-    setNotes("");
   };
-
-  const timeSlots = [
-    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-    "15:00", "15:30", "16:00", "16:30", "17:00"
-  ];
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Quick Book Appointment</DialogTitle>
-          <DialogDescription>
-            Quickly schedule a new appointment with a client
-          </DialogDescription>
+          <DialogTitle>Schedule Appointment</DialogTitle>
         </DialogHeader>
-
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="client">Client Name</Label>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="clientName" className="text-right">
+                Client Name
+              </Label>
               <Input
-                id="client"
+                id="clientName"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                placeholder="Enter client name"
+                className="col-span-3"
+                required
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="meeting-type">Meeting Type</Label>
-              <Select value={meetingType} onValueChange={setMeetingType}>
-                <SelectTrigger id="meeting-type">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="meetingType" className="text-right">
+                Meeting Type
+              </Label>
+              <Select 
+                value={meetingType}
+                onValueChange={setMeetingType}
+              >
+                <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select meeting type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="consultation">Initial Consultation</SelectItem>
+                  <SelectItem value="initial-consultation">Initial Consultation</SelectItem>
                   <SelectItem value="follow-up">Follow-up Meeting</SelectItem>
                   <SelectItem value="document-review">Document Review</SelectItem>
                   <SelectItem value="financial-planning">Financial Planning</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="border rounded-md p-3"
-              />
-            </div>
             
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="time">Time</Label>
-                <Select value={selectedTime} onValueChange={setSelectedTime}>
-                  <SelectTrigger id="time">
-                    <SelectValue placeholder="Select time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timeSlots.map(time => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="duration">Duration (minutes)</Label>
-                <Select value={duration} onValueChange={setDuration}>
-                  <SelectTrigger id="duration">
-                    <SelectValue placeholder="Select duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30">30 minutes</SelectItem>
-                    <SelectItem value="60">60 minutes</SelectItem>
-                    <SelectItem value="90">90 minutes</SelectItem>
-                    <SelectItem value="120">120 minutes</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes (optional)</Label>
-                <Input
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add meeting notes"
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">
+                Date
+              </Label>
+              <div className="col-span-3">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  className="rounded-md border"
+                  disabled={(date) => date < new Date()}
                 />
               </div>
             </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="time" className="text-right">
+                Time
+              </Label>
+              <Input
+                id="time"
+                type="time"
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
           </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit}>
-            Schedule Appointment
-          </Button>
-        </DialogFooter>
+          
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Schedule Appointment</Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

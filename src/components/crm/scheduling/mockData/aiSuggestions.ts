@@ -1,29 +1,30 @@
 
-import { AISuggestion } from '../AIRecommendations';
+import { AISuggestion } from "../AIRecommendations";
 
+// AI suggestions
 export const aiSuggestions: AISuggestion[] = [
   {
-    id: 'suggestion-1',
-    message: 'Client Sarah Johnson has 3 meetings scheduled in the same week. Consider consolidating to reduce travel burden.',
-    priority: 'medium',
+    id: "1",
+    message: "John Smith has rescheduled 3 times in the past. Consider calling to confirm today's appointment.",
+    priority: "high",
     actionable: true
   },
   {
-    id: 'suggestion-2',
-    message: 'Michael Chen has not provided required financial statements ahead of tomorrow\'s meeting.',
-    priority: 'high',
+    id: "2",
+    message: "Michael Williams hasn't submitted his tax returns. Request before tomorrow's meeting.",
+    priority: "medium",
     actionable: true
   },
   {
-    id: 'suggestion-3',
-    message: 'Your Thursday afternoon has multiple back-to-back meetings. Consider adding short breaks between sessions.',
-    priority: 'low',
-    actionable: false
+    id: "3",
+    message: "You have 3 clients in the same area on Thursday. Consider grouping appointments for efficiency.",
+    priority: "low",
+    actionable: true
   },
   {
-    id: 'suggestion-4',
-    message: 'Based on client history, morning appointments have 28% higher engagement rates than afternoon sessions.',
-    priority: 'low',
-    actionable: false
+    id: "4",
+    message: "Your afternoon slots are underutilized. Consider opening these for self-booking.",
+    priority: "medium",
+    actionable: true
   }
 ];

@@ -88,7 +88,7 @@ export const SmartSchedulingCalendar = () => {
                     to="/calendar-fullscreen" 
                     state={{ 
                       initialDate: selectedDate,
-                      initialView: calendarView
+                      initialView: "week"
                     }}
                   >
                     <Button variant="ghost" size="icon" title="Open fullscreen calendar">

@@ -3,7 +3,6 @@ import { Search, Bot, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Link } from "react-router-dom";
 
 interface SupportHeaderProps {
   searchQuery: string;
@@ -34,11 +33,9 @@ export const SupportHeader = ({ searchQuery, setSearchQuery, setShowChatbot }: S
           </div>
           
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link to="/support/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Ask a Question
-              </Link>
+            <Button onClick={() => window.location.href = "/support/new"} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Ask a Question
             </Button>
             <Button onClick={() => setShowChatbot(true)}>
               <Bot className="h-4 w-4 mr-2" />

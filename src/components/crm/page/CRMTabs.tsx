@@ -12,7 +12,7 @@ export const CRMTabs = () => {
       <h2 className="text-xl font-bold">Dashboard Modules</h2>
       <p className="text-muted-foreground">Access tools and features to manage your clients efficiently.</p>
       
-      <Tabs defaultValue="workflow" className="space-y-6">
+      <Tabs defaultValue="scheduling" className="space-y-6">
         <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="scheduling" className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />

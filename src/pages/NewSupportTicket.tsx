@@ -3,7 +3,6 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { NewTicketForm } from "@/components/support/NewTicketForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
 
 export const NewSupportTicket = () => {
   return (
@@ -13,12 +12,10 @@ export const NewSupportTicket = () => {
           <Button 
             variant="ghost" 
             className="mb-4"
-            asChild
+            onClick={() => window.history.back()}
           >
-            <Link to="/support">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Support
-            </Link>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Support
           </Button>
           <h1 className="text-3xl font-bold">Create Support Ticket</h1>
           <p className="text-muted-foreground mt-1">
