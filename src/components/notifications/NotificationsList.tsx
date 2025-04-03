@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-interface NotificationsListProps {
+export interface NotificationsListProps {
   notifications: Notification[] | undefined;
   isLoading: boolean;
   onMarkAsRead?: (id: string) => void;
