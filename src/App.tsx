@@ -16,6 +16,7 @@ import { NotificationsPage as AuthPage } from "./pages/NotificationsPage"; // Te
 import NotFound from "./pages/NotFound";
 import SupportPage from "./pages/SupportPage";
 import MeetingsPage from "./pages/MeetingsPage";
+import CalendarFullscreenPage from "./pages/CalendarFullscreenPage"; // Add import for the calendar fullscreen page
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/meetings/*" element={<MeetingsPage />} />
+        <Route path="/calendar-fullscreen" element={<CalendarFullscreenPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
