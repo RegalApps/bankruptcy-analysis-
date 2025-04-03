@@ -81,6 +81,7 @@ export const NotificationsSidebar = ({
                 <NotificationsList 
                   notifications={categoryNotifications} 
                   onMarkAsRead={onMarkAsRead}
+                  isLoading={false}
                 />
               </div>
             ))

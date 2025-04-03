@@ -10,24 +10,22 @@ export const isDocumentType = (
 ): boolean => {
   if (!document) return false;
   
-  // Check filename extension
-  const filename = document.filename || '';
-  if (filename.toLowerCase().endsWith(`.${type.toLowerCase()}`)) {
+  // Check title for file extension
+  const title = document.title || '';
+  if (title.toLowerCase().endsWith(`.${type.toLowerCase()}`)) {
     return true;
   }
   
-  // Check content type if available
-  const contentType = document.contentType || '';
-  if (contentType.includes(type)) {
+  // Check storage_path for file extension
+  const storagePath = document.storage_path || '';
+  if (storagePath.toLowerCase().endsWith(`.${type.toLowerCase()}`)) {
     return true;
   }
   
-  // Check document metadata if available
-  if (document.metadata && typeof document.metadata === 'object') {
-    const fileType = (document.metadata as any).fileType || '';
-    if (fileType.toLowerCase() === type.toLowerCase()) {
-      return true;
-    }
+  // Check type if available
+  const documentType = document.type || '';
+  if (documentType.toLowerCase().includes(type.toLowerCase())) {
+    return true;
   }
   
   return false;
@@ -65,14 +63,54 @@ export const isImage = (document: DocumentDetails | null): boolean => {
 };
 
 /**
+ * Check if document is a Form 47 (Consumer Proposal)
+ */
+export const isDocumentForm47 = (document: DocumentDetails | null): boolean => {
+  if (!document) return false;
+  
+  // Check document title
+  const title = document.title?.toLowerCase() || '';
+  if (title.includes('form 47') || title.includes('form47') || title.includes('consumer proposal')) {
+    return true;
+  }
+  
+  // Check document type
+  const documentType = document.type?.toLowerCase() || '';
+  if (documentType.includes('consumer proposal') || documentType.includes('form 47') || documentType.includes('form47')) {
+    return true;
+  }
+  
+  // Check if analysis has form number data
+  if (document.analysis && document.analysis.length > 0) {
+    const extractedInfo = document.analysis[0]?.content?.extracted_info;
+    if (extractedInfo?.formNumber === '47' || 
+        extractedInfo?.formType?.toLowerCase()?.includes('form-47') || 
+        extractedInfo?.formType?.toLowerCase()?.includes('consumer proposal')) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
+/**
  * Get file extension from document
  */
 export const getFileExtension = (document: DocumentDetails | null): string => {
-  if (!document || !document.filename) return '';
+  if (!document) return '';
   
-  const parts = document.filename.split('.');
-  if (parts.length > 1) {
-    return parts[parts.length - 1].toLowerCase();
+  // Try to get extension from storage_path
+  const storagePath = document.storage_path || '';
+  const pathParts = storagePath.split('.');
+  if (pathParts.length > 1) {
+    return pathParts[pathParts.length - 1].toLowerCase();
+  }
+  
+  // If no extension in path, try to get from title
+  const title = document.title || '';
+  const titleParts = title.split('.');
+  if (titleParts.length > 1) {
+    return titleParts[titleParts.length - 1].toLowerCase();
   }
   
   return '';
