@@ -15,6 +15,9 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import NewSupportTicket from "./pages/NewSupportTicket";
+import SAFAPage from "./pages/ConBrandingPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import Support from "./pages/Support";
 import "./App.css";
 
 function App() {
@@ -34,7 +37,10 @@ function App() {
       <Route path="/analytics" element={<AnalyticsPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/support" element={<Support />} />
       <Route path="/support/new-ticket" element={<NewSupportTicket />} />
+      <Route path="/SAFA" element={<SAFAPage />} />
+      <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
