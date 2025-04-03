@@ -1,6 +1,16 @@
 
 import { toast } from "sonner";
-import { startTiming, endTiming } from "./performanceMonitor";
+import { 
+  startTiming, 
+  endTiming,
+  measureTime,
+  initPerformanceMonitoring,
+  getPerformanceMeasurements,
+  getAnomalyThresholds,
+  getPerformanceHistory,
+  resetPerformanceHistory,
+  measureRouteChange
+} from "./performanceMonitor";
 import { analyticsService } from "@/services/analyticsService";
 
 // Debounce function to prevent excessive toasts
@@ -67,7 +77,7 @@ export {
   getAnomalyThresholds,
   getPerformanceHistory,
   resetPerformanceHistory
-} from './performanceMonitor';
+};
 
 // Create and export additional measurement utility functions
 export const measureDocumentLoad = (documentId: string) => {
