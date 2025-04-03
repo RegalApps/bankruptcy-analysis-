@@ -32,15 +32,11 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         defaultSize={25} 
         minSize={20}
         maxSize={40}
-        className="border-r border-border/50"
+        className="h-full overflow-auto border-r border-border/50 bg-white dark:bg-background"
       >
-        <TabsContainer
-          selectedTab={selectedTab}
-          setSelectedTab={setSelectedTab}
-          collaborationPanel={sidebar}
-          taskPanel={taskPanel}
-          versionPanel={versionPanel}
-        />
+        <div className="p-3 h-full overflow-auto">
+          {collaborationPanel}
+        </div>
       </ResizablePanel>
       
       <ResizableHandle withHandle />
@@ -57,11 +53,15 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             defaultSize={30} 
             minSize={15} 
             maxSize={40}
-            className="h-full overflow-auto border-l border-border/50 bg-white dark:bg-background"
+            className="border-l border-border/50"
           >
-            <div className="p-3 h-full overflow-auto">
-              {collaborationPanel}
-            </div>
+            <TabsContainer
+              selectedTab={selectedTab}
+              setSelectedTab={setSelectedTab}
+              collaborationPanel={sidebar}
+              taskPanel={taskPanel}
+              versionPanel={versionPanel}
+            />
           </ResizablePanel>
         </ResizablePanelGroup>
       </ResizablePanel>

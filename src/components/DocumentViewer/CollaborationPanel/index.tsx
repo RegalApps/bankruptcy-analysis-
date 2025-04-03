@@ -63,8 +63,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
           <TabsContent value="versions" className="mt-0 h-full">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
-                {/* Version history component removed as it's not properly exported */}
-                <p className="text-muted-foreground">Version history is not available at this time.</p>
+                <p className="text-muted-foreground">Version history is now available on the right panel.</p>
               </div>
             </ScrollArea>
           </TabsContent>

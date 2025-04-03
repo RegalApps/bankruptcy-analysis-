@@ -27,15 +27,9 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
 }) => {
   return (
     <div className="flex-1 overflow-hidden flex flex-col">
-      {showSidebar && (
-        <div className="border-b border-border/50 max-h-[40vh] overflow-auto">
-          <TabsContainer
-            selectedTab={selectedTab}
-            setSelectedTab={setSelectedTab}
-            collaborationPanel={sidebar}
-            taskPanel={taskPanel}
-            versionPanel={versionPanel}
-          />
+      {showCollaborationPanel && (
+        <div className="border-b border-border/50 overflow-auto max-h-[40vh]">
+          <div className="p-3">{collaborationPanel}</div>
         </div>
       )}
       
@@ -43,9 +37,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         {mainContent}
       </div>
       
-      {showCollaborationPanel && (
-        <div className="border-t border-border/50 overflow-auto max-h-[40vh]">
-          <div className="p-3">{collaborationPanel}</div>
+      {showSidebar && (
+        <div className="border-t border-border/50 max-h-[40vh] overflow-auto">
+          <TabsContainer
+            selectedTab={selectedTab}
+            setSelectedTab={setSelectedTab}
+            collaborationPanel={sidebar}
+            taskPanel={taskPanel}
+            versionPanel={versionPanel}
+          />
         </div>
       )}
     </div>
