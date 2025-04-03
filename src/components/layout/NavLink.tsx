@@ -10,6 +10,7 @@ interface NavLinkProps {
   activeClassName?: string;
   prefetch?: boolean;
   onClick?: () => void;
+  exact?: boolean; // Added exact prop for exact path matching
 }
 
 export const NavLink: React.FC<NavLinkProps> = ({
@@ -18,11 +19,15 @@ export const NavLink: React.FC<NavLinkProps> = ({
   className = '',
   activeClassName = 'bg-accent text-accent-foreground',
   prefetch = true,
-  onClick
+  onClick,
+  exact = false
 }) => {
   const location = useLocation();
-  const isActive = location.pathname === to || 
-                  (to !== '/' && location.pathname.startsWith(to));
+  
+  // Check if the current path matches the link
+  const isActive = exact 
+    ? location.pathname === to 
+    : (to !== '/' ? location.pathname.startsWith(to) : location.pathname === '/');
   
   // Safer implementation of prefetching with error handling
   const handleMouseEnter = React.useCallback(() => {

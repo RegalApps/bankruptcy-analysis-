@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { PageTransition } from "@/components/navigation/PageTransition";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -23,7 +24,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         {/* Scrollable content area */}
         <main className="flex-1 overflow-auto p-2 sm:p-4 md:p-6 bg-gray-50 dark:bg-background w-full">
           <div className="container mx-auto max-w-full pb-16 sm:pb-20">
-            {children}
+            <PageTransition>
+              {children}
+            </PageTransition>
           </div>
         </main>
       </div>

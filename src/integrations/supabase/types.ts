@@ -46,15 +46,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "api_integrations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "available_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -87,13 +79,6 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "audit_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "available_users"
             referencedColumns: ["id"]
           },
         ]
@@ -276,13 +261,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "document_access_history_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "available_users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_document_id"
             columns: ["document_id"]
             isOneToOne: false
@@ -360,13 +338,6 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "document_audit_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "available_users"
             referencedColumns: ["id"]
           },
         ]
@@ -499,13 +470,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "document_versions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "available_users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "document_versions_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
@@ -575,13 +539,6 @@ export type Database = {
             columns: ["parent_folder_id"]
             isOneToOne: false
             referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "available_users"
             referencedColumns: ["id"]
           },
         ]
@@ -666,13 +623,6 @@ export type Database = {
             referencedRelation: "financial_records"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "financial_documents_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "available_users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       financial_records: {
@@ -751,15 +701,7 @@ export type Database = {
           user_id?: string | null
           utilities?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "financial_records_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "available_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       form_analysis_results: {
         Row: {
@@ -938,15 +880,7 @@ export type Database = {
           type?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "available_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -976,15 +910,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "available_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       regulatory_updates: {
         Row: {
@@ -1068,13 +994,6 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "signatures_signer_id_fkey"
-            columns: ["signer_id"]
-            isOneToOne: false
-            referencedRelation: "available_users"
             referencedColumns: ["id"]
           },
         ]
@@ -1190,26 +1109,11 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "available_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
-      available_users: {
-        Row: {
-          email: string | null
-          full_name: string | null
-          id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never

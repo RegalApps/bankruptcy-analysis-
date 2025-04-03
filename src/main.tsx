@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { Toaster } from 'sonner'
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Root element not found')
@@ -14,6 +15,7 @@ ReactDOM.createRoot(root).render(
     <BrowserRouter>
       <ThemeProvider>
         <App />
+        <Toaster position="top-right" />
       </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
