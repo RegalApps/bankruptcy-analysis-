@@ -35,7 +35,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         className="h-full overflow-auto border-r border-border/50 bg-white dark:bg-background"
       >
         <div className="p-3 h-full overflow-auto">
-          {sidebar}
+          {collaborationPanel}
         </div>
       </ResizablePanel>
       
@@ -58,7 +58,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             <TabsContainer
               selectedTab={selectedTab}
               setSelectedTab={setSelectedTab}
-              collaborationPanel={collaborationPanel}
+              collaborationPanel={sidebar}
               taskPanel={taskPanel}
               versionPanel={versionPanel}
             />

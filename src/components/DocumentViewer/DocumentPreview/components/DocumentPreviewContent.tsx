@@ -5,7 +5,6 @@ import { PDFViewer } from "./PDFViewer";
 import { ErrorDisplay } from "./ErrorDisplay";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ViewerToolbar } from "./ViewerToolbar";
-import { NetworkStatusIndicator } from "./NetworkStatusIndicator";
 import { useNetworkResilience } from "../hooks/useNetworkResilience";
 import { DocumentPreviewContentProps } from "../types";
 import { Button } from "@/components/ui/button";
@@ -182,12 +181,6 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     if (useFallbackViewer) {
       return (
         <div className="relative h-full w-full flex flex-col">
-          <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 text-sm text-center">
-            Using alternative viewer due to loading issues. 
-            <Button variant="link" className="px-1 py-0 h-auto" onClick={() => setUseFallbackViewer(false)}>
-              Try standard viewer
-            </Button>
-          </div>
           <iframe
             src={getFallbackViewerUrl()}
             className="w-full flex-1"
@@ -235,12 +228,6 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
       <div className="flex-1 overflow-hidden relative">
         {renderDocumentViewer()}
       </div>
-      
-      <NetworkStatusIndicator 
-        isOnline={networkStatus === 'online'} 
-        onRetry={handleRefresh}
-        attemptCount={attemptCount}
-      />
     </div>
   );
 };
