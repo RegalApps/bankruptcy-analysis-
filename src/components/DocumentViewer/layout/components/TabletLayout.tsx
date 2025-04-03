@@ -28,18 +28,8 @@ export const TabletLayout: React.FC<TabletLayoutProps> = ({
   return (
     <div className="flex-1 overflow-hidden flex flex-col">
       <div className="flex-1 flex overflow-hidden">
-        {showCollaborationPanel && (
-          <div className="w-80 border-r border-border/50 overflow-auto">
-            {collaborationPanel}
-          </div>
-        )}
-        
-        <div className="flex-1 overflow-auto">
-          {mainContent}
-        </div>
-        
         {showSidebar && (
-          <div className="w-72 border-l border-border/50 overflow-auto">
+          <div className="w-72 border-r border-border/50 overflow-auto">
             <TabsContainer
               selectedTab={selectedTab}
               setSelectedTab={setSelectedTab}
@@ -47,6 +37,16 @@ export const TabletLayout: React.FC<TabletLayoutProps> = ({
               taskPanel={taskPanel}
               versionPanel={versionPanel}
             />
+          </div>
+        )}
+        
+        <div className="flex-1 overflow-auto">
+          {mainContent}
+        </div>
+        
+        {showCollaborationPanel && (
+          <div className="w-80 border-l border-border/50 overflow-auto">
+            {collaborationPanel}
           </div>
         )}
       </div>
