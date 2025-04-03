@@ -1,3 +1,4 @@
+
 /**
  * Performance monitoring utilities to track and measure application performance
  */
@@ -12,6 +13,13 @@ interface TimingData {
 // Performance measurement history
 interface PerformanceHistory {
   [key: string]: number[];
+}
+
+// Threshold data returned by getAnomalyThresholds
+export interface AnomalyThreshold {
+  mean: number;
+  threshold: number;
+  stdDev: number;
 }
 
 let performanceTimings: Record<string, TimingData> = {};
@@ -94,8 +102,8 @@ export const getPerformanceMeasurements = (): Record<string, TimingData> => {
 /**
  * Calculate anomaly thresholds for performance metrics
  */
-export const getAnomalyThresholds = (): Record<string, { mean: number; threshold: number }> => {
-  const thresholds: Record<string, { mean: number; threshold: number }> = {};
+export const getAnomalyThresholds = (): Record<string, AnomalyThreshold> => {
+  const thresholds: Record<string, AnomalyThreshold> = {};
   
   Object.entries(performanceHistory).forEach(([key, values]) => {
     if (values.length < 5) return; // Need enough data points
@@ -110,7 +118,8 @@ export const getAnomalyThresholds = (): Record<string, { mean: number; threshold
     // Set threshold as mean + 2 standard deviations
     thresholds[key] = {
       mean,
-      threshold: mean + (2 * stdDev)
+      threshold: mean + (2 * stdDev),
+      stdDev
     };
   });
   

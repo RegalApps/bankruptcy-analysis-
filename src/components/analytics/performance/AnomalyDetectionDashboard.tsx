@@ -11,7 +11,7 @@ import {
   Legend, 
   ResponsiveContainer 
 } from "recharts";
-import { getPerformanceMeasurements, getAnomalyThresholds } from '@/utils/performanceMonitor';
+import { getPerformanceMeasurements, getAnomalyThresholds, AnomalyThreshold } from '@/utils/performanceMonitor';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface AnomalyData {
@@ -46,14 +46,15 @@ export const AnomalyDetectionDashboard = () => {
         const thresholds = getAnomalyThresholds();
         
         const formattedAnomalyData = Object.entries(measurements).map(([key, value]) => {
-          const threshold = thresholds[key] || { mean: 0, stdDev: 0 };
-          const thresholdValue = threshold.mean + (2 * threshold.stdDev);
+          const threshold = thresholds[key] as AnomalyThreshold | undefined;
+          const thresholdValue = threshold ? threshold.threshold : 0;
+          const durationValue = typeof value.duration === 'number' ? value.duration : 0;
           
           return {
             name: key.replace(/-/g, ' ').replace(/^./, str => str.toUpperCase()),
-            value: Math.round(value as number),
+            value: Math.round(durationValue),
             threshold: Math.round(thresholdValue),
-            isAnomaly: threshold.mean > 0 && (value as number) > thresholdValue
+            isAnomaly: threshold ? durationValue > thresholdValue : false
           };
         });
         

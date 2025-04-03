@@ -9,9 +9,13 @@ import {
   getAnomalyThresholds,
   getPerformanceHistory,
   resetPerformanceHistory,
-  measureRouteChange
+  measureRouteChange,
+  AnomalyThreshold
 } from "./performanceMonitor";
 import { analyticsService } from "@/services/analyticsService";
+
+// Re-export the AnomalyThreshold type
+export type { AnomalyThreshold };
 
 // Debounce function to prevent excessive toasts
 const debounce = (fn: Function, ms = 300) => {
