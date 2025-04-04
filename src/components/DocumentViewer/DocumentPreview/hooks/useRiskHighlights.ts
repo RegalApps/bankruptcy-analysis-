@@ -19,15 +19,16 @@ export const useRiskHighlights = (
   const documentContainerRef = useRef<HTMLDivElement>(null);
   const [documentDimensions, setDocumentDimensions] = useState({ width: 800, height: 1200 });
   const [highlightRisks, setHighlightRisks] = useState<Risk[]>(risks);
+  const lastScrollPosition = useRef(0);
   
   // Measure the document container size for proper positioning
   const updateDocumentDimensions = useCallback(() => {
     if (documentContainerRef.current) {
       const { width, height } = documentContainerRef.current.getBoundingClientRect();
       
-      // Only update if the dimensions have actually changed
+      // Only update if the dimensions have actually changed significantly
       setDocumentDimensions(prev => {
-        if (Math.abs(prev.width - width) > 5 || Math.abs(prev.height - height) > 5) {
+        if (Math.abs(prev.width - width) > 2 || Math.abs(prev.height - height) > 2) {
           return { width, height };
         }
         return prev;
@@ -42,6 +43,19 @@ export const useRiskHighlights = (
     // Re-measure on window resize
     window.addEventListener('resize', updateDocumentDimensions);
     
+    // Handle scroll events to maintain highlight positions
+    const handleScroll = () => {
+      if (documentContainerRef.current) {
+        // Track scroll position to help stabilize highlights
+        lastScrollPosition.current = documentContainerRef.current.scrollTop;
+      }
+    };
+    
+    // Add scroll event listener
+    if (documentContainerRef.current) {
+      documentContainerRef.current.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    
     // Set up a periodic check for when the PDF might load and change the container size
     const checkDimensions = () => {
       updateDocumentDimensions();
@@ -49,16 +63,22 @@ export const useRiskHighlights = (
     
     // Check dimensions more frequently initially, then less often
     const initialIntervals = [100, 200, 500, 1000, 2000];
-    initialIntervals.forEach((delay, index) => {
-      setTimeout(checkDimensions, delay);
-    });
+    const checkTimeouts = initialIntervals.map((delay, index) => 
+      setTimeout(checkDimensions, delay)
+    );
     
-    const intervalId = setInterval(checkDimensions, 5000);
+    // More consistent checking to ensure stability
+    const intervalId = setInterval(checkDimensions, 2000);
     
     // Clean up
     return () => {
       window.removeEventListener('resize', updateDocumentDimensions);
+      checkTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
       clearInterval(intervalId);
+      
+      if (documentContainerRef.current) {
+        documentContainerRef.current.removeEventListener('scroll', handleScroll);
+      }
     };
   }, [documentId, updateDocumentDimensions]);
   
