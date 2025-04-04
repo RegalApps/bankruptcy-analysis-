@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { EnhancedComments } from "../Comments/EnhancedComments";
 import { MessageSquare, Clock, ClipboardList } from "lucide-react";
 import { TaskManager } from "../TaskManager";
+import { DocumentVersions } from "../components/DocumentVersions";
 
 interface CollaborationPanelProps {
   document?: DocumentDetails;
@@ -76,7 +77,14 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
           <TabsContent value="versions" className="mt-0 h-full">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
-                <p className="text-muted-foreground">Version history is not available at this time.</p>
+                {document?.versions ? (
+                  <DocumentVersions 
+                    documentVersions={document.versions} 
+                    currentDocumentId={docId}
+                  />
+                ) : (
+                  <p className="text-muted-foreground">Version history is not available at this time.</p>
+                )}
               </div>
             </ScrollArea>
           </TabsContent>

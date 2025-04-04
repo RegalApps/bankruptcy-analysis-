@@ -1,3 +1,4 @@
+
 export interface DocumentDetails {
   id: string;
   title: string;
@@ -23,6 +24,10 @@ export interface DocumentDetails {
     created_at: string;
     user_id: string;
   }>;
+  tasks?: Task[];
+  deadlines?: Deadline[];
+  file_size?: number;
+  creation_date?: string;
 }
 
 export interface DocumentVersion {
@@ -67,6 +72,27 @@ export interface DocumentComment {
   updated_at?: string;
   status?: "active" | "deleted" | "resolved";
   replies?: DocumentComment[];
+}
+
+export interface Deadline {
+  title: string;
+  dueDate: string;
+  description?: string;
+}
+
+export interface Task {
+  id: string;
+  document_id?: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  severity: 'low' | 'medium' | 'high';
+  created_at?: string;
+  due_date?: string;
+  assigned_to?: string;
+  created_by?: string;
+  regulation?: string;
+  solution?: string;
 }
 
 export interface CollaborationPanelProps {
