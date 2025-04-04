@@ -11,6 +11,7 @@ interface RiskHighlightProps {
   documentHeight: number;
   onRiskClick: (riskId: string) => void;
   activeRiskId: string | null;
+  containerRef?: React.RefObject<HTMLDivElement>;
 }
 
 interface RiskPosition {
@@ -34,10 +35,28 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   documentWidth,
   documentHeight,
   onRiskClick,
-  activeRiskId
+  activeRiskId,
+  containerRef
 }) => {
   const [hoveredRisk, setHoveredRisk] = useState<string | null>(null);
   const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
+  const [scrollOffset, setScrollOffset] = useState(0);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      if (containerRef?.current) {
+        setScrollOffset(containerRef.current.scrollTop);
+      }
+    };
+    
+    const container = containerRef?.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+      };
+    }
+  }, [containerRef]);
   
   const getPrecisePositionForRisk = (risk: Risk, index: number): RiskPosition | null => {
     // Calculate page heights - adjust this based on your specific document
@@ -47,7 +66,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     // These coordinates are specifically tuned for the Form 47 document
     const adminCertY = 120; // Top of document
     const creditorInfoY = 520; // Section 4, around "Jane and Fince Group" line
-    const paymentScheduleY = 550; // Just below creditor line, for payment schedule
+    const paymentScheduleY = 560; // Just below creditor line, for payment schedule
     const dividendsY = pageHeight + 150; // Page 2, dividend distribution
     const additionalTermsY = pageHeight + 280; // Page 2, additional terms
     const signatureY = pageHeight * 2 + 340; // Page 3, signature area
@@ -282,6 +301,15 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       {filteredPositions.map((position) => {
         const isActive = activeRiskId === position.id;
         
+        // Calculate the absolute position for the highlight based on scroll offset
+        // This ensures the highlight stays with the document content when scrolling
+        const absoluteY = position.y - scrollOffset;
+        
+        // Only render if the highlight is within the viewport (with some buffer)
+        const isVisible = absoluteY > -100 && absoluteY < documentHeight + 100;
+        
+        if (!isVisible) return null;
+        
         return (
           <TooltipProvider key={position.id}>
             <Tooltip delayDuration={300}>
@@ -297,6 +325,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
                     borderColor: getSeverityBorder(position.severity),
                     transform: isActive ? 'scale(1.05)' : 'scale(1)',
                     zIndex: isActive ? 20 : 10,
+                    position: 'absolute',
                   }}
                   onMouseEnter={() => setHoveredRisk(position.id)}
                   onMouseLeave={() => setHoveredRisk(null)}

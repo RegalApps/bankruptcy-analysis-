@@ -41,19 +41,42 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   const [refreshedUrl, setRefreshedUrl] = useState<string | null>(null);
   const [pdfLoaded, setPdfLoaded] = useState(false);
   const [pdfStabilized, setPdfStabilized] = useState(false);
+  const [contentHeight, setContentHeight] = useState<number | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
+  const pdfContainerRef = useRef<HTMLDivElement>(null);
   
   const {
     documentContainerRef,
     documentDimensions,
     handleRiskClick,
-    highlightRisks
+    highlightRisks,
+    updateDocumentDimensions
   } = useRiskHighlights(documentId, risks, onRiskSelect);
 
   useEffect(() => {
     setLocalZoom(zoomLevel);
   }, [zoomLevel]);
+  
+  // Monitor for scroll events to update highlight positions
+  useEffect(() => {
+    const container = pdfContainerRef.current;
+    
+    if (!container || !pdfLoaded) return;
+    
+    const handleScroll = () => {
+      // Force update of document dimensions when scrolling
+      if (documentContainerRef.current) {
+        updateDocumentDimensions();
+      }
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [pdfLoaded, updateDocumentDimensions]);
 
   useEffect(() => {
     // Add stabilization timeout to ensure PDF is fully rendered before showing risk highlights
@@ -64,7 +87,11 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
           const { width, height } = documentContainerRef.current.getBoundingClientRect();
           console.log("PDF dimensions after initial load:", { width, height });
           
-          // Set a secondary timeout for final stabilization
+          if (height > 100) {
+            setContentHeight(height);
+          }
+          
+          // Set a secondary timeout for final stabilization with a longer delay
           const finalStabilizationTimer = setTimeout(() => {
             if (documentContainerRef.current) {
               const finalDimensions = documentContainerRef.current.getBoundingClientRect();
@@ -72,13 +99,21 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
                 width: finalDimensions.width, 
                 height: finalDimensions.height 
               });
-              setPdfStabilized(true);
+              
+              // Only consider the PDF stabilized if dimensions are reasonable
+              if (finalDimensions.height > 100) {
+                setPdfStabilized(true);
+                setContentHeight(finalDimensions.height);
+              } else {
+                console.log("PDF dimensions still not valid, delaying stabilization");
+                setTimeout(() => setPdfStabilized(true), 800);
+              }
             }
-          }, 500);
+          }, 600);
           
           return () => clearTimeout(finalStabilizationTimer);
         }
-      }, 300);
+      }, 400);
       
       return () => clearTimeout(initialStabilizationTimer);
     }
@@ -277,7 +312,10 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   }
 
   return (
-    <div ref={documentContainerRef} className="relative w-full h-full">
+    <div 
+      ref={documentContainerRef} 
+      className="relative w-full h-full overflow-hidden"
+    >
       <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-background/80 p-1 rounded-md shadow-sm">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut}>
           <ZoomOut className="h-4 w-4" />
@@ -304,40 +342,71 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
         </div>
       )}
 
-      {useGoogleViewer ? (
-        <iframe
-          src={googleDocsViewerUrl}
-          className="w-full h-full border-0"
-          onLoad={handleLoadSuccess}
-          onError={() => handleLoadError()}
-          title={`Google Docs viewer: ${title}`}
-          referrerPolicy="no-referrer"
-          allow="fullscreen"
-        />
-      ) : (
-        <object
-          ref={objectRef}
-          data={cacheBustedUrl}
-          type="application/pdf"
-          className="w-full h-full"
-          style={{transform: `scale(${localZoom / 100})`, transformOrigin: 'center top'}}
-          onLoad={handleLoadSuccess}
-          onError={(e) => handleLoadError(e)}
-        >
+      <div 
+        ref={pdfContainerRef}
+        className="w-full h-full overflow-auto" 
+      >
+        {useGoogleViewer ? (
           <iframe
-            ref={iframeRef}
-            src={cacheBustedUrl}
+            src={googleDocsViewerUrl}
             className="w-full h-full border-0"
-            title={`Document Preview: ${title}`}
-            style={{transform: `scale(${localZoom / 100})`, transformOrigin: 'center top'}}
             onLoad={handleLoadSuccess}
-            onError={(e) => handleLoadError(e)}
-            sandbox="allow-same-origin allow-scripts allow-forms"
+            onError={() => handleLoadError()}
+            title={`Google Docs viewer: ${title}`}
             referrerPolicy="no-referrer"
             allow="fullscreen"
+            style={{ 
+              minHeight: contentHeight ? `${contentHeight}px` : '100%',
+              display: 'block'
+            }}
           />
-        </object>
-      )}
+        ) : (
+          <div className="relative" style={{ 
+            transform: `scale(${localZoom / 100})`, 
+            transformOrigin: 'center top',
+            minHeight: contentHeight ? `${contentHeight}px` : 'auto',
+            width: '100%',
+            height: '100%'
+          }}>
+            <object
+              ref={objectRef}
+              data={cacheBustedUrl}
+              type="application/pdf"
+              className="w-full h-full"
+              onLoad={handleLoadSuccess}
+              onError={(e) => handleLoadError(e)}
+              style={{
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+              }}
+            >
+              <iframe
+                ref={iframeRef}
+                src={cacheBustedUrl}
+                className="w-full h-full border-0"
+                title={`Document Preview: ${title}`}
+                onLoad={handleLoadSuccess}
+                onError={(e) => handleLoadError(e)}
+                sandbox="allow-same-origin allow-scripts allow-forms"
+                referrerPolicy="no-referrer"
+                allow="fullscreen"
+                style={{
+                  display: 'block',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                }}
+              />
+            </object>
+          </div>
+        )}
+      </div>
       
       {pdfLoaded && pdfStabilized && highlightRisks.length > 0 && !useGoogleViewer && (
         <RiskHighlightOverlay
@@ -346,6 +415,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
           documentHeight={documentDimensions.height}
           onRiskClick={handleRiskClick}
           activeRiskId={activeRiskId}
+          containerRef={pdfContainerRef}
         />
       )}
     </div>

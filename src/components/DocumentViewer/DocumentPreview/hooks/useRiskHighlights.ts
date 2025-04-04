@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Risk } from '../../types';
 import { toast } from 'sonner';
 
@@ -8,6 +8,7 @@ interface UseRiskHighlightsReturn {
   documentDimensions: { width: number; height: number };
   handleRiskClick: (riskId: string) => void;
   highlightRisks: Risk[];
+  updateDocumentDimensions: () => void;
 }
 
 export const useRiskHighlights = (
@@ -20,29 +21,46 @@ export const useRiskHighlights = (
   const [highlightRisks, setHighlightRisks] = useState<Risk[]>(risks);
   
   // Measure the document container size for proper positioning
+  const updateDocumentDimensions = useCallback(() => {
+    if (documentContainerRef.current) {
+      const { width, height } = documentContainerRef.current.getBoundingClientRect();
+      
+      // Only update if the dimensions have actually changed
+      setDocumentDimensions(prev => {
+        if (Math.abs(prev.width - width) > 5 || Math.abs(prev.height - height) > 5) {
+          return { width, height };
+        }
+        return prev;
+      });
+    }
+  }, []);
+  
   useEffect(() => {
-    const updateDimensions = () => {
-      if (documentContainerRef.current) {
-        const { width, height } = documentContainerRef.current.getBoundingClientRect();
-        setDocumentDimensions({ width, height });
-      }
-    };
-
     // Initial measure
-    updateDimensions();
+    updateDocumentDimensions();
     
     // Re-measure on window resize
-    window.addEventListener('resize', updateDimensions);
+    window.addEventListener('resize', updateDocumentDimensions);
     
     // Set up a periodic check for when the PDF might load and change the container size
-    const intervalId = setInterval(updateDimensions, 1000);
+    const checkDimensions = () => {
+      updateDocumentDimensions();
+    };
+    
+    // Check dimensions more frequently initially, then less often
+    const initialIntervals = [100, 200, 500, 1000, 2000];
+    initialIntervals.forEach((delay, index) => {
+      setTimeout(checkDimensions, delay);
+    });
+    
+    const intervalId = setInterval(checkDimensions, 5000);
     
     // Clean up
     return () => {
-      window.removeEventListener('resize', updateDimensions);
+      window.removeEventListener('resize', updateDocumentDimensions);
       clearInterval(intervalId);
     };
-  }, [documentId]);
+  }, [documentId, updateDocumentDimensions]);
   
   // Set up predefined risks for Form 47 if we're looking at that document
   useEffect(() => {
@@ -147,6 +165,7 @@ export const useRiskHighlights = (
     documentContainerRef,
     documentDimensions,
     handleRiskClick,
-    highlightRisks
+    highlightRisks,
+    updateDocumentDimensions
   };
 };
