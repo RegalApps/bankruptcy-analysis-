@@ -40,6 +40,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   const [localZoom, setLocalZoom] = useState(zoomLevel);
   const [refreshedUrl, setRefreshedUrl] = useState<string | null>(null);
   const [pdfLoaded, setPdfLoaded] = useState(false);
+  const [pdfStabilized, setPdfStabilized] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
   
@@ -57,15 +58,29 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   useEffect(() => {
     // Add stabilization timeout to ensure PDF is fully rendered before showing risk highlights
     if (pdfLoaded) {
-      const stabilizationTimer = setTimeout(() => {
-        // Force a refresh of the component dimensions after PDF has stabilized
+      // Initial stabilization check
+      const initialStabilizationTimer = setTimeout(() => {
         if (documentContainerRef.current) {
           const { width, height } = documentContainerRef.current.getBoundingClientRect();
-          console.log("PDF stabilized with dimensions:", { width, height });
+          console.log("PDF dimensions after initial load:", { width, height });
+          
+          // Set a secondary timeout for final stabilization
+          const finalStabilizationTimer = setTimeout(() => {
+            if (documentContainerRef.current) {
+              const finalDimensions = documentContainerRef.current.getBoundingClientRect();
+              console.log("PDF stabilized with dimensions:", { 
+                width: finalDimensions.width, 
+                height: finalDimensions.height 
+              });
+              setPdfStabilized(true);
+            }
+          }, 500);
+          
+          return () => clearTimeout(finalStabilizationTimer);
         }
-      }, 500);
+      }, 300);
       
-      return () => clearTimeout(stabilizationTimer);
+      return () => clearTimeout(initialStabilizationTimer);
     }
   }, [pdfLoaded]);
 
@@ -120,7 +135,8 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   };
 
   const currentUrl = refreshedUrl || fileUrl;
-  const cacheBustedUrl = currentUrl ? `${currentUrl}${currentUrl.includes('?') ? '&' : '?'}t=${Date.now()}-${forceReload}` : '';
+  // Use a more reliable cache-busting strategy with a unique timestamp for each load attempt
+  const cacheBustedUrl = currentUrl ? `${currentUrl}${currentUrl.includes('?') ? '&' : '?'}_t=${Date.now()}-${forceReload}` : '';
   const googleDocsViewerUrl = currentUrl ? 
     `https://docs.google.com/viewer?url=${encodeURIComponent(currentUrl)}&embedded=true` : '';
 
@@ -128,6 +144,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     if (fileUrl) {
       setIsLoading(true);
       setPdfLoaded(false);
+      setPdfStabilized(false);
       setLoadError(null);
       setRetryCount(0);
     }
@@ -179,6 +196,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       
       setIsLoading(false);
       setPdfLoaded(false);
+      setPdfStabilized(false);
       setLoadError(errorMsg);
       if (onError) onError(errorMsg);
     }
@@ -218,6 +236,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       setLoadError(null);
       setIsLoading(true);
       setPdfLoaded(false);
+      setPdfStabilized(false);
       setRetryCount(0);
       setForceReload(prev => prev + 1);
     }
@@ -320,7 +339,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
         </object>
       )}
       
-      {pdfLoaded && highlightRisks.length > 0 && !useGoogleViewer && (
+      {pdfLoaded && pdfStabilized && highlightRisks.length > 0 && !useGoogleViewer && (
         <RiskHighlightOverlay
           risks={highlightRisks}
           documentWidth={documentDimensions.width}

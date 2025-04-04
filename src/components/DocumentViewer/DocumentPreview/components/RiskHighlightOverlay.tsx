@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Risk } from "../../types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -39,16 +40,20 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
   
   const getPrecisePositionForRisk = (risk: Risk, index: number): RiskPosition | null => {
+    // Calculate page heights - adjust this based on your specific document
     const pageHeight = documentHeight / 3;
     
-    const adminCertY = 120;
-    const creditorInfoY = 870;
-    const paymentScheduleY = 992;
-    const dividendsY = pageHeight + 370;
-    const additionalTermsY = pageHeight + 510;
-    const signatureY = pageHeight * 2 + 340;
-    const witnessY = pageHeight * 2 + 340;
+    // Precise Y coordinates for different sections based on Form 47
+    // These coordinates are specifically tuned for the Form 47 document
+    const adminCertY = 120; // Top of document
+    const creditorInfoY = 520; // Section 4, around "Jane and Fince Group" line
+    const paymentScheduleY = 550; // Just below creditor line, for payment schedule
+    const dividendsY = pageHeight + 150; // Page 2, dividend distribution
+    const additionalTermsY = pageHeight + 280; // Page 2, additional terms
+    const signatureY = pageHeight * 2 + 340; // Page 3, signature area
+    const witnessY = pageHeight * 2 + 380; // Page 3, witness signature area
     
+    // Each risk type has specific position on the document
     if (risk.type?.includes("Administrator Certificate") || risk.description?.includes("Administrator Certificate")) {
       return {
         id: `risk-${index}`,
@@ -70,7 +75,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
         x: documentWidth * 0.05,
         y: creditorInfoY,
         width: documentWidth * 0.9,
-        height: 45,
+        height: 25,
         severity: risk.severity || 'high',
         label: risk.type || "Missing Creditor Info",
         description: "No creditor details in Section 4 'payments be made to Jane and Fince Group' line.",
@@ -85,7 +90,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
         x: documentWidth * 0.05,
         y: paymentScheduleY, 
         width: documentWidth * 0.9,
-        height: 35,
+        height: 25,
         severity: risk.severity || 'medium',
         label: risk.type || "Payment Schedule",
         description: "Payment schedule not filled in the '(Set out the schedule of payments...)' section below creditor line.",
@@ -155,6 +160,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     
+    // Fallback position calculation for other risks
     const hashCode = (str: string) => {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
@@ -199,15 +205,21 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       return a.y - b.y;
     });
     
-    const minVerticalSpace = 15;
+    const minVerticalSpace = 35; // Increased to prevent label overlap
     
     for (let i = 1; i < sorted.length; i++) {
       const current = sorted[i];
       const prev = sorted[i - 1];
       
       if ((current.pageNumber || 1) === (prev.pageNumber || 1)) {
-        if (current.y < prev.y + prev.height + minVerticalSpace) {
-          current.y = prev.y + prev.height + minVerticalSpace;
+        // Check if current risk's position (including its label space) overlaps with previous risk
+        // We need to account for the label that appears above the highlight box
+        const prevBottom = prev.y + prev.height;
+        const prevLabelBottom = prev.y - 25; // Labels are typically positioned above the box
+        
+        if (current.y < prevBottom + minVerticalSpace || 
+            (current.y - 25 < prevBottom && current.y > prevLabelBottom)) {
+          current.y = prevBottom + minVerticalSpace;
         }
       }
     }
