@@ -45,14 +45,18 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     // Each page is approximately 1/3 of the total document height for a 3-page form
     const pageHeight = documentHeight / 3;
     
-    // Page 1 sections (top, middle, lower sections)
-    const page1Top = pageHeight * 0.15; // Top area of page 1
-    const page1Mid = pageHeight * 0.4; // Middle area of page 1
-    const page1Lower = pageHeight * 0.65; // Lower area of page 1
+    // Page 1 sections
+    const page1Top = pageHeight * 0.15;       // Top area of page 1
+    const page1Mid = pageHeight * 0.4;        // Middle area of page 1
+    const page1Lower = pageHeight * 0.65;     // Lower area of page 1
+    
+    // Specific section locations for Form 47
+    const section4Y = pageHeight * 0.58;      // Section 4 location with creditor info
+    const paymentScheduleY = section4Y + 35;  // Payment schedule line below creditor info
     
     // Page 2 sections
-    const page2Mid = pageHeight + pageHeight * 0.3; // Middle of page 2
-    const page2Lower = pageHeight + pageHeight * 0.7; // Lower part of page 2
+    const page2Mid = pageHeight + pageHeight * 0.3;    // Middle of page 2
+    const page2Lower = pageHeight + pageHeight * 0.7;  // Lower part of page 2
     
     // Page 3 sections
     const page3Lower = pageHeight * 2 + pageHeight * 0.85; // Bottom area of page 3
@@ -75,12 +79,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     } 
     else if (risk.type?.includes("Creditor Information") || risk.description?.includes("creditor")) {
-      // Section 4 - Highlight the section about payments to creditors
-      // FIXED: Moved to Section 4 around "Jane and Fince Group" line
+      // Section 4 - Highlight the creditor line with "Jane and Fince Group"
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
-        y: pageHeight * 0.5, // Positioned in the middle of page 1 where Section 4 is located
+        y: section4Y,
         width: documentWidth * 0.8,
         height: 30,
         severity: risk.severity || 'high',
@@ -92,11 +95,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Payment Schedule") || risk.description?.includes("payment schedule")) {
-      // FIXED: Positioned just below the creditor information section in Section 4
+      // Position directly below the creditor info line, on the "(Set out the schedule of payments...)" line
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
-        y: pageHeight * 0.54, // Positioned just below the creditor info highlight
+        y: paymentScheduleY,
         width: documentWidth * 0.8,
         height: 25,
         severity: risk.severity || 'medium',
