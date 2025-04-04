@@ -47,7 +47,7 @@ export const useRiskHighlights = (
   // Set up predefined risks for Form 47 if we're looking at that document
   useEffect(() => {
     if (documentId === 'form47') {
-      // Create specific risks for Form 47
+      // Create specific risks for Form 47 according to the user's specifications
       const form47Risks: Risk[] = [
         {
           type: "Missing Administrator Certificate",
@@ -114,21 +114,28 @@ export const useRiskHighlights = (
   }, [documentId, risks]);
   
   const handleRiskClick = (riskId: string) => {
-    // Extract risk details from the risk ID
-    const parts = riskId.split('-');
-    const riskIndex = parseInt(parts[1], 10);
-    
-    if (isNaN(riskIndex) || riskIndex >= highlightRisks.length) {
-      toast.error("Could not find risk details");
-      return;
-    }
-    
-    const risk = highlightRisks[riskIndex];
+    // Extract risk ID information to find the corresponding risk
+    console.log("Risk clicked:", riskId);
     
     // Show a quick toast with the risk info
-    toast.info(`Selected risk: ${risk.type}`, {
-      description: risk.description
-    });
+    let riskInfo: Risk | undefined;
+    
+    // Check if it's one of our predefined risks (risk-0, risk-1, etc.)
+    const match = riskId.match(/risk-(\d+)/);
+    if (match) {
+      const index = parseInt(match[1], 10);
+      if (!isNaN(index) && index < highlightRisks.length) {
+        riskInfo = highlightRisks[index];
+      }
+    }
+    
+    if (riskInfo) {
+      toast.info(`Selected risk: ${riskInfo.type}`, {
+        description: riskInfo.description
+      });
+    } else {
+      toast.info("Risk selected");
+    }
     
     // Forward the selection to the parent component if provided
     if (onRiskSelect) {

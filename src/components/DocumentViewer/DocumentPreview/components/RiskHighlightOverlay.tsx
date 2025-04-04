@@ -39,122 +39,133 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   const [hoveredRisk, setHoveredRisk] = useState<string | null>(null);
   const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
   
-  // Define precise positions for Form 47 highlights
+  // Define precise positions for Form 47 highlights based on user specifications
   const getPrecisePositionForRisk = (risk: Risk, index: number): RiskPosition | null => {
-    // We're using a combination of risk type and form field identification
-    const isForm47 = true; // In a real app, this would be determined dynamically
+    // Calculate vertical positions based on document height
+    // Each page is approximately 1/3 of the total document height for a 3-page form
+    const pageHeight = documentHeight / 3;
+    const page1Y = pageHeight * 0.15; // Top area of page 1
+    const page1MidY = pageHeight * 0.4; // Middle area of page 1
+    const page1LowerY = pageHeight * 0.6; // Lower area of page 1
+    const page2Y = pageHeight + pageHeight * 0.3; // Middle of page 2
+    const page2LowerY = pageHeight + pageHeight * 0.7; // Lower part of page 2
+    const page3Y = pageHeight * 2 + pageHeight * 0.85; // Bottom area of page 3
     
-    if (isForm47) {
-      // Map risk types to specific positions on the Form 47
-      if (risk.type?.includes("Administrator Certificate") || risk.description?.includes("Administrator Certificate")) {
-        return {
-          id: `risk-${index}-${risk.type}`,
-          x: documentWidth * 0.6,
-          y: documentHeight * 0.15,
-          width: documentWidth * 0.35,
-          height: 40,
-          severity: risk.severity || 'high',
-          label: risk.type || "Missing Certificate",
-          description: risk.description || "Administrator Certificate missing — required by BIA.",
-          regulation: risk.regulation,
-          solution: risk.solution,
-          pageNumber: 1
-        };
-      } 
-      else if (risk.type?.includes("Creditor Information") || risk.description?.includes("creditor")) {
-        return {
-          id: `risk-${index}-${risk.type}`,
-          x: documentWidth * 0.2,
-          y: documentHeight * 0.4,
-          width: documentWidth * 0.6,
-          height: 30,
-          severity: risk.severity || 'high',
-          label: risk.type || "Missing Creditor Info",
-          description: risk.description || "No creditor details or beneficiary name present.",
-          regulation: risk.regulation,
-          solution: risk.solution,
-          pageNumber: 1
-        };
-      }
-      else if (risk.type?.includes("Payment Schedule") || risk.description?.includes("payment schedule")) {
-        return {
-          id: `risk-${index}-${risk.type}`,
-          x: documentWidth * 0.1,
-          y: documentHeight * 0.5,
-          width: documentWidth * 0.8,
-          height: 25,
-          severity: risk.severity || 'medium',
-          label: risk.type || "Payment Schedule",
-          description: risk.description || "Payment schedule not filled — required under 66.13(2)(c) of BIA.",
-          regulation: risk.regulation,
-          solution: risk.solution,
-          pageNumber: 1
-        };
-      }
-      else if (risk.type?.includes("Dividend") || risk.description?.includes("dividend")) {
-        return {
-          id: `risk-${index}-${risk.type}`,
-          x: documentWidth * 0.15,
-          y: documentHeight * 0.6,
-          width: documentWidth * 0.7,
-          height: 25,
-          severity: risk.severity || 'medium',
-          label: risk.type || "Dividend Distribution",
-          description: risk.description || "No dividend distribution method outlined.",
-          regulation: risk.regulation,
-          solution: risk.solution,
-          pageNumber: 2
-        };
-      }
-      else if (risk.type?.includes("Terms") || risk.description?.includes("terms")) {
-        return {
-          id: `risk-${index}-${risk.type}`,
-          x: documentWidth * 0.2,
-          y: documentHeight * 0.7,
-          width: documentWidth * 0.6,
-          height: 25,
-          severity: risk.severity || 'medium',
-          label: risk.type || "Additional Terms",
-          description: risk.description || "Optional field left blank — flag for administrator to confirm intent.",
-          regulation: risk.regulation,
-          solution: risk.solution,
-          pageNumber: 2
-        };
-      }
-      else if (risk.type?.includes("Unsigned") || risk.description?.includes("signature") || risk.description?.includes("debtor")) {
-        return {
-          id: `risk-${index}-${risk.type}`,
-          x: documentWidth * 0.7,
-          y: documentHeight * 0.85,
-          width: 100,
-          height: 40,
-          severity: risk.severity || 'high',
-          label: risk.type || "Missing Signature",
-          description: risk.description || "Consumer Debtor signature missing — non-compliant submission.",
-          regulation: risk.regulation,
-          solution: risk.solution,
-          pageNumber: 3
-        };
-      }
-      else if (risk.type?.includes("Witness") || risk.description?.includes("witness")) {
-        return {
-          id: `risk-${index}-${risk.type}`,
-          x: documentWidth * 0.3,
-          y: documentHeight * 0.85,
-          width: 100,
-          height: 40,
-          severity: risk.severity || 'medium',
-          label: risk.type || "Witness Signature",
-          description: risk.description || "Witness signature required for legal validation.",
-          regulation: risk.regulation,
-          solution: risk.solution,
-          pageNumber: 3
-        };
-      }
+    // We're using a combination of risk type and form field identification
+    if (risk.type?.includes("Administrator Certificate") || risk.description?.includes("Administrator Certificate")) {
+      // Place above "Consumer Proposal" section and near signature block
+      return {
+        id: `risk-${index}`,
+        x: documentWidth * 0.15,
+        y: page1Y,
+        width: documentWidth * 0.7,
+        height: 35,
+        severity: risk.severity || 'high',
+        label: risk.type || "Missing Certificate",
+        description: "Administrator Certificate missing — required by BIA.",
+        regulation: risk.regulation,
+        solution: risk.solution,
+        pageNumber: 1
+      };
+    } 
+    else if (risk.type?.includes("Creditor Information") || risk.description?.includes("creditor")) {
+      // Highlight the section "That the following payments be made to ______, the administrator..."
+      return {
+        id: `risk-${index}`,
+        x: documentWidth * 0.1,
+        y: page1MidY,
+        width: documentWidth * 0.8,
+        height: 30,
+        severity: risk.severity || 'high',
+        label: risk.type || "Missing Creditor Info",
+        description: "No creditor details or beneficiary name present.",
+        regulation: risk.regulation,
+        solution: risk.solution,
+        pageNumber: 1
+      };
+    }
+    else if (risk.type?.includes("Payment Schedule") || risk.description?.includes("payment schedule")) {
+      // Highlight the line: "Set out the schedule of payments and the total amount..."
+      return {
+        id: `risk-${index}`,
+        x: documentWidth * 0.1,
+        y: page1LowerY,
+        width: documentWidth * 0.8,
+        height: 25,
+        severity: risk.severity || 'medium',
+        label: risk.type || "Payment Schedule",
+        description: "Payment schedule not filled — required under 66.13(2)(c) of BIA.",
+        regulation: risk.regulation,
+        solution: risk.solution,
+        pageNumber: 1
+      };
+    }
+    else if (risk.type?.includes("Dividend") || risk.description?.includes("dividend")) {
+      // Highlight: "Describe the manner for distributing dividends."
+      return {
+        id: `risk-${index}`,
+        x: documentWidth * 0.1,
+        y: page2Y,
+        width: documentWidth * 0.8,
+        height: 35,
+        severity: risk.severity || 'medium',
+        label: risk.type || "Dividend Distribution",
+        description: "No dividend distribution method outlined.",
+        regulation: risk.regulation,
+        solution: risk.solution,
+        pageNumber: 2
+      };
+    }
+    else if (risk.type?.includes("Terms") || risk.description?.includes("terms")) {
+      // Highlight: "Set out the additional terms as proposed."
+      return {
+        id: `risk-${index}`,
+        x: documentWidth * 0.1, 
+        y: page2LowerY,
+        width: documentWidth * 0.8,
+        height: 35,
+        severity: risk.severity || 'medium',
+        label: risk.type || "Additional Terms",
+        description: "Optional field left blank — flag for administrator to confirm intent.",
+        regulation: risk.regulation,
+        solution: risk.solution,
+        pageNumber: 2
+      };
+    }
+    else if (risk.type?.includes("Unsigned") || risk.description?.includes("Consumer Debtor")) {
+      // Highlight bottom right signature field labeled "Consumer Debtor"
+      return {
+        id: `risk-${index}`,
+        x: documentWidth * 0.6,
+        y: page3Y,
+        width: documentWidth * 0.3,
+        height: 40,
+        severity: risk.severity || 'high',
+        label: risk.type || "Missing Signature",
+        description: "Consumer Debtor signature missing — non-compliant submission.",
+        regulation: risk.regulation,
+        solution: risk.solution,
+        pageNumber: 3
+      };
+    }
+    else if (risk.type?.includes("Witness") || risk.description?.includes("witness")) {
+      // Highlight the line left of "Consumer Debtor" for witness signature
+      return {
+        id: `risk-${index}`,
+        x: documentWidth * 0.2,
+        y: page3Y,
+        width: documentWidth * 0.3,
+        height: 40,
+        severity: risk.severity || 'medium',
+        label: risk.type || "Witness Signature",
+        description: "Witness signature required for legal validation.",
+        regulation: risk.regulation,
+        solution: risk.solution,
+        pageNumber: 3
+      };
     }
     
-    // Fallback to generic positioning if no specific match
-    // Generate deterministic but "random-looking" positions based on risk properties
+    // Fallback for any other risk types
     const hashCode = (str: string) => {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
@@ -173,7 +184,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     const height = 20 + (Math.abs(riskHash >> 4) % 30);
 
     return {
-      id: `risk-${index}-${risk.type}`,
+      id: `risk-${index}`,
       x,
       y,
       width,
@@ -194,6 +205,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     .filter((position): position is RiskPosition => position !== null);
   
   const getSeverityColor = (severity: string, isActive: boolean, isHovered: boolean): string => {
+    // Higher opacity for active/hovered items for better visibility
     const opacity = isActive ? '0.7' : (isHovered ? '0.5' : '0.3');
     switch (severity) {
       case 'high':
@@ -233,6 +245,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     }
   };
   
+  // Filter highlights by severity when selected
   const handleFilterSeverity = (severity: string | null) => {
     setFilteredSeverity(filteredSeverity === severity ? null : severity);
   };
@@ -313,7 +326,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
         );
       })}
       
-      {/* Risk Legend */}
+      {/* Risk Legend with toggleable filters */}
       <div className="absolute bottom-4 right-4 bg-background/90 border rounded-lg shadow-md p-2 flex items-center gap-2 pointer-events-auto">
         <span className="text-xs font-medium">Filter:</span>
         <button

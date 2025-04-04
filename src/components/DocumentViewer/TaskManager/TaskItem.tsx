@@ -1,117 +1,112 @@
 
-import React, { useState } from "react";
-import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { 
   AlertTriangle, 
+  CheckCircle, 
   Clock, 
+  Edit, 
   MoreVertical, 
-  Check, 
-  XCircle, 
-  Play, 
-  Trash2,
-  Info,
-  CheckCircle2,
-  Edit
+  PlayCircle, 
+  Trash2, 
+  XCircle 
 } from "lucide-react";
+import { Task } from "../types";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
+  DropdownMenuLabel, 
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Task } from "../types";
 
-export interface TaskItemProps {
+interface TaskItemProps {
   task: Task;
-  onStatusChange: (status: Task['status']) => void;
-  onDelete: () => void;
+  onStatusChange: (newStatus: 'pending' | 'in_progress' | 'completed' | 'cancelled') => void;
   onEdit: () => void;
+  onDelete: () => void;
   isHighlighted?: boolean;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ 
-  task, 
-  onStatusChange, 
-  onDelete, 
+export const TaskItem: React.FC<TaskItemProps> = ({
+  task,
+  onStatusChange,
   onEdit,
-  isHighlighted = false 
+  onDelete,
+  isHighlighted = false
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  const getStatusColor = () => {
-    switch (task.status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'text-amber-500 bg-amber-50 border-amber-200';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
+        return 'text-blue-500 bg-blue-50 border-blue-200';
+      case 'completed':
+        return 'text-green-500 bg-green-50 border-green-200';
       case 'cancelled':
-        return 'bg-gray-100 text-gray-800';
+        return 'text-gray-500 bg-gray-50 border-gray-200';
       default:
-        return 'bg-amber-100 text-amber-800';
+        return 'text-gray-500 bg-gray-50 border-gray-200';
     }
   };
 
-  const getSeverityIcon = () => {
-    switch (task.severity) {
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Clock className="h-4 w-4" />;
+      case 'in_progress':
+        return <PlayCircle className="h-4 w-4" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return <Clock className="h-4 w-4" />;
+    }
+  };
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
       case 'high':
         return <AlertTriangle className="h-4 w-4 text-red-500" />;
       case 'medium':
-        return <Info className="h-4 w-4 text-amber-500" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
       case 'low':
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+        return <AlertTriangle className="h-4 w-4 text-green-500" />;
       default:
-        return <Info className="h-4 w-4 text-blue-500" />;
-    }
-  };
-
-  const getStatusActions = () => {
-    switch (task.status) {
-      case 'pending':
-        return [
-          { label: 'Start Task', status: 'in_progress', icon: <Play className="h-4 w-4 mr-2" /> },
-          { label: 'Mark Completed', status: 'completed', icon: <Check className="h-4 w-4 mr-2" /> },
-          { label: 'Cancel Task', status: 'cancelled', icon: <XCircle className="h-4 w-4 mr-2" /> }
-        ];
-      case 'in_progress':
-        return [
-          { label: 'Mark Completed', status: 'completed', icon: <Check className="h-4 w-4 mr-2" /> },
-          { label: 'Move to Pending', status: 'pending', icon: <Clock className="h-4 w-4 mr-2" /> },
-          { label: 'Cancel Task', status: 'cancelled', icon: <XCircle className="h-4 w-4 mr-2" /> }
-        ];
-      case 'completed':
-        return [
-          { label: 'Reopen Task', status: 'pending', icon: <Clock className="h-4 w-4 mr-2" /> }
-        ];
-      case 'cancelled':
-        return [
-          { label: 'Reopen Task', status: 'pending', icon: <Clock className="h-4 w-4 mr-2" /> }
-        ];
-      default:
-        return [];
+        return <AlertTriangle className="h-4 w-4 text-gray-500" />;
     }
   };
 
   return (
-    <div 
-      className={`p-3 rounded-md border transition-all ${
+    <Card 
+      className={`p-4 transition-all ${
         isHighlighted 
-          ? 'bg-primary/5 border-primary/40 shadow-sm ring-1 ring-primary/20' 
-          : 'bg-muted/10 hover:bg-muted/20'
+          ? 'ring-2 ring-primary border-primary/30 shadow-md' 
+          : 'hover:shadow-sm'
       }`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          {getSeverityIcon()}
-          <h4 className="font-medium text-sm">{task.title}</h4>
+      <div className="flex justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {getSeverityIcon(task.severity)}
+            <h3 className="font-medium text-sm line-clamp-1">
+              {task.title}
+            </h3>
+          </div>
+          {task.description && (
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              {task.description}
+            </p>
+          )}
         </div>
-        
-        <div className="flex items-center">
-          <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor()}`}>
-            {task.status === 'in_progress' ? 'In Progress' : 
-             task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-          </span>
+
+        <div className="flex flex-col items-end gap-2">
+          <Badge variant="outline" className={`${getStatusColor(task.status)} flex items-center gap-1`}>
+            {getStatusIcon(task.status)} {task.status.replace('_', ' ')}
+          </Badge>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -119,7 +114,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              
               <DropdownMenuItem onClick={onEdit}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Task
@@ -127,21 +125,37 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               
               <DropdownMenuSeparator />
               
-              {getStatusActions().map((action) => (
-                <DropdownMenuItem
-                  key={action.status}
-                  onClick={() => onStatusChange(action.status as Task['status'])}
-                >
-                  {action.icon}
-                  {action.label}
+              {task.status !== 'pending' && (
+                <DropdownMenuItem onClick={() => onStatusChange('pending')}>
+                  <Clock className="h-4 w-4 mr-2 text-amber-500" />
+                  Mark as Pending
                 </DropdownMenuItem>
-              ))}
+              )}
+              
+              {task.status !== 'in_progress' && (
+                <DropdownMenuItem onClick={() => onStatusChange('in_progress')}>
+                  <PlayCircle className="h-4 w-4 mr-2 text-blue-500" />
+                  Mark as In Progress
+                </DropdownMenuItem>
+              )}
+              
+              {task.status !== 'completed' && (
+                <DropdownMenuItem onClick={() => onStatusChange('completed')}>
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                  Mark as Completed
+                </DropdownMenuItem>
+              )}
+              
+              {task.status !== 'cancelled' && (
+                <DropdownMenuItem onClick={() => onStatusChange('cancelled')}>
+                  <XCircle className="h-4 w-4 mr-2 text-gray-500" />
+                  Mark as Cancelled
+                </DropdownMenuItem>
+              )}
               
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="text-red-600"
-              >
+              
+              <DropdownMenuItem className="text-red-600" onClick={onDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Task
               </DropdownMenuItem>
@@ -150,37 +164,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         </div>
       </div>
       
-      {task.description && (
-        <div className="mt-2">
-          <button 
-            className="text-xs text-primary hover:underline"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
-            {isExpanded ? 'Hide details' : 'Show details'}
-          </button>
-          
-          {isExpanded && (
-            <p className="text-xs mt-1 text-muted-foreground">
-              {task.description}
-            </p>
-          )}
+      {task.due_date && (
+        <div className="flex items-center mt-2 text-xs text-muted-foreground">
+          <Clock className="h-3.5 w-3.5 mr-1" />
+          Due: {new Date(task.due_date).toLocaleDateString()}
         </div>
       )}
-      
-      <div className="flex items-center justify-between mt-2 pt-2 text-xs text-muted-foreground">
-        {task.due_date && (
-          <div className="flex items-center">
-            <Clock className="h-3.5 w-3.5 mr-1" />
-            Due: {format(new Date(task.due_date), 'MMM d, yyyy')}
-          </div>
-        )}
-        
-        {task.created_at && (
-          <div>
-            Added: {format(new Date(task.created_at), 'MMM d, yyyy')}
-          </div>
-        )}
-      </div>
-    </div>
+    </Card>
   );
 };

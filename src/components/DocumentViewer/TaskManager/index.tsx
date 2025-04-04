@@ -8,6 +8,7 @@ import { TaskItem } from "./TaskItem";
 import { useTaskManager } from "./hooks/useTaskManager";
 import AddTaskDialog from "./components/AddTaskDialog";
 import { TaskFilter } from "./TaskFilter";
+import { TaskHeader } from "./components/TaskHeader";
 
 interface TaskManagerProps {
   documentId: string;
@@ -24,6 +25,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { localTasks, addTask, updateTaskStatus, deleteTask, loading } = useTaskManager({ documentId });
 
@@ -67,21 +69,30 @@ export const TaskManager: React.FC<TaskManagerProps> = ({
     return true;
   });
 
+  const completedTasks = localTasks.filter(task => task.status === 'completed').length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Tasks</h2>
+        <TaskHeader 
+          onFilterClick={() => setIsFilterOpen(!isFilterOpen)}
+          isFilterOpen={isFilterOpen}
+          totalTasks={localTasks.length}
+          completedTasks={completedTasks}
+        />
         <Button onClick={handleOpenAddTask} size="sm">
           <Plus className="h-4 w-4 mr-1" /> Add Task
         </Button>
       </div>
       
-      <TaskFilter 
-        onStatusChange={setFilterStatus} 
-        onSeverityChange={setFilterSeverity}
-        selectedStatus={filterStatus}
-        selectedSeverity={filterSeverity} 
-      />
+      {isFilterOpen && (
+        <TaskFilter 
+          onStatusChange={setFilterStatus} 
+          onSeverityChange={setFilterSeverity}
+          selectedStatus={filterStatus}
+          selectedSeverity={filterSeverity} 
+        />
+      )}
       
       <ScrollArea className="h-[calc(100vh-280px)]">
         {loading ? (
