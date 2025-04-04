@@ -44,20 +44,26 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     // Calculate vertical positions based on document height
     // Each page is approximately 1/3 of the total document height for a 3-page form
     const pageHeight = documentHeight / 3;
-    const page1Y = pageHeight * 0.15; // Top area of page 1
-    const page1MidY = pageHeight * 0.4; // Middle area of page 1
-    const page1LowerY = pageHeight * 0.6; // Lower area of page 1
-    const page2Y = pageHeight + pageHeight * 0.3; // Middle of page 2
-    const page2LowerY = pageHeight + pageHeight * 0.7; // Lower part of page 2
-    const page3Y = pageHeight * 2 + pageHeight * 0.85; // Bottom area of page 3
+    
+    // Page 1 sections (top, middle, lower sections)
+    const page1Top = pageHeight * 0.15; // Top area of page 1
+    const page1Mid = pageHeight * 0.4; // Middle area of page 1
+    const page1Lower = pageHeight * 0.65; // Lower area of page 1
+    
+    // Page 2 sections
+    const page2Mid = pageHeight + pageHeight * 0.3; // Middle of page 2
+    const page2Lower = pageHeight + pageHeight * 0.7; // Lower part of page 2
+    
+    // Page 3 sections
+    const page3Lower = pageHeight * 2 + pageHeight * 0.85; // Bottom area of page 3
     
     // We're using a combination of risk type and form field identification
     if (risk.type?.includes("Administrator Certificate") || risk.description?.includes("Administrator Certificate")) {
-      // Place above "Consumer Proposal" section and near signature block
+      // Place above "Consumer Proposal" section
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.15,
-        y: page1Y,
+        y: page1Top,
         width: documentWidth * 0.7,
         height: 35,
         severity: risk.severity || 'high',
@@ -69,11 +75,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     } 
     else if (risk.type?.includes("Creditor Information") || risk.description?.includes("creditor")) {
-      // Highlight the section "That the following payments be made to ______, the administrator..."
+      // FIXED: Section 4 - Highlight the section about payments to creditors
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
-        y: page1MidY,
+        y: page1Mid,
         width: documentWidth * 0.8,
         height: 30,
         severity: risk.severity || 'high',
@@ -85,11 +91,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Payment Schedule") || risk.description?.includes("payment schedule")) {
-      // Highlight the line: "Set out the schedule of payments and the total amount..."
+      // FIXED: Directly below the creditor information section (Section 4)
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
-        y: page1LowerY,
+        y: page1Mid + 40, // Positioned just below the creditor info highlight
         width: documentWidth * 0.8,
         height: 25,
         severity: risk.severity || 'medium',
@@ -105,7 +111,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
-        y: page2Y,
+        y: page2Mid,
         width: documentWidth * 0.8,
         height: 35,
         severity: risk.severity || 'medium',
@@ -121,7 +127,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1, 
-        y: page2LowerY,
+        y: page2Lower,
         width: documentWidth * 0.8,
         height: 35,
         severity: risk.severity || 'medium',
@@ -137,7 +143,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.6,
-        y: page3Y,
+        y: page3Lower,
         width: documentWidth * 0.3,
         height: 40,
         severity: risk.severity || 'high',
@@ -153,7 +159,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.2,
-        y: page3Y,
+        y: page3Lower,
         width: documentWidth * 0.3,
         height: 40,
         severity: risk.severity || 'medium',
@@ -204,6 +210,40 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     .map((risk, index) => getPrecisePositionForRisk(risk, index))
     .filter((position): position is RiskPosition => position !== null);
   
+  // Apply auto-spacing to prevent overlapping highlights
+  const applyAutoSpacing = (positions: RiskPosition[]): RiskPosition[] => {
+    // Sort positions by page number and Y position
+    const sorted = [...positions].sort((a, b) => {
+      if ((a.pageNumber || 1) !== (b.pageNumber || 1)) {
+        return (a.pageNumber || 1) - (b.pageNumber || 1);
+      }
+      return a.y - b.y;
+    });
+    
+    // Minimum vertical space between highlights
+    const minVerticalSpace = 10;
+    
+    // Check for overlaps and adjust positions
+    for (let i = 1; i < sorted.length; i++) {
+      const current = sorted[i];
+      const prev = sorted[i - 1];
+      
+      // Only adjust positions within the same page
+      if ((current.pageNumber || 1) === (prev.pageNumber || 1)) {
+        // Check if current highlight overlaps with previous
+        if (current.y < prev.y + prev.height + minVerticalSpace) {
+          // Adjust position to avoid overlap
+          current.y = prev.y + prev.height + minVerticalSpace;
+        }
+      }
+    }
+    
+    return sorted;
+  };
+  
+  // Apply auto-spacing to prevent overlaps
+  const adjustedRiskPositions = applyAutoSpacing(riskPositions);
+  
   const getSeverityColor = (severity: string, isActive: boolean, isHovered: boolean): string => {
     // Higher opacity for active/hovered items for better visibility
     const opacity = isActive ? '0.7' : (isHovered ? '0.5' : '0.3');
@@ -251,8 +291,8 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   };
   
   const filteredPositions = filteredSeverity 
-    ? riskPositions.filter(pos => pos.severity === filteredSeverity)
-    : riskPositions;
+    ? adjustedRiskPositions.filter(pos => pos.severity === filteredSeverity)
+    : adjustedRiskPositions;
 
   return (
     <div className="absolute inset-0 pointer-events-none">

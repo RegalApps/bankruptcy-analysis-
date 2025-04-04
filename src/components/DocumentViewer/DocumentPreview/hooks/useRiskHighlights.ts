@@ -59,7 +59,7 @@ export const useRiskHighlights = (
         },
         {
           type: "Missing Creditor Information",
-          description: "No creditor details or beneficiary name present.",
+          description: "No creditor details or beneficiary name present in Section 4.",
           severity: "high",
           regulation: "Bankruptcy and Insolvency Act s.66",
           solution: "Fill in the creditor name in the payment section",
@@ -67,7 +67,7 @@ export const useRiskHighlights = (
         },
         {
           type: "Incomplete Payment Schedule",
-          description: "Payment schedule not filled — required under 66.13(2)(c) of BIA.",
+          description: "Payment schedule not filled in Section 4 — required under 66.13(2)(c) of BIA.",
           severity: "medium",
           regulation: "BIA s.66.13(2)(c)",
           solution: "Complete the payment schedule section with dates and amounts",
