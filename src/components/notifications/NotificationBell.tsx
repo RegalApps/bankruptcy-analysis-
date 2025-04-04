@@ -1,137 +1,168 @@
 
-import { useState, useEffect } from "react";
-import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Notification, NotificationCategory } from "@/types/notifications";
-import { NotificationsSidebar } from "./NotificationsSidebar";
+import { useState, useEffect, useRef } from 'react';
+import { BellRing, X } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Badge } from '@/components/ui/badge';
+import { Notification, NotificationCategory } from '@/types/notifications';
+import { categoryConfig } from '@/lib/notifications/categoryConfig';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { Button } from '@/components/ui/button';
+import { NotificationsList } from './NotificationsList';
+import { toast } from 'sonner';
 
 export const NotificationBell = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  // Fetch notifications
   useEffect(() => {
     const fetchNotifications = async () => {
+      setIsLoading(true);
       try {
-        // In a real app, this would be an API call
-        // For now, we'll use mock data
-        const mockNotifications = [
-          {
-            id: "1",
-            title: "New document uploaded",
-            description: "A new document has been uploaded to your account.",
-            type: "document",
-            createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
-            read: false,
-            priority: "medium",
-            action_url: "/documents",
-            icon: "file",
-            metadata: {},
-            category: NotificationCategory.DOCUMENT
-          },
-          {
-            id: "2",
-            title: "Meeting reminder",
-            description: "You have a meeting with Client X in 30 minutes.",
-            type: "meeting",
-            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-            read: true,
-            priority: "high",
-            action_url: "/meetings",
-            icon: "calendar",
-            metadata: {
-              meetingId: "123",
-              clientName: "Client X"
-            },
-            category: NotificationCategory.MEETING
-          },
-          {
-            id: "3",
-            title: "System update",
-            description: "The system will be down for maintenance tonight at 10 PM.",
-            type: "system",
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-            read: false,
-            priority: "low",
-            icon: "info",
-            metadata: {},
-            category: NotificationCategory.SYSTEM
-          }
-        ] as Notification[];
-
-        setNotifications(mockNotifications);
+        const { data: { user } } = await supabase.auth.getUser();
         
-        // Calculate unread count
-        const unread = mockNotifications.filter(n => !n.read).length;
-        setUnreadCount(unread);
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('read', false)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+
+        // Transform database notifications to UI notifications
+        const transformedNotifications: Notification[] = data.map(dbNotification => {
+          // Extract category from metadata, defaulting to 'file_activity'
+          const category = (dbNotification.metadata?.category as NotificationCategory) || 'file_activity';
+          
+          return {
+            id: dbNotification.id,
+            title: dbNotification.title,
+            message: dbNotification.message,
+            type: dbNotification.type,
+            created_at: dbNotification.created_at,
+            read: dbNotification.read,
+            priority: dbNotification.priority || 'normal',
+            action_url: dbNotification.action_url || '',
+            icon: dbNotification.icon || '',
+            metadata: dbNotification.metadata || {},
+            category: category
+          };
+        });
+
+        setNotifications(transformedNotifications);
+        setUnreadCount(transformedNotifications.length);
       } catch (error) {
-        console.error("Error fetching notifications:", error);
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchNotifications();
-    
-    // Set up polling for new notifications
-    const interval = setInterval(() => {
-      // In a real app, we would poll for new notifications here
-    }, 30000); // Poll every 30 seconds
-    
-    return () => clearInterval(interval);
+
+    // Set up real-time subscription for new notifications
+    const subscription = supabase
+      .channel('notifications')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications'
+      }, async (payload) => {
+        // Get the full notification object
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && payload.new.user_id === user.id) {
+          const newDbNotification = payload.new;
+          const category = (newDbNotification.metadata?.category as NotificationCategory) || 'file_activity';
+          
+          // Create a notification with the correct structure
+          const newNotification: Notification = {
+            id: newDbNotification.id,
+            title: newDbNotification.title,
+            message: newDbNotification.message,
+            type: newDbNotification.type,
+            created_at: newDbNotification.created_at,
+            read: newDbNotification.read,
+            priority: newDbNotification.priority || 'normal',
+            action_url: newDbNotification.action_url || '',
+            icon: newDbNotification.icon || '',
+            metadata: newDbNotification.metadata || {},
+            category: category
+          };
+          
+          setNotifications(prev => [newNotification, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const handleMarkAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, read: true } 
-          : notification
-      )
-    );
-    
-    // Recalculate unread count
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-    setUnreadCount(0);
-  };
+      // Update the notification in the database
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId);
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
+      // Update local state
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read: true } 
+            : notification
+        )
+      );
+      
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      toast("Failed to mark notification as read");
+    }
   };
 
   return (
-    <>
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="relative" 
-        onClick={toggleSidebar}
-        aria-label="Notifications"
-      >
-        <Bell className="h-5 w-5" />
-        {unreadCount > 0 && (
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-          >
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </Badge>
-        )}
-      </Button>
-      
-      <NotificationsSidebar 
-        isOpen={isOpen} 
-        onClose={() => setIsOpen(false)}
-        notifications={notifications}
-        onMarkAsRead={handleMarkAsRead}
-        onMarkAllAsRead={handleMarkAllAsRead}
-      />
-    </>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative">
+          <div className="relative p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+            <BellRing className="h-5 w-5 text-primary" />
+          </div>
+          {unreadCount > 0 && (
+            <Badge 
+              className="absolute -top-1.5 -right-1.5 px-1.5 h-5 min-w-5 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-semibold shadow-sm"
+              variant="destructive"
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0" align="end">
+        <NotificationsList 
+          notifications={notifications} 
+          isLoading={isLoading} 
+          onMarkAsRead={handleMarkAsRead}
+        />
+      </PopoverContent>
+    </Popover>
   );
 };

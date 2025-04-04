@@ -1,141 +1,252 @@
 
 /**
- * Performance monitoring utilities to track and measure application performance
+ * Optimized performance monitoring utility
  */
 
-// Store timing data for different operations
-interface TimingData {
-  startTime: number;
-  endTime?: number;
-  duration?: number;
-}
+// Use a more efficient data structure for performance measurements
+const performanceMeasurements: Record<string, { start: number; end?: number }> = {};
 
-// Performance measurement history
-interface PerformanceHistory {
-  [key: string]: number[];
-}
-
-// Threshold data returned by getAnomalyThresholds
-export interface AnomalyThreshold {
-  mean: number;
-  threshold: number;
-  stdDev: number;
-}
-
-let performanceTimings: Record<string, TimingData> = {};
-let performanceHistory: PerformanceHistory = {};
+// Store historical data for anomaly detection - limit history size to prevent memory issues
+const MAX_HISTORY_SIZE = 50;
+const performanceHistory: Record<string, number[]> = {};
+const anomalyThresholds: Record<string, { mean: number; stdDev: number }> = {};
 
 /**
- * Initialize performance monitoring
- */
-export const initPerformanceMonitoring = () => {
-  console.log('Performance monitoring initialized');
-  performanceTimings = {};
-  performanceHistory = {};
-};
-
-/**
- * Start timing for an operation
+ * Start timing a specific operation
  */
 export const startTiming = (operationName: string): void => {
-  performanceTimings[operationName] = {
-    startTime: performance.now()
+  performanceMeasurements[operationName] = {
+    start: performance.now()
   };
 };
 
 /**
- * End timing for an operation and return the duration
+ * End timing a specific operation and return the duration
+ * @param operationName The name of the operation to end timing for
+ * @param logResult Whether to log the result (default: false in production)
+ * @returns The duration in milliseconds or undefined if no timing was started
  */
-export const endTiming = (operationName: string): number | null => {
-  const timing = performanceTimings[operationName];
-  if (!timing || !timing.startTime) return null;
+export const endTiming = (operationName: string, logResult: boolean = process.env.NODE_ENV !== 'production'): number | undefined => {
+  const measurement = performanceMeasurements[operationName];
+  if (!measurement) {
+    return undefined;
+  }
+
+  if (measurement.end !== undefined) {
+    return measurement.end - measurement.start;
+  }
+
+  measurement.end = performance.now();
+  const duration = measurement.end - measurement.start;
   
-  timing.endTime = performance.now();
-  timing.duration = timing.endTime - timing.startTime;
+  // Only log in development or when explicitly requested
+  if (logResult) {
+    console.log(`Performance: ${operationName} took ${duration.toFixed(2)}ms`);
+  }
   
-  // Record in history for anomaly detection
+  // Add to history for anomaly detection - limit the history size
   if (!performanceHistory[operationName]) {
     performanceHistory[operationName] = [];
   }
   
-  performanceHistory[operationName].push(timing.duration);
+  performanceHistory[operationName].push(duration);
   
-  // Keep only the last 100 measurements
-  if (performanceHistory[operationName].length > 100) {
-    performanceHistory[operationName].shift();
+  // Trim history array if it gets too large
+  if (performanceHistory[operationName].length > MAX_HISTORY_SIZE) {
+    performanceHistory[operationName] = performanceHistory[operationName].slice(-MAX_HISTORY_SIZE);
   }
   
-  return timing.duration;
+  // After collecting enough samples, calculate anomaly thresholds
+  if (performanceHistory[operationName].length >= 5) {
+    updateAnomalyThresholds(operationName);
+  }
+  
+  // Check if this is an anomaly
+  const isAnomaly = checkForAnomaly(operationName, duration);
+  if (isAnomaly && logResult) {
+    console.warn(`ANOMALY DETECTED: ${operationName} (${duration.toFixed(2)}ms) is significantly slower than usual`);
+  }
+  
+  return duration;
 };
 
 /**
- * Reset performance history
+ * Update anomaly detection thresholds based on historical data - optimized calculation
  */
-export const resetPerformanceHistory = (): void => {
-  performanceHistory = {};
+const updateAnomalyThresholds = (operationName: string): void => {
+  const history = performanceHistory[operationName];
+  if (history.length < 5) return; // Need enough samples
+  
+  // Calculate mean more efficiently
+  const sum = history.reduce((acc, val) => acc + val, 0);
+  const mean = sum / history.length;
+  
+  // Calculate standard deviation more efficiently
+  let sumSquaredDiff = 0;
+  for (let i = 0; i < history.length; i++) {
+    sumSquaredDiff += Math.pow(history[i] - mean, 2);
+  }
+  
+  const stdDev = Math.sqrt(sumSquaredDiff / history.length);
+  
+  anomalyThresholds[operationName] = { mean, stdDev };
 };
 
 /**
- * Get the performance history
+ * Check if a performance measurement is an anomaly
  */
-export const getPerformanceHistory = (): PerformanceHistory => {
-  return performanceHistory;
+const checkForAnomaly = (operationName: string, duration: number): boolean => {
+  const threshold = anomalyThresholds[operationName];
+  if (!threshold) return false;
+  
+  // Consider values beyond 2 standard deviations as anomalies
+  const upperBound = threshold.mean + (2 * threshold.stdDev);
+  return duration > upperBound;
 };
 
 /**
- * Measure the duration of a function execution
+ * Get all performance measurements - memoizes the result by default
  */
-export const measureTime = <T>(fn: () => T, operationName: string): T => {
-  startTiming(operationName);
-  const result = fn();
-  endTiming(operationName);
+let cachedMeasurements: Record<string, number> | null = null;
+let lastMeasurementTime = 0;
+
+export const getPerformanceMeasurements = (): Record<string, number> => {
+  const now = Date.now();
+  
+  // Return cached results if less than 1 second has passed since the last calculation
+  if (cachedMeasurements !== null && now - lastMeasurementTime < 1000) {
+    return cachedMeasurements;
+  }
+  
+  const result: Record<string, number> = {};
+  
+  Object.entries(performanceMeasurements).forEach(([key, measurement]) => {
+    if (measurement.end !== undefined) {
+      result[key] = measurement.end - measurement.start;
+    }
+  });
+  
+  // Update cache
+  cachedMeasurements = result;
+  lastMeasurementTime = now;
+  
   return result;
 };
 
 /**
- * Get all performance measurements
+ * Get anomaly thresholds for all operations
  */
-export const getPerformanceMeasurements = (): Record<string, TimingData> => {
-  return performanceTimings;
+export const getAnomalyThresholds = (): Record<string, { mean: number; stdDev: number }> => {
+  return { ...anomalyThresholds };
 };
 
 /**
- * Calculate anomaly thresholds for performance metrics
+ * Get performance history for a specific operation
  */
-export const getAnomalyThresholds = (): Record<string, AnomalyThreshold> => {
-  const thresholds: Record<string, AnomalyThreshold> = {};
+export const getPerformanceHistory = (operationName?: string): Record<string, number[]> => {
+  if (operationName) {
+    return { [operationName]: [...(performanceHistory[operationName] || [])] };
+  }
+  
+  // Create a deep copy to prevent external modification
+  const historyCopy: Record<string, number[]> = {};
   
   Object.entries(performanceHistory).forEach(([key, values]) => {
-    if (values.length < 5) return; // Need enough data points
-    
-    // Calculate mean
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-    
-    // Calculate standard deviation
-    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
-    const stdDev = Math.sqrt(variance);
-    
-    // Set threshold as mean + 2 standard deviations
-    thresholds[key] = {
-      mean,
-      threshold: mean + (2 * stdDev),
-      stdDev
-    };
+    historyCopy[key] = [...values];
   });
   
-  return thresholds;
+  return historyCopy;
 };
 
 /**
- * Measure route change performance
+ * Initialize performance monitoring with optimizations
+ */
+export const initPerformanceMonitoring = (): void => {
+  startTiming('appInitialization');
+  
+  // Record page load timing
+  if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+      endTiming('appInitialization');
+      
+      // Add navigation timing if available
+      if (performance && performance.timing) {
+        try {
+          const navigationTiming = performance.timing;
+          const loadTime = navigationTiming.loadEventEnd - navigationTiming.navigationStart;
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`Page load time: ${loadTime}ms`);
+          }
+        } catch (e) {
+          // Silent error - timing API might not be available
+        }
+      }
+    });
+  }
+};
+
+/**
+ * Reset performance history and calculated thresholds
+ */
+export const resetPerformanceHistory = (operationName?: string): void => {
+  if (operationName) {
+    delete performanceHistory[operationName];
+    delete anomalyThresholds[operationName];
+  } else {
+    // Clear all history
+    Object.keys(performanceHistory).forEach(key => {
+      delete performanceHistory[key];
+      delete anomalyThresholds[key];
+    });
+  }
+  
+  // Clear cache
+  cachedMeasurements = null;
+  lastMeasurementTime = 0;
+};
+
+// Import from @/services/analyticsService
+import { analyticsService } from "@/services/analyticsService";
+
+/**
+ * Measures and reports navigation performance
  */
 export const measureRouteChange = (from: string, to: string) => {
-  const operationName = `route-change-${from}-to-${to}`;
-  startTiming(operationName);
+  // End timing for previous page
+  const interactionTime = endTiming(`page-interact-${from}`);
   
-  // End timing after a small delay to allow for render
+  // Track page interaction time
+  if (interactionTime) {
+    analyticsService.trackEvent({
+      category: 'Performance',
+      subcategory: 'Interaction',
+      action: 'PageInteraction',
+      label: from,
+      value: Math.round(interactionTime)
+    });
+  }
+  
+  // Console log for debug purposes
+  console.log(`Navigation: ${from} → ${to}`);
+  
+  // Start timing for next page load - defer slightly to allow for route change
   setTimeout(() => {
-    const duration = endTiming(operationName);
-    console.log(`Route change from ${from} to ${to} took ${duration?.toFixed(2)}ms`);
-  }, 100);
+    startTiming(`page-load-${to}`);
+    
+    // Track navigation event
+    analyticsService.trackEvent({
+      category: 'Navigation',
+      subcategory: 'Navigation',
+      action: 'RouteChange',
+      label: `${from} → ${to}`
+    });
+  }, 0);
+  
+  // Reset document load timings when changing routes
+  try {
+    performance.clearMarks('document-load-start');
+    performance.clearMarks('document-load-end');
+  } catch (e) {
+    // Ignore errors in browsers that don't support this
+  }
 };

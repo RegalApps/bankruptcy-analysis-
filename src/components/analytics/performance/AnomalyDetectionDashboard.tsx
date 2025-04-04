@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BarChart, 
   Bar, 
+  LineChart, 
+  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -11,29 +13,34 @@ import {
   Legend, 
   ResponsiveContainer 
 } from "recharts";
-import { getPerformanceMeasurements, getAnomalyThresholds, AnomalyThreshold } from '@/utils/performanceMonitor';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-
-interface AnomalyData {
-  name: string;
-  value: number;
-  threshold: number;
-  isAnomaly: boolean;
-}
-
-interface ThresholdData {
-  name: string;
-  mean: number;
-  upperBound: number;
-  lowerBound: number;
-}
+import { getPerformanceMeasurements, getAnomalyThresholds } from '@/utils/performanceMonitor';
 
 export const AnomalyDetectionDashboard = () => {
-  const [anomalyData, setAnomalyData] = useState<AnomalyData[]>([]);
-  const [thresholdData, setThresholdData] = useState<ThresholdData[]>([]);
+  const [anomalyData, setAnomalyData] = useState<any[]>([]);
+  const [thresholdData, setThresholdData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Format performance data for charts
+  // Format performance data for charts - memoized to prevent recalculation on each render
+  const getFormattedPerformanceData = useMemo(() => {
+    const measurements = getPerformanceMeasurements();
+    const thresholds = getAnomalyThresholds();
+    
+    return {
+      anomalyData: Object.entries(measurements).map(([key, value]) => ({
+        name: key.replace(/-/g, ' ').replace(/^./, str => str.toUpperCase()),
+        value: Math.round(value),
+        threshold: thresholds[key]?.mean + (2 * thresholds[key]?.stdDev) || 0,
+        isAnomaly: thresholds[key] ? value > (thresholds[key].mean + (2 * thresholds[key].stdDev)) : false
+      })),
+      thresholdData: Object.entries(thresholds).map(([key, { mean, stdDev }]) => ({
+        name: key.replace(/-/g, ' ').replace(/^./, str => str.toUpperCase()),
+        mean: Math.round(mean),
+        upperBound: Math.round(mean + (2 * stdDev)),
+        lowerBound: Math.round(Math.max(0, mean - (2 * stdDev)))
+      }))
+    };
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -42,31 +49,10 @@ export const AnomalyDetectionDashboard = () => {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        const measurements = getPerformanceMeasurements();
-        const thresholds = getAnomalyThresholds();
+        const { anomalyData, thresholdData } = getFormattedPerformanceData;
         
-        const formattedAnomalyData = Object.entries(measurements).map(([key, value]) => {
-          const threshold = thresholds[key] as AnomalyThreshold | undefined;
-          const thresholdValue = threshold ? threshold.threshold : 0;
-          const durationValue = typeof value.duration === 'number' ? value.duration : 0;
-          
-          return {
-            name: key.replace(/-/g, ' ').replace(/^./, str => str.toUpperCase()),
-            value: Math.round(durationValue),
-            threshold: Math.round(thresholdValue),
-            isAnomaly: threshold ? durationValue > thresholdValue : false
-          };
-        });
-        
-        const formattedThresholdData = Object.entries(thresholds).map(([key, threshold]) => ({
-          name: key.replace(/-/g, ' ').replace(/^./, str => str.toUpperCase()),
-          mean: Math.round(threshold.mean),
-          upperBound: Math.round(threshold.mean + (2 * threshold.stdDev)),
-          lowerBound: Math.round(Math.max(0, threshold.mean - (2 * threshold.stdDev)))
-        }));
-        
-        setAnomalyData(formattedAnomalyData);
-        setThresholdData(formattedThresholdData);
+        setAnomalyData(anomalyData);
+        setThresholdData(thresholdData);
       } catch (error) {
         console.error('Error loading performance data:', error);
       } finally {
@@ -80,7 +66,7 @@ export const AnomalyDetectionDashboard = () => {
     const interval = setInterval(loadData, 30000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [getFormattedPerformanceData]);
 
   // Filter only anomalies for the anomalies chart
   const anomaliesOnly = useMemo(() => 
@@ -91,8 +77,7 @@ export const AnomalyDetectionDashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="medium" />
-        <p className="ml-3">Loading performance metrics...</p>
+        <p>Loading performance metrics...</p>
       </div>
     );
   }

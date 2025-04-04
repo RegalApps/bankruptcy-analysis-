@@ -19,7 +19,6 @@ import SAFAPage from "./pages/ConBrandingPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import Support from "./pages/Support";
 import ClientViewerPage from "./pages/ClientViewerPage";
-import DocumentViewerPage from "./pages/DocumentViewerPage";
 import "./App.css";
 
 function App() {
@@ -29,7 +28,6 @@ function App() {
       <Route path="/index" element={<Index />} />
       <Route path="/crm" element={<CRMPage />} />
       <Route path="/documents/*" element={<DocumentsPage />} />
-      <Route path="/documents/view/:documentId" element={<DocumentViewerPage />} />
       <Route path="/meetings" element={<MeetingsPage />} />
       <Route path="/meetings/notes-standalone" element={<MeetingNotesPage />} />
       <Route path="/meetings/agenda-standalone" element={<MeetingAgendaPage />} />

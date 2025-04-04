@@ -1,59 +1,69 @@
 
-import { NotificationCategory, CategoryConfig } from "@/types/notifications";
+import { FileText, Shield, MessageCircle, Timer, Calendar, Upload, Lock, Users, CheckCircle, UserCircle, AlertCircle, Bell } from "lucide-react";
+import type { CategoryConfig, NotificationCategory } from "@/types/notifications";
 
-export const notificationCategories: Record<NotificationCategory, CategoryConfig> = {
-  [NotificationCategory.SYSTEM]: {
-    name: "System",
-    icon: "settings",
-    color: "blue",
-    description: "System-wide updates and maintenance notifications"
+export const categoryConfig: Record<NotificationCategory, CategoryConfig> = {
+  file_activity: {
+    label: "File Activity",
+    icon: FileText,
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
   },
-  [NotificationCategory.DOCUMENT]: {
-    name: "Documents",
-    icon: "file",
-    color: "green",
-    description: "Document uploads, processing, and sharing"
+  client_update: {
+    label: "Client Updates",
+    icon: UserCircle,
+    color: "text-indigo-500",
+    bgColor: "bg-indigo-500/10",
   },
-  [NotificationCategory.MEETING]: {
-    name: "Meetings",
-    icon: "calendar",
-    color: "purple",
-    description: "Meeting reminders and updates"
+  system_alert: {
+    label: "System Alerts",
+    icon: AlertCircle,
+    color: "text-yellow-500",
+    bgColor: "bg-yellow-500/10",
   },
-  [NotificationCategory.TASK]: {
-    name: "Tasks",
-    icon: "check-square",
-    color: "amber",
-    description: "Tasks assigned to you or completed by others"
+  task_complete: {
+    label: "Completed Tasks",
+    icon: CheckCircle,
+    color: "text-green-500",
+    bgColor: "bg-green-500/10",
   },
-  [NotificationCategory.CLIENT]: {
-    name: "Clients",
-    icon: "users",
-    color: "indigo",
-    description: "Client updates and interactions"
+  security: {
+    label: "Security",
+    icon: Shield,
+    color: "text-red-500",
+    bgColor: "bg-red-500/10",
   },
-  [NotificationCategory.SECURITY]: {
-    name: "Security",
-    icon: "shield",
-    color: "red",
-    description: "Security alerts and login notifications"
+  task: {
+    label: "Tasks & Comments",
+    icon: MessageCircle,
+    color: "text-green-500",
+    bgColor: "bg-green-500/10",
   },
-  [NotificationCategory.FORM]: {
-    name: "Forms",
-    icon: "clipboard",
-    color: "cyan",
-    description: "Form submissions and updates"
+  subscription: {
+    label: "Subscription",
+    icon: Timer,
+    color: "text-purple-500",
+    bgColor: "bg-purple-500/10",
   },
-  [NotificationCategory.DEADLINE]: {
-    name: "Deadlines",
-    icon: "clock",
-    color: "orange",
-    description: "Upcoming and missed deadlines"
+  reminder: {
+    label: "Reminders",
+    icon: Calendar,
+    color: "text-orange-500",
+    bgColor: "bg-orange-500/10",
   },
-  [NotificationCategory.OTHER]: {
-    name: "Other",
-    icon: "bell",
-    color: "gray",
-    description: "Miscellaneous notifications"
+};
+
+export const getIconForNotification = (category: NotificationCategory, type?: string) => {
+  const specificIcons = {
+    upload: Upload,
+    access: Lock,
+    mention: Users,
+    completed: CheckCircle,
+  };
+
+  if (type && specificIcons[type as keyof typeof specificIcons]) {
+    return specificIcons[type as keyof typeof specificIcons];
   }
+
+  return categoryConfig[category].icon;
 };
