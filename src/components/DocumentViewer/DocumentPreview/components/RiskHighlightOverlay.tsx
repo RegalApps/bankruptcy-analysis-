@@ -30,7 +30,7 @@ interface RiskPosition {
 }
 
 export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
-  risks,
+  risks, 
   documentWidth,
   documentHeight,
   onRiskClick,
@@ -68,39 +68,40 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
         height: 35,
         severity: risk.severity || 'high',
         label: risk.type || "Missing Certificate",
-        description: "Administrator Certificate missing — required by BIA.",
+        description: "Administrator Certificate missing — required by BIA at the top of the form.",
         regulation: risk.regulation,
         solution: risk.solution,
         pageNumber: 1
       };
     } 
     else if (risk.type?.includes("Creditor Information") || risk.description?.includes("creditor")) {
-      // FIXED: Section 4 - Highlight the section about payments to creditors
+      // Section 4 - Highlight the section about payments to creditors
+      // FIXED: Moved to Section 4 around "Jane and Fince Group" line
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
-        y: page1Mid,
+        y: pageHeight * 0.5, // Positioned in the middle of page 1 where Section 4 is located
         width: documentWidth * 0.8,
         height: 30,
         severity: risk.severity || 'high',
         label: risk.type || "Missing Creditor Info",
-        description: "No creditor details or beneficiary name present.",
+        description: "No creditor details or beneficiary name present in Section 4 where payments are specified.",
         regulation: risk.regulation,
         solution: risk.solution,
         pageNumber: 1
       };
     }
     else if (risk.type?.includes("Payment Schedule") || risk.description?.includes("payment schedule")) {
-      // FIXED: Directly below the creditor information section (Section 4)
+      // FIXED: Positioned just below the creditor information section in Section 4
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
-        y: page1Mid + 40, // Positioned just below the creditor info highlight
+        y: pageHeight * 0.54, // Positioned just below the creditor info highlight
         width: documentWidth * 0.8,
         height: 25,
         severity: risk.severity || 'medium',
         label: risk.type || "Payment Schedule",
-        description: "Payment schedule not filled — required under 66.13(2)(c) of BIA.",
+        description: "Payment schedule not filled in Section 4 below creditor information — required under 66.13(2)(c) of BIA.",
         regulation: risk.regulation,
         solution: risk.solution,
         pageNumber: 1
