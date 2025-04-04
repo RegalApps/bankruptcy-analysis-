@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { Risk } from "../../types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 
 interface RiskHighlightProps {
   risks: Risk[];
@@ -19,6 +21,10 @@ interface RiskPosition {
   severity: 'high' | 'medium' | 'low';
   label: string;
   description: string;
+  regulation?: string;
+  solution?: string;
+  deadline?: string;
+  priority?: string;
 }
 
 export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
@@ -30,7 +36,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   const [hoveredRisk, setHoveredRisk] = useState<string | null>(null);
   const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
   
-  // Mock positions - in a real implementation, these would come from document analysis
+  // Generate deterministic positions based on risk properties
   const riskPositions: RiskPosition[] = risks.map((risk, index) => {
     // Deterministic but "random-looking" positions based on risk properties
     const hashCode = (str: string) => {
@@ -56,9 +62,13 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       y,
       width,
       height,
-      severity: risk.severity,
+      severity: risk.severity || 'medium',
       label: risk.type || "Issue",
-      description: risk.description || "Potential issue detected"
+      description: risk.description || "Potential issue detected",
+      regulation: risk.regulation,
+      solution: risk.solution,
+      deadline: risk.deadline || "7 days",
+      priority: risk.severity === 'high' ? 'High' : risk.severity === 'medium' ? 'Medium' : 'Low'
     };
   });
   
@@ -86,6 +96,19 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
         return 'rgb(34, 197, 94)';
       default:
         return 'rgb(156, 163, 175)';
+    }
+  };
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return <AlertTriangle className="h-3 w-3 text-white" />;
+      case 'medium':
+        return <Info className="h-3 w-3 text-white" />;
+      case 'low':
+        return <CheckCircle2 className="h-3 w-3 text-white" />;
+      default:
+        return <Info className="h-3 w-3 text-white" />;
     }
   };
   
@@ -121,16 +144,43 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
                   onRiskClick(position.id);
                 }}
               >
-                <div className="absolute -top-6 left-0 text-xs font-medium px-2 py-0.5 rounded"
+                <div className="absolute -top-6 left-0 text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1"
                   style={{ backgroundColor: getSeverityBorder(position.severity), color: 'white' }}>
+                  {getSeverityIcon(position.severity)}
                   {position.label}
                 </div>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <p className="font-medium">{position.label}</p>
-              <p className="text-xs text-muted-foreground">{position.description}</p>
-              <p className="text-xs mt-1">Click to see details and fix</p>
+            <TooltipContent side="top" className="max-w-xs p-3 space-y-2 bg-white shadow-lg border rounded-lg">
+              <div className="space-y-1">
+                <h4 className="font-semibold flex items-center gap-1">
+                  {getSeverityIcon(position.severity)} 
+                  {position.label}
+                </h4>
+                <p className="text-xs text-muted-foreground">{position.description}</p>
+                {position.regulation && (
+                  <p className="text-xs"><span className="font-medium">Regulation:</span> {position.regulation}</p>
+                )}
+                {position.solution && (
+                  <p className="text-xs"><span className="font-medium">Recommended fix:</span> {position.solution}</p>
+                )}
+                <div className="flex justify-between text-xs pt-1">
+                  <span><span className="font-medium">Priority:</span> {position.priority}</span>
+                  <span><span className="font-medium">Due:</span> {position.deadline}</span>
+                </div>
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="w-full text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRiskClick(position.id);
+                }}
+              >
+                Assign Task
+              </Button>
+              <p className="text-xs text-center mt-1">Click to see full details</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -140,20 +190,26 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       <div className="absolute bottom-4 right-4 bg-background/90 border rounded-lg shadow-md p-2 flex items-center gap-2 pointer-events-auto">
         <span className="text-xs font-medium">Filter:</span>
         <button
-          className={`w-5 h-5 rounded-full flex items-center justify-center bg-red-500 ${filteredSeverity === 'high' ? 'ring-2 ring-red-200' : ''}`}
+          className={`w-6 h-6 rounded-full flex items-center justify-center bg-red-500 ${filteredSeverity === 'high' ? 'ring-2 ring-red-200' : ''}`}
           onClick={() => handleFilterSeverity('high')}
           title="High Risk"
-        />
+        >
+          <AlertTriangle className="h-3.5 w-3.5 text-white" />
+        </button>
         <button
-          className={`w-5 h-5 rounded-full flex items-center justify-center bg-amber-500 ${filteredSeverity === 'medium' ? 'ring-2 ring-amber-200' : ''}`}
+          className={`w-6 h-6 rounded-full flex items-center justify-center bg-amber-500 ${filteredSeverity === 'medium' ? 'ring-2 ring-amber-200' : ''}`}
           onClick={() => handleFilterSeverity('medium')}
           title="Medium Risk"
-        />
+        >
+          <Info className="h-3.5 w-3.5 text-white" />
+        </button>
         <button
-          className={`w-5 h-5 rounded-full flex items-center justify-center bg-green-500 ${filteredSeverity === 'low' ? 'ring-2 ring-green-200' : ''}`}
+          className={`w-6 h-6 rounded-full flex items-center justify-center bg-green-500 ${filteredSeverity === 'low' ? 'ring-2 ring-green-200' : ''}`}
           onClick={() => handleFilterSeverity('low')}
           title="Low Risk"
-        />
+        >
+          <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+        </button>
         {filteredSeverity && (
           <button
             className="text-xs text-muted-foreground hover:text-foreground"

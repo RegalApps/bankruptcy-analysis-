@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Risk } from "../../types";
+import { toast } from "sonner";
 
 export const useRiskHighlights = (documentId: string, risks: Risk[] = []) => {
   const [documentDimensions, setDocumentDimensions] = useState({ width: 0, height: 0 });
@@ -40,18 +41,50 @@ export const useRiskHighlights = (documentId: string, risks: Risk[] = []) => {
     // Extract the risk index from the ID format "risk-{index}-{type}"
     const riskIndex = riskId.split('-')[1];
     if (riskIndex && risks[parseInt(riskIndex)]) {
-      // This event can be listened to by the parent to scroll to the risk details
+      const risk = risks[parseInt(riskIndex)];
+      
+      // Show toast notification about the risk
+      toast.info(`Risk Selected: ${risk.type}`, {
+        description: `Severity: ${risk.severity}. ${risk.description?.substring(0, 100)}...`,
+        duration: 3000,
+      });
+      
+      // Dispatch custom event for other components to respond to
       const event = new CustomEvent('riskSelected', { 
-        detail: { risk: risks[parseInt(riskIndex)] }
+        detail: { risk, riskId }
       });
       window.dispatchEvent(event);
+      
+      // If there's a "rightPanel" element, scroll to the risk section
+      setTimeout(() => {
+        const riskSection = document.getElementById(`risk-detail-${riskId}`);
+        if (riskSection) {
+          riskSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          riskSection.classList.add('highlight-pulse');
+          setTimeout(() => {
+            riskSection.classList.remove('highlight-pulse');
+          }, 2000);
+        } else {
+          // Try to find the right panel and scroll to top
+          const rightPanel = document.querySelector('[data-panel="right-panel"]');
+          if (rightPanel) {
+            rightPanel.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }
+      }, 100);
     }
+  };
+  
+  const getRiskById = (riskId: string) => {
+    const riskIndex = riskId.split('-')[1];
+    return riskIndex && risks[parseInt(riskIndex)] ? risks[parseInt(riskIndex)] : null;
   };
   
   return {
     documentContainerRef,
     documentDimensions,
     selectedRiskId,
-    handleRiskClick
+    handleRiskClick,
+    getRiskById
   };
 };

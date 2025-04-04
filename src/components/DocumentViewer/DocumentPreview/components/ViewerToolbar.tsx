@@ -1,8 +1,7 @@
 
 import React from "react";
-import { ZoomIn, ZoomOut, RefreshCw, ExternalLink, Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ExternalLink, Download, Printer, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
 import { ViewerToolbarProps } from "../types";
 
 export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
@@ -17,81 +16,73 @@ export const ViewerToolbar: React.FC<ViewerToolbarProps> = ({
   onPrint
 }) => {
   return (
-    <div className="bg-card border-b flex items-center justify-between px-4 py-2">
-      <div className="flex-1 truncate mr-4">
-        <h3 className="text-sm font-medium truncate">{title}</h3>
+    <div className="py-2 px-4 border-b flex items-center justify-between bg-card">
+      <div className="flex items-center">
+        <h3 className="text-sm font-medium mr-4">{title}</h3>
+        <span className="text-xs text-muted-foreground">{zoomLevel}%</span>
       </div>
       
-      <div className="flex items-center space-x-1">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={onZoomOut} disabled={zoomLevel <= 50}>
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Zoom Out</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onZoomOut}
+          className="h-8 w-8"
+          title="Zoom Out"
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
         
-        <span className="text-xs font-mono w-12 text-center">{zoomLevel}%</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onZoomIn}
+          className="h-8 w-8"
+          title="Zoom In"
+        >
+          <ZoomIn className="h-4 w-4" />
+        </Button>
         
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={onZoomIn} disabled={zoomLevel >= 200}>
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Zoom In</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onRefresh}
+          className={`h-8 w-8 ${isRetrying ? 'animate-spin' : ''}`}
+          title="Refresh"
+          disabled={isRetrying}
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
         
-        <div className="mx-2 h-5 border-r border-border" />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onOpenInNewTab}
+          className="h-8 w-8"
+          title="Open in New Tab"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </Button>
         
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={onRefresh} disabled={isRetrying}>
-                <RefreshCw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Refresh</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onDownload}
+          className="h-8 w-8"
+          title="Download"
+        >
+          <Download className="h-4 w-4" />
+        </Button>
         
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={onOpenInNewTab}>
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Open in New Tab</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={onDownload}>
-                <Download className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Download</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={onPrint}>
-                <Printer className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Print</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onPrint}
+          className="h-8 w-8"
+          title="Print"
+        >
+          <Printer className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

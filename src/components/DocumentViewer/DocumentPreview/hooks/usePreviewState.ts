@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -122,7 +123,7 @@ const usePreviewState = (
       } else if (data?.content?.extracted_info?.formType === 'form-47' || 
                 isDocumentForm47({ 
                   id: documentId, 
-                  title: title, 
+                  title, 
                   type: 'form-47',
                   storage_path: storagePath 
                 })) {
