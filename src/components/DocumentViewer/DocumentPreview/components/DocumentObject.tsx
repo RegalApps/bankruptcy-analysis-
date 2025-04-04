@@ -2,14 +2,7 @@
 import React, { useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import logger from "@/utils/logger";
-
-export interface DocumentObjectProps {
-  publicUrl: string;
-  isExcelFile: boolean;
-  storagePath: string;
-  documentId: string;
-  onError?: () => void;
-}
+import { DocumentObjectProps } from "../types";
 
 export const DocumentObject: React.FC<DocumentObjectProps> = ({ 
   publicUrl, 
@@ -28,7 +21,7 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
   };
 
   // Cache-bust the URL to ensure fresh content
-  const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+  const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
 
   if (isExcelFile) {
     return (

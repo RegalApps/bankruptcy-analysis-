@@ -2,40 +2,47 @@
 import { useState, useCallback } from "react";
 import { UseRetryStrategyReturn } from "../../types";
 
-/**
- * Hook to manage retry attempts with exponential backoff
- */
-export const useRetryStrategy = (maxAttempts = 5): UseRetryStrategyReturn => {
-  const [attemptCount, setAttemptCount] = useState(0);
+export const useRetryStrategy = (maxRetries: number = 3): UseRetryStrategyReturn => {
+  const [retryCount, setRetryCount] = useState<number>(0);
+  const [isRetrying, setIsRetrying] = useState<boolean>(false);
+  const [attemptCount, setAttemptCount] = useState<number>(0);
   const [lastAttempt, setLastAttempt] = useState<Date | null>(null);
-  
+
   const incrementAttempt = useCallback(() => {
-    setAttemptCount(count => Math.min(count + 1, maxAttempts));
-    setLastAttempt(new Date());
-  }, [maxAttempts]);
-  
+    setAttemptCount(prev => prev + 1);
+  }, []);
+
   const resetAttempts = useCallback(() => {
     setAttemptCount(0);
     setLastAttempt(null);
   }, []);
-  
-  /**
-   * Determine if another retry should be attempted based on the current count
-   */
-  const shouldRetry = useCallback((currentAttempt: number): boolean => {
-    return currentAttempt < maxAttempts;
-  }, [maxAttempts]);
-  
-  /**
-   * Calculate delay for the next retry using exponential backoff
-   * Returns delay in milliseconds
-   */
-  const getRetryDelay = useCallback((attempt: number): number => {
-    // Progressive backoff: 2s, 4s, 8s, etc. with a max of 15s
-    return Math.min(2000 * Math.pow(2, attempt - 1), 15000);
+
+  const shouldRetry = useCallback((count: number) => {
+    return count < maxRetries;
+  }, [maxRetries]);
+
+  const getRetryDelay = useCallback((count: number) => {
+    // Exponential backoff: 1s, 2s, 4s, 8s, etc.
+    return Math.min(1000 * Math.pow(2, count - 1), 10000);
   }, []);
-  
+
+  const retry = useCallback(() => {
+    if (retryCount < maxRetries) {
+      setIsRetrying(true);
+      setRetryCount(prev => prev + 1);
+    }
+  }, [retryCount, maxRetries]);
+
+  const reset = useCallback(() => {
+    setRetryCount(0);
+    setIsRetrying(false);
+  }, []);
+
   return {
+    retryCount,
+    isRetrying,
+    retry,
+    reset,
     attemptCount,
     incrementAttempt,
     resetAttempts,

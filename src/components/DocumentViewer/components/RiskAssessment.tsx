@@ -226,7 +226,8 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, risk
         </div>
       </ScrollArea>
       
-      <style jsx global>{`
+      <style>
+        {`
         .highlight-pulse {
           animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1);
         }
@@ -242,7 +243,8 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, risk
             background-color: rgba(var(--primary-rgb), 0.1);
           }
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };

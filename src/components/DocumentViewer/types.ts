@@ -1,3 +1,4 @@
+
 export interface Risk {
   type: string;
   description: string;
@@ -48,6 +49,10 @@ export interface DocumentDetails {
   title: string;
   type: string;
   storage_path: string;
+  created_at?: string; // Added this field
+  creation_date?: string; // Added this field
+  size?: number; // Added this field
+  file_size?: number; // Added this field
   deadlines?: Deadline[];
   tasks?: Task[];
   versions?: DocumentVersion[];

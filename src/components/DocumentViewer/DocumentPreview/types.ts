@@ -58,12 +58,13 @@ export interface UseFileCheckerReturn {
   isPdfFile: boolean;
   isExcelFile: boolean;
   isDocFile: boolean;
-  checkFile: () => Promise<void>;
+  checkFile: (storagePath: string) => Promise<void>;
 }
 
 export interface UseNetworkMonitorReturn {
   networkStatus: 'online' | 'offline' | 'unknown';
   isOnline: boolean;
+  handleOnline: () => void;
 }
 
 export interface UseRetryStrategyReturn {
@@ -71,4 +72,27 @@ export interface UseRetryStrategyReturn {
   isRetrying: boolean;
   retry: () => void;
   reset: () => void;
+  attemptCount: number;
+  incrementAttempt: () => void;
+  resetAttempts: () => void;
+  lastAttempt: Date | null;
+  setLastAttempt: (date: Date) => void;
+  shouldRetry: (attemptCount: number) => boolean;
+  getRetryDelay: (attemptCount: number) => number;
+}
+
+export interface DocumentViewerFrameProps {
+  fileUrl: string;
+  title: string;
+  isLoading: boolean;
+  useDirectLink: boolean;
+  zoomLevel: number;
+  isPdfFile: boolean;
+  isDocFile: boolean;
+  onIframeLoad: () => void;
+  onIframeError: () => void;
+  iframeRef: React.RefObject<HTMLIFrameElement>;
+  forceReload: number;
+  onOpenInNewTab: () => void;
+  onDownload: () => void;
 }

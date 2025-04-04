@@ -9,14 +9,14 @@ import { MessageSquare, Clock, ClipboardList } from "lucide-react";
 import { TaskManager } from "../TaskManager";
 
 interface CollaborationPanelProps {
-  documentId?: string;
   document?: DocumentDetails;
+  documentId?: string;
   onCommentAdded?: () => void;
 }
 
 export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ 
-  documentId,
   document,
+  documentId,
   onCommentAdded = () => {}
 }) => {
   const docId = documentId || document?.id;
