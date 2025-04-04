@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -8,7 +7,7 @@ import { AlertTriangle, ArrowLeft, Check, Download, Eye, MessageSquare, Share } 
 import { RiskAssessment } from "./components/RiskAssessment";
 import { DocumentMetadata } from "./components/DocumentMetadata";
 import { DocumentVersions } from "./components/DocumentVersions";
-import { CollaborationPanel } from "./CollaborationPanel";
+import { CollaborationPanel } from "./CollaborationPanel/index";
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
 
 interface DocumentViewerProps {
@@ -42,7 +41,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     handleRefresh
   } = useDocumentViewer(documentId);
 
-  // Handle risk selection
   const handleRiskSelect = (riskId: string | null) => {
     setActiveRiskId(riskId);
     if (riskId) {
@@ -50,7 +48,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   };
 
-  // If document is loading or has an error, handle those states
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full border rounded-md bg-muted/30">
@@ -82,17 +79,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const title = document?.title || documentTitle;
   const storagePath = document?.storage_path || `documents/${documentId}.pdf`;
   
-  // Extract risks from document or use default
   const documentRisks = document?.analysis?.[0]?.content?.risks || [];
 
-  // Handle comment additions
   const handleCommentAdded = () => {
     handleRefresh();
   };
 
   return (
     <div className="flex flex-col h-full border rounded-md bg-card overflow-hidden">
-      {/* Header */}
       <div className="p-4 border-b flex items-center justify-between">
         <div className="flex items-center">
           {onBack && (
@@ -123,9 +117,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         </div>
       </div>
 
-      {/* Main Content */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {/* Left Panel - Comments & Tasks */}
         <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="border-r">
           <CollaborationPanel 
             document={document} 
@@ -138,7 +130,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
         <ResizableHandle withHandle />
 
-        {/* Center Panel - Document Preview */}
         <ResizablePanel defaultSize={50} minSize={30}>
           <div className="h-full flex flex-col bg-muted/10">
             <DocumentPreview 
@@ -155,7 +146,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
         <ResizableHandle withHandle />
 
-        {/* Right Panel - Document Details */}
         <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
             <TabsList className="w-full px-4 pt-3 pb-0 justify-start border-b rounded-none gap-2">
