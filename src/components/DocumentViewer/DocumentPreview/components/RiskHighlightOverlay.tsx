@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Risk } from "../../types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -45,14 +44,13 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     // Each page is approximately 1/3 of the total document height for a 3-page form
     const pageHeight = documentHeight / 3;
     
-    // Page 1 sections
-    const page1Top = pageHeight * 0.15;       // Top area of page 1
-    const page1Mid = pageHeight * 0.4;        // Middle area of page 1
-    const page1Lower = pageHeight * 0.65;     // Lower area of page 1
+    // Page 1 sections - Calculate exact positions for Form 47
+    const page1Top = pageHeight * 0.15;       // Title area of page 1
     
-    // Specific section locations for Form 47
-    const section4Y = pageHeight * 0.58;      // Section 4 location with creditor info
-    const paymentScheduleY = section4Y + 35;  // Payment schedule line below creditor info
+    // Section 4 is approximately located at 55-60% down page 1
+    // This is where the creditor information appears in Form 47
+    const section4CreditorY = pageHeight * 0.56;      // "Jane and Fince Group" line in Section 4
+    const paymentScheduleY = section4CreditorY + 30;  // "(Set out the schedule of payments...)" line
     
     // Page 2 sections
     const page2Mid = pageHeight + pageHeight * 0.3;    // Middle of page 2
@@ -61,9 +59,9 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     // Page 3 sections
     const page3Lower = pageHeight * 2 + pageHeight * 0.85; // Bottom area of page 3
     
-    // We're using a combination of risk type and form field identification
+    // Based on risk type, place highlights at specific form locations
     if (risk.type?.includes("Administrator Certificate") || risk.description?.includes("Administrator Certificate")) {
-      // Place above "Consumer Proposal" section
+      // Place at the top of form where certificate would appear
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.15,
@@ -79,11 +77,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     } 
     else if (risk.type?.includes("Creditor Information") || risk.description?.includes("creditor")) {
-      // Section 4 - Highlight the creditor line with "Jane and Fince Group"
+      // Highlight the "Jane and Fince Group" line in Section 4
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
-        y: section4Y,
+        y: section4CreditorY,
         width: documentWidth * 0.8,
         height: 30,
         severity: risk.severity || 'high',
@@ -95,7 +93,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Payment Schedule") || risk.description?.includes("payment schedule")) {
-      // Position directly below the creditor info line, on the "(Set out the schedule of payments...)" line
+      // Position on the "(Set out the schedule of payments...)" line directly below creditor info
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
@@ -225,7 +223,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     });
     
     // Minimum vertical space between highlights
-    const minVerticalSpace = 10;
+    const minVerticalSpace = 15;
     
     // Check for overlaps and adjust positions
     for (let i = 1; i < sorted.length; i++) {
