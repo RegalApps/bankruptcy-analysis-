@@ -1,7 +1,7 @@
 
 import { DocumentDetails } from "../types";
 
-export const isDocumentForm47 = (document: DocumentDetails): boolean => {
+export const isDocumentForm47 = (document: Partial<DocumentDetails>): boolean => {
   // Check document type directly
   if (document.type === 'form-47') {
     return true;

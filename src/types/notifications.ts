@@ -1,4 +1,21 @@
 
+export type NotificationCategory = 
+  | 'file_activity'
+  | 'client_update'
+  | 'system_alert'
+  | 'task_complete'
+  | 'security'
+  | 'task'
+  | 'subscription'
+  | 'reminder';
+
+export interface CategoryConfig {
+  label: string;
+  icon: React.ComponentType<any>;
+  color: string;
+  bgColor: string;
+}
+
 export interface Notification {
   id: string;
   title: string;
@@ -14,4 +31,10 @@ export interface Notification {
     name: string;
     avatar?: string;
   };
+  // Additional fields needed by NotificationBell.tsx
+  message?: string;
+  created_at?: string;
+  action_url?: string;
+  icon?: string;
+  category?: NotificationCategory;
 }

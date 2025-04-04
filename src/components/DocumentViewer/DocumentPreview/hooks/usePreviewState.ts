@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -38,12 +37,10 @@ const usePreviewState = (
   const [attemptCount, setAttemptCount] = useState(0);
   const [documentRisks, setDocumentRisks] = useState<Risk[]>([]);
 
-  // Function to get file extension
   const getFileExtension = (path: string): string => {
     return path.split('.').pop()?.toLowerCase() || '';
   };
 
-  // Check if file exists and get its URL
   const checkFile = useCallback(async () => {
     if (!storagePath) {
       setPreviewError("No storage path provided");
@@ -55,10 +52,9 @@ const usePreviewState = (
     setAttemptCount(prev => prev + 1);
 
     try {
-      // Check file existence and get URL
       const { data, error } = await supabase.storage
         .from('documents')
-        .createSignedUrl(storagePath, 3600); // 1 hour expiration
+        .createSignedUrl(storagePath, 3600);
 
       if (error) {
         console.error("Error getting file URL:", error);
@@ -78,18 +74,15 @@ const usePreviewState = (
         return;
       }
 
-      // File exists, set URL and check file type
       setFileExists(true);
       setFileUrl(data.signedUrl);
       setNetworkStatus('online');
       
-      // Determine file type based on extension
       const extension = getFileExtension(storagePath);
       setIsPdfFile(extension === 'pdf');
       setIsExcelFile(['xlsx', 'xls', 'csv'].includes(extension));
       setIsDocFile(['doc', 'docx'].includes(extension));
       
-      // Fetch document analysis and risks if not bypassed
       if (!bypassAnalysis) {
         await fetchDocumentRisks(documentId);
       }
@@ -111,7 +104,6 @@ const usePreviewState = (
     }
   }, [storagePath, documentId, bypassAnalysis]);
 
-  // Fetch document risks from analysis
   const fetchDocumentRisks = async (docId: string) => {
     try {
       const { data, error } = await supabase
@@ -127,8 +119,13 @@ const usePreviewState = (
 
       if (data?.content?.risks) {
         setDocumentRisks(data.content.risks);
-      } else if (data?.content?.extracted_info?.formType === 'form-47' || isDocumentForm47({ type: 'form-47' })) {
-        // If it's a Form 47, create default risks for consumer proposal documents
+      } else if (data?.content?.extracted_info?.formType === 'form-47' || 
+                isDocumentForm47({ 
+                  id: documentId, 
+                  title: title, 
+                  type: 'form-47',
+                  storage_path: storagePath 
+                })) {
         const defaultForm47Risks: Risk[] = [
           {
             type: "Missing Creditor Information",
@@ -165,16 +162,13 @@ const usePreviewState = (
     }
   };
 
-  // Initial file check
   useEffect(() => {
     checkFile();
   }, [checkFile]);
 
-  // Handle online/offline status
   useEffect(() => {
     const handleOnline = () => {
       setNetworkStatus('online');
-      // Retry fetching the file if we previously had a network error
       if (previewError && previewError.includes("network")) {
         checkFile();
       }
