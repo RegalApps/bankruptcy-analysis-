@@ -7,11 +7,17 @@ interface UseRiskHighlightsReturn {
   documentContainerRef: React.RefObject<HTMLDivElement>;
   documentDimensions: { width: number; height: number };
   handleRiskClick: (riskId: string) => void;
+  highlightRisks: Risk[];
 }
 
-export const useRiskHighlights = (documentId: string, risks: Risk[]): UseRiskHighlightsReturn => {
+export const useRiskHighlights = (
+  documentId: string, 
+  risks: Risk[], 
+  onRiskSelect?: (riskId: string) => void
+): UseRiskHighlightsReturn => {
   const documentContainerRef = useRef<HTMLDivElement>(null);
   const [documentDimensions, setDocumentDimensions] = useState({ width: 800, height: 1200 });
+  const [highlightRisks, setHighlightRisks] = useState<Risk[]>(risks);
   
   // Measure the document container size for proper positioning
   useEffect(() => {
@@ -38,28 +44,102 @@ export const useRiskHighlights = (documentId: string, risks: Risk[]): UseRiskHig
     };
   }, [documentId]);
   
+  // Set up predefined risks for Form 47 if we're looking at that document
+  useEffect(() => {
+    if (documentId === 'form47') {
+      // Create specific risks for Form 47
+      const form47Risks: Risk[] = [
+        {
+          type: "Missing Administrator Certificate",
+          description: "Administrator Certificate missing — required by BIA.",
+          severity: "high",
+          regulation: "Bankruptcy and Insolvency Act",
+          solution: "Add administrator certificate at the top of the form",
+          deadline: "Immediately"
+        },
+        {
+          type: "Missing Creditor Information",
+          description: "No creditor details or beneficiary name present.",
+          severity: "high",
+          regulation: "Bankruptcy and Insolvency Act s.66",
+          solution: "Fill in the creditor name in the payment section",
+          deadline: "24 hours"
+        },
+        {
+          type: "Incomplete Payment Schedule",
+          description: "Payment schedule not filled — required under 66.13(2)(c) of BIA.",
+          severity: "medium",
+          regulation: "BIA s.66.13(2)(c)",
+          solution: "Complete the payment schedule section with dates and amounts",
+          deadline: "48 hours"
+        },
+        {
+          type: "Blank Distribution of Dividends",
+          description: "No dividend distribution method outlined.",
+          severity: "medium",
+          regulation: "BIA Directive s.13",
+          solution: "Specify the dividend distribution methodology",
+          deadline: "3 days"
+        },
+        {
+          type: "No Additional Terms Provided",
+          description: "Optional field left blank — flag for administrator to confirm intent.",
+          severity: "medium",
+          regulation: "Best practice",
+          solution: "Add additional terms or mark as 'None'",
+          deadline: "5 days"
+        },
+        {
+          type: "Unsigned by Consumer Debtor",
+          description: "Consumer Debtor signature missing — non-compliant submission.",
+          severity: "high",
+          regulation: "BIA s.66.13(2)(d)",
+          solution: "Obtain consumer debtor signature",
+          deadline: "Immediately"
+        },
+        {
+          type: "Missing Witness Signature",
+          description: "Witness signature required for legal validation.",
+          severity: "medium",
+          regulation: "BIA Directive s.22",
+          solution: "Obtain witness signature",
+          deadline: "48 hours"
+        }
+      ];
+      
+      setHighlightRisks(form47Risks);
+    } else {
+      setHighlightRisks(risks);
+    }
+  }, [documentId, risks]);
+  
   const handleRiskClick = (riskId: string) => {
     // Extract risk details from the risk ID
     const parts = riskId.split('-');
     const riskIndex = parseInt(parts[1], 10);
     
-    if (isNaN(riskIndex) || riskIndex >= risks.length) {
+    if (isNaN(riskIndex) || riskIndex >= highlightRisks.length) {
       toast.error("Could not find risk details");
       return;
     }
     
-    const risk = risks[riskIndex];
+    const risk = highlightRisks[riskIndex];
+    
+    // Show a quick toast with the risk info
     toast.info(`Selected risk: ${risk.type}`, {
       description: risk.description
     });
     
-    // In a real app, this would scroll to the risk details in the right panel
-    // or open a task creation modal
+    // Forward the selection to the parent component if provided
+    if (onRiskSelect) {
+      onRiskSelect(riskId);
+    }
   };
 
   return {
     documentContainerRef,
     documentDimensions,
-    handleRiskClick
+    handleRiskClick,
+    highlightRisks
   };
 };

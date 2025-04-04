@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AlertTriangle, Download, ExternalLink, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
@@ -44,13 +45,9 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   const {
     documentContainerRef,
     documentDimensions,
-    handleRiskClick
-  } = useRiskHighlights(documentId, risks);
-
-  const handleRiskSelection = (riskId: string) => {
-    handleRiskClick(riskId);
-    onRiskSelect(riskId);
-  };
+    handleRiskClick,
+    highlightRisks
+  } = useRiskHighlights(documentId, risks, onRiskSelect);
 
   useEffect(() => {
     setLocalZoom(zoomLevel);
@@ -303,12 +300,12 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
         </object>
       )}
       
-      {!isLoading && risks.length > 0 && !useGoogleViewer && (
+      {!isLoading && highlightRisks.length > 0 && !useGoogleViewer && (
         <RiskHighlightOverlay
-          risks={risks}
+          risks={highlightRisks}
           documentWidth={documentDimensions.width}
           documentHeight={documentDimensions.height}
-          onRiskClick={handleRiskSelection}
+          onRiskClick={handleRiskClick}
           activeRiskId={activeRiskId}
         />
       )}

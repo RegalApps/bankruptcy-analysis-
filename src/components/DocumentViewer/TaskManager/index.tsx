@@ -1,128 +1,114 @@
 
 import React, { useState } from "react";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Task } from "../types";
 import { TaskItem } from "./TaskItem";
 import { useTaskManager } from "./hooks/useTaskManager";
-import { AddTaskDialog } from "./components/AddTaskDialog";
+import AddTaskDialog from "./components/AddTaskDialog";
+import { TaskFilter } from "./TaskFilter";
 
 interface TaskManagerProps {
   documentId: string;
-  tasks: Task[];
-  onTaskUpdate: () => void;
-  activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string | null) => void;
 }
 
-export const TaskManager: React.FC<TaskManagerProps> = ({
-  documentId,
-  tasks,
-  onTaskUpdate,
-  activeRiskId,
-  onRiskSelect
-}) => {
-  const [isAddingTask, setIsAddingTask] = useState(false);
-  const { addTask, updateTaskStatus, deleteTask, loading } = useTaskManager(documentId);
+export const TaskManager: React.FC<TaskManagerProps> = ({ documentId }) => {
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
 
-  const handleAddTask = async (task: Omit<Task, 'id' | 'document_id'>) => {
-    await addTask(task);
-    setIsAddingTask(false);
-    onTaskUpdate();
+  const { localTasks, addTask, updateTaskStatus, deleteTask, loading } = useTaskManager({ documentId });
+
+  const handleOpenAddTask = () => {
+    setEditingTask(null);
+    setIsAddTaskOpen(true);
   };
 
-  const handleStatusUpdate = async (taskId: string, status: Task['status']) => {
-    await updateTaskStatus(taskId, status);
-    onTaskUpdate();
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsAddTaskOpen(true);
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    await deleteTask(taskId);
-    onTaskUpdate();
+  const handleSaveTask = (task: Partial<Task>) => {
+    if (editingTask) {
+      updateTaskStatus({ ...editingTask, ...task });
+    } else {
+      addTask(task);
+    }
   };
 
-  const isTaskFromActiveRisk = (task: Task) => {
-    if (!activeRiskId) return false;
-    
-    // Extract risk type from activeRiskId (e.g., "risk-2-Missing Administrator Certificate")
-    const parts = activeRiskId.split('-');
-    if (parts.length < 3) return false;
-    
-    // Join all parts after the index to get the full risk type
-    const riskType = parts.slice(2).join('-');
-    
-    // Check if task title or description contains the risk type
-    return task.title.includes(riskType) || 
-           (task.description && task.description.includes(riskType));
-  };
-
-  // If there's an active risk but no task for it, we should suggest creating one
-  const shouldSuggestTaskCreation = activeRiskId && !tasks.some(isTaskFromActiveRisk);
+  const filteredTasks = localTasks.filter(task => {
+    if (filterStatus && task.status !== filterStatus) {
+      return false;
+    }
+    if (filterSeverity && task.severity !== filterSeverity) {
+      return false;
+    }
+    return true;
+  });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-medium">Tasks</h3>
-        <Button 
-          onClick={() => setIsAddingTask(true)} 
-          variant="ghost" 
-          size="sm" 
-          className="flex items-center text-xs gap-1"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add Task
+        <h2 className="text-xl font-semibold">Tasks</h2>
+        <Button onClick={handleOpenAddTask} size="sm">
+          <Plus className="h-4 w-4 mr-1" /> Add Task
         </Button>
       </div>
       
-      {shouldSuggestTaskCreation && (
-        <div className="p-3 border border-dashed border-primary/40 bg-primary/5 rounded-md">
-          <p className="text-sm font-medium">Create a task for this issue?</p>
-          <p className="text-xs text-muted-foreground mb-3">
-            You've selected an issue that doesn't have an associated task yet.
-          </p>
-          <Button 
-            size="sm" 
-            onClick={() => setIsAddingTask(true)}
-            className="w-full text-xs"
-          >
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Create Task from Selected Issue
-          </Button>
-        </div>
-      )}
-
-      {tasks.length === 0 ? (
-        <div className="text-center p-6 border rounded-md bg-muted/10">
-          <p className="text-sm text-muted-foreground">No tasks yet</p>
-          <Button 
-            onClick={() => setIsAddingTask(true)}
-            variant="outline" 
-            size="sm"
-            className="mt-2"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Create First Task
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {tasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onStatusChange={(status) => handleStatusUpdate(task.id, status)}
-              onDelete={() => handleDeleteTask(task.id)}
-              isHighlighted={isTaskFromActiveRisk(task)}
-            />
-          ))}
-        </div>
-      )}
-
+      <TaskFilter 
+        onStatusChange={setFilterStatus} 
+        onSeverityChange={setFilterSeverity}
+        selectedStatus={filterStatus}
+        selectedSeverity={filterSeverity} 
+      />
+      
+      <ScrollArea className="h-[calc(100vh-280px)]">
+        {loading ? (
+          <div className="py-8 text-center">
+            <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+            <p className="text-sm text-muted-foreground">Loading tasks...</p>
+          </div>
+        ) : filteredTasks.length === 0 ? (
+          <div className="py-8 text-center border rounded-md">
+            <p className="text-sm text-muted-foreground">
+              {filterStatus || filterSeverity ? "No tasks match your filters" : "No tasks yet"}
+            </p>
+            {(filterStatus || filterSeverity) && (
+              <Button 
+                variant="link" 
+                onClick={() => { 
+                  setFilterStatus(null);
+                  setFilterSeverity(null);
+                }}
+                className="text-sm"
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredTasks.map((task) => (
+              <TaskItem 
+                key={task.id} 
+                task={task}
+                onStatusChange={(newStatus) => updateTaskStatus({ ...task, status: newStatus })}
+                onEdit={() => handleEditTask(task)}
+                onDelete={() => deleteTask(task.id)}
+              />
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+      
       <AddTaskDialog
-        isOpen={isAddingTask}
-        onClose={() => setIsAddingTask(false)}
-        onAdd={handleAddTask}
-        selectedRiskId={activeRiskId}
+        isOpen={isAddTaskOpen}
+        onClose={() => setIsAddTaskOpen(false)}
+        onSave={handleSaveTask}
+        initialTask={editingTask || {}}
         documentId={documentId}
       />
     </div>
