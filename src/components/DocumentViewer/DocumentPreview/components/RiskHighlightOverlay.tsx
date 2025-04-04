@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Risk } from "../../types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -41,33 +42,36 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   // Define precise positions for Form 47 highlights based on user specifications
   const getPrecisePositionForRisk = (risk: Risk, index: number): RiskPosition | null => {
     // Calculate vertical positions based on document height
-    // Each page is approximately 1/3 of the total document height for a 3-page form
+    // For Form 47, we need very precise positioning based on the image provided
     const pageHeight = documentHeight / 3;
     
-    // Page 1 sections - Calculate exact positions for Form 47
-    const page1Top = pageHeight * 0.15;       // Title area of page 1
+    // Based on the screenshot, adjust these coordinates to match the exact positions
     
-    // Section 4 is approximately located at 55-60% down page 1
-    // This is where the creditor information appears in Form 47
-    const section4CreditorY = pageHeight * 0.56;      // "Jane and Fince Group" line in Section 4
-    const paymentScheduleY = section4CreditorY + 30;  // "(Set out the schedule of payments...)" line
+    // Administrator Certificate position (top of document, full width red box)
+    const adminCertY = 155;  // Exact Y position based on screenshot
     
-    // Page 2 sections
-    const page2Mid = pageHeight + pageHeight * 0.3;    // Middle of page 2
-    const page2Lower = pageHeight + pageHeight * 0.7;  // Lower part of page 2
+    // Creditor Information (middle section, "Jane and Fince Group" area)
+    const creditorInfoY = 870;  // Adjusted Y position for the creditor info highlight
     
-    // Page 3 sections
-    const page3Lower = pageHeight * 2 + pageHeight * 0.85; // Bottom area of page 3
+    // Payment Schedule (right after the creditor line)
+    const paymentScheduleY = 992;  // Position for the schedule of payments text
+    
+    // Page 2 positions 
+    const dividendsY = pageHeight + 370; // Position for dividend distribution
+    const additionalTermsY = pageHeight + 510; // Position for additional terms
+    
+    // Page 3 positions
+    const signatureY = pageHeight * 2 + 340; // Position for signatures
     
     // Based on risk type, place highlights at specific form locations
     if (risk.type?.includes("Administrator Certificate") || risk.description?.includes("Administrator Certificate")) {
-      // Place at the top of form where certificate would appear
+      // Top of form where certificate would appear - full width box
       return {
         id: `risk-${index}`,
-        x: documentWidth * 0.15,
-        y: page1Top,
-        width: documentWidth * 0.7,
-        height: 35,
+        x: documentWidth * 0.03,
+        y: adminCertY,
+        width: documentWidth * 0.94,
+        height: 60,
         severity: risk.severity || 'high',
         label: risk.type || "Missing Certificate",
         description: "Administrator Certificate missing — required by BIA at the top of the form.",
@@ -77,43 +81,43 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     } 
     else if (risk.type?.includes("Creditor Information") || risk.description?.includes("creditor")) {
-      // Highlight the "Jane and Fince Group" line in Section 4
+      // The "Jane and Fince Group" line in Section 4
       return {
         id: `risk-${index}`,
-        x: documentWidth * 0.1,
-        y: section4CreditorY,
-        width: documentWidth * 0.8,
-        height: 30,
+        x: documentWidth * 0.05,
+        y: creditorInfoY,
+        width: documentWidth * 0.9,
+        height: 45,
         severity: risk.severity || 'high',
         label: risk.type || "Missing Creditor Info",
-        description: "No creditor details or beneficiary name present in Section 4 where payments are specified.",
+        description: "No creditor details in Section 4 'payments be made to Jane and Fince Group' line.",
         regulation: risk.regulation,
         solution: risk.solution,
         pageNumber: 1
       };
     }
     else if (risk.type?.includes("Payment Schedule") || risk.description?.includes("payment schedule")) {
-      // Position on the "(Set out the schedule of payments...)" line directly below creditor info
+      // "(Set out the schedule of payments...)" line directly below creditor info
       return {
         id: `risk-${index}`,
-        x: documentWidth * 0.1,
-        y: paymentScheduleY,
-        width: documentWidth * 0.8,
-        height: 25,
+        x: documentWidth * 0.05,
+        y: paymentScheduleY, 
+        width: documentWidth * 0.9,
+        height: 35,
         severity: risk.severity || 'medium',
         label: risk.type || "Payment Schedule",
-        description: "Payment schedule not filled in Section 4 below creditor information — required under 66.13(2)(c) of BIA.",
+        description: "Payment schedule not filled in the '(Set out the schedule of payments...)' section below creditor line.",
         regulation: risk.regulation,
         solution: risk.solution,
         pageNumber: 1
       };
     }
     else if (risk.type?.includes("Dividend") || risk.description?.includes("dividend")) {
-      // Highlight: "Describe the manner for distributing dividends."
+      // "Describe the manner for distributing dividends."
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
-        y: page2Mid,
+        y: dividendsY,
         width: documentWidth * 0.8,
         height: 35,
         severity: risk.severity || 'medium',
@@ -125,11 +129,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Terms") || risk.description?.includes("terms")) {
-      // Highlight: "Set out the additional terms as proposed."
+      // "Set out the additional terms as proposed."
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1, 
-        y: page2Lower,
+        y: additionalTermsY,
         width: documentWidth * 0.8,
         height: 35,
         severity: risk.severity || 'medium',
@@ -141,11 +145,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Unsigned") || risk.description?.includes("Consumer Debtor")) {
-      // Highlight bottom right signature field labeled "Consumer Debtor"
+      // Bottom right signature field labeled "Consumer Debtor"
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.6,
-        y: page3Lower,
+        y: signatureY,
         width: documentWidth * 0.3,
         height: 40,
         severity: risk.severity || 'high',
@@ -157,11 +161,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Witness") || risk.description?.includes("witness")) {
-      // Highlight the line left of "Consumer Debtor" for witness signature
+      // The line left of "Consumer Debtor" for witness signature
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.2,
-        y: page3Lower,
+        y: signatureY,
         width: documentWidth * 0.3,
         height: 40,
         severity: risk.severity || 'medium',
