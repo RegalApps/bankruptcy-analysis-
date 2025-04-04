@@ -11,9 +11,15 @@ import { TaskFilter } from "./TaskFilter";
 
 interface TaskManagerProps {
   documentId: string;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string | null) => void;
 }
 
-export const TaskManager: React.FC<TaskManagerProps> = ({ documentId }) => {
+export const TaskManager: React.FC<TaskManagerProps> = ({ 
+  documentId,
+  activeRiskId,
+  onRiskSelect
+}) => {
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
@@ -39,6 +45,18 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ documentId }) => {
     }
   };
 
+  // Handle risk highlight selection if a risk ID is provided
+  React.useEffect(() => {
+    if (activeRiskId && onRiskSelect) {
+      // Find if we have any task related to this risk
+      const relatedTask = localTasks.find(task => task.id === activeRiskId);
+      if (relatedTask) {
+        // Highlight the task somehow
+        console.log("Task related to risk found:", relatedTask);
+      }
+    }
+  }, [activeRiskId, localTasks, onRiskSelect]);
+
   const filteredTasks = localTasks.filter(task => {
     if (filterStatus && task.status !== filterStatus) {
       return false;
@@ -50,7 +68,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ documentId }) => {
   });
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Tasks</h2>
         <Button onClick={handleOpenAddTask} size="sm">
@@ -98,6 +116,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ documentId }) => {
                 onStatusChange={(newStatus) => updateTaskStatus({ ...task, status: newStatus })}
                 onEdit={() => handleEditTask(task)}
                 onDelete={() => deleteTask(task.id)}
+                isHighlighted={activeRiskId === task.id}
               />
             ))}
           </div>

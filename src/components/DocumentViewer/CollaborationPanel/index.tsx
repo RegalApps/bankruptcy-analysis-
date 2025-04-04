@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentDetails } from "../types";
@@ -29,7 +29,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
   const [activeTab, setActiveTab] = useState("comments");
   
   // Effect to activate tasks tab when a risk is selected
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeRiskId) {
       setActiveTab("tasks");
     }
@@ -84,8 +84,6 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
               <div className="p-3">
                 <TaskManager
                   documentId={docId}
-                  tasks={document?.tasks || []}
-                  onTaskUpdate={onCommentAdded}
                   activeRiskId={activeRiskId}
                   onRiskSelect={onRiskSelect}
                 />

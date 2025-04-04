@@ -10,7 +10,8 @@ import {
   Play, 
   Trash2,
   Info,
-  CheckCircle2
+  CheckCircle2,
+  Edit
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -22,14 +23,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Task } from "../types";
 
-interface TaskItemProps {
+export interface TaskItemProps {
   task: Task;
   onStatusChange: (status: Task['status']) => void;
   onDelete: () => void;
+  onEdit: () => void;
   isHighlighted?: boolean;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, onStatusChange, onDelete, isHighlighted = false }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ 
+  task, 
+  onStatusChange, 
+  onDelete, 
+  onEdit,
+  isHighlighted = false 
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
   const getStatusColor = () => {
@@ -112,6 +120,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, onStatusChange, onDele
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Task
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
               {getStatusActions().map((action) => (
                 <DropdownMenuItem
                   key={action.status}
