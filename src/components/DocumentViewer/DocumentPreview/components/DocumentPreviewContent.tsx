@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { PDFViewer } from "./PDFViewer";
+import { EnhancedPDFViewer } from "./EnhancedPDFViewer";
 import { ErrorDisplay } from "./ErrorDisplay";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ViewerToolbar } from "./ViewerToolbar";
@@ -26,7 +26,8 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     isLoading,
     isExcelFile,
     networkStatus,
-    attemptCount
+    attemptCount,
+    documentRisks
   } = previewState;
 
   const [zoomLevel, setZoomLevel] = useState(100);
@@ -204,9 +205,11 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     }
     
     return (
-      <PDFViewer
+      <EnhancedPDFViewer
         fileUrl={fileUrl}
         title={title}
+        documentId={documentId}
+        risks={documentRisks}
         zoomLevel={zoomLevel}
         onLoad={() => setPreviewError(null)}
         onError={() => {

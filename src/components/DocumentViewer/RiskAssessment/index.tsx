@@ -1,4 +1,5 @@
 
+import { useEffect, useState, useRef } from "react";
 import { 
   CheckCircle, 
   ShieldAlert, 
@@ -13,10 +14,11 @@ import { RiskItem } from "./RiskItem";
 import { Form47RiskView } from "./Form47RiskView";
 import { RiskAssessmentProps } from "./types";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
 
 export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], documentId, isLoading }) => {
   const [isForm47, setIsForm47] = useState(false);
+  const [selectedRisk, setSelectedRisk] = useState<string | null>(null);
+  const riskRefs = useRef<Record<string, HTMLDivElement | null>>({});
   
   // Detect if this is a Form 47 (Consumer Proposal) document based on risks
   useEffect(() => {
@@ -41,6 +43,46 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
 
     console.log('Is Form 47 detected from risks:', isConsumerProposal);
     setIsForm47(isConsumerProposal);
+  }, [risks]);
+  
+  // Listen for risk selection events from the document viewer
+  useEffect(() => {
+    const handleRiskSelected = (event: CustomEvent) => {
+      if (event.detail?.risk) {
+        const risk = event.detail.risk;
+        console.log('Risk selected from document viewer:', risk);
+        
+        // Find the matching risk and scroll to it
+        const riskIndex = risks.findIndex(r => 
+          r.type === risk.type && r.severity === risk.severity
+        );
+        
+        if (riskIndex >= 0) {
+          const riskKey = `${risk.severity}-${riskIndex}`;
+          setSelectedRisk(riskKey);
+          
+          // Scroll to the risk item
+          if (riskRefs.current[riskKey]) {
+            riskRefs.current[riskKey]?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+            });
+            
+            // Highlight it temporarily
+            riskRefs.current[riskKey]?.classList.add('bg-primary/10');
+            setTimeout(() => {
+              riskRefs.current[riskKey]?.classList.remove('bg-primary/10');
+            }, 2000);
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('riskSelected', handleRiskSelected as EventListener);
+    
+    return () => {
+      window.removeEventListener('riskSelected', handleRiskSelected as EventListener);
+    };
   }, [risks]);
   
   // Count risks by severity
@@ -108,7 +150,13 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
                 </h4>
                 <div className="space-y-2">
                   {criticalRisks.map((risk, index) => (
-                    <RiskItem key={`critical-${index}`} risk={risk} documentId={documentId} />
+                    <div 
+                      key={`critical-${index}`}
+                      ref={el => riskRefs.current[`high-${index}`] = el}
+                      className={`transition-colors ${selectedRisk === `high-${index}` ? 'ring-2 ring-primary' : ''}`}
+                    >
+                      <RiskItem risk={risk} documentId={documentId} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -123,7 +171,13 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
                 </h4>
                 <div className="space-y-2">
                   {moderateRisks.map((risk, index) => (
-                    <RiskItem key={`moderate-${index}`} risk={risk} documentId={documentId} />
+                    <div 
+                      key={`moderate-${index}`}
+                      ref={el => riskRefs.current[`medium-${index}`] = el}
+                      className={`transition-colors ${selectedRisk === `medium-${index}` ? 'ring-2 ring-primary' : ''}`}
+                    >
+                      <RiskItem risk={risk} documentId={documentId} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -138,7 +192,13 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
                 </h4>
                 <div className="space-y-2">
                   {minorRisks.map((risk, index) => (
-                    <RiskItem key={`minor-${index}`} risk={risk} documentId={documentId} />
+                    <div 
+                      key={`minor-${index}`}
+                      ref={el => riskRefs.current[`low-${index}`] = el}
+                      className={`transition-colors ${selectedRisk === `low-${index}` ? 'ring-2 ring-primary' : ''}`}
+                    >
+                      <RiskItem risk={risk} documentId={documentId} />
+                    </div>
                   ))}
                 </div>
               </div>
