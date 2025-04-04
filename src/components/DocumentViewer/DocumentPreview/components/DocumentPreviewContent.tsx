@@ -12,7 +12,9 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   storagePath,
   documentId,
   title,
-  previewState
+  previewState,
+  activeRiskId,
+  onRiskSelect
 }) => {
   const {
     fileExists,
@@ -84,6 +86,8 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
             zoomLevel={zoomLevel}
             documentId={documentId}
             risks={documentRisks}
+            activeRiskId={activeRiskId}
+            onRiskSelect={onRiskSelect}
             onLoad={() => setIsLoading(false)}
             onError={(errorMessage) => {
               setIsLoading(false);

@@ -8,6 +8,8 @@ interface DocumentPreviewProps {
   documentId: string;
   title: string;
   bypassAnalysis?: boolean;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string) => void;
   onAnalysisComplete?: () => void;
 }
 
@@ -16,6 +18,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   documentId,
   title,
   bypassAnalysis = false,
+  activeRiskId = null,
+  onRiskSelect = () => {},
   onAnalysisComplete
 }) => {
   const previewState = usePreviewState(storagePath, documentId, title, onAnalysisComplete, bypassAnalysis);
@@ -26,6 +30,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       documentId={documentId}
       title={title}
       previewState={previewState}
+      activeRiskId={activeRiskId}
+      onRiskSelect={onRiskSelect}
     />
   );
 };

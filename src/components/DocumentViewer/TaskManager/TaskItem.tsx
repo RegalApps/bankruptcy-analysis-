@@ -1,181 +1,171 @@
 
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { 
-  CheckCircle,
-  AlertTriangle,
-  AlertOctagon,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  UserCircle2
+  AlertTriangle, 
+  Clock, 
+  MoreVertical, 
+  Check, 
+  XCircle, 
+  Play, 
+  Trash2,
+  Info,
+  CheckCircle2
 } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useState } from "react";
-import type { Task } from "../types";
-
-interface AvailableUser {
-  id: string;
-  full_name: string | null;
-  email: string;
-}
+import { Task } from "../types";
 
 interface TaskItemProps {
   task: Task;
-  availableUsers: AvailableUser[];
-  onUpdateStatus: (taskId: string, newStatus: Task['status']) => void;
-  onAssignTask: (taskId: string, userId: string) => void;
+  onStatusChange: (status: Task['status']) => void;
+  onDelete: () => void;
+  isHighlighted?: boolean;
 }
 
-export const TaskItem = ({ task, availableUsers, onUpdateStatus, onAssignTask }: TaskItemProps) => {
-  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
-
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'low':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'medium':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-      case 'high':
-        return <AlertOctagon className="h-5 w-5 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, onStatusChange, onDelete, isHighlighted = false }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const getStatusColor = () => {
+    switch (task.status) {
       case 'completed':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-      case 'cancelled':
-        return <XCircle className="h-5 w-5 text-red-500" />;
+        return 'bg-green-100 text-green-800';
       case 'in_progress':
-        return <Clock className="h-5 w-5 text-blue-500" />;
+        return 'bg-blue-100 text-blue-800';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-800';
       default:
-        return <Clock className="h-5 w-5 text-gray-500" />;
+        return 'bg-amber-100 text-amber-800';
     }
   };
 
-  const assignedUser = availableUsers.find(user => user.id === task.assigned_to);
+  const getSeverityIcon = () => {
+    switch (task.severity) {
+      case 'high':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'medium':
+        return <Info className="h-4 w-4 text-amber-500" />;
+      case 'low':
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      default:
+        return <Info className="h-4 w-4 text-blue-500" />;
+    }
+  };
+
+  const getStatusActions = () => {
+    switch (task.status) {
+      case 'pending':
+        return [
+          { label: 'Start Task', status: 'in_progress', icon: <Play className="h-4 w-4 mr-2" /> },
+          { label: 'Mark Completed', status: 'completed', icon: <Check className="h-4 w-4 mr-2" /> },
+          { label: 'Cancel Task', status: 'cancelled', icon: <XCircle className="h-4 w-4 mr-2" /> }
+        ];
+      case 'in_progress':
+        return [
+          { label: 'Mark Completed', status: 'completed', icon: <Check className="h-4 w-4 mr-2" /> },
+          { label: 'Move to Pending', status: 'pending', icon: <Clock className="h-4 w-4 mr-2" /> },
+          { label: 'Cancel Task', status: 'cancelled', icon: <XCircle className="h-4 w-4 mr-2" /> }
+        ];
+      case 'completed':
+        return [
+          { label: 'Reopen Task', status: 'pending', icon: <Clock className="h-4 w-4 mr-2" /> }
+        ];
+      case 'cancelled':
+        return [
+          { label: 'Reopen Task', status: 'pending', icon: <Clock className="h-4 w-4 mr-2" /> }
+        ];
+      default:
+        return [];
+    }
+  };
 
   return (
-    <>
-      <div className="p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3 flex-1">
-            <div className="mt-1">
-              {getSeverityIcon(task.severity)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <h4 className="font-medium truncate">{task.title}</h4>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    Due: {format(new Date(task.due_date), 'MMM d')}
-                  </span>
-                  {getStatusIcon(task.status)}
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
-                {task.description}
-              </p>
-              {task.regulation && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  <span className="font-medium">Regulation:</span> {task.regulation}
-                </p>
-              )}
-              <div className="mt-2 flex items-center gap-2">
-                <UserCircle2 className="h-4 w-4 text-muted-foreground" />
-                <Select
-                  value={task.assigned_to || ""}
-                  onValueChange={(value) => onAssignTask(task.id, value)}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Assign to..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableUsers.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.full_name || user.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
+    <div 
+      className={`p-3 rounded-md border transition-all ${
+        isHighlighted 
+          ? 'bg-primary/5 border-primary/40 shadow-sm ring-1 ring-primary/20' 
+          : 'bg-muted/10 hover:bg-muted/20'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          {getSeverityIcon()}
+          <h4 className="font-medium text-sm">{task.title}</h4>
         </div>
-
-        <div className="mt-4 flex items-center justify-end gap-2">
-          {task.status !== 'completed' && task.status !== 'cancelled' && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onUpdateStatus(task.id, 'cancelled')}
-              >
-                Cancel
+        
+        <div className="flex items-center">
+          <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor()}`}>
+            {task.status === 'in_progress' ? 'In Progress' : 
+             task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+          </span>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
               </Button>
-              {task.status === 'pending' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onUpdateStatus(task.id, 'in_progress')}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {getStatusActions().map((action) => (
+                <DropdownMenuItem
+                  key={action.status}
+                  onClick={() => onStatusChange(action.status as Task['status'])}
                 >
-                  Start
-                </Button>
-              )}
-              {task.status === 'in_progress' && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setShowCompleteDialog(true)}
-                >
-                  Complete
-                </Button>
-              )}
-            </>
-          )}
+                  {action.icon}
+                  {action.label}
+                </DropdownMenuItem>
+              ))}
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={onDelete}
+                className="text-red-600"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Task
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-
-      <AlertDialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Complete Task</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to mark this task as completed? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                onUpdateStatus(task.id, 'completed');
-                setShowCompleteDialog(false);
-              }}
-            >
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      
+      {task.description && (
+        <div className="mt-2">
+          <button 
+            className="text-xs text-primary hover:underline"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? 'Hide details' : 'Show details'}
+          </button>
+          
+          {isExpanded && (
+            <p className="text-xs mt-1 text-muted-foreground">
+              {task.description}
+            </p>
+          )}
+        </div>
+      )}
+      
+      <div className="flex items-center justify-between mt-2 pt-2 text-xs text-muted-foreground">
+        {task.due_date && (
+          <div className="flex items-center">
+            <Clock className="h-3.5 w-3.5 mr-1" />
+            Due: {format(new Date(task.due_date), 'MMM d, yyyy')}
+          </div>
+        )}
+        
+        {task.created_at && (
+          <div>
+            Added: {format(new Date(task.created_at), 'MMM d, yyyy')}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

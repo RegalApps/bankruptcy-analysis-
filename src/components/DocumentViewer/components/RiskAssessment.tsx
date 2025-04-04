@@ -1,250 +1,176 @@
-import React, { useState, useEffect } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Info, PlusCircle } from "lucide-react";
-import { Risk } from "../types";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+
+import React from 'react';
+import { 
+  AlertTriangle, 
+  Clock, 
+  Info, 
+  CheckCircle2,
+  ClipboardList
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Risk } from '../types';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { formatDate } from '@/lib/utils';
 
 interface RiskAssessmentProps {
-  documentId: string;
   risks: Risk[];
+  documentId: string;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string | null) => void;
 }
 
-export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, risks }) => {
-  const [selectedRiskId, setSelectedRiskId] = useState<string | null>(null);
-  const [expandedRisks, setExpandedRisks] = useState<Record<string, boolean>>({});
-  const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const handleRiskSelected = (event: CustomEvent) => {
-      const { risk, riskId } = event.detail;
-      if (risk && riskId) {
-        setSelectedRiskId(riskId);
-        setExpandedRisks(prev => ({ ...prev, [riskId]: true }));
-      }
-    };
-    
-    window.addEventListener('riskSelected', handleRiskSelected as EventListener);
-    
-    return () => {
-      window.removeEventListener('riskSelected', handleRiskSelected as EventListener);
-    };
-  }, []);
-  
-  const handleAssignTask = (risk: Risk) => {
-    toast.success(`Task created for ${risk.type}`, {
-      description: "Task has been added to your task list",
-      duration: 3000,
-    });
-  };
-  
-  const toggleRiskExpand = (riskId: string) => {
-    setExpandedRisks(prev => ({
-      ...prev,
-      [riskId]: !prev[riskId]
-    }));
-  };
-  
-  const handleFilterSeverity = (severity: string | null) => {
-    setFilteredSeverity(severity === filteredSeverity ? null : severity);
-  };
-  
-  const getRiskIcon = (severity: string) => {
+export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ 
+  risks, 
+  documentId,
+  activeRiskId,
+  onRiskSelect = () => {}
+}) => {
+  if (!risks || risks.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center h-full">
+        <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
+        <h3 className="text-lg font-medium mb-2">No Risks Detected</h3>
+        <p className="text-muted-foreground text-sm max-w-xs">
+          This document appears to be compliant with the relevant regulations.
+        </p>
+      </div>
+    );
+  }
+
+  const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'high':
-        return <AlertTriangle className="h-5 w-5 text-red-500" />;
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
       case 'medium':
-        return <Info className="h-5 w-5 text-amber-500" />;
+        return <Info className="h-4 w-4 text-amber-500" />;
       case 'low':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       default:
-        return <Info className="h-5 w-5 text-gray-500" />;
+        return <Info className="h-4 w-4 text-blue-500" />;
     }
   };
-  
-  const getSeverityColor = (severity: string) => {
+
+  const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case 'high':
-        return 'text-red-500 bg-red-50 border-red-100';
+        return (
+          <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+            High
+          </span>
+        );
       case 'medium':
-        return 'text-amber-500 bg-amber-50 border-amber-100';
+        return (
+          <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+            Medium
+          </span>
+        );
       case 'low':
-        return 'text-green-500 bg-green-50 border-green-100';
+        return (
+          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+            Low
+          </span>
+        );
       default:
-        return 'text-gray-500 bg-gray-50 border-gray-100';
+        return (
+          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
+            Info
+          </span>
+        );
     }
   };
-  
-  const filteredRisks = filteredSeverity 
-    ? risks.filter(risk => risk.severity === filteredSeverity)
-    : risks;
+
+  const isRiskActive = (index: number, risk: Risk) => {
+    const riskId = `risk-${index}-${risk.type}`;
+    return activeRiskId === riskId;
+  }
+
+  const handleRiskClick = (index: number, risk: Risk) => {
+    const riskId = `risk-${index}-${risk.type}`;
+    onRiskSelect(riskId);
+  }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b pb-3">
-        <div className="flex items-center justify-between px-4 py-2">
-          <h3 className="font-medium">Risk Assessment</h3>
-          <div className="flex items-center gap-1">
-            <button
-              className={cn("p-1 rounded-full", filteredSeverity === 'high' ? 'bg-red-100' : 'hover:bg-muted')}
-              onClick={() => handleFilterSeverity('high')}
-              title="High Risk"
-            >
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-            </button>
-            <button
-              className={cn("p-1 rounded-full", filteredSeverity === 'medium' ? 'bg-amber-100' : 'hover:bg-muted')}
-              onClick={() => handleFilterSeverity('medium')}
-              title="Medium Risk"
-            >
-              <Info className="h-4 w-4 text-amber-500" />
-            </button>
-            <button
-              className={cn("p-1 rounded-full", filteredSeverity === 'low' ? 'bg-green-100' : 'hover:bg-muted')}
-              onClick={() => handleFilterSeverity('low')}
-              title="Low Risk"
-            >
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            </button>
-            {filteredSeverity && (
-              <button
-                className="p-1 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => handleFilterSeverity(null)}
-              >
-                Clear
-              </button>
-            )}
-          </div>
+    <ScrollArea className="h-full">
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">Risk Assessment</h3>
+          <span className="text-xs text-muted-foreground">
+            {risks.length} {risks.length === 1 ? 'issue' : 'issues'} detected
+          </span>
         </div>
         
-        <div className="flex justify-between px-4">
-          <div className="flex gap-2">
-            <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-100 border-red-200">
-              High: {risks.filter(r => r.severity === 'high').length}
-            </Badge>
-            <Badge variant="outline" className="bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200">
-              Medium: {risks.filter(r => r.severity === 'medium').length}
-            </Badge>
-            <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200">
-              Low: {risks.filter(r => r.severity === 'low').length}
-            </Badge>
-          </div>
+        <div className="space-y-4">
+          {risks.map((risk, index) => {
+            const isActive = isRiskActive(index, risk);
+            
+            return (
+              <div key={`${risk.type}-${index}`} 
+                className={`p-3 rounded-lg border ${isActive 
+                  ? 'bg-primary/5 border-primary/40 shadow-sm ring-1 ring-primary/20' 
+                  : 'bg-muted/10 hover:bg-muted/20 cursor-pointer'}`}
+                onClick={() => handleRiskClick(index, risk)}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {getSeverityIcon(risk.severity)}
+                    <h4 className="font-medium text-sm">{risk.type}</h4>
+                  </div>
+                  {getSeverityBadge(risk.severity)}
+                </div>
+                
+                <p className="text-xs text-muted-foreground mb-3">{risk.description}</p>
+                
+                {risk.regulation && (
+                  <div className="mb-2">
+                    <span className="text-xs font-medium">Regulation:</span>
+                    <span className="text-xs ml-2 text-muted-foreground">{risk.regulation}</span>
+                  </div>
+                )}
+                
+                {(risk.impact || risk.requiredAction) && (
+                  <div className="mb-2 p-2 bg-muted rounded-md">
+                    {risk.impact && (
+                      <div className="mb-1">
+                        <span className="text-xs font-medium">Impact:</span>
+                        <span className="text-xs ml-2 text-muted-foreground">{risk.impact}</span>
+                      </div>
+                    )}
+                    
+                    {risk.requiredAction && (
+                      <div>
+                        <span className="text-xs font-medium">Required Action:</span>
+                        <span className="text-xs ml-2 text-muted-foreground">{risk.requiredAction}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {risk.solution && (
+                  <div className="mb-3">
+                    <span className="text-xs font-medium">Recommended Solution:</span>
+                    <p className="text-xs mt-1 p-2 rounded bg-green-50 text-green-700">{risk.solution}</p>
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between mt-3 pt-2 border-t">
+                  {risk.deadline && (
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5 mr-1" />
+                      Due: {risk.deadline}
+                    </div>
+                  )}
+                  
+                  <Button size="sm" className="text-xs" variant="secondary">
+                    <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
+                    Assign Task
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
-      
-      <ScrollArea className="flex-1">
-        <div className="p-3 space-y-3">
-          {filteredRisks.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {filteredSeverity 
-                ? `No ${filteredSeverity} risk issues found` 
-                : "No risk issues detected"}
-            </div>
-          ) : (
-            filteredRisks.map((risk, index) => (
-              <Card 
-                key={`risk-${index}-${risk.type}`}
-                id={`risk-detail-risk-${index}-${risk.type}`}
-                className={cn(
-                  "overflow-hidden transition-all duration-200 border",
-                  selectedRiskId === `risk-${index}-${risk.type}` 
-                    ? "ring-2 ring-primary ring-offset-2" 
-                    : ""
-                )}
-              >
-                <Collapsible
-                  open={expandedRisks[`risk-${index}-${risk.type}`] || selectedRiskId === `risk-${index}-${risk.type}`}
-                  onOpenChange={() => toggleRiskExpand(`risk-${index}-${risk.type}`)}
-                >
-                  <div className="flex items-start p-3 gap-3">
-                    <div className="mt-0.5">
-                      {getRiskIcon(risk.severity || 'medium')}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-sm">{risk.type}</h4>
-                        <div className="flex items-center gap-2">
-                          <Badge className={getSeverityColor(risk.severity || 'medium')}>
-                            {risk.severity?.charAt(0).toUpperCase() + risk.severity?.slice(1) || 'Medium'}
-                          </Badge>
-                          <CollapsibleTrigger className="p-1 hover:bg-muted rounded">
-                            {expandedRisks[`risk-${index}-${risk.type}`] ? 
-                              <ChevronDown className="h-4 w-4" /> : 
-                              <ChevronRight className="h-4 w-4" />}
-                          </CollapsibleTrigger>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">{risk.description}</p>
-                    </div>
-                  </div>
-                  
-                  <CollapsibleContent>
-                    <Separator />
-                    <div className="p-3 space-y-3 bg-muted/30">
-                      {risk.regulation && (
-                        <div>
-                          <h5 className="text-xs font-medium mb-1">Regulation</h5>
-                          <p className="text-sm">{risk.regulation}</p>
-                        </div>
-                      )}
-                      
-                      {risk.impact && (
-                        <div>
-                          <h5 className="text-xs font-medium mb-1">Impact</h5>
-                          <p className="text-sm">{risk.impact}</p>
-                        </div>
-                      )}
-                      
-                      {risk.solution && (
-                        <div>
-                          <h5 className="text-xs font-medium mb-1">Recommended Fix</h5>
-                          <p className="text-sm">{risk.solution}</p>
-                        </div>
-                      )}
-                      
-                      <div className="pt-2">
-                        <Button 
-                          size="sm"
-                          className="w-full flex items-center"
-                          onClick={() => handleAssignTask(risk)}
-                        >
-                          <PlusCircle className="h-4 w-4 mr-1" />
-                          Assign Task
-                        </Button>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </Card>
-            ))
-          )}
-        </div>
-      </ScrollArea>
-      
-      <style>
-        {`
-        .highlight-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1);
-        }
-        
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.85;
-            transform: scale(1.03);
-            background-color: rgba(var(--primary-rgb), 0.1);
-          }
-        }
-        `}
-      </style>
-    </div>
+    </ScrollArea>
   );
 };

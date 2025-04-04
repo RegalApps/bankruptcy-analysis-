@@ -33,12 +33,22 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onAnalysisComplete
 }) => {
   const [activeTab, setActiveTab] = useState("details");
+  const [activeRiskId, setActiveRiskId] = useState<string | null>(null);
+  
   const {
     document,
     loading,
     loadingError,
     handleRefresh
   } = useDocumentViewer(documentId);
+
+  // Handle risk selection
+  const handleRiskSelect = (riskId: string | null) => {
+    setActiveRiskId(riskId);
+    if (riskId) {
+      setActiveTab("risks");
+    }
+  };
 
   // If document is loading or has an error, handle those states
   if (loading) {
@@ -115,25 +125,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
       {/* Main Content */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {/* Left Panel - Comments */}
+        {/* Left Panel - Comments & Tasks */}
         <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="border-r">
-          <Tabs defaultValue="comments" className="h-full flex flex-col">
-            <TabsList className="w-full px-4 pt-3 pb-0 justify-start border-b rounded-none gap-6">
-              <TabsTrigger value="comments" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
-                <MessageSquare className="h-4 w-4 mr-1.5" />
-                Comments
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="comments" className="flex-1 m-0 p-0">
-              {document && (
-                <CollaborationPanel 
-                  document={document} 
-                  onCommentAdded={handleCommentAdded} 
-                />
-              )}
-            </TabsContent>
-          </Tabs>
+          <CollaborationPanel 
+            document={document} 
+            documentId={documentId}
+            onCommentAdded={handleCommentAdded}
+            activeRiskId={activeRiskId}
+            onRiskSelect={handleRiskSelect}
+          />
         </ResizablePanel>
 
         <ResizableHandle withHandle />
@@ -147,6 +147,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               title={title} 
               bypassAnalysis={bypassAnalysis || bypassProcessing}
               onAnalysisComplete={onAnalysisComplete}
+              activeRiskId={activeRiskId}
+              onRiskSelect={handleRiskSelect}
             />
           </div>
         </ResizablePanel>
@@ -173,7 +175,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             </TabsContent>
             
             <TabsContent value="risks" className="p-0 m-0 flex-1 overflow-auto">
-              <RiskAssessment risks={documentRisks} documentId={documentId} />
+              <RiskAssessment 
+                risks={documentRisks} 
+                documentId={documentId} 
+                activeRiskId={activeRiskId}
+                onRiskSelect={handleRiskSelect}
+              />
             </TabsContent>
             
             <TabsContent value="versions" className="p-4 flex-1 overflow-auto">

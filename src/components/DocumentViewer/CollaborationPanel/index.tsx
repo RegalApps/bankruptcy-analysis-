@@ -5,22 +5,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentDetails } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EnhancedComments } from "../Comments/EnhancedComments";
-import { MessageSquare, Clock, ClipboardList } from "lucide-react";
+import { MessageSquare, Clock, ClipboardList, Calendar } from "lucide-react";
 import { TaskManager } from "../TaskManager";
 import { DocumentVersions } from "../components/DocumentVersions";
+import { DeadlineManager } from "../DeadlineManager";
 
 interface CollaborationPanelProps {
   document?: DocumentDetails;
   documentId?: string;
   onCommentAdded?: () => void;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string | null) => void;
 }
 
 export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ 
   document,
   documentId,
-  onCommentAdded = () => {}
+  onCommentAdded = () => {},
+  activeRiskId,
+  onRiskSelect
 }) => {
   const docId = documentId || document?.id;
+  const [activeTab, setActiveTab] = useState("comments");
+  
+  // Effect to activate tasks tab when a risk is selected
+  React.useEffect(() => {
+    if (activeRiskId) {
+      setActiveTab("tasks");
+    }
+  }, [activeRiskId]);
   
   if (!docId) {
     return (
@@ -32,7 +45,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
 
   return (
     <Card className="h-full">
-      <Tabs defaultValue="comments" className="h-full flex flex-col">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
         <div className="p-1 px-2 border-b">
           <TabsList className="w-full">
             <TabsTrigger value="comments" className="flex items-center text-xs py-1.5">
@@ -42,6 +55,10 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
             <TabsTrigger value="tasks" className="flex items-center text-xs py-1.5">
               <ClipboardList className="h-3.5 w-3.5 mr-1" />
               Tasks
+            </TabsTrigger>
+            <TabsTrigger value="deadlines" className="flex items-center text-xs py-1.5">
+              <Calendar className="h-3.5 w-3.5 mr-1" />
+              Deadlines
             </TabsTrigger>
             <TabsTrigger value="versions" className="flex items-center text-xs py-1.5">
               <Clock className="h-3.5 w-3.5 mr-1" />
@@ -69,7 +86,17 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
                   documentId={docId}
                   tasks={document?.tasks || []}
                   onTaskUpdate={onCommentAdded}
+                  activeRiskId={activeRiskId}
+                  onRiskSelect={onRiskSelect}
                 />
+              </div>
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="deadlines" className="mt-0 h-full">
+            <ScrollArea className="h-[calc(100vh-12rem)]">
+              <div className="p-3">
+                {document && <DeadlineManager document={document} onDeadlineUpdated={onCommentAdded} />}
               </div>
             </ScrollArea>
           </TabsContent>

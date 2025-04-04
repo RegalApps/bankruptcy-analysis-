@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AlertTriangle, Download, ExternalLink, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
@@ -15,6 +14,8 @@ interface EnhancedPDFViewerProps {
   zoomLevel: number;
   documentId: string;
   risks?: Risk[];
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string) => void;
   onLoad?: () => void;
   onError?: (errorMessage?: string) => void;
 }
@@ -25,6 +26,8 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   zoomLevel,
   documentId,
   risks = [],
+  activeRiskId = null,
+  onRiskSelect = () => {},
   onLoad,
   onError
 }) => {
@@ -44,17 +47,19 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     handleRiskClick
   } = useRiskHighlights(documentId, risks);
 
+  const handleRiskSelection = (riskId: string) => {
+    handleRiskClick(riskId);
+    onRiskSelect(riskId);
+  };
+
   useEffect(() => {
     setLocalZoom(zoomLevel);
   }, [zoomLevel]);
 
-  // Extract the storage path from the URL if possible
   const getStoragePathFromUrl = (url: string): string | null => {
     try {
-      // Parse URL to get the pathname
       const urlObj = new URL(url);
       const pathParts = urlObj.pathname.split('/');
-      // Find the part of the path after "/object/" or similar
       for (let i = 0; i < pathParts.length; i++) {
         if (pathParts[i] === 'object' && pathParts[i+1] === 'sign' && pathParts[i+2] === 'documents') {
           return pathParts.slice(i+2).join('/').split('?')[0];
@@ -67,12 +72,10 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     }
   };
 
-  // Try to refresh the token and get a new signed URL
   const refreshToken = async () => {
     if (!fileUrl) return false;
     
     try {
-      // Extract storage path from fileUrl
       const storagePath = getStoragePathFromUrl(fileUrl);
       if (!storagePath) {
         console.error("Could not extract storage path from URL:", fileUrl);
@@ -81,10 +84,9 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       
       console.log("Attempting to refresh token for path:", storagePath);
       
-      // Create a new signed URL
       const { data, error } = await supabase.storage
         .from('documents')
-        .createSignedUrl(storagePath, 3600); // 1 hour expiry
+        .createSignedUrl(storagePath, 3600);
       
       if (error) {
         console.error("Error refreshing token:", error);
@@ -128,22 +130,20 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     console.error("Error loading PDF:", fileUrl, errorEvent);
     const errorMessage = errorEvent?.message || "Unknown error loading document";
     
-    // Increment retry counter
     setRetryCount(prev => prev + 1);
     
-    // Check if this is a token error
     const isTokenError = errorMessage.includes('token') || 
-                         errorMessage.includes('JWT') || 
-                         errorMessage.includes('401') || 
-                         errorMessage.includes('403') ||
-                         errorMessage.includes('authentication');
+                        errorMessage.includes('JWT') || 
+                        errorMessage.includes('401') || 
+                        errorMessage.includes('403') ||
+                        errorMessage.includes('authentication');
     
     if (isTokenError && retryCount < 1) {
       console.log("Token error detected, attempting to refresh...");
       const refreshSuccess = await refreshToken();
       if (refreshSuccess) {
         console.log("Token refreshed successfully, retrying load...");
-        return; // We'll retry with the new URL
+        return;
       }
     }
     
@@ -196,10 +196,8 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   };
 
   const handleRetry = async () => {
-    // Try to refresh token first
     const refreshed = await refreshToken();
     if (!refreshed) {
-      // If token refresh failed, try other recovery methods
       setUseGoogleViewer(false);
       setLoadError(null);
       setIsLoading(true);
@@ -310,7 +308,8 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
           risks={risks}
           documentWidth={documentDimensions.width}
           documentHeight={documentDimensions.height}
-          onRiskClick={handleRiskClick}
+          onRiskClick={handleRiskSelection}
+          activeRiskId={activeRiskId}
         />
       )}
     </div>
