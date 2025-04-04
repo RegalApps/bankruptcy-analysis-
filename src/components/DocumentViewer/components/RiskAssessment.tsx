@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
@@ -21,7 +20,6 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, risk
   const [expandedRisks, setExpandedRisks] = useState<Record<string, boolean>>({});
   const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
   
-  // Set up event listener for risk selection from document viewer
   useEffect(() => {
     const handleRiskSelected = (event: CustomEvent) => {
       const { risk, riskId } = event.detail;
@@ -82,11 +80,10 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, risk
     }
   };
   
-  // Filter risks by severity if a filter is active
   const filteredRisks = filteredSeverity 
     ? risks.filter(risk => risk.severity === filteredSeverity)
     : risks;
-  
+
   return (
     <div className="h-full flex flex-col">
       <div className="border-b pb-3">

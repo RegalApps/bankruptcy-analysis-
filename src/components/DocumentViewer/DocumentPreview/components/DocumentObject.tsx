@@ -1,15 +1,21 @@
 
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import logger from "@/utils/logger";
 
-interface DocumentObjectProps {
+export interface DocumentObjectProps {
   publicUrl: string;
+  isExcelFile: boolean;
+  storagePath: string;
+  documentId: string;
   onError?: () => void;
 }
 
 export const DocumentObject: React.FC<DocumentObjectProps> = ({ 
   publicUrl, 
+  isExcelFile,
+  storagePath,
+  documentId,
   onError 
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -23,6 +29,19 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
 
   // Cache-bust the URL to ensure fresh content
   const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+
+  if (isExcelFile) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center p-6 bg-muted rounded-lg">
+          <p className="font-medium">Excel Viewer Not Available</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Excel files cannot be previewed directly. Please download the file to view its contents.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full rounded-md overflow-hidden border">

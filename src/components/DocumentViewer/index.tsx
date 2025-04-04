@@ -15,16 +15,22 @@ interface DocumentViewerProps {
   documentId: string;
   documentTitle?: string;
   isForm47?: boolean;
+  bypassAnalysis?: boolean;
+  bypassProcessing?: boolean;
   onLoadFailure?: () => void;
   onBack?: () => void;
+  onAnalysisComplete?: () => void;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   documentId,
   documentTitle = "Document",
   isForm47 = false,
+  bypassAnalysis = false,
+  bypassProcessing = false,
   onLoadFailure,
-  onBack
+  onBack,
+  onAnalysisComplete
 }) => {
   const [activeTab, setActiveTab] = useState("details");
   const {
@@ -115,7 +121,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             </TabsList>
             
             <TabsContent value="comments" className="flex-1 m-0 p-0">
-              <CollaborationPanel documentId={documentId} />
+              <CollaborationPanel 
+                documentId={documentId} 
+                document={document} 
+              />
             </TabsContent>
           </Tabs>
         </ResizablePanel>
@@ -129,7 +138,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               storagePath={storagePath} 
               documentId={documentId} 
               title={title} 
-              bypassAnalysis={false}
+              bypassAnalysis={bypassAnalysis || bypassProcessing}
+              onAnalysisComplete={onAnalysisComplete}
             />
           </div>
         </ResizablePanel>

@@ -1,4 +1,6 @@
 
+import { LucideIcon } from "lucide-react";
+
 export type NotificationCategory = 
   | 'file_activity'
   | 'client_update'
@@ -11,7 +13,7 @@ export type NotificationCategory =
 
 export interface CategoryConfig {
   label: string;
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   color: string;
   bgColor: string;
 }
@@ -19,22 +21,16 @@ export interface CategoryConfig {
 export interface Notification {
   id: string;
   title: string;
-  description: string;
-  createdAt: string;
+  description?: string;
+  message?: string; // For backwards compatibility
+  type: string;
+  created_at?: string; // For backwards compatibility
+  createdAt?: string;
   read: boolean;
-  type: 'document' | 'meeting' | 'task' | 'system' | 'message' | string;
-  metadata?: Record<string, any>;
   priority?: 'low' | 'medium' | 'high';
   actionUrl?: string;
-  sender?: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  // Additional fields needed by NotificationBell.tsx
-  message?: string;
-  created_at?: string;
-  action_url?: string;
+  action_url?: string; // For backwards compatibility
   icon?: string;
+  metadata?: Record<string, any>;
   category?: NotificationCategory;
 }

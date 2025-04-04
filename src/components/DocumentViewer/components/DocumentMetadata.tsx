@@ -117,21 +117,21 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({ document }) 
                 <div>
                   <p className="text-xs text-muted-foreground">Upload Date</p>
                   <p className="text-sm">{
-                    document.created_at 
-                      ? formatDistanceToNow(new Date(document.created_at), { addSuffix: true })
+                    document.created_at || document.creation_date
+                      ? formatDistanceToNow(new Date(document.created_at || document.creation_date), { addSuffix: true })
                       : "Unknown"
                   }</p>
                 </div>
               </div>
               
-              {document.size && (
+              {(document.size || document.file_size) && (
                 <div className="flex items-start gap-3">
                   <div className="bg-muted rounded-full p-2">
                     <FileText className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">File Size</p>
-                    <p className="text-sm">{Math.round(document.size / 1024)} KB</p>
+                    <p className="text-sm">{Math.round((document.size || document.file_size) / 1024)} KB</p>
                   </div>
                 </div>
               )}

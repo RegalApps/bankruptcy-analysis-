@@ -1,9 +1,7 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Risk } from "../../types";
-import { isDocumentForm47 } from "../../utils/documentTypeUtils";
+import { Risk, DocumentDetails } from "../../types";
 
 interface PreviewState {
   fileExists: boolean;
@@ -104,6 +102,17 @@ const usePreviewState = (
       setIsLoading(false);
     }
   }, [storagePath, documentId, bypassAnalysis]);
+
+  const isDocumentForm47 = (document: DocumentDetails): boolean => {
+    if (!document) return false;
+    
+    const isForm47InTitle = document.title?.toLowerCase().includes('form 47') || 
+                           document.title?.toLowerCase().includes('f47');
+    const isForm47InType = document.type?.toLowerCase().includes('form-47') || 
+                          document.type?.toLowerCase().includes('form 47');
+    
+    return isForm47InTitle || isForm47InType;
+  };
 
   const fetchDocumentRisks = async (docId: string) => {
     try {

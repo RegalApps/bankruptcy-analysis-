@@ -1,21 +1,34 @@
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DocumentDetails as DocumentDetailsType } from "../types";
+import { DocumentDetails } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EnhancedComments } from "../Comments/EnhancedComments";
 import { MessageSquare, Clock, ClipboardList } from "lucide-react";
 import { TaskManager } from "../TaskManager";
 
 interface CollaborationPanelProps {
-  document: DocumentDetailsType;
-  onCommentAdded: () => void;
+  documentId?: string;
+  document?: DocumentDetails;
+  onCommentAdded?: () => void;
 }
 
 export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ 
+  documentId,
   document,
-  onCommentAdded
+  onCommentAdded = () => {}
 }) => {
+  const docId = documentId || document?.id;
+  
+  if (!docId) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-muted-foreground">No document information available</p>
+      </div>
+    );
+  }
+
   return (
     <Card className="h-full">
       <Tabs defaultValue="comments" className="h-full flex flex-col">
@@ -41,7 +54,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
                 <EnhancedComments 
-                  documentId={document.id} 
+                  documentId={docId} 
                   onCommentAdded={onCommentAdded}
                 />
               </div>
@@ -52,8 +65,8 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
                 <TaskManager
-                  documentId={document.id}
-                  tasks={document.tasks || []}
+                  documentId={docId}
+                  tasks={document?.tasks || []}
                   onTaskUpdate={onCommentAdded}
                 />
               </div>
@@ -63,7 +76,6 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
           <TabsContent value="versions" className="mt-0 h-full">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
-                {/* Version history component removed as it's not properly exported */}
                 <p className="text-muted-foreground">Version history is not available at this time.</p>
               </div>
             </ScrollArea>

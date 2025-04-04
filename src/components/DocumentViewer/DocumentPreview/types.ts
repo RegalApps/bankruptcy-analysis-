@@ -1,45 +1,20 @@
 
 import { Risk } from "../types";
 
-export interface DocumentPreviewContentProps {
+export interface DocumentPreviewProps {
   storagePath: string;
   documentId: string;
   title: string;
-  previewState: {
-    fileExists: boolean;
-    fileUrl: string | null;
-    isPdfFile: boolean;
-    isExcelFile: boolean;
-    isDocFile: boolean;
-    isLoading: boolean;
-    previewError: string | null;
-    setPreviewError: (error: string | null) => void;
-    checkFile: () => Promise<void>;
-    networkStatus: 'online' | 'offline' | 'unknown';
-    attemptCount: number;
-    documentRisks: Risk[];
-  };
+  bypassAnalysis?: boolean;
+  onAnalysisComplete?: () => void;
 }
 
-export interface DocumentViewerFrameProps {
-  fileUrl: string;
-  title: string;
-  isLoading: boolean;
-  useDirectLink: boolean;
-  zoomLevel: number;
-  isPdfFile: boolean;
-  isDocFile: boolean;
-  onIframeLoad: () => void;
-  onIframeError: () => void;
-  iframeRef: React.RefObject<HTMLIFrameElement>;
-  forceReload: number;
-  onOpenInNewTab: () => void;
-  onDownload: () => void;
-}
-
-export interface ErrorDisplayProps {
-  error: string;
-  onRetry: () => void;
+export interface DocumentObjectProps {
+  publicUrl: string | null;
+  isExcelFile: boolean;
+  storagePath: string;
+  documentId: string;
+  onError?: () => void;
 }
 
 export interface ViewerToolbarProps {
@@ -54,23 +29,46 @@ export interface ViewerToolbarProps {
   onPrint: () => void;
 }
 
-export interface UseRetryStrategyReturn {
-  attemptCount: number;
-  incrementAttempt: () => void;
-  resetAttempts: () => void;
-  lastAttempt: Date | null;
-  setLastAttempt: (date: Date | null) => void;
-  shouldRetry: (currentAttempt: number) => boolean;
-  getRetryDelay: (attempt: number) => number;
+export interface ErrorDisplayProps {
+  error: string;
+  onRetry: () => void;
 }
 
-export interface UseNetworkMonitorReturn {
-  networkStatus: 'online' | 'offline';
-  handleOnline: () => void;
-  handleOffline: () => void;
+export interface DocumentPreviewContentProps {
+  storagePath: string;
+  documentId: string;
+  title: string;
+  previewState: {
+    fileExists: boolean;
+    fileUrl: string | null;
+    isPdfFile: boolean;
+    isExcelFile: boolean;
+    isDocFile: boolean;
+    isLoading: boolean;
+    previewError: string | null;
+    setPreviewError: (error: string | null) => void;
+    checkFile: () => Promise<void>;
+    documentRisks: Risk[];
+  };
 }
 
 export interface UseFileCheckerReturn {
-  checkFile: (path?: string) => Promise<void>;
-  handleFileCheckError: (error: any, publicUrl?: string | null) => void;
+  fileExists: boolean;
+  fileUrl: string | null;
+  isPdfFile: boolean;
+  isExcelFile: boolean;
+  isDocFile: boolean;
+  checkFile: () => Promise<void>;
+}
+
+export interface UseNetworkMonitorReturn {
+  networkStatus: 'online' | 'offline' | 'unknown';
+  isOnline: boolean;
+}
+
+export interface UseRetryStrategyReturn {
+  retryCount: number;
+  isRetrying: boolean;
+  retry: () => void;
+  reset: () => void;
 }

@@ -88,10 +88,14 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           />
         ) : (
           <DocumentObject
-            url={fileUrl}
+            publicUrl={fileUrl}
             isExcelFile={isExcelFile}
             storagePath={storagePath}
             documentId={documentId}
+            onError={() => {
+              setIsLoading(false);
+              setPreviewError("Failed to load document");
+            }}
           />
         )}
       </div>

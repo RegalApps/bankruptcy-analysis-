@@ -1,4 +1,3 @@
-
 export interface Risk {
   type: string;
   description: string;
@@ -7,6 +6,9 @@ export interface Risk {
   impact?: string;
   requiredAction?: string;
   solution?: string;
+  deadline?: string;
+  created_at?: string;
+  size?: number;
 }
 
 export interface Deadline {
