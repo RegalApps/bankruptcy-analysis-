@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { DocumentPreviewContentProps } from "../types";
-import { DocumentObject } from "./DocumentObject";
+import { DocumentObject } from "../DocumentObject";
 import { EnhancedPDFViewer } from "./EnhancedPDFViewer";
 import { useDocumentPreview } from "../hooks/useDocumentPreview";
 import { ViewerToolbar } from "./ViewerToolbar";
@@ -56,6 +56,9 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     return <ErrorDisplay error={previewError} onRetry={handleRetry} />;
   }
 
+  // Check if this is a PDF file by checking the path
+  const isPdfDocument = isPdfFile(storagePath);
+
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
@@ -73,7 +76,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
 
       {/* Document Viewer */}
       <div className="flex-1 overflow-hidden relative">
-        {isPdfFile ? (
+        {isPdfDocument ? (
           <EnhancedPDFViewer
             fileUrl={fileUrl}
             title={title}
@@ -89,7 +92,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
         ) : (
           <DocumentObject
             publicUrl={fileUrl}
-            isExcelFile={isExcelFile}
+            isExcelFile={isExcelFile(storagePath)}
             storagePath={storagePath}
             documentId={documentId}
             onError={() => {

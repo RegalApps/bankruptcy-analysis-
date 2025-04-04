@@ -1,29 +1,25 @@
 
 import React, { useState } from "react";
 import { AlertTriangle } from "lucide-react";
-
-interface DocumentObjectProps {
-  url: string | null;
-  isExcelFile: boolean;
-  storagePath: string;
-  documentId: string;
-}
+import { DocumentObjectProps } from "./types";
 
 export const DocumentObject: React.FC<DocumentObjectProps> = ({ 
-  url, 
+  publicUrl, 
   isExcelFile,
   storagePath,
-  documentId
+  documentId,
+  onError
 }) => {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const handleError = () => {
     console.error('Error loading document in iframe');
     setLoadError("The document couldn't be displayed. It may be in an unsupported format or inaccessible.");
+    if (onError) onError();
   };
 
   // Cache-bust the URL to ensure fresh content
-  const cacheBustedUrl = url ? `${url}?t=${Date.now()}` : '';
+  const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
 
   if (isExcelFile) {
     return (

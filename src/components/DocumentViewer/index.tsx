@@ -122,16 +122,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             
             <TabsContent value="comments" className="flex-1 m-0 p-0">
               {document && (
-                <CollaborationPanel 
-                  document={document}
-                  onCommentAdded={() => {}}
-                />
+                <CollaborationPanel document={document} />
               )}
             </TabsContent>
           </Tabs>
         </ResizablePanel>
 
-        <ResizableHandle />
+        <ResizableHandle withHandle />
 
         {/* Center Panel - Document Preview */}
         <ResizablePanel defaultSize={50} minSize={30}>
@@ -146,38 +143,38 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           </div>
         </ResizablePanel>
 
-        <ResizableHandle />
+        <ResizableHandle withHandle />
 
-        {/* Right Panel - Details, Risks, etc. */}
-        <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="border-l" data-panel="right-panel">
+        {/* Right Panel - Document Details */}
+        <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="w-full px-4 pt-3 pb-0 justify-start border-b rounded-none gap-4">
-              <TabsTrigger value="details" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsList className="w-full px-4 pt-3 pb-0 justify-start border-b rounded-none gap-2">
+              <TabsTrigger value="details" className="text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
                 Details
               </TabsTrigger>
-              <TabsTrigger value="risks" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
-                Risks
-                {documentRisks.length > 0 && (
-                  <span className="ml-1.5 bg-primary/10 text-xs px-1.5 py-0.5 rounded-full">
-                    {documentRisks.length}
-                  </span>
-                )}
+              <TabsTrigger value="risks" className="text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+                Risks {documentRisks.length > 0 && `(${documentRisks.length})`}
               </TabsTrigger>
-              <TabsTrigger value="versions" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+              <TabsTrigger value="versions" className="text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
                 Versions
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="details" className="flex-1 m-0 p-0">
-              <DocumentMetadata document={document} />
+            <TabsContent value="details" className="p-4 flex-1 overflow-auto">
+              {document && <DocumentMetadata document={document} />}
             </TabsContent>
             
-            <TabsContent value="risks" className="flex-1 m-0 p-0">
-              <RiskAssessment documentId={documentId} risks={documentRisks} />
+            <TabsContent value="risks" className="p-0 m-0 flex-1 overflow-auto">
+              <RiskAssessment risks={documentRisks} documentId={documentId} />
             </TabsContent>
             
-            <TabsContent value="versions" className="flex-1 m-0 p-0">
-              <DocumentVersions documentId={documentId} />
+            <TabsContent value="versions" className="p-4 flex-1 overflow-auto">
+              {document?.versions && (
+                <DocumentVersions 
+                  versions={document.versions} 
+                  currentDocumentId={documentId}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </ResizablePanel>

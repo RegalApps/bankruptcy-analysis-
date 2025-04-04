@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { AlertTriangle, Download, ExternalLink, RefreshCw } from "lucide-react";
+import { AlertTriangle, Download, ExternalLink, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { RiskHighlightOverlay } from "./RiskHighlightOverlay";
@@ -32,6 +31,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   const [useGoogleViewer, setUseGoogleViewer] = useState(false);
   const [forceReload, setForceReload] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
+  const [localZoom, setLocalZoom] = useState(zoomLevel);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
   
@@ -41,16 +41,19 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     handleRiskClick
   } = useRiskHighlights(documentId, risks);
 
-  // Cache-bust the URL to ensure fresh content
+  useEffect(() => {
+    setLocalZoom(zoomLevel);
+  }, [zoomLevel]);
+
   const cacheBustedUrl = fileUrl ? `${fileUrl}?t=${Date.now()}-${forceReload}` : '';
   const googleDocsViewerUrl = fileUrl ? 
     `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true` : '';
 
   useEffect(() => {
-    // Reset loading state when URL changes
     if (fileUrl) {
       setIsLoading(true);
       setLoadError(null);
+      setRetryCount(0);
     }
   }, [fileUrl, forceReload]);
 
@@ -66,20 +69,17 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     
     setRetryCount(prev => prev + 1);
     
-    // First retry immediately without changing modes
     if (retryCount === 1) {
       console.log("First load failed, retrying immediately");
       setForceReload(prev => prev + 1);
       return;
     }
     
-    // After first retry fails, switch to Google Docs viewer
     if (!useGoogleViewer && retryCount >= 2) {
       console.log("Falling back to Google Docs viewer");
       setUseGoogleViewer(true);
       setIsLoading(true);
     } else if (useGoogleViewer && retryCount >= 3) {
-      // Both methods failed
       setIsLoading(false);
       setLoadError("Could not load the document. It may be in an unsupported format or inaccessible.");
       if (onError) onError();
@@ -91,6 +91,14 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       window.open(fileUrl, '_blank');
       toast.success("Document opened in new tab");
     }
+  };
+
+  const handleZoomIn = () => {
+    setLocalZoom(prev => Math.min(prev + 10, 200));
+  };
+  
+  const handleZoomOut = () => {
+    setLocalZoom(prev => Math.max(prev - 10, 50));
   };
 
   const handleDownload = () => {
@@ -149,6 +157,16 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
 
   return (
     <div ref={documentContainerRef} className="relative w-full h-full">
+      <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-background/80 p-1 rounded-md shadow-sm">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut}>
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <span className="text-xs font-medium w-12 text-center">{localZoom}%</span>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn}>
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+      </div>
+      
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="text-center">
@@ -181,7 +199,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
           data={cacheBustedUrl}
           type="application/pdf"
           className="w-full h-full"
-          style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
+          style={{transform: `scale(${localZoom / 100})`, transformOrigin: 'center top'}}
           onLoad={handleLoadSuccess}
           onError={handleLoadError}
         >
@@ -190,7 +208,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
             src={cacheBustedUrl}
             className="w-full h-full border-0"
             title={`Document Preview: ${title}`}
-            style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
+            style={{transform: `scale(${localZoom / 100})`, transformOrigin: 'center top'}}
             onLoad={handleLoadSuccess}
             onError={handleLoadError}
             sandbox="allow-same-origin allow-scripts allow-forms"
@@ -200,7 +218,6 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
         </object>
       )}
       
-      {/* Risk highlights overlay - only show when document is loaded and there are risks */}
       {!isLoading && risks.length > 0 && !useGoogleViewer && (
         <RiskHighlightOverlay
           risks={risks}
