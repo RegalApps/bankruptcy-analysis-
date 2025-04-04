@@ -1,94 +1,171 @@
-
-export interface Risk {
-  type: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  regulation?: string;
-  impact?: string;
-  requiredAction?: string;
-  solution?: string;
-  deadline?: string;
-  created_at?: string;
-  size?: number;
-}
-
-export interface Deadline {
-  title: string;
-  dueDate: string;
-  description?: string;
-}
-
-export interface Task {
+export interface DocumentDetails {
   id: string;
   title: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  due_date: string;
-  created_at: string;
-  created_by: string;
-  assigned_to?: string;
-  document_id: string;
-  regulation?: string;
-  solution?: string;
+  type?: string;
+  description?: string;
+  size?: number;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
+  status?: string;
+  tags?: string[];
+  content?: string;
+  storage_path: string;
+  metadata?: Record<string, any>;
+  url?: string;
+  analysis?: Array<{
+    content: any;
+  }>;
+  versions?: DocumentVersion[];
+  comments?: Array<{
+    id: string;
+    content: any;
+    created_at: string;
+    user_id: string;
+  }>;
 }
 
 export interface DocumentVersion {
   id: string;
   document_id: string;
   version_number: number;
-  created_at: string;
-  created_by?: string;
+  version_name?: string;
   storage_path: string;
+  created_at: string;
+  created_by: string;
   is_current: boolean;
-  changes_description?: string;
+  change_summary?: string;
+  metadata?: Record<string, any>;
 }
 
-export interface DocumentDetails {
-  id: string;
-  title: string;
+export interface Risk {
   type: string;
-  storage_path: string;
-  created_at?: string;
-  creation_date?: string;
-  size?: number;
-  file_size?: number;
-  deadlines?: Deadline[];
-  tasks?: Task[];
-  versions?: DocumentVersion[];
-  ai_processing_status?: 'pending' | 'complete' | 'failed';
-  analysis?: {
-    content: {
-      extracted_info: {
-        type?: string;
-        formType?: string;
-        formNumber?: string;
-        clientName?: string;
-        trusteeName?: string;
-        administratorName?: string;
-        estateNumber?: string;
-        district?: string;
-        divisionNumber?: string;
-        courtNumber?: string;
-        meetingOfCreditors?: string;
-        chairInfo?: string;
-        securityInfo?: string;
-        dateBankruptcy?: string;
-        dateSigned?: string;
-        officialReceiver?: string;
-        summary?: string;
-        filingDate?: string;
-        submissionDeadline?: string;
-        documentStatus?: string;
-        paymentSchedule?: string;
-      };
-      risks: Risk[];
+  description: string;
+  severity: "low" | "medium" | "high";
+  regulation?: string;
+  impact?: string;
+  requiredAction?: string;
+  solution?: string;
+  deadline?: string;
+}
+
+export interface DocumentComment {
+  id: string;
+  document_id: string;
+  user_id: string;
+  content: {
+    text: string;
+    attachments?: string[];
+    page?: number;
+    position?: {
+      x: number;
+      y: number;
     };
-  }[];
-  comments?: {
-    id: string;
-    content: string;
-    created_at: string;
-    user_id: string;
-  }[];
+  };
+  parent_id?: string | null;
+  created_at: string;
+  updated_at?: string;
+  status?: "active" | "deleted" | "resolved";
+  replies?: DocumentComment[];
+}
+
+export interface CollaborationPanelProps {
+  document: DocumentDetails;
+  onCommentAdded?: () => void;
+}
+
+export interface DocumentPreviewProps {
+  storagePath: string;
+  documentId: string;
+  title: string;
+  bypassAnalysis?: boolean;
+  onAnalysisComplete?: () => void;
+}
+
+export interface DocumentObjectProps {
+  publicUrl: string | null;
+  isExcelFile: boolean;
+  storagePath: string;
+  documentId: string;
+  onError?: () => void;
+}
+
+export interface ViewerToolbarProps {
+  title: string;
+  zoomLevel: number;
+  isRetrying: boolean;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onRefresh: () => void;
+  onOpenInNewTab: () => void;
+  onDownload: () => void;
+  onPrint: () => void;
+}
+
+export interface ErrorDisplayProps {
+  error: string;
+  onRetry: () => void;
+}
+
+export interface DocumentPreviewContentProps {
+  storagePath: string;
+  documentId: string;
+  title: string;
+  previewState: {
+    fileExists: boolean;
+    fileUrl: string | null;
+    isPdfFile: (path: string) => boolean;
+    isExcelFile: (path: string) => boolean;
+    isDocFile: (path: string) => boolean;
+    isLoading: boolean;
+    previewError: string | null;
+    setPreviewError: (error: string | null) => void;
+    checkFile: () => Promise<void>;
+    documentRisks: Risk[];
+  };
+}
+
+export interface UseFileCheckerReturn {
+  fileExists: boolean;
+  fileUrl: string | null;
+  isPdfFile: (path: string) => boolean;
+  isExcelFile: (path: string) => boolean;
+  isDocFile: (path: string) => boolean;
+  checkFile: (storagePath: string) => Promise<void>;
+}
+
+export interface UseNetworkMonitorReturn {
+  networkStatus: 'online' | 'offline' | 'unknown';
+  isOnline: boolean;
+  handleOnline: () => void;
+}
+
+export interface UseRetryStrategyReturn {
+  retryCount: number;
+  isRetrying: boolean;
+  retry: () => void;
+  reset: () => void;
+  attemptCount: number;
+  incrementAttempt: () => void;
+  resetAttempts: () => void;
+  lastAttempt: Date | null;
+  setLastAttempt: (date: Date) => void;
+  shouldRetry: (attemptCount: number) => boolean;
+  getRetryDelay: (attemptCount: number) => number;
+}
+
+export interface DocumentViewerFrameProps {
+  fileUrl: string;
+  title: string;
+  isLoading: boolean;
+  useDirectLink: boolean;
+  zoomLevel: number;
+  isPdfFile: boolean;
+  isDocFile: boolean;
+  onIframeLoad: () => void;
+  onIframeError: () => void;
+  iframeRef: React.RefObject<HTMLIFrameElement>;
+  forceReload: number;
+  onOpenInNewTab: () => void;
+  onDownload: () => void;
 }

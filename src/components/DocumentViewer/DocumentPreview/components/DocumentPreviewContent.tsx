@@ -6,6 +6,7 @@ import { EnhancedPDFViewer } from "./EnhancedPDFViewer";
 import { useDocumentPreview } from "../hooks/useDocumentPreview";
 import { ViewerToolbar } from "./ViewerToolbar";
 import { ErrorDisplay } from "./ErrorDisplay";
+import { toast } from "sonner";
 
 export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   storagePath,
@@ -84,9 +85,15 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
             documentId={documentId}
             risks={documentRisks}
             onLoad={() => setIsLoading(false)}
-            onError={() => {
+            onError={(errorMessage) => {
               setIsLoading(false);
-              setPreviewError("Failed to load PDF document");
+              // Check if this is a token error
+              if (errorMessage?.includes('token') || errorMessage?.includes('JWT')) {
+                setPreviewError("Authentication error: Your session may have expired. Please refresh the page and try again.");
+                toast.error("Authentication error with document. Refreshing your session might help.");
+              } else {
+                setPreviewError("Failed to load PDF document");
+              }
             }}
           />
         ) : (

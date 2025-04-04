@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -6,9 +7,9 @@ import { Risk, DocumentDetails } from "../../types";
 interface PreviewState {
   fileExists: boolean;
   fileUrl: string | null;
-  isPdfFile: boolean;
-  isExcelFile: boolean;
-  isDocFile: boolean;
+  isPdfFile: (path: string) => boolean;
+  isExcelFile: (path: string) => boolean;
+  isDocFile: (path: string) => boolean;
   isLoading: boolean;
   previewError: string | null;
   setPreviewError: (error: string | null) => void;
@@ -27,9 +28,6 @@ const usePreviewState = (
 ): PreviewState => {
   const [fileExists, setFileExists] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [isPdfFile, setIsPdfFile] = useState(false);
-  const [isExcelFile, setIsExcelFile] = useState(false);
-  const [isDocFile, setIsDocFile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [networkStatus, setNetworkStatus] = useState<'online' | 'offline' | 'unknown'>('unknown');
@@ -39,6 +37,20 @@ const usePreviewState = (
   const getFileExtension = (path: string): string => {
     return path.split('.').pop()?.toLowerCase() || '';
   };
+
+  const isPdfFile = useCallback((path: string): boolean => {
+    return getFileExtension(path) === 'pdf';
+  }, []);
+
+  const isExcelFile = useCallback((path: string): boolean => {
+    const ext = getFileExtension(path);
+    return ['xlsx', 'xls', 'csv'].includes(ext);
+  }, []);
+
+  const isDocFile = useCallback((path: string): boolean => {
+    const ext = getFileExtension(path);
+    return ['doc', 'docx'].includes(ext);
+  }, []);
 
   const checkFile = useCallback(async () => {
     if (!storagePath) {
@@ -76,11 +88,6 @@ const usePreviewState = (
       setFileExists(true);
       setFileUrl(data.signedUrl);
       setNetworkStatus('online');
-      
-      const extension = getFileExtension(storagePath);
-      setIsPdfFile(extension === 'pdf');
-      setIsExcelFile(['xlsx', 'xls', 'csv'].includes(extension));
-      setIsDocFile(['doc', 'docx'].includes(extension));
       
       if (!bypassAnalysis) {
         await fetchDocumentRisks(documentId);

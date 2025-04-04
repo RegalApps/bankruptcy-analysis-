@@ -1,85 +1,91 @@
 
-import { useState, useRef, RefObject } from "react";
+import { useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
 
-export const useDocumentPreview = (fileUrl: string | null, title: string, providedIframeRef?: RefObject<HTMLIFrameElement>) => {
-  const [isLoading, setIsLoading] = useState(true);
+export const useDocumentPreview = (fileUrl: string | null, title: string) => {
   const [zoomLevel, setZoomLevel] = useState(100);
-  const [useDirectLink, setUseDirectLink] = useState(false);
+  const [useDirectLink, setUseDirectLink] = useState(true);
   const [isRetrying, setIsRetrying] = useState(false);
-  const localIframeRef = useRef<HTMLIFrameElement>(null);
-  
-  // Use the provided ref or fallback to local ref
-  const iframeRef = providedIframeRef || localIframeRef;
+  const [isLoading, setIsLoading] = useState(true);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 10, 200));
-  };
-  
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 10, 50));
-  };
+  const handleZoomIn = useCallback(() => {
+    setZoomLevel(prevZoom => Math.min(prevZoom + 10, 200));
+  }, []);
 
-  const handleOpenInNewTab = () => {
+  const handleZoomOut = useCallback(() => {
+    setZoomLevel(prevZoom => Math.max(prevZoom - 10, 50));
+  }, []);
+
+  const handleOpenInNewTab = useCallback(() => {
     if (fileUrl) {
-      window.open(fileUrl, '_blank');
-      toast.info("Document opened in new tab");
+      window.open(fileUrl, "_blank", "noreferrer");
+      toast.success("Document opened in new tab");
+    } else {
+      toast.error("Document URL not available");
     }
-  };
+  }, [fileUrl]);
 
-  const handleDownload = async () => {
-    if (!fileUrl) return;
-    
-    try {
-      // Create a temporary anchor and simulate click to download
-      const a = document.createElement('a');
-      a.href = fileUrl;
-      a.download = title || 'document';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      
+  const handleDownload = useCallback(() => {
+    if (fileUrl) {
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      link.setAttribute("download", `${title || "document"}`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       toast.success("Download started");
-    } catch (error) {
-      console.error("Download error:", error);
-      toast.error("Failed to download document");
+    } else {
+      toast.error("Download link not available");
     }
-  };
+  }, [fileUrl, title]);
 
-  const handlePrint = () => {
-    try {
-      if (iframeRef.current) {
-        // Try using the iframe's print function
-        iframeRef.current.contentWindow?.print();
-      } else if (fileUrl) {
-        // Fallback: open in new window and print
-        const printWindow = window.open(fileUrl, '_blank');
-        if (printWindow) {
-          printWindow.onload = () => {
-            printWindow.print();
-          };
+  const handlePrint = useCallback(() => {
+    // If we have an iframe reference, print its content
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.print();
+      } catch (err) {
+        console.error("Error printing iframe content:", err);
+        // Fallback to direct URL printing
+        if (fileUrl) {
+          const printWindow = window.open(fileUrl, "_blank");
+          if (printWindow) {
+            printWindow.addEventListener("load", () => {
+              printWindow.print();
+            });
+          } else {
+            toast.error("Pop-up blocked. Please allow pop-ups to print.");
+          }
+        } else {
+          toast.error("Print function not available");
         }
       }
-      toast.info("Print dialog opened");
-    } catch (error) {
-      console.error("Print error:", error);
-      toast.error("Failed to print document");
+    } else if (fileUrl) {
+      // Direct URL printing fallback
+      const printWindow = window.open(fileUrl, "_blank");
+      if (printWindow) {
+        printWindow.addEventListener("load", () => {
+          printWindow.print();
+        });
+      } else {
+        toast.error("Pop-up blocked. Please allow pop-ups to print.");
+      }
+    } else {
+      toast.error("Print function not available");
     }
-  };
+  }, [fileUrl, iframeRef]);
 
   return {
-    isLoading,
-    setIsLoading,
     zoomLevel,
     useDirectLink,
-    setUseDirectLink,
     isRetrying,
-    setIsRetrying,
     iframeRef,
     handleZoomIn,
     handleZoomOut,
     handleOpenInNewTab,
     handleDownload,
-    handlePrint
+    handlePrint,
+    setIsLoading
   };
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AlertTriangle, Download, ExternalLink, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
@@ -6,6 +7,7 @@ import { toast } from "sonner";
 import { RiskHighlightOverlay } from "./RiskHighlightOverlay";
 import { Risk } from "../../types";
 import { useRiskHighlights } from "../hooks/useRiskHighlights";
+import { supabase } from "@/lib/supabase";
 
 interface EnhancedPDFViewerProps {
   fileUrl: string | null;
@@ -14,7 +16,7 @@ interface EnhancedPDFViewerProps {
   documentId: string;
   risks?: Risk[];
   onLoad?: () => void;
-  onError?: () => void;
+  onError?: (errorMessage?: string) => void;
 }
 
 export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
@@ -32,6 +34,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   const [forceReload, setForceReload] = useState(0);
   const [retryCount, setRetryCount] = useState(0);
   const [localZoom, setLocalZoom] = useState(zoomLevel);
+  const [refreshedUrl, setRefreshedUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
   
@@ -45,9 +48,66 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     setLocalZoom(zoomLevel);
   }, [zoomLevel]);
 
-  const cacheBustedUrl = fileUrl ? `${fileUrl}?t=${Date.now()}-${forceReload}` : '';
-  const googleDocsViewerUrl = fileUrl ? 
-    `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true` : '';
+  // Extract the storage path from the URL if possible
+  const getStoragePathFromUrl = (url: string): string | null => {
+    try {
+      // Parse URL to get the pathname
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split('/');
+      // Find the part of the path after "/object/" or similar
+      for (let i = 0; i < pathParts.length; i++) {
+        if (pathParts[i] === 'object' && pathParts[i+1] === 'sign' && pathParts[i+2] === 'documents') {
+          return pathParts.slice(i+2).join('/').split('?')[0];
+        }
+      }
+      return null;
+    } catch (e) {
+      console.error("Error parsing URL:", e);
+      return null;
+    }
+  };
+
+  // Try to refresh the token and get a new signed URL
+  const refreshToken = async () => {
+    if (!fileUrl) return false;
+    
+    try {
+      // Extract storage path from fileUrl
+      const storagePath = getStoragePathFromUrl(fileUrl);
+      if (!storagePath) {
+        console.error("Could not extract storage path from URL:", fileUrl);
+        return false;
+      }
+      
+      console.log("Attempting to refresh token for path:", storagePath);
+      
+      // Create a new signed URL
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(storagePath, 3600); // 1 hour expiry
+      
+      if (error) {
+        console.error("Error refreshing token:", error);
+        return false;
+      }
+      
+      if (data?.signedUrl) {
+        console.log("Successfully refreshed token, new URL obtained");
+        setRefreshedUrl(data.signedUrl);
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      console.error("Exception during token refresh:", e);
+      return false;
+    }
+  };
+
+  const currentUrl = refreshedUrl || fileUrl;
+  const cacheBustedUrl = currentUrl ? `${currentUrl}${currentUrl.includes('?') ? '&' : '?'}t=${Date.now()}-${forceReload}` : '';
+  const googleDocsViewerUrl = currentUrl ? 
+    `https://docs.google.com/viewer?url=${encodeURIComponent(currentUrl)}&embedded=true` : '';
 
   useEffect(() => {
     if (fileUrl) {
@@ -55,7 +115,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       setLoadError(null);
       setRetryCount(0);
     }
-  }, [fileUrl, forceReload]);
+  }, [fileUrl, forceReload, refreshedUrl]);
 
   const handleLoadSuccess = () => {
     setIsLoading(false);
@@ -64,12 +124,30 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     if (onLoad) onLoad();
   };
 
-  const handleLoadError = () => {
-    console.error("Error loading PDF:", fileUrl);
+  const handleLoadError = async (errorEvent?: any) => {
+    console.error("Error loading PDF:", fileUrl, errorEvent);
+    const errorMessage = errorEvent?.message || "Unknown error loading document";
     
+    // Increment retry counter
     setRetryCount(prev => prev + 1);
     
-    if (retryCount === 1) {
+    // Check if this is a token error
+    const isTokenError = errorMessage.includes('token') || 
+                         errorMessage.includes('JWT') || 
+                         errorMessage.includes('401') || 
+                         errorMessage.includes('403') ||
+                         errorMessage.includes('authentication');
+    
+    if (isTokenError && retryCount < 1) {
+      console.log("Token error detected, attempting to refresh...");
+      const refreshSuccess = await refreshToken();
+      if (refreshSuccess) {
+        console.log("Token refreshed successfully, retrying load...");
+        return; // We'll retry with the new URL
+      }
+    }
+    
+    if (retryCount === 1 && !isTokenError) {
       console.log("First load failed, retrying immediately");
       setForceReload(prev => prev + 1);
       return;
@@ -80,15 +158,19 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       setUseGoogleViewer(true);
       setIsLoading(true);
     } else if (useGoogleViewer && retryCount >= 3) {
+      const errorMsg = isTokenError ? 
+        "Authentication error: Your session may have expired." : 
+        "Could not load the document. It may be in an unsupported format or inaccessible.";
+      
       setIsLoading(false);
-      setLoadError("Could not load the document. It may be in an unsupported format or inaccessible.");
-      if (onError) onError();
+      setLoadError(errorMsg);
+      if (onError) onError(errorMsg);
     }
   };
 
   const handleOpenInNewTab = () => {
-    if (fileUrl) {
-      window.open(fileUrl, '_blank');
+    if (currentUrl) {
+      window.open(currentUrl, '_blank');
       toast.success("Document opened in new tab");
     }
   };
@@ -102,9 +184,9 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   };
 
   const handleDownload = () => {
-    if (fileUrl) {
+    if (currentUrl) {
       const link = document.createElement('a');
-      link.href = fileUrl;
+      link.href = currentUrl;
       link.download = title || 'document.pdf';
       document.body.appendChild(link);
       link.click();
@@ -113,15 +195,20 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     }
   };
 
-  const handleRetry = () => {
-    setUseGoogleViewer(false);
-    setLoadError(null);
-    setIsLoading(true);
-    setRetryCount(0);
-    setForceReload(prev => prev + 1);
+  const handleRetry = async () => {
+    // Try to refresh token first
+    const refreshed = await refreshToken();
+    if (!refreshed) {
+      // If token refresh failed, try other recovery methods
+      setUseGoogleViewer(false);
+      setLoadError(null);
+      setIsLoading(true);
+      setRetryCount(0);
+      setForceReload(prev => prev + 1);
+    }
   };
 
-  if (!fileUrl) {
+  if (!currentUrl) {
     return (
       <div className="flex items-center justify-center h-full bg-muted/30">
         <p className="text-muted-foreground">No document URL provided</p>
@@ -188,7 +275,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
           src={googleDocsViewerUrl}
           className="w-full h-full border-0"
           onLoad={handleLoadSuccess}
-          onError={handleLoadError}
+          onError={() => handleLoadError()}
           title={`Google Docs viewer: ${title}`}
           referrerPolicy="no-referrer"
           allow="fullscreen"
@@ -201,7 +288,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
           className="w-full h-full"
           style={{transform: `scale(${localZoom / 100})`, transformOrigin: 'center top'}}
           onLoad={handleLoadSuccess}
-          onError={handleLoadError}
+          onError={(e) => handleLoadError(e)}
         >
           <iframe
             ref={iframeRef}
@@ -210,7 +297,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
             title={`Document Preview: ${title}`}
             style={{transform: `scale(${localZoom / 100})`, transformOrigin: 'center top'}}
             onLoad={handleLoadSuccess}
-            onError={handleLoadError}
+            onError={(e) => handleLoadError(e)}
             sandbox="allow-same-origin allow-scripts allow-forms"
             referrerPolicy="no-referrer"
             allow="fullscreen"
