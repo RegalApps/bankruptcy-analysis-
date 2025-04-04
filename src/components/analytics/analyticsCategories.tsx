@@ -1,4 +1,5 @@
-import { Users, BarChart, PieChart, FileText, Shield, Globe, LayoutDashboard, Zap, LineChart, Network, Cpu, Video } from "lucide-react";
+
+import { Users, BarChart, PieChart, FileText, Shield, Globe, LayoutDashboard, Zap, LineChart, Network, Cpu } from "lucide-react";
 import { ClientManagementAnalytics } from "./client/ClientManagementAnalytics";
 import { DocumentAnalytics } from "./documents/DocumentAnalytics";
 import { ComplianceAnalytics } from "./compliance/ComplianceAnalytics";
@@ -10,7 +11,6 @@ import { SystemUsageAnalytics } from "./system/SystemUsageAnalytics";
 import { MarketingAnalytics } from "./marketing/MarketingAnalytics";
 import { SystemHealthAnalytics } from "./health/SystemHealthAnalytics";
 import { CrmAnalytics } from "./crm/CrmAnalytics";
-import { MeetingsAnalytics } from "./meetings/MeetingsAnalytics";
 import { CategoryData } from "./types";
 
 export const getAnalyticsCategories = (): CategoryData[] => [
@@ -29,12 +29,6 @@ export const getAnalyticsCategories = (): CategoryData[] => [
         name: "Operational Efficiency",
         icon: BarChart,
         component: OperationalEfficiencyAnalytics,
-      },
-      {
-        id: "meetings",
-        name: "Meeting Analytics",
-        icon: Video,
-        component: MeetingsAnalytics,
       },
       {
         id: "crm",
