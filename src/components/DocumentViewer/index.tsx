@@ -75,6 +75,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   // Extract risks from document or use default
   const documentRisks = document?.analysis?.[0]?.content?.risks || [];
 
+  // Handle comment additions
+  const handleCommentAdded = () => {
+    handleRefresh();
+  };
+
   return (
     <div className="flex flex-col h-full border rounded-md bg-card overflow-hidden">
       {/* Header */}
@@ -122,7 +127,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             
             <TabsContent value="comments" className="flex-1 m-0 p-0">
               {document && (
-                <CollaborationPanel document={document} />
+                <CollaborationPanel 
+                  document={document} 
+                  onCommentAdded={handleCommentAdded} 
+                />
               )}
             </TabsContent>
           </Tabs>
@@ -171,7 +179,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             <TabsContent value="versions" className="p-4 flex-1 overflow-auto">
               {document?.versions && (
                 <DocumentVersions 
-                  versions={document.versions} 
+                  documentVersions={document.versions} 
                   currentDocumentId={documentId}
                 />
               )}

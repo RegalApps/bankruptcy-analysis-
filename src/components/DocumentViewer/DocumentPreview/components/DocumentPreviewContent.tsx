@@ -57,7 +57,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   }
 
   // Check if this is a PDF file by checking the path
-  const isPdfDocument = isPdfFile(storagePath);
+  const isPdfDocument = storagePath.toLowerCase().endsWith('.pdf');
 
   return (
     <div className="flex flex-col h-full">
@@ -92,7 +92,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
         ) : (
           <DocumentObject
             publicUrl={fileUrl}
-            isExcelFile={isExcelFile(storagePath)}
+            isExcelFile={storagePath.toLowerCase().includes('.xls') || storagePath.toLowerCase().includes('.csv')}
             storagePath={storagePath}
             documentId={documentId}
             onError={() => {
