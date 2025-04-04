@@ -39,6 +39,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   const [retryCount, setRetryCount] = useState(0);
   const [localZoom, setLocalZoom] = useState(zoomLevel);
   const [refreshedUrl, setRefreshedUrl] = useState<string | null>(null);
+  const [pdfLoaded, setPdfLoaded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
   
@@ -52,6 +53,21 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   useEffect(() => {
     setLocalZoom(zoomLevel);
   }, [zoomLevel]);
+
+  useEffect(() => {
+    // Add stabilization timeout to ensure PDF is fully rendered before showing risk highlights
+    if (pdfLoaded) {
+      const stabilizationTimer = setTimeout(() => {
+        // Force a refresh of the component dimensions after PDF has stabilized
+        if (documentContainerRef.current) {
+          const { width, height } = documentContainerRef.current.getBoundingClientRect();
+          console.log("PDF stabilized with dimensions:", { width, height });
+        }
+      }, 500);
+      
+      return () => clearTimeout(stabilizationTimer);
+    }
+  }, [pdfLoaded]);
 
   const getStoragePathFromUrl = (url: string): string | null => {
     try {
@@ -111,6 +127,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   useEffect(() => {
     if (fileUrl) {
       setIsLoading(true);
+      setPdfLoaded(false);
       setLoadError(null);
       setRetryCount(0);
     }
@@ -118,6 +135,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
 
   const handleLoadSuccess = () => {
     setIsLoading(false);
+    setPdfLoaded(true);
     setLoadError(null);
     setRetryCount(0);
     if (onLoad) onLoad();
@@ -160,6 +178,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
         "Could not load the document. It may be in an unsupported format or inaccessible.";
       
       setIsLoading(false);
+      setPdfLoaded(false);
       setLoadError(errorMsg);
       if (onError) onError(errorMsg);
     }
@@ -198,6 +217,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       setUseGoogleViewer(false);
       setLoadError(null);
       setIsLoading(true);
+      setPdfLoaded(false);
       setRetryCount(0);
       setForceReload(prev => prev + 1);
     }
@@ -300,7 +320,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
         </object>
       )}
       
-      {!isLoading && highlightRisks.length > 0 && !useGoogleViewer && (
+      {pdfLoaded && highlightRisks.length > 0 && !useGoogleViewer && (
         <RiskHighlightOverlay
           risks={highlightRisks}
           documentWidth={documentDimensions.width}

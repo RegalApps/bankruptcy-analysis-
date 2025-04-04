@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Risk } from "../../types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -39,33 +38,18 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   const [hoveredRisk, setHoveredRisk] = useState<string | null>(null);
   const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
   
-  // Define precise positions for Form 47 highlights based on user specifications
   const getPrecisePositionForRisk = (risk: Risk, index: number): RiskPosition | null => {
-    // Calculate vertical positions based on document height
-    // For Form 47, we need very precise positioning based on the image provided
     const pageHeight = documentHeight / 3;
     
-    // Based on the screenshot, adjust these coordinates to match the exact positions
+    const adminCertY = 120;
+    const creditorInfoY = 870;
+    const paymentScheduleY = 992;
+    const dividendsY = pageHeight + 370;
+    const additionalTermsY = pageHeight + 510;
+    const signatureY = pageHeight * 2 + 340;
+    const witnessY = pageHeight * 2 + 340;
     
-    // Administrator Certificate position (top of document, full width red box)
-    const adminCertY = 155;  // Exact Y position based on screenshot
-    
-    // Creditor Information (middle section, "Jane and Fince Group" area)
-    const creditorInfoY = 870;  // Adjusted Y position for the creditor info highlight
-    
-    // Payment Schedule (right after the creditor line)
-    const paymentScheduleY = 992;  // Position for the schedule of payments text
-    
-    // Page 2 positions 
-    const dividendsY = pageHeight + 370; // Position for dividend distribution
-    const additionalTermsY = pageHeight + 510; // Position for additional terms
-    
-    // Page 3 positions
-    const signatureY = pageHeight * 2 + 340; // Position for signatures
-    
-    // Based on risk type, place highlights at specific form locations
     if (risk.type?.includes("Administrator Certificate") || risk.description?.includes("Administrator Certificate")) {
-      // Top of form where certificate would appear - full width box
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.03,
@@ -81,7 +65,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     } 
     else if (risk.type?.includes("Creditor Information") || risk.description?.includes("creditor")) {
-      // The "Jane and Fince Group" line in Section 4
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.05,
@@ -97,7 +80,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Payment Schedule") || risk.description?.includes("payment schedule")) {
-      // "(Set out the schedule of payments...)" line directly below creditor info
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.05,
@@ -113,7 +95,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Dividend") || risk.description?.includes("dividend")) {
-      // "Describe the manner for distributing dividends."
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1,
@@ -129,7 +110,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Terms") || risk.description?.includes("terms")) {
-      // "Set out the additional terms as proposed."
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.1, 
@@ -145,7 +125,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Unsigned") || risk.description?.includes("Consumer Debtor")) {
-      // Bottom right signature field labeled "Consumer Debtor"
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.6,
@@ -161,11 +140,10 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     else if (risk.type?.includes("Witness") || risk.description?.includes("witness")) {
-      // The line left of "Consumer Debtor" for witness signature
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.2,
-        y: signatureY,
+        y: witnessY,
         width: documentWidth * 0.3,
         height: 40,
         severity: risk.severity || 'medium',
@@ -177,7 +155,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     
-    // Fallback for any other risk types
     const hashCode = (str: string) => {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
@@ -189,7 +166,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
 
     const riskHash = hashCode(risk.type + (risk.description || ''));
     
-    // Generate a position based on the hash
     const x = Math.abs(riskHash % (documentWidth - 200)) + 50;
     const y = Math.abs((riskHash >> 8) % (documentHeight - 100)) + 50;
     const width = 100 + (Math.abs(riskHash) % 150);
@@ -211,14 +187,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     };
   };
   
-  // Generate positions for all risks
   const riskPositions: RiskPosition[] = risks
     .map((risk, index) => getPrecisePositionForRisk(risk, index))
     .filter((position): position is RiskPosition => position !== null);
   
-  // Apply auto-spacing to prevent overlapping highlights
   const applyAutoSpacing = (positions: RiskPosition[]): RiskPosition[] => {
-    // Sort positions by page number and Y position
     const sorted = [...positions].sort((a, b) => {
       if ((a.pageNumber || 1) !== (b.pageNumber || 1)) {
         return (a.pageNumber || 1) - (b.pageNumber || 1);
@@ -226,19 +199,14 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       return a.y - b.y;
     });
     
-    // Minimum vertical space between highlights
     const minVerticalSpace = 15;
     
-    // Check for overlaps and adjust positions
     for (let i = 1; i < sorted.length; i++) {
       const current = sorted[i];
       const prev = sorted[i - 1];
       
-      // Only adjust positions within the same page
       if ((current.pageNumber || 1) === (prev.pageNumber || 1)) {
-        // Check if current highlight overlaps with previous
         if (current.y < prev.y + prev.height + minVerticalSpace) {
-          // Adjust position to avoid overlap
           current.y = prev.y + prev.height + minVerticalSpace;
         }
       }
@@ -247,11 +215,9 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     return sorted;
   };
   
-  // Apply auto-spacing to prevent overlaps
   const adjustedRiskPositions = applyAutoSpacing(riskPositions);
   
   const getSeverityColor = (severity: string, isActive: boolean, isHovered: boolean): string => {
-    // Higher opacity for active/hovered items for better visibility
     const opacity = isActive ? '0.7' : (isHovered ? '0.5' : '0.3');
     switch (severity) {
       case 'high':
@@ -291,7 +257,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     }
   };
   
-  // Filter highlights by severity when selected
   const handleFilterSeverity = (severity: string | null) => {
     setFilteredSeverity(filteredSeverity === severity ? null : severity);
   };
@@ -302,7 +267,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
 
   return (
     <div className="absolute inset-0 pointer-events-none">
-      {/* Risk Highlights */}
       {filteredPositions.map((position) => {
         const isActive = activeRiskId === position.id;
         
@@ -372,7 +336,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
         );
       })}
       
-      {/* Risk Legend with toggleable filters */}
       <div className="absolute bottom-4 right-4 bg-background/90 border rounded-lg shadow-md p-2 flex items-center gap-2 pointer-events-auto">
         <span className="text-xs font-medium">Filter:</span>
         <button
