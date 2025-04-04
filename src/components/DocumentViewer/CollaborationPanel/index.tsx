@@ -12,7 +12,7 @@ import { DeadlineManager } from "../DeadlineManager";
 
 interface CollaborationPanelProps {
   document?: DocumentDetails;
-  documentId?: string;
+  documentId?: string;  // Ensuring documentId is explicitly defined in the interface
   onCommentAdded?: () => void;
   activeRiskId?: string | null;
   onRiskSelect?: (riskId: string | null) => void;
