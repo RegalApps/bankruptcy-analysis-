@@ -55,9 +55,9 @@ export interface DocumentPreviewContentProps {
 export interface UseFileCheckerReturn {
   fileExists: boolean;
   fileUrl: string | null;
-  isPdfFile: boolean;
-  isExcelFile: boolean;
-  isDocFile: boolean;
+  isPdfFile: (path: string) => boolean;
+  isExcelFile: (path: string) => boolean;
+  isDocFile: (path: string) => boolean;
   checkFile: (storagePath: string) => Promise<void>;
 }
 

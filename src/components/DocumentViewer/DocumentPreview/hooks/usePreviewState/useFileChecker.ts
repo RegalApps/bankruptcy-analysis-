@@ -92,9 +92,9 @@ export const useFileChecker = (
   return {
     fileExists: false,
     fileUrl: null,
-    isPdfFile: isPdfFile,
-    isExcelFile: isExcelFile,
-    isDocFile: isDocFile,
-    checkFile: checkFile
+    isPdfFile,
+    isExcelFile,
+    isDocFile,
+    checkFile
   };
 };
