@@ -121,10 +121,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             </TabsList>
             
             <TabsContent value="comments" className="flex-1 m-0 p-0">
-              <CollaborationPanel 
-                documentId={documentId} 
-                document={document} 
-              />
+              {document && (
+                <CollaborationPanel 
+                  document={document}
+                  onCommentAdded={() => {}}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </ResizablePanel>
