@@ -1,14 +1,16 @@
+
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { DocumentPreview } from "./DocumentPreview";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ArrowLeft, Check, Download, Eye, MessageSquare, Share } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Download, Eye, MessageSquare, Share, FileBarChart } from "lucide-react";
 import { RiskAssessment } from "./components/RiskAssessment";
 import { DocumentMetadata } from "./components/DocumentMetadata";
 import { DocumentVersions } from "./components/DocumentVersions";
 import { CollaborationPanel } from "./CollaborationPanel/index";
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
+import { Badge } from "@/components/ui/badge";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -96,9 +98,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           )}
           <div>
             <h2 className="text-lg font-semibold">{title}</h2>
-            <p className="text-sm text-muted-foreground">
-              Document ID: {documentId.substring(0, 8)}...
-            </p>
+            <div className="flex items-center mt-1 space-x-2">
+              <Badge variant="success" className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600">
+                <FileBarChart className="h-3.5 w-3.5" />
+                Division II Proposal
+              </Badge>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
