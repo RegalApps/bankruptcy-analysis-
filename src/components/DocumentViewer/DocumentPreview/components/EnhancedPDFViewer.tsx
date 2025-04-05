@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AlertTriangle, Download, ExternalLink, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
@@ -58,14 +57,12 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     setLocalZoom(zoomLevel);
   }, [zoomLevel]);
   
-  // Monitor for scroll events to update highlight positions
   useEffect(() => {
     const container = pdfContainerRef.current;
     
     if (!container || !pdfLoaded) return;
     
     const handleScroll = () => {
-      // Force update of document dimensions when scrolling
       if (documentContainerRef.current) {
         updateDocumentDimensions();
       }
@@ -79,9 +76,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   }, [pdfLoaded, updateDocumentDimensions]);
 
   useEffect(() => {
-    // Add stabilization timeout to ensure PDF is fully rendered before showing risk highlights
     if (pdfLoaded) {
-      // Initial stabilization check
       const initialStabilizationTimer = setTimeout(() => {
         if (documentContainerRef.current) {
           const { width, height } = documentContainerRef.current.getBoundingClientRect();
@@ -91,7 +86,6 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
             setContentHeight(height);
           }
           
-          // Set a secondary timeout for final stabilization with a longer delay
           const finalStabilizationTimer = setTimeout(() => {
             if (documentContainerRef.current) {
               const finalDimensions = documentContainerRef.current.getBoundingClientRect();
@@ -100,7 +94,6 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
                 height: finalDimensions.height 
               });
               
-              // Only consider the PDF stabilized if dimensions are reasonable
               if (finalDimensions.height > 100) {
                 setPdfStabilized(true);
                 setContentHeight(finalDimensions.height);
@@ -170,7 +163,6 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
   };
 
   const currentUrl = refreshedUrl || fileUrl;
-  // Use a more reliable cache-busting strategy with a unique timestamp for each load attempt
   const cacheBustedUrl = currentUrl ? `${currentUrl}${currentUrl.includes('?') ? '&' : '?'}_t=${Date.now()}-${forceReload}` : '';
   const googleDocsViewerUrl = currentUrl ? 
     `https://docs.google.com/viewer?url=${encodeURIComponent(currentUrl)}&embedded=true` : '';
@@ -345,6 +337,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       <div 
         ref={pdfContainerRef}
         className="w-full h-full overflow-auto" 
+        data-testid="pdf-container"
       >
         {useGoogleViewer ? (
           <iframe

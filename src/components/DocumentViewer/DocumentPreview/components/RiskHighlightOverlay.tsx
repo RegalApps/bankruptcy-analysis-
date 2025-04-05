@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Risk } from "../../types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -42,6 +41,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [animatedRiskId, setAnimatedRiskId] = useState<string | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -53,13 +53,14 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     const container = containerRef?.current;
     if (container) {
       container.addEventListener('scroll', handleScroll, { passive: true });
+      setScrollOffset(container.scrollTop);
+      
       return () => {
         container.removeEventListener('scroll', handleScroll);
       };
     }
   }, [containerRef]);
 
-  // Add animation effect when a new risk is selected
   useEffect(() => {
     if (activeRiskId) {
       setAnimatedRiskId(activeRiskId);
@@ -71,20 +72,16 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   }, [activeRiskId]);
   
   const getPrecisePositionForRisk = (risk: Risk, index: number): RiskPosition | null => {
-    // Calculate page heights - adjust this based on your specific document
     const pageHeight = documentHeight / 3;
     
-    // Precise Y coordinates for different sections based on Form 47
-    // These coordinates are specifically tuned for the Form 47 document
-    const adminCertY = 120; // Top of document
-    const creditorInfoY = 520; // Section 4, around "Jane and Fince Group" line
-    const preferredClaimsY = 320; // Section 2/3, for proposal terms
-    const dividendsY = pageHeight + 150; // Page 2, dividend distribution
-    const additionalTermsY = pageHeight + 280; // Page 2, additional terms
-    const signatureY = pageHeight * 2 + 340; // Page 3, signature area
-    const witnessY = pageHeight * 2 + 380; // Page 3, witness signature area
+    const adminCertY = 120;
+    const creditorInfoY = 520;
+    const preferredClaimsY = 320;
+    const dividendsY = pageHeight + 150;
+    const additionalTermsY = pageHeight + 280;
+    const signatureY = pageHeight * 2 + 340;
+    const witnessY = pageHeight * 2 + 380;
     
-    // Each risk type has specific position on the document
     if (risk.type?.includes("Administrator Certificate") || risk.description?.includes("Administrator Certificate")) {
       return {
         id: `risk-${index}`,
@@ -191,7 +188,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
     
-    // Fallback position calculation for other risks
     const hashCode = (str: string) => {
       let hash = 0;
       for (let i = 0; i < str.length; i++) {
@@ -236,17 +232,15 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       return a.y - b.y;
     });
     
-    const minVerticalSpace = 35; // Increased to prevent label overlap
+    const minVerticalSpace = 35;
     
     for (let i = 1; i < sorted.length; i++) {
       const current = sorted[i];
       const prev = sorted[i - 1];
       
       if ((current.pageNumber || 1) === (prev.pageNumber || 1)) {
-        // Check if current risk's position (including its label space) overlaps with previous risk
-        // We need to account for the label that appears above the highlight box
         const prevBottom = prev.y + prev.height;
-        const prevLabelBottom = prev.y - 25; // Labels are typically positioned above the box
+        const prevLabelBottom = prev.y - 25;
         
         if (current.y < prevBottom + minVerticalSpace || 
             (current.y - 25 < prevBottom && current.y > prevLabelBottom)) {
@@ -308,9 +302,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     ? adjustedRiskPositions.filter(pos => pos.severity === filteredSeverity)
     : adjustedRiskPositions;
 
-  // Add a vertical minimap on the right for page navigation
   const renderPageMinimap = () => {
-    // Get the number of unique pages
     const uniquePages = new Set(filteredPositions.map(pos => pos.pageNumber || 1));
     const numberOfPages = Math.max(...Array.from(uniquePages));
     
@@ -325,7 +317,6 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
               className={`w-4 h-4 flex items-center justify-center text-[8px] mb-1 hover:bg-primary/20 rounded-full ${hasRisks ? 'bg-primary/40' : 'bg-muted/40'}`}
               onClick={() => {
                 if (containerRef?.current) {
-                  // Scroll to the approximate position of the page
                   const pagePosition = (pageNum - 1) * (documentHeight / 3);
                   containerRef.current.scrollTo({
                     top: pagePosition,
@@ -344,17 +335,17 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   };
 
   return (
-    <div className="absolute inset-0 pointer-events-none">
+    <div ref={overlayRef} className="absolute inset-0 pointer-events-none">
       {filteredPositions.map((position) => {
         const isActive = activeRiskId === position.id;
         const isHovered = hoveredRisk === position.id;
         const isAnimated = animatedRiskId === position.id;
         
-        // Calculate the absolute position for the highlight based on scroll offset
-        // This ensures the highlight stays with the document content when scrolling
-        const absoluteY = position.y - scrollOffset;
+        const pageNumber = position.pageNumber || 1;
+        const pageOffset = (pageNumber - 1) * (documentHeight / 3);
         
-        // Only render if the highlight is within the viewport (with some buffer)
+        const absoluteY = position.y + pageOffset - scrollOffset;
+        
         const isVisible = absoluteY > -100 && absoluteY < documentHeight + 100;
         
         if (!isVisible) return null;
@@ -369,7 +360,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
                   } ${isActive ? 'ring-2 ring-white shadow-lg z-20 scale-105' : 'z-10'}`}
                   style={{
                     left: `${position.x}px`,
-                    top: `${position.y}px`,
+                    top: `${pageOffset + position.y - scrollOffset}px`,
                     width: `${position.width}px`,
                     height: `${position.height}px`,
                     backgroundColor: getSeverityColor(position.severity, isActive, isHovered, isAnimated),

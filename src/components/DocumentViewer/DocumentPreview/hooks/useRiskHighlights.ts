@@ -48,6 +48,9 @@ export const useRiskHighlights = (
       if (documentContainerRef.current) {
         // Track scroll position to help stabilize highlights
         lastScrollPosition.current = documentContainerRef.current.scrollTop;
+        
+        // Force a dimension update on scroll to make sure positions stay correct
+        updateDocumentDimensions();
       }
     };
     
