@@ -22,8 +22,12 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
 
   // Cache-bust the URL to ensure fresh content
   const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
+  
+  // Check file extension from the URL to verify if it's really Excel
+  const isPdfFromUrl = publicUrl?.toLowerCase().includes('.pdf');
+  const actuallyIsExcel = isExcelFile && !isPdfFromUrl;
 
-  if (isExcelFile) {
+  if (actuallyIsExcel) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center p-6 bg-muted rounded-lg">

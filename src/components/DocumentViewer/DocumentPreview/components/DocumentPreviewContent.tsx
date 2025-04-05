@@ -82,8 +82,14 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     );
   }
 
+  // Use explicit path checking in addition to the isExcelFile flag
+  const actuallyIsExcel = isExcelFile && storagePath.match(/\.(xlsx|xls|csv)$/i);
+  
+  // For Form47, we know it's a PDF regardless of what the system thinks
+  const isForm47 = title?.toLowerCase().includes('form 47') || title?.toLowerCase().includes('consumer proposal');
+  
   // Success state - render the PDF viewer or other document viewer based on file type
-  if (isExcelFile) {
+  if (actuallyIsExcel && !isForm47) {
     return (
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-2 bg-muted/20">
