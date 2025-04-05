@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -9,6 +10,7 @@ import { DocumentMetadata } from "./components/DocumentMetadata";
 import { DocumentVersions } from "./components/DocumentVersions";
 import { CollaborationPanel } from "./CollaborationPanel/index";
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
+import { MetadataTag } from "./MetadataTag";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -87,33 +89,47 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   return (
     <div className="flex flex-col h-full border rounded-md bg-card overflow-hidden">
-      <div className="p-4 border-b flex items-center justify-between">
-        <div className="flex items-center">
-          {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack} className="mr-2">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          )}
-          <div>
+      <div className="flex flex-col items-center border-b">
+        <div className="w-full text-center py-3">
+          <div className="flex items-center justify-center gap-2">
             <h2 className="text-lg font-semibold">{title}</h2>
-            <p className="text-sm text-muted-foreground">
-              Document ID: {documentId.substring(0, 8)}...
-            </p>
+            {isForm47 && (
+              <MetadataTag 
+                label="Division II Proposal" 
+                variant="secondary"
+                icon={<FileBarChart className="h-3 w-3 mr-1 text-blue-500" />}
+              />
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-1.5" />
-            Download
+        
+        <div className="w-full border-b"></div>
+        
+        <div className="w-full p-2 flex justify-between items-center">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onBack}
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" /> 
+            Back to Documents
           </Button>
-          <Button variant="outline" size="sm">
-            <Share className="h-4 w-4 mr-1.5" />
-            Share
-          </Button>
-          <Button size="sm">
-            <Check className="h-4 w-4 mr-1.5" />
-            Approve
-          </Button>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-1.5" />
+              Download
+            </Button>
+            <Button variant="outline" size="sm">
+              <Share className="h-4 w-4 mr-1.5" />
+              Share
+            </Button>
+            <Button size="sm">
+              <Check className="h-4 w-4 mr-1.5" />
+              Approve
+            </Button>
+          </div>
         </div>
       </div>
 
