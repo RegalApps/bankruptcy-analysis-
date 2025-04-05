@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { DocumentPreview } from "./DocumentPreview";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, ArrowLeft, Check, Download, Eye, MessageSquare, Share } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Download, Eye, FileBarChart, MessageSquare, Share } from "lucide-react";
 import { RiskAssessment } from "./components/RiskAssessment";
 import { DocumentMetadata } from "./components/DocumentMetadata";
 import { DocumentVersions } from "./components/DocumentVersions";
