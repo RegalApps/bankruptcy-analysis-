@@ -76,17 +76,11 @@ export interface UseRetryStrategyReturn {
 }
 
 export interface DocumentViewerFrameProps {
-  fileUrl: string;
-  title: string;
-  isLoading: boolean;
-  useDirectLink: boolean;
-  zoomLevel: number;
-  isPdfFile: boolean;
-  isDocFile: boolean;
-  onIframeLoad: () => void;
-  onIframeError: () => void;
-  iframeRef: React.RefObject<HTMLIFrameElement>;
-  forceReload: number;
-  onOpenInNewTab: () => void;
-  onDownload: () => void;
+  children: React.ReactNode;
+  controls?: React.ReactNode;
+}
+
+export interface PreviewControlsProps {
+  publicUrl: string;
+  onRefresh: () => void;
 }
