@@ -104,44 +104,28 @@ export const useRiskHighlights = (
           deadline: "24 hours"
         },
         {
-          type: "Incomplete Payment Schedule",
-          description: "Payment schedule not filled in the '(Set out the schedule of payments...)' section below creditor line.",
-          severity: "medium",
-          regulation: "BIA s.66.13(2)(c)",
-          solution: "Complete the payment schedule section with dates and amounts",
-          deadline: "48 hours"
-        },
-        {
-          type: "Blank Distribution of Dividends",
-          description: "No dividend distribution method outlined.",
+          type: "Unspecified Dividend Distribution",
+          description: "No dividend distribution method outlined in the 'Describe the manner for distributing dividends' section.",
           severity: "medium",
           regulation: "BIA Directive s.13",
           solution: "Specify the dividend distribution methodology",
           deadline: "3 days"
         },
         {
-          type: "No Additional Terms Provided",
-          description: "Optional field left blank — flag for administrator to confirm intent.",
-          severity: "medium",
-          regulation: "Best practice",
-          solution: "Add additional terms or mark as 'None'",
-          deadline: "5 days"
-        },
-        {
-          type: "Unsigned by Consumer Debtor",
-          description: "Consumer Debtor signature missing — non-compliant submission.",
-          severity: "high",
-          regulation: "BIA s.66.13(2)(d)",
-          solution: "Obtain consumer debtor signature",
-          deadline: "Immediately"
-        },
-        {
-          type: "Missing Witness Signature",
-          description: "Witness signature required for legal validation.",
+          type: "Unfilled Witness Signature",
+          description: "Witness signature line is empty - required for legal validation.",
           severity: "medium",
           regulation: "BIA Directive s.22",
           solution: "Obtain witness signature",
           deadline: "48 hours"
+        },
+        {
+          type: "Missing Proposal Terms in Preferred Claims Section",
+          description: "Section 2/3 missing required proposal terms for handling preferred claims.",
+          severity: "high",
+          regulation: "BIA s.66.13(2)(b)",
+          solution: "Add required terms regarding treatment of preferred claims",
+          deadline: "24 hours"
         }
       ];
       

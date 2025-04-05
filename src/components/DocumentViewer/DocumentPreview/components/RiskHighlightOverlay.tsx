@@ -41,6 +41,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   const [hoveredRisk, setHoveredRisk] = useState<string | null>(null);
   const [filteredSeverity, setFilteredSeverity] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [animatedRiskId, setAnimatedRiskId] = useState<string | null>(null);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -57,6 +58,17 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       };
     }
   }, [containerRef]);
+
+  // Add animation effect when a new risk is selected
+  useEffect(() => {
+    if (activeRiskId) {
+      setAnimatedRiskId(activeRiskId);
+      const timer = setTimeout(() => {
+        setAnimatedRiskId(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeRiskId]);
   
   const getPrecisePositionForRisk = (risk: Risk, index: number): RiskPosition | null => {
     // Calculate page heights - adjust this based on your specific document
@@ -66,7 +78,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     // These coordinates are specifically tuned for the Form 47 document
     const adminCertY = 120; // Top of document
     const creditorInfoY = 520; // Section 4, around "Jane and Fince Group" line
-    const paymentScheduleY = 560; // Just below creditor line, for payment schedule
+    const preferredClaimsY = 320; // Section 2/3, for proposal terms
     const dividendsY = pageHeight + 150; // Page 2, dividend distribution
     const additionalTermsY = pageHeight + 280; // Page 2, additional terms
     const signatureY = pageHeight * 2 + 340; // Page 3, signature area
@@ -103,16 +115,16 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
         pageNumber: 1
       };
     }
-    else if (risk.type?.includes("Payment Schedule") || risk.description?.includes("payment schedule")) {
+    else if (risk.type?.includes("Proposal Terms") || risk.description?.includes("Preferred Claims")) {
       return {
         id: `risk-${index}`,
         x: documentWidth * 0.05,
-        y: paymentScheduleY, 
+        y: preferredClaimsY,
         width: documentWidth * 0.9,
-        height: 25,
-        severity: risk.severity || 'medium',
-        label: risk.type || "Payment Schedule",
-        description: "Payment schedule not filled in the '(Set out the schedule of payments...)' section below creditor line.",
+        height: 40,
+        severity: risk.severity || 'high',
+        label: risk.type || "Missing Proposal Terms",
+        description: "Section 2/3 missing required proposal terms for handling preferred claims.",
         regulation: risk.regulation,
         solution: risk.solution,
         pageNumber: 1
@@ -127,7 +139,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
         height: 35,
         severity: risk.severity || 'medium',
         label: risk.type || "Dividend Distribution",
-        description: "No dividend distribution method outlined.",
+        description: "No dividend distribution method outlined in the 'Describe the manner for distributing dividends' section.",
         regulation: risk.regulation,
         solution: risk.solution,
         pageNumber: 2
@@ -248,7 +260,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
   
   const adjustedRiskPositions = applyAutoSpacing(riskPositions);
   
-  const getSeverityColor = (severity: string, isActive: boolean, isHovered: boolean): string => {
+  const getSeverityColor = (severity: string, isActive: boolean, isHovered: boolean, isAnimated: boolean): string => {
     const opacity = isActive ? '0.7' : (isHovered ? '0.5' : '0.3');
     switch (severity) {
       case 'high':
@@ -296,10 +308,47 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
     ? adjustedRiskPositions.filter(pos => pos.severity === filteredSeverity)
     : adjustedRiskPositions;
 
+  // Add a vertical minimap on the right for page navigation
+  const renderPageMinimap = () => {
+    // Get the number of unique pages
+    const uniquePages = new Set(filteredPositions.map(pos => pos.pageNumber || 1));
+    const numberOfPages = Math.max(...Array.from(uniquePages));
+    
+    return (
+      <div className="absolute right-0.5 top-1/4 bottom-1/4 w-4 flex flex-col justify-between py-4 bg-background/20 rounded-l-md">
+        {Array.from({ length: numberOfPages }, (_, i) => i + 1).map((pageNum) => {
+          const hasRisks = filteredPositions.some(pos => (pos.pageNumber || 1) === pageNum);
+          
+          return (
+            <button 
+              key={`page-${pageNum}`}
+              className={`w-4 h-4 flex items-center justify-center text-[8px] mb-1 hover:bg-primary/20 rounded-full ${hasRisks ? 'bg-primary/40' : 'bg-muted/40'}`}
+              onClick={() => {
+                if (containerRef?.current) {
+                  // Scroll to the approximate position of the page
+                  const pagePosition = (pageNum - 1) * (documentHeight / 3);
+                  containerRef.current.scrollTo({
+                    top: pagePosition,
+                    behavior: 'smooth'
+                  });
+                }
+              }}
+              title={`Page ${pageNum}`}
+            >
+              {pageNum}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="absolute inset-0 pointer-events-none">
       {filteredPositions.map((position) => {
         const isActive = activeRiskId === position.id;
+        const isHovered = hoveredRisk === position.id;
+        const isAnimated = animatedRiskId === position.id;
         
         // Calculate the absolute position for the highlight based on scroll offset
         // This ensures the highlight stays with the document content when scrolling
@@ -315,17 +364,17 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
                 <div
-                  className={`absolute rounded border-2 cursor-pointer pointer-events-auto transition-colors duration-200 ${isActive ? 'ring-2 ring-white' : ''}`}
+                  className={`absolute rounded border pointer-events-auto transition-all duration-300 ${
+                    isAnimated ? 'animate-pulse' : ''
+                  } ${isActive ? 'ring-2 ring-white shadow-lg z-20 scale-105' : 'z-10'}`}
                   style={{
                     left: `${position.x}px`,
                     top: `${position.y}px`,
                     width: `${position.width}px`,
                     height: `${position.height}px`,
-                    backgroundColor: getSeverityColor(position.severity, isActive, hoveredRisk === position.id),
+                    backgroundColor: getSeverityColor(position.severity, isActive, isHovered, isAnimated),
                     borderColor: getSeverityBorder(position.severity),
-                    transform: isActive ? 'scale(1.05)' : 'scale(1)',
-                    zIndex: isActive ? 20 : 10,
-                    position: 'absolute',
+                    borderWidth: isActive || isHovered ? '2px' : '1px',
                   }}
                   onMouseEnter={() => setHoveredRisk(position.id)}
                   onMouseLeave={() => setHoveredRisk(null)}
@@ -334,8 +383,12 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
                     onRiskClick(position.id);
                   }}
                 >
-                  <div className="absolute -top-6 left-0 text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1"
-                    style={{ backgroundColor: getSeverityBorder(position.severity), color: 'white' }}>
+                  <div 
+                    className={`absolute -top-6 left-0 text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1 shadow-sm transition-opacity duration-200 ${
+                      (isHovered || isActive) ? 'opacity-100' : 'opacity-90'
+                    }`}
+                    style={{ backgroundColor: getSeverityBorder(position.severity), color: 'white' }}
+                  >
                     {getSeverityIcon(position.severity)}
                     {position.label}
                   </div>
@@ -377,8 +430,10 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
         );
       })}
       
-      <div className="absolute bottom-4 right-4 bg-background/90 border rounded-lg shadow-md p-2 flex items-center gap-2 pointer-events-auto">
-        <span className="text-xs font-medium">Filter:</span>
+      {renderPageMinimap()}
+
+      <div className="absolute bottom-4 right-12 bg-white/90 border rounded-lg shadow-md p-2 flex items-center gap-2 pointer-events-auto">
+        <span className="text-xs font-medium">Risk Filter:</span>
         <button
           className={`w-6 h-6 rounded-full flex items-center justify-center bg-red-500 ${filteredSeverity === 'high' ? 'ring-2 ring-red-200' : ''}`}
           onClick={() => handleFilterSeverity('high')}
@@ -408,6 +463,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
             Clear
           </button>
         )}
+      </div>
+
+      <div className="absolute bottom-4 left-4 bg-white/90 border rounded-lg shadow-md py-1.5 px-3 text-xs font-medium pointer-events-auto">
+        Page Legend: Risk Icons on Pages 
+        {Array.from(new Set(adjustedRiskPositions.map(p => p.pageNumber || 1))).sort().join(', ')}
       </div>
     </div>
   );
