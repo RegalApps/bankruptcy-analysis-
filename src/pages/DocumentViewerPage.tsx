@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, FileBarChart } from "lucide-react";
 import { DocumentViewer } from "@/components/DocumentViewer";
+import { MetadataTag } from "@/components/DocumentViewer/MetadataTag";
 
 const DocumentViewerPage = () => {
   const { documentId } = useParams<{ documentId: string }>();
@@ -31,19 +32,34 @@ const DocumentViewerPage = () => {
   
   return (
     <MainLayout>
-      <div className="mb-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleBack}
-          className="flex items-center"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" /> 
-          Back
-        </Button>
+      <div className="flex flex-col items-center mb-4">
+        <div className="w-full text-center mb-2">
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-xl font-semibold">Form 47 Consumer Proposal Form.pdf</h1>
+            <MetadataTag 
+              label="Division II Proposal" 
+              variant="secondary"
+              icon={<FileBarChart className="h-3 w-3 mr-1 text-blue-500" />}
+            />
+          </div>
+        </div>
+        
+        <div className="w-full border-b mb-2"></div>
+        
+        <div className="w-full">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleBack}
+            className="flex items-center"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" /> 
+            Back to Documents
+          </Button>
+        </div>
       </div>
       
-      <div className="h-[calc(100vh-8rem)]">
+      <div className="h-[calc(100vh-10rem)]">
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
