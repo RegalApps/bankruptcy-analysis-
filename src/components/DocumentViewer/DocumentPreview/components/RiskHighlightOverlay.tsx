@@ -50,13 +50,17 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
       }
     };
     
+    const throttledHandleScroll = () => {
+      requestAnimationFrame(handleScroll);
+    };
+    
     const container = containerRef?.current;
     if (container) {
-      container.addEventListener('scroll', handleScroll, { passive: true });
+      container.addEventListener('scroll', throttledHandleScroll, { passive: true });
       setScrollOffset(container.scrollTop);
       
       return () => {
-        container.removeEventListener('scroll', handleScroll);
+        container.removeEventListener('scroll', throttledHandleScroll);
       };
     }
   }, [containerRef]);
@@ -366,6 +370,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
                     backgroundColor: getSeverityColor(position.severity, isActive, isHovered, isAnimated),
                     borderColor: getSeverityBorder(position.severity),
                     borderWidth: isActive || isHovered ? '2px' : '1px',
+                    transform: 'translateZ(0)',
                   }}
                   onMouseEnter={() => setHoveredRisk(position.id)}
                   onMouseLeave={() => setHoveredRisk(null)}
@@ -378,7 +383,11 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightProps> = ({
                     className={`absolute -top-6 left-0 text-xs font-medium px-2 py-0.5 rounded flex items-center gap-1 shadow-sm transition-opacity duration-200 ${
                       (isHovered || isActive) ? 'opacity-100' : 'opacity-90'
                     }`}
-                    style={{ backgroundColor: getSeverityBorder(position.severity), color: 'white' }}
+                    style={{ 
+                      backgroundColor: getSeverityBorder(position.severity), 
+                      color: 'white',
+                      position: 'absolute',
+                    }}
                   >
                     {getSeverityIcon(position.severity)}
                     {position.label}

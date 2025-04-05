@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AlertTriangle, Download, ExternalLink, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
@@ -57,20 +58,30 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     setLocalZoom(zoomLevel);
   }, [zoomLevel]);
   
+  // Set up a more efficient scroll handler using requestAnimationFrame
   useEffect(() => {
     const container = pdfContainerRef.current;
     
     if (!container || !pdfLoaded) return;
     
+    let rafId: number | null = null;
     const handleScroll = () => {
       if (documentContainerRef.current) {
-        updateDocumentDimensions();
+        if (rafId === null) {
+          rafId = requestAnimationFrame(() => {
+            updateDocumentDimensions();
+            rafId = null;
+          });
+        }
       }
     };
     
     container.addEventListener('scroll', handleScroll, { passive: true });
     
     return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
       container.removeEventListener('scroll', handleScroll);
     };
   }, [pdfLoaded, updateDocumentDimensions]);
@@ -97,9 +108,13 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
               if (finalDimensions.height > 100) {
                 setPdfStabilized(true);
                 setContentHeight(finalDimensions.height);
+                updateDocumentDimensions(); // Update dimensions one more time after stabilization
               } else {
                 console.log("PDF dimensions still not valid, delaying stabilization");
-                setTimeout(() => setPdfStabilized(true), 800);
+                setTimeout(() => {
+                  setPdfStabilized(true);
+                  updateDocumentDimensions();
+                }, 800);
               }
             }
           }, 600);
@@ -110,7 +125,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       
       return () => clearTimeout(initialStabilizationTimer);
     }
-  }, [pdfLoaded]);
+  }, [pdfLoaded, updateDocumentDimensions]);
 
   const getStoragePathFromUrl = (url: string): string | null => {
     try {
@@ -182,6 +197,10 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     setPdfLoaded(true);
     setLoadError(null);
     setRetryCount(0);
+    
+    // Update dimensions after successful load
+    setTimeout(updateDocumentDimensions, 100);
+    
     if (onLoad) onLoad();
   };
 
