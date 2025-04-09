@@ -30,3 +30,11 @@ export interface Form76Risk extends Risk {
   signatureRequired?: boolean;
   verificationStatus?: 'pending' | 'verified' | 'rejected';
 }
+
+export interface Form31Risk extends Risk {
+  section?: string;
+  biaReference?: string;
+  details?: string;
+  isResolved?: boolean;
+  riskCategory?: 'section4' | 'section5' | 'section6' | 'date' | 'trustee' | 'schedule' | 'other';
+}

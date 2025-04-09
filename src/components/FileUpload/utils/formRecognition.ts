@@ -1,4 +1,3 @@
-
 import { FINANCIAL_TERMS } from './constants';
 
 interface FormField {
@@ -150,17 +149,87 @@ export const extractForm31Fields = (text: string): Record<string, any> => {
     fields.claimAmount = '$89,355.00';
     fields.hasSectionIssues = true;
     
-    // Add GreenTech specific risk data
+    // Add GreenTech specific risk data based on the provided insights
     fields.risks = {
-      section4: "Missing checkbox selections in claim category",
-      section5: "Missing confirmation of relatedness status",
-      section6: "No disclosure of transfers or payments",
-      dateFormat: "Incorrect date format",
-      trusteeDeclaration: "Incomplete trustee declaration",
-      scheduleA: "No attached Schedule A"
+      highRisks: [
+        {
+          section: "Section 4",
+          description: "Missing Checkbox Selections in Claim Category",
+          details: "None of the checkboxes (Unsecured, Secured, Lessor, etc.) are checked, although $89,355 is listed.",
+          regulation: "BIA Subsection 124(2)",
+          impact: "This creates ambiguity about the nature of the claim. An incorrect or unverified claim type may result in disallowance or delayed processing.",
+          solution: "Select the appropriate claim type checkbox (likely 'A. Unsecured Claim') and complete priority claim subfields if applicable.",
+          deadline: "Immediately upon filing or before the first creditors' meeting.",
+          severity: "high"
+        },
+        {
+          section: "Section 5",
+          description: "Missing Confirmation of Relatedness/Arm's-Length Status",
+          details: "The declaration of whether the creditor is related to the debtor or dealt at arm's length is incomplete.",
+          regulation: "BIA Section 4(1) and Section 95",
+          impact: "Required for assessing transfers and preferences under s.4 and s.95–96.",
+          solution: "Clearly indicate 'I am not related' and 'have not dealt at non-arm's length' (if true).",
+          severity: "high",
+          deadline: "Immediately"
+        },
+        {
+          section: "Section 6",
+          description: "No Disclosure of Transfers, Credits, or Payments",
+          details: "The response field is empty.",
+          regulation: "BIA Section 96(1)",
+          impact: "Required to assess preferential payments or transfers at undervalue.",
+          solution: "State 'None' if applicable or list any payments, credits, or undervalued transactions within the past 3–12 months.",
+          severity: "high",
+          deadline: "Must be part of the Proof of Claim to be considered valid."
+        }
+      ],
+      mediumRisks: [
+        {
+          section: "Declaration",
+          description: "Incorrect or Incomplete Date Format",
+          details: "\"Dated at 2025, this 8 day of 0.\" is invalid.",
+          regulation: "BIA Form Regulations Rule 1",
+          impact: "Could invalidate the form due to ambiguity or perceived incompleteness.",
+          solution: "Correct to \"Dated at Toronto, this 8th day of April, 2025.\"",
+          severity: "medium",
+          deadline: "Before submission"
+        },
+        {
+          section: "Declaration",
+          description: "Incomplete Trustee Declaration",
+          details: "\"I am a creditor (or I am a Licensed Insolvency Trustee)\" is not finalized with a completed sentence or signature line.",
+          regulation: "BIA General Requirements",
+          impact: "Weakens legal standing of the declaration.",
+          solution: "Complete full sentence: \"I am a Licensed Insolvency Trustee of ABC Restructuring Ltd.\" and ensure proper signature of both trustee and witness.",
+          severity: "medium",
+          deadline: "3 days"
+        }
+      ],
+      lowRisks: [
+        {
+          section: "Supporting Documents",
+          description: "No Attached Schedule \"A\"",
+          details: "While referenced, Schedule \"A\" showing the breakdown of the $89,355 is not attached or included in this file.",
+          regulation: "BIA Subsection 124(2)",
+          impact: "May delay claim acceptance if not provided to support the stated debt.",
+          solution: "Attach a detailed account statement or affidavit showing calculation of amount owing, including any applicable interest or late fees.",
+          severity: "low",
+          deadline: "5 days"
+        },
+        {
+          section: "Optional",
+          description: "Missing Checkbox for Trustee Discharge Report Request",
+          details: "Unchecked, even though the form is being filed on behalf of a trustee.",
+          regulation: "BIA Optional Requirements",
+          impact: "Might miss delivery of discharge-related updates.",
+          solution: "Tick if desired, but not mandatory for non-individual bankruptcies.",
+          severity: "low",
+          deadline: "Optional"
+        }
+      ]
     };
     
-    console.log('Extracted GreenTech Supplies Form 31 fields:', fields);
+    console.log('Extracted GreenTech Supplies Form 31 fields with detailed risk assessment');
     return fields;
   }
   

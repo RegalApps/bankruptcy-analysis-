@@ -1,9 +1,10 @@
+
 import { toast } from "sonner";
 import { Client, Document } from "../../../types";
 import { 
   fetchClientDocuments, 
   fetchForm47Documents, 
-  handleJoshHartClient
+  handleJoshHartClient 
 } from "./documentFetcher";
 import { initializeClientFromDocuments } from "./clientDataInitializer";
 import { extractClientInfo } from "@/utils/documents/formExtraction";
@@ -91,8 +92,16 @@ export const processClientDocuments = async (
     
     // Special case for GreenTech Supplies Inc. based on provided insights
     if (clientId.toLowerCase().includes('greentech') || searchClientId.includes('greentech')) {
+      console.log("Detected GreenTech Supplies request - using special handling");
       const greenTechData = createGreenTechClientData();
       if (greenTechData) {
+        // Create client profile in database for persistence
+        await createClientIfNeeded(
+          'GreenTech Supplies Inc.', 
+          true, 
+          '$89,355.00', 
+          'greentech-form31'
+        );
         return greenTechData;
       }
     }
@@ -128,7 +137,17 @@ function createGreenTechClientData() {
       totalDebts: '$89,355.00',
       formType: 'form-31',
       processingNotes: 'Created from Form 31 Proof of Claim analysis',
-      riskLevel: 'high'
+      riskLevel: 'high',
+      riskDetails: {
+        highRiskCount: 3,
+        mediumRiskCount: 2,
+        lowRiskCount: 2,
+        requiredActions: [
+          "Select appropriate claim type checkbox in Section 4",
+          "Complete relatedness declaration in Section 5",
+          "Provide disclosure of transfers in Section 6"
+        ]
+      }
     }
   };
   
@@ -157,7 +176,8 @@ function createGreenTechClientData() {
         clientName: 'GreenTech Supplies Inc.',
         isCompany: 'true',
         totalDebts: '$89,355.00'
-      }
+      },
+      riskAssessment: getGreenTechRiskAssessment()
     }
   };
   
@@ -360,7 +380,14 @@ async function createClientIfNeeded(
             source: 'form-31',
             documentId: documentId,
             isCompany: isCompany,
-            totalDebts: totalDebts
+            totalDebts: totalDebts,
+            riskLevel: clientName.includes('GreenTech') ? 'high' : 'medium',
+            riskDetails: clientName.includes('GreenTech') ? {
+              highRiskCount: 3,
+              mediumRiskCount: 2,
+              lowRiskCount: 2,
+              summary: "Critical issues in Sections 4, 5, and 6 require immediate attention"
+            } : undefined
           }
         })
         .select()
@@ -369,14 +396,17 @@ async function createClientIfNeeded(
       if (newClient && !error) {
         toast.success(`Created client profile for ${clientName}`);
         console.log(`Created new client: ${clientName}`);
+        return newClient;
       } else if (error) {
         console.error(`Error creating client ${clientName}:`, error);
       }
     } else {
       console.log(`Client ${clientName} already exists`);
+      return existingClient;
     }
   } catch (error) {
     console.error(`Error checking/creating client ${clientName}:`, error);
+    return null;
   }
 }
 
@@ -393,7 +423,8 @@ function getGreenTechRiskAssessment() {
         regulation: "BIA Subsection 124(2)",
         impact: "Claim ambiguity can result in disallowance",
         solution: "Select appropriate claim type checkbox (likely 'A. Unsecured Claim')",
-        deadline: "Immediately upon filing"
+        deadline: "Immediately upon filing",
+        details: "None of the checkboxes (Unsecured, Secured, Lessor, etc.) are checked, although $89,355 is listed."
       }
     ],
     section5Risks: [
@@ -404,7 +435,8 @@ function getGreenTechRiskAssessment() {
         regulation: "BIA Section 4(1) and Section 95",
         impact: "Required for assessing transfers and preferences",
         solution: "Clearly indicate 'I am not related' and 'have not dealt at non-arm's length'",
-        deadline: "Immediately"
+        deadline: "Immediately",
+        details: "The declaration of whether the creditor is related to the debtor or dealt at arm's length is incomplete."
       }
     ],
     section6Risks: [
@@ -415,7 +447,8 @@ function getGreenTechRiskAssessment() {
         regulation: "BIA Section 96(1)",
         impact: "Required to assess preferential payments or transfers at undervalue",
         solution: "State 'None' if applicable or list any transactions within past 3-12 months",
-        deadline: "Immediately"
+        deadline: "Immediately",
+        details: "The response field is empty."
       }
     ],
     dateRisks: [
@@ -426,7 +459,8 @@ function getGreenTechRiskAssessment() {
         regulation: "BIA Form Regulations Rule 1",
         impact: "Could invalidate the form due to incompleteness",
         solution: "Correct to 'Dated at Toronto, this 8th day of April, 2025.'",
-        deadline: "3 days"
+        deadline: "3 days",
+        details: "\"Dated at 2025, this 8 day of 0.\" is invalid."
       }
     ],
     trusteeRisks: [
@@ -437,7 +471,8 @@ function getGreenTechRiskAssessment() {
         regulation: "BIA General Requirements",
         impact: "Weakens legal standing of the declaration",
         solution: "Complete full sentence: 'I am a Licensed Insolvency Trustee of ABC Restructuring Ltd.'",
-        deadline: "3 days"
+        deadline: "3 days",
+        details: "\"I am a creditor (or I am a Licensed Insolvency Trustee)\" is not finalized with a completed sentence or signature line."
       }
     ],
     scheduleRisks: [
@@ -448,7 +483,8 @@ function getGreenTechRiskAssessment() {
         regulation: "BIA Subsection 124(2)",
         impact: "May delay claim acceptance",
         solution: "Attach a detailed account statement or affidavit showing calculation of amount owing",
-        deadline: "5 days"
+        deadline: "5 days",
+        details: "While referenced, Schedule \"A\" showing the breakdown of the $89,355 is not attached or included in this file."
       }
     ],
     otherRisks: [
@@ -459,7 +495,8 @@ function getGreenTechRiskAssessment() {
         regulation: "BIA Section 170(1)",
         impact: "Might miss delivery of discharge-related updates",
         solution: "Tick if desired (optional for non-individual bankruptcies)",
-        deadline: "5 days"
+        deadline: "5 days",
+        details: "Unchecked, even though the form is being filed on behalf of a trustee."
       }
     ]
   };

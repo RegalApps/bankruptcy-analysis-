@@ -184,7 +184,7 @@ export const Form31RiskView: React.FC<Form31RiskViewProps> = ({
 
 // Special component for GreenTech Supplies Inc. Form 31
 const GreenTechForm31RiskView: React.FC<{ documentId: string }> = ({ documentId }) => {
-  // Risk data based on the provided Form 31 insights
+  // Risk data based on the provided Form 31 insights from the prompt
   const greenTechRisks = {
     highRisks: [
       {
@@ -270,7 +270,7 @@ const GreenTechForm31RiskView: React.FC<{ documentId: string }> = ({ documentId 
         return;
       }
       
-      // Create the client
+      // Create the client with detailed risk assessment from the provided insights
       const { data, error } = await supabase
         .from('clients')
         .insert({
@@ -280,7 +280,14 @@ const GreenTechForm31RiskView: React.FC<{ documentId: string }> = ({ documentId 
             source: 'form-31',
             documentId: documentId,
             isCompany: true,
-            totalDebts: '$89,355.00'
+            totalDebts: '$89,355.00',
+            riskLevel: 'high',
+            riskDetails: {
+              highRiskCount: 3,
+              mediumRiskCount: 2,
+              lowRiskCount: 2,
+              summary: "Critical issues in Sections 4, 5, and 6 require immediate attention"
+            }
           }
         });
         
@@ -294,7 +301,7 @@ const GreenTechForm31RiskView: React.FC<{ documentId: string }> = ({ documentId 
     }
   };
   
-  const renderRiskItem = (risk: any, index: number, type: string) => {
+  function renderRiskItem(risk: any, index: number, type: string) {
     return (
       <div key={`${type}-${index}`} className="border rounded-md p-3 bg-muted/10 mb-3">
         <div className="flex justify-between items-start mb-2">
