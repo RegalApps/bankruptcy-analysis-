@@ -38,3 +38,22 @@ export interface Form31Risk extends Risk {
   isResolved?: boolean;
   riskCategory?: 'section4' | 'section5' | 'section6' | 'date' | 'trustee' | 'schedule' | 'other';
 }
+
+// Add GreenTech specific types
+export interface GreenTechRisk extends Form31Risk {
+  // Specific fields for GreenTech risks
+  position?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  documentSection?: string;
+}
+
+export interface Form31RiskViewProps {
+  risks: Risk[];
+  documentId: string;
+  onRiskSelect?: (riskId: string) => void;
+  activeRiskId?: string | null;
+}

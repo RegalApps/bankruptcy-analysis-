@@ -1,194 +1,102 @@
 
-import React, { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import React, { useState, useEffect, useCallback } from "react";
 import { DocumentPreview } from "./DocumentPreview";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, ArrowLeft, Check, Download, Eye, MessageSquare, Share, FileBarChart } from "lucide-react";
-import { RiskAssessment } from "./components/RiskAssessment";
-import { DocumentMetadata } from "./components/DocumentMetadata";
-import { DocumentVersions } from "./components/DocumentVersions";
-import { CollaborationPanel } from "./CollaborationPanel/index";
-import { useDocumentViewer } from "./hooks/useDocumentViewer";
-import { Badge } from "@/components/ui/badge";
+import { RiskAssessment } from "./RiskAssessment";
+import { Form31RiskView } from "./RiskAssessment/Form31RiskView";
+import { Risk } from "./types";
+import { toast } from "sonner";
+import { useGreenTechForm31Risks } from "./hooks/useGreenTechForm31Risks";
 
 interface DocumentViewerProps {
   documentId: string;
   documentTitle?: string;
   isForm47?: boolean;
-  bypassAnalysis?: boolean;
-  bypassProcessing?: boolean;
-  onLoadFailure?: () => void;
-  onBack?: () => void;
-  onAnalysisComplete?: () => void;
+  isForm31GreenTech?: boolean;
+  onLoadFailure?: (errorMessage?: string) => void;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   documentId,
   documentTitle = "Document",
   isForm47 = false,
-  bypassAnalysis = false,
-  bypassProcessing = false,
-  onLoadFailure,
-  onBack,
-  onAnalysisComplete
+  isForm31GreenTech = false,
+  onLoadFailure
 }) => {
-  const [activeTab, setActiveTab] = useState("details");
+  const [isLoading, setIsLoading] = useState(true);
   const [activeRiskId, setActiveRiskId] = useState<string | null>(null);
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   
-  const {
-    document,
-    loading,
-    loadingError,
-    handleRefresh
-  } = useDocumentViewer(documentId);
+  // Get GreenTech Form 31 risks if applicable
+  const greenTechRisks = useGreenTechForm31Risks();
+  const risks = isForm31GreenTech ? greenTechRisks : [];
 
-  const handleRiskSelect = (riskId: string | null) => {
+  // Simulate loading document
+  useEffect(() => {
+    const loadDocument = async () => {
+      try {
+        setIsLoading(true);
+        
+        if (isForm47) {
+          // Use sample Form 47
+          setDocumentUrl("/documents/sample-form47.pdf");
+        } else if (isForm31GreenTech) {
+          // Use sample Form 31
+          setDocumentUrl("/documents/sample-form31-greentech.pdf");
+        } else {
+          // Generic document handling
+          setDocumentUrl("/documents/sample-document.pdf");
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error loading document:", error);
+        toast.error("Failed to load document");
+        if (onLoadFailure) onLoadFailure("Document failed to load");
+        setIsLoading(false);
+      }
+    };
+    
+    loadDocument();
+  }, [documentId, isForm47, isForm31GreenTech, onLoadFailure]);
+
+  // Handle risk selection
+  const handleRiskSelect = useCallback((riskId: string | null) => {
+    console.log("Selected risk:", riskId);
     setActiveRiskId(riskId);
-    if (riskId) {
-      setActiveTab("risks");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full border rounded-md bg-muted/30">
-        <div className="flex flex-col items-center text-center p-8">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-          <h3 className="text-lg font-medium">Loading Document</h3>
-          <p className="text-muted-foreground mt-2">Please wait while we load the document...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loadingError) {
-    return (
-      <div className="flex items-center justify-center h-full border rounded-md bg-muted/30">
-        <div className="flex flex-col items-center text-center p-8 max-w-md">
-          <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-          <h3 className="text-lg font-medium">Error Loading Document</h3>
-          <p className="text-muted-foreground mt-2 mb-4">{loadingError}</p>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={handleRefresh}>Try Again</Button>
-            {onBack && <Button onClick={onBack}>Go Back</Button>}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const title = document?.title || documentTitle;
-  const storagePath = document?.storage_path || `documents/${documentId}.pdf`;
-  
-  const documentRisks = document?.analysis?.[0]?.content?.risks || [];
-
-  const handleCommentAdded = () => {
-    handleRefresh();
-  };
+  }, []);
 
   return (
-    <div className="flex flex-col h-full border rounded-md bg-card overflow-hidden">
-      <div className="p-4 border-b flex items-center justify-between">
-        <div className="flex items-center">
-          {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack} className="mr-2">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          )}
-          <div>
-            <h2 className="text-lg font-semibold">{title}</h2>
-            <div className="flex items-center mt-1 space-x-2">
-              <Badge variant="success" className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600">
-                <FileBarChart className="h-3.5 w-3.5" />
-                Division II Proposal
-              </Badge>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-1.5" />
-            Download
-          </Button>
-          <Button variant="outline" size="sm">
-            <Share className="h-4 w-4 mr-1.5" />
-            Share
-          </Button>
-          <Button size="sm">
-            <Check className="h-4 w-4 mr-1.5" />
-            Approve
-          </Button>
-        </div>
+    <div className="flex h-full gap-4">
+      <div className="flex-1 bg-card border rounded-lg overflow-hidden">
+        <DocumentPreview
+          fileUrl={documentUrl}
+          title={documentTitle}
+          documentId={documentId}
+          isLoading={isLoading}
+          onError={onLoadFailure}
+          risks={risks}
+          activeRiskId={activeRiskId}
+          onRiskSelect={handleRiskSelect}
+        />
       </div>
-
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="border-r">
-          <CollaborationPanel 
-            document={document} 
-            documentId={documentId}
-            onCommentAdded={handleCommentAdded}
+      
+      <div className="w-[350px] bg-card border rounded-lg overflow-hidden">
+        {isForm31GreenTech ? (
+          <Form31RiskView 
+            documentId={documentId} 
+            risks={risks}
             activeRiskId={activeRiskId}
             onRiskSelect={handleRiskSelect}
           />
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        <ResizablePanel defaultSize={50} minSize={30}>
-          <div className="h-full flex flex-col bg-muted/10">
-            <DocumentPreview 
-              storagePath={storagePath} 
-              documentId={documentId} 
-              title={title} 
-              bypassAnalysis={bypassAnalysis || bypassProcessing}
-              onAnalysisComplete={onAnalysisComplete}
-              activeRiskId={activeRiskId}
-              onRiskSelect={handleRiskSelect}
-            />
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="w-full px-4 pt-3 pb-0 justify-start border-b rounded-none gap-2">
-              <TabsTrigger value="details" className="text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
-                Details
-              </TabsTrigger>
-              <TabsTrigger value="risks" className="text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
-                Risks {documentRisks.length > 0 && `(${documentRisks.length})`}
-              </TabsTrigger>
-              <TabsTrigger value="versions" className="text-xs data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
-                Versions
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details" className="p-4 flex-1 overflow-auto">
-              {document && <DocumentMetadata document={document} />}
-            </TabsContent>
-            
-            <TabsContent value="risks" className="p-0 m-0 flex-1 overflow-auto">
-              <RiskAssessment 
-                risks={documentRisks} 
-                documentId={documentId} 
-                activeRiskId={activeRiskId}
-                onRiskSelect={handleRiskSelect}
-              />
-            </TabsContent>
-            
-            <TabsContent value="versions" className="p-4 flex-1 overflow-auto">
-              {document?.versions && (
-                <DocumentVersions 
-                  documentVersions={document.versions} 
-                  currentDocumentId={documentId}
-                />
-              )}
-            </TabsContent>
-          </Tabs>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        ) : (
+          <RiskAssessment 
+            documentId={documentId} 
+            risks={risks}
+            activeRiskId={activeRiskId}
+            onRiskSelect={handleRiskSelect}
+          />
+        )}
+      </div>
     </div>
   );
 };
