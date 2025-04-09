@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { AlertTriangle, Clock, Info, CheckCircle2, FileCheck, Pen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,7 @@ export const Form31RiskView: React.FC<Form31RiskViewProps> = ({
   // Look for GreenTech Supplies and use special handling if found
   const isGreenTechForm = risks.some(r => 
     r.description.toLowerCase().includes('greentech') ||
-    (r.metadata?.clientName || '').toLowerCase().includes('greentech')
+    ((r.metadata as Record<string, any>)?.clientName || '').toLowerCase().includes('greentech')
   );
   
   // Use special handling for GreenTech Supplies

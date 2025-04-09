@@ -33,7 +33,8 @@ export const extractClientInfo = (text: string) => {
       clientEmail: extractEmail(text),
       totalDebts: extractTotalDebts(text),
       totalAssets: extractTotalAssets(text),
-      monthlyIncome: extractMonthlyIncome(text)
+      monthlyIncome: extractMonthlyIncome(text),
+      isCompany: extractIsCompany(text)
     };
     
     logger.info("Extracted client information:", clientInfo);
@@ -42,6 +43,25 @@ export const extractClientInfo = (text: string) => {
     logger.error("Error extracting client information:", error);
     return {};
   }
+};
+
+/**
+ * Helper function to determine if client is a company based on text
+ */
+const extractIsCompany = (text: string): string => {
+  // Look for company indicators
+  const companyIndicators = [
+    /ltd\.?|inc\.?|limited|corporation|corp\.?/i,
+    /company|enterprise|business/i
+  ];
+
+  for (const pattern of companyIndicators) {
+    if (pattern.test(text)) {
+      return 'true';
+    }
+  }
+  
+  return 'false';
 };
 
 /**

@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { Client, Document } from "../../../types";
 import { 
@@ -177,8 +176,8 @@ async function processDocumentsContent(docs: Document[]): Promise<Document[]> {
   for (let i = 0; i < processedDocs.length; i++) {
     const doc = processedDocs[i];
     
-    // Skip if no storage path or if it's not an accessible property
-    if (!doc.storage_path && !(doc as any).storage_path) {
+    // Skip if no storage path
+    if (!doc.storage_path) {
       continue;
     }
     
@@ -211,8 +210,8 @@ async function processDocumentsContent(docs: Document[]): Promise<Document[]> {
     
     // Try to process document text for other cases
     try {
-      // Get the storage path - handle type differences
-      const storagePath = doc.storage_path || (doc as any).storage_path;
+      // Get the storage path
+      const storagePath = doc.storage_path;
       
       if (!storagePath) continue;
       
@@ -284,7 +283,7 @@ async function processDocumentsContent(docs: Document[]): Promise<Document[]> {
           extractedClientInfo: clientInfo,
           formType: isForm31(text) ? 'form-31' : undefined
         });
-          
+        
         // Create client record if needed
         if (clientInfo.clientName) {
           const isCompany = clientInfo.isCompany === 'true';

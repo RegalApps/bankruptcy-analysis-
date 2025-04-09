@@ -8,6 +8,7 @@ export interface Risk {
   requiredAction?: string;
   solution?: string;
   deadline?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface RiskAssessmentProps {
