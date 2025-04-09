@@ -12,11 +12,13 @@ import {
 import { TooltipProvider } from "../../ui/tooltip";
 import { RiskItem } from "./RiskItem";
 import { Form47RiskView } from "./Form47RiskView";
+import { Form31RiskView } from "./Form31RiskView";
 import { RiskAssessmentProps } from "./types";
 import { Badge } from "@/components/ui/badge";
 
 export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], documentId, isLoading }) => {
   const [isForm47, setIsForm47] = useState(false);
+  const [isForm31, setIsForm31] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<string | null>(null);
   const riskRefs = useRef<Record<string, HTMLDivElement | null>>({});
   
@@ -43,6 +45,26 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
 
     console.log('Is Form 47 detected from risks:', isConsumerProposal);
     setIsForm47(isConsumerProposal);
+    
+    // Detect if this is a Form 31 (Proof of Claim) document based on risks
+    const isProofOfClaim = risks.some(risk => 
+      (risk.regulation && (
+        risk.regulation.includes('124(2)') || 
+        risk.regulation.includes('BIA Subsection 124')
+      )) || 
+      (risk.description && (
+        risk.description.toLowerCase().includes('proof of claim') ||
+        risk.description.toLowerCase().includes('section 4') ||
+        risk.description.toLowerCase().includes('claim category') ||
+        risk.description.toLowerCase().includes('schedule "a"')
+      )) ||
+      (risk.type && (
+        risk.type.toLowerCase().includes('proof of claim')
+      ))
+    );
+    
+    console.log('Is Form 31 detected from risks:', isProofOfClaim);
+    setIsForm31(isProofOfClaim);
   }, [risks]);
   
   // Listen for risk selection events from the document viewer
@@ -111,6 +133,8 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
         {/* Use specialized view for Form 47 */}
         {isForm47 ? (
           <Form47RiskView risks={risks} documentId={documentId} />
+        ) : isForm31 ? (
+          <Form31RiskView risks={risks} documentId={documentId} />
         ) : (
           <>
             {/* Risk summary badges */}

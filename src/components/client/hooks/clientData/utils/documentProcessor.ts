@@ -7,6 +7,8 @@ import {
   handleJoshHartClient
 } from "./documentFetcher";
 import { initializeClientFromDocuments } from "./clientDataInitializer";
+import { extractClientInfo } from "@/utils/documents/formExtraction";
+import { supabase } from "@/lib/supabase";
 
 /**
  * Processes client documents and returns client data and documents
@@ -67,9 +69,17 @@ export const processClientDocuments = async (
     console.log(`Found ${clientDocs?.length || 0} documents for client:`, clientDocs);
     
     if (clientDocs && clientDocs.length > 0) {
-      const client = initializeClientFromDocuments(clientId, clientDocs);
-      return { client, documents: clientDocs };
-    } 
+      // Try to extract text content for Form 31 processing
+      try {
+        const processedClientDocs = await processDocumentsContent(clientDocs);
+        const client = initializeClientFromDocuments(clientId, processedClientDocs);
+        return { client, documents: processedClientDocs };
+      } catch (extractError) {
+        console.error("Error processing document content:", extractError);
+        const client = initializeClientFromDocuments(clientId, clientDocs);
+        return { client, documents: clientDocs };
+      }
+    }
     
     // Special case for Josh Hart when no documents found
     const joshHartData = handleJoshHartClient(clientId, searchClientId);
@@ -91,3 +101,93 @@ export const processClientDocuments = async (
     throw error;
   }
 };
+
+/**
+ * Process document content to extract client information for appropriate form types
+ */
+async function processDocumentsContent(docs: Document[]): Promise<Document[]> {
+  const processedDocs = [...docs];
+  
+  for (let i = 0; i < processedDocs.length; i++) {
+    const doc = processedDocs[i];
+    
+    // Skip if not a Form 31 or no storage path
+    if (!doc.storage_path || !doc.title?.toLowerCase().includes('form 31')) {
+      continue;
+    }
+    
+    try {
+      // Fetch document text content
+      const { data } = await supabase.storage
+        .from('documents')
+        .download(doc.storage_path);
+      
+      if (!data) continue;
+      
+      // Get text content from document
+      const text = await data.text();
+      
+      // Extract client info
+      const clientInfo = extractClientInfo(text);
+      
+      // Update document metadata
+      if (Object.keys(clientInfo).length > 0) {
+        processedDocs[i] = {
+          ...doc,
+          metadata: {
+            ...doc.metadata,
+            extractedClientInfo: clientInfo,
+            formType: 'form-31'
+          }
+        };
+        
+        // Also update in database
+        await supabase
+          .from('documents')
+          .update({
+            metadata: {
+              ...doc.metadata,
+              extractedClientInfo: clientInfo,
+              formType: 'form-31'
+            }
+          })
+          .eq('id', doc.id);
+          
+        // Create client record if needed
+        if (clientInfo.clientName) {
+          const { data: existingClient } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('name', clientInfo.clientName)
+            .single();
+            
+          if (!existingClient) {
+            const { data: newClient, error } = await supabase
+              .from('clients')
+              .insert({
+                name: clientInfo.clientName,
+                status: 'active',
+                metadata: {
+                  source: 'form-31',
+                  documentId: doc.id,
+                  isCompany: clientInfo.isCompany === 'true',
+                  totalDebts: clientInfo.totalDebts
+                }
+              })
+              .select()
+              .single();
+              
+            if (newClient && !error) {
+              toast.success(`Created client profile for ${clientInfo.clientName}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error processing document text:", error);
+    }
+  }
+  
+  return processedDocs;
+}
+
