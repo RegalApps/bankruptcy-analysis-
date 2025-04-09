@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Risk } from "../../types";
+import { Risk } from "../../RiskAssessment/types";
 
 interface RiskHighlightOverlayProps {
   risks: Risk[];
@@ -22,7 +22,7 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightOverlayProps> = ({
   // Special case for GreenTech Supplies Form 31
   const isGreenTechForm31 = risks.some(risk => 
     risk.description?.toLowerCase().includes('greentech') || 
-    ((risk.metadata as any)?.clientName || '').toLowerCase().includes('greentech'));
+    ((risk.metadata && risk.metadata.clientName) || '').toLowerCase().includes('greentech'));
 
   const getHighlightPositions = () => {
     if (isGreenTechForm31) {

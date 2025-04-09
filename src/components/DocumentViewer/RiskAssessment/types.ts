@@ -15,6 +15,8 @@ export interface RiskAssessmentProps {
   documentId: string;
   risks?: Risk[];
   isLoading?: boolean;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string | null) => void;
 }
 
 export interface Form47Risk extends Risk {
@@ -54,6 +56,6 @@ export interface GreenTechRisk extends Form31Risk {
 export interface Form31RiskViewProps {
   risks: Risk[];
   documentId: string;
-  onRiskSelect?: (riskId: string) => void;
+  onRiskSelect?: (riskId: string | null) => void;
   activeRiskId?: string | null;
 }

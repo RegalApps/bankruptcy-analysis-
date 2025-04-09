@@ -16,11 +16,24 @@ import { Form31RiskView } from "./Form31RiskView";
 import { RiskAssessmentProps } from "./types";
 import { Badge } from "@/components/ui/badge";
 
-export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], documentId, isLoading }) => {
+export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ 
+  risks = [], 
+  documentId, 
+  isLoading,
+  activeRiskId,
+  onRiskSelect 
+}) => {
   const [isForm47, setIsForm47] = useState(false);
   const [isForm31, setIsForm31] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<string | null>(null);
   const riskRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  
+  // Update selected risk when activeRiskId changes
+  useEffect(() => {
+    if (activeRiskId !== undefined && activeRiskId !== null) {
+      setSelectedRisk(activeRiskId);
+    }
+  }, [activeRiskId]);
   
   // Detect if this is a Form 47 (Consumer Proposal) document based on risks
   useEffect(() => {
@@ -107,6 +120,13 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
     };
   }, [risks]);
   
+  const handleLocalRiskSelect = (riskId: string | null) => {
+    setSelectedRisk(riskId);
+    if (onRiskSelect) {
+      onRiskSelect(riskId);
+    }
+  };
+  
   // Count risks by severity
   const criticalCount = risks?.filter(r => r.severity === 'high').length || 0;
   const moderateCount = risks?.filter(r => r.severity === 'medium').length || 0;
@@ -132,9 +152,19 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
       <div className="space-y-4">
         {/* Use specialized view for Form 47 */}
         {isForm47 ? (
-          <Form47RiskView risks={risks} documentId={documentId} />
+          <Form47RiskView 
+            risks={risks} 
+            documentId={documentId} 
+            activeRiskId={selectedRisk}
+            onRiskSelect={handleLocalRiskSelect}
+          />
         ) : isForm31 ? (
-          <Form31RiskView risks={risks} documentId={documentId} />
+          <Form31RiskView 
+            risks={risks} 
+            documentId={documentId}
+            activeRiskId={selectedRisk}
+            onRiskSelect={handleLocalRiskSelect}
+          />
         ) : (
           <>
             {/* Risk summary badges */}

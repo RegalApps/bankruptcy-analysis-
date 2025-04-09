@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { DocumentPreview } from "./DocumentPreview";
 import { RiskAssessment } from "./RiskAssessment";
 import { Form31RiskView } from "./RiskAssessment/Form31RiskView";
-import { Risk } from "./types";
+import { Risk } from "./RiskAssessment/types";
 import { toast } from "sonner";
 import { useGreenTechForm31Risks } from "./hooks/useGreenTechForm31Risks";
 
@@ -13,6 +13,7 @@ interface DocumentViewerProps {
   isForm47?: boolean;
   isForm31GreenTech?: boolean;
   onLoadFailure?: (errorMessage?: string) => void;
+  bypassProcessing?: boolean;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
@@ -20,7 +21,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   documentTitle = "Document",
   isForm47 = false,
   isForm31GreenTech = false,
-  onLoadFailure
+  onLoadFailure,
+  bypassProcessing = false
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeRiskId, setActiveRiskId] = useState<string | null>(null);
@@ -69,12 +71,21 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     <div className="flex h-full gap-4">
       <div className="flex-1 bg-card border rounded-lg overflow-hidden">
         <DocumentPreview
-          fileUrl={documentUrl}
-          title={documentTitle}
+          storagePath={documentUrl || ""}
           documentId={documentId}
-          isLoading={isLoading}
-          onError={onLoadFailure}
-          risks={risks}
+          title={documentTitle || ""}
+          previewState={{
+            fileExists: !!documentUrl,
+            fileUrl: documentUrl,
+            isPdfFile: () => true,
+            isExcelFile: () => false,
+            isDocFile: () => false,
+            isLoading,
+            previewError: null,
+            setPreviewError: () => {},
+            checkFile: async () => {},
+            documentRisks: risks
+          }}
           activeRiskId={activeRiskId}
           onRiskSelect={handleRiskSelect}
         />
