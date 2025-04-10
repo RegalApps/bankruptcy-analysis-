@@ -1,150 +1,99 @@
 
-import { useState } from "react";
-import { 
-  Card,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { 
-  AlertOctagon, 
-  AlertTriangle, 
-  Info, 
-  Clock,
-  BookOpen,
-  Bookmark
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Risk } from "./types";
-import { CreateTaskButton } from "./CreateTaskButton";
+import { AlertTriangle, AlertCircle, Info, CalendarClock } from "lucide-react";
+import { Risk } from './types';
 
 interface RiskItemProps {
   risk: Risk;
   documentId: string;
+  isActive?: boolean;
+  onSelect?: () => void;
 }
 
-export const RiskItem = ({ risk, documentId }: RiskItemProps) => {
-  const [expanded, setExpanded] = useState(false);
-  
-  // Format risk severity with corresponding icon
+export const RiskItem: React.FC<RiskItemProps> = ({ 
+  risk, 
+  documentId,
+  isActive = false, 
+  onSelect
+}) => {
   const getSeverityIcon = () => {
     switch (risk.severity) {
       case 'high':
-        return <AlertOctagon className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
       case 'medium':
         return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-      case 'low':
-        return <Info className="h-4 w-4 text-yellow-500" />;
       default:
-        return <Info className="h-4 w-4 text-muted-foreground" />;
+        return <Info className="h-4 w-4 text-blue-500" />;
     }
   };
-  
-  const getDeadlineString = () => {
-    if (!risk.deadline) return null;
-    
-    // Handle different deadline formats
-    if (risk.deadline.toLowerCase() === 'immediately') {
-      return (
-        <Badge variant="outline" className="text-red-500 border-red-200 flex items-center gap-1 ml-auto">
-          <Clock className="h-3 w-3" />
-          Immediate
-        </Badge>
-      );
-    } else if (risk.deadline.toLowerCase().includes('day')) {
-      return (
-        <Badge variant="outline" className="text-amber-500 border-amber-200 flex items-center gap-1 ml-auto">
-          <Clock className="h-3 w-3" />
-          {risk.deadline}
-        </Badge>
-      );
-    } else {
-      return (
-        <Badge variant="outline" className="text-muted-foreground border-muted flex items-center gap-1 ml-auto">
-          <Clock className="h-3 w-3" />
-          {risk.deadline}
-        </Badge>
-      );
+
+  const getSeverityBadge = () => {
+    switch (risk.severity) {
+      case 'high':
+        return <Badge variant="destructive">Critical</Badge>;
+      case 'medium':
+        return <Badge variant="default">Moderate</Badge>;
+      default:
+        return <Badge variant="outline">Low</Badge>;
+    }
+  };
+
+  const handleClick = () => {
+    if (onSelect) {
+      onSelect();
     }
   };
 
   return (
-    <Card className="overflow-hidden border-l-4 bg-background shadow-sm hover:shadow-md transition-shadow"
-          style={{
-            borderLeftColor: risk.severity === 'high' 
-              ? 'rgb(239 68 68)' 
-              : risk.severity === 'medium' 
-                ? 'rgb(245 158 11)' 
-                : 'rgb(234 179 8)'
-          }}>
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5">
+    <Card 
+      className={`
+        cursor-pointer transition-all hover:bg-muted/30
+        ${isActive ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'}
+      `}
+      onClick={handleClick}
+    >
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
             {getSeverityIcon()}
+            <h5 className="text-sm font-medium">{risk.type}</h5>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <div className="font-medium text-sm">{risk.type || "Unknown Risk"}</div>
-              {getDeadlineString()}
-            </div>
-            <p className="text-sm text-muted-foreground line-clamp-2">{risk.description}</p>
+          {getSeverityBadge()}
+        </div>
+        
+        <p className="text-sm text-muted-foreground mb-3">{risk.description}</p>
+
+        {risk.regulation && (
+          <p className="text-xs text-muted-foreground mb-2">
+            <span className="font-medium">Regulation:</span> {risk.regulation}
+          </p>
+        )}
+        
+        {(risk.impact || risk.requiredAction) && (
+          <div className="mb-2 p-2 bg-muted/50 rounded-md text-xs">
+            {risk.impact && (
+              <p className="mb-1">
+                <span className="font-medium">Impact:</span> {risk.impact}
+              </p>
+            )}
             
-            {expanded && (
-              <div className="mt-3 space-y-2 text-sm">
-                {risk.impact && (
-                  <div className="flex gap-2">
-                    <span className="font-medium">Impact:</span>
-                    <span className="text-muted-foreground">{risk.impact}</span>
-                  </div>
-                )}
-                
-                {risk.requiredAction && (
-                  <div className="flex gap-2">
-                    <span className="font-medium">Required Action:</span>
-                    <span className="text-muted-foreground">{risk.requiredAction}</span>
-                  </div>
-                )}
-                
-                {risk.solution && (
-                  <div className="flex gap-2">
-                    <span className="font-medium">Solution:</span>
-                    <span className="text-muted-foreground">{risk.solution}</span>
-                  </div>
-                )}
-                
-                {risk.regulation && (
-                  <div className="flex items-center gap-2 mt-3">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground rounded-full bg-muted px-2 py-1">
-                          <BookOpen className="h-3 w-3" />
-                          {risk.regulation}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Regulatory reference: {risk.regulation}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                )}
-              </div>
+            {risk.requiredAction && (
+              <p>
+                <span className="font-medium">Required Action:</span> {risk.requiredAction}
+              </p>
             )}
           </div>
-        </div>
-      </CardContent>
-      
-      <CardFooter className="p-2 flex justify-between items-center bg-muted/30">
-        <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} className="text-xs">
-          {expanded ? 'Show Less' : 'Show More'}
-        </Button>
+        )}
         
-        <CreateTaskButton documentId={documentId} risk={risk} />
-      </CardFooter>
+        {risk.deadline && (
+          <div className="flex items-center text-xs text-muted-foreground mt-3">
+            <CalendarClock className="h-3.5 w-3.5 mr-1.5" />
+            Due: {risk.deadline}
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 };

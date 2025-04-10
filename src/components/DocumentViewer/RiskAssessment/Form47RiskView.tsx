@@ -19,11 +19,15 @@ import { RiskItem } from "./RiskItem";
 interface Form47RiskViewProps {
   risks: Risk[];
   documentId: string;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string | null) => void;
 }
 
 export const Form47RiskView: React.FC<Form47RiskViewProps> = ({ 
   risks, 
-  documentId 
+  documentId,
+  activeRiskId,
+  onRiskSelect = () => {} 
 }) => {
   // Filter for Form 47 specific categories
   const paymentRisks = risks.filter(r => 
@@ -143,7 +147,13 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
           </h4>
           <div className="space-y-2">
             {paymentRisks.map((risk, index) => (
-              <RiskItem key={`payment-${index}`} risk={risk} documentId={documentId} />
+              <RiskItem 
+                key={`payment-${index}`} 
+                risk={risk} 
+                documentId={documentId} 
+                isActive={activeRiskId === `payment-${index}`}
+                onSelect={() => onRiskSelect?.(`payment-${index}`)}
+              />
             ))}
           </div>
         </div>
@@ -157,7 +167,13 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
           </h4>
           <div className="space-y-2">
             {complianceRisks.map((risk, index) => (
-              <RiskItem key={`compliance-${index}`} risk={risk} documentId={documentId} />
+              <RiskItem 
+                key={`compliance-${index}`} 
+                risk={risk} 
+                documentId={documentId}
+                isActive={activeRiskId === `compliance-${index}`}
+                onSelect={() => onRiskSelect?.(`compliance-${index}`)}
+              />
             ))}
           </div>
         </div>
@@ -171,7 +187,13 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
           </h4>
           <div className="space-y-2">
             {documentationRisks.map((risk, index) => (
-              <RiskItem key={`doc-${index}`} risk={risk} documentId={documentId} />
+              <RiskItem 
+                key={`doc-${index}`} 
+                risk={risk} 
+                documentId={documentId}
+                isActive={activeRiskId === `doc-${index}`}
+                onSelect={() => onRiskSelect?.(`doc-${index}`)}
+              />
             ))}
           </div>
         </div>
@@ -185,7 +207,13 @@ export const Form47RiskView: React.FC<Form47RiskViewProps> = ({
           </h4>
           <div className="space-y-2">
             {deadlineRisks.map((risk, index) => (
-              <RiskItem key={`deadline-${index}`} risk={risk} documentId={documentId} />
+              <RiskItem 
+                key={`deadline-${index}`} 
+                risk={risk} 
+                documentId={documentId}
+                isActive={activeRiskId === `deadline-${index}`}
+                onSelect={() => onRiskSelect?.(`deadline-${index}`)}
+              />
             ))}
           </div>
         </div>

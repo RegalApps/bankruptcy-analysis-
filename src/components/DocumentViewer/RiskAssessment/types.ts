@@ -60,7 +60,7 @@ export interface Form31RiskViewProps {
   activeRiskId?: string | null;
 }
 
-// Add missing interface for Form47RiskView component
+// Update Form47RiskViewProps interface to include activeRiskId and onRiskSelect
 export interface Form47RiskViewProps {
   risks: Risk[];
   documentId: string;
