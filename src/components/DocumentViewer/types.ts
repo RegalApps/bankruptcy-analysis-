@@ -1,52 +1,9 @@
 
-export interface DocumentDetails {
-  id: string;
-  title: string;
-  type?: string;
-  description?: string;
-  size?: number;
-  created_at?: string;
-  updated_at?: string;
-  user_id?: string;
-  status?: string;
-  tags?: string[];
-  content?: string;
-  storage_path: string;
-  metadata?: Record<string, any>;
-  url?: string;
-  analysis?: Array<{
-    content: any;
-  }>;
-  versions?: DocumentVersion[];
-  comments?: Array<{
-    id: string;
-    content: any;
-    created_at: string;
-    user_id: string;
-  }>;
-  tasks?: Task[];
-  deadlines?: Deadline[];
-  file_size?: number;
-  creation_date?: string;
-}
-
-export interface DocumentVersion {
-  id: string;
-  document_id: string;
-  version_number: number;
-  version_name?: string;
-  storage_path: string;
-  created_at: string;
-  created_by: string;
-  is_current: boolean;
-  change_summary?: string;
-  metadata?: Record<string, any>;
-}
-
 export interface Risk {
-  type: string;
+  severity: string;
+  type?: string;
+  title?: string;
   description: string;
-  severity: "low" | "medium" | "high";
   regulation?: string;
   impact?: string;
   requiredAction?: string;
@@ -54,58 +11,55 @@ export interface Risk {
   deadline?: string;
 }
 
-export interface DocumentComment {
+export interface DocumentDetails {
   id: string;
-  document_id: string;
-  user_id: string;
-  content: {
-    text: string;
-    attachments?: string[];
-    page?: number;
-    position?: {
-      x: number;
-      y: number;
-    };
-  };
-  parent_id?: string | null;
-  created_at: string;
-  updated_at?: string;
-  status?: "active" | "deleted" | "resolved";
-  replies?: DocumentComment[];
-}
-
-export interface Deadline {
-  title: string;
-  dueDate: string;
-  description?: string;
-}
-
-export interface Task {
-  id: string;
-  document_id?: string;
-  title: string;
-  description?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  severity: 'low' | 'medium' | 'high';
+  title?: string;
+  type?: string;
+  status?: string;
+  client_id?: string;
   created_at?: string;
-  due_date?: string;
-  assigned_to?: string;
-  created_by?: string;
-  regulation?: string;
-  solution?: string;
+  updated_at?: string;
+  analysis?: { 
+    content: any 
+  }[];
+  comments?: any[];
+  deadline?: string;
+  submission_date?: string;
 }
 
-export interface CollaborationPanelProps {
-  document: DocumentDetails;
-  onCommentAdded?: () => void;
-  activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string) => void;
+export interface DocumentSummaryProps {
+  summary?: string;
+  regulatoryCompliance?: {
+    status: string;
+    details: string[];
+    references: string[];
+  };
 }
 
-export interface DocumentPreviewProps {
-  storagePath: string;
-  documentId: string;
-  title: string;
-  bypassAnalysis?: boolean;
-  onAnalysisComplete?: () => void;
+export interface ExtractedInfo {
+  clientName?: string;
+  clientAddress?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  trusteeName?: string;
+  trusteeAddress?: string;
+  trusteeEmail?: string;
+  trusteePhone?: string;
+  formType?: string;
+  formNumber?: string;
+  dateSigned?: string;
+  estateNumber?: string;
+  district?: string;
+  divisionNumber?: string;
+  courtNumber?: string;
+  meetingOfCreditors?: string;
+  chairInfo?: string;
+  securityInfo?: string;
+  dateBankruptcy?: string;
+  officialReceiver?: string;
+  filingDate?: string;
+  submissionDeadline?: string;
+  documentStatus?: string;
+  summary?: string;
+  paymentSchedule?: string;
 }

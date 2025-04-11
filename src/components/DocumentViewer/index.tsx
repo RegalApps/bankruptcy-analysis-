@@ -12,6 +12,7 @@ import { Risk } from "./RiskAssessment/types";
 import { toast } from "sonner";
 import { useGreenTechForm31Risks } from "./hooks/useGreenTechForm31Risks";
 import { useDocumentViewer } from "./useDocumentViewer";
+import { Sidebar } from "./Sidebar";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -138,9 +139,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   // Risk assessment component for the right panel  
   const riskAssessment = (
     isForm31GreenTech ? (
-      <Form31RiskView risks={documentRisks} activeRiskId={activeRiskId} onRiskSelect={handleRiskSelect} />
+      <Form31RiskView 
+        risks={documentRisks} 
+        documentId={documentId}
+        activeRiskId={activeRiskId} 
+        onRiskSelect={handleRiskSelect} 
+      />
     ) : (
-      <RiskAssessment risks={documentRisks} activeRiskId={activeRiskId} onRiskSelect={handleRiskSelect} />
+      <RiskAssessment 
+        risks={documentRisks} 
+        documentId={documentId}
+        activeRiskId={activeRiskId} 
+        onRiskSelect={handleRiskSelect} 
+      />
     )
   );
 
@@ -238,10 +249,26 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     />
   );
 
+  // Create the sidebar content for the right panel
+  const sidebarContent = (
+    document ? (
+      <Sidebar 
+        document={document} 
+        onDeadlineUpdated={() => console.log("Deadline updated")} 
+      />
+    ) : (
+      <div className="h-full flex flex-col space-y-4 p-4">
+        {clientDetails}
+        {documentSummary}
+        {riskAssessment}
+      </div>
+    )
+  );
+
   return (
     <ViewerLayout
       isForm47={isForm47}
-      sidebar={sidebar}
+      sidebar={sidebarContent}
       mainContent={mainContent}
       collaborationPanel={collaborationPanel}
       taskPanel={taskPanel}

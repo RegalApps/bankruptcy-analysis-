@@ -13,6 +13,7 @@ interface ViewerLayoutProps {
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
   analysisPanel?: React.ReactNode;
+  deadlinesPanel?: React.ReactNode;
   documentTitle?: string;
   documentType?: string;
   clientDetails?: React.ReactNode;
@@ -28,6 +29,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   taskPanel,
   versionPanel,
   analysisPanel,
+  deadlinesPanel,
   documentTitle = "Document",
   documentType = "Document",
   clientDetails,
@@ -87,7 +89,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
         {isMobile ? (
           <MobileLayout
             showSidebar={showSidebar}
-            sidebar={rightPanelContent}
+            sidebar={sidebar}
             mainContent={mainContent}
             showCollaborationPanel={showCollaborationPanel}
             collaborationPanel={collaborationPanel}
@@ -100,7 +102,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
         ) : isTablet ? (
           <TabletLayout
             showSidebar={showSidebar}
-            sidebar={rightPanelContent}
+            sidebar={sidebar}
             mainContent={mainContent}
             showCollaborationPanel={showCollaborationPanel}
             collaborationPanel={collaborationPanel}
@@ -113,7 +115,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
         ) : (
           <DesktopLayout
             showSidebar={showSidebar}
-            sidebar={rightPanelContent}
+            sidebar={sidebar}
             mainContent={mainContent}
             showCollaborationPanel={showCollaborationPanel}
             collaborationPanel={collaborationPanel}
