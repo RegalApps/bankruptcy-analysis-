@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Risk, DocumentDetails } from "../types";
+import { toast as sonner } from "sonner";
 
 export const useDocumentAnalysisAI = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -10,7 +10,7 @@ export const useDocumentAnalysisAI = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const analyzeDocument = async (documentId: string, documentText?: string) => {
+  const analyzeDocument = async (documentId: string, documentText?: string, documentType?: string) => {
     if (!documentId) {
       setError("Document ID is required");
       toast({
@@ -25,15 +25,26 @@ export const useDocumentAnalysisAI = () => {
     setError(null);
     
     try {
+      sonner.info("Document analysis started", {
+        description: "This may take a few moments"
+      });
+      
+      console.log(`Calling analyze-document-openai function for document ${documentId}`);
+      
       const { data, error: invokeError } = await supabase.functions.invoke('analyze-document-openai', {
         body: {
           documentId,
           documentText,
-          documentType: "form31" // You can make this dynamic based on document metadata
+          documentType: documentType || "generic"
         }
       });
 
-      if (invokeError) throw new Error(invokeError.message);
+      if (invokeError) {
+        console.error("Error invoking function:", invokeError);
+        throw new Error(invokeError.message || "Failed to analyze document");
+      }
+      
+      console.log("Analysis result:", data);
       
       if (data?.analysis) {
         setResult(data.analysis);
@@ -43,26 +54,31 @@ export const useDocumentAnalysisAI = () => {
           description: "Document has been successfully analyzed"
         });
         
-        // Fetch the updated document analysis
+        // Fetch the updated document analysis to ensure we have the latest data
         const { data: analysisData } = await supabase
           .from('document_analysis')
           .select('content')
           .eq('document_id', documentId)
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
           
         if (analysisData) {
+          console.log("Updated analysis data from database:", analysisData);
           setResult(analysisData.content);
         }
+      } else {
+        setResult(null);
+        throw new Error("No analysis data returned");
       }
+      
     } catch (err: any) {
       console.error("Document analysis failed:", err);
-      setError(err.message);
+      setError(err.message || "An unknown error occurred");
       toast({
         variant: "destructive",
         title: "Analysis Failed",
-        description: err.message
+        description: err.message || "Failed to analyze document"
       });
     } finally {
       setIsAnalyzing(false);

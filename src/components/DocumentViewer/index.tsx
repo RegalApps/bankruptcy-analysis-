@@ -5,11 +5,13 @@ import { DocumentPreview } from "./DocumentPreview";
 import { RiskAssessment } from "./RiskAssessment";
 import { Form31RiskView } from "./RiskAssessment/Form31RiskView";
 import { CollaborationPanel } from "./CollaborationPanel";
-import { DocumentDetails } from "./DocumentDetails";
+import { DocumentDetails as DocumentDetailsComponent } from "./DocumentDetails";
 import { DocumentAnalysis } from "./DocumentAnalysis";
+import { DocumentSummary } from "./DocumentDetails/DocumentSummary";
 import { Risk } from "./RiskAssessment/types";
 import { toast } from "sonner";
 import { useGreenTechForm31Risks } from "./hooks/useGreenTechForm31Risks";
+import { useDocumentViewer } from "./useDocumentViewer";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -35,6 +37,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   // Get GreenTech Form 31 risks if applicable
   const greenTechRisks = useGreenTechForm31Risks();
   const risks = isForm31GreenTech ? greenTechRisks : [];
+  
+  // Fetch document details using the hook
+  const { document, loading } = useDocumentViewer(documentId);
 
   // Simulate loading document
   useEffect(() => {
@@ -71,6 +76,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     setActiveRiskId(riskId);
   }, []);
 
+  // Get document analysis content
+  const analysisContent = document?.analysis?.[0]?.content;
+  const extractedInfo = analysisContent?.extracted_info;
+  const documentRisks = analysisContent?.risks || risks;
+
   // Create all the required content components for the viewer layout
   const mainContent = (
     <DocumentPreview
@@ -87,28 +97,57 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         previewError: null,
         setPreviewError: () => {},
         checkFile: async () => {},
-        documentRisks: risks
+        documentRisks: documentRisks
       }}
       activeRiskId={activeRiskId}
       onRiskSelect={handleRiskSelect}
     />
   );
 
-  const sidebar = (
-    <DocumentDetails
-      clientName="Sample Client"
+  // Client details component for the right panel
+  const clientDetails = (
+    <DocumentDetailsComponent
+      clientName={extractedInfo?.clientName || (isForm31GreenTech ? "GreenTech Supplies Inc." : "Sample Client")}
       documentId={documentId}
-      formNumber={isForm47 ? "47" : isForm31GreenTech ? "31" : ""}
-      formType={isForm47 ? "Consumer Proposal" : isForm31GreenTech ? "Proof of Claim" : "General Document"}
-      dateSigned="2025-01-15"
-      estateNumber={isForm47 ? "EST-12345" : isForm31GreenTech ? "EST-54321" : ""}
-      summary="This document represents a formal submission related to the bankruptcy process."
+      trusteeName={extractedInfo?.trusteeName || (isForm31GreenTech ? "Neil Armstrong" : "")}
+      administratorName={extractedInfo?.administratorName}
+      formNumber={isForm47 ? "47" : isForm31GreenTech ? "31" : extractedInfo?.formNumber || ""}
+      formType={isForm47 ? "Consumer Proposal" : isForm31GreenTech ? "Proof of Claim" : extractedInfo?.formType || "General Document"}
+      dateSigned={extractedInfo?.dateSigned || (isForm31GreenTech ? "April 8, 2025" : "2025-01-15")}
+      estateNumber={isForm47 ? "EST-12345" : isForm31GreenTech ? "EST-54321" : extractedInfo?.estateNumber || ""}
+      filingDate={extractedInfo?.filingDate}
+      submissionDeadline={extractedInfo?.submissionDeadline}
+      documentStatus={extractedInfo?.documentStatus}
     />
+  );
+
+  // Document summary component for the right panel
+  const documentSummary = (
+    <DocumentSummary 
+      summary={extractedInfo?.summary || (isForm31GreenTech ? 
+        "This Form 31 (Proof of Claim) document is submitted by Neil Armstrong of ABC Restructuring Ltd. claiming $89,355.00 from GreenTech Supplies Inc. Several compliance issues have been identified including missing selections in claim categories and incomplete date formatting." : 
+        "This document represents a formal submission related to the bankruptcy process.")}
+      regulatoryCompliance={analysisContent?.regulatory_compliance ? {
+        status: analysisContent.regulatory_compliance.status,
+        details: analysisContent.regulatory_compliance.details,
+        references: analysisContent.regulatory_compliance.references
+      } : undefined}
+    />
+  );
+
+  // Risk assessment component for the right panel  
+  const riskAssessment = (
+    isForm31GreenTech ? (
+      <Form31RiskView risks={documentRisks} activeRiskId={activeRiskId} onRiskSelect={handleRiskSelect} />
+    ) : (
+      <RiskAssessment risks={documentRisks} activeRiskId={activeRiskId} onRiskSelect={handleRiskSelect} />
+    )
   );
 
   const collaborationPanel = (
     <CollaborationPanel
       documentId={documentId}
+      document={document}
       activeRiskId={activeRiskId}
       onRiskSelect={handleRiskSelect}
     />
@@ -155,7 +194,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           basis: "Debt owed as of March 15, 2025"
         },
         documentDate: "April 8, 2025",
-        risks: [
+        risks: documentRisks || [
           {
             severity: "high",
             title: "Missing Checkbox Selections in Claim Category",
@@ -210,6 +249,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       analysisPanel={analysisPanel}
       documentTitle={documentTitle}
       documentType={isForm47 ? "Consumer Proposal" : isForm31GreenTech ? "Proof of Claim" : "Document"}
+      clientDetails={clientDetails}
+      documentSummary={documentSummary}
+      riskAssessment={riskAssessment}
     />
   );
 };

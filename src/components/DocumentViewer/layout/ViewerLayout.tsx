@@ -15,6 +15,9 @@ interface ViewerLayoutProps {
   analysisPanel?: React.ReactNode;
   documentTitle?: string;
   documentType?: string;
+  clientDetails?: React.ReactNode;
+  documentSummary?: React.ReactNode;
+  riskAssessment?: React.ReactNode;
 }
 
 export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
@@ -26,7 +29,10 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   versionPanel,
   analysisPanel,
   documentTitle = "Document",
-  documentType = "Document"
+  documentType = "Document",
+  clientDetails,
+  documentSummary,
+  riskAssessment
 }) => {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showCollaborationPanel, setShowCollaborationPanel] = useState(true);
@@ -54,6 +60,15 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Create the right panel content that combines client details, document summary and risk assessment
+  const rightPanelContent = (
+    <div className="flex flex-col h-full overflow-auto">
+      {clientDetails}
+      {documentSummary}
+      {riskAssessment}
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full border rounded-lg overflow-hidden bg-background">
       <ViewerHeader
@@ -72,7 +87,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
         {isMobile ? (
           <MobileLayout
             showSidebar={showSidebar}
-            sidebar={sidebar}
+            sidebar={rightPanelContent}
             mainContent={mainContent}
             showCollaborationPanel={showCollaborationPanel}
             collaborationPanel={collaborationPanel}
@@ -85,7 +100,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
         ) : isTablet ? (
           <TabletLayout
             showSidebar={showSidebar}
-            sidebar={sidebar}
+            sidebar={rightPanelContent}
             mainContent={mainContent}
             showCollaborationPanel={showCollaborationPanel}
             collaborationPanel={collaborationPanel}
@@ -98,7 +113,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
         ) : (
           <DesktopLayout
             showSidebar={showSidebar}
-            sidebar={sidebar}
+            sidebar={rightPanelContent}
             mainContent={mainContent}
             showCollaborationPanel={showCollaborationPanel}
             collaborationPanel={collaborationPanel}

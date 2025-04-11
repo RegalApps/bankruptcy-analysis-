@@ -10,6 +10,7 @@ interface TabsContainerProps {
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
   analysisPanel?: React.ReactNode;
+  deadlinesPanel?: React.ReactNode;
 }
 
 export const TabsContainer: React.FC<TabsContainerProps> = ({
@@ -18,7 +19,8 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
   collaborationPanel,
   taskPanel,
   versionPanel,
-  analysisPanel
+  analysisPanel,
+  deadlinesPanel
 }) => {
   return (
     <Tabs
@@ -27,21 +29,25 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
       className="h-full flex flex-col"
     >
       <div className="p-2 bg-muted/20">
-        <TabsList className="w-full grid grid-cols-4 p-1">
-          <TabsTrigger value="comments" className="flex items-center gap-2 py-2">
-            <MessageSquare className="h-4 w-4" />
+        <TabsList className="w-full grid grid-cols-5 p-1">
+          <TabsTrigger value="comments" className="flex items-center gap-1 py-2 text-xs">
+            <MessageSquare className="h-3 w-3" />
             <span>Comments</span>
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="flex items-center gap-2 py-2">
-            <ClipboardList className="h-4 w-4" />
+          <TabsTrigger value="tasks" className="flex items-center gap-1 py-2 text-xs">
+            <ClipboardList className="h-3 w-3" />
             <span>Tasks</span>
           </TabsTrigger>
-          <TabsTrigger value="versions" className="flex items-center gap-2 py-2">
-            <Clock className="h-4 w-4" />
+          <TabsTrigger value="versions" className="flex items-center gap-1 py-2 text-xs">
+            <Clock className="h-3 w-3" />
             <span>Versions</span>
           </TabsTrigger>
-          <TabsTrigger value="analysis" className="flex items-center gap-2 py-2">
-            <FileBarChart className="h-4 w-4" />
+          <TabsTrigger value="deadlines" className="flex items-center gap-1 py-2 text-xs">
+            <Calendar className="h-3 w-3" />
+            <span>Deadlines</span>
+          </TabsTrigger>
+          <TabsTrigger value="analysis" className="flex items-center gap-1 py-2 text-xs">
+            <FileBarChart className="h-3 w-3" />
             <span>Analysis</span>
           </TabsTrigger>
         </TabsList>
@@ -59,6 +65,14 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
         {versionPanel}
       </TabsContent>
 
+      <TabsContent value="deadlines" className="flex-1 overflow-auto m-0 p-0">
+        {deadlinesPanel || (
+          <div className="p-4 text-center text-muted-foreground">
+            No deadlines available for this document
+          </div>
+        )}
+      </TabsContent>
+      
       <TabsContent value="analysis" className="flex-1 overflow-auto m-0 p-0">
         {analysisPanel}
       </TabsContent>
