@@ -10,6 +10,7 @@ interface MobileLayoutProps {
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
+  analysisPanel: React.ReactNode;
   selectedTab: string;
   setSelectedTab: (value: string) => void;
 }
@@ -22,6 +23,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   collaborationPanel,
   taskPanel,
   versionPanel,
+  analysisPanel,
   selectedTab,
   setSelectedTab,
 }) => {
@@ -35,6 +37,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             collaborationPanel={collaborationPanel}
             taskPanel={taskPanel}
             versionPanel={versionPanel}
+            analysisPanel={analysisPanel}
           />
         </div>
       )}

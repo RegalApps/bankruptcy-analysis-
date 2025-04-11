@@ -6,6 +6,7 @@ import { RiskAssessment } from "./RiskAssessment";
 import { Form31RiskView } from "./RiskAssessment/Form31RiskView";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { DocumentDetails } from "./DocumentDetails";
+import { DocumentAnalysis } from "./DocumentAnalysis";
 import { Risk } from "./RiskAssessment/types";
 import { toast } from "sonner";
 import { useGreenTechForm31Risks } from "./hooks/useGreenTechForm31Risks";
@@ -130,6 +131,73 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       </p>
     </div>
   );
+  
+  const analysisPanel = (
+    <DocumentAnalysis 
+      documentId={documentId} 
+      initialData={isForm31GreenTech ? {
+        documentType: "Form 31 - Proof of Claim",
+        clientInformation: {
+          name: "GreenTech Supplies Inc.",
+          city: "Trenton, Ontario"
+        },
+        creditorInformation: {
+          name: "Neil Armstrong",
+          role: "Licensed Insolvency Trustee",
+          firm: "ABC Restructuring Ltd.",
+          address: "100 Bay Street, Suite 400, Toronto, Ontario, M5J 2N8",
+          phone: "416-988-2442",
+          email: "neil.armstrong@fallouttrusteelimited.com"
+        },
+        claimInformation: {
+          type: "Unsecured",
+          amount: "$89,355.00",
+          basis: "Debt owed as of March 15, 2025"
+        },
+        documentDate: "April 8, 2025",
+        risks: [
+          {
+            severity: "high",
+            title: "Missing Checkbox Selections in Claim Category",
+            description: "None of the checkboxes (Unsecured, Secured, Lessor, etc.) are checked, although $89,355 is listed.",
+            regulation: "BIA Subsection 124(2)",
+            impact: "This creates ambiguity about the nature of the claim.",
+            solution: "Select the appropriate claim type checkbox (likely 'A. Unsecured Claim')."
+          },
+          {
+            severity: "high",
+            title: "Missing Confirmation of Relatedness Status",
+            description: "The declaration of whether the creditor is related to the debtor is incomplete.",
+            regulation: "BIA Section 4(1) and Section 95",
+            impact: "Required for assessing transfers and preferences.",
+            solution: "Clearly indicate 'I am not related' and 'have not dealt at non-arm's length' (if true)."
+          },
+          {
+            severity: "high",
+            title: "No Disclosure of Transfers or Payments",
+            description: "Section 6 response field is empty.",
+            regulation: "BIA Section 96(1)",
+            impact: "Required to assess preferential payments or transfers at undervalue.",
+            solution: "State 'None' if applicable or list any payments within the past 3–12 months."
+          },
+          {
+            severity: "medium",
+            title: "Incorrect or Incomplete Date Format",
+            description: "\"Dated at 2025, this 8 day of 0.\" is invalid.",
+            regulation: "BIA Form Regulations Rule 1",
+            solution: "Correct to \"Dated at Toronto, this 8th day of April, 2025.\""
+          },
+          {
+            severity: "low",
+            title: "No Attached Schedule A",
+            description: "Schedule 'A' showing breakdown of amount is not attached.",
+            regulation: "BIA Subsection 124(2)",
+            solution: "Attach a detailed account statement showing calculation of amount owing."
+          }
+        ]
+      } : null}
+    />
+  );
 
   return (
     <ViewerLayout
@@ -139,6 +207,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       collaborationPanel={collaborationPanel}
       taskPanel={taskPanel}
       versionPanel={versionPanel}
+      analysisPanel={analysisPanel}
       documentTitle={documentTitle}
       documentType={isForm47 ? "Consumer Proposal" : isForm31GreenTech ? "Proof of Claim" : "Document"}
     />

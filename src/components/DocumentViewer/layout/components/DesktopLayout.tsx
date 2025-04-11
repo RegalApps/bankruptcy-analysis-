@@ -1,70 +1,57 @@
 
 import React from "react";
-import { 
-  ResizablePanelGroup, 
-  ResizablePanel, 
-  ResizableHandle 
-} from "@/components/ui/resizable";
 import { TabsContainer } from "./TabsContainer";
 
 interface DesktopLayoutProps {
+  showSidebar: boolean;
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
+  showCollaborationPanel: boolean;
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
+  analysisPanel: React.ReactNode;
   selectedTab: string;
   setSelectedTab: (value: string) => void;
 }
 
 export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
+  showSidebar,
   sidebar,
   mainContent,
+  showCollaborationPanel,
   collaborationPanel,
   taskPanel,
   versionPanel,
+  analysisPanel,
   selectedTab,
   setSelectedTab,
 }) => {
   return (
-    <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
-      <ResizablePanel 
-        defaultSize={30} 
-        minSize={20}
-        maxSize={40}
-        className="border-r border-border/50"
-      >
-        <TabsContainer
-          selectedTab={selectedTab}
-          setSelectedTab={setSelectedTab}
-          collaborationPanel={collaborationPanel}
-          taskPanel={taskPanel}
-          versionPanel={versionPanel}
-        />
-      </ResizablePanel>
-      
-      <ResizableHandle withHandle />
-      
-      <ResizablePanel defaultSize={70} className="flex h-full overflow-hidden">
-        <ResizablePanelGroup direction="horizontal" className="h-full">
-          <ResizablePanel defaultSize={70} minSize={50} className="overflow-auto flex flex-col">
-            {mainContent}
-          </ResizablePanel>
-          
-          <ResizableHandle withHandle />
-          
-          <ResizablePanel 
-            defaultSize={30} 
-            minSize={15} 
-            maxSize={40}
-            className="h-full overflow-auto border-l border-border/50 bg-white dark:bg-background"
-          >
-            <div className="p-3 h-full overflow-auto">
-              {sidebar}
+    <div className="flex h-full">
+      <div className={`flex-1 min-w-0 ${showCollaborationPanel ? 'flex' : ''}`}>
+        <div className={`flex-1 overflow-auto ${showSidebar ? 'flex' : ''}`}>
+          {showSidebar && (
+            <div className="w-80 min-w-[20rem] border-r border-border/50 overflow-auto">
+              <div className="p-4">{sidebar}</div>
             </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+          )}
+          <div className="flex-1 overflow-auto min-w-0">{mainContent}</div>
+        </div>
+        
+        {showCollaborationPanel && (
+          <div className="w-80 min-w-[20rem] border-l border-border/50 overflow-auto">
+            <TabsContainer
+              selectedTab={selectedTab}
+              setSelectedTab={setSelectedTab}
+              collaborationPanel={collaborationPanel}
+              taskPanel={taskPanel}
+              versionPanel={versionPanel}
+              analysisPanel={analysisPanel}
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
