@@ -29,19 +29,23 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   return (
     <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
       <ResizablePanel 
-        defaultSize={25} 
-        minSize={15}
+        defaultSize={30} 
+        minSize={20}
         maxSize={40}
-        className="h-full overflow-auto border-r border-border/50 bg-white dark:bg-background"
+        className="border-r border-border/50"
       >
-        <div className="p-3 h-full overflow-auto">
-          {sidebar}
-        </div>
+        <TabsContainer
+          selectedTab={selectedTab}
+          setSelectedTab={setSelectedTab}
+          collaborationPanel={collaborationPanel}
+          taskPanel={taskPanel}
+          versionPanel={versionPanel}
+        />
       </ResizablePanel>
       
       <ResizableHandle withHandle />
       
-      <ResizablePanel defaultSize={75} className="flex h-full overflow-hidden">
+      <ResizablePanel defaultSize={70} className="flex h-full overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
           <ResizablePanel defaultSize={70} minSize={50} className="overflow-auto flex flex-col">
             {mainContent}
@@ -51,17 +55,13 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           
           <ResizablePanel 
             defaultSize={30} 
-            minSize={20} 
+            minSize={15} 
             maxSize={40}
-            className="border-l border-border/50"
+            className="h-full overflow-auto border-l border-border/50 bg-white dark:bg-background"
           >
-            <TabsContainer
-              selectedTab={selectedTab}
-              setSelectedTab={setSelectedTab}
-              collaborationPanel={collaborationPanel}
-              taskPanel={taskPanel}
-              versionPanel={versionPanel}
-            />
+            <div className="p-3 h-full overflow-auto">
+              {sidebar}
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </ResizablePanel>

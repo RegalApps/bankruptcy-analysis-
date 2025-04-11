@@ -30,10 +30,10 @@ export const ViewerHeader: React.FC<ViewerHeaderProps> = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={toggleSidebar} 
+            onClick={toggleCollaborationPanel} 
             className="h-8 w-8"
           >
-            <MenuIcon className="h-4 w-4" />
+            <Users className="h-4 w-4" />
           </Button>
         )}
         
@@ -60,10 +60,10 @@ export const ViewerHeader: React.FC<ViewerHeaderProps> = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={toggleCollaborationPanel}
+            onClick={toggleSidebar}
             className="h-8 w-8"
           >
-            <Users className="h-4 w-4" />
+            <MenuIcon className="h-4 w-4" />
           </Button>
         ) : (
           <div className="flex items-center gap-2">
