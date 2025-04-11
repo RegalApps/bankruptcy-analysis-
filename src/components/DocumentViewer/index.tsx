@@ -1,8 +1,11 @@
 
 import React, { useState, useEffect, useCallback } from "react";
+import { ViewerLayout } from "./layout/ViewerLayout";
 import { DocumentPreview } from "./DocumentPreview";
 import { RiskAssessment } from "./RiskAssessment";
 import { Form31RiskView } from "./RiskAssessment/Form31RiskView";
+import { CollaborationPanel } from "./CollaborationPanel";
+import { DocumentDetails } from "./DocumentDetails";
 import { Risk } from "./RiskAssessment/types";
 import { toast } from "sonner";
 import { useGreenTechForm31Risks } from "./hooks/useGreenTechForm31Risks";
@@ -50,7 +53,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         }
         
         setIsLoading(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading document:", error);
         toast.error("Failed to load document");
         if (onLoadFailure) onLoadFailure("Document failed to load");
@@ -67,47 +70,77 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     setActiveRiskId(riskId);
   }, []);
 
-  return (
-    <div className="flex h-full gap-4">
-      <div className="flex-1 bg-card border rounded-lg overflow-hidden">
-        <DocumentPreview
-          storagePath={documentUrl || ""}
-          documentId={documentId}
-          title={documentTitle || ""}
-          previewState={{
-            fileExists: !!documentUrl,
-            fileUrl: documentUrl,
-            isPdfFile: () => true,
-            isExcelFile: () => false,
-            isDocFile: () => false,
-            isLoading,
-            previewError: null,
-            setPreviewError: () => {},
-            checkFile: async () => {},
-            documentRisks: risks
-          }}
-          activeRiskId={activeRiskId}
-          onRiskSelect={handleRiskSelect}
-        />
-      </div>
-      
-      <div className="w-[350px] bg-card border rounded-lg overflow-hidden">
-        {isForm31GreenTech ? (
-          <Form31RiskView 
-            documentId={documentId} 
-            risks={risks}
-            activeRiskId={activeRiskId}
-            onRiskSelect={handleRiskSelect}
-          />
-        ) : (
-          <RiskAssessment 
-            documentId={documentId} 
-            risks={risks}
-            activeRiskId={activeRiskId}
-            onRiskSelect={handleRiskSelect}
-          />
-        )}
-      </div>
+  // Create all the required content components for the viewer layout
+  const mainContent = (
+    <DocumentPreview
+      storagePath={documentUrl || ""}
+      documentId={documentId}
+      title={documentTitle || ""}
+      previewState={{
+        fileExists: !!documentUrl,
+        fileUrl: documentUrl,
+        isPdfFile: () => true,
+        isExcelFile: () => false,
+        isDocFile: () => false,
+        isLoading,
+        previewError: null,
+        setPreviewError: () => {},
+        checkFile: async () => {},
+        documentRisks: risks
+      }}
+      activeRiskId={activeRiskId}
+      onRiskSelect={handleRiskSelect}
+    />
+  );
+
+  const sidebar = (
+    <DocumentDetails
+      clientName="Sample Client"
+      documentId={documentId}
+      formNumber={isForm47 ? "47" : isForm31GreenTech ? "31" : ""}
+      formType={isForm47 ? "Consumer Proposal" : isForm31GreenTech ? "Proof of Claim" : "General Document"}
+      dateSigned="2025-01-15"
+      estateNumber={isForm47 ? "EST-12345" : isForm31GreenTech ? "EST-54321" : ""}
+      summary="This document represents a formal submission related to the bankruptcy process."
+    />
+  );
+
+  const collaborationPanel = (
+    <CollaborationPanel
+      documentId={documentId}
+      activeRiskId={activeRiskId}
+      onRiskSelect={handleRiskSelect}
+    />
+  );
+
+  const taskPanel = (
+    <div className="p-4">
+      <h3 className="font-medium text-sm mb-2">Document Tasks</h3>
+      <p className="text-xs text-muted-foreground">
+        Tasks related to this document will appear here.
+      </p>
     </div>
+  );
+
+  const versionPanel = (
+    <div className="p-4">
+      <h3 className="font-medium text-sm mb-2">Document History</h3>
+      <p className="text-xs text-muted-foreground">
+        Version history for this document will appear here.
+      </p>
+    </div>
+  );
+
+  return (
+    <ViewerLayout
+      isForm47={isForm47}
+      sidebar={sidebar}
+      mainContent={mainContent}
+      collaborationPanel={collaborationPanel}
+      taskPanel={taskPanel}
+      versionPanel={versionPanel}
+      documentTitle={documentTitle}
+      documentType={isForm47 ? "Consumer Proposal" : isForm31GreenTech ? "Proof of Claim" : "Document"}
+    />
   );
 };

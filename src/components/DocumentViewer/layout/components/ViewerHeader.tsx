@@ -1,6 +1,8 @@
 
 import React from "react";
-import { FileBarChart, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MenuIcon, Users, Clock, ChevronLeft, Download } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ViewerHeaderProps {
   documentTitle: string;
@@ -22,52 +24,68 @@ export const ViewerHeader: React.FC<ViewerHeaderProps> = ({
   toggleCollaborationPanel,
 }) => {
   return (
-    <div className="sticky top-0 z-10 flex justify-between items-center p-2 sm:p-3 bg-muted/30 border-b">
-      <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-        <div className="bg-muted/50 p-1.5 sm:p-2 rounded-md flex-shrink-0">
-          {isForm47 ? (
-            <FileBarChart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          ) : (
-            <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          )}
-        </div>
-        <div className="flex flex-col overflow-hidden">
-          <h1 className="text-sm sm:text-lg font-bold text-foreground truncate">{documentTitle}</h1>
-          <div className="flex flex-wrap gap-1 sm:gap-2 mt-0.5 sm:mt-1">
-            {isForm47 && (
-              <div className="bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
-                Consumer Proposal
-              </div>
-            )}
-            <div className="bg-muted text-muted-foreground px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
-              Form {documentType.includes('47') ? '47' : documentType}
-            </div>
+    <div className="border-b bg-white dark:bg-background p-3 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        {(isTablet || isMobile) && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar} 
+            className="h-8 w-8"
+          >
+            <MenuIcon className="h-4 w-4" />
+          </Button>
+        )}
+        
+        <div>
+          <h2 className="font-medium text-lg line-clamp-1">{documentTitle}</h2>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+            <span>{documentType}</span>
+            {isForm47 && <Badge variant="secondary" className="text-xs">Form 47</Badge>}
           </div>
         </div>
       </div>
       
-      {(isMobile || isTablet) && (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleSidebar}
-            className="h-8 px-2"
-          >
-            {isTablet && !isMobile ? "Document Details" : "Details"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm" 
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-xs hidden sm:flex items-center gap-1"
+        >
+          <Download className="h-3 w-3 mr-1" />
+          Download
+        </Button>
+        
+        {(isTablet || isMobile) ? (
+          <Button 
+            variant="ghost" 
+            size="icon" 
             onClick={toggleCollaborationPanel}
-            className="h-8 px-2"
+            className="h-8 w-8"
           >
-            {isTablet && !isMobile ? "Collaboration" : "Comments"}
+            <Users className="h-4 w-4" />
           </Button>
-        </div>
-      )}
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs flex items-center gap-1"
+            >
+              <Users className="h-3 w-3 mr-1" />
+              Share
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs flex items-center gap-1"
+            >
+              <Clock className="h-3 w-3 mr-1" />
+              History
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
-
-import { Button } from "@/components/ui/button";

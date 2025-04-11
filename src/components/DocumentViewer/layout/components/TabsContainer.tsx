@@ -1,11 +1,11 @@
 
 import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, ListTodo, History } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { MessageSquare, ClipboardList, Clock } from "lucide-react";
 
 interface TabsContainerProps {
   selectedTab: string;
-  setSelectedTab: (value: string) => void;
+  setSelectedTab: (tab: string) => void;
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
@@ -16,38 +16,42 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
   setSelectedTab,
   collaborationPanel,
   taskPanel,
-  versionPanel,
+  versionPanel
 }) => {
   return (
-    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full h-full">
-      <div className="flex items-center justify-between bg-muted/30 px-2 py-1 border-b border-border/50">
-        <TabsList className="grid grid-cols-3 w-full">
-          <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
+    <Tabs
+      value={selectedTab}
+      onValueChange={setSelectedTab}
+      className="h-full flex flex-col"
+    >
+      <div className="border-b px-2 py-1 bg-muted/30">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="comments" className="text-xs flex gap-1 items-center py-1">
             <MessageSquare className="h-3.5 w-3.5" />
-            <span>Comments</span>
+            <span className="hidden sm:inline">Comments</span>
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="flex items-center gap-1 text-xs">
-            <ListTodo className="h-3.5 w-3.5" />
-            <span>Tasks</span>
+          <TabsTrigger value="tasks" className="text-xs flex gap-1 items-center py-1">
+            <ClipboardList className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Tasks</span>
           </TabsTrigger>
-          <TabsTrigger value="versions" className="flex items-center gap-1 text-xs">
-            <History className="h-3.5 w-3.5" />
-            <span>Versions</span>
+          <TabsTrigger value="versions" className="text-xs flex gap-1 items-center py-1">
+            <Clock className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Versions</span>
           </TabsTrigger>
         </TabsList>
       </div>
       
-      <div className="flex-1 overflow-auto">
-        <TabsContent value="comments" className="m-0 p-2 h-full overflow-auto">
-          {collaborationPanel}
-        </TabsContent>
-        <TabsContent value="tasks" className="m-0 p-2 h-full overflow-auto">
-          {taskPanel}
-        </TabsContent>
-        <TabsContent value="versions" className="m-0 p-2 h-full overflow-auto">
-          {versionPanel}
-        </TabsContent>
-      </div>
+      <TabsContent value="comments" className="flex-1 overflow-auto m-0 p-0">
+        {collaborationPanel}
+      </TabsContent>
+      
+      <TabsContent value="tasks" className="flex-1 overflow-auto m-0 p-0">
+        {taskPanel}
+      </TabsContent>
+      
+      <TabsContent value="versions" className="flex-1 overflow-auto m-0 p-0">
+        {versionPanel}
+      </TabsContent>
     </Tabs>
   );
 };
