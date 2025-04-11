@@ -61,6 +61,9 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
         documentType={documentType}
         toggleSidebar={toggleSidebar}
         toggleCollaborationPanel={toggleCollaborationPanel}
+        isForm47={isForm47}
+        isTablet={isTablet}
+        isMobile={isMobile}
         showSidebar={showSidebar}
         showCollaborationPanel={showCollaborationPanel}
       />

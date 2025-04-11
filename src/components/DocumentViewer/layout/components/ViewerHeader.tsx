@@ -12,6 +12,8 @@ interface ViewerHeaderProps {
   isMobile: boolean;
   toggleSidebar: () => void;
   toggleCollaborationPanel: () => void;
+  showSidebar?: boolean;
+  showCollaborationPanel?: boolean;
 }
 
 export const ViewerHeader: React.FC<ViewerHeaderProps> = ({
@@ -22,6 +24,8 @@ export const ViewerHeader: React.FC<ViewerHeaderProps> = ({
   isMobile,
   toggleSidebar,
   toggleCollaborationPanel,
+  showSidebar,
+  showCollaborationPanel,
 }) => {
   return (
     <div className="border-b bg-white dark:bg-background p-3 flex items-center justify-between">
