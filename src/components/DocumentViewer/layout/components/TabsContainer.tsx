@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { MessageSquare, ClipboardList, Clock } from "lucide-react";
+import { MessageSquare, ClipboardList, Clock, Calendar } from "lucide-react";
 
 interface TabsContainerProps {
   selectedTab: string;
@@ -24,19 +24,19 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
       onValueChange={setSelectedTab}
       className="h-full flex flex-col"
     >
-      <div className="border-b px-2 py-1 bg-muted/30">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="comments" className="text-xs flex gap-1 items-center py-1">
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Comments</span>
+      <div className="p-2 bg-muted/20">
+        <TabsList className="w-full grid grid-cols-3 p-1">
+          <TabsTrigger value="comments" className="flex items-center gap-2 py-2">
+            <MessageSquare className="h-4 w-4" />
+            <span>Comments</span>
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="text-xs flex gap-1 items-center py-1">
-            <ClipboardList className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Tasks</span>
+          <TabsTrigger value="tasks" className="flex items-center gap-2 py-2">
+            <ClipboardList className="h-4 w-4" />
+            <span>Tasks</span>
           </TabsTrigger>
-          <TabsTrigger value="versions" className="text-xs flex gap-1 items-center py-1">
-            <Clock className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Versions</span>
+          <TabsTrigger value="versions" className="flex items-center gap-2 py-2">
+            <Clock className="h-4 w-4" />
+            <span>Versions</span>
           </TabsTrigger>
         </TabsList>
       </div>

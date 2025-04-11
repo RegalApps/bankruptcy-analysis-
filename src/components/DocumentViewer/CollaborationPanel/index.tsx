@@ -11,7 +11,7 @@ import { DeadlineManager } from "../DeadlineManager";
 
 interface CollaborationPanelProps {
   document?: DocumentDetails;
-  documentId?: string;  // Ensuring documentId is explicitly defined in the interface
+  documentId?: string;
   onCommentAdded?: () => void;
   activeRiskId?: string | null;
   onRiskSelect?: (riskId: string | null) => void;
@@ -45,19 +45,19 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
   return (
     <Card className="h-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-        <div className="p-1 px-2 border-b">
-          <TabsList className="w-full">
-            <TabsTrigger value="comments" className="flex items-center text-xs py-1.5">
-              <MessageSquare className="h-3.5 w-3.5 mr-1" />
-              Comments
+        <div className="p-2 bg-muted/20">
+          <TabsList className="w-full grid grid-cols-3 p-1">
+            <TabsTrigger value="comments" className="flex items-center gap-2 py-2">
+              <MessageSquare className="h-4 w-4" />
+              <span>Comments</span>
             </TabsTrigger>
-            <TabsTrigger value="tasks" className="flex items-center text-xs py-1.5">
-              <ClipboardList className="h-3.5 w-3.5 mr-1" />
-              Tasks
+            <TabsTrigger value="tasks" className="flex items-center gap-2 py-2">
+              <ClipboardList className="h-4 w-4" />
+              <span>Tasks</span>
             </TabsTrigger>
-            <TabsTrigger value="deadlines" className="flex items-center text-xs py-1.5">
-              <Calendar className="h-3.5 w-3.5 mr-1" />
-              Deadlines
+            <TabsTrigger value="deadlines" className="flex items-center gap-2 py-2">
+              <Calendar className="h-4 w-4" />
+              <span>Deadlines</span>
             </TabsTrigger>
           </TabsList>
         </div>
