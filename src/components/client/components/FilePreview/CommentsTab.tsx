@@ -1,9 +1,21 @@
 
 import React, { useState } from 'react';
-import { Document, Comment } from '../../types';
+import { Document } from '../../types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
+
+// Define a Comment interface locally if it's not available from types
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id?: string;
+  user_name?: string;
+  document_id?: string;
+  parent_id?: string;
+  is_resolved?: boolean;
+}
 
 interface CommentsTabProps {
   document: Document;
@@ -23,10 +35,10 @@ export const CommentsTab: React.FC<CommentsTabProps> = ({
     id: document.id,
     title: document.title,
     type: document.type || 'document',
-    user_id: document.user_id || '',
     created_at: document.created_at || new Date().toISOString(),
     updated_at: document.updated_at || new Date().toISOString(),
-    comments: document.comments || [],
+    // Ensure comments exists or default to empty array
+    comments: document.comments as Comment[] || [],
   };
 
   const handleSubmit = () => {
@@ -39,12 +51,12 @@ export const CommentsTab: React.FC<CommentsTabProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="flex-grow overflow-y-auto p-3 space-y-3">
-        {!document.comments?.length ? (
+        {!(viewerDocument.comments?.length) ? (
           <p className="text-center text-sm text-muted-foreground pt-4">
             No comments yet. Be the first to add a comment.
           </p>
         ) : (
-          document.comments.map((comment, index) => (
+          viewerDocument.comments.map((comment, index) => (
             <div 
               key={comment.id || index}
               className="bg-muted p-3 rounded-lg"

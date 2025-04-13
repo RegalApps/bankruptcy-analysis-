@@ -27,6 +27,7 @@ export interface Comment {
   document_id: string;
   parent_id?: string;
   is_resolved: boolean;
+  user_name?: string;
 }
 
 export interface Analysis {
@@ -127,14 +128,14 @@ export interface DocumentViewerProps {
 
 export interface DocumentPreviewProps {
   documentId: string;
-  document?: DocumentDetails;
-  loading?: boolean;
-  zoomLevel: number;
-  setZoomLevel: (value: number) => void;
-  onLoadFailure?: () => void;
-  isForm31GreenTech?: boolean;
+  storagePath: string;
+  title: string;
+  bypassAnalysis?: boolean;
   activeRiskId?: string | null;
   onRiskSelect?: (riskId: string) => void;
+  onAnalysisComplete?: () => void;
+  onLoadFailure?: () => void;
+  isForm31GreenTech?: boolean;
 }
 
 export interface CommentsProps {

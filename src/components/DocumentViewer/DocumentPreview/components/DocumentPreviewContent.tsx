@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { EnhancedPDFViewer } from "./EnhancedPDFViewer";
 import { DocumentViewerFrame } from "./DocumentViewerFrame";
 import { PreviewControls } from "../PreviewControls";
@@ -12,7 +12,9 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   title,
   previewState,
   activeRiskId = null,
-  onRiskSelect = () => {}
+  onRiskSelect = () => {},
+  onLoadFailure,
+  isForm31GreenTech
 }) => {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [forceReload, setForceReload] = useState(Date.now());
@@ -34,6 +36,13 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     setForceReload(Date.now());
   };
 
+  // Call onLoadFailure when there's a preview error
+  useEffect(() => {
+    if (previewState.previewError && onLoadFailure) {
+      onLoadFailure();
+    }
+  }, [previewState.previewError, onLoadFailure]);
+
   const { 
     fileExists,
     fileUrl,
@@ -51,6 +60,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   
   const handleDocumentError = () => {
     console.error("Error loading document");
+    if (onLoadFailure) onLoadFailure();
   };
 
   // Define content based on loading state

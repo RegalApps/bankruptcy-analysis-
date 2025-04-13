@@ -127,12 +127,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       mainContent={
         <DocumentPreview 
           documentId={documentId}
-          zoomLevel={zoomLevel}
-          setZoomLevel={setZoomLevel}
-          onLoadFailure={onLoadFailure}
-          isForm31GreenTech={isForm31GreenTech}
+          storagePath={document?.storage_path || ''}
+          title={document?.title || documentTitle}
+          bypassAnalysis={bypassProcessing}
           activeRiskId={activeRiskId}
           onRiskSelect={handleRiskSelect}
+          onLoadFailure={onLoadFailure}
+          isForm31GreenTech={isForm31GreenTech}
         />
       }
       rightPanel={rightPanelContent}

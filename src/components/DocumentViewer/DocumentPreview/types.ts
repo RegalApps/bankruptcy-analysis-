@@ -1,9 +1,9 @@
 
-import { Risk } from "../types";
+import { Risk } from '../RiskAssessment/types';
 
 export interface DocumentPreviewContentProps {
-  storagePath: string;
   documentId: string;
+  storagePath: string;
   title: string;
   previewState: {
     fileExists: boolean;
@@ -16,9 +16,13 @@ export interface DocumentPreviewContentProps {
     setPreviewError: (error: string | null) => void;
     checkFile: () => Promise<void>;
     documentRisks: Risk[];
+    networkStatus?: 'online' | 'offline' | 'unknown';
+    attemptCount?: number;
   };
   activeRiskId?: string | null;
   onRiskSelect?: (riskId: string) => void;
+  onLoadFailure?: () => void;
+  isForm31GreenTech?: boolean;
 }
 
 export interface DocumentObjectProps {
@@ -29,21 +33,11 @@ export interface DocumentObjectProps {
   onError?: () => void;
 }
 
-export interface ViewerToolbarProps {
+export interface DocumentViewerFrameProps {
+  url: string;
   title: string;
-  zoomLevel: number;
-  isRetrying: boolean;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onRefresh: () => void;
-  onOpenInNewTab: () => void;
-  onDownload: () => void;
-  onPrint: () => void;
-}
-
-export interface ErrorDisplayProps {
-  error: string;
-  onRetry: () => void;
+  isFullscreen?: boolean;
+  onError?: () => void;
 }
 
 export interface UseFileCheckerReturn {
@@ -53,34 +47,4 @@ export interface UseFileCheckerReturn {
   isExcelFile: (path: string) => boolean;
   isDocFile: (path: string) => boolean;
   checkFile: (storagePath: string) => Promise<void>;
-}
-
-export interface UseNetworkMonitorReturn {
-  networkStatus: 'online' | 'offline' | 'unknown';
-  isOnline: boolean;
-  handleOnline: () => void;
-}
-
-export interface UseRetryStrategyReturn {
-  retryCount: number;
-  isRetrying: boolean;
-  retry: () => void;
-  reset: () => void;
-  attemptCount: number;
-  incrementAttempt: () => void;
-  resetAttempts: () => void;
-  lastAttempt: Date | null;
-  setLastAttempt: (date: Date) => void;
-  shouldRetry: (attemptCount: number) => boolean;
-  getRetryDelay: (attemptCount: number) => number;
-}
-
-export interface DocumentViewerFrameProps {
-  children: React.ReactNode;
-  controls?: React.ReactNode;
-}
-
-export interface PreviewControlsProps {
-  publicUrl: string;
-  onRefresh: () => void;
 }

@@ -5,13 +5,15 @@ import usePreviewState from "./hooks/usePreviewState";
 import { Risk } from "../RiskAssessment/types";
 
 interface DocumentPreviewProps {
-  storagePath: string;
   documentId: string;
+  storagePath: string;
   title: string;
   bypassAnalysis?: boolean;
   activeRiskId?: string | null;
   onRiskSelect?: (riskId: string) => void;
   onAnalysisComplete?: () => void;
+  onLoadFailure?: () => void;
+  isForm31GreenTech?: boolean;
   // Add the previewState prop
   previewState?: {
     fileExists: boolean;
@@ -35,6 +37,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   activeRiskId = null,
   onRiskSelect = () => {},
   onAnalysisComplete,
+  onLoadFailure,
+  isForm31GreenTech,
   previewState: providedPreviewState
 }) => {
   // Generate preview state if not provided
@@ -50,6 +54,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       previewState={previewState}
       activeRiskId={activeRiskId}
       onRiskSelect={onRiskSelect}
+      onLoadFailure={onLoadFailure}
+      isForm31GreenTech={isForm31GreenTech}
     />
   );
 };
