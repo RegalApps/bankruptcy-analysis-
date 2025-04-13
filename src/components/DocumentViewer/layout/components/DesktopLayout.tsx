@@ -6,11 +6,13 @@ interface DesktopLayoutProps {
   showSidebar: boolean;
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
+  rightPanel: React.ReactNode;
   showCollaborationPanel: boolean;
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
   analysisPanel: React.ReactNode;
+  deadlinesPanel: React.ReactNode;
   selectedTab: string;
   setSelectedTab: (value: string) => void;
 }
@@ -19,39 +21,41 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   showSidebar,
   sidebar,
   mainContent,
+  rightPanel,
   showCollaborationPanel,
   collaborationPanel,
   taskPanel,
   versionPanel,
   analysisPanel,
+  deadlinesPanel,
   selectedTab,
   setSelectedTab,
 }) => {
   return (
     <div className="flex h-full">
-      <div className={`flex-1 min-w-0 ${showCollaborationPanel ? 'flex' : ''}`}>
-        <div className={`flex-1 overflow-auto ${showSidebar ? 'flex' : ''}`}>
-          {showSidebar && (
-            <div className="w-80 min-w-[20rem] border-r border-border/50 overflow-auto">
-              <div className="p-4">{sidebar}</div>
-            </div>
-          )}
-          <div className="flex-1 overflow-auto min-w-0">{mainContent}</div>
+      {showSidebar && (
+        <div className="w-80 min-w-[20rem] border-r border-border/50 overflow-auto">
+          <TabsContainer
+            selectedTab={selectedTab}
+            setSelectedTab={setSelectedTab}
+            collaborationPanel={collaborationPanel}
+            taskPanel={taskPanel}
+            versionPanel={versionPanel}
+            analysisPanel={analysisPanel}
+            deadlinesPanel={deadlinesPanel}
+          />
         </div>
-        
-        {showCollaborationPanel && (
-          <div className="w-80 min-w-[20rem] border-l border-border/50 overflow-auto">
-            <TabsContainer
-              selectedTab={selectedTab}
-              setSelectedTab={setSelectedTab}
-              collaborationPanel={collaborationPanel}
-              taskPanel={taskPanel}
-              versionPanel={versionPanel}
-              analysisPanel={analysisPanel}
-            />
-          </div>
-        )}
+      )}
+      
+      <div className="flex-1 min-w-0 overflow-auto">
+        {mainContent}
       </div>
+      
+      {showCollaborationPanel && (
+        <div className="w-80 min-w-[20rem] border-l border-border/50 overflow-auto">
+          <div className="p-4">{rightPanel}</div>
+        </div>
+      )}
     </div>
   );
 };

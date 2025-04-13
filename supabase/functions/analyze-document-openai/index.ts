@@ -42,6 +42,8 @@ serve(async (req) => {
     // Fetch document content if documentText is not provided
     let text = documentText;
     let docTitle = '';
+    let formTypeIdentified = documentType;
+    
     if (!text) {
       const { data: document, error: docError } = await supabase
         .from('documents')
@@ -56,6 +58,7 @@ serve(async (req) => {
       
       // For this example, we'll simulate having the text content based on document type
       if (documentType === 'form31' || docTitle.includes('Form 31')) {
+        formTypeIdentified = 'form31';
         text = `Form 31 - Proof of Claim
         Creditor: Neil Armstrong, Licensed Insolvency Trustee
         Firm: ABC Restructuring Ltd.
@@ -67,6 +70,7 @@ serve(async (req) => {
         missing relatedness declaration, and incomplete date format.
         Dated at 2025, this 8 day of 0.`;
       } else if (documentType === 'form47' || docTitle.includes('Form 47')) {
+        formTypeIdentified = 'form47';
         text = `Form 47 - Consumer Proposal
         Debtor: Josh Hart
         Administrator: Tom Francis
@@ -80,45 +84,94 @@ serve(async (req) => {
       console.log("Using simulated document content");
     }
     
-    // Prepare the prompt for OpenAI
-    const systemPrompt = `You are an expert document analyzer for Canadian insolvency and bankruptcy forms. 
-    Analyze the provided document text in detail and extract the following information in JSON format:
+    // Configure system prompt based on document type
+    let systemPrompt = '';
     
-    1. extracted_info: Include these fields (leave empty if not found):
-       - formNumber (just the number)
-       - formType (e.g., "Consumer Proposal", "Proof of Claim")
-       - clientName (debtor name)
-       - dateSigned
-       - trusteeName or administratorName (depending on document type)
-       - clientAddress (if available)
-       - clientPhone (if available)
-       - clientEmail (if available)
-       - trusteeAddress (if available)
-       - trusteePhone (if available)
-       - trusteeEmail (if available)
-       - estateNumber (if available)
-       - summary (2-3 sentence summary of the document)
-       - filingDate (if available)
-       - submissionDeadline (if available)
-       - documentStatus (if available)
-    
-    2. risks: Array of objects with these fields:
-       - type: String (e.g., "compliance", "legal", "document")
-       - description: Detailed description of the issue
-       - severity: "high", "medium", or "low"
-       - regulation: BIA reference or legal citation
-       - impact: How this affects compliance or processing
-       - requiredAction: What needs to be done
-       - solution: Specific fix for the issue
-       - deadline: Suggested timeframe for resolution
-    
-    3. regulatory_compliance: Object with:
-       - status: "compliant", "non_compliant", or "needs_review"
-       - details: Summary of compliance status
-       - references: Array of relevant BIA sections or regulations
-    
-    Only include fields where you have high confidence in the extracted data. Format your response as structured JSON.`;
+    if (formTypeIdentified === 'form31' || formTypeIdentified.toLowerCase().includes('form 31')) {
+      systemPrompt = `You are an expert document analyzer for Canadian insolvency and bankruptcy forms, specifically Form 31 (Proof of Claim).
+      Analyze the provided Form 31 document text in detail and extract the following information in JSON format according to the OSB Form 31 field mapping:
+      
+      1. extracted_info: Include these fields (leave empty if not found):
+         - formNumber: "31"
+         - formType: "Proof of Claim"
+         - clientName: The debtor's full name
+         - clientAddress: The debtor's address if available
+         - creditorName: Name of the creditor submitting the claim
+         - creditorAddress: Address of the creditor
+         - dateSigned: Date the form was signed
+         - debtAmount: Amount of the debt claimed
+         - trusteeName: Name of the insolvency trustee if mentioned
+         - trusteeAddress: Address of the trustee if available
+         - claimCategory: One of ["unsecured", "secured", "preferred", "lessor", "farmer", "fisherman", "wage_earner", "pension_plan", "director"]
+         - summary: Concise 2-3 sentence summary of the claim
+      
+      2. risks: Array of objects with these fields:
+         - type: Specific risk type (e.g., "Missing Signature", "Incomplete Section 6")
+         - description: Detailed description of the issue
+         - severity: "high", "medium", or "low"
+         - regulation: BIA reference or legal citation
+         - impact: How this affects compliance or processing
+         - requiredAction: What needs to be done
+         - solution: Specific fix for the issue
+         - deadline: Suggested timeframe for resolution
+      
+      3. regulatory_compliance: Object with:
+         - status: "compliant", "non_compliant", or "needs_review"
+         - details: Summary of compliance status
+         - references: Array of relevant BIA sections or regulations
+      
+      For Form 31, pay special attention to these critical sections:
+      - Section 1: Creditor Contact Info (mandatory address)
+      - Section 2: Matter Identification (debtor name, creditor name)
+      - Section 3: Certifier Declaration (debt validity date, debt amount)
+      - Section 5: Claim Categories (check if properly categorized)
+      - Section 6: Relationship & Transactions (check if completed)
+      - Section 8: Execution (signature, date)
+      
+      Identify especially if any mandatory fields are missing or incomplete according to BIA requirements.
+      Format your response as structured JSON.`;
+    } else {
+      // Default analysis prompt for other document types
+      systemPrompt = `You are an expert document analyzer for Canadian insolvency and bankruptcy forms. 
+      Analyze the provided document text in detail and extract the following information in JSON format:
+      
+      1. extracted_info: Include these fields (leave empty if not found):
+         - formNumber (just the number)
+         - formType (e.g., "Consumer Proposal", "Proof of Claim")
+         - clientName (debtor name)
+         - dateSigned
+         - trusteeName or administratorName (depending on document type)
+         - clientAddress (if available)
+         - clientPhone (if available)
+         - clientEmail (if available)
+         - trusteeAddress (if available)
+         - trusteePhone (if available)
+         - trusteeEmail (if available)
+         - estateNumber (if available)
+         - summary (2-3 sentence summary of the document)
+         - filingDate (if available)
+         - submissionDeadline (if available)
+         - documentStatus (if available)
+      
+      2. risks: Array of objects with these fields:
+         - type: String (e.g., "compliance", "legal", "document")
+         - description: Detailed description of the issue
+         - severity: "high", "medium", or "low"
+         - regulation: BIA reference or legal citation
+         - impact: How this affects compliance or processing
+         - requiredAction: What needs to be done
+         - solution: Specific fix for the issue
+         - deadline: Suggested timeframe for resolution
+      
+      3. regulatory_compliance: Object with:
+         - status: "compliant", "non_compliant", or "needs_review"
+         - details: Summary of compliance status
+         - references: Array of relevant BIA sections or regulations
+      
+      Only include fields where you have high confidence in the extracted data. Format your response as structured JSON.`;
+    }
 
+    console.log(`Using ${formTypeIdentified} analysis prompt`);
     console.log("Calling OpenAI API");
 
     // Call OpenAI API
@@ -167,6 +220,41 @@ serve(async (req) => {
         status: "needs_review",
         details: "Compliance status could not be determined",
         references: []
+      };
+    }
+    
+    // For Form 31, enhance with specific field mappings
+    if (formTypeIdentified === 'form31') {
+      // Map the BIA form requirements to the results
+      analysisResult.form31_field_mapping = {
+        section1: {
+          creditorMailingAddress: analysisResult.extracted_info.creditorAddress || "",
+          creditorFacsimileEmail: analysisResult.extracted_info.creditorEmail || "",
+          contactPersonName: analysisResult.extracted_info.creditorName || "",
+          contactTelephone: ""
+        },
+        section2: {
+          debtorName: analysisResult.extracted_info.clientName || "",
+          debtorCity: analysisResult.extracted_info.clientAddress ? 
+            extractCity(analysisResult.extracted_info.clientAddress) : "",
+          debtorProvince: analysisResult.extracted_info.clientAddress ? 
+            extractProvince(analysisResult.extracted_info.clientAddress) : "",
+          creditorName: analysisResult.extracted_info.creditorName || ""
+        },
+        section3: {
+          certifierName: analysisResult.extracted_info.creditorName || "",
+          isRepresentative: false,
+          debtValidityDate: analysisResult.extracted_info.dateSigned || "",
+          debtAmountCAD: parseFloat(
+            (analysisResult.extracted_info.debtAmount || "0")
+              .replace(/[^0-9.]/g, '')
+          ) || 0,
+          isStatuteBarred: false
+        },
+        section8: {
+          executionDate: analysisResult.extracted_info.dateSigned || "",
+          hasSignature: checkForSignature(text)
+        }
       };
     }
     
@@ -249,3 +337,29 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper functions for Form 31 field mapping
+function extractCity(address: string): string {
+  const cityRegex = /(?:,\s*)([A-Za-z\s]+)(?:,\s*[A-Z]{2})/;
+  const match = address.match(cityRegex);
+  return match ? match[1].trim() : "";
+}
+
+function extractProvince(address: string): string {
+  const provinceRegex = /(?:,\s*[A-Za-z\s]+,\s*)([A-Z]{2})/;
+  const match = address.match(provinceRegex);
+  return match ? match[1].trim() : "";
+}
+
+function checkForSignature(text: string): boolean {
+  const signatureIndicators = [
+    "signed",
+    "signature",
+    "executed",
+    "dated at",
+    "authorized signatory"
+  ];
+  
+  const normalizedText = text.toLowerCase();
+  return signatureIndicators.some(indicator => normalizedText.includes(indicator));
+}

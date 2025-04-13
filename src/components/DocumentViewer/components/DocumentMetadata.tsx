@@ -1,144 +1,188 @@
 
 import React from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
+import { CalendarIcon, FileTextIcon, ClockIcon, AlertCircle, CheckCircle } from "lucide-react";
+import { formatDistanceToNow, format, isAfter } from "date-fns";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ArrowDownToLine, Calendar, FileText, Info, User } from "lucide-react";
 import { DocumentDetails } from "../types";
-import { formatDistanceToNow } from "date-fns";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 interface DocumentMetadataProps {
-  document: DocumentDetails | null;
+  document: DocumentDetails;
 }
 
 export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({ document }) => {
-  if (!document) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-muted-foreground">No document information available</p>
-      </div>
-    );
-  }
+  if (!document) return null;
 
-  // Extract metadata from document
-  const extractedInfo = document.analysis?.[0]?.content?.extracted_info || {};
-  const documentType = document.type || extractedInfo.formType || "Unknown";
+  const formatFileSize = (size?: number): string => {
+    if (!size) return "Unknown";
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getStatusColor = (status?: string): string => {
+    if (!status) return "bg-muted";
+    
+    switch(status.toLowerCase()) {
+      case 'completed':
+      case 'approved':
+      case 'verified':
+        return "bg-green-500";
+      case 'in_progress':
+      case 'processing':
+      case 'pending':
+        return "bg-yellow-500";
+      case 'reviewing':
+        return "bg-blue-500";
+      case 'rejected':
+      case 'error':
+      case 'failed':
+        return "bg-red-500";
+      default:
+        return "bg-muted";
+    }
+  };
   
-  const metadataItems = [
-    { label: "Document Type", value: documentType, icon: FileText },
-    { label: "Client Name", value: extractedInfo.clientName, icon: User },
-    { label: "Date Signed", value: extractedInfo.dateSigned, icon: Calendar },
-    { label: "Form Number", value: extractedInfo.formNumber, icon: Info },
-    { label: "Trustee Name", value: extractedInfo.trusteeName, icon: User },
-    { label: "Estate Number", value: extractedInfo.estateNumber, icon: Info },
-    { label: "Submission Deadline", value: extractedInfo.submissionDeadline, icon: Calendar },
-  ];
-
-  // Filter out empty values
-  const validMetadataItems = metadataItems.filter(item => item.value);
+  const processingStatus = document.status || "pending";
+  
+  const getDeadlineStatus = (deadline?: string): React.ReactNode => {
+    if (!deadline) return null;
+    
+    try {
+      const deadlineDate = new Date(deadline);
+      const isOverdue = isAfter(new Date(), deadlineDate);
+      
+      return (
+        <div className="flex items-center gap-2 mt-2">
+          <Badge variant={isOverdue ? "destructive" : "default"} className="flex items-center gap-1">
+            {isOverdue ? <AlertCircle className="h-3 w-3" /> : <ClockIcon className="h-3 w-3" />}
+            {isOverdue ? "Overdue" : "Upcoming"}
+          </Badge>
+          <span className="text-xs text-muted-foreground">
+            {format(deadlineDate, "MMM d, yyyy")}
+          </span>
+        </div>
+      );
+    } catch (e) {
+      return null;
+    }
+  };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b">
-        <h3 className="font-medium">Document Details</h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          Information extracted from the document
-        </p>
-      </div>
+    <Card className="shadow-none border-0">
+      <CardHeader className="pb-2 pt-4">
+        <CardTitle className="text-base">Document Details</CardTitle>
+        <CardDescription>
+          Information about the document and its status
+        </CardDescription>
+      </CardHeader>
       
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
-          {/* Key Details */}
-          <Card className="p-4">
-            <h4 className="text-sm font-medium mb-3">Key Information</h4>
-            
-            <div className="space-y-3">
-              {validMetadataItems.map((item, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="bg-primary/10 rounded-full p-2">
-                    <item.icon className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">{item.label}</p>
-                    <p className="text-sm font-medium">{item.value || "N/A"}</p>
-                  </div>
-                </div>
-              ))}
-              
-              {validMetadataItems.length === 0 && (
-                <div className="text-center py-4 text-muted-foreground">
-                  <Info className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No metadata extracted from this document</p>
-                </div>
-              )}
+      <CardContent className="pt-0">
+        <div className="space-y-3">
+          <div>
+            <h4 className="text-sm font-medium">Processing Status</h4>
+            <div className="mt-1 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span>{processingStatus.charAt(0).toUpperCase() + processingStatus.slice(1).replace(/_/g, ' ')}</span>
+              </div>
+              <Progress 
+                value={processingStatus === "completed" ? 100 : 
+                       processingStatus === "failed" ? 100 : 
+                       processingStatus === "processing" ? 50 : 25} 
+                className={cn(
+                  "h-1.5",
+                  processingStatus === "completed" ? "bg-green-500" : 
+                  processingStatus === "failed" ? "bg-red-500" : 
+                  "bg-blue-500"
+                )}
+              />
             </div>
-          </Card>
+          </div>
           
-          {/* Summary Section */}
-          {extractedInfo.summary && (
-            <Card className="p-4">
-              <h4 className="text-sm font-medium mb-2">Document Summary</h4>
-              <p className="text-sm">{extractedInfo.summary}</p>
-            </Card>
+          <Separator />
+          
+          {document.deadline && (
+            <>
+              <div>
+                <h4 className="text-sm font-medium">Submission Deadline</h4>
+                <div className="mt-1 flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{format(new Date(document.deadline), "MMMM d, yyyy")}</span>
+                </div>
+                {getDeadlineStatus(document.deadline)}
+              </div>
+              
+              <Separator />
+            </>
           )}
-          
-          {/* Deadlines Section */}
+
           {document.deadlines && document.deadlines.length > 0 && (
-            <Card className="p-4">
-              <h4 className="text-sm font-medium mb-3">Key Deadlines</h4>
-              <div className="space-y-3">
-                {document.deadlines.map((deadline, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="bg-red-100 rounded-full p-2">
-                      <Calendar className="h-4 w-4 text-red-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{deadline.title}</p>
-                      <p className="text-xs text-muted-foreground">{deadline.dueDate}</p>
-                      {deadline.description && (
-                        <p className="text-xs mt-1">{deadline.description}</p>
+            <div>
+              <h4 className="text-sm font-medium">Upcoming Deadlines</h4>
+              <div className="mt-1 space-y-2">
+                {document.deadlines.slice(0, 2).map((deadline, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      {deadline.status === 'completed' ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <ClockIcon className="h-4 w-4 text-amber-500" />
                       )}
+                      <span>{deadline.title}</span>
                     </div>
+                    <Badge 
+                      variant={deadline.status === 'overdue' ? "destructive" : "outline"}
+                      className="text-xs"
+                    >
+                      {format(new Date(deadline.due_date), "MMM d")}
+                    </Badge>
                   </div>
                 ))}
-              </div>
-            </Card>
-          )}
-          
-          {/* File Details */}
-          <Card className="p-4">
-            <h4 className="text-sm font-medium mb-3">File Details</h4>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="bg-muted rounded-full p-2">
-                  <ArrowDownToLine className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Upload Date</p>
-                  <p className="text-sm">{
-                    document.created_at || document.creation_date
-                      ? formatDistanceToNow(new Date(document.created_at || document.creation_date), { addSuffix: true })
-                      : "Unknown"
-                  }</p>
-                </div>
+                {document.deadlines.length > 2 && (
+                  <div className="text-xs text-muted-foreground text-right">
+                    +{document.deadlines.length - 2} more deadlines
+                  </div>
+                )}
               </div>
               
-              {(document.size || document.file_size) && (
-                <div className="flex items-start gap-3">
-                  <div className="bg-muted rounded-full p-2">
-                    <FileText className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">File Size</p>
-                    <p className="text-sm">{Math.round((document.size || document.file_size) / 1024)} KB</p>
-                  </div>
-                </div>
-              )}
+              <Separator className="my-3" />
             </div>
-          </Card>
+          )}
+          
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div>
+              <h4 className="text-xs text-muted-foreground">Created</h4>
+              <p className="text-sm">
+                {document.created_at ? formatDistanceToNow(new Date(document.created_at), { addSuffix: true }) : 'Unknown'}
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="text-xs text-muted-foreground">Modified</h4>
+              <p className="text-sm">
+                {document.updated_at ? formatDistanceToNow(new Date(document.updated_at), { addSuffix: true }) : 'Unknown'}
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="text-xs text-muted-foreground">File Type</h4>
+              <p className="text-sm">
+                {document.type || 'Unknown'}
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="text-xs text-muted-foreground">Size</h4>
+              <p className="text-sm">
+                {document.size ? formatFileSize(document.size) : document.file_size || 'Unknown'}
+              </p>
+            </div>
+          </div>
         </div>
-      </ScrollArea>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

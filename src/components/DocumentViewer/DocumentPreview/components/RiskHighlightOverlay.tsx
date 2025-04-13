@@ -1,13 +1,23 @@
 
-import React from "react";
-import { Risk } from "../../RiskAssessment/types";
+import React, { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
+import { Risk } from '../../RiskAssessment/types';
+
+interface RiskHighlightWithPosition extends Risk {
+  position?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
 
 interface RiskHighlightOverlayProps {
-  risks: Risk[];
+  risks: RiskHighlightWithPosition[];
   documentWidth: number;
   documentHeight: number;
-  onRiskClick: (riskId: string) => void;
-  activeRiskId?: string | null;
+  activeRiskId: string | null;
+  onRiskClick: (risk: RiskHighlightWithPosition) => void;
   containerRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -15,152 +25,86 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightOverlayProps> = ({
   risks,
   documentWidth,
   documentHeight,
-  onRiskClick,
   activeRiskId,
-  containerRef,
+  onRiskClick,
+  containerRef
 }) => {
-  // Special case for GreenTech Supplies Form 31
-  const isGreenTechForm31 = risks.some(risk => 
-    risk.description?.toLowerCase().includes('greentech') || 
-    ((risk.metadata && risk.metadata.clientName) || '').toLowerCase().includes('greentech'));
+  const [scrollPosition, setScrollPosition] = useState({ top: 0, left: 0 });
 
-  const getHighlightPositions = () => {
-    if (isGreenTechForm31) {
-      // Pre-defined positions for GreenTech Form 31
-      return [
-        // Section 4 - Claim Category (High Risk)
-        {
-          id: "risk-0",
-          top: documentHeight * 0.35, 
-          left: documentWidth * 0.15,
-          width: documentWidth * 0.7,
-          height: documentHeight * 0.08,
-          border: '2px dashed #ff4444',
-          risk: risks.find(r => r.description?.includes('Missing Checkbox Selections')) || risks[0],
-        },
-        // Section 5 - Relatedness (High Risk)
-        {
-          id: "risk-1",
-          top: documentHeight * 0.45,
-          left: documentWidth * 0.15,
-          width: documentWidth * 0.7,
-          height: documentHeight * 0.08,
-          border: '2px dashed #ff4444',
-          risk: risks.find(r => r.description?.includes('Relatedness')) || risks[1],
-        },
-        // Section 6 - Transfers (High Risk)
-        {
-          id: "risk-2",
-          top: documentHeight * 0.55,
-          left: documentWidth * 0.15,
-          width: documentWidth * 0.7,
-          height: documentHeight * 0.08, 
-          border: '2px dashed #ff4444',
-          risk: risks.find(r => r.description?.includes('Disclosure of Transfers')) || risks[2],
-        },
-        // Date Format (Medium Risk)
-        {
-          id: "risk-3",
-          top: documentHeight * 0.7,
-          left: documentWidth * 0.2,
-          width: documentWidth * 0.5,
-          height: documentHeight * 0.05,
-          border: '2px dashed #ff9900',
-          risk: risks.find(r => r.description?.includes('Date Format')) || risks[3],
-        },
-        // Trustee Declaration (Medium Risk)
-        {
-          id: "risk-4",
-          top: documentHeight * 0.78,
-          left: documentWidth * 0.1,
-          width: documentWidth * 0.8,
-          height: documentHeight * 0.07,
-          border: '2px dashed #ff9900',
-          risk: risks.find(r => r.description?.includes('Trustee Declaration')) || risks[4],
-        }
-      ];
+  useEffect(() => {
+    const handleScroll = () => {
+      if (containerRef.current) {
+        setScrollPosition({
+          top: containerRef.current.scrollTop,
+          left: containerRef.current.scrollLeft
+        });
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
     }
 
-    // For other documents or if not GreenTech Form 31
-    return risks.map((risk, index) => {
-      // Default spacing for general risk highlights
-      const verticalSpacing = documentHeight / (risks.length + 1);
-      return {
-        id: `risk-${index}`,
-        top: verticalSpacing * (index + 1) - 30,
-        left: documentWidth * 0.1,
-        width: documentWidth * 0.8,
-        height: 60,
-        border: `2px dashed ${
-          risk.severity === 'high'
-            ? '#ff4444'
-            : risk.severity === 'medium'
-            ? '#ff9900'
-            : '#44aa44'
-        }`,
-        risk
-      };
-    });
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [containerRef]);
+
+  const getSeverityColor = (severity: 'high' | 'medium' | 'low' = 'medium') => {
+    switch (severity) {
+      case 'high':
+        return 'bg-red-500/20 border-red-500';
+      case 'medium':
+        return 'bg-amber-500/20 border-amber-500';
+      case 'low':
+        return 'bg-blue-500/20 border-blue-500';
+      default:
+        return 'bg-amber-500/20 border-amber-500';
+    }
   };
 
-  const highlights = getHighlightPositions();
-
   return (
-    <div
-      className="absolute top-0 left-0 w-full h-full pointer-events-none"
-      style={{ zIndex: 50 }}
+    <div 
+      className="absolute top-0 left-0 pointer-events-none"
+      style={{
+        width: documentWidth,
+        height: documentHeight
+      }}
     >
-      {highlights.map((highlight) => (
-        <div
-          key={highlight.id}
-          id={highlight.id}
-          className="absolute cursor-pointer pointer-events-auto transition-opacity duration-300"
-          style={{
-            top: highlight.top,
-            left: highlight.left,
-            width: highlight.width,
-            height: highlight.height,
-            border: highlight.border,
-            backgroundColor: `${
-              highlight.risk.severity === 'high'
-                ? 'rgba(255, 68, 68, 0.1)'
-                : highlight.risk.severity === 'medium'
-                ? 'rgba(255, 153, 0, 0.1)'
-                : 'rgba(68, 170, 68, 0.1)'
-            }`,
-            boxShadow: activeRiskId === highlight.id
-              ? `0 0 0 2px ${
-                  highlight.risk.severity === 'high'
-                    ? '#ff4444'
-                    : highlight.risk.severity === 'medium'
-                    ? '#ff9900'
-                    : '#44aa44'
-                }`
-              : 'none',
-            opacity: activeRiskId && activeRiskId !== highlight.id ? 0.3 : 0.8,
-            transition: 'opacity 0.3s, box-shadow 0.3s',
-            zIndex: activeRiskId === highlight.id ? 52 : 51,
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRiskClick(highlight.id);
-          }}
-        >
-          <div 
-            className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 rounded-full px-2 py-0.5 text-xs font-medium text-white"
+      {risks.filter(risk => risk.position).map((risk, index) => {
+        if (!risk.position) return null;
+        
+        const { x, y, width, height } = risk.position;
+        const isActive = activeRiskId === risk.type;
+        
+        // Calculate positions relative to the document and adjust for scroll
+        const left = (x * documentWidth) - scrollPosition.left;
+        const top = (y * documentHeight) - scrollPosition.top;
+        const highlightWidth = width * documentWidth;
+        const highlightHeight = height * documentHeight;
+        
+        return (
+          <div
+            key={`risk-${index}-${risk.type}`}
+            className={cn(
+              'absolute border-2 rounded pointer-events-auto transition-all duration-200',
+              getSeverityColor(risk.severity as 'high' | 'medium' | 'low'),
+              isActive ? 'z-20 ring-2 ring-offset-2 ring-primary' : 'z-10 opacity-50 hover:opacity-100'
+            )}
             style={{
-              backgroundColor: highlight.risk.severity === 'high'
-                ? '#ff4444'
-                : highlight.risk.severity === 'medium'
-                ? '#ff9900'
-                : '#44aa44',
-              zIndex: 53
+              left: `${left}px`,
+              top: `${top}px`,
+              width: `${highlightWidth}px`,
+              height: `${highlightHeight}px`,
             }}
-          >
-            {highlight.risk.severity.toUpperCase()}
-          </div>
-        </div>
-      ))}
+            onClick={() => onRiskClick(risk)}
+            title={risk.description || risk.type}
+          />
+        );
+      })}
     </div>
   );
 };

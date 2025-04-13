@@ -1,16 +1,16 @@
 
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { MessageSquare, ClipboardList, Clock, Calendar, FileBarChart } from "lucide-react";
+import { MessageSquare, FileCheck, Clock, LineChart, HistoryIcon } from "lucide-react";
 
 interface TabsContainerProps {
   selectedTab: string;
-  setSelectedTab: (tab: string) => void;
+  setSelectedTab: (value: string) => void;
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
-  analysisPanel?: React.ReactNode;
-  deadlinesPanel?: React.ReactNode;
+  analysisPanel: React.ReactNode;
+  deadlinesPanel: React.ReactNode;
 }
 
 export const TabsContainer: React.FC<TabsContainerProps> = ({
@@ -20,60 +20,50 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
   taskPanel,
   versionPanel,
   analysisPanel,
-  deadlinesPanel
+  deadlinesPanel,
 }) => {
   return (
-    <Tabs
-      value={selectedTab}
-      onValueChange={setSelectedTab}
-      className="h-full flex flex-col"
-    >
-      <div className="p-2 bg-muted/20">
-        <TabsList className="w-full grid grid-cols-5 p-1">
-          <TabsTrigger value="comments" className="flex items-center gap-1 py-2 text-xs">
-            <MessageSquare className="h-3 w-3" />
-            <span>Comments</span>
-          </TabsTrigger>
-          <TabsTrigger value="tasks" className="flex items-center gap-1 py-2 text-xs">
-            <ClipboardList className="h-3 w-3" />
-            <span>Tasks</span>
-          </TabsTrigger>
-          <TabsTrigger value="versions" className="flex items-center gap-1 py-2 text-xs">
-            <Clock className="h-3 w-3" />
-            <span>Versions</span>
-          </TabsTrigger>
-          <TabsTrigger value="deadlines" className="flex items-center gap-1 py-2 text-xs">
-            <Calendar className="h-3 w-3" />
-            <span>Deadlines</span>
-          </TabsTrigger>
-          <TabsTrigger value="analysis" className="flex items-center gap-1 py-2 text-xs">
-            <FileBarChart className="h-3 w-3" />
-            <span>Analysis</span>
-          </TabsTrigger>
-        </TabsList>
-      </div>
+    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="h-full flex flex-col">
+      <TabsList className="w-full grid grid-cols-5 p-0">
+        <TabsTrigger value="comments" className="flex items-center gap-1.5">
+          <MessageSquare className="h-4 w-4" />
+          <span className="hidden sm:inline">Comments</span>
+        </TabsTrigger>
+        <TabsTrigger value="tasks" className="flex items-center gap-1.5">
+          <FileCheck className="h-4 w-4" />
+          <span className="hidden sm:inline">Tasks</span>
+        </TabsTrigger>
+        <TabsTrigger value="versions" className="flex items-center gap-1.5">
+          <HistoryIcon className="h-4 w-4" />
+          <span className="hidden sm:inline">Versions</span>
+        </TabsTrigger>
+        <TabsTrigger value="deadlines" className="flex items-center gap-1.5">
+          <Clock className="h-4 w-4" />
+          <span className="hidden sm:inline">Deadlines</span>
+        </TabsTrigger>
+        <TabsTrigger value="analysis" className="flex items-center gap-1.5">
+          <LineChart className="h-4 w-4" />
+          <span className="hidden sm:inline">Analysis</span>
+        </TabsTrigger>
+      </TabsList>
       
-      <TabsContent value="comments" className="flex-1 overflow-auto m-0 p-0">
+      <TabsContent value="comments" className="flex-1 overflow-y-auto p-4">
         {collaborationPanel}
       </TabsContent>
       
-      <TabsContent value="tasks" className="flex-1 overflow-auto m-0 p-0">
+      <TabsContent value="tasks" className="flex-1 overflow-y-auto p-4">
         {taskPanel}
       </TabsContent>
       
-      <TabsContent value="versions" className="flex-1 overflow-auto m-0 p-0">
+      <TabsContent value="versions" className="flex-1 overflow-y-auto p-4">
         {versionPanel}
       </TabsContent>
-
-      <TabsContent value="deadlines" className="flex-1 overflow-auto m-0 p-0">
-        {deadlinesPanel || (
-          <div className="p-4 text-center text-muted-foreground">
-            No deadlines available for this document
-          </div>
-        )}
+      
+      <TabsContent value="deadlines" className="flex-1 overflow-y-auto p-4">
+        {deadlinesPanel}
       </TabsContent>
       
-      <TabsContent value="analysis" className="flex-1 overflow-auto m-0 p-0">
+      <TabsContent value="analysis" className="flex-1 overflow-y-auto p-4">
         {analysisPanel}
       </TabsContent>
     </Tabs>

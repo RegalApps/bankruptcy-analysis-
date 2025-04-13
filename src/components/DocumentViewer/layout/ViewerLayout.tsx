@@ -9,6 +9,7 @@ interface ViewerLayoutProps {
   isForm47?: boolean;
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
+  rightPanel: React.ReactNode;
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
@@ -16,15 +17,13 @@ interface ViewerLayoutProps {
   deadlinesPanel?: React.ReactNode;
   documentTitle?: string;
   documentType?: string;
-  clientDetails?: React.ReactNode;
-  documentSummary?: React.ReactNode;
-  riskAssessment?: React.ReactNode;
 }
 
 export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   isForm47 = false,
   sidebar,
   mainContent,
+  rightPanel,
   collaborationPanel,
   taskPanel,
   versionPanel,
@@ -32,9 +31,6 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   deadlinesPanel,
   documentTitle = "Document",
   documentType = "Document",
-  clientDetails,
-  documentSummary,
-  riskAssessment
 }) => {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showCollaborationPanel, setShowCollaborationPanel] = useState(true);
@@ -62,15 +58,6 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Create the right panel content that combines client details, document summary and risk assessment
-  const rightPanelContent = (
-    <div className="flex flex-col h-full overflow-auto">
-      {clientDetails}
-      {documentSummary}
-      {riskAssessment}
-    </div>
-  );
-
   return (
     <div className="flex flex-col h-full border rounded-lg overflow-hidden bg-background">
       <ViewerHeader
@@ -91,11 +78,13 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
             showSidebar={showSidebar}
             sidebar={sidebar}
             mainContent={mainContent}
+            rightPanel={rightPanel}
             showCollaborationPanel={showCollaborationPanel}
             collaborationPanel={collaborationPanel}
             taskPanel={taskPanel}
             versionPanel={versionPanel}
             analysisPanel={analysisPanel || <div>No analysis available</div>}
+            deadlinesPanel={deadlinesPanel || <div>No deadlines available</div>}
             selectedTab={selectedTab}
             setSelectedTab={setSelectedTab}
           />
@@ -104,11 +93,13 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
             showSidebar={showSidebar}
             sidebar={sidebar}
             mainContent={mainContent}
+            rightPanel={rightPanel}
             showCollaborationPanel={showCollaborationPanel}
             collaborationPanel={collaborationPanel}
             taskPanel={taskPanel}
             versionPanel={versionPanel}
             analysisPanel={analysisPanel || <div>No analysis available</div>}
+            deadlinesPanel={deadlinesPanel || <div>No deadlines available</div>}
             selectedTab={selectedTab}
             setSelectedTab={setSelectedTab}
           />
@@ -117,11 +108,13 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
             showSidebar={showSidebar}
             sidebar={sidebar}
             mainContent={mainContent}
+            rightPanel={rightPanel}
             showCollaborationPanel={showCollaborationPanel}
             collaborationPanel={collaborationPanel}
             taskPanel={taskPanel}
             versionPanel={versionPanel}
             analysisPanel={analysisPanel || <div>No analysis available</div>}
+            deadlinesPanel={deadlinesPanel || <div>No deadlines available</div>}
             selectedTab={selectedTab}
             setSelectedTab={setSelectedTab}
           />

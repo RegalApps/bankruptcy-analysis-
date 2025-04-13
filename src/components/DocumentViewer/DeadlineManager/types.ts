@@ -1,22 +1,20 @@
 
-import { DocumentDetails, Deadline } from '../types';
+import { Deadline } from "../types";
 
 export interface DeadlineManagerProps {
-  document: DocumentDetails;
-  onDeadlineUpdated: () => void;
+  documentId: string;
+  deadlines?: Deadline[];
+  isLoading?: boolean;
 }
 
 export interface AddDeadlineFormProps {
-  onAdd: (deadline: Deadline) => Promise<void>;
+  onSubmit: (deadline: Omit<Deadline, 'id' | 'created_at'>) => void;
   onCancel: () => void;
-}
-
-export interface DeadlineListProps {
-  deadlines: Deadline[];
-  onRemove: (index: number) => Promise<void>;
 }
 
 export interface DeadlineItemProps {
   deadline: Deadline;
-  onRemove: () => Promise<void>;
+  onStatusChange: (id: string, status: Deadline['status']) => void;
+  onEdit: (deadline: Deadline) => void;
+  onDelete: (id: string) => void;
 }
