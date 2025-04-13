@@ -110,13 +110,13 @@ const usePreviewState = (
     }
   }, [storagePath, documentId, bypassAnalysis]);
 
-  const isDocumentForm47 = (document: DocumentDetails): boolean => {
-    if (!document) return false;
+  const isDocumentForm47 = (docTitle: string, docType: string): boolean => {
+    if (!docTitle && !docType) return false;
     
-    const isForm47InTitle = document.title?.toLowerCase().includes('form 47') || 
-                           document.title?.toLowerCase().includes('f47');
-    const isForm47InType = document.type?.toLowerCase().includes('form-47') || 
-                          document.type?.toLowerCase().includes('form 47');
+    const isForm47InTitle = docTitle?.toLowerCase().includes('form 47') || 
+                           docTitle?.toLowerCase().includes('f47');
+    const isForm47InType = docType?.toLowerCase().includes('form-47') || 
+                          docType?.toLowerCase().includes('form 47');
     
     return isForm47InTitle || isForm47InType;
   };
@@ -137,12 +137,7 @@ const usePreviewState = (
       if (data?.content?.risks) {
         setDocumentRisks(data.content.risks);
       } else if (data?.content?.extracted_info?.formType === 'form-47' || 
-                isDocumentForm47({ 
-                  id: documentId, 
-                  title, 
-                  type: 'form-47',
-                  storage_path: storagePath 
-                })) {
+                isDocumentForm47(title, 'form-47')) {
         const defaultForm47Risks: Risk[] = [
           {
             type: "Missing Creditor Information",

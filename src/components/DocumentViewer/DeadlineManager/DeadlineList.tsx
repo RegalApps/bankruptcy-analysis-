@@ -18,7 +18,7 @@ export const DeadlineList: React.FC<DeadlineListProps> = ({
     <div className="space-y-2">
       {deadlines.map((deadline, index) => (
         <DeadlineItem
-          key={index}
+          key={deadline.id || index.toString()}
           deadline={deadline}
           onRemove={() => onRemove(deadline.id)}
           onStatusChange={onStatusChange}

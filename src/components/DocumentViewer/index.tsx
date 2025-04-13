@@ -117,7 +117,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   );
 
   // Create empty div for sidebar content
-  const sidebarContent = <div></div>;
+  const sidebarContent = <div className="h-full"></div>;
 
   return (
     <ViewerLayout
@@ -125,10 +125,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       documentType={documentType}
       isForm47={isForm47}
       mainContent={
-        <DocumentPreview
+        <DocumentPreview 
           documentId={documentId}
-          document={document}
-          loading={loading}
           zoomLevel={zoomLevel}
           setZoomLevel={setZoomLevel}
           onLoadFailure={onLoadFailure}
@@ -144,6 +142,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           documentId={documentId}
           comments={document?.comments || []}
           onCommentAdded={handleCommentAdded}
+          isLoading={loading}
         />
       }
       taskPanel={
@@ -151,7 +150,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           documentId={documentId}
           activeRiskId={activeRiskId}
           onRiskSelect={handleRiskSelect}
-          isLoading={loading}
         />
       }
       versionPanel={
