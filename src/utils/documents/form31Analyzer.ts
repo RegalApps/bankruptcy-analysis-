@@ -65,7 +65,7 @@ const analyzeForm31 = (title: string): AnalysisResult => {
       }
     ],
     regulatory_compliance: {
-      status: 'non_compliant',
+      status: 'non_compliant' as const,
       details: 'This document has compliance issues that must be addressed before submission.',
       references: [
         'BIA Section 124(1)(b) - Supporting documentation requirements',

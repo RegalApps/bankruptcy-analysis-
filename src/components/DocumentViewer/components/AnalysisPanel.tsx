@@ -18,7 +18,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const risks = analysis?.risks || [];
 
   const defaultRegulatoryCompliance: RegulatoryCompliance = {
-    status: "needs_review",
+    status: "needs_review" as const,
     details: 'This document requires regulatory compliance review.',
     references: ['BIA Section 124(1)', 'BIA Section 121(1)']
   };
