@@ -14,8 +14,8 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   analysis
 }) => {
   const hasAnalysis = !!analysis;
-  const extractedInfo = analysis?.extracted_info;
-  const risks = analysis?.risks || [];
+  const extractedInfo = analysis?.content?.extracted_info;
+  const risks = analysis?.content?.risks || [];
 
   const defaultRegulatoryCompliance: RegulatoryCompliance = {
     status: "needs_review",
@@ -24,11 +24,11 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   };
 
   // Cast the status to the appropriate type to ensure proper typing
-  const regulatoryCompliance: RegulatoryCompliance = analysis?.regulatory_compliance 
+  const regulatoryCompliance: RegulatoryCompliance = analysis?.content?.regulatory_compliance 
     ? {
-        status: (analysis.regulatory_compliance.status || "needs_review") as "needs_review" | "compliant" | "non_compliant",
-        details: analysis.regulatory_compliance.details || defaultRegulatoryCompliance.details,
-        references: analysis.regulatory_compliance.references || []
+        status: (analysis.content.regulatory_compliance.status || "needs_review") as "needs_review" | "compliant" | "non_compliant",
+        details: analysis.content.regulatory_compliance.details || defaultRegulatoryCompliance.details,
+        references: analysis.content.regulatory_compliance.references || []
       }
     : defaultRegulatoryCompliance;
 

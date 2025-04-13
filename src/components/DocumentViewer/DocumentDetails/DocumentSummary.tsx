@@ -1,7 +1,6 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RegulatoryCompliance } from "@/utils/documents/types/analysisTypes";
 
 interface DocumentSummaryProps {
@@ -11,43 +10,46 @@ interface DocumentSummaryProps {
 
 export const DocumentSummary: React.FC<DocumentSummaryProps> = ({ 
   summary,
-  regulatoryCompliance
+  regulatoryCompliance 
 }) => {
-  return (
-    <Card className="mb-4">
-      <CardContent className="pt-4">
-        <div className="space-y-4">
-          <div>
-            <h4 className="font-medium mb-2">Document Summary</h4>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {summary}
-            </p>
-          </div>
+  if (!summary) {
+    return (
+      <Card className="bg-muted/10">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Document Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm italic">No summary available</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
-          {regulatoryCompliance && (
-            <div>
-              <h4 className="font-medium mb-2">Regulatory Compliance</h4>
-              <Alert 
-                variant={regulatoryCompliance.status === 'non_compliant' ? 'destructive' : 'default'}
-                className={cn(
-                  regulatoryCompliance.status === 'needs_review' && "border-orange-500 text-orange-500"
-                )}
-              >
-                <p className="text-sm">{regulatoryCompliance.details}</p>
-                {regulatoryCompliance.references && (
-                  <div className="mt-2">
-                    <p className="text-xs font-medium">References:</p>
-                    <ul className="text-xs list-disc list-inside">
-                      {regulatoryCompliance.references.map((ref, index) => (
-                        <li key={index}>{ref}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </Alert>
-            </div>
-          )}
-        </div>
+  return (
+    <Card className="bg-muted/10">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">Document Summary</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm">{summary}</p>
+        
+        {regulatoryCompliance && (
+          <div className="mt-4 pt-4 border-t border-muted">
+            <h4 className="font-medium text-sm mb-2">Regulatory Compliance</h4>
+            <p className="text-sm">{regulatoryCompliance.details}</p>
+            
+            {regulatoryCompliance.references && regulatoryCompliance.references.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs text-muted-foreground">References:</p>
+                <ul className="text-xs list-disc pl-5 mt-1 space-y-1">
+                  {regulatoryCompliance.references.map((ref, idx) => (
+                    <li key={idx}>{ref}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

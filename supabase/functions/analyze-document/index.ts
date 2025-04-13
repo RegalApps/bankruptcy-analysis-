@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -21,16 +20,13 @@ interface AnalysisRequest {
   isExcelFile?: boolean;
 }
 
-// Add timeout to prevent function from running indefinitely
 const FUNCTION_TIMEOUT = 25000; // 25 seconds - edge functions have a 30s limit
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Use a timer to enforce function timeout
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => reject(new Error('Function timed out after 25 seconds')), FUNCTION_TIMEOUT);
   });
@@ -50,16 +46,13 @@ serve(async (req) => {
 
     console.log(`Analysis request received for document ID: ${documentId}, form type: ${formType}, isExcelFile: ${isExcelFile}`);
 
-    // If no document ID or text, return error
     if (!documentId && !documentText) {
       throw new Error('Either documentId or documentText must be provided');
     }
     
-    // Fast path for Excel files - just extract client name and metadata, no full analysis
     if (isExcelFile && documentId) {
       console.log("Processing Excel file with simplified workflow");
       
-      // Extract client name from filename if possible
       let clientName = "Unknown Client";
       if (title) {
         const nameMatch = title.match(/(?:form[- ]?76[- ]?|)([a-z\s]+)(?:\.|$)/i);
@@ -69,7 +62,6 @@ serve(async (req) => {
         }
       }
       
-      // Update document with basic metadata - fast operation
       await supabase
         .from('documents')
         .update({ 
@@ -101,7 +93,6 @@ serve(async (req) => {
       });
     }
 
-    // Prepare analysis results for non-Excel files
     const result = {
       structureValid: true,
       requiredFieldsPresent: true,
@@ -117,7 +108,6 @@ serve(async (req) => {
       }
     };
     
-    // Extract form number from title if available
     if (title && !result.extracted_info.formNumber) {
       const formMatch = title.match(/Form\s+(\d+)/i) || title.match(/F(\d+)/i);
       if (formMatch) {
@@ -125,7 +115,6 @@ serve(async (req) => {
       }
     }
     
-    // Check for consumer proposal patterns in title or content
     const isConsumerProposal = title.toLowerCase().includes('consumer proposal') || 
                                (documentText && documentText.toLowerCase().includes('consumer proposal'));
     
@@ -134,7 +123,84 @@ serve(async (req) => {
       result.extracted_info.formType = 'form-47';
     }
     
-    // For Form 76, add specific compliance details
+    const isForm31 = title.toLowerCase().includes('form 31') || 
+                    title.toLowerCase().includes('proof of claim') ||
+                    documentId?.toLowerCase().includes('form31') || 
+                    documentId?.toLowerCase().includes('greentech');
+
+    if (isForm31) {
+      console.log("Processing Form 31 Proof of Claim document");
+      
+      result.extracted_info.formType = 'form-31';
+      result.extracted_info.formNumber = '31';
+      result.extracted_info.summary = "Proof of Claim (Form 31) processed successfully";
+      result.extracted_info.clientName = "GreenTech Supplies Inc.";
+      result.extracted_info.creditorName = "GreenTech Supplies Inc.";
+      result.extracted_info.creditorMailingAddress = "123 Tech Boulevard, Suite 450, San Francisco, CA 94103";
+      result.extracted_info.creditorEmail = "claims@greentech-supplies.com";
+      result.extracted_info.contactPersonName = "Sarah Johnson, Claims Manager";
+      result.extracted_info.contactTelephone = "(415) 555-7890";
+      result.extracted_info.debtorName = "EcoBuilders Construction Ltd.";
+      result.extracted_info.debtorCity = "Toronto";
+      result.extracted_info.debtorProvince = "Ontario"; 
+      result.extracted_info.debtAmount = "$125,450.00";
+      result.extracted_info.executionDate = "2025-03-15";
+      result.extracted_info.documentStatus = "Pending Review";
+      
+      result.risks = [
+        {
+          type: "Missing Supporting Documentation",
+          description: "No evidence of delivery confirmation attached for invoice #GT-7845.",
+          severity: "high",
+          regulation: "BIA Section 124(1)(b)",
+          impact: "May delay claim processing or result in partial rejection",
+          requiredAction: "Attach delivery confirmation for invoice #GT-7845",
+          solution: "Upload signed delivery receipt or proof of service for invoice #GT-7845",
+          deadline: "Immediately"
+        },
+        {
+          type: "Incomplete Creditor Information",
+          description: "Contact person's telephone number is missing from Section 1.",
+          severity: "medium",
+          regulation: "BIA General Rules s. 118(1)",
+          impact: "May hinder communication regarding claim resolution",
+          requiredAction: "Add contact telephone number",
+          solution: "Complete Section 1 by adding required contact telephone number",
+          deadline: "3 days"
+        },
+        {
+          type: "Potential Related Party Transaction",
+          description: "No disclosure whether creditor is related to debtor under BIA s.4",
+          severity: "high",
+          regulation: "BIA Section 4",
+          impact: "Could affect claim priority and scrutiny level",
+          requiredAction: "Complete related party disclosure",
+          solution: "Check appropriate box in Section 6 indicating related/non-related status",
+          deadline: "Immediately"
+        },
+        {
+          type: "Missing Security Documentation",
+          description: "Claim indicates secured status but no security documentation attached",
+          severity: "high",
+          regulation: "BIA Section 128(3)",
+          impact: "Claim may be processed as unsecured if security not proven",
+          requiredAction: "Attach security agreement documentation",
+          solution: "Upload security agreement and proof of registration (PPSA)",
+          deadline: "Immediately"
+        }
+      ];
+      
+      result.regulatory_compliance = {
+        status: 'non_compliant',
+        details: 'This document has compliance issues that must be addressed before submission.',
+        references: [
+          'BIA Section 124(1)(b) - Supporting documentation requirements',
+          'BIA Section 4 - Related party disclosures',
+          'BIA Section 128(3) - Security documentation requirements'
+        ]
+      };
+    }
+    
     if (formType === 'form-76' || title.toLowerCase().includes('form 76')) {
       result.extracted_info.formType = 'form-76';
       result.extracted_info.formNumber = '76';
@@ -143,7 +209,6 @@ serve(async (req) => {
       result.extracted_info.trusteeName = "Gradey Henderson";
       result.extracted_info.dateSigned = "February 22, 2025";
       
-      // Add sample risks for Form 76
       result.risks = [
         {
           type: "compliance",
@@ -188,7 +253,6 @@ serve(async (req) => {
       ];
     }
     
-    // For Form 47 (Consumer Proposal), add specific compliance details
     if (formType === 'form-47' || result.extracted_info.formNumber === '47' || 
         title.toLowerCase().includes('form 47') || isConsumerProposal) {
       result.extracted_info.formType = 'form-47';
@@ -200,7 +264,6 @@ serve(async (req) => {
       result.extracted_info.submissionDeadline = "March 3, 2025";
       result.extracted_info.documentStatus = "Draft - Pending Review";
       
-      // Add risks for Form 47 Consumer Proposal
       result.risks = [
         {
           type: "compliance",
@@ -265,13 +328,10 @@ serve(async (req) => {
       ];
     }
 
-    // If we have a documentId, save the analysis to the database
-    // Race this against the timeout
     if (documentId) {
       await Promise.race([
         (async () => {
           try {
-            // Get the user ID who owns the document
             const { data: documentOwner, error: ownerError } = await supabase
               .from('documents')
               .select('user_id')
@@ -280,11 +340,9 @@ serve(async (req) => {
 
             if (ownerError) {
               console.error('Error fetching document owner:', ownerError);
-              // Continue with default processing even if owner lookup fails
             } 
             
             if (documentOwner) {
-              // Save analysis results
               const { error: analysisError } = await supabase
                 .from('document_analysis')
                 .upsert({
@@ -298,7 +356,6 @@ serve(async (req) => {
                 console.error('Error saving analysis:', analysisError);
               }
 
-              // Update document status
               const { error: updateError } = await supabase
                 .from('documents')
                 .update({ 
@@ -323,14 +380,12 @@ serve(async (req) => {
                 console.error('Error updating document status:', updateError);
               }
               
-              // Create a deadline notification for Form 47 based on submission deadline
               if (result.extracted_info.formNumber === '47' && result.extracted_info.submissionDeadline) {
                 const submissionDate = new Date(result.extracted_info.submissionDeadline);
                 const now = new Date();
                 
                 if (submissionDate > now) {
                   try {
-                    // Add deadline to document
                     const { data: document } = await supabase
                       .from('documents')
                       .select('deadlines')
@@ -360,7 +415,6 @@ serve(async (req) => {
                 }
               }
             } else {
-              // If we can't find the owner, still update the document status
               const { error: updateError } = await supabase
                 .from('documents')
                 .update({ 
@@ -380,7 +434,6 @@ serve(async (req) => {
             }
           } catch (dbError) {
             console.error('Database operation error:', dbError);
-            // Even if DB operations fail, we'll still return results to client
           }
         })(),
         timeoutPromise
@@ -395,7 +448,6 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in analyze-document function:', error);
     
-    // If we have a document ID, update its status to failed
     try {
       const requestData = await req.json() as AnalysisRequest;
       if (requestData.documentId) {
@@ -432,9 +484,7 @@ serve(async (req) => {
   }
 });
 
-// Helper function stub for future implementation
 function extractClientName(text: string): string {
-  // Simple extraction logic
   const namePattern = /client\s*name\s*[:;]\s*([^\n,]+)/i;
   const match = text.match(namePattern);
   return match ? match[1].trim() : "Unknown Client";

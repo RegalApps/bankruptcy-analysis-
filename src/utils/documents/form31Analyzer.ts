@@ -23,20 +23,43 @@ const analyzeForm31 = (title: string): AnalysisResult => {
       summary: "This Proof of Claim (Form 31) submitted by GreenTech Supplies Inc. claims $125,450 related to unpaid equipment and supply invoices. The claim includes supporting documents with invoice details and delivery confirmations. The claim has been properly signed by the authorized representative and includes required contact information.",
       submissionDeadline: "April 30, 2025",
       documentStatus: "Pending Review",
-      // Add Form 31 specific fields based on the field map provided
+      
+      // Section 1: Creditor Contact Info
       creditorMailingAddress: "123 Tech Boulevard, Suite 450, San Francisco, CA 94103",
       creditorEmail: "claims@greentech-supplies.com",
       contactPersonName: "Sarah Johnson, Claims Manager",
       contactTelephone: "(415) 555-7890",
+      
+      // Section 2: Matter Identification
       debtorName: "EcoBuilders Construction Ltd.",
       debtorCity: "Toronto",
       debtorProvince: "Ontario",
+      creditorName: "GreenTech Supplies Inc.",
+      
+      // Section 3: Certifier Declaration
       certifierName: "Sarah Johnson",
+      representativeAuthority: true,
+      debtValidityDate: "2025-01-01",
       debtAmount: "$125,450.00",
+      statuteBarredStatus: false,
+      
+      // Section 4: Debt Particulars
       debtDueDate: "2025-01-15",
+      lastPaymentDate: "2024-12-01",
+      lastAcknowledgementDate: "2024-12-15",
+      claimHistory: "Multiple invoices for construction supplies delivered between Oct-Dec 2024. Payment terms Net-30.",
+      
+      // Section 5: Claim Categories
       claimCategory: "A. Unsecured Claim",
       unsecuredAmount: "$125,450.00",
-      executionDate: "2025-03-15"
+      
+      // Section 6: Relationship & Transactions
+      relatedToDebtor: false,
+      nonArmsLengthTransactions: false,
+      
+      // Section 8: Execution
+      executionDate: "2025-03-15",
+      signatureValid: true
     },
     risks: [
       {
