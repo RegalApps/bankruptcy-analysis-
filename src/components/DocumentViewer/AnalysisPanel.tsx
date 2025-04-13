@@ -85,7 +85,8 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadli
         </div>
 
         <DeadlineManager 
-          document={document}
+          documentId={document.id}
+          deadlines={document.deadlines}
           onDeadlineUpdated={onDeadlineUpdated}
         />
       </div>
