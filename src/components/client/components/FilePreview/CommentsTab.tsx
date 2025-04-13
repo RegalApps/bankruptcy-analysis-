@@ -1,9 +1,8 @@
 
-import React, { useState } from 'react';
-import { Document, Comment } from '../../types';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Send } from 'lucide-react';
+import React from 'react';
+import { Document } from '../../types';
+import { CommentInput } from './components/CommentInput';
+import { CommentList } from './components/CommentList';
 
 interface CommentsTabProps {
   document: Document;
@@ -16,60 +15,21 @@ export const CommentsTab: React.FC<CommentsTabProps> = ({
   onAddComment,
   isLoading = false
 }) => {
-  const [comment, setComment] = useState('');
-  
   const viewerDocument = {
     ...document,
     comments: document.comments || [] // Ensure comments is always an array
   };
 
-  const handleSubmit = () => {
-    if (comment.trim() && onAddComment) {
-      onAddComment(comment);
-      setComment('');
-    }
-  };
-
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-grow overflow-y-auto p-3 space-y-3">
-        {!(viewerDocument.comments?.length) ? (
-          <p className="text-center text-sm text-muted-foreground pt-4">
-            No comments yet. Be the first to add a comment.
-          </p>
-        ) : (
-          viewerDocument.comments.map((comment, index) => (
-            <div 
-              key={comment.id || index}
-              className="bg-muted p-3 rounded-lg"
-            >
-              <div className="text-xs text-muted-foreground mb-1">
-                {comment.user_name || 'Anonymous'} • {new Date(comment.created_at).toLocaleDateString()}
-              </div>
-              <p className="text-sm">{comment.content}</p>
-            </div>
-          ))
-        )}
+      <div className="flex-grow overflow-y-auto p-3">
+        <CommentList comments={viewerDocument.comments} />
       </div>
       
-      <div className="p-3 border-t">
-        <div className="flex gap-2">
-          <Textarea
-            placeholder="Add a comment..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="resize-none"
-            rows={2}
-          />
-          <Button 
-            size="icon" 
-            onClick={handleSubmit}
-            disabled={!comment.trim() || isLoading}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <CommentInput 
+        onAddComment={onAddComment}
+        isLoading={isLoading}
+      />
     </div>
   );
 };
