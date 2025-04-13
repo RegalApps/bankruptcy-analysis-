@@ -1,15 +1,12 @@
+
 import React from "react";
 import { AnalysisPanelProps } from "../types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { ClientDetails } from "./ClientDetails";
-import { DocumentSummary } from "../DocumentDetails/DocumentSummary";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RiskAssessment } from "../RiskAssessment";
 import { DeadlineManager } from "../DeadlineManager";
 import { RegulatoryCompliance } from "@/utils/documents/types/analysisTypes";
+import { SummaryPanel } from "./SummaryPanel";
 
 export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   documentId,
@@ -26,6 +23,8 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     references: ['BIA Section 124(1)', 'BIA Section 121(1)']
   };
 
+  const regulatoryCompliance = analysis?.regulatory_compliance || defaultRegulatoryCompliance;
+
   return (
     <div className="h-full overflow-y-auto">
       <Tabs defaultValue="summary" className="w-full">
@@ -41,30 +40,13 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               <Skeleton className="h-[100px] w-full rounded-md mb-4" />
               <Skeleton className="h-[200px] w-full rounded-md" />
             </>
-          ) : hasAnalysis ? (
-            <>
-              {extractedInfo && (
-                <ClientDetails extractedInfo={extractedInfo} />
-              )}
-              {extractedInfo?.summary && (
-                <DocumentSummary 
-                  summary={extractedInfo.summary} 
-                  regulatoryCompliance={analysis.regulatory_compliance || defaultRegulatoryCompliance}
-                />
-              )}
-            </>
           ) : (
-            <Card>
-              <CardContent className="pt-6">
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>No Analysis Available</AlertTitle>
-                  <AlertDescription>
-                    We couldn't find any analysis data for this document.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
+            <SummaryPanel
+              extractedInfo={extractedInfo}
+              regulatoryCompliance={regulatoryCompliance}
+              isLoading={isLoading}
+              hasAnalysis={hasAnalysis}
+            />
           )}
         </TabsContent>
         
