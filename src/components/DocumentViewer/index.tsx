@@ -50,6 +50,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   });
 
+  // Function to refresh document details
+  const refreshDocumentDetails = useCallback(() => {
+    setIsLoading(true);
+    fetchDocumentDetails();
+  }, [fetchDocumentDetails]);
+
   useEffect(() => {
     if (documentId) {
       setIsLoading(true);
@@ -70,7 +76,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         filter: `id=eq.${documentId}`
       }, () => {
         console.log('Document updated, refreshing...');
-        updateDocumentDetails();
+        refreshDocumentDetails();
       })
       .subscribe((status) => {
         if (status !== 'SUBSCRIBED') {
@@ -81,7 +87,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [documentId, updateDocumentDetails]);
+  }, [documentId, refreshDocumentDetails]);
 
   // Create subscription to document analysis changes
   useEffect(() => {
@@ -96,7 +102,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         filter: `document_id=eq.${documentId} AND user_id=eq.${session.user.id}`
       }, () => {
         console.log('Document analysis updated, refreshing...');
-        updateDocumentDetails();
+        refreshDocumentDetails();
       })
       .subscribe((status) => {
         if (status !== 'SUBSCRIBED') {
@@ -107,11 +113,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [documentId, session?.user?.id, updateDocumentDetails]);
+  }, [documentId, session?.user?.id, refreshDocumentDetails]);
 
   const handleAnalysisCompleted = useCallback(() => {
-    updateDocumentDetails();
-  }, [updateDocumentDetails]);
+    refreshDocumentDetails();
+  }, [refreshDocumentDetails]);
 
   const handleSelectRisk = useCallback((riskId: string) => {
     setSelectedRiskId((prevId) => (prevId === riskId ? null : riskId));
@@ -129,7 +135,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   if (isLoading) {
     return (
-      <ViewerLayout documentId={documentId}>
+      <ViewerLayout documentId={documentId} documentTitle={documentTitle}>
         <ViewerLoadingState />
       </ViewerLayout>
     );
@@ -137,8 +143,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   if (error) {
     return (
-      <ViewerLayout documentId={documentId}>
-        <ViewerErrorState error={error} />
+      <ViewerLayout documentId={documentId} documentTitle={documentTitle}>
+        <ViewerErrorState error={error} onRetry={refreshDocumentDetails} />
       </ViewerLayout>
     );
   }
@@ -148,7 +154,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       onLoadFailure();
     }
     return (
-      <ViewerLayout documentId={documentId}>
+      <ViewerLayout documentId={documentId} documentTitle={documentTitle}>
         <ViewerNotFoundState />
       </ViewerLayout>
     );

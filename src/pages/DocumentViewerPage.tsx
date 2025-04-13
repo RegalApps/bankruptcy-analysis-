@@ -8,7 +8,7 @@ import { DocumentViewer } from "@/components/DocumentViewer";
 import analyzeForm31 from "@/utils/documents/form31Analyzer";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { NotFound } from "./NotFound";
+import NotFound from "./NotFound";
 
 const DocumentViewerPage = () => {
   const { documentId } = useParams<{ documentId: string }>();

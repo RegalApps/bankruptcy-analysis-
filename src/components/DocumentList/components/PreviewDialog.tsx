@@ -40,7 +40,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({ document, onClose, onAnal
             storagePath={document.storage_path} 
             documentId={document.id}
             title={document.title}
-            onAnalysisComplete={() => {
+            onAnalysisCompleted={() => {
               if (onAnalysisComplete) {
                 onAnalysisComplete(document.id);
               }

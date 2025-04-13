@@ -26,6 +26,7 @@ function App() {
       <Route path="/crm" element={<CRMPage />} />
       <Route path="/documents/*" element={<DocumentsPage />} />
       <Route path="/document-viewer/:documentId" element={<DocumentViewerPage />} />
+      <Route path="/document-viewer/form47" element={<DocumentViewerPage />} />
       <Route path="/calendar-fullscreen" element={<CalendarFullscreenPage />} />
       <Route path="/e-filing" element={<EFilingPage />} />
       <Route path="/activity" element={<ActivityPage />} />
