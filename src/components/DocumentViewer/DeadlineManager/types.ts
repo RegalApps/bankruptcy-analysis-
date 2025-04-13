@@ -17,7 +17,7 @@ export interface DeadlineListProps {
 }
 
 export interface AddDeadlineFormProps {
-  onAdd: (newDeadline: Deadline) => Promise<void>;
+  onSubmit: (newDeadline: Omit<Deadline, 'id' | 'created_at'>) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -25,4 +25,12 @@ export interface EditDeadlineFormProps {
   deadline: Deadline;
   onUpdate: (updatedDeadline: Deadline) => Promise<void>;
   onCancel: () => void;
+}
+
+export interface DeadlineItemProps {
+  deadline: Deadline;
+  onRemove: (id: string) => void;
+  onStatusChange: (id: string, status: 'pending' | 'completed' | 'overdue') => void;
+  onEdit: (deadline: Deadline) => void;
+  onDelete: (id: string) => void;
 }

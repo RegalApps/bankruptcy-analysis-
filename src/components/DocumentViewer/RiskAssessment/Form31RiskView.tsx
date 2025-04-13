@@ -1,7 +1,6 @@
 
-// Will fix the title property reference errors by ensuring the title is properly accessed
 import React, { useState } from 'react';
-import { Risk, Form31RiskViewProps } from './types';
+import { Risk } from './types';
 import {
   AlertTriangle,
   Info,
@@ -19,6 +18,13 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+
+interface Form31RiskViewProps {
+  risks: Risk[];
+  documentId: string;
+  onRiskSelect?: (riskId: string) => void;
+  activeRiskId?: string | null;
+}
 
 export const Form31RiskView: React.FC<Form31RiskViewProps> = ({ 
   risks,
@@ -60,14 +66,14 @@ export const Form31RiskView: React.FC<Form31RiskViewProps> = ({
   };
 
   // Group risks by section
-  const groupedRisks = risks.reduce((acc, risk) => {
-    const section = (risk as any).section || 'General';
-    if (!acc[section]) {
-      acc[section] = [];
+  const groupedRisks: Record<string, Risk[]> = {};
+  risks.forEach(risk => {
+    const section = risk.metadata?.section || 'General';
+    if (!groupedRisks[section]) {
+      groupedRisks[section] = [];
     }
-    acc[section].push(risk);
-    return acc;
-  }, {} as Record<string, Risk[]>);
+    groupedRisks[section].push(risk);
+  });
 
   return (
     <div className="space-y-4">

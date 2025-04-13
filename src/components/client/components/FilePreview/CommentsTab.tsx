@@ -38,7 +38,7 @@ export const CommentsTab: React.FC<CommentsTabProps> = ({
     created_at: document.created_at || new Date().toISOString(),
     updated_at: document.updated_at || new Date().toISOString(),
     // Ensure comments exists or default to empty array
-    comments: document.comments as Comment[] || [],
+    comments: (document as any).comments as Comment[] || [],
   };
 
   const handleSubmit = () => {

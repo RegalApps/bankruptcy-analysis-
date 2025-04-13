@@ -1,136 +1,118 @@
 
 import React, { useState } from 'react';
-import { AddDeadlineFormProps } from './types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { v4 as uuidv4 } from 'uuid';
+import { 
+  Select, 
+  SelectContent, 
+  SelectGroup, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { AddDeadlineFormProps } from './types';
+import { Deadline } from '../types';
 
-export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({
-  onAdd,
-  onCancel
-}) => {
+export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({ onSubmit, onCancel }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState<Date>();
+  const [dueDate, setDueDate] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !date) return;
-
+    
+    if (!title || !dueDate) return;
+    
     setIsSubmitting(true);
+    
     try {
-      await onAdd({
-        id: uuidv4(),
+      const newDeadline: Omit<Deadline, 'id' | 'created_at'> = {
         title,
         description,
-        due_date: date.toISOString(),
-        status: 'pending', // Changed from 'upcoming' to 'pending'
+        due_date: dueDate,
+        status: 'pending',
         priority,
-        created_at: new Date().toISOString()
-      });
+        type: 'general'
+      };
       
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setDate(undefined);
-      setPriority('medium');
+      await onSubmit(newDeadline);
     } catch (error) {
       console.error('Error adding deadline:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 border rounded-md p-4">
       <div className="space-y-2">
-        <Label htmlFor="deadline-title">Title</Label>
-        <Input
-          id="deadline-title"
-          placeholder="Deadline title"
-          value={title}
+        <Label htmlFor="title">Title</Label>
+        <Input 
+          id="title" 
+          value={title} 
           onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter deadline title"
           required
         />
       </div>
-
+      
       <div className="space-y-2">
-        <Label htmlFor="deadline-description">Description</Label>
-        <Textarea
-          id="deadline-description"
-          placeholder="Describe the deadline (optional)"
-          value={description}
+        <Label htmlFor="description">Description (optional)</Label>
+        <Textarea 
+          id="description" 
+          value={description} 
           onChange={(e) => setDescription(e.target.value)}
-          rows={3}
+          placeholder="Enter description"
+          rows={2}
         />
       </div>
-
+      
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Due Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, "PPP") : <span>Select date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Label htmlFor="due-date">Due Date</Label>
+          <Input 
+            id="due-date" 
+            type="date" 
+            value={dueDate} 
+            onChange={(e) => setDueDate(e.target.value)}
+            required
+          />
         </div>
-
+        
         <div className="space-y-2">
-          <Label>Priority</Label>
-          <Select
-            defaultValue="medium"
-            value={priority}
-            onValueChange={(value: 'low' | 'medium' | 'high') => setPriority(value)}
-          >
-            <SelectTrigger>
+          <Label htmlFor="priority">Priority</Label>
+          <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
+            <SelectTrigger id="priority">
               <SelectValue placeholder="Select priority" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="high">High</SelectItem>
+              <SelectGroup>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
       </div>
-
+      
       <div className="flex justify-end space-x-2 pt-2">
-        <Button
-          type="button"
-          variant="outline"
+        <Button 
+          type="button" 
+          variant="outline" 
           onClick={onCancel}
           disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={!title || !date || isSubmitting}>
+        <Button 
+          type="submit" 
+          disabled={!title || !dueDate || isSubmitting}
+        >
           {isSubmitting ? 'Adding...' : 'Add Deadline'}
         </Button>
       </div>
