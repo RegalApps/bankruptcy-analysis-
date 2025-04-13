@@ -23,11 +23,11 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     references: ['BIA Section 124(1)', 'BIA Section 121(1)']
   };
 
-  // Ensure regulatory_compliance is properly typed - use a type assertion to ensure proper typing
+  // Cast the status to the appropriate type to ensure proper typing
   const regulatoryCompliance: RegulatoryCompliance = analysis?.regulatory_compliance 
     ? {
-        status: analysis.regulatory_compliance.status as "needs_review" | "compliant" | "non_compliant",
-        details: analysis.regulatory_compliance.details,
+        status: (analysis.regulatory_compliance.status || "needs_review") as "needs_review" | "compliant" | "non_compliant",
+        details: analysis.regulatory_compliance.details || defaultRegulatoryCompliance.details,
         references: analysis.regulatory_compliance.references || []
       }
     : defaultRegulatoryCompliance;
@@ -72,7 +72,6 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         <TabsContent value="deadlines" className="mt-0">
           <DeadlineManager
             documentId={documentId}
-            isLoading={isLoading}
           />
         </TabsContent>
       </Tabs>

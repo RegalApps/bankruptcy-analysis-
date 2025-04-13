@@ -23,6 +23,7 @@ export const performMockAnalysis = (formNumber = '76', formType = 'bankruptcy'):
   // Choose the right mock data based on form number
   if (formNum === '31' || formTypeLower.includes('proof of claim')) {
     // Use the Form 31 analyzer for Proof of Claim forms
+    // Pass additional contextual information to the analyzer
     return analyzeForm31('GreenTech Supplies Inc. Proof of Claim Form 31');
   } else if (formNum === '66' || formTypeLower.includes('consumer proposal')) {
     return getMockForm66Data();

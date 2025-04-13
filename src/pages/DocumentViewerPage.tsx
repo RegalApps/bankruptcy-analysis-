@@ -23,12 +23,20 @@ const DocumentViewerPage = () => {
     return () => clearTimeout(timer);
   }, [documentId]);
   
-  // Check for Form 31 documents stuck in processing state and fix them
+  // Check for Form 31 documents stuck in processing state or with missing storage paths and fix them
   useEffect(() => {
     const checkAndFixForm31Documents = async () => {
       if (!documentId) return;
-      
+
       try {
+        // Get the current user to set proper user_id
+        const currentUser = await supabase.auth.getUser();
+        const userId = currentUser?.data?.user?.id;
+
+        if (!userId) {
+          console.log("Cannot get current user ID for document association");
+        }
+        
         const { data: document } = await supabase
           .from('documents')
           .select('*')
@@ -46,7 +54,8 @@ const DocumentViewerPage = () => {
           
         // If document is a Form 31 and stuck in processing state or has no analysis
         if (document && isForm31 && 
-            (document.ai_processing_status === 'processing' || document.ai_processing_status === 'pending')) {
+            (document.ai_processing_status === 'processing' || 
+             document.ai_processing_status === 'pending')) {
           
           console.log('Found Form 31 document stuck in processing state, applying local analysis');
           
@@ -64,19 +73,22 @@ const DocumentViewerPage = () => {
                 formType: 'Proof of Claim',
                 clientName: 'GreenTech Supplies Inc.',
                 processing_complete: true,
-                last_analyzed: new Date().toISOString()
-              }
+                last_analyzed: new Date().toISOString(),
+                // Set default storage path if missing
+                storage_path: document.storage_path || 'demo/greentech-form31-proof-of-claim.pdf'
+              },
+              // Fix missing storage path
+              storage_path: document.storage_path || 'demo/greentech-form31-proof-of-claim.pdf'
             })
             .eq('id', documentId);
             
-          // Add analysis directly using local data
-          const user = await supabase.auth.getUser();
-          if (user?.data?.user?.id) {
+          // Add analysis directly using local data with proper user ID
+          if (userId) {
             await supabase
               .from('document_analysis')
               .upsert({
                 document_id: documentId,
-                user_id: user.data.user.id,
+                user_id: userId, // Use the actual user ID to fix the constraint error
                 content: analysisResult
               });
               
@@ -112,6 +124,7 @@ const DocumentViewerPage = () => {
   
   const handleLoadFailure = () => {
     console.error("Failed to load document");
+    toast.error("There was a problem loading this document. Please try again.");
     // Could navigate back or show an error state
   };
 
