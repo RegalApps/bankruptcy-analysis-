@@ -1,64 +1,58 @@
 
 import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ExtractedInfo } from "../types";
 
 interface ClientDetailsProps {
-  extractedInfo: {
-    clientName?: string;
-    clientAddress?: string;
-    clientPhone?: string;
-    clientEmail?: string;
-    trusteeName?: string;
-    trusteeAddress?: string;
-    trusteePhone?: string;
-    trusteeEmail?: string;
-    administratorName?: string;
-    formNumber?: string;
-    dateSigned?: string;
-    estateNumber?: string;
-    [key: string]: any;
-  };
+  extractedInfo: ExtractedInfo;
 }
 
 export const ClientDetails: React.FC<ClientDetailsProps> = ({ extractedInfo }) => {
-  // Helper to render a detail field only if it has a value
-  const renderField = (label: string, value?: string) => {
-    if (!value) return null;
-    
-    return (
-      <div className="mb-2">
-        <span className="text-sm font-medium text-muted-foreground">{label}:</span>
-        <p className="text-sm">{value}</p>
-      </div>
-    );
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-semibold">Client Information</h3>
-      </div>
-      
-      <div className="rounded-lg border bg-card p-4 shadow-sm">
-        {renderField("Client Name", extractedInfo.clientName)}
-        {renderField("Client Address", extractedInfo.clientAddress)}
-        {renderField("Client Phone", extractedInfo.clientPhone)}
-        {renderField("Client Email", extractedInfo.clientEmail)}
-        
-        <div className="border-t my-3" />
-        
-        {renderField("Trustee Name", extractedInfo.trusteeName || extractedInfo.administratorName)}
-        {renderField("Trustee Address", extractedInfo.trusteeAddress)}
-        {renderField("Trustee Contact", extractedInfo.trusteePhone)}
-        {renderField("Trustee Email", extractedInfo.trusteeEmail)}
-        
-        <div className="border-t my-3" />
-        
-        {renderField("Form Number", extractedInfo.formNumber)}
-        {renderField("Date Signed", extractedInfo.dateSigned)}
-        {renderField("Estate Number", extractedInfo.estateNumber)}
-        {renderField("Filing Date", extractedInfo.filingDate)}
-        {renderField("Submission Deadline", extractedInfo.submissionDeadline)}
-      </div>
-    </div>
+    <Card className="mb-4">
+      <CardContent className="pt-4">
+        <h4 className="font-medium mb-2">Client Information</h4>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Client Name:</span>
+            <span className="font-medium">{extractedInfo.clientName || "Not available"}</span>
+          </div>
+          {extractedInfo.trusteeName && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Trustee/Administrator:</span>
+              <span className="font-medium">{extractedInfo.trusteeName}</span>
+            </div>
+          )}
+          {extractedInfo.dateSigned && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Date Signed:</span>
+              <span className="font-medium">{extractedInfo.dateSigned}</span>
+            </div>
+          )}
+          {extractedInfo.filingDate && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Filing Date:</span>
+              <span className="font-medium">{extractedInfo.filingDate}</span>
+            </div>
+          )}
+          {extractedInfo.submissionDeadline && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Submission Deadline:</span>
+              <span className="font-medium text-orange-600">{extractedInfo.submissionDeadline}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Form Number:</span>
+            <span className="font-medium">{extractedInfo.formNumber || "Unknown"}</span>
+          </div>
+          {extractedInfo.documentStatus && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Status:</span>
+              <span className="font-medium">{extractedInfo.documentStatus}</span>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

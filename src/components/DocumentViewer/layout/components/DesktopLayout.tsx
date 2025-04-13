@@ -35,7 +35,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     <div className="flex h-full">
       {/* Left Panel - Contains Tabs for Comments, Tasks, Versions */}
       {showSidebar && (
-        <div className="w-80 min-w-[20rem] border-r border-border/50 overflow-hidden">
+        <div className="w-72 border-r border-border/50 h-full overflow-hidden flex-shrink-0">
           <TabsContainer
             selectedTab={selectedTab}
             setSelectedTab={setSelectedTab}
@@ -49,14 +49,14 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       )}
       
       {/* Center Panel - Document Preview */}
-      <div className="flex-1 min-w-0 overflow-auto">
+      <div className="flex-1 min-w-0 overflow-auto h-full bg-white">
         {mainContent}
       </div>
       
       {/* Right Panel - Client Info, Document Summary, Risk Assessment */}
       {showRightPanel && (
-        <div className="w-80 min-w-[20rem] border-l border-border/50 overflow-auto">
-          <div className="p-4">{rightPanel}</div>
+        <div className="w-80 border-l border-border/50 h-full overflow-auto flex-shrink-0">
+          <div className="p-4 h-full">{rightPanel}</div>
         </div>
       )}
     </div>

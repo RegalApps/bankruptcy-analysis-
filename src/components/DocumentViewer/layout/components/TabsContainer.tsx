@@ -23,7 +23,7 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
   deadlinesPanel,
 }) => {
   return (
-    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="h-full">
+    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="h-full flex flex-col">
       <div className="border-b sticky top-0 bg-background z-10">
         <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="comments" className="flex flex-col items-center py-2">
@@ -49,23 +49,23 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
         </TabsList>
       </div>
       
-      <TabsContent value="comments" className="p-0 m-0 h-[calc(100%-41px)] overflow-hidden">
+      <TabsContent value="comments" className="p-0 m-0 flex-1 overflow-auto">
         {collaborationPanel}
       </TabsContent>
       
-      <TabsContent value="tasks" className="p-3 m-0 h-[calc(100%-41px)] overflow-auto">
+      <TabsContent value="tasks" className="p-3 m-0 flex-1 overflow-auto">
         {taskPanel}
       </TabsContent>
       
-      <TabsContent value="versions" className="p-3 m-0 h-[calc(100%-41px)] overflow-auto">
+      <TabsContent value="versions" className="p-3 m-0 flex-1 overflow-auto">
         {versionPanel}
       </TabsContent>
       
-      <TabsContent value="analysis" className="p-3 m-0 h-[calc(100%-41px)] overflow-auto">
+      <TabsContent value="analysis" className="p-3 m-0 flex-1 overflow-auto">
         {analysisPanel}
       </TabsContent>
       
-      <TabsContent value="deadlines" className="p-3 m-0 h-[calc(100%-41px)] overflow-auto">
+      <TabsContent value="deadlines" className="p-3 m-0 flex-1 overflow-auto">
         {deadlinesPanel}
       </TabsContent>
     </Tabs>

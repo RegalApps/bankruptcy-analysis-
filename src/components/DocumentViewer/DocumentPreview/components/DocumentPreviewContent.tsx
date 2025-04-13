@@ -72,6 +72,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
     );
   }
 
+  // If we have an error or no file URL
   if (previewError || !fileUrl) {
     return (
       <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center p-6">
@@ -98,7 +99,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   // For Form47, we know it's a PDF regardless of what the system thinks
   const isForm47 = title?.toLowerCase().includes('form 47') || title?.toLowerCase().includes('consumer proposal');
   
-  // Success state - render the PDF viewer or other document viewer based on file type
+  // For Excel files that aren't actually Form 47
   if (actuallyIsExcel && !isForm47) {
     return (
       <div className="h-full flex flex-col">
