@@ -24,7 +24,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
     return null; // Loading state is handled in parent component
   }
   
-  if (!hasAnalysis) {
+  if (!hasAnalysis || !extractedInfo) {
     return (
       <Card>
         <CardContent className="pt-6">

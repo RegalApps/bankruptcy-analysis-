@@ -18,15 +18,15 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const risks = analysis?.risks || [];
 
   const defaultRegulatoryCompliance: RegulatoryCompliance = {
-    status: "needs_review" as const,
+    status: "needs_review",
     details: 'This document requires regulatory compliance review.',
     references: ['BIA Section 124(1)', 'BIA Section 121(1)']
   };
 
-  // Ensure regulatory_compliance is properly typed
+  // Ensure regulatory_compliance is properly typed - use a type assertion to ensure proper typing
   const regulatoryCompliance: RegulatoryCompliance = analysis?.regulatory_compliance 
     ? {
-        status: (analysis.regulatory_compliance.status as "needs_review" | "compliant" | "non_compliant"),
+        status: analysis.regulatory_compliance.status as "needs_review" | "compliant" | "non_compliant",
         details: analysis.regulatory_compliance.details,
         references: analysis.regulatory_compliance.references || []
       }

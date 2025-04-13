@@ -6,6 +6,8 @@ import { AnalysisResult } from './types/analysisTypes';
  * Based on BIA (Bankruptcy and Insolvency Act) requirements
  */
 const analyzeForm31 = (title: string): AnalysisResult => {
+  console.log("Analyzing Form 31 document:", title);
+  
   // This would be dynamically generated from real document OCR/analysis
   // For now we're using mock data
   return {
@@ -65,7 +67,7 @@ const analyzeForm31 = (title: string): AnalysisResult => {
       }
     ],
     regulatory_compliance: {
-      status: 'non_compliant' as const,
+      status: 'non_compliant' as "needs_review" | "compliant" | "non_compliant",
       details: 'This document has compliance issues that must be addressed before submission.',
       references: [
         'BIA Section 124(1)(b) - Supporting documentation requirements',
