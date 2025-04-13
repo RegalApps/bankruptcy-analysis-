@@ -23,6 +23,7 @@ interface DocumentViewerProps {
   isForm47?: boolean;
   isForm31GreenTech?: boolean;
   onLoadFailure?: () => void;
+  bypassProcessing?: boolean;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
@@ -31,6 +32,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   isForm47 = false,
   isForm31GreenTech = false,
   onLoadFailure = () => {},
+  bypassProcessing = false
 }) => {
   const { document, loading, fetchDocumentDetails } = useDocumentViewer(documentId);
   const { analyzeDocument, isAnalyzing, result, error } = useDocumentAnalysisAI();
@@ -39,10 +41,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const documentType = document?.type || (isForm47 ? "Form 47" : isForm31GreenTech ? "Form 31" : "Document");
 
   useEffect(() => {
-    if (document && !document.analysis?.length && !isAnalyzing) {
+    if (document && !document.analysis?.length && !isAnalyzing && !bypassProcessing) {
       analyzeDocument(documentId, undefined, documentType);
     }
-  }, [document, documentId, documentType, isAnalyzing]);
+  }, [document, documentId, documentType, isAnalyzing, bypassProcessing]);
 
   const handleRefreshAnalysis = () => {
     analyzeDocument(documentId, undefined, documentType);
@@ -58,7 +60,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       {document && document.analysis?.[0]?.content?.extracted_info ? (
         <>
           <ClientDetails extractedInfo={document.analysis[0].content.extracted_info} />
-          <DocumentSummary summary={document.analysis[0].content.extracted_info.summary} />
+          <DocumentSummary summary={document.analysis[0].content.extracted_info.summary || ''} />
         </>
       ) : loading ? (
         <>
@@ -110,6 +112,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     </div>
   );
 
+  // Create empty div for sidebar content
+  const sidebarContent = <div></div>;
+
   return (
     <ViewerLayout
       documentTitle={document?.title || documentTitle}
@@ -118,7 +123,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       mainContent={
         <DocumentPreview
           documentId={documentId}
-          document={document}
           loading={loading}
           zoomLevel={zoomLevel}
           setZoomLevel={setZoomLevel}
@@ -129,30 +133,26 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         />
       }
       rightPanel={rightPanelContent}
-      sidebar={<></>}
+      sidebar={sidebarContent}
       collaborationPanel={
         <Comments
           documentId={documentId}
           comments={document?.comments || []}
-          isLoading={loading}
         />
       }
       taskPanel={
         <TaskManager
           documentId={documentId}
-          isLoading={loading}
         />
       }
       versionPanel={
         <DocumentVersions
           documentId={documentId}
-          isLoading={loading}
         />
       }
       deadlinesPanel={
         <DeadlineManager
           documentId={documentId}
-          isLoading={loading}
         />
       }
       analysisPanel={

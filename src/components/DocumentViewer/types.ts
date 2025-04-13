@@ -1,196 +1,144 @@
 
+export interface DocumentDetails {
+  id: string;
+  title: string;
+  type: string;
+  content?: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  comments?: Comment[];
+  analysis?: Analysis[];
+  versions?: DocumentVersion[];
+  tasks?: Task[];
+  deadlines?: Deadline[];
+  metadata?: any;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  document_id: string;
+  parent_id?: string;
+  is_resolved: boolean;
+}
+
+export interface Analysis {
+  id: string;
+  content: AnalysisContent;
+  created_at: string;
+}
+
+export interface AnalysisContent {
+  extracted_info?: {
+    clientName?: string;
+    trusteeName?: string;
+    administratorName?: string;
+    dateSigned?: string;
+    formNumber?: string;
+    estateNumber?: string;
+    filingDate?: string;
+    submissionDeadline?: string;
+    documentStatus?: string;
+    type?: string;
+    summary?: string;
+    [key: string]: any;
+  };
+  risks?: Risk[];
+  regulatory_compliance?: {
+    status: string;
+    details: string;
+    references: string[];
+  };
+}
+
 export interface Risk {
+  id?: string;
   type: string;
   description: string;
-  severity: 'low' | 'medium' | 'high';
+  severity: string;
   regulation?: string;
   impact?: string;
   requiredAction?: string;
   solution?: string;
   deadline?: string;
-}
-
-export interface DocumentDetails {
-  id: string;
-  title?: string;
-  type?: string;
-  status?: string;
-  client_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  analysis?: { 
-    content: any 
-  }[];
-  comments?: any[];
-  deadline?: string;
-  submission_date?: string;
-  size?: number;
-  storage_path?: string;
-  deadlines?: Deadline[];
-  file_size?: string;
-  creation_date?: string;
-}
-
-export interface DocumentSummaryProps {
-  summary?: string;
-  regulatoryCompliance?: {
-    status: string;
-    details: string[];
-    references: string[];
+  position?: {
+    page: number;
+    rect: number[];
   };
-}
-
-export interface ExtractedInfo {
-  clientName?: string;
-  clientAddress?: string;
-  clientEmail?: string;
-  clientPhone?: string;
-  trusteeName?: string;
-  trusteeAddress?: string;
-  trusteeEmail?: string;
-  trusteePhone?: string;
-  formType?: string;
-  formNumber?: string;
-  dateSigned?: string;
-  estateNumber?: string;
-  district?: string;
-  divisionNumber?: string;
-  courtNumber?: string;
-  meetingOfCreditors?: string;
-  chairInfo?: string;
-  securityInfo?: string;
-  dateBankruptcy?: string;
-  officialReceiver?: string;
-  filingDate?: string;
-  submissionDeadline?: string;
-  documentStatus?: string;
-  summary?: string;
-  paymentSchedule?: string;
-}
-
-export interface Deadline {
-  id: string;
-  title: string;
-  description?: string;
-  due_date: string;
-  status: 'upcoming' | 'overdue' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-  related_to?: string;
-  type?: string;
-  created_by?: string;
-  created_at?: string;
-}
-
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high';
-  assigned_to?: string;
-  due_date?: string;
-  created_at?: string;
-  created_by?: string;
-  document_id?: string;
-  risk_id?: string;
-  solution?: string;
-  requiredAction?: string;
-  severity?: string;
-  regulation?: string;
 }
 
 export interface DocumentVersion {
   id: string;
   document_id: string;
   version_number: number;
-  created_at?: string;
-  created_by?: string;
-  is_current?: boolean;
+  created_at: string;
+  is_current: boolean;
   description?: string;
   changes_summary?: string;
-  storage_path?: string;
 }
 
-export interface Form31FieldMapping {
-  section1: {
-    creditorMailingAddress: string;
-    creditorFacsimileEmail?: string;
-    contactPersonName: string;
-    contactTelephone: string;
-  };
-  section2: {
-    debtorName: string;
-    debtorCity: string;
-    debtorProvince: string;
-    creditorName: string;
-  };
-  section3: {
-    certifierName: string;
-    isRepresentative: boolean;
-    debtValidityDate: string;
-    debtAmountCAD: number;
-    isStatuteBarred: boolean;
-  };
-  section4: {
-    dateDebtDue: string;
-    lastPaymentDate?: string;
-    lastAcknowledgementDate?: string;
-    claimHistory: string;
-  };
-  section5: {
-    unsecuredClaim?: {
-      amount: number;
-      prioritySubsection?: string;
-      priorityJustification?: string;
-    };
-    lessorClaim?: {
-      amount: number;
-      leaseParticulars: string;
-      hasAttachedLease: boolean;
-    };
-    securedClaim?: {
-      amount: number;
-      securityValue: number;
-      hasAttachedDocumentation: boolean;
-    };
-    farmerFishermanClaim?: {
-      amount: number;
-      hasAttachedRecords: boolean;
-    };
-    wageEarnerClaim?: {
-      amount: number;
-      employmentPeriodStart: string;
-      employmentPeriodEnd: string;
-      hasAttachedRecords: boolean;
-    };
-    pensionPlanClaim?: {
-      amount: number;
-      hasAttachedRecords: boolean;
-    };
-    directorClaim?: {
-      amount: number;
-      hasAttachedProof: boolean;
-    };
-    securitiesFirmClaim?: {
-      amount: number;
-      hasAttachedStatements: boolean;
-    };
-  };
-  section6: {
-    isRelatedToDebtor: boolean;
-    hadNonArmsLengthTransactions: boolean;
-    transfersAtUndervalue?: string;
-  };
-  section7: {
-    requestSurplusIncomeNotification: boolean;
-    requestTrusteeDischargeReport: boolean;
-  };
-  section8: {
-    executionDate: string;
-    hasSignature: boolean;
-  };
-  section9: {
-    hasScheduleA: boolean;
-    additionalAttachments?: string[];
-  };
+export interface Task {
+  id: string;
+  document_id: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  severity: string;
+  priority: string;  // Added this missing property
+  created_at: string;
+  due_date?: string;
+  assigned_to?: string;
+  regulation?: string;
+  solution?: string;
+}
+
+export interface Deadline {
+  id: string;
+  title: string;
+  description?: string;
+  due_date: string;  // Changed from 'dueDate' to 'due_date'
+  status: 'pending' | 'completed' | 'overdue';
+  priority: 'low' | 'medium' | 'high';
+  created_at: string;
+}
+
+export interface DocumentViewerProps {
+  documentId: string;
+  documentTitle?: string;
+  isForm47?: boolean;
+  isForm31GreenTech?: boolean;
+  onLoadFailure?: () => void;
+  bypassProcessing?: boolean;  // Added this missing prop
+}
+
+export interface DocumentPreviewProps {
+  documentId: string;
+  loading: boolean;
+  zoomLevel: number;
+  setZoomLevel: (value: number) => void;
+  onLoadFailure?: () => void;
+  isForm31GreenTech?: boolean;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string) => void;
+}
+
+export interface CommentsProps {
+  documentId: string;
+  comments?: Comment[];
+  isLoading?: boolean;  // Added this missing prop
+}
+
+export interface TaskManagerProps {
+  documentId: string;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string | null) => void;
+  isLoading?: boolean;  // Added this missing prop
+}
+
+export interface DocumentVersionsProps {
+  documentId: string;  // Added this missing prop
+  isLoading?: boolean;  // Added this missing prop
 }

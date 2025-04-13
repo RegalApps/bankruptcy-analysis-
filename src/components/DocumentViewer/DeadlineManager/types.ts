@@ -17,4 +17,12 @@ export interface DeadlineItemProps {
   onStatusChange: (id: string, status: Deadline['status']) => void;
   onEdit: (deadline: Deadline) => void;
   onDelete: (id: string) => void;
+  onRemove: () => void;  // Added this missing prop
+}
+
+export interface DeadlineListProps {
+  deadlines: Deadline[];
+  onRemove: (id: string) => void;
+  onStatusChange: (id: string, status: Deadline['status']) => void;
+  onEdit: (deadline: Deadline) => void;
 }
