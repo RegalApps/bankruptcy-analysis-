@@ -13,6 +13,10 @@ export interface DocumentDetails {
   tasks?: Task[];
   deadlines?: Deadline[];
   metadata?: any;
+  status?: string;
+  storage_path?: string;
+  file_size?: number;
+  size?: number;
 }
 
 export interface Comment {
@@ -57,16 +61,21 @@ export interface AnalysisContent {
 export interface Risk {
   id?: string;
   type: string;
+  title?: string;
   description: string;
-  severity: string;
+  severity: "low" | "medium" | "high";
   regulation?: string;
   impact?: string;
   requiredAction?: string;
   solution?: string;
   deadline?: string;
   position?: {
-    page: number;
-    rect: number[];
+    page?: number;
+    rect?: number[];
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
   };
 }
 
@@ -78,6 +87,7 @@ export interface DocumentVersion {
   is_current: boolean;
   description?: string;
   changes_summary?: string;
+  version_name?: string;
 }
 
 export interface Task {
@@ -87,7 +97,7 @@ export interface Task {
   description?: string;
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   severity: string;
-  priority: string;  // Added this missing property
+  priority: string;
   created_at: string;
   due_date?: string;
   assigned_to?: string;
@@ -99,10 +109,11 @@ export interface Deadline {
   id: string;
   title: string;
   description?: string;
-  due_date: string;  // Changed from 'dueDate' to 'due_date'
+  due_date: string;
   status: 'pending' | 'completed' | 'overdue';
   priority: 'low' | 'medium' | 'high';
   created_at: string;
+  type?: string;
 }
 
 export interface DocumentViewerProps {
@@ -111,12 +122,13 @@ export interface DocumentViewerProps {
   isForm47?: boolean;
   isForm31GreenTech?: boolean;
   onLoadFailure?: () => void;
-  bypassProcessing?: boolean;  // Added this missing prop
+  bypassProcessing?: boolean;
 }
 
 export interface DocumentPreviewProps {
   documentId: string;
-  loading: boolean;
+  document?: DocumentDetails;
+  loading?: boolean;
   zoomLevel: number;
   setZoomLevel: (value: number) => void;
   onLoadFailure?: () => void;
@@ -128,17 +140,33 @@ export interface DocumentPreviewProps {
 export interface CommentsProps {
   documentId: string;
   comments?: Comment[];
-  isLoading?: boolean;  // Added this missing prop
+  isLoading?: boolean;
+  onCommentAdded?: () => void;
 }
 
 export interface TaskManagerProps {
   documentId: string;
   activeRiskId?: string | null;
   onRiskSelect?: (riskId: string | null) => void;
-  isLoading?: boolean;  // Added this missing prop
+  isLoading?: boolean;
 }
 
 export interface DocumentVersionsProps {
-  documentId: string;  // Added this missing prop
-  isLoading?: boolean;  // Added this missing prop
+  documentId: string;
+  documentVersions?: DocumentVersion[];
+  currentDocumentId?: string;
+  isLoading?: boolean;
+}
+
+export interface DeadlineManagerProps {
+  documentId: string;
+  deadlines?: Deadline[];
+  isLoading?: boolean;
+  onDeadlineUpdated?: () => void;
+}
+
+export interface AnalysisPanelProps {
+  documentId: string;
+  isLoading?: boolean;
+  analysis?: AnalysisContent;
 }

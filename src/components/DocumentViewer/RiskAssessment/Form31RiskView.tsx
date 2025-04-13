@@ -1,168 +1,156 @@
 
-import React from 'react';
-import { AlertTriangle, Info, Clock, CheckCircle2, ClipboardList } from 'lucide-react';
+// Will fix the title property reference errors by ensuring the title is properly accessed
+import React, { useState } from 'react';
+import { Risk, Form31RiskViewProps } from './types';
+import {
+  AlertTriangle,
+  Info,
+  CheckCircle,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Risk } from '../types';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
-export interface Form31RiskViewProps {
-  risks: Risk[];
-  documentId: string;
-  activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string | null) => void;
-}
+import { Badge } from '@/components/ui/badge';
 
 export const Form31RiskView: React.FC<Form31RiskViewProps> = ({ 
-  risks, 
+  risks,
   documentId,
-  activeRiskId,
-  onRiskSelect = () => {}
+  onRiskSelect,
+  activeRiskId
 }) => {
-  if (!risks || risks.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 text-center h-full">
-        <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
-        <h3 className="text-lg font-medium mb-2">No Risks Detected</h3>
-        <p className="text-muted-foreground text-sm max-w-xs">
-          This Form 31 document appears to be compliant with the relevant regulations.
-        </p>
-      </div>
-    );
-  }
+  const [expandedRiskId, setExpandedRiskId] = useState<string | null>(null);
+
+  const getSeverityColor = (severity: string) => {
+    switch(severity) {
+      case 'high': return 'text-red-500 border-red-200 bg-red-50';
+      case 'medium': return 'text-amber-600 border-amber-200 bg-amber-50';
+      case 'low': return 'text-green-600 border-green-200 bg-green-50';
+      default: return 'text-blue-600 border-blue-200 bg-blue-50';
+    }
+  };
 
   const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'high':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'medium':
-        return <Info className="h-4 w-4 text-amber-500" />;
-      case 'low':
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      default:
-        return <Info className="h-4 w-4 text-blue-500" />;
+    switch(severity) {
+      case 'high': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'medium': return <Info className="h-4 w-4 text-amber-600" />;
+      case 'low': return <CheckCircle className="h-4 w-4 text-green-600" />;
+      default: return <Info className="h-4 w-4 text-blue-600" />;
     }
   };
 
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
-      case 'high':
-        return (
-          <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
-            High
-          </span>
-        );
-      case 'medium':
-        return (
-          <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
-            Medium
-          </span>
-        );
-      case 'low':
-        return (
-          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-            Low
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
-            Info
-          </span>
-        );
+  const handleRiskClick = (risk: Risk) => {
+    const riskId = risk.id || `risk-${risk.type.replace(/\s+/g, '-').toLowerCase()}`;
+    if (onRiskSelect) {
+      onRiskSelect(riskId);
     }
+    setExpandedRiskId(expandedRiskId === riskId ? null : riskId);
   };
 
-  const isRiskActive = (index: number, risk: Risk) => {
-    const riskId = `risk-${index}-${risk.type || risk.title}`;
-    return activeRiskId === riskId;
-  }
+  const isRiskActive = (risk: Risk) => {
+    const riskId = risk.id || `risk-${risk.type.replace(/\s+/g, '-').toLowerCase()}`;
+    return riskId === activeRiskId;
+  };
 
-  const handleRiskClick = (index: number, risk: Risk) => {
-    const riskId = `risk-${index}-${risk.type || risk.title}`;
-    onRiskSelect(riskId);
-  }
+  // Group risks by section
+  const groupedRisks = risks.reduce((acc, risk) => {
+    const section = (risk as any).section || 'General';
+    if (!acc[section]) {
+      acc[section] = [];
+    }
+    acc[section].push(risk);
+    return acc;
+  }, {} as Record<string, Risk[]>);
 
   return (
-    <ScrollArea className="h-full">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium">Form 31 Compliance</h3>
-          <span className="text-xs text-muted-foreground">
-            {risks.length} {risks.length === 1 ? 'issue' : 'issues'} detected
-          </span>
-        </div>
-        
-        <div className="space-y-4">
-          {risks.map((risk, index) => {
-            const isActive = isRiskActive(index, risk);
-            
-            return (
-              <div key={`${risk.type || risk.title}-${index}`} 
-                className={`p-3 rounded-lg border ${isActive 
-                  ? 'bg-primary/5 border-primary/40 shadow-sm ring-1 ring-primary/20' 
-                  : 'bg-muted/10 hover:bg-muted/20 cursor-pointer'}`}
-                onClick={() => handleRiskClick(index, risk)}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    {getSeverityIcon(risk.severity)}
-                    <h4 className="font-medium text-sm">{risk.title || risk.type}</h4>
-                  </div>
-                  {getSeverityBadge(risk.severity)}
-                </div>
-                
-                <p className="text-xs text-muted-foreground mb-3">{risk.description}</p>
-                
-                {risk.regulation && (
-                  <div className="mb-2">
-                    <span className="text-xs font-medium">Regulation:</span>
-                    <span className="text-xs ml-2 text-muted-foreground">{risk.regulation}</span>
-                  </div>
-                )}
-                
-                {(risk.impact || risk.requiredAction) && (
-                  <div className="mb-2 p-2 bg-muted rounded-md">
-                    {risk.impact && (
-                      <div className="mb-1">
-                        <span className="text-xs font-medium">Impact:</span>
-                        <span className="text-xs ml-2 text-muted-foreground">{risk.impact}</span>
-                      </div>
-                    )}
-                    
-                    {risk.requiredAction && (
+    <div className="space-y-4">
+      {Object.entries(groupedRisks).map(([section, sectionRisks]) => (
+        <div key={section} className="border rounded-md overflow-hidden">
+          <div className="bg-muted/50 px-3 py-2 font-medium text-sm border-b">
+            {section} Risks
+          </div>
+          <div className="divide-y">
+            {sectionRisks.map((risk, idx) => {
+              const riskTitle = risk.title || risk.type;
+              return (
+                <div
+                  key={`${section}-${idx}`}
+                  className={cn(
+                    "p-3 cursor-pointer hover:bg-muted/30 transition-colors",
+                    isRiskActive(risk) && "bg-primary/10"
+                  )}
+                  onClick={() => handleRiskClick(risk)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-2">
+                      {getSeverityIcon(risk.severity)}
                       <div>
-                        <span className="text-xs font-medium">Required Action:</span>
-                        <span className="text-xs ml-2 text-muted-foreground">{risk.requiredAction}</span>
+                        <h4 className="font-medium text-sm">{riskTitle}</h4>
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {risk.description}
+                        </p>
                       </div>
-                    )}
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={cn("text-xs", getSeverityColor(risk.severity))}
+                    >
+                      {risk.severity}
+                    </Badge>
                   </div>
-                )}
-                
-                {risk.solution && (
-                  <div className="mb-3">
-                    <span className="text-xs font-medium">Recommended Solution:</span>
-                    <p className="text-xs mt-1 p-2 rounded bg-green-50 text-green-700">{risk.solution}</p>
-                  </div>
-                )}
-                
-                <div className="flex items-center justify-between mt-3 pt-2 border-t">
-                  {risk.deadline && (
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5 mr-1" />
-                      Due: {risk.deadline}
+
+                  {isRiskActive(risk) && (
+                    <div className="mt-3 pl-6 border-t pt-3">
+                      <dl className="space-y-2 text-xs">
+                        {risk.regulation && (
+                          <div>
+                            <dt className="font-semibold">Regulation:</dt>
+                            <dd className="text-muted-foreground">{risk.regulation}</dd>
+                          </div>
+                        )}
+                        {risk.impact && (
+                          <div>
+                            <dt className="font-semibold">Impact:</dt>
+                            <dd className="text-muted-foreground">{risk.impact}</dd>
+                          </div>
+                        )}
+                        {risk.solution && (
+                          <div>
+                            <dt className="font-semibold">Recommended Solution:</dt>
+                            <dd className="bg-green-50 p-2 rounded text-green-800 mt-1">{risk.solution}</dd>
+                          </div>
+                        )}
+                      </dl>
+                      <div className="mt-3 flex justify-end">
+                        <Button variant="outline" size="sm" className="text-xs">
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View in Document
+                        </Button>
+                      </div>
                     </div>
                   )}
-                  
-                  <Button size="sm" className="text-xs" variant="secondary">
-                    <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
-                    Assign Task
-                  </Button>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </ScrollArea>
+      ))}
+      {risks.length === 0 && (
+        <div className="text-center py-8 border rounded-md">
+          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
+          <h3 className="font-medium">No Risks Detected</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            This document appears to be compliant with Form 31 requirements.
+          </p>
+        </div>
+      )}
+    </div>
   );
 };

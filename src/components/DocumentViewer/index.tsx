@@ -53,6 +53,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const handleRiskSelect = (riskId: string) => {
     setActiveRiskId(riskId === activeRiskId ? null : riskId);
   };
+  
+  const handleCommentAdded = () => {
+    fetchDocumentDetails();
+  };
 
   // Build the right panel content
   const rightPanelContent = (
@@ -123,6 +127,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       mainContent={
         <DocumentPreview
           documentId={documentId}
+          document={document}
           loading={loading}
           zoomLevel={zoomLevel}
           setZoomLevel={setZoomLevel}
@@ -138,21 +143,31 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         <Comments
           documentId={documentId}
           comments={document?.comments || []}
+          onCommentAdded={handleCommentAdded}
         />
       }
       taskPanel={
         <TaskManager
           documentId={documentId}
+          activeRiskId={activeRiskId}
+          onRiskSelect={handleRiskSelect}
+          isLoading={loading}
         />
       }
       versionPanel={
         <DocumentVersions
           documentId={documentId}
+          documentVersions={document?.versions || []}
+          currentDocumentId={documentId}
+          isLoading={loading}
         />
       }
       deadlinesPanel={
         <DeadlineManager
           documentId={documentId}
+          deadlines={document?.deadlines || []}
+          isLoading={loading}
+          onDeadlineUpdated={fetchDocumentDetails}
         />
       }
       analysisPanel={

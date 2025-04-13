@@ -1,6 +1,8 @@
 
 export interface Risk {
+  id?: string;
   type: string;
+  title?: string;
   description: string;
   severity: 'low' | 'medium' | 'high';
   regulation?: string;
@@ -9,6 +11,14 @@ export interface Risk {
   solution?: string;
   deadline?: string;
   metadata?: Record<string, any>;
+  position?: {
+    page?: number;
+    rect?: number[];
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+  };
 }
 
 export interface RiskAssessmentProps {
@@ -45,10 +55,10 @@ export interface Form31Risk extends Risk {
 export interface GreenTechRisk extends Form31Risk {
   // Specific fields for GreenTech risks
   position?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
   };
   documentSection?: string;
 }

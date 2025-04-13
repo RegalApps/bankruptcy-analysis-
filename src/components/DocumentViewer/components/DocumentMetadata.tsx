@@ -71,6 +71,20 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({ document }) 
     }
   };
 
+  // Find the nearest deadline
+  const findNearestDeadline = () => {
+    if (!document.deadlines || document.deadlines.length === 0) return null;
+    
+    const now = new Date();
+    const upcomingDeadlines = document.deadlines
+      .filter(d => new Date(d.due_date) > now)
+      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+    
+    return upcomingDeadlines[0]?.due_date;
+  };
+
+  const nearestDeadline = findNearestDeadline();
+
   return (
     <Card className="shadow-none border-0">
       <CardHeader className="pb-2 pt-4">
@@ -104,15 +118,15 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({ document }) 
           
           <Separator />
           
-          {document.deadline && (
+          {nearestDeadline && (
             <>
               <div>
                 <h4 className="text-sm font-medium">Submission Deadline</h4>
                 <div className="mt-1 flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{format(new Date(document.deadline), "MMMM d, yyyy")}</span>
+                  <span className="text-sm">{format(new Date(nearestDeadline), "MMMM d, yyyy")}</span>
                 </div>
-                {getDeadlineStatus(document.deadline)}
+                {getDeadlineStatus(nearestDeadline)}
               </div>
               
               <Separator />
@@ -177,7 +191,7 @@ export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({ document }) 
             <div>
               <h4 className="text-xs text-muted-foreground">Size</h4>
               <p className="text-sm">
-                {document.size ? formatFileSize(document.size) : document.file_size || 'Unknown'}
+                {formatFileSize(document.size || document.file_size)}
               </p>
             </div>
           </div>

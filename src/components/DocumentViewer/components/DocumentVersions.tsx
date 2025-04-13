@@ -7,13 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 
 interface DocumentVersionsProps {
-  documentVersions: DocumentVersion[];
-  currentDocumentId: string;
+  documentId: string;
+  documentVersions?: DocumentVersion[];
+  currentDocumentId?: string;
+  isLoading?: boolean;
 }
 
 export const DocumentVersions: React.FC<DocumentVersionsProps> = ({
-  documentVersions,
-  currentDocumentId
+  documentId,
+  documentVersions = [],
+  currentDocumentId = documentId,
+  isLoading = false
 }) => {
   // Sort versions by created_at, most recent first
   const sortedVersions = [...documentVersions].sort(
@@ -24,6 +28,15 @@ export const DocumentVersions: React.FC<DocumentVersionsProps> = ({
     // Open the version in a new tab or navigate to it
     window.open(`/document/${versionId}`, '_blank');
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10">
+        <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+        <p className="text-sm text-muted-foreground">Loading versions...</p>
+      </div>
+    );
+  }
 
   if (!documentVersions || documentVersions.length === 0) {
     return (
@@ -70,8 +83,8 @@ export const DocumentVersions: React.FC<DocumentVersionsProps> = ({
                     addSuffix: true,
                   })}
                 </p>
-                {version.change_summary && (
-                  <p className="text-sm mt-2">{version.change_summary}</p>
+                {version.changes_summary && (
+                  <p className="text-sm mt-2">{version.changes_summary}</p>
                 )}
               </div>
               {version.id !== currentDocumentId && (

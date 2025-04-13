@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -7,18 +6,28 @@ import { Deadline } from '../types';
 import { DeadlineManagerProps } from './types';
 import { AddDeadlineForm } from './AddDeadlineForm';
 import { DeadlineList } from './DeadlineList';
+import { v4 as uuidv4 } from 'uuid';
 
-export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDeadlineUpdated }) => {
+export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ 
+  documentId, 
+  deadlines = [], 
+  isLoading = false,
+  onDeadlineUpdated = () => {}
+}) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [localDeadlines, setLocalDeadlines] = useState<Deadline[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setLocalDeadlines(deadlines);
+  }, [deadlines]);
 
   // Check for approaching deadlines
   useEffect(() => {
     const checkDeadlines = () => {
       const now = new Date();
-      const deadlines = document.deadlines || [];
-      deadlines.forEach(deadline => {
-        const dueDate = new Date(deadline.dueDate);
+      localDeadlines.forEach(deadline => {
+        const dueDate = new Date(deadline.due_date);
         const hoursDiff = (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
         if (hoursDiff <= 24 && hoursDiff > 23) {
@@ -39,12 +48,18 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
 
     const interval = setInterval(checkDeadlines, 1000 * 60); // Check every minute
     return () => clearInterval(interval);
-  }, [document.deadlines, toast]);
+  }, [localDeadlines, toast]);
 
-  const handleAddDeadline = async (newDeadline: Deadline) => {
+  const handleAddDeadline = async (newDeadlineData: Omit<Deadline, 'id' | 'created_at'>) => {
     try {
-      const currentDeadlines = document.deadlines || [];
-      console.log('Current document state:', document);
+      // Add id and created_at to the deadline
+      const newDeadline: Deadline = {
+        ...newDeadlineData,
+        id: uuidv4(),
+        created_at: new Date().toISOString()
+      };
+      
+      const currentDeadlines = [...localDeadlines];
       console.log('Adding new deadline:', newDeadline);
 
       const { error } = await supabase
@@ -52,7 +67,7 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
         .update({
           deadlines: [...currentDeadlines, newDeadline]
         })
-        .eq('id', document.id);
+        .eq('id', documentId);
 
       if (error) throw error;
 
@@ -73,17 +88,17 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
     }
   };
 
-  const removeDeadline = async (index: number) => {
+  const removeDeadline = async (deadlineId: string) => {
     try {
-      const currentDeadlines = [...(document.deadlines || [])];
-      currentDeadlines.splice(index, 1);
+      const currentDeadlines = [...localDeadlines];
+      const updatedDeadlines = currentDeadlines.filter(deadline => deadline.id !== deadlineId);
 
       const { error } = await supabase
         .from('documents')
         .update({
-          deadlines: currentDeadlines
+          deadlines: updatedDeadlines
         })
-        .eq('id', document.id);
+        .eq('id', documentId);
 
       if (error) throw error;
 
@@ -99,6 +114,70 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to remove deadline"
+      });
+    }
+  };
+  
+  const handleStatusChange = async (deadlineId: string, status: Deadline['status']) => {
+    try {
+      const currentDeadlines = [...localDeadlines];
+      const updatedDeadlines = currentDeadlines.map(deadline => 
+        deadline.id === deadlineId ? {...deadline, status} : deadline
+      );
+
+      const { error } = await supabase
+        .from('documents')
+        .update({
+          deadlines: updatedDeadlines
+        })
+        .eq('id', documentId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Deadline status updated"
+      });
+
+      onDeadlineUpdated();
+    } catch (error: any) {
+      console.error('Error updating deadline status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update deadline status"
+      });
+    }
+  };
+  
+  const handleEditDeadline = async (editedDeadline: Deadline) => {
+    try {
+      const currentDeadlines = [...localDeadlines];
+      const updatedDeadlines = currentDeadlines.map(deadline => 
+        deadline.id === editedDeadline.id ? editedDeadline : deadline
+      );
+
+      const { error } = await supabase
+        .from('documents')
+        .update({
+          deadlines: updatedDeadlines
+        })
+        .eq('id', documentId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Deadline updated"
+      });
+
+      onDeadlineUpdated();
+    } catch (error: any) {
+      console.error('Error editing deadline:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to edit deadline"
       });
     }
   };
@@ -118,14 +197,17 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
 
       {isAdding && (
         <AddDeadlineForm
-          onAdd={handleAddDeadline}
+          onSubmit={handleAddDeadline}
           onCancel={() => setIsAdding(false)}
         />
       )}
 
       <DeadlineList
-        deadlines={document.deadlines || []}
+        deadlines={localDeadlines}
         onRemove={removeDeadline}
+        onStatusChange={handleStatusChange}
+        onEdit={handleEditDeadline}
+        onDelete={removeDeadline}
       />
     </div>
   );

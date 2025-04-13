@@ -113,7 +113,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
               </h3>
             </div>
             <DeadlineManager 
-              document={document} 
+              documentId={document.id}
+              deadlines={document.deadlines}
               onDeadlineUpdated={onDeadlineUpdated}
             />
           </div>

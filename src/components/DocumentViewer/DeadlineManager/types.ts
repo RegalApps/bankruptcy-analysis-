@@ -5,6 +5,7 @@ export interface DeadlineManagerProps {
   documentId: string;
   deadlines?: Deadline[];
   isLoading?: boolean;
+  onDeadlineUpdated?: () => void;
 }
 
 export interface AddDeadlineFormProps {
@@ -14,15 +15,16 @@ export interface AddDeadlineFormProps {
 
 export interface DeadlineItemProps {
   deadline: Deadline;
-  onStatusChange: (id: string, status: Deadline['status']) => void;
-  onEdit: (deadline: Deadline) => void;
-  onDelete: (id: string) => void;
-  onRemove: () => void;  // Added this missing prop
+  onStatusChange?: (id: string, status: Deadline['status']) => void;
+  onEdit?: (deadline: Deadline) => void;
+  onDelete?: (id: string) => void;
+  onRemove: () => void;
 }
 
 export interface DeadlineListProps {
   deadlines: Deadline[];
   onRemove: (id: string) => void;
-  onStatusChange: (id: string, status: Deadline['status']) => void;
-  onEdit: (deadline: Deadline) => void;
+  onStatusChange?: (id: string, status: Deadline['status']) => void;
+  onEdit?: (deadline: Deadline) => void;
+  onDelete?: (id: string) => void;
 }

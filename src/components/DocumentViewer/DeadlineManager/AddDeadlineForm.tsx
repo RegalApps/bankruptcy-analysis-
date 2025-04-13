@@ -28,7 +28,7 @@ export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({ onSubmit, onCa
       title,
       description,
       due_date: dueDate.toISOString(),
-      status: 'upcoming',
+      status: 'pending',
       priority,
       type
     };

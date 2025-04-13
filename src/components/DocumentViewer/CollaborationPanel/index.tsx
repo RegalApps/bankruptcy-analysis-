@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentDetails } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { EnhancedComments } from "../Comments/EnhancedComments";
+import { Comments } from "../Comments";
 import { MessageSquare, ClipboardList, Clock, Calendar, FileBarChart } from "lucide-react";
 import { TaskManager } from "../TaskManager";
 import { DeadlineManager } from "../DeadlineManager";
@@ -70,9 +70,10 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
           <TabsContent value="comments" className="mt-0 h-full">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
-                <EnhancedComments 
+                <Comments 
                   documentId={docId} 
                   onCommentAdded={onCommentAdded}
+                  comments={document?.comments || []}
                 />
               </div>
             </ScrollArea>
@@ -106,7 +107,13 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
           <TabsContent value="deadlines" className="mt-0 h-full">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
-                {document && <DeadlineManager document={document} onDeadlineUpdated={onCommentAdded} />}
+                {document && 
+                  <DeadlineManager 
+                    documentId={docId}
+                    deadlines={document?.deadlines || []}
+                    onDeadlineUpdated={onCommentAdded}
+                  />
+                }
               </div>
             </ScrollArea>
           </TabsContent>
