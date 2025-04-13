@@ -1,21 +1,9 @@
 
 import React, { useState } from 'react';
-import { Document } from '../../types';
+import { Document, Comment } from '../../types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
-
-// Define a Comment interface locally if it's not available from types
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id?: string;
-  user_name?: string;
-  document_id?: string;
-  parent_id?: string;
-  is_resolved?: boolean;
-}
 
 interface CommentsTabProps {
   document: Document;
@@ -30,15 +18,9 @@ export const CommentsTab: React.FC<CommentsTabProps> = ({
 }) => {
   const [comment, setComment] = useState('');
   
-  // Create a document object for the DocumentViewer with required props
   const viewerDocument = {
-    id: document.id,
-    title: document.title,
-    type: document.type || 'document',
-    created_at: document.created_at || new Date().toISOString(),
-    updated_at: document.updated_at || new Date().toISOString(),
-    // Safely access comments with a fallback
-    comments: document.comments as Comment[] || []
+    ...document,
+    comments: document.comments || [] // Ensure comments is always an array
   };
 
   const handleSubmit = () => {
