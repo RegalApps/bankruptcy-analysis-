@@ -15,6 +15,7 @@ import SAFAPage from "./pages/ConBrandingPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import Support from "./pages/Support";
 import ClientViewerPage from "./pages/ClientViewerPage";
+import DocumentViewerPage from "./pages/DocumentViewerPage";
 import "./App.css";
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
       <Route path="/index" element={<Index />} />
       <Route path="/crm" element={<CRMPage />} />
       <Route path="/documents/*" element={<DocumentsPage />} />
+      <Route path="/document-viewer/:documentId" element={<DocumentViewerPage />} />
       <Route path="/calendar-fullscreen" element={<CalendarFullscreenPage />} />
       <Route path="/e-filing" element={<EFilingPage />} />
       <Route path="/activity" element={<ActivityPage />} />

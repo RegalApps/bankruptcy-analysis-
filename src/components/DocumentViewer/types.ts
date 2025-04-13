@@ -1,4 +1,3 @@
-
 export interface DocumentDetails {
   id: string;
   title: string;
@@ -136,6 +135,7 @@ export interface DocumentPreviewProps {
   onAnalysisComplete?: () => void;
   onLoadFailure?: () => void;
   isForm31GreenTech?: boolean;
+  isForm47?: boolean;
 }
 
 export interface CommentsProps {

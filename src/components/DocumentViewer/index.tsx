@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { defaultContext } from "@/lib/default-context";
 import { AnalysisPanel } from "./components/AnalysisPanel";
 import { useAuthState } from "@/hooks/useAuthState";
+import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -32,7 +33,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 }) => {
   const [document, setDocument] = useState<DocumentDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [selectedRiskId, setSelectedRiskId] = useState<string | null>(null);
   const { session } = useAuthState();
 
@@ -43,7 +44,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     },
     onError: (err) => {
       console.error("Error fetching document details:", err);
-      setError(err);
+      setError(typeof err === 'string' ? err : err.message || "Unknown error");
       setIsLoading(false);
       onLoadFailure?.();
     }
@@ -53,17 +54,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     if (documentId) {
       setIsLoading(true);
       fetchDocumentDetails();
-    }
-  }, [documentId]);
-
-  const updateDocumentDetails = useCallback(async () => {
-    try {
-      const updatedDoc = await fetchDocumentDetails();
-      if (updatedDoc) {
-        setDocument(updatedDoc);
-      }
-    } catch (err) {
-      console.error("Error updating document details:", err);
     }
   }, [documentId, fetchDocumentDetails]);
 
@@ -153,13 +143,78 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  if (!document) {
+  if (!document && (documentId !== 'form47' && !isForm47)) {
     if (onLoadFailure) {
       onLoadFailure();
     }
     return (
       <ViewerLayout documentId={documentId}>
-        <ViewerErrorState error={new Error("Document not found")} />
+        <ViewerNotFoundState />
+      </ViewerLayout>
+    );
+  }
+
+  // Special handling for Form 47 when no document is found but form47 is requested
+  if (!document && (documentId === 'form47' || isForm47)) {
+    const mockDocument: DocumentDetails = {
+      id: "form47",
+      title: "Form 47 - Consumer Proposal",
+      type: "consumer-proposal",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user_id: session?.user?.id || "demo-user",
+      storage_path: "demo/form47-consumer-proposal.pdf",
+      metadata: {
+        formNumber: "47",
+        formType: "Consumer Proposal"
+      }
+    };
+    
+    return (
+      <ViewerLayout 
+        documentId={documentId} 
+        documentTitle={documentTitle || "Form 47 - Consumer Proposal"}
+      >
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="w-full h-full rounded-lg border"
+        >
+          <ResizablePanel defaultSize={70} minSize={40} className="h-full">
+            <DocumentPreview
+              documentId={documentId}
+              storagePath="demo/form47-consumer-proposal.pdf"
+              title="Form 47 - Consumer Proposal"
+              activeRiskId={selectedRiskId}
+              onRiskSelect={handleSelectRisk}
+              bypassAnalysis={bypassProcessing}
+              onLoadFailure={onLoadFailure}
+              isForm47={true}
+            />
+          </ResizablePanel>
+          
+          <ResizablePanel defaultSize={30} minSize={25} className="h-full p-0 overflow-y-hidden">
+            <AnalysisPanel
+              documentId={documentId}
+              isLoading={false}
+              analysis={{
+                extracted_info: {
+                  clientName: "John Smith",
+                  formNumber: "47",
+                  formType: "Consumer Proposal",
+                  trusteeName: "Jane Doe, LIT",
+                  dateSigned: new Date().toLocaleDateString(),
+                  summary: "This is a Consumer Proposal form (Form 47) submitted under the Bankruptcy and Insolvency Act."
+                },
+                risks: [],
+                regulatory_compliance: {
+                  status: "needs_review",
+                  details: "This Consumer Proposal requires review for regulatory compliance.",
+                  references: ["BIA Section 66.13(2)", "BIA Section 66.14"]
+                }
+              }}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </ViewerLayout>
     );
   }
@@ -167,7 +222,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   return (
     <ViewerLayout 
       documentId={documentId} 
-      documentTitle={documentTitle || document.title}
+      documentTitle={documentTitle || document?.title}
     >
       <ResizablePanelGroup
         direction="horizontal"
@@ -177,7 +232,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           <DocumentPreview
             documentId={documentId}
             storagePath={storagePath}
-            title={documentTitle || document.title}
+            title={documentTitle || document?.title || "Document"}
             activeRiskId={selectedRiskId}
             onRiskSelect={handleSelectRisk}
             bypassAnalysis={bypassProcessing}
@@ -191,7 +246,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           <AnalysisPanel
             documentId={documentId}
             isLoading={isLoading}
-            analysis={document.analysis?.[0]}
+            analysis={document?.analysis?.[0]?.content}
           />
         </ResizablePanel>
       </ResizablePanelGroup>
