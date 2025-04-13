@@ -27,6 +27,18 @@ export interface ExtractedInfo {
   submissionDeadline?: string;
   documentStatus?: string;
   summary?: string;
+  // Adding additional fields needed for the mock data
+  clientAddress?: string;
+  clientPhone?: string;
+  clientEmail?: string;
+  trusteeAddress?: string;
+  trusteePhone?: string;
+  trusteeEmail?: string;
+  type?: string;
+  totalDebts?: string;
+  totalAssets?: string;
+  monthlyIncome?: string;
+  estateNumber?: string;
 }
 
 export interface RegulatoryCompliance {
@@ -36,10 +48,10 @@ export interface RegulatoryCompliance {
 }
 
 export interface AnalysisResult {
-  structureValid: boolean;
-  requiredFieldsPresent: boolean;
-  signaturesValid: boolean;
+  structureValid?: boolean;
+  requiredFieldsPresent?: boolean;
+  signaturesValid?: boolean;
   risks: Risk[];
   extracted_info: ExtractedInfo;
-  regulatoryCompliance?: RegulatoryCompliance;
+  regulatory_compliance?: RegulatoryCompliance;
 }

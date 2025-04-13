@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ExtractedInfo } from "../types";
+import { ExtractedInfo } from "@/utils/documents/types/analysisTypes";
 
 interface ClientDetailsProps {
   extractedInfo: ExtractedInfo;

@@ -3,6 +3,9 @@ import { AnalysisResult } from '../types/analysisTypes';
 
 export const getMockForm76Data = (): AnalysisResult => {
   return {
+    structureValid: true,
+    requiredFieldsPresent: true,
+    signaturesValid: true,
     extracted_info: {
       formNumber: "Form 76",
       clientName: "Reginald Dickerson",
@@ -127,7 +130,7 @@ export const getMockForm66Data = (): AnalysisResult => {
       }
     ],
     regulatory_compliance: {
-      status: "requires_review",
+      status: "needs_review",
       details: "Consumer proposal requires verification of key elements under BIA Section 66.13 and OSB Directive 6R3",
       references: [
         "BIA Section 66.13 - Consumer Proposal Requirements",
@@ -190,7 +193,7 @@ export const getMockForm65Data = (): AnalysisResult => {
       }
     ],
     regulatory_compliance: {
-      status: "requires_immediate_action",
+      status: "needs_review",
       details: "This Notice of Intention filing requires immediate action to address timeline constraints, creditor disclosure issues, and cash flow concerns to ensure BIA compliance.",
       references: [
         "BIA Section 50.4(8) - Timeline for filing proposal",

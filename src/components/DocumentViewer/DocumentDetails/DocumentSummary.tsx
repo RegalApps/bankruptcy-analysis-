@@ -2,14 +2,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { RegulatoryCompliance } from "@/utils/documents/types/analysisTypes";
 
 interface DocumentSummaryProps {
   summary: string;
-  regulatoryCompliance?: {
-    status: 'compliant' | 'non_compliant' | 'needs_review';
-    details: string;
-    references?: string[];
-  };
+  regulatoryCompliance?: RegulatoryCompliance;
 }
 
 export const DocumentSummary: React.FC<DocumentSummaryProps> = ({ 
