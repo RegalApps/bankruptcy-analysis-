@@ -1,5 +1,4 @@
 
-
 export interface Document {
   id: string;
   title: string;
@@ -15,10 +14,9 @@ export interface Document {
   ai_processing_status?: string;
   deadlines?: any[];
   url?: string;
-  comments?: Comment[]; // Add this line to define comments
+  comments?: Comment[];
 }
 
-// Define Comment interface if it's not already defined
 export interface Comment {
   id: string;
   content: string;
