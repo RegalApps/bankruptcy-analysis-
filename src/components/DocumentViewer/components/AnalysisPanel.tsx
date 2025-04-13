@@ -23,7 +23,14 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     references: ['BIA Section 124(1)', 'BIA Section 121(1)']
   };
 
-  const regulatoryCompliance = analysis?.regulatory_compliance || defaultRegulatoryCompliance;
+  // Ensure regulatory_compliance is properly typed
+  const regulatoryCompliance: RegulatoryCompliance = analysis?.regulatory_compliance 
+    ? {
+        status: (analysis.regulatory_compliance.status as "needs_review" | "compliant" | "non_compliant"),
+        details: analysis.regulatory_compliance.details,
+        references: analysis.regulatory_compliance.references || []
+      }
+    : defaultRegulatoryCompliance;
 
   return (
     <div className="h-full overflow-y-auto">
