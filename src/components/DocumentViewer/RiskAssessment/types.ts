@@ -61,3 +61,18 @@ export type Form47Risk = Risk;
 
 // Alias for GreenTech risks
 export type GreenTechRisk = Risk;
+
+// Form 31 specific risk type with BIA specific fields
+export interface Form31Risk extends Risk {
+  biaSection?: string;
+  complianceDetails?: {
+    requirement: string;
+    statusDetails: string;
+    remediation: string;
+  };
+  formSection?: {
+    name: string;
+    fieldName: string;
+    requiredAction: string;
+  };
+}
