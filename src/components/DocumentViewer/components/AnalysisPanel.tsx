@@ -1,4 +1,3 @@
-
 import React from "react";
 import { AnalysisPanelProps } from "../types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +19,12 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const hasAnalysis = !!analysis;
   const extractedInfo = analysis?.extracted_info;
   const risks = analysis?.risks || [];
+
+  const defaultRegulatoryCompliance: RegulatoryCompliance = {
+    status: "needs_review",
+    details: 'This document requires regulatory compliance review.',
+    references: ['BIA Section 124(1)', 'BIA Section 121(1)']
+  };
 
   return (
     <div className="h-full overflow-y-auto">
@@ -44,11 +49,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               {extractedInfo?.summary && (
                 <DocumentSummary 
                   summary={extractedInfo.summary} 
-                  regulatoryCompliance={analysis.regulatory_compliance || {
-                    status: "needs_review" as "needs_review",
-                    details: 'This document requires regulatory compliance review.',
-                    references: ['BIA Section 124(1)', 'BIA Section 121(1)']
-                  }}
+                  regulatoryCompliance={analysis.regulatory_compliance || defaultRegulatoryCompliance}
                 />
               )}
             </>
