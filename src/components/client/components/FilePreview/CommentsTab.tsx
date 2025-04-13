@@ -27,13 +27,15 @@ export const CommentsTab: React.FC<CommentsTabProps> = ({
                     document?.type?.includes('Form 31') || 
                     document.title?.toLowerCase().includes('form 31');
   
-  // Provide suggested comments for Form 31 based on common issues
+  // Provide suggested comments for Form 31 based on common issues and BIA compliance
   const suggestedComments = isForm31 ? [
     "Missing checkboxes in claim category section",
-    "Missing confirmation of relatedness status",
-    "No disclosure of transfers or payments",
-    "Incorrect date format in declaration",
-    "Schedule A attachment required"
+    "Missing confirmation of relatedness status per BIA s.4",
+    "No disclosure of transfers or payments per BIA s.95",
+    "Incorrect date format in declaration - YYYY-MM-DD required",
+    "Schedule A attachment required per BIA s.124(1)(b)",
+    "Missing debt particulars - dates required per BIA s.121(1)(d)",
+    "Claim amount calculation needs verification per BIA s.121(4)"
   ] : [];
 
   return (

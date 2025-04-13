@@ -8,7 +8,7 @@ interface MobileLayoutProps {
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
   rightPanel: React.ReactNode;
-  showCollaborationPanel: boolean;
+  showRightPanel: boolean;
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
@@ -23,7 +23,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   sidebar,
   mainContent,
   rightPanel,
-  showCollaborationPanel,
+  showRightPanel,
   collaborationPanel,
   taskPanel,
   versionPanel,
@@ -37,8 +37,8 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       <Tabs defaultValue="document" className="h-full flex flex-col">
         <TabsList className="w-full">
           <TabsTrigger value="document" className="flex-1">Document</TabsTrigger>
-          {showSidebar && <TabsTrigger value="sidebar" className="flex-1">Sidebar</TabsTrigger>}
-          {showCollaborationPanel && <TabsTrigger value="info" className="flex-1">Details</TabsTrigger>}
+          {showSidebar && <TabsTrigger value="sidebar" className="flex-1">Collaboration</TabsTrigger>}
+          {showRightPanel && <TabsTrigger value="info" className="flex-1">Details</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="document" className="flex-1 overflow-auto">
@@ -59,7 +59,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           </TabsContent>
         )}
         
-        {showCollaborationPanel && (
+        {showRightPanel && (
           <TabsContent value="info" className="flex-1 overflow-auto">
             <div className="p-3">{rightPanel}</div>
           </TabsContent>

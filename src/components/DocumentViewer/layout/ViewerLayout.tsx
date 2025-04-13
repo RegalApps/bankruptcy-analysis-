@@ -33,7 +33,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   documentType = "Document",
 }) => {
   const [showSidebar, setShowSidebar] = useState(true);
-  const [showCollaborationPanel, setShowCollaborationPanel] = useState(true);
+  const [showRightPanel, setShowRightPanel] = useState(true);
   const [selectedTab, setSelectedTab] = useState("comments");
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
@@ -42,8 +42,8 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
     setShowSidebar(!showSidebar);
   };
 
-  const toggleCollaborationPanel = () => {
-    setShowCollaborationPanel(!showCollaborationPanel);
+  const toggleRightPanel = () => {
+    setShowRightPanel(!showRightPanel);
   };
 
   // Update layout based on screen size
@@ -64,12 +64,12 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
         documentTitle={documentTitle}
         documentType={documentType}
         toggleSidebar={toggleSidebar}
-        toggleCollaborationPanel={toggleCollaborationPanel}
+        toggleRightPanel={toggleRightPanel}
         isForm47={isForm47}
         isTablet={isTablet}
         isMobile={isMobile}
         showSidebar={showSidebar}
-        showCollaborationPanel={showCollaborationPanel}
+        showRightPanel={showRightPanel}
       />
       
       <div className="flex-1 overflow-hidden">
@@ -79,7 +79,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
             sidebar={sidebar}
             mainContent={mainContent}
             rightPanel={rightPanel}
-            showCollaborationPanel={showCollaborationPanel}
+            showRightPanel={showRightPanel}
             collaborationPanel={collaborationPanel}
             taskPanel={taskPanel}
             versionPanel={versionPanel}
@@ -94,7 +94,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
             sidebar={sidebar}
             mainContent={mainContent}
             rightPanel={rightPanel}
-            showCollaborationPanel={showCollaborationPanel}
+            showRightPanel={showRightPanel}
             collaborationPanel={collaborationPanel}
             taskPanel={taskPanel}
             versionPanel={versionPanel}
@@ -109,7 +109,7 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
             sidebar={sidebar}
             mainContent={mainContent}
             rightPanel={rightPanel}
-            showCollaborationPanel={showCollaborationPanel}
+            showRightPanel={showRightPanel}
             collaborationPanel={collaborationPanel}
             taskPanel={taskPanel}
             versionPanel={versionPanel}

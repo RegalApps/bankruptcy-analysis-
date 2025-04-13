@@ -7,7 +7,7 @@ interface TabletLayoutProps {
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
   rightPanel: React.ReactNode;
-  showCollaborationPanel: boolean;
+  showRightPanel: boolean;
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
@@ -22,7 +22,7 @@ export const TabletLayout: React.FC<TabletLayoutProps> = ({
   sidebar,
   mainContent,
   rightPanel,
-  showCollaborationPanel,
+  showRightPanel,
   collaborationPanel,
   taskPanel,
   versionPanel,
@@ -50,7 +50,7 @@ export const TabletLayout: React.FC<TabletLayoutProps> = ({
         <div className="flex-1 overflow-auto">{mainContent}</div>
       </div>
       
-      {showCollaborationPanel && (
+      {showRightPanel && (
         <div className="h-96 border-t border-border/50 overflow-hidden">
           <div className="p-4 h-full overflow-auto">{rightPanel}</div>
         </div>

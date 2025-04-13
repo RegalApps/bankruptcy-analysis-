@@ -7,7 +7,7 @@ interface DesktopLayoutProps {
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
   rightPanel: React.ReactNode;
-  showCollaborationPanel: boolean;
+  showRightPanel: boolean;
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
@@ -22,7 +22,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   sidebar,
   mainContent,
   rightPanel,
-  showCollaborationPanel,
+  showRightPanel,
   collaborationPanel,
   taskPanel,
   versionPanel,
@@ -51,7 +51,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         {mainContent}
       </div>
       
-      {showCollaborationPanel && (
+      {showRightPanel && (
         <div className="w-80 min-w-[20rem] border-l border-border/50 overflow-auto">
           <div className="p-4">{rightPanel}</div>
         </div>

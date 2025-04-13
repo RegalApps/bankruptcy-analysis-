@@ -16,6 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -58,62 +60,66 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     fetchDocumentDetails();
   };
 
-  // Build the right panel content
+  // Build the right panel content with client details, document summary, and risk assessment
   const rightPanelContent = (
-    <div className="space-y-6">
-      {document && document.analysis?.[0]?.content?.extracted_info ? (
-        <>
-          <ClientDetails extractedInfo={document.analysis[0].content.extracted_info} />
-          <DocumentSummary summary={document.analysis[0].content.extracted_info.summary || ''} />
-        </>
-      ) : loading ? (
-        <>
-          <Skeleton className="h-[200px] w-full rounded-md mb-4" />
-          <Skeleton className="h-[150px] w-full rounded-md" />
-        </>
-      ) : (
-        <div className="space-y-2">
-          <Alert variant="default">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>No document data available</AlertTitle>
-            <AlertDescription>
-              We couldn't find any extracted information for this document.
-            </AlertDescription>
-          </Alert>
-          
-          {!isAnalyzing && (
-            <Button 
-              onClick={handleRefreshAnalysis}
-              variant="outline"
-              className="w-full"
-              disabled={isAnalyzing}
-            >
-              {isAnalyzing ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Analyze Document
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-      )}
-      
-      {document && (
-        <RiskAssessment 
-          documentId={documentId}
-          risks={document.analysis?.[0]?.content?.risks || []}
-          isLoading={loading || isAnalyzing}
-          activeRiskId={activeRiskId}
-          onRiskSelect={handleRiskSelect}
-        />
-      )}
-    </div>
+    <ScrollArea className="h-full pr-2">
+      <div className="space-y-6">
+        {document && document.analysis?.[0]?.content?.extracted_info ? (
+          <>
+            <ClientDetails extractedInfo={document.analysis[0].content.extracted_info} />
+            <Separator />
+            <DocumentSummary summary={document.analysis[0].content.extracted_info.summary || ''} />
+            <Separator />
+            <RiskAssessment 
+              documentId={documentId}
+              risks={document.analysis?.[0]?.content?.risks || []}
+              isLoading={loading || isAnalyzing}
+              activeRiskId={activeRiskId}
+              onRiskSelect={handleRiskSelect}
+            />
+          </>
+        ) : loading ? (
+          <>
+            <Skeleton className="h-[150px] w-full rounded-md mb-4" />
+            <Separator />
+            <Skeleton className="h-[100px] w-full rounded-md mb-4" />
+            <Separator />
+            <Skeleton className="h-[200px] w-full rounded-md" />
+          </>
+        ) : (
+          <div className="space-y-4">
+            <Alert variant="default">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>No document data available</AlertTitle>
+              <AlertDescription>
+                We couldn't find any extracted information for this document.
+              </AlertDescription>
+            </Alert>
+            
+            {!isAnalyzing && (
+              <Button 
+                onClick={handleRefreshAnalysis}
+                variant="outline"
+                className="w-full"
+                disabled={isAnalyzing}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Analyze Document
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </ScrollArea>
   );
 
   // Create empty div for sidebar content
