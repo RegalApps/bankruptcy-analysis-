@@ -64,7 +64,7 @@ const analyzeForm31 = (title: string): AnalysisResult => {
         position: { x: 0.3, y: 0.55, width: 0.35, height: 0.06 }
       }
     ],
-    regulatoryCompliance: {
+    regulatory_compliance: {
       status: 'non_compliant',
       details: 'This document has compliance issues that must be addressed before submission.',
       references: [

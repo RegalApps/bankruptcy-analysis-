@@ -44,7 +44,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 <DocumentSummary 
                   summary={extractedInfo.summary} 
                   regulatoryCompliance={analysis.regulatory_compliance || {
-                    status: 'needs_review',
+                    status: 'needs_review' as const,
                     details: 'This document requires regulatory compliance review.',
                     references: ['BIA Section 124(1)', 'BIA Section 121(1)']
                   }}
