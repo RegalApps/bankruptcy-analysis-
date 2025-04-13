@@ -10,6 +10,7 @@ import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RiskAssessment } from "../RiskAssessment";
 import { DeadlineManager } from "../DeadlineManager";
+import { RegulatoryCompliance } from "@/utils/documents/types/analysisTypes";
 
 export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   documentId,
@@ -44,7 +45,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 <DocumentSummary 
                   summary={extractedInfo.summary} 
                   regulatoryCompliance={analysis.regulatory_compliance || {
-                    status: 'needs_review' as const,
+                    status: "needs_review" as "needs_review",
                     details: 'This document requires regulatory compliance review.',
                     references: ['BIA Section 124(1)', 'BIA Section 121(1)']
                   }}
