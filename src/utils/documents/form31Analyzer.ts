@@ -16,9 +16,9 @@ const analyzeForm31 = (documentTitle: string): AnalysisResult => {
 
   // Create base analysis result
   const analysisResult: AnalysisResult = {
-    document_type: "Form 31",
     extracted_info: {
       formNumber: "31",
+      type: "Form 31",
       formType: "Proof of Claim",
       clientName: clientName,
       dateSigned: isGreenTech ? "2024-03-15" : "2024-02-28",

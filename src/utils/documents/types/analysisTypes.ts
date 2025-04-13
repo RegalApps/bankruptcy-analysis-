@@ -2,6 +2,7 @@
 export interface AnalysisResult {
   extracted_info: {
     formNumber: string;
+    formType?: string;
     clientName: string;
     dateSigned: string;
     trusteeName: string;
@@ -16,8 +17,20 @@ export interface AnalysisResult {
     totalDebts?: string;
     totalAssets?: string;
     monthlyIncome?: string;
+    debtorName?: string;
+    debtorCity?: string;
+    debtorProvince?: string;
+    creditorName?: string;
+    claimAmount?: string;
+    claimType?: string;
+    claimCategory?: string;
+    creditorAddress?: string;
+    contactPerson?: string;
+    contactEmail?: string;
+    contactPhone?: string;
   };
   risks: Array<{
+    id?: string;
     type: string;
     description: string;
     severity: string;
@@ -25,14 +38,19 @@ export interface AnalysisResult {
     impact: string;
     requiredAction: string;
     solution: string;
-    deadline: string;
+    deadline?: string;
+    metadata?: {
+      section?: string;
+      details?: string;
+      biaReference?: string;
+    };
   }>;
-  regulatory_compliance: {
+  regulatory_compliance?: {
     status: string;
     details: string;
     references: string[];
   };
-  // Add Form 31 specific field structure
+  // Form 31 specific field structure
   form31_fields?: {
     creditor: {
       name: string;
@@ -123,7 +141,7 @@ export interface AnalysisResult {
   };
 }
 
-// Add Form 31 specific validation rules
+// Form 31 specific validation rules
 export interface Form31ValidationRules {
   fieldRules: {
     [fieldPath: string]: {

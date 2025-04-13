@@ -24,7 +24,7 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
 }) => {
   return (
     <Tabs value={selectedTab} onValueChange={setSelectedTab} className="h-full">
-      <div className="border-b">
+      <div className="border-b sticky top-0 bg-background z-10">
         <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="comments" className="flex flex-col items-center py-2">
             <MessageSquare className="h-4 w-4 mb-1" />
@@ -49,7 +49,7 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
         </TabsList>
       </div>
       
-      <TabsContent value="comments" className="p-0 m-0 h-[calc(100%-41px)]">
+      <TabsContent value="comments" className="p-0 m-0 h-[calc(100%-41px)] overflow-hidden">
         {collaborationPanel}
       </TabsContent>
       
