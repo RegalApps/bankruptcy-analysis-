@@ -54,6 +54,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [storagePath, documentId, isForm31GreenTech, isForm47]);
 
+  // Pass the properly typed callback to usePreviewState
   const previewState = usePreviewState(
     effectiveStoragePath,
     documentId,

@@ -24,6 +24,7 @@ const usePreviewState = (
   const [hasFallbackToDirectUrl, setHasFallbackToDirectUrl] = useState(false);
 
   const handleAnalysisCompleteWrapper = useCallback((id: string) => {
+    console.log("Analysis complete triggered in usePreviewState for ID:", id);
     if (onAnalysisComplete) {
       onAnalysisComplete(id);
     }
@@ -76,6 +77,7 @@ const usePreviewState = (
     }
   }, [previewError, loadRetries, hasFallbackToDirectUrl, checkFile]);
 
+  // Pass the properly typed callback to useAnalysisInitialization
   useAnalysisInitialization({
     storagePath,
     fileExists,

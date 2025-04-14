@@ -1,5 +1,5 @@
 
-import { AnalysisProcessProps, AnalysisProcessContext } from "../../DocumentPreview/hooks/analysisProcess/types";
+import { AnalysisProcessProps } from "../../DocumentPreview/hooks/analysisProcess/types";
 import {
   documentIngestion,
   documentClassification,
@@ -33,7 +33,7 @@ export const useAnalysisProcess = ({
       });
       
       // Enhanced context with form type information
-      const enhancedContext: AnalysisProcessContext = { 
+      const enhancedContext = { 
         setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete, isForm76 
       };
       

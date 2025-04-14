@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { useAnalysisProcess } from "./analysisProcess/useAnalysisProcess";
-import { AnalysisProcessProps } from "./analysisProcess/types";
+import { useAnalysisProcess } from "../../../hooks/analysisProcess/useAnalysisProcess";
+import { AnalysisProcessProps } from "../../../hooks/analysisProcess/types";
 
 export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (documentId: string) => void) => {
   const [analyzing, setAnalyzing] = useState(false);
@@ -14,11 +14,12 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
   const [processingStage, setProcessingStage] = useState<string>("");
   const { toast } = useToast();
 
-  const handleAnalysisCompleteWrapper = useCallback(() => {
-    if (onAnalysisComplete && storagePath) {
-      onAnalysisComplete(storagePath);
+  const handleAnalysisCompleteWrapper = useCallback((id: string) => {
+    if (onAnalysisComplete && id) {
+      console.log("Analysis complete wrapper called with ID:", id);
+      onAnalysisComplete(id);
     }
-  }, [storagePath, onAnalysisComplete]);
+  }, [onAnalysisComplete]);
 
   const analysisProcessProps: AnalysisProcessProps = {
     setAnalysisStep,
@@ -63,7 +64,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
         try {
           const { data: document } = await supabase
             .from('documents')
-            .select('ai_processing_status, metadata')
+            .select('ai_processing_status, metadata, id')
             .eq('storage_path', storagePath)
             .maybeSingle();
             
@@ -73,6 +74,9 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
               document.metadata?.processing_steps_completed?.length < 8)) {
             console.log('Document needs analysis, current status:', document.ai_processing_status);
             handleAnalyzeDocument(session);
+          } else if (document && document.ai_processing_status === 'complete' && onAnalysisComplete) {
+            console.log('Document already analyzed, calling completion callback with ID:', document.id);
+            onAnalysisComplete(document.id);
           }
         } catch (err) {
           console.error('Error checking document status:', err);
@@ -81,7 +85,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
       
       checkDocumentStatus();
     }
-  }, [session, storagePath, analyzing]);
+  }, [session, storagePath, analyzing, onAnalysisComplete]);
 
   return {
     analyzing,

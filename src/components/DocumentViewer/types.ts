@@ -136,7 +136,7 @@ export interface DocumentPreviewProps {
   onLoadFailure?: () => void;
   isForm31GreenTech?: boolean;
   isForm47?: boolean;
-  onAnalysisComplete?: (documentId: string) => void;
+  onAnalysisComplete?: (id: string) => void;
 }
 
 export interface CommentsProps {
