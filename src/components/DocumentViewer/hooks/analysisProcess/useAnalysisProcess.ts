@@ -57,6 +57,11 @@ export const useAnalysisProcess = ({
       
       console.log('Analysis completed successfully.');
       
+      // Call onAnalysisComplete with the document record ID if available
+      if (onAnalysisComplete && documentRecord && documentRecord.id) {
+        onAnalysisComplete(documentRecord.id);
+      }
+      
     } catch (error) {
       throw error;
     }

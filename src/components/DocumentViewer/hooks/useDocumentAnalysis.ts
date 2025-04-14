@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -14,11 +13,11 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
   const [processingStage, setProcessingStage] = useState<string>("");
   const { toast } = useToast();
 
-  const handleAnalysisCompleteWrapper = useCallback(() => {
-    if (onAnalysisComplete) {
-      onAnalysisComplete(storagePath);
+  const handleAnalysisCompleteWrapper = useCallback((documentId: string) => {
+    if (onAnalysisComplete && documentId) {
+      onAnalysisComplete(documentId);
     }
-  }, [storagePath, onAnalysisComplete]);
+  }, [onAnalysisComplete]);
 
   const analysisProcessProps: AnalysisProcessProps = {
     setAnalysisStep,
@@ -116,7 +115,9 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
         
         setTimeout(() => {
           setAnalyzing(false);
-          handleAnalysisCompleteWrapper();
+          if (onAnalysisComplete && document?.id) {
+            onAnalysisComplete(document.id);
+          }
         }, 1500);
         
         return;
@@ -130,7 +131,9 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
         
         setTimeout(() => {
           setAnalyzing(false);
-          handleAnalysisCompleteWrapper();
+          if (onAnalysisComplete) {
+            onAnalysisComplete(storagePath);
+          }
         }, 1500);
         return;
       }
@@ -176,7 +179,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
           if (payload.new.ai_processing_status === 'complete') {
             setProgress(100);
             setAnalyzing(false);
-            if (onAnalysisComplete) onAnalysisComplete(storagePath);
+            if (onAnalysisComplete) onAnalysisComplete(payload.new.id || storagePath);
           }
         }
       )
@@ -193,7 +196,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
         try {
           const { data: document } = await supabase
             .from('documents')
-            .select('ai_processing_status, metadata, type, title')
+            .select('id, ai_processing_status, metadata, type, title')
             .eq('storage_path', storagePath)
             .maybeSingle();
             
@@ -220,8 +223,8 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
                 })
                 .eq('storage_path', storagePath);
                 
-              if (onAnalysisComplete) {
-                onAnalysisComplete(storagePath);
+              if (onAnalysisComplete && document.id) {
+                onAnalysisComplete(document.id);
               }
             }
             

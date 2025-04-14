@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -96,7 +95,7 @@ export const useAnalysisInitialization = ({
                   console.log('Excel file marked as processed without full analysis');
                   
                   if (onAnalysisComplete) {
-                    onAnalysisComplete(storagePath);
+                    onAnalysisComplete(document.id);
                   }
                 }
               } catch (err) {
@@ -110,7 +109,7 @@ export const useAnalysisInitialization = ({
           if (storagePath) {
             const { data: document, error: docError } = await supabase
               .from('documents')
-              .select('ai_processing_status, metadata')
+              .select('id, ai_processing_status, metadata')
               .eq('storage_path', storagePath)
               .maybeSingle();
               
@@ -136,7 +135,7 @@ export const useAnalysisInitialization = ({
               } else if (document.ai_processing_status === 'completed' || document.ai_processing_status === 'complete') {
                 console.log('Document already analyzed');
                 if (onAnalysisComplete) {
-                  onAnalysisComplete(storagePath);
+                  onAnalysisComplete(document.id);
                 }
               }
             } else {
