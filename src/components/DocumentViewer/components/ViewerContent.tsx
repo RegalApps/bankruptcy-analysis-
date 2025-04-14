@@ -1,5 +1,5 @@
 
-import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { DocumentPreview } from "../DocumentPreview";
 import { AnalysisPanel } from "../components/AnalysisPanel";
 
@@ -47,6 +47,8 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
         />
       </ResizablePanel>
       
+      <ResizableHandle />
+      
       <ResizablePanel defaultSize={30} minSize={25} className="h-full p-0 overflow-y-hidden">
         <AnalysisPanel
           documentId={documentId}
@@ -57,4 +59,3 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
     </ResizablePanelGroup>
   );
 };
-

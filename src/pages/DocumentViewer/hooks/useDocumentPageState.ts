@@ -14,25 +14,34 @@ export const useDocumentPageState = () => {
     documentId === "form31" || 
     documentId === "form-31-greentech";
 
+  // Add a shorter timeout for loading state
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 500);
+    }, 300);
     
     return () => clearTimeout(timer);
   }, [documentId]);
 
   useEffect(() => {
-    if (!documentId || isForm47 || isGreenTechForm31) return;
+    if (!documentId || isForm47 || isGreenTechForm31) {
+      // Skip database check for special documents
+      return;
+    }
     
     const checkDocumentExists = async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('documents')
           .select('id')
           .eq('id', documentId)
           .maybeSingle();
           
+        if (error) {
+          console.error('Error checking document existence:', error);
+          return;
+        }
+        
         if (!data) {
           setDocumentNotFound(true);
         }

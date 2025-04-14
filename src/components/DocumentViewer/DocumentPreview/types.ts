@@ -1,3 +1,4 @@
+
 import { Risk } from '../RiskAssessment/types';
 
 export interface DocumentPreviewContentProps {
@@ -94,7 +95,7 @@ export interface UseRetryStrategyReturn {
 
 export interface DocumentPreviewProps {
   documentId: string;
-  storagePath: string;
+  storagePath?: string;
   title?: string;
   activeRiskId?: string | null;
   onRiskSelect?: (riskId: string) => void;
