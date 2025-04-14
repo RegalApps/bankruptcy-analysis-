@@ -12,7 +12,7 @@ interface AnalysisInitializationProps {
   setSession: (session: Session | null) => void;
   handleAnalyzeDocument: (session: Session | null) => void;
   setPreviewError: (error: string | null) => void;
-  onAnalysisComplete: () => void;
+  onAnalysisComplete: (documentId: string) => void;
   bypassAnalysis: boolean;
 }
 
@@ -57,14 +57,14 @@ export const useAnalysisInitialization = ({
             .from('documents')
             .select('ai_processing_status')
             .eq('storage_path', storagePath)
-            .single();
+            .maybeSingle();
 
           if (!document || document.ai_processing_status !== 'complete') {
             console.log("Document needs analysis, starting...");
             handleAnalyzeDocument(data.session);
           } else {
             console.log("Document already analyzed");
-            onAnalysisComplete();
+            onAnalysisComplete(storagePath);
           }
         }
       } catch (error: any) {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -22,11 +23,11 @@ const usePreviewState = (
   const [isLoading, setIsLoading] = useState(true);
   const [hasFallbackToDirectUrl, setHasFallbackToDirectUrl] = useState(false);
 
-  const handleAnalysisCompleteWrapper = useCallback(() => {
+  const handleAnalysisCompleteWrapper = useCallback((id: string) => {
     if (onAnalysisComplete) {
-      onAnalysisComplete(documentId);
+      onAnalysisComplete(id);
     }
-  }, [documentId, onAnalysisComplete]);
+  }, [onAnalysisComplete]);
 
   const {
     analyzing,

@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalysisProcess } from "./analysisProcess/useAnalysisProcess";
 import { AnalysisProcessProps } from "./analysisProcess/types";
 
-export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (id: string) => void) => {
+export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (documentId: string) => void) => {
   const [analyzing, setAnalyzing] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -13,11 +14,11 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (i
   const [processingStage, setProcessingStage] = useState<string>("");
   const { toast } = useToast();
 
-  const handleAnalysisCompleteWrapper = () => {
+  const handleAnalysisCompleteWrapper = useCallback(() => {
     if (onAnalysisComplete) {
       onAnalysisComplete(storagePath);
     }
-  };
+  }, [storagePath, onAnalysisComplete]);
 
   const analysisProcessProps: AnalysisProcessProps = {
     setAnalysisStep,
