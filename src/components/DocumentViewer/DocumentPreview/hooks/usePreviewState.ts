@@ -54,7 +54,7 @@ const usePreviewState = (
   }, []);
 
   const checkFile = useCallback(async () => {
-    if (!storagePath) {
+    if (!storagePath && !documentId.includes('form')) {
       setPreviewError("No storage path provided");
       setIsLoading(false);
       return;
@@ -66,7 +66,8 @@ const usePreviewState = (
     try {
       // For demo documents with special paths, set fileExists and fileUrl directly
       if (storagePath.includes('demo/') || 
-          (storagePath === "" && (documentId.includes('form47') || documentId.includes('form31')))) {
+          documentId.includes('form47') || 
+          documentId.includes('form31')) {
         
         let demoPath = storagePath;
         if (storagePath === "" && documentId.includes('form47')) {
@@ -90,12 +91,14 @@ const usePreviewState = (
             // If we can't get a real signed URL, use a mock one for demo purposes
             console.log("Using mock URL for demo document");
             setFileExists(true);
-            setFileUrl(`https://document-viewer-demo.com/${demoPath}`);
+            // Use a public URL for demo files
+            setFileUrl(`/documents/sample-form31-greentech.pdf`);
           }
         } catch (err) {
           console.log("Using fallback for demo document");
           setFileExists(true);
-          setFileUrl(`https://document-viewer-demo.com/${demoPath}`);
+          // Use a public URL for demo files
+          setFileUrl(`/documents/sample-form31-greentech.pdf`);
         }
         
         setNetworkStatus('online');

@@ -1,9 +1,8 @@
 
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertCircle, WifiOff } from "lucide-react";
+import { RefreshCw, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -27,8 +26,8 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
       const newTime = Math.floor((Date.now() - startTime) / 1000);
       setLoadingTime(newTime);
       
-      // Show retry button earlier (after 5 seconds) when there are network issues
-      if ((networkError && newTime > 3) || (!networkError && newTime > 7)) {
+      // Show retry button earlier (after 3 seconds) when there are network issues
+      if ((networkError && newTime > 2) || (!networkError && newTime > 5)) {
         setShowRetry(true);
       }
     }, 1000);
@@ -42,12 +41,12 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
       return "Network connection issues detected. The server might be unavailable or there may be connectivity problems.";
     }
     
-    if (loadingTime > 15) {
+    if (loadingTime > 10) {
       return "This document is taking longer than expected to load. It may be unavailable or the server may be experiencing issues.";
-    } else if (loadingTime > 8) {
+    } else if (loadingTime > 5) {
       return "Still loading document... This may take a moment for large files or if the system is busy.";
-    } else if (loadingTime > 3) {
-      return "Loading document content... This may take a moment for large files.";
+    } else if (loadingTime > 2) {
+      return "Loading document content...";
     }
     return "Preparing document viewer...";
   }, [loadingTime, networkError]);
@@ -106,16 +105,16 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
         )}
       </div>
       
-      {/* Skeleton loading UI to indicate content is being loaded */}
+      {/* Clean up skeleton UI to be more compact */}
       {!networkError && (
         <div className="w-full max-w-3xl px-6 mt-4">
-          <Skeleton className="h-7 w-3/4 mb-4" />
-          <Skeleton className="h-32 w-full mb-3" />
+          <Skeleton className="h-6 w-2/3 mb-4" />
+          <Skeleton className="h-24 w-full mb-3" />
           <div className="flex gap-2 mb-4">
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-6 w-16" />
           </div>
-          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-16 w-full" />
         </div>
       )}
     </div>

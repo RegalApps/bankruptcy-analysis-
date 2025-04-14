@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DocumentPreview } from "@/components/DocumentViewer/DocumentPreview";
@@ -39,7 +40,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({ document, onClose, onAnal
             storagePath={document.storage_path} 
             documentId={document.id}
             title={document.title}
-            onAnalysisComplete={onAnalysisComplete}
+            onAnalysisComplete={() => onAnalysisComplete?.(document.id)}
           />
         </div>
       </DialogContent>

@@ -18,7 +18,7 @@ export const useDocumentPageState = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 300);
+    }, 200); // Even shorter timeout for faster UI responsiveness
     
     return () => clearTimeout(timer);
   }, [documentId]);
@@ -26,6 +26,7 @@ export const useDocumentPageState = () => {
   useEffect(() => {
     if (!documentId || isForm47 || isGreenTechForm31) {
       // Skip database check for special documents
+      setIsLoading(false); // Immediately set loading to false for special docs
       return;
     }
     
@@ -39,14 +40,18 @@ export const useDocumentPageState = () => {
           
         if (error) {
           console.error('Error checking document existence:', error);
+          setIsLoading(false);
           return;
         }
         
         if (!data) {
           setDocumentNotFound(true);
         }
+        
+        setIsLoading(false);
       } catch (error) {
         console.error('Error checking document existence:', error);
+        setIsLoading(false);
       }
     };
     

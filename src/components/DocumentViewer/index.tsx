@@ -61,11 +61,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   }, [fetchDocumentDetails]);
 
   useEffect(() => {
+    // Special case for demo documents
+    if (isForm47 || isForm31GreenTech) {
+      setIsLoading(false);
+      return;
+    }
+    
     if (documentId) {
       setIsLoading(true);
       fetchDocumentDetails();
     }
-  }, [documentId, fetchDocumentDetails]);
+  }, [documentId, fetchDocumentDetails, isForm47, isForm31GreenTech]);
 
   // Create subscription to document changes
   useEffect(() => {
@@ -93,6 +99,41 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     setSelectedRiskId((prevId) => (prevId === riskId ? null : riskId));
   }, []);
 
+  // Fast-path for Form 47 and Form 31 documents
+  if (isForm47 || isForm31GreenTech) {
+    const mockDocument = isForm47 ? 
+      createForm47DemoDocument(session?.user?.id) : 
+      { analysis: [{ content: {} }] };
+    
+    const demoPath = isForm47 ? 
+      "demo/form47-consumer-proposal.pdf" : 
+      "demo/greentech-form31-proof-of-claim.pdf";
+    
+    const demoTitle = isForm47 ? 
+      "Form 47 - Consumer Proposal" : 
+      "Form 31 - GreenTech Proof of Claim";
+    
+    return (
+      <ViewerLayout 
+        documentId={documentId} 
+        documentTitle={documentTitle || demoTitle}
+      >
+        <ViewerContent
+          documentId={documentId}
+          storagePath={demoPath}
+          title={documentTitle || demoTitle}
+          selectedRiskId={selectedRiskId}
+          onRiskSelect={handleSelectRisk}
+          bypassProcessing={true}
+          onLoadFailure={onLoadFailure}
+          isForm47={isForm47}
+          isForm31GreenTech={isForm31GreenTech}
+          analysis={mockDocument.analysis?.[0]?.content}
+        />
+      </ViewerLayout>
+    );
+  }
+
   if (isLoading) {
     return (
       <ViewerLayout documentId={documentId} documentTitle={documentTitle}>
@@ -109,37 +150,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  if (!document && (documentId !== 'form47' && !isForm47)) {
+  if (!document) {
     if (onLoadFailure) {
       onLoadFailure();
     }
     return (
       <ViewerLayout documentId={documentId} documentTitle={documentTitle}>
         <ViewerNotFoundState />
-      </ViewerLayout>
-    );
-  }
-
-  // Special handling for Form 47 when no document is found but form47 is requested
-  if (!document && (documentId === 'form47' || isForm47)) {
-    const mockDocument = createForm47DemoDocument(session?.user?.id);
-    
-    return (
-      <ViewerLayout 
-        documentId={documentId} 
-        documentTitle={documentTitle || "Form 47 - Consumer Proposal"}
-      >
-        <ViewerContent
-          documentId={documentId}
-          storagePath="demo/form47-consumer-proposal.pdf"
-          title="Form 47 - Consumer Proposal"
-          selectedRiskId={selectedRiskId}
-          onRiskSelect={handleSelectRisk}
-          bypassProcessing={bypassProcessing}
-          onLoadFailure={onLoadFailure}
-          isForm47={true}
-          analysis={mockDocument.analysis?.[0]?.content}
-        />
       </ViewerLayout>
     );
   }
@@ -164,4 +181,3 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     </ViewerLayout>
   );
 };
-
