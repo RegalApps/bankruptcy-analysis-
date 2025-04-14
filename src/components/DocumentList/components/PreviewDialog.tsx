@@ -18,12 +18,6 @@ interface PreviewDialogProps {
 const PreviewDialog: React.FC<PreviewDialogProps> = ({ document, onClose, onAnalysisComplete }) => {
   if (!document) return null;
 
-  const handleAnalysisComplete = (id: string) => {
-    if (onAnalysisComplete && document) {
-      onAnalysisComplete(id);
-    }
-  };
-
   return (
     <Dialog open={!!document} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-4xl h-[80vh] flex flex-col">
@@ -46,7 +40,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({ document, onClose, onAnal
             storagePath={document.storage_path} 
             documentId={document.id}
             title={document.title}
-            onAnalysisComplete={handleAnalysisComplete}
+            onAnalysisComplete={onAnalysisComplete}
           />
         </div>
       </DialogContent>

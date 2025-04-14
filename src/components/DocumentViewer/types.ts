@@ -127,15 +127,15 @@ export interface DocumentViewerProps {
 
 export interface DocumentPreviewProps {
   documentId: string;
-  storagePath: string;
-  title: string;
-  bypassAnalysis?: boolean;
+  storagePath?: string;
+  title?: string;
   activeRiskId?: string | null;
   onRiskSelect?: (riskId: string) => void;
-  onAnalysisComplete?: () => void;
+  bypassAnalysis?: boolean;
   onLoadFailure?: () => void;
   isForm31GreenTech?: boolean;
   isForm47?: boolean;
+  onAnalysisComplete?: (id: string) => void;
 }
 
 export interface CommentsProps {

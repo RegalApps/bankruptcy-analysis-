@@ -22,7 +22,7 @@ const usePreviewState = (
   const [isLoading, setIsLoading] = useState(true);
   const [hasFallbackToDirectUrl, setHasFallbackToDirectUrl] = useState(false);
 
-  const handleAnalysisCompleteCallback = useCallback(() => {
+  const handleAnalysisCompleteWrapper = useCallback(() => {
     if (onAnalysisComplete) {
       onAnalysisComplete(documentId);
     }
@@ -35,7 +35,7 @@ const usePreviewState = (
     progress,
     processingStage,
     handleAnalyzeDocument
-  } = useDocumentAnalysis(storagePath, onAnalysisComplete);
+  } = useDocumentAnalysis(storagePath, handleAnalysisCompleteWrapper);
 
   const { 
     checkFile, 
@@ -84,7 +84,7 @@ const usePreviewState = (
     setSession,
     handleAnalyzeDocument,
     setPreviewError,
-    onAnalysisComplete: handleAnalysisCompleteCallback,
+    onAnalysisComplete: handleAnalysisCompleteWrapper,
     bypassAnalysis
   });
 
