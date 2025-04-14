@@ -5,7 +5,7 @@ export interface AnalysisProcessProps {
   setError: (error: string | null) => void;
   setProcessingStage: (stage: string) => void;
   toast: any;
-  onAnalysisComplete?: () => void;
+  onAnalysisComplete?: (documentId: string) => void;
 }
 
 export interface AnalysisProcessContext extends AnalysisProcessProps {

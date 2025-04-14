@@ -31,6 +31,13 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   analysis,
   onAnalysisComplete
 }) => {
+  const handleAnalysisComplete = (id: string) => {
+    console.log("Analysis completed in ViewerContent:", id);
+    if (onAnalysisComplete) {
+      onAnalysisComplete(id);
+    }
+  };
+
   return (
     <ResizablePanelGroup
       direction="horizontal"
@@ -47,7 +54,7 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
           onLoadFailure={onLoadFailure}
           isForm31GreenTech={isForm31GreenTech}
           isForm47={isForm47}
-          onAnalysisComplete={onAnalysisComplete}
+          onAnalysisComplete={handleAnalysisComplete}
         />
       </ResizablePanel>
       

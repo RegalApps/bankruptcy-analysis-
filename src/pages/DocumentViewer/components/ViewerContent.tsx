@@ -24,6 +24,11 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
     toast.error("There was a problem loading this document. Please try again.");
   };
 
+  const handleAnalysisComplete = (id: string) => {
+    console.log("Analysis complete for document:", id);
+    setLoading(false);
+  };
+
   return (
     <div className="h-full border rounded-lg overflow-hidden">
       <DocumentViewer 
@@ -32,6 +37,7 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
         isForm47={isForm47}
         isForm31GreenTech={isGreenTechForm31}
         onLoadFailure={handleLoadFailure}
+        onAnalysisComplete={handleAnalysisComplete}
       />
     </div>
   );
