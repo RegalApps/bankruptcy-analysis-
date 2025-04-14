@@ -1,5 +1,5 @@
 
-import { AnalysisProcessProps, AnalysisProcessContext } from "./types";
+import { AnalysisProcessProps, AnalysisProcessContext } from "../../DocumentPreview/hooks/analysisProcess/types";
 import {
   documentIngestion,
   documentClassification,

@@ -123,6 +123,7 @@ export interface DocumentViewerProps {
   isForm31GreenTech?: boolean;
   onLoadFailure?: () => void;
   bypassProcessing?: boolean;
+  onAnalysisComplete?: (id: string) => void;
 }
 
 export interface DocumentPreviewProps {

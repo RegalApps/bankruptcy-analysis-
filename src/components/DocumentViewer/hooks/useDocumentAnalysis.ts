@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalysisProcess } from "./analysisProcess/useAnalysisProcess";
-import { AnalysisProcessProps } from "./analysisProcess/types";
+import { AnalysisProcessProps } from "../DocumentPreview/hooks/analysisProcess/types";
 
 export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (documentId: string) => void) => {
   const [analyzing, setAnalyzing] = useState(false);
@@ -131,8 +131,8 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
         
         setTimeout(() => {
           setAnalyzing(false);
-          if (onAnalysisComplete) {
-            onAnalysisComplete(storagePath);
+          if (onAnalysisComplete && document?.id) {
+            onAnalysisComplete(document.id);
           }
         }, 1500);
         return;
@@ -245,7 +245,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (d
       
       checkDocumentStatus();
     }
-  }, [session, storagePath, analyzing]);
+  }, [session, storagePath, analyzing, handleAnalyzeDocument, onAnalysisComplete]);
 
   return {
     analyzing,

@@ -19,6 +19,7 @@ interface DocumentViewerProps {
   documentTitle?: string | null;
   isForm47?: boolean;
   isForm31GreenTech?: boolean;
+  onAnalysisComplete?: (id: string) => void;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
@@ -27,7 +28,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onLoadFailure,
   documentTitle,
   isForm47 = false,
-  isForm31GreenTech = false
+  isForm31GreenTech = false,
+  onAnalysisComplete
 }) => {
   const { session } = useAuthState();
   const {
@@ -99,6 +101,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     setSelectedRiskId((prevId) => (prevId === riskId ? null : riskId));
   }, []);
 
+  const handleAnalysisComplete = useCallback((id: string) => {
+    console.log("Analysis completed for document:", id);
+    if (onAnalysisComplete) {
+      onAnalysisComplete(id);
+    }
+  }, [onAnalysisComplete]);
+
   // Fast-path for Form 47 and Form 31 documents
   if (isForm47 || isForm31GreenTech) {
     const mockDocument = isForm47 ? 
@@ -129,6 +138,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           isForm47={isForm47}
           isForm31GreenTech={isForm31GreenTech}
           analysis={mockDocument.analysis?.[0]?.content}
+          onAnalysisComplete={handleAnalysisComplete}
         />
       </ViewerLayout>
     );
@@ -177,6 +187,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         isForm31GreenTech={isForm31GreenTech}
         isForm47={isForm47}
         analysis={document?.analysis?.[0]?.content}
+        onAnalysisComplete={handleAnalysisComplete}
       />
     </ViewerLayout>
   );
