@@ -13,13 +13,19 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (i
   const [processingStage, setProcessingStage] = useState<string>("");
   const { toast } = useToast();
 
+  const handleAnalysisCompleteWrapper = () => {
+    if (onAnalysisComplete) {
+      onAnalysisComplete(storagePath);
+    }
+  };
+
   const analysisProcessProps: AnalysisProcessProps = {
     setAnalysisStep,
     setProgress,
     setError,
     setProcessingStage,
     toast,
-    onAnalysisComplete: onAnalysisComplete ? () => onAnalysisComplete(storagePath) : undefined
+    onAnalysisComplete: handleAnalysisCompleteWrapper
   };
 
   const { executeAnalysisProcess } = useAnalysisProcess(analysisProcessProps);
@@ -109,7 +115,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (i
         
         setTimeout(() => {
           setAnalyzing(false);
-          if (onAnalysisComplete) onAnalysisComplete(storagePath);
+          handleAnalysisCompleteWrapper();
         }, 1500);
         
         return;
@@ -123,7 +129,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (i
         
         setTimeout(() => {
           setAnalyzing(false);
-          if (onAnalysisComplete) onAnalysisComplete(storagePath);
+          handleAnalysisCompleteWrapper();
         }, 1500);
         return;
       }

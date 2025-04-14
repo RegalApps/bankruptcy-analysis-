@@ -117,7 +117,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   }, [documentId, isForm31GreenTech, onAnalysisComplete]);
   
   const handleRetry = () => {
-    checkFile();
+    previewState.checkFile();
   };
   
   const handleRunDiagnostics = () => {
@@ -158,30 +158,30 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     setTimeout(() => setDiagnosticMode(false), 10000);
   };
 
-  if (previewError && !isLoading) {
+  if (previewState.previewError && !previewState.isLoading) {
     return (
       <div className="h-full flex flex-col">
         <PreviewErrorAlert
-          error={previewError}
+          error={previewState.previewError}
           onRefresh={handleRetry}
-          publicUrl={fileUrl || ""}
+          publicUrl={previewState.fileUrl || ""}
           documentId={documentId}
           onRunDiagnostics={handleRunDiagnostics}
         />
         
         <ViewerErrorState 
-          error={previewError} 
+          error={previewState.previewError} 
           onRetry={handleRetry} 
         />
       </div>
     );
   }
 
-  if (isLoading) {
+  if (previewState.isLoading) {
     return (
       <ViewerLoadingState 
         onRetry={handleRetry}
-        networkError={networkStatus === 'offline'}
+        networkError={previewState.networkStatus === 'offline'}
       />
     );
   }

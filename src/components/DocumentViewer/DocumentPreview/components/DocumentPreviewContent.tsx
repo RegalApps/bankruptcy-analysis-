@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { EnhancedPDFViewer } from "./EnhancedPDFViewer";
 import { DocumentViewerFrame } from "./DocumentViewerFrame";
@@ -34,6 +33,10 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
 
   const handleRefresh = () => {
     setForceReload(Date.now());
+    // Also trigger the file check to reload the document
+    if (previewState && previewState.checkFile) {
+      previewState.checkFile();
+    }
   };
 
   // Call onLoadFailure when there's a preview error
@@ -67,7 +70,10 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+          <p className="text-sm text-muted-foreground">Loading document...</p>
+        </div>
       </div>
     );
   }
@@ -186,8 +192,9 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           
           <button 
             className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
-            onClick={() => window.open(fileUrl, "_blank")}
+            onClick={() => fileUrl && window.open(fileUrl, "_blank")}
             title="Open in new tab"
+            disabled={!fileUrl}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 3H6a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M16 3h5v5"/><path d="M21 3 10 14"/></svg>
           </button>
@@ -195,12 +202,15 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           <button 
             className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
             onClick={() => {
-              const link = document.createElement("a");
-              link.href = fileUrl;
-              link.download = title;
-              link.click();
+              if (fileUrl) {
+                const link = document.createElement("a");
+                link.href = fileUrl;
+                link.download = title;
+                link.click();
+              }
             }}
             title="Download document"
+            disabled={!fileUrl}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 17v-10H5.5A2.5 2.5 0 0 1 3 4.5v0A2.5 2.5 0 0 1 5.5 2H18a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-2"/><path d="m8 15-2 2 2 2"/></svg>
           </button>
@@ -218,6 +228,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           onRiskSelect={onRiskSelect}
           onLoad={handleDocumentLoad}
           onError={handleDocumentError}
+          key={`doc-${documentId}-${forceReload}`}
         />
       </div>
     </div>
