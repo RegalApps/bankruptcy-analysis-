@@ -61,16 +61,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     bypassAnalysis
   );
 
-  const {
-    previewError,
-    isLoading,
-    networkStatus,
-    checkFile,
-    fileExists,
-    fileUrl,
-    documentRisks
-  } = previewState;
-
   useEffect(() => {
     if (isForm31GreenTech || 
         documentId === "greentech-form31" || 

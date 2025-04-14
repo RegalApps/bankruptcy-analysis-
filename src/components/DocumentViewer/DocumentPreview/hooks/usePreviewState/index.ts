@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
 import { useDocumentAnalysis } from "../../hooks/useDocumentAnalysis";
 import { useFilePreview } from "./useFilePreview";
-import { useAnalysisInitialization } from "./useAnalysisInitialization";
+import { useAnalysisInitialization } from "../useAnalysisInitialization";
 
 const usePreviewState = (
   storagePath: string,
