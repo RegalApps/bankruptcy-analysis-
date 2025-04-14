@@ -14,6 +14,7 @@ interface ViewerContentProps {
   isForm47?: boolean;
   isForm31GreenTech?: boolean;
   analysis?: any;
+  onAnalysisComplete?: (id: string) => void;
 }
 
 export const ViewerContent: React.FC<ViewerContentProps> = ({
@@ -26,7 +27,8 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   onRiskSelect,
   isForm47,
   isForm31GreenTech,
-  analysis
+  analysis,
+  onAnalysisComplete
 }) => {
   return (
     <ResizablePanelGroup
@@ -44,6 +46,7 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
           onLoadFailure={onLoadFailure}
           isForm31GreenTech={isForm31GreenTech}
           isForm47={isForm47}
+          onAnalysisComplete={onAnalysisComplete}
         />
       </ResizablePanel>
       

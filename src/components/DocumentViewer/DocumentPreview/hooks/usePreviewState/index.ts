@@ -11,7 +11,7 @@ const usePreviewState = (
   storagePath: string,
   documentId: string,
   title: string,
-  onAnalysisComplete?: () => void,
+  onAnalysisComplete?: (id: string) => void,
   bypassAnalysis: boolean = false
 ) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -23,6 +23,12 @@ const usePreviewState = (
   const [isLoading, setIsLoading] = useState(true);
   const [hasFallbackToDirectUrl, setHasFallbackToDirectUrl] = useState(false);
 
+  const handleAnalysisCompleteCallback = () => {
+    if (onAnalysisComplete) {
+      onAnalysisComplete(documentId);
+    }
+  };
+
   const {
     analyzing,
     error,
@@ -30,7 +36,7 @@ const usePreviewState = (
     progress,
     processingStage,
     handleAnalyzeDocument
-  } = useDocumentAnalysis(storagePath, onAnalysisComplete);
+  } = useDocumentAnalysis(storagePath, handleAnalysisCompleteCallback);
 
   // Use the FilePreview hook with the correct props shape
   const { 
@@ -87,7 +93,7 @@ const usePreviewState = (
     setSession,
     handleAnalyzeDocument,
     setPreviewError,
-    onAnalysisComplete,
+    onAnalysisComplete: handleAnalysisCompleteCallback,
     bypassAnalysis
   });
 

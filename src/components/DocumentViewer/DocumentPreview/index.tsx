@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { DocumentPreviewContent } from "./components/DocumentPreviewContent";
 import { PreviewControls } from "./PreviewControls";
@@ -21,6 +20,7 @@ interface DocumentPreviewProps {
   onLoadFailure?: () => void;
   isForm31GreenTech?: boolean;
   isForm47?: boolean;
+  onAnalysisComplete?: (id: string) => void;
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
@@ -32,7 +32,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   bypassAnalysis = false,
   onLoadFailure,
   isForm31GreenTech = false,
-  isForm47 = false
+  isForm47 = false,
+  onAnalysisComplete
 }) => {
   const [diagnosticMode, setDiagnosticMode] = useState(false);
   
@@ -58,7 +59,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     effectiveStoragePath,
     documentId,
     title,
-    undefined,
+    onAnalysisComplete,
     bypassAnalysis
   );
 
@@ -108,6 +109,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 });
                 
               console.log('Form 31 analysis added for demo document');
+              
+              // Call onAnalysisComplete callback
+              if (onAnalysisComplete) {
+                onAnalysisComplete(documentId);
+              }
             }
           }
         } catch (error) {
@@ -117,7 +123,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       
       applyForm31Analysis();
     }
-  }, [documentId, isForm31GreenTech]);
+  }, [documentId, isForm31GreenTech, onAnalysisComplete]);
   
   const handleRetry = () => {
     checkFile();
