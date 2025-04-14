@@ -1,4 +1,3 @@
-
 import { Risk } from '../RiskAssessment/types';
 
 export interface DocumentPreviewContentProps {
@@ -91,4 +90,17 @@ export interface UseRetryStrategyReturn {
   setLastAttempt: (date: Date | null) => void;
   shouldRetry: (count: number) => boolean;
   getRetryDelay: (count: number) => number;
+}
+
+export interface DocumentPreviewProps {
+  documentId: string;
+  storagePath: string;
+  title?: string;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string) => void;
+  bypassAnalysis?: boolean;
+  onLoadFailure?: () => void;
+  isForm31GreenTech?: boolean;
+  isForm47?: boolean;
+  onAnalysisComplete?: (id: string) => void;
 }
