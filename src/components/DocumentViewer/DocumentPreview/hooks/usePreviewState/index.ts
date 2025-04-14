@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
@@ -23,11 +22,11 @@ const usePreviewState = (
   const [isLoading, setIsLoading] = useState(true);
   const [hasFallbackToDirectUrl, setHasFallbackToDirectUrl] = useState(false);
 
-  const handleAnalysisCompleteCallback = () => {
+  const handleAnalysisCompleteCallback = useCallback(() => {
     if (onAnalysisComplete) {
       onAnalysisComplete(documentId);
     }
-  };
+  }, [documentId, onAnalysisComplete]);
 
   const {
     analyzing,
@@ -36,9 +35,8 @@ const usePreviewState = (
     progress,
     processingStage,
     handleAnalyzeDocument
-  } = useDocumentAnalysis(storagePath, handleAnalysisCompleteCallback);
+  } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
-  // Use the FilePreview hook with the correct props shape
   const { 
     checkFile, 
     networkStatus, 
@@ -53,32 +51,25 @@ const usePreviewState = (
     setPreviewError
   });
 
-  // When file information changes, update loading state
   useEffect(() => {
     if (fileUrl) {
-      // If we have a file URL, we can consider loading complete
       setIsLoading(false);
     }
   }, [fileUrl]);
 
-  // Log network status changes for debugging
   useEffect(() => {
     console.log(`Network status: ${networkStatus}, attempt count: ${attemptCount}`);
   }, [networkStatus, attemptCount]);
 
-  // Auto-fallback to direct URL mode after multiple failures with preview
   useEffect(() => {
     if (previewError && loadRetries < 2 && !hasFallbackToDirectUrl) {
       console.log("Preview error detected, retrying with fallback strategies");
       
-      // Increment retry counter 
       setLoadRetries(prev => prev + 1);
       
-      // On second retry, fall back to direct URL
       if (loadRetries === 1) {
         setHasFallbackToDirectUrl(true);
         console.log("Falling back to direct URL mode");
-        // Force an additional check
         setTimeout(checkFile, 1000);
       }
     }
@@ -97,7 +88,6 @@ const usePreviewState = (
     bypassAnalysis
   });
 
-  // Add state for tracking stuck analysis
   const [isAnalysisStuck, setIsAnalysisStuck] = useState<{
     stuck: boolean;
     minutesStuck: number;
@@ -106,11 +96,9 @@ const usePreviewState = (
     minutesStuck: 0
   });
 
-  // Enhanced document status tracking
   useEffect(() => {
     if (!documentId) return;
     
-    // Check if analysis is stuck
     const checkStuckAnalysis = async () => {
       try {
         const { data } = await supabase
@@ -123,11 +111,9 @@ const usePreviewState = (
           const lastUpdateTime = new Date(data.updated_at);
           const minutesSinceUpdate = Math.floor((Date.now() - lastUpdateTime.getTime()) / (1000 * 60));
           
-          // If analysis has been stuck for more than 10 minutes
           if (minutesSinceUpdate > 10) {
             setPreviewError(`Analysis appears to be stuck (running for ${minutesSinceUpdate} minutes)`);
             
-            // Update local state to show retry button
             setIsAnalysisStuck({
               stuck: true,
               minutesStuck: minutesSinceUpdate
@@ -139,7 +125,6 @@ const usePreviewState = (
       }
     };
     
-    // Check once on load and then every 5 minutes
     checkStuckAnalysis();
     const intervalId = setInterval(checkStuckAnalysis, 5 * 60 * 1000);
     
@@ -167,16 +152,13 @@ const usePreviewState = (
     networkStatus,
     attemptCount,
     handleAnalysisRetry: () => {
-      // Reset stuck state
       setIsAnalysisStuck({
         stuck: false,
         minutesStuck: 0
       });
       
-      // Reset fallback status
       setHasFallbackToDirectUrl(false);
       
-      // Refresh document data
       setPreviewError(null);
       setFileExists(false);
       setLoadRetries(0);

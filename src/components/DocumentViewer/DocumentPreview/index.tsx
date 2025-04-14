@@ -37,12 +37,10 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 }) => {
   const [diagnosticMode, setDiagnosticMode] = useState(false);
   
-  // Use Form 31 specific storage path if flag is set
   const effectiveStoragePath = isForm31GreenTech 
     ? "demo/greentech-form31-proof-of-claim.pdf" 
     : (isForm47 ? "demo/form47-consumer-proposal.pdf" : storagePath);
 
-  // If we don't have a storagePath but the document is a special demo one, use demo paths
   useEffect(() => {
     if ((!storagePath || storagePath.trim() === "") && 
         (isForm31GreenTech || documentId === "greentech-form31" || documentId === "form31")) {
@@ -73,7 +71,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     documentRisks
   } = previewState;
 
-  // Apply local analysis for Form 31 GreenTech demo document
   useEffect(() => {
     if (isForm31GreenTech || 
         documentId === "greentech-form31" || 
@@ -81,7 +78,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         documentId === "form-31-greentech") {
       const applyForm31Analysis = async () => {
         try {
-          // Check if analysis exists
           const { data: existingAnalysis } = await supabase
             .from('document_analysis')
             .select('*')
@@ -89,17 +85,13 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             .maybeSingle();
           
           if (!existingAnalysis) {
-            // Import the Form 31 analyzer dynamically to avoid circular dependencies
             const { default: analyzeForm31 } = await import('@/utils/documents/form31Analyzer');
             
-            // Create analysis result
             const analysisResult = analyzeForm31('GreenTech Supplies Inc. Proof of Claim Form 31');
             
-            // Get current user
             const { data: userData } = await supabase.auth.getUser();
             
             if (userData?.user?.id) {
-              // Insert analysis
               await supabase
                 .from('document_analysis')
                 .upsert({
@@ -110,7 +102,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 
               console.log('Form 31 analysis added for demo document');
               
-              // Call onAnalysisComplete callback
               if (onAnalysisComplete) {
                 onAnalysisComplete(documentId);
               }
@@ -133,7 +124,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     setDiagnosticMode(true);
     toast.info("Running diagnostics on document...");
     
-    // Check document record
     supabase
       .from('documents')
       .select('*')
@@ -152,7 +142,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         }
       });
       
-    // See if we can get the file directly
     if (storagePath) {
       supabase.storage
         .from('documents')
@@ -169,7 +158,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     setTimeout(() => setDiagnosticMode(false), 10000);
   };
 
-  // If there's an error with the preview
   if (previewError && !isLoading) {
     return (
       <div className="h-full flex flex-col">
@@ -189,7 +177,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     );
   }
 
-  // If the document is still loading
   if (isLoading) {
     return (
       <ViewerLoadingState 

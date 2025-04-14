@@ -18,9 +18,9 @@ interface PreviewDialogProps {
 const PreviewDialog: React.FC<PreviewDialogProps> = ({ document, onClose, onAnalysisComplete }) => {
   if (!document) return null;
 
-  const handleAnalysisComplete = () => {
+  const handleAnalysisComplete = (id: string) => {
     if (onAnalysisComplete && document) {
-      onAnalysisComplete(document.id);
+      onAnalysisComplete(id);
     }
   };
 
