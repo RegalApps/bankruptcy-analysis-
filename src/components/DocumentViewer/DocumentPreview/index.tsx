@@ -21,7 +21,7 @@ interface DocumentPreviewProps {
   onLoadFailure?: () => void;
   isForm31GreenTech?: boolean;
   isForm47?: boolean;
-  onAnalysisComplete?: (id: string) => void; // Takes string parameter
+  onAnalysisComplete?: (id: string) => void;
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
@@ -54,7 +54,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [storagePath, documentId, isForm31GreenTech, isForm47]);
 
-  // Fix the callback type issue by explicitly handling undefined callback
+  // Create a wrapper function that handles the callback if it exists
   const handleAnalysisComplete = React.useCallback((id: string) => {
     console.log("Analysis complete called with ID:", id);
     if (onAnalysisComplete) {
@@ -62,7 +62,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [onAnalysisComplete]);
 
-  // Now we need to modify usePreviewState to expect our callback type
+  // Pass the wrapper function to usePreviewState
   const previewState = usePreviewState(
     effectiveStoragePath,
     documentId,

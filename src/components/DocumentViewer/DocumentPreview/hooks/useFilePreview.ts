@@ -1,9 +1,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { useNetworkMonitor } from "./useNetworkMonitor";
-import { useRetryStrategy } from "./useRetryStrategy";
-import { useFileChecker } from "./useFileChecker";
+import { useNetworkMonitor } from "./usePreviewState/useNetworkMonitor";
+import { useRetryStrategy } from "./usePreviewState/useRetryStrategy";
+import { useFileChecker } from "./usePreviewState/useFileChecker";
 
 interface UseFilePreviewProps {
   storagePath: string;

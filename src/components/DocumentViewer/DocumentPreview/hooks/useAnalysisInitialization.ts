@@ -1,19 +1,19 @@
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { Session } from "@supabase/supabase-js";
 
-interface AnalysisInitializationProps {
+interface UseAnalysisInitializationProps {
   storagePath: string;
   fileExists: boolean;
   isExcelFile: boolean;
   analyzing: boolean;
   error: string | null;
-  setSession: (session: any) => void;
-  handleAnalyzeDocument: (session: any) => void;
+  setSession: (session: Session | null) => void;
+  handleAnalyzeDocument: () => void;
   setPreviewError: (error: string | null) => void;
-  onAnalysisComplete?: (id: string) => void; // Make sure it accepts an ID parameter
-  bypassAnalysis: boolean;
+  onAnalysisComplete?: (id: string) => void;
+  bypassAnalysis?: boolean;
 }
 
 export const useAnalysisInitialization = ({
@@ -26,102 +26,59 @@ export const useAnalysisInitialization = ({
   handleAnalyzeDocument,
   setPreviewError,
   onAnalysisComplete,
-  bypassAnalysis
-}: AnalysisInitializationProps) => {
-  const [hasInitializedAnalysis, setHasInitializedAnalysis] = useState(false);
-  const [hasCheckedDocumentStatus, setHasCheckedDocumentStatus] = useState(false);
-
-  // Load session and initialize document analysis
+  bypassAnalysis = false
+}: UseAnalysisInitializationProps) => {
+  // Set up session
   useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        
-        if (data && data.session) {
-          setSession(data.session);
-        } else {
-          console.log("No active session found");
-          setPreviewError('Authentication required');
-        }
-      } catch (error) {
-        console.error('Error fetching session:', error);
-      }
-    };
-    
-    fetchSession();
-  }, [setSession, setPreviewError]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
 
-  // Initialize document analysis if conditions are met
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [setSession]);
+
+  // Auto-analyze if appropriate conditions are met
   useEffect(() => {
     if (
-      storagePath && 
-      fileExists && 
-      !analyzing && 
-      !hasInitializedAnalysis && 
-      !bypassAnalysis &&
-      !isExcelFile // Don't analyze Excel files
+      fileExists &&
+      !isExcelFile &&
+      !analyzing &&
+      !error &&
+      !bypassAnalysis
     ) {
-      const checkDocumentStatus = async () => {
-        try {
-          const { data } = await supabase
-            .from('documents')
-            .select('id, storage_path, ai_processing_status')
-            .eq('storage_path', storagePath)
-            .maybeSingle();
-          
-          setHasCheckedDocumentStatus(true);
-            
-          // If document exists but hasn't been processed, start analysis
-          if (data && (
-            data.ai_processing_status === 'pending' || 
-            data.ai_processing_status === 'failed' ||
-            !data.ai_processing_status
-          )) {
-            console.log("Document found but needs analysis");
-            
-            const { data: sessionData } = await supabase.auth.getSession();
-            
-            if (sessionData?.session) {
-              setSession(sessionData.session);
-              handleAnalyzeDocument(sessionData.session);
-              setHasInitializedAnalysis(true);
-            }
-          } else if (data && data.ai_processing_status === 'complete') {
-            console.log("Document analysis already complete");
-            setHasInitializedAnalysis(true);
-            
-            // If we have a document ID and analysis is complete, call the callback with the id
-            if (data.id && onAnalysisComplete) {
-              console.log("Triggering analysis complete with id:", data.id);
-              onAnalysisComplete(data.id);
-            }
-          }
-        } catch (err) {
-          console.error("Error checking document status:", err);
-        }
-      };
-      
-      checkDocumentStatus();
+      console.log("Auto-triggering document analysis");
+      handleAnalyzeDocument();
+    } else if (fileExists && isExcelFile && !analyzing && !error) {
+      console.log("Skipping analysis for Excel file");
+      if (onAnalysisComplete) {
+        onAnalysisComplete("excel-file-skipped");
+      }
+    } else if (bypassAnalysis && fileExists) {
+      console.log("Analysis bypassed as requested");
+      if (onAnalysisComplete) {
+        onAnalysisComplete("analysis-bypassed");
+      }
     }
   }, [
-    storagePath, 
-    fileExists, 
-    analyzing, 
-    hasInitializedAnalysis,
-    setSession,
+    fileExists,
+    isExcelFile,
+    analyzing,
+    error,
     handleAnalyzeDocument,
     bypassAnalysis,
-    isExcelFile,
     onAnalysisComplete
   ]);
 
-  // Handle errors in document analysis
+  // Handle errors
   useEffect(() => {
     if (error) {
-      toast.error(`Analysis Error: ${error}`);
-      setPreviewError(error);
+      setPreviewError(`Analysis error: ${error}`);
     }
   }, [error, setPreviewError]);
-
-  return { hasInitializedAnalysis, hasCheckedDocumentStatus };
 };

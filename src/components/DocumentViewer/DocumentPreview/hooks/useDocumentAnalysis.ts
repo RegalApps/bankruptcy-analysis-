@@ -1,90 +1,74 @@
-import { useState, useEffect, useCallback } from "react";
+
+import { useState, useCallback } from "react";
+import { useProcessingStages } from "./analysisProcess/useAnalysisProcess";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
-import { useAnalysisProcess } from "../../hooks/analysisProcess/useAnalysisProcess";
-import { AnalysisProcessProps } from "./analysisProcess/types";
+import { toast } from "sonner";
 
-export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (id: string) => void) => {
+export const useDocumentAnalysis = (
+  storagePath: string,
+  onAnalysisComplete?: (id: string) => void // Accept an ID parameter
+) => {
   const [analyzing, setAnalyzing] = useState(false);
-  const [session, setSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [analysisStep, setAnalysisStep] = useState<string>("");
-  const [progress, setProgress] = useState<number>(0);
-  const [processingStage, setProcessingStage] = useState<string>("");
-  const { toast } = useToast();
+  const [analysisStep, setAnalysisStep] = useState(0);
+  const [progress, setProgress] = useState(0);
 
-  const handleAnalysisCompleteWrapper = useCallback((id: string) => {
-    if (onAnalysisComplete && id) {
-      console.log("Analysis complete wrapper called with ID:", id);
-      onAnalysisComplete(id);
+  const {
+    runProcessingStage,
+    currentStage: processingStage
+  } = useProcessingStages();
+
+  const handleAnalyzeDocument = useCallback(async () => {
+    if (!storagePath) {
+      setError("No document path provided");
+      return;
     }
-  }, [onAnalysisComplete]);
 
-  const analysisProcessProps: AnalysisProcessProps = {
-    setAnalysisStep,
-    setProgress,
-    setError,
-    setProcessingStage,
-    toast,
-    onAnalysisComplete: handleAnalysisCompleteWrapper
-  };
-
-  const { executeAnalysisProcess } = useAnalysisProcess(analysisProcessProps);
-
-  const handleAnalyzeDocument = async (currentSession = session) => {
+    console.log("Starting document analysis for:", storagePath);
+    setAnalyzing(true);
     setError(null);
-    
-    try {
-      if (!currentSession) {
-        console.error("No session available for document analysis");
-        throw new Error('You must be logged in to analyze documents');
-      }
+    setProgress(0);
+    setAnalysisStep(1);
 
-      setAnalyzing(true);
+    try {
+      // Extract document ID from storage path or use the path itself as ID
+      const documentId = storagePath.split("/").pop() || storagePath;
       
-      await executeAnalysisProcess(storagePath, currentSession);
+      // Process stages sequentially
+      let currentProgress = 0;
+      const incrementProgress = () => {
+        currentProgress += 12.5; // 8 stages total = 12.5% each
+        setProgress(Math.min(currentProgress, 100));
+        setAnalysisStep(prev => prev + 1);
+      };
+
+      // Run each processing stage
+      await runProcessingStage("documentIngestion", incrementProgress);
+      await runProcessingStage("documentClassification", incrementProgress);
+      await runProcessingStage("dataExtraction", incrementProgress);
+      await runProcessingStage("documentOrganization", incrementProgress);
+      await runProcessingStage("riskAssessment", incrementProgress);
+      await runProcessingStage("issuePrioritization", incrementProgress);
+      await runProcessingStage("collaborationSetup", incrementProgress);
+      await runProcessingStage("continuousLearning", incrementProgress);
+
+      setProgress(100);
+      console.log("Document analysis complete");
       
-    } catch (error: any) {
-      console.error('Document analysis failed:', error);
-      setError(error.message || 'An unknown error occurred');
-      toast({
-        variant: "destructive",
-        title: "Analysis Failed",
-        description: error.message || "Failed to analyze document"
-      });
+      // Call the callback with the document ID if provided
+      if (onAnalysisComplete) {
+        onAnalysisComplete(documentId);
+      }
+      
+      toast.success("Document analysis complete");
+    } catch (err: any) {
+      console.error("Document analysis error:", err);
+      setError(err.message || "Analysis failed");
+      toast.error(`Analysis error: ${err.message || "Unknown error"}`);
     } finally {
       setAnalyzing(false);
     }
-  };
-
-  useEffect(() => {
-    if (session && storagePath && !analyzing) {
-      const checkDocumentStatus = async () => {
-        try {
-          const { data: document } = await supabase
-            .from('documents')
-            .select('ai_processing_status, metadata, id')
-            .eq('storage_path', storagePath)
-            .maybeSingle();
-            
-          if (document && 
-             (document.ai_processing_status === 'pending' || 
-              document.ai_processing_status === 'failed' ||
-              document.metadata?.processing_steps_completed?.length < 8)) {
-            console.log('Document needs analysis, current status:', document.ai_processing_status);
-            handleAnalyzeDocument(session);
-          } else if (document && document.ai_processing_status === 'complete' && onAnalysisComplete) {
-            console.log('Document already analyzed, calling completion callback with ID:', document.id);
-            onAnalysisComplete(document.id);
-          }
-        } catch (err) {
-          console.error('Error checking document status:', err);
-        }
-      };
-      
-      checkDocumentStatus();
-    }
-  }, [session, storagePath, analyzing, onAnalysisComplete]);
+  }, [storagePath, runProcessingStage, onAnalysisComplete]);
 
   return {
     analyzing,
@@ -92,7 +76,6 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (i
     analysisStep,
     progress,
     processingStage,
-    setSession,
     handleAnalyzeDocument
   };
 };
