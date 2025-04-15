@@ -222,6 +222,12 @@ const usePreviewState = (
         ];
         setDocumentRisks(defaultForm47Risks);
       }
+      
+      // Call the onAnalysisComplete callback when analysis is done
+      if (onAnalysisComplete) {
+        console.log("Analysis complete, calling callback with ID:", docId);
+        onAnalysisComplete(docId);
+      }
     } catch (err) {
       console.error("Error fetching document risks:", err);
     }
