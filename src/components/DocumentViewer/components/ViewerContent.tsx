@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { DocumentPreview } from "../DocumentPreview";
 import { AnalysisPanel } from "../components/AnalysisPanel";
@@ -31,6 +31,18 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   analysis,
   onAnalysisComplete
 }) => {
+  // Add debug logs to help trace the component rendering
+  useEffect(() => {
+    console.log("ViewerContent rendered with:", {
+      documentId,
+      storagePath,
+      title,
+      bypassProcessing,
+      isForm47,
+      isForm31GreenTech
+    });
+  }, [documentId, storagePath, title, bypassProcessing, isForm47, isForm31GreenTech]);
+
   const handleAnalysisComplete = (id: string) => {
     console.log("Analysis completed in ViewerContent:", id);
     if (onAnalysisComplete) {

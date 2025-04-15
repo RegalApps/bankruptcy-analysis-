@@ -12,7 +12,7 @@ const usePreviewState = (
   documentId: string,
   title: string,
   bypassAnalysis: boolean = false,
-  onAnalysisComplete?: (id: string) => void // Parameter order matches how it's called in DocumentPreview/index.tsx
+  onAnalysisComplete?: (id: string) => void
 ) => {
   const [session, setSession] = useState<Session | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);

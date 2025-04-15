@@ -62,13 +62,13 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [onAnalysisComplete]);
 
-  // Pass the wrapper function to usePreviewState with correct parameter order
+  // Fix the parameter order here - pass the function as the final parameter
   const previewState = usePreviewState(
     effectiveStoragePath,
     documentId,
     title,
     bypassAnalysis,
-    handleAnalysisComplete 
+    handleAnalysisComplete
   );
 
   useEffect(() => {
