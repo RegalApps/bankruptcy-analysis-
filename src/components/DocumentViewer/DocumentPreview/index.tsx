@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { DocumentPreviewContent } from "./components/DocumentPreviewContent";
 import { PreviewControls } from "./PreviewControls";
@@ -62,7 +61,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [onAnalysisComplete]);
 
-  // Fix the parameter order here - pass the function as the final parameter
+  // Fix the parameter order here - pass the boolean before the function
   const previewState = usePreviewState(
     effectiveStoragePath,
     documentId,

@@ -23,8 +23,8 @@ const usePreviewState = (
   storagePath: string, 
   documentId: string, 
   title: string,
-  onAnalysisComplete?: () => void,
-  bypassAnalysis: boolean = false
+  bypassAnalysis: boolean = false,
+  onAnalysisComplete?: (id: string) => void
 ): PreviewState => {
   const [fileExists, setFileExists] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
