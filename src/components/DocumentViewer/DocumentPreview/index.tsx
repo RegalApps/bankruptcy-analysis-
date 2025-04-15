@@ -21,7 +21,7 @@ interface DocumentPreviewProps {
   onLoadFailure?: () => void;
   isForm31GreenTech?: boolean;
   isForm47?: boolean;
-  onAnalysisComplete?: (id: string) => void;
+  onAnalysisComplete?: (id: string) => void; // Ensure this takes a string parameter
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
@@ -54,12 +54,19 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [storagePath, documentId, isForm31GreenTech, isForm47]);
 
+  // Ensure onAnalysisComplete is called with a string ID
+  const handleAnalysisComplete = (id: string) => {
+    if (onAnalysisComplete) {
+      onAnalysisComplete(id);
+    }
+  };
+
   // Pass the properly typed callback to usePreviewState
   const previewState = usePreviewState(
     effectiveStoragePath,
     documentId,
     title,
-    onAnalysisComplete,
+    handleAnalysisComplete,
     bypassAnalysis
   );
 
@@ -94,9 +101,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                 
               console.log('Form 31 analysis added for demo document');
               
-              if (onAnalysisComplete) {
-                onAnalysisComplete(documentId);
-              }
+              // Call handleAnalysisComplete with the document ID
+              handleAnalysisComplete(documentId);
             }
           }
         } catch (error) {
@@ -106,7 +112,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       
       applyForm31Analysis();
     }
-  }, [documentId, isForm31GreenTech, onAnalysisComplete]);
+  }, [documentId, isForm31GreenTech, handleAnalysisComplete]);
   
   const handleRetry = () => {
     previewState.checkFile();
