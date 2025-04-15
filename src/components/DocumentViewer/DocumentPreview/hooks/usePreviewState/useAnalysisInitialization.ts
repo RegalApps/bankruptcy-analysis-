@@ -13,7 +13,7 @@ interface AnalysisInitializationProps {
   setSession: (session: Session | null) => void;
   handleAnalyzeDocument: (session: Session | null) => void;
   setPreviewError: (error: string | null) => void;
-  onAnalysisComplete?: () => void;
+  onAnalysisComplete?: (id: string) => void; // Updated to accept id parameter
   bypassAnalysis?: boolean;
 }
 
@@ -43,9 +43,29 @@ export const useAnalysisInitialization = ({
     if (bypassAnalysis) {
       console.log('Bypassing analysis due to user preference');
       if (onAnalysisComplete) {
-        // If we're bypassing analysis, still call the completion handler
-        // so navigation can continue
-        onAnalysisComplete();
+        // If we're bypassing analysis, still call the completion handler with a document ID if available
+        const getDocumentId = async () => {
+          try {
+            const { data } = await supabase
+              .from('documents')
+              .select('id')
+              .eq('storage_path', storagePath)
+              .maybeSingle();
+            
+            if (data && data.id) {
+              onAnalysisComplete(data.id);
+            } else {
+              // If no document ID is available, use the storagePath as a fallback
+              onAnalysisComplete(storagePath);
+            }
+          } catch (err) {
+            console.error("Error getting document ID:", err);
+            // Use storagePath as fallback if we can't get the document ID
+            onAnalysisComplete(storagePath);
+          }
+        };
+        
+        getDocumentId();
       }
       return;
     }
@@ -95,8 +115,8 @@ export const useAnalysisInitialization = ({
                     
                   console.log('Excel file marked as processed without full analysis');
                   
-                  if (onAnalysisComplete) {
-                    onAnalysisComplete();
+                  if (onAnalysisComplete && document.id) {
+                    onAnalysisComplete(document.id);
                   }
                 }
               } catch (err) {
@@ -110,7 +130,7 @@ export const useAnalysisInitialization = ({
           if (storagePath) {
             const { data: document, error: docError } = await supabase
               .from('documents')
-              .select('ai_processing_status, metadata')
+              .select('id, ai_processing_status, metadata')
               .eq('storage_path', storagePath)
               .maybeSingle();
               
@@ -135,15 +155,16 @@ export const useAnalysisInitialization = ({
                 }, 100);
               } else if (document.ai_processing_status === 'completed' || document.ai_processing_status === 'complete') {
                 console.log('Document already analyzed');
-                if (onAnalysisComplete) {
-                  onAnalysisComplete();
+                if (onAnalysisComplete && document.id) {
+                  onAnalysisComplete(document.id);
                 }
               }
             } else {
               // If no document record found but we have a storage path and file exists,
               // we can still show the preview without analysis
               if (onAnalysisComplete) {
-                onAnalysisComplete();
+                // Use storagePath as fallback if we can't get the document ID
+                onAnalysisComplete(storagePath);
               }
             }
           }

@@ -4,7 +4,7 @@ import { Session } from "@supabase/supabase-js";
 export interface PreviewStateProps {
   storagePath: string;
   title?: string;
-  onAnalysisComplete?: () => void;
+  onAnalysisComplete?: (id: string) => void; // Updated to accept id parameter
 }
 
 export interface PreviewState {
