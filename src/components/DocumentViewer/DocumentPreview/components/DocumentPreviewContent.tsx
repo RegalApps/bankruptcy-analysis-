@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { EnhancedPDFViewer } from "./EnhancedPDFViewer";
 import { DocumentViewerFrame } from "./DocumentViewerFrame";
@@ -18,6 +19,19 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   const [zoomLevel, setZoomLevel] = useState(100);
   const [forceReload, setForceReload] = useState(Date.now());
   
+  // Debug information
+  useEffect(() => {
+    console.log("DocumentPreviewContent rendered with:", {
+      documentId,
+      storagePath,
+      fileUrl: previewState.fileUrl,
+      fileExists: previewState.fileExists,
+      isExcelFile: previewState.isExcelFile,
+      isLoading: previewState.isLoading,
+      previewError: previewState.previewError
+    });
+  }, [documentId, storagePath, previewState]);
+  
   // Handle zoom in/out functions
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(prev + 10, 200));
@@ -32,6 +46,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   };
 
   const handleRefresh = () => {
+    console.log("Manual refresh triggered");
     setForceReload(Date.now());
     // Also trigger the file check to reload the document
     if (previewState && previewState.checkFile) {
@@ -42,6 +57,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   // Call onLoadFailure when there's a preview error
   useEffect(() => {
     if (previewState.previewError && onLoadFailure) {
+      console.error("Preview error detected, calling onLoadFailure:", previewState.previewError);
       onLoadFailure();
     }
   }, [previewState.previewError, onLoadFailure]);
@@ -49,9 +65,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   const { 
     fileExists,
     fileUrl,
-    isPdfFile,
     isExcelFile,
-    isDocFile,
     isLoading,
     previewError,
     documentRisks
@@ -62,7 +76,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   };
   
   const handleDocumentError = () => {
-    console.error("Error loading document");
+    console.error("Error loading document in DocumentPreviewContent");
     if (onLoadFailure) onLoadFailure();
   };
 
@@ -95,6 +109,14 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
         >
           Try Again
         </button>
+        <div className="mt-4 text-xs text-muted-foreground border border-muted p-3 rounded">
+          <p>Debug Info:</p>
+          <p>Document ID: {documentId}</p>
+          <p>Storage Path: {storagePath}</p>
+          <p>File URL exists: {fileUrl ? 'Yes' : 'No'}</p>
+          <p>Network Status: {previewState.networkStatus}</p>
+          <p>Attempt Count: {previewState.attemptCount}</p>
+        </div>
       </div>
     );
   }

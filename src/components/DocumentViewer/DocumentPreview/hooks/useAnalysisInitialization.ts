@@ -12,7 +12,7 @@ interface AnalysisInitializationProps {
   setSession: (session: any) => void;
   handleAnalyzeDocument: (session: any) => void;
   setPreviewError: (error: string | null) => void;
-  onAnalysisComplete?: (id: string) => void; // Updated to accept id parameter
+  onAnalysisComplete?: (id: string) => void; // Make sure it accepts an ID parameter
   bypassAnalysis: boolean;
 }
 
@@ -92,6 +92,7 @@ export const useAnalysisInitialization = ({
             
             // If we have a document ID and analysis is complete, call the callback with the id
             if (data.id && onAnalysisComplete) {
+              console.log("Triggering analysis complete with id:", data.id);
               onAnalysisComplete(data.id);
             }
           }

@@ -1,7 +1,6 @@
 
 import { useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { UseFileCheckerReturn } from "../../types";
 
 export const useFileChecker = (
   setFileExists: (exists: boolean) => void,
@@ -9,92 +8,95 @@ export const useFileChecker = (
   setIsExcelFile: (isExcel: boolean) => void,
   setPreviewError: (error: string | null) => void,
   setNetworkStatus: (status: 'online' | 'offline') => void
-): UseFileCheckerReturn => {
-  
-  const getFileExtension = (path: string): string => {
-    return path.split('.').pop()?.toLowerCase() || '';
-  };
-
-  const isPdfFile = useCallback((path: string): boolean => {
-    return getFileExtension(path) === 'pdf';
-  }, []);
-
-  const isExcelFile = useCallback((path: string): boolean => {
-    const ext = getFileExtension(path);
-    return ['xlsx', 'xls', 'csv'].includes(ext);
-  }, []);
-
-  const isDocFile = useCallback((path: string): boolean => {
-    const ext = getFileExtension(path);
-    return ['doc', 'docx'].includes(ext);
-  }, []);
-
-  // Main function to check file existence and properties
-  const checkFile = useCallback(async (storagePath: string): Promise<void> => {
+) => {
+  const checkFile = useCallback(async (storagePath: string) => {
+    console.log("Checking file access for:", storagePath);
+    
     if (!storagePath) {
+      console.error("No storage path provided!");
+      setPreviewError("No storage path provided");
       setFileExists(false);
       setFileUrl(null);
-      setPreviewError('No storage path provided');
       return;
     }
 
     try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .createSignedUrl(storagePath, 3600); // 1 hour expiry
-
-      if (error) {
-        console.error('Error getting file URL:', error);
-        setFileExists(false);
-        setFileUrl(null);
+      // Special handling for demo paths
+      if (storagePath.includes('demo/')) {
+        console.log("Demo document detected: ", storagePath);
         
-        // Check if error is network-related
-        if (error.message.includes('network') || error.message.includes('connect')) {
-          setNetworkStatus('offline');
-          setPreviewError('Network connection issue. Please check your internet connection.');
-        } else {
+        const { data, error } = await supabase.storage
+          .from('documents')
+          .createSignedUrl(storagePath, 3600);
+          
+        if (error) {
+          console.error("Error getting demo file:", error);
+          setPreviewError(`Error loading demo: ${error.message}`);
+          setFileExists(false);
+          setFileUrl(null);
+          return;
+        }
+        
+        if (data && data.signedUrl) {
+          console.log("Successfully got signed URL for demo document");
+          setFileExists(true);
+          setFileUrl(data.signedUrl);
           setNetworkStatus('online');
-          setPreviewError(`Error accessing file: ${error.message}`);
+          
+          // Check if Excel file
+          const isExcel = storagePath.toLowerCase().match(/\.(xlsx|xls|csv)$/i);
+          setIsExcelFile(!!isExcel);
+        } else {
+          setPreviewError("Could not generate URL for demo file");
+          setFileExists(false);
+          setFileUrl(null);
         }
         return;
       }
 
-      if (!data?.signedUrl) {
+      // Regular document check
+      console.log("Requesting signed URL for:", storagePath);
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(storagePath, 3600);
+        
+      if (error) {
+        console.error("Error getting file access:", error);
+        setPreviewError(`Error loading document: ${error.message}`);
         setFileExists(false);
         setFileUrl(null);
-        setPreviewError('File not found or access denied');
+        setNetworkStatus(error.message.includes("network") ? 'offline' : 'online');
         return;
       }
-
-      // File exists and URL retrieved successfully
-      setFileExists(true);
-      setFileUrl(data.signedUrl);
-      setNetworkStatus('online');
-      setIsExcelFile(isExcelFile(storagePath));
+      
+      if (data && data.signedUrl) {
+        console.log("File exists, URL created successfully");
+        setFileExists(true);
+        setFileUrl(data.signedUrl);
+        setNetworkStatus('online');
+        
+        // Check if Excel file
+        const isExcel = storagePath.toLowerCase().match(/\.(xlsx|xls|csv)$/i);
+        setIsExcelFile(!!isExcel);
+      } else {
+        setPreviewError("File access denied or not found");
+        setFileExists(false);
+        setFileUrl(null);
+      }
     } catch (error: any) {
-      console.error('Exception when checking file:', error);
+      console.error("Exception checking file access:", error);
+      setPreviewError(`Error: ${error.message || "Unknown error"}`);
       setFileExists(false);
       setFileUrl(null);
-      
-      // Categorize error as network-related or other
-      if (error.message?.includes('network') || 
-          error.message?.includes('fetch') || 
-          error.message?.includes('connection')) {
-        setNetworkStatus('offline');
-        setPreviewError('Network connection error. Please check your internet connection and try again.');
-      } else {
-        setNetworkStatus('online');
-        setPreviewError(`Error: ${error.message || 'Unknown error occurred'}`);
-      }
+      setNetworkStatus(
+        error.message?.includes("network") || 
+        error.message?.includes("fetch") || 
+        error.message?.includes("connection")
+          ? 'offline' 
+          : 'online'
+      );
     }
-  }, [setFileExists, setFileUrl, setIsExcelFile, setPreviewError, setNetworkStatus, isExcelFile]);
+  }, [setFileExists, setFileUrl, setIsExcelFile, setPreviewError, setNetworkStatus]);
 
-  return {
-    fileExists: false,
-    fileUrl: null,
-    isPdfFile,
-    isExcelFile,
-    isDocFile,
-    checkFile
-  };
+  return { checkFile };
 };
