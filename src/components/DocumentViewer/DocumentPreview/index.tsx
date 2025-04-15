@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { DocumentPreviewContent } from "./components/DocumentPreviewContent";
 import { PreviewControls } from "./PreviewControls";

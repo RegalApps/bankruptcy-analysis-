@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
-import { useDocumentAnalysis } from "../../hooks/useDocumentAnalysis";
+import { useDocumentAnalysis } from "../useDocumentAnalysis";
 import { useFilePreview } from "./useFilePreview";
 import { useAnalysisInitialization } from "../useAnalysisInitialization";
 
@@ -77,7 +76,6 @@ const usePreviewState = (
     }
   }, [previewError, loadRetries, hasFallbackToDirectUrl, checkFile]);
 
-  // Pass the properly typed callback to useAnalysisInitialization
   useAnalysisInitialization({
     storagePath,
     fileExists,
