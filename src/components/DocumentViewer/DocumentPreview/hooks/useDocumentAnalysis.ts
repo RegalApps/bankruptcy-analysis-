@@ -4,72 +4,86 @@ import { useProcessingStages } from "./useProcessingStages";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
-export const useDocumentAnalysis = (
-  storagePath: string,
-  onAnalysisComplete?: (id: string) => void // Accept an ID parameter
-) => {
+// Define the hook to accept a callback function that takes a document ID
+const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (id: string) => void) => {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [analysisStep, setAnalysisStep] = useState(0);
+  const [analysisStep, setAnalysisStep] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-
-  const {
-    runProcessingStage,
-    currentStage: processingStage
-  } = useProcessingStages();
-
-  const handleAnalyzeDocument = useCallback(async () => {
+  
+  const { runProcessingStage, currentStage } = useProcessingStages();
+  
+  const processingStage = currentStage;
+  
+  const handleAnalyzeDocument = useCallback(async (session?: any) => {
+    if (analyzing) return;
+    
     if (!storagePath) {
-      setError("No document path provided");
+      setError('No document path provided');
       return;
     }
-
-    console.log("Starting document analysis for:", storagePath);
+    
     setAnalyzing(true);
     setError(null);
+    setAnalysisStep('starting');
     setProgress(0);
-    setAnalysisStep(1);
-
+    
     try {
-      // Extract document ID from storage path or use the path itself as ID
-      const documentId = storagePath.split("/").pop() || storagePath;
+      // Extract document ID from storage path if not explicitly provided
+      let documentId = storagePath.split('/').pop()?.split('.')[0] || 'unknown-doc';
       
-      // Process stages sequentially
-      let currentProgress = 0;
-      const incrementProgress = () => {
-        currentProgress += 12.5; // 8 stages total = 12.5% each
-        setProgress(Math.min(currentProgress, 100));
-        setAnalysisStep(prev => prev + 1);
-      };
-
-      // Run each processing stage
-      await runProcessingStage("documentIngestion", incrementProgress);
-      await runProcessingStage("documentClassification", incrementProgress);
-      await runProcessingStage("dataExtraction", incrementProgress);
-      await runProcessingStage("documentOrganization", incrementProgress);
-      await runProcessingStage("riskAssessment", incrementProgress);
-      await runProcessingStage("issuePrioritization", incrementProgress);
-      await runProcessingStage("collaborationSetup", incrementProgress);
-      await runProcessingStage("continuousLearning", incrementProgress);
-
-      setProgress(100);
-      console.log("Document analysis complete");
+      // Get document from database if available
+      const { data: documentData } = await supabase
+        .from('documents')
+        .select('id, storage_path')
+        .eq('storage_path', storagePath)
+        .maybeSingle();
       
-      // Call the callback with the document ID if provided
-      if (onAnalysisComplete) {
-        onAnalysisComplete(documentId);
+      if (documentData?.id) {
+        documentId = documentData.id;
       }
       
-      toast.success("Document analysis complete");
+      // Run processing stages
+      setAnalysisStep('preprocessing');
+      setProgress(10);
+      await runProcessingStage('preprocessing', () => {
+        setProgress(20);
+      });
+      
+      setAnalysisStep('extraction');
+      setProgress(30);
+      await runProcessingStage('extraction', () => {
+        setProgress(40);
+      });
+      
+      setAnalysisStep('analysis');
+      setProgress(60);
+      await runProcessingStage('analysis', () => {
+        setProgress(80);
+      });
+      
+      setAnalysisStep('finalization');
+      setProgress(90);
+      await runProcessingStage('finalization', () => {
+        setProgress(100);
+      });
+      
+      setAnalysisStep('complete');
+      
+      // Call the completion callback with the document ID
+      if (onAnalysisComplete) {
+        console.log("Document analysis complete, calling callback with ID:", documentId);
+        onAnalysisComplete(documentId);
+      }
     } catch (err: any) {
-      console.error("Document analysis error:", err);
-      setError(err.message || "Analysis failed");
-      toast.error(`Analysis error: ${err.message || "Unknown error"}`);
+      console.error('Error during document analysis:', err);
+      setError(err.message || 'Unknown error during analysis');
+      toast.error('Failed to analyze document');
     } finally {
       setAnalyzing(false);
     }
-  }, [storagePath, runProcessingStage, onAnalysisComplete]);
-
+  }, [analyzing, storagePath, runProcessingStage, onAnalysisComplete]);
+  
   return {
     analyzing,
     error,
@@ -79,3 +93,5 @@ export const useDocumentAnalysis = (
     handleAnalyzeDocument
   };
 };
+
+export { useDocumentAnalysis };

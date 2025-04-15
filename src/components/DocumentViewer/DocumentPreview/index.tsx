@@ -68,7 +68,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     documentId,
     title,
     bypassAnalysis,
-    handleAnalysisComplete // Pass our wrapper function here
+    handleAnalysisComplete 
   );
 
   useEffect(() => {

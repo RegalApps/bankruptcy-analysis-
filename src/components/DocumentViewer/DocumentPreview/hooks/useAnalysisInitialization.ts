@@ -62,7 +62,30 @@ export const useAnalysisInitialization = ({
     } else if (bypassAnalysis && fileExists) {
       console.log("Analysis bypassed as requested");
       if (onAnalysisComplete) {
-        onAnalysisComplete("analysis-bypassed");
+        // For bypassed analysis, try to get the document ID if possible
+        const extractDocumentId = async () => {
+          try {
+            const { data } = await supabase
+              .from('documents')
+              .select('id')
+              .eq('storage_path', storagePath)
+              .maybeSingle();
+            
+            if (data?.id) {
+              onAnalysisComplete(data.id);
+            } else {
+              // Fall back to a generated ID if no document record exists
+              const fallbackId = `${storagePath.split('/').pop()}-${Date.now()}`;
+              onAnalysisComplete(fallbackId);
+            }
+          } catch (err) {
+            // If database lookup fails, use a fallback ID
+            const fallbackId = `bypass-${Date.now()}`;
+            onAnalysisComplete(fallbackId);
+          }
+        };
+        
+        extractDocumentId();
       }
     }
   }, [
@@ -72,7 +95,8 @@ export const useAnalysisInitialization = ({
     error,
     handleAnalyzeDocument,
     bypassAnalysis,
-    onAnalysisComplete
+    onAnalysisComplete,
+    storagePath
   ]);
 
   // Handle errors
