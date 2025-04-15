@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { DocumentPreview } from "../DocumentPreview";
 import { AnalysisPanel } from "../components/AnalysisPanel";

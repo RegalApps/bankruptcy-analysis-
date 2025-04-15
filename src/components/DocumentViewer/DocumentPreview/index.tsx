@@ -62,7 +62,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [onAnalysisComplete]);
 
-  // Fix the parameter order here - pass the boolean before the function
+  // Fix the parameter order here - pass document ID first, then all other parameters
   const previewState = usePreviewState(
     effectiveStoragePath,
     documentId,

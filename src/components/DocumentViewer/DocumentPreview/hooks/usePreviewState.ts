@@ -54,6 +54,8 @@ const usePreviewState = (
   }, []);
 
   const checkFile = useCallback(async () => {
+    console.log(`Checking file for path: ${storagePath}, documentId: ${documentId}`);
+    
     if (!storagePath && !documentId.includes('form')) {
       setPreviewError("No storage path provided");
       setIsLoading(false);
@@ -176,6 +178,7 @@ const usePreviewState = (
 
   const fetchDocumentRisks = async (docId: string) => {
     try {
+      console.log("Fetching risks for document:", docId);
       const { data, error } = await supabase
         .from('document_analysis')
         .select('content')
@@ -236,6 +239,7 @@ const usePreviewState = (
   // Only run checkFile once on mount, not on every render
   useEffect(() => {
     if (!hasCheckedFile) {
+      console.log("Initial file check for document:", documentId, "path:", storagePath);
       checkFile();
     }
   }, [checkFile, hasCheckedFile]);

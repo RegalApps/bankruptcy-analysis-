@@ -103,6 +103,12 @@ const Index = () => {
     setLoadFailed(true);
   }, []);
 
+  const handleAnalysisComplete = useCallback((id: string) => {
+    console.log("Analysis completed for document:", id);
+    // You might want to do something when analysis completes
+    toast.success("Document analysis completed");
+  }, []);
+
   useEffect(() => {
     if (selectedDocument) {
       console.log("Selected document in Index.tsx:", selectedDocument);
@@ -158,6 +164,7 @@ const Index = () => {
               documentTitle={documentTitle}
               isForm47={isForm47}
               isForm31GreenTech={isForm31GreenTech}
+              onAnalysisComplete={handleAnalysisComplete}
             />
           </div>
         </div>

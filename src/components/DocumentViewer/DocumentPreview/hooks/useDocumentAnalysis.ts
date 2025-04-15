@@ -46,25 +46,25 @@ const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (id: stri
       // Run processing stages
       setAnalysisStep('preprocessing');
       setProgress(10);
-      await runProcessingStage('preprocessing', () => {
+      await runProcessingStage('preprocessing', (progress) => {
         setProgress(20);
       });
       
       setAnalysisStep('extraction');
       setProgress(30);
-      await runProcessingStage('extraction', () => {
+      await runProcessingStage('extraction', (progress) => {
         setProgress(40);
       });
       
       setAnalysisStep('analysis');
       setProgress(60);
-      await runProcessingStage('analysis', () => {
+      await runProcessingStage('analysis', (progress) => {
         setProgress(80);
       });
       
       setAnalysisStep('finalization');
       setProgress(90);
-      await runProcessingStage('finalization', () => {
+      await runProcessingStage('finalization', (progress) => {
         setProgress(100);
       });
       
