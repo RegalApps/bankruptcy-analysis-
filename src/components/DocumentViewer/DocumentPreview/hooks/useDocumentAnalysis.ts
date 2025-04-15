@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { useProcessingStages } from "./analysisProcess/useAnalysisProcess";
+import { useProcessingStages } from "./useProcessingStages";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 

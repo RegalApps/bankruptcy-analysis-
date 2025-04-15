@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { DocumentPreviewContent } from "./components/DocumentPreviewContent";
 import { PreviewControls } from "./PreviewControls";
 import { ErrorDisplay } from "./components/ErrorDisplay";
@@ -55,7 +54,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   }, [storagePath, documentId, isForm31GreenTech, isForm47]);
 
   // Create a wrapper function that handles the callback if it exists
-  const handleAnalysisComplete = React.useCallback((id: string) => {
+  const handleAnalysisComplete = useCallback((id: string) => {
     console.log("Analysis complete called with ID:", id);
     if (onAnalysisComplete) {
       onAnalysisComplete(id);
@@ -67,8 +66,8 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     effectiveStoragePath,
     documentId,
     title,
-    handleAnalysisComplete,
-    bypassAnalysis
+    bypassAnalysis,
+    handleAnalysisComplete // Pass our wrapper function here
   );
 
   useEffect(() => {
@@ -162,15 +161,15 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       <div className="h-full flex flex-col">
         <PreviewErrorAlert
           error={previewState.previewError}
-          onRefresh={handleRetry}
+          onRefresh={previewState.checkFile}
           publicUrl={previewState.fileUrl || ""}
           documentId={documentId}
-          onRunDiagnostics={handleRunDiagnostics}
+          onRunDiagnostics={() => setDiagnosticMode(true)}
         />
         
         <ViewerErrorState 
           error={previewState.previewError} 
-          onRetry={handleRetry} 
+          onRetry={previewState.checkFile} 
         />
       </div>
     );
@@ -179,7 +178,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   if (previewState.isLoading) {
     return (
       <ViewerLoadingState 
-        onRetry={handleRetry}
+        onRetry={previewState.checkFile}
         networkError={previewState.networkStatus === 'offline'}
       />
     );

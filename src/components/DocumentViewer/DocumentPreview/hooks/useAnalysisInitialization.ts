@@ -10,9 +10,9 @@ interface UseAnalysisInitializationProps {
   analyzing: boolean;
   error: string | null;
   setSession: (session: Session | null) => void;
-  handleAnalyzeDocument: () => void;
+  handleAnalyzeDocument: (session?: Session | null) => void;
   setPreviewError: (error: string | null) => void;
-  onAnalysisComplete?: (id: string) => void;
+  onAnalysisComplete?: (id: string) => void; // Accept an ID parameter
   bypassAnalysis?: boolean;
 }
 

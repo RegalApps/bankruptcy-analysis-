@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -11,8 +10,8 @@ const usePreviewState = (
   storagePath: string,
   documentId: string,
   title: string,
-  onAnalysisComplete?: (id: string) => void, // Make sure it accepts string parameter
-  bypassAnalysis: boolean = false
+  bypassAnalysis: boolean = false,
+  onAnalysisComplete?: (id: string) => void // Make sure it accepts string parameter
 ) => {
   const [session, setSession] = useState<Session | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
