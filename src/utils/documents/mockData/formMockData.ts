@@ -1,4 +1,5 @@
-import { Risk } from "../types/analysisTypes";
+
+import { Risk, AnalysisResult } from "../types/analysisTypes";
 
 // Default position for risks when not specified
 const defaultPosition = {

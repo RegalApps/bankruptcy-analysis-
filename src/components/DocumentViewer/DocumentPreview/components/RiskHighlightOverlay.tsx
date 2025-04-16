@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Risk } from '../../RiskAssessment/types';
+import { Risk } from '@/utils/documents/types/analysisTypes';
 
 interface RiskHighlightWithPosition extends Risk {
   position?: {
@@ -12,13 +12,14 @@ interface RiskHighlightWithPosition extends Risk {
   };
 }
 
-interface RiskHighlightOverlayProps {
+export interface RiskHighlightOverlayProps {
   risks: RiskHighlightWithPosition[];
   documentWidth: number;
   documentHeight: number;
   activeRiskId: string | null;
   onRiskClick: (risk: RiskHighlightWithPosition) => void;
   containerRef: React.RefObject<HTMLDivElement>;
+  currentPage?: number;
 }
 
 export const RiskHighlightOverlay: React.FC<RiskHighlightOverlayProps> = ({
@@ -27,7 +28,8 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightOverlayProps> = ({
   documentHeight,
   activeRiskId,
   onRiskClick,
-  containerRef
+  containerRef,
+  currentPage
 }) => {
   const [scrollPosition, setScrollPosition] = useState({ top: 0, left: 0 });
 
@@ -76,6 +78,13 @@ export const RiskHighlightOverlay: React.FC<RiskHighlightOverlayProps> = ({
     >
       {risks.filter(risk => risk.position).map((risk, index) => {
         if (!risk.position) return null;
+        
+        // Check if this risk should be shown on the current page
+        if (currentPage !== undefined && 
+            risk.position.page !== undefined && 
+            risk.position.page !== currentPage) {
+          return null; // Skip risks not on the current page
+        }
         
         const { x, y, width, height } = risk.position;
         const isActive = activeRiskId === risk.type;
