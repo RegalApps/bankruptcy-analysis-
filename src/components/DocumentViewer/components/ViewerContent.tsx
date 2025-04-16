@@ -45,9 +45,12 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   }, [documentId, storagePath, title, bypassProcessing, isForm47, isForm31GreenTech, onAnalysisComplete]);
 
   const handleAnalysisComplete = (id: string) => {
-    console.log("Analysis completed in ViewerContent:", id);
+    console.log("Analysis completed in ViewerContent for document:", id);
     if (onAnalysisComplete) {
+      console.log("Calling onAnalysisComplete callback with ID:", id);
       onAnalysisComplete(id);
+    } else {
+      console.log("No onAnalysisComplete callback provided");
     }
   };
 

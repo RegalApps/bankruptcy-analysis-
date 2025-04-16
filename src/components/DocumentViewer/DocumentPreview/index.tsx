@@ -1,200 +1,149 @@
 
-import React, { useState, useEffect, useCallback } from "react";
-import { DocumentPreviewContent } from "./components/DocumentPreviewContent";
-import { PreviewControls } from "./PreviewControls";
-import { ErrorDisplay } from "./components/ErrorDisplay";
-import { ViewerLoadingState } from "../components/ViewerLoadingState";
-import { ViewerErrorState } from "../components/ViewerErrorState";
-import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
-import { Risk } from "../types";
+import React, { useEffect, useState } from "react";
 import usePreviewState from "./hooks/usePreviewState";
+import { useDocumentAnalysis } from "./hooks/useDocumentAnalysis";
+import { PDFViewer } from "./components/PDFViewer";
+import { DocumentViewerFrame } from "./components/DocumentViewerFrame";
+import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
+import { AnalysisProgress } from "./components/AnalysisProgress";
 import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+import { useToast } from "@/lib/hooks/useToast";
+import { ExcelPreview } from "../ExcelPreview";
 
 interface DocumentPreviewProps {
   documentId: string;
-  storagePath?: string;
-  title?: string;
+  storagePath: string;
+  title: string;
   activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string) => void;
+  onRiskSelect?: (id: string) => void;
   bypassAnalysis?: boolean;
   onLoadFailure?: () => void;
-  isForm31GreenTech?: boolean;
   isForm47?: boolean;
+  isForm31GreenTech?: boolean;
   onAnalysisComplete?: (id: string) => void;
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   documentId,
-  storagePath = "",
-  title = "Document",
-  activeRiskId = null,
+  storagePath,
+  title,
+  activeRiskId,
   onRiskSelect,
   bypassAnalysis = false,
   onLoadFailure,
-  isForm31GreenTech = false,
   isForm47 = false,
+  isForm31GreenTech = false,
   onAnalysisComplete
 }) => {
-  const [diagnosticMode, setDiagnosticMode] = useState(false);
-  
-  const effectiveStoragePath = isForm31GreenTech 
-    ? "demo/greentech-form31-proof-of-claim.pdf" 
-    : (isForm47 ? "demo/form47-consumer-proposal.pdf" : storagePath);
+  const previewState = usePreviewState(storagePath, documentId, title, bypassAnalysis, onAnalysisComplete);
+  const {
+    fileExists,
+    fileUrl,
+    isPdfFile,
+    isExcelFile,
+    isLoading,
+    previewError,
+    setPreviewError,
+    checkFile,
+    networkStatus,
+    attemptCount,
+    documentRisks
+  } = previewState;
 
+  // Log important props and state for debugging
   useEffect(() => {
-    if ((!storagePath || storagePath.trim() === "") && 
-        (isForm31GreenTech || documentId === "greentech-form31" || documentId === "form31")) {
-      console.log("Using demo Form 31 document path");
-    } else if ((!storagePath || storagePath.trim() === "") && 
-        (isForm47 || documentId === "form47")) {
-      console.log("Using demo Form 47 document path");
-    } else if (!storagePath || storagePath.trim() === "") {
-      console.error("No storage path provided for document:", documentId);
-    }
-  }, [storagePath, documentId, isForm31GreenTech, isForm47]);
+    console.log("DocumentPreview component rendered with:", {
+      documentId,
+      storagePath,
+      title,
+      isForm31GreenTech,
+      isForm47,
+      hasAnalysisCompleteCallback: !!onAnalysisComplete,
+      fileExists,
+      fileUrl: fileUrl ? "exists" : "not available"
+    });
+  }, [documentId, storagePath, title, isForm31GreenTech, isForm47, onAnalysisComplete, fileExists, fileUrl]);
 
-  // Create a wrapper function that handles the callback if it exists
-  const handleAnalysisComplete = useCallback((id: string) => {
-    console.log("Analysis complete called with ID:", id);
-    if (onAnalysisComplete) {
-      onAnalysisComplete(id);
-    }
-  }, [onAnalysisComplete]);
-
-  // Fix the parameter order here - pass document ID first, then all other parameters
-  const previewState = usePreviewState(
-    effectiveStoragePath,
-    documentId,
-    title,
-    bypassAnalysis,
-    handleAnalysisComplete
-  );
-
+  // Fetch session information for document analysis
+  const [session, setSession] = useState<any>(null);
   useEffect(() => {
-    if (isForm31GreenTech || 
-        documentId === "greentech-form31" || 
-        documentId === "form31" || 
-        documentId === "form-31-greentech") {
-      const applyForm31Analysis = async () => {
-        try {
-          const { data: existingAnalysis } = await supabase
-            .from('document_analysis')
-            .select('*')
-            .eq('document_id', documentId)
-            .maybeSingle();
-          
-          if (!existingAnalysis) {
-            const { default: analyzeForm31 } = await import('@/utils/documents/form31Analyzer');
-            
-            const analysisResult = analyzeForm31('GreenTech Supplies Inc. Proof of Claim Form 31');
-            
-            const { data: userData } = await supabase.auth.getUser();
-            
-            if (userData?.user?.id) {
-              await supabase
-                .from('document_analysis')
-                .upsert({
-                  document_id: documentId,
-                  user_id: userData.user.id,
-                  content: analysisResult
-                });
-                
-              console.log('Form 31 analysis added for demo document');
-              
-              // Pass the ID to our wrapper function
-              handleAnalysisComplete(documentId);
-            }
-          }
-        } catch (error) {
-          console.error('Error applying Form 31 analysis:', error);
-        }
-      };
-      
-      applyForm31Analysis();
-    }
-  }, [documentId, isForm31GreenTech, handleAnalysisComplete]);
-  
-  const handleRetry = () => {
-    previewState.checkFile();
-  };
-  
-  const handleRunDiagnostics = () => {
-    setDiagnosticMode(true);
-    toast.info("Running diagnostics on document...");
-    
-    supabase
-      .from('documents')
-      .select('*')
-      .eq('id', documentId)
-      .single()
-      .then(({ data, error }) => {
-        if (error) {
-          toast.error(`Database error: ${error.message}`);
-        } else if (data) {
-          toast.success(`Document record found: ${data.title}`);
-          console.log("Document database record:", data);
-          
-          if (!data.storage_path) {
-            toast.error("Document has no storage path!");
-          }
-        }
-      });
-      
-    if (storagePath) {
-      supabase.storage
-        .from('documents')
-        .download(storagePath)
-        .then(({ data, error }) => {
-          if (error) {
-            toast.error(`Storage error: ${error.message}`);
-          } else if (data) {
-            toast.success("File successfully downloaded from storage");
-          }
-        });
-    }
-    
-    setTimeout(() => setDiagnosticMode(false), 10000);
-  };
+    const fetchSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        setSession(data?.session || null);
+      } catch (error) {
+        console.error("Error fetching session:", error);
+      }
+    };
+    fetchSession();
+  }, []);
 
-  if (previewState.previewError && !previewState.isLoading) {
-    return (
-      <div className="h-full flex flex-col">
-        <PreviewErrorAlert
-          error={previewState.previewError}
-          onRefresh={previewState.checkFile}
-          publicUrl={previewState.fileUrl || ""}
-          documentId={documentId}
-          onRunDiagnostics={() => setDiagnosticMode(true)}
-        />
-        
-        <ViewerErrorState 
-          error={previewState.previewError} 
-          onRetry={previewState.checkFile} 
-        />
-      </div>
-    );
-  }
+  // Initialize document analysis
+  const {
+    analyzing,
+    analysisStep,
+    progress,
+    handleAnalyzeDocument,
+    processingStage,
+    error: analysisError
+  } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
-  if (previewState.isLoading) {
+  // Start analysis if not bypassed
+  useEffect(() => {
+    if (!bypassAnalysis && fileExists && session && !analyzing) {
+      console.log("Starting document analysis");
+      handleAnalyzeDocument(session);
+    }
+  }, [bypassAnalysis, fileExists, session, analyzing, handleAnalyzeDocument]);
+
+  // Handle load failure
+  useEffect(() => {
+    if (previewError && onLoadFailure) {
+      onLoadFailure();
+    }
+  }, [previewError, onLoadFailure]);
+
+  // Render document based on file type
+  const renderDocument = () => {
+    if (isLoading) {
+      return <div className="flex justify-center items-center h-full">Loading document...</div>;
+    }
+
+    if (previewError) {
+      return <PreviewErrorAlert error={previewError} onRetry={checkFile} attemptCount={attemptCount} />;
+    }
+
+    if (!fileExists || !fileUrl) {
+      return <div className="flex justify-center items-center h-full">Document not found</div>;
+    }
+
+    if (isExcelFile(storagePath)) {
+      return <ExcelPreview documentId={documentId} storageUrl={fileUrl} />;
+    }
+
+    // Default to PDF viewer
     return (
-      <ViewerLoadingState 
-        onRetry={previewState.checkFile}
-        networkError={previewState.networkStatus === 'offline'}
+      <PDFViewer
+        fileUrl={fileUrl}
+        documentId={documentId}
+        activeRiskId={activeRiskId}
+        onRiskSelect={onRiskSelect}
+        risks={documentRisks}
       />
     );
-  }
-  
+  };
+
   return (
-    <DocumentPreviewContent
-      documentId={documentId}
-      storagePath={effectiveStoragePath}
-      title={title}
-      previewState={previewState}
-      activeRiskId={activeRiskId}
-      onRiskSelect={onRiskSelect}
-      onLoadFailure={onLoadFailure}
-      isForm31GreenTech={isForm31GreenTech}
-    />
+    <DocumentViewerFrame>
+      {!bypassAnalysis && analyzing && (
+        <AnalysisProgress
+          step={analysisStep}
+          progress={progress}
+          stage={processingStage}
+          error={analysisError}
+        />
+      )}
+      {renderDocument()}
+    </DocumentViewerFrame>
   );
 };

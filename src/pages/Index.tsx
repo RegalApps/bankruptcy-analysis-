@@ -112,11 +112,12 @@ const Index = () => {
   useEffect(() => {
     if (selectedDocument) {
       console.log("Selected document in Index.tsx:", selectedDocument);
+      console.log("Is Form 31:", isForm31GreenTech);
       if (isDebugMode()) {
         console.log("🛠️ DEBUG: Document viewer loaded in debug mode");
       }
     }
-  }, [selectedDocument]);
+  }, [selectedDocument, isForm31GreenTech]);
 
   if (isLoading) {
     return <LoadingSpinner />;
