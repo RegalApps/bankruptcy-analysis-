@@ -8,7 +8,7 @@ import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
 import { ViewerContent } from "./components/ViewerContent";
 import { useDocumentViewerState } from "./hooks/useDocumentViewerState";
 import { useDocumentDetails } from "./hooks/useDocumentDetails";
-import { createForm47DemoDocument } from "./utils/demoDocuments";
+import { createForm47DemoDocument, createForm31DemoDocument } from "./utils/demoDocuments";
 import { useAuthState } from "@/hooks/useAuthState";
 import { supabase } from "@/lib/supabase";
 
@@ -43,6 +43,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     setSelectedRiskId
   } = useDocumentViewerState();
 
+  // Detect if the document ID or title suggests this is a Form 31 document
+  const detectedForm31 = 
+    documentTitle?.toLowerCase().includes('form 31') || 
+    documentTitle?.toLowerCase().includes('proof of claim') || 
+    documentId?.toLowerCase().includes('form31') ||
+    isForm31GreenTech;
+
+  const finalIsForm31GreenTech = isForm31GreenTech || detectedForm31;
+
   const { fetchDocumentDetails } = useDocumentDetails(documentId, {
     onSuccess: (doc) => {
       setDocument(doc);
@@ -64,7 +73,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   useEffect(() => {
     // Special case for demo documents
-    if (isForm47 || isForm31GreenTech) {
+    if (isForm47 || finalIsForm31GreenTech) {
       setIsLoading(false);
       return;
     }
@@ -73,7 +82,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       setIsLoading(true);
       fetchDocumentDetails();
     }
-  }, [documentId, fetchDocumentDetails, isForm47, isForm31GreenTech]);
+  }, [documentId, fetchDocumentDetails, isForm47, finalIsForm31GreenTech]);
 
   // Create subscription to document changes
   useEffect(() => {
@@ -109,10 +118,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   }, [onAnalysisComplete]);
 
   // Fast-path for Form 47 and Form 31 documents
-  if (isForm47 || isForm31GreenTech) {
+  if (isForm47 || finalIsForm31GreenTech) {
     const mockDocument = isForm47 ? 
       createForm47DemoDocument(session?.user?.id) : 
-      { analysis: [{ content: {} }] };
+      createForm31DemoDocument(session?.user?.id);
     
     const demoPath = isForm47 ? 
       "demo/form47-consumer-proposal.pdf" : 
@@ -136,7 +145,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           bypassProcessing={true}
           onLoadFailure={onLoadFailure}
           isForm47={isForm47}
-          isForm31GreenTech={isForm31GreenTech}
+          isForm31GreenTech={finalIsForm31GreenTech}
           analysis={mockDocument.analysis?.[0]?.content}
           onAnalysisComplete={handleAnalysisComplete}
         />
@@ -184,7 +193,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         onRiskSelect={handleSelectRisk}
         bypassProcessing={bypassProcessing}
         onLoadFailure={onLoadFailure}
-        isForm31GreenTech={isForm31GreenTech}
+        isForm31GreenTech={finalIsForm31GreenTech}
         isForm47={isForm47}
         analysis={document?.analysis?.[0]?.content}
         onAnalysisComplete={handleAnalysisComplete}

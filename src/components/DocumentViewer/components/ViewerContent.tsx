@@ -44,6 +44,21 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
     });
   }, [documentId, storagePath, title, bypassProcessing, isForm47, isForm31GreenTech, onAnalysisComplete]);
 
+  // Detect if we're looking at a Form 31 document based on title or ID
+  const detectedForm31 = 
+    title?.toLowerCase().includes('form 31') || 
+    title?.toLowerCase().includes('proof of claim') || 
+    documentId?.toLowerCase().includes('form31') ||
+    isForm31GreenTech;
+  
+  const finalIsForm31GreenTech = isForm31GreenTech || detectedForm31;
+
+  if (finalIsForm31GreenTech) {
+    console.log("Form 31 GreenTech document detected!");
+    // Make sure we're using the demo path for GreenTech Form 31
+    storagePath = "demo/greentech-form31-proof-of-claim.pdf";
+  }
+
   const handleAnalysisComplete = (id: string) => {
     console.log("Analysis completed in ViewerContent for document:", id);
     if (onAnalysisComplete) {
@@ -68,7 +83,7 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
           onRiskSelect={onRiskSelect}
           bypassAnalysis={bypassProcessing}
           onLoadFailure={onLoadFailure}
-          isForm31GreenTech={isForm31GreenTech}
+          isForm31GreenTech={finalIsForm31GreenTech}
           isForm47={isForm47}
           onAnalysisComplete={handleAnalysisComplete}
         />

@@ -1,121 +1,194 @@
 
-import React, { useState, useEffect } from "react";
-import { Risk } from "@/utils/documents/types/analysisTypes";
-import { RiskHighlightOverlay } from "./RiskHighlightOverlay";
-import { ViewerToolbar } from "./ViewerToolbar";
+import React, { useState, useEffect, useRef } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PDFViewerProps, Risk } from "../types";
+import { RiskHighlighter } from "./RiskHighlighter";
 
-interface PDFViewerProps {
-  fileUrl: string;
-  activeRiskId?: string | null;
-  onRiskSelect?: (id: string) => void;
-  risks?: Risk[];
-  documentId?: string;
-}
+// Set the worker source
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 export const PDFViewer: React.FC<PDFViewerProps> = ({
   fileUrl,
   activeRiskId,
   onRiskSelect,
-  risks = [],
-  documentId
+  risks = []
 }) => {
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [zoomLevel, setZoomLevel] = useState<number>(100);
-
-  // Reset current page when file URL changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [fileUrl]);
-
-  // Handle fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-
-  // Define handlers for toolbar
-  const handleZoomIn = () => {
-    setZoomLevel(prev => prev + 10);
-    setScale(prev => prev + 0.1);
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel(prev => prev - 10);
-    setScale(prev => Math.max(prev - 0.1, 0.1));
-  };
-
-  const handleRefresh = () => {
-    // Refresh logic
-  };
-
-  const handleOpenInNewTab = () => {
-    window.open(fileUrl, '_blank');
-  };
-
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = fileUrl;
-    link.download = "document.pdf";
-    link.click();
-  };
-
-  const handlePrint = () => {
-    const printWindow = window.open(fileUrl, '_blank');
-    if (printWindow) {
-      printWindow.onload = () => {
-        printWindow.print();
-      };
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [scale, setScale] = useState<number>(1.0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<Error | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Function to go to next page
+  const nextPage = () => {
+    if (numPages && pageNumber < numPages) {
+      setPageNumber(pageNumber + 1);
     }
   };
 
+  // Function to go to previous page
+  const prevPage = () => {
+    if (pageNumber > 1) {
+      setPageNumber(pageNumber - 1);
+    }
+  };
+
+  // Handle document load success
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    setIsLoading(false);
+    setLoadError(null);
+    // Reset to page 1 when loading a new document
+    setPageNumber(1);
+  };
+
+  // Handle document load error
+  const onDocumentLoadError = (error: Error) => {
+    console.error("Error loading PDF:", error);
+    setIsLoading(false);
+    setLoadError(error);
+  };
+
+  // Update page based on active risk
+  useEffect(() => {
+    if (activeRiskId && risks && risks.length > 0) {
+      const selectedRisk = risks.find(risk => risk.id === activeRiskId);
+      if (selectedRisk && selectedRisk.position?.page) {
+        setPageNumber(selectedRisk.position.page);
+      }
+    }
+  }, [activeRiskId, risks]);
+
+  // Get risks for current page only
+  const currentPageRisks = risks
+    ? risks.filter(risk => 
+        risk.position && 
+        (risk.position.page === pageNumber || 
+         (risk.position.page === undefined && pageNumber === 1))
+      )
+    : [];
+
+  // Render a loading state
+  if (isLoading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-muted/20">
+        <div className="flex flex-col items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="mt-2 text-sm text-muted-foreground">Loading document...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render an error state
+  if (loadError) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-muted/20">
+        <div className="text-center max-w-sm p-6 border rounded-lg bg-destructive/10">
+          <h3 className="text-lg font-medium mb-2">Error Loading Document</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            {loadError.message || "The document could not be loaded. It may be corrupted or in an unsupported format."}
+          </p>
+          <div className="text-xs text-muted-foreground mt-4">
+            <p>File URL: {fileUrl ? "Provided" : "Not provided"}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-full">
-      <ViewerToolbar 
-        title="PDF Document"
-        zoomLevel={zoomLevel}
-        numPages={numPages} 
-        currentPage={currentPage} 
-        setCurrentPage={setCurrentPage}
-        scale={scale}
-        setScale={setScale}
-        isFullscreen={isFullscreen}
-        setIsFullscreen={setIsFullscreen}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onRefresh={handleRefresh}
-        onOpenInNewTab={handleOpenInNewTab}
-        onDownload={handleDownload}
-        onPrint={handlePrint}
-      />
+    <div className="flex flex-col h-full" ref={containerRef}>
+      {/* PDF Navigation */}
+      <div className="flex items-center justify-between p-2 border-b">
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={prevPage} 
+            disabled={pageNumber <= 1}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm mx-2">
+            Page {pageNumber} of {numPages || "?"}
+          </span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={nextPage} 
+            disabled={!numPages || pageNumber >= numPages}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setScale(scale => Math.max(0.5, scale - 0.1))}
+            className="h-8 w-8 p-0"
+          >
+            -
+          </Button>
+          <span className="text-xs mx-2">{Math.round(scale * 100)}%</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setScale(scale => Math.min(2, scale + 0.1))}
+            className="h-8 w-8 p-0"
+          >
+            +
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setScale(1.0)}
+            className="text-xs ml-1"
+          >
+            Reset
+          </Button>
+        </div>
+      </div>
       
-      <div className="flex-1 overflow-auto relative bg-muted/20">
-        <iframe 
-          src={`${fileUrl}#page=${currentPage}&zoom=${scale * 100}`}
-          className="w-full h-full border-0"
-          title="PDF Viewer"
-        />
-        
-        {risks && risks.length > 0 && (
-          <RiskHighlightOverlay 
-            risks={risks}
-            documentWidth={800}
-            documentHeight={1100}
-            activeRiskId={activeRiskId || null}
-            onRiskClick={(risk) => onRiskSelect?.(risk.type)}
-            containerRef={{ current: null }}
-            currentPage={currentPage}
-          />
-        )}
+      {/* PDF Document */}
+      <div className="flex-1 overflow-auto bg-zinc-100 p-4 flex justify-center">
+        <div className="relative">
+          <Document
+            file={fileUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={onDocumentLoadError}
+            loading={
+              <div className="flex items-center justify-center h-[500px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            }
+          >
+            <div className="relative shadow-lg">
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+              
+              {/* Risk Highlighters */}
+              {currentPageRisks.map((risk, index) => (
+                <RiskHighlighter
+                  key={`risk-${risk.id || index}`}
+                  risk={risk}
+                  isActive={activeRiskId === risk.id}
+                  onClick={() => onRiskSelect && risk.id && onRiskSelect(risk.id)}
+                />
+              ))}
+            </div>
+          </Document>
+        </div>
       </div>
     </div>
   );

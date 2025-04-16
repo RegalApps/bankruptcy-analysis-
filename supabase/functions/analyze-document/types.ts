@@ -17,10 +17,14 @@ export interface Risk {
     page?: number;
     rect?: number[];
   };
+  id?: string; // Adding ID for easier reference
+  metadata?: {
+    section?: string;
+  };
 }
 
 export interface RegulatoryCompliance {
-  status: 'compliant' | 'non_compliant' | 'error';
+  status: 'compliant' | 'non_compliant' | 'needs_review' | 'error';
   details: string;
   references: string[];
 }
@@ -48,6 +52,41 @@ export interface ExtractedInfo {
   submissionDeadline?: string;
   estimatedCompletion?: string;
   lastUpdated?: string;
+  estateNumber?: string;
+  district?: string;
+  // Form 31 specific fields - Certifier Declaration
+  certifierName?: string;
+  representativeAuthority?: boolean;
+  debtValidityDate?: string;
+  statuteBarredStatus?: boolean;
+  // Form 31 specific fields - Debt Particulars
+  debtDueDate?: string;
+  lastPaymentDate?: string;
+  lastAcknowledgementDate?: string;
+  claimHistory?: string;
+  // Form 31 specific fields - Claim Categories
+  claimCategory?: string;
+  unsecuredAmount?: string;
+  prioritySubsection?: string;
+  priorityJustification?: string;
+  leaseAmount?: string;
+  leaseParticulars?: string;
+  securedAmount?: string;
+  securityValue?: string;
+  securityDocumentation?: string;
+  agriculturalAmount?: string;
+  wageArrearsAmount?: string;
+  employmentPeriod?: string;
+  pensionArrearsAmount?: string;
+  directorLiabilityAmount?: string;
+  netEquityAmount?: string;
+  // Form 31 specific fields - Relationship & Transactions
+  relatedToDebtor?: boolean;
+  nonArmsLengthTransactions?: boolean;
+  transfersAtUndervalue?: string;
+  // Form 31 specific fields - Bankruptcy Requests
+  surplusIncomeNotification?: boolean;
+  trusteeDischargeReport?: boolean;
   [key: string]: any;
 }
 
@@ -57,4 +96,13 @@ export interface FormField {
   type: string;
   required?: boolean;
   regulatoryReferences?: Record<string, string[]>;
+}
+
+export interface AnalysisResult {
+  structureValid?: boolean;
+  requiredFieldsPresent?: boolean;
+  signaturesValid?: boolean;
+  extracted_info: ExtractedInfo;
+  risks?: Risk[];
+  regulatory_compliance?: RegulatoryCompliance;
 }

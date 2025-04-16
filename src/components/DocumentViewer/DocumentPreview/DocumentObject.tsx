@@ -21,6 +21,27 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
   // Cache-bust the URL to ensure fresh content
   const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
 
+  // Handle demo documents for Form 31 GreenTech
+  const isGreenTechForm31 = storagePath?.includes('greentech-form31') || 
+                            documentId?.includes('form31') ||
+                            (publicUrl?.includes('form31') || publicUrl?.includes('greentech'));
+                            
+  if (isGreenTechForm31 && !publicUrl) {
+    console.log("Using fallback path for GreenTech Form 31");
+    // Use local path for demo documents
+    const localPath = "/documents/sample-form31-greentech.pdf";
+    return (
+      <div className="relative w-full h-full rounded-md overflow-hidden border">
+        <iframe
+          className="w-full h-full border-0"
+          title="Document Preview"
+          src={localPath}
+          onError={handleError}
+        />
+      </div>
+    );
+  }
+
   if (isExcelFile) {
     return (
       <div className="flex items-center justify-center h-full">
