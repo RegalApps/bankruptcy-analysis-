@@ -83,11 +83,13 @@ export interface Risk {
   requiredAction?: string;
   solution?: string;
   deadline?: string;
-  position?: {
+  position: {
     x: number;
     y: number;
     width: number;
     height: number;
+    page?: number;
+    rect?: number[];
   };
 }
 

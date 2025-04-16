@@ -5,41 +5,46 @@ import { ExcelTable } from "./components/ExcelTable";
 import { ExcelHeaderActions } from "./components/ExcelHeaderActions";
 import { ExcelErrorDisplay } from "./components/ExcelErrorDisplay";
 import { ExcelLoadingSkeleton } from "./components/ExcelLoadingSkeleton";
+import { ExcelPreviewProps } from "./types";
 
-interface ExcelPreviewProps {
-  storageUrl: string;
-  documentId?: string;
-}
-
-export const ExcelPreview: React.FC<ExcelPreviewProps> = ({ storageUrl, documentId }) => {
+export const ExcelPreview: React.FC<ExcelPreviewProps> = ({ 
+  storageUrl, 
+  documentId 
+}) => {
+  const [currentSheet, setCurrentSheet] = useState(0);
+  
   const { 
     data,
-    sheetNames,
-    currentSheet,
-    setCurrentSheet,
-    isLoading,
+    loading,
     error,
-    refetch
-  } = useExcelPreview(storageUrl, documentId);
+    publicUrl,
+    handleRefresh
+  } = useExcelPreview(storageUrl);
 
-  const [hasRendered, setHasRendered] = useState(false);
+  const sheetNames = data?.sheets || [];
+  const isLoading = loading;
 
   useEffect(() => {
-    // Mark as rendered once we have data or an error
     if (!isLoading && (data || error)) {
-      setHasRendered(true);
+      console.log("Excel preview data loaded:", { data, error });
     }
   }, [data, error, isLoading]);
 
-  if (isLoading && !hasRendered) {
+  if (isLoading) {
     return <ExcelLoadingSkeleton />;
   }
 
   if (error) {
-    return <ExcelErrorDisplay error={error} onRetry={refetch} />;
+    return (
+      <ExcelErrorDisplay 
+        error={error}
+        onRefresh={handleRefresh}
+        publicUrl={publicUrl}
+      />
+    );
   }
 
-  if (!data || data.length === 0) {
+  if (!data || !data.rows || data.rows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
         <p className="text-muted-foreground mb-2">No data found in this Excel file.</p>
@@ -51,10 +56,8 @@ export const ExcelPreview: React.FC<ExcelPreviewProps> = ({ storageUrl, document
   return (
     <div className="flex flex-col h-full">
       <ExcelHeaderActions 
-        sheetNames={sheetNames}
-        currentSheet={currentSheet}
-        onSheetChange={setCurrentSheet}
-        onRefresh={refetch}
+        onRefresh={handleRefresh}
+        publicUrl={publicUrl}
       />
       
       <div className="flex-1 overflow-auto">

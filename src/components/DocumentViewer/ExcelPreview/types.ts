@@ -1,28 +1,28 @@
 
 export interface ExcelPreviewProps {
-  storagePath: string;
+  storageUrl: string;
   title?: string;
+  documentId?: string;
 }
 
 export interface ExcelData {
   headers: string[];
   rows: any[][];
-}
-
-export interface ExcelTableProps {
-  data: ExcelData;
-  enableSorting?: boolean;
-  enableFiltering?: boolean;
+  length?: number;
 }
 
 export interface ExcelHeaderActionsProps {
   title?: string;
   onRefresh: () => void;
   publicUrl: string;
+  sheetNames?: string[];
+  currentSheet?: number;
+  onSheetChange?: (sheet: number) => void;
 }
 
 export interface ExcelErrorDisplayProps {
   error: string;
   onRefresh: () => void;
+  onRetry?: () => void;
   publicUrl: string;
 }

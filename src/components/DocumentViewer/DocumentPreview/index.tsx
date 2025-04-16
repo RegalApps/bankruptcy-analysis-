@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import usePreviewState from "./hooks/usePreviewState";
 import { useDocumentAnalysis } from "./hooks/useDocumentAnalysis";
@@ -7,7 +6,7 @@ import { DocumentViewerFrame } from "./components/DocumentViewerFrame";
 import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
 import { AnalysisProgress } from "./components/AnalysisProgress";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast"; // Fixed import path
+import { useToast } from "@/components/ui/use-toast";
 import { ExcelPreview } from "../ExcelPreview";
 
 interface DocumentPreviewProps {
@@ -50,7 +49,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     documentRisks
   } = previewState;
 
-  // Log important props and state for debugging
   useEffect(() => {
     console.log("DocumentPreview component rendered with:", {
       documentId,
@@ -64,7 +62,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     });
   }, [documentId, storagePath, title, isForm31GreenTech, isForm47, onAnalysisComplete, fileExists, fileUrl]);
 
-  // Fetch session information for document analysis
   const [session, setSession] = useState<any>(null);
   useEffect(() => {
     const fetchSession = async () => {
@@ -78,7 +75,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     fetchSession();
   }, []);
 
-  // Initialize document analysis
   const {
     analyzing,
     analysisStep,
@@ -88,7 +84,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     error: analysisError
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
 
-  // Start analysis if not bypassed
   useEffect(() => {
     if (!bypassAnalysis && fileExists && session && !analyzing) {
       console.log("Starting document analysis");
@@ -96,14 +91,24 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
   }, [bypassAnalysis, fileExists, session, analyzing, handleAnalyzeDocument]);
 
-  // Handle load failure
   useEffect(() => {
     if (previewError && onLoadFailure) {
       onLoadFailure();
     }
   }, [previewError, onLoadFailure]);
 
-  // Render document based on file type
+  const convertedRisks = documentRisks.map(risk => ({
+    ...risk,
+    position: {
+      x: risk.position?.x || 0,
+      y: risk.position?.y || 0,
+      width: risk.position?.width || 0,
+      height: risk.position?.height || 0,
+      page: risk.position?.page,
+      rect: risk.position?.rect
+    }
+  }));
+
   const renderDocument = () => {
     if (isLoading) {
       return <div className="flex justify-center items-center h-full">Loading document...</div>;
@@ -126,13 +131,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       return <ExcelPreview storageUrl={fileUrl} />;
     }
 
-    // Default to PDF viewer
     return (
       <PDFViewer
         fileUrl={fileUrl}
         activeRiskId={activeRiskId}
         onRiskSelect={onRiskSelect}
-        risks={documentRisks}
+        risks={convertedRisks}
       />
     );
   };
