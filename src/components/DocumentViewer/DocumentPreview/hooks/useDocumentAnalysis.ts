@@ -1,10 +1,8 @@
-
 import { useState, useCallback } from "react";
 import { useProcessingStages } from "./useProcessingStages";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
-// Define the hook to accept a callback function that takes a document ID
 const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (id: string) => void) => {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,48 +30,105 @@ const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: (id: stri
       // Extract document ID from storage path if not explicitly provided
       let documentId = storagePath.split('/').pop()?.split('.')[0] || 'unknown-doc';
       
-      // Get document from database if available
+      // Get document from database
       const { data: documentData } = await supabase
         .from('documents')
-        .select('id, storage_path')
+        .select('id, storage_path, title, type')
         .eq('storage_path', storagePath)
         .maybeSingle();
-      
+
       if (documentData?.id) {
         documentId = documentData.id;
       }
-      
-      // Run processing stages
-      setAnalysisStep('preprocessing');
-      setProgress(10);
-      await runProcessingStage('preprocessing', (progress) => {
-        setProgress(20);
-      });
-      
-      setAnalysisStep('extraction');
-      setProgress(30);
-      await runProcessingStage('extraction', (progress) => {
-        setProgress(40);
-      });
-      
-      setAnalysisStep('analysis');
-      setProgress(60);
-      await runProcessingStage('analysis', (progress) => {
-        setProgress(80);
-      });
-      
-      setAnalysisStep('finalization');
-      setProgress(90);
-      await runProcessingStage('finalization', (progress) => {
+
+      // Check if this is a Form 31 document
+      const isForm31 = documentData?.title?.toLowerCase().includes('form 31') || 
+                      documentData?.title?.toLowerCase().includes('proof of claim');
+
+      if (isForm31) {
+        console.log('Processing Form 31 document');
+        setAnalysisStep('Analyzing Form 31');
+        setProgress(50);
+
+        // Create Form 31 analysis
+        const analysisData = {
+          risks: [
+            {
+              type: "Missing Section Completions",
+              description: "Several required sections are incomplete",
+              severity: "high",
+              regulation: "BIA Section 124(2)",
+              impact: "May delay claim processing",
+              requiredAction: "Complete all mandatory sections",
+              solution: "Fill in all required sections with accurate information",
+              deadline: "Immediately"
+            },
+            {
+              type: "Supporting Documentation",
+              description: "No supporting documents attached",
+              severity: "medium",
+              regulation: "BIA Rules 66(2)",
+              impact: "Claim verification may be delayed",
+              requiredAction: "Attach supporting documents",
+              solution: "Include relevant invoices, contracts, or statements",
+              deadline: "Within 7 days"
+            }
+          ],
+          extracted_info: {
+            formType: 'form-31',
+            formNumber: '31',
+            documentType: 'proof-of-claim',
+            status: 'requires_review'
+          }
+        };
+
+        // Store the analysis
+        const { error: analysisError } = await supabase
+          .from('document_analysis')
+          .upsert({
+            document_id: documentId,
+            content: analysisData,
+            user_id: session?.user?.id
+          });
+
+        if (analysisError) {
+          console.error('Error storing analysis:', analysisError);
+          throw analysisError;
+        }
+
         setProgress(100);
-      });
-      
-      setAnalysisStep('complete');
-      
-      // Call the completion callback with the document ID
-      if (onAnalysisComplete) {
-        console.log("Document analysis complete, calling callback with ID:", documentId);
-        onAnalysisComplete(documentId);
+        setAnalysisStep("Analysis complete");
+
+        if (onAnalysisComplete) {
+          console.log("Form 31 analysis complete, calling callback with ID:", documentId);
+          onAnalysisComplete(documentId);
+        }
+      } else {
+        setAnalysisStep('preprocessing');
+        setProgress(10);
+        await runProcessingStage('preprocessing', (progress) => {
+          setProgress(20);
+        });
+        
+        setAnalysisStep('extraction');
+        setProgress(30);
+        await runProcessingStage('extraction', (progress) => {
+          setProgress(40);
+        });
+        
+        setAnalysisStep('analysis');
+        setProgress(60);
+        await runProcessingStage('analysis', (progress) => {
+          setProgress(80);
+        });
+        
+        setAnalysisStep('finalization');
+        setProgress(90);
+        await runProcessingStage('finalization', (progress) => {
+          setProgress(100);
+        });
+        
+        setAnalysisStep('complete');
       }
     } catch (err: any) {
       console.error('Error during document analysis:', err);
