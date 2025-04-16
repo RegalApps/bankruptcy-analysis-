@@ -9,9 +9,12 @@ import { ExcelPreviewProps } from "./types";
 
 export const ExcelPreview: React.FC<ExcelPreviewProps> = ({ 
   storageUrl, 
+  storagePath, 
+  title,
   documentId 
 }) => {
   const [currentSheet, setCurrentSheet] = useState(0);
+  const actualUrl = storagePath || storageUrl;
   
   const { 
     data,
@@ -19,7 +22,7 @@ export const ExcelPreview: React.FC<ExcelPreviewProps> = ({
     error,
     publicUrl,
     handleRefresh
-  } = useExcelPreview(storageUrl);
+  } = useExcelPreview(actualUrl);
 
   const sheetNames = data?.sheets || [];
   const isLoading = loading;
@@ -58,6 +61,10 @@ export const ExcelPreview: React.FC<ExcelPreviewProps> = ({
       <ExcelHeaderActions 
         onRefresh={handleRefresh}
         publicUrl={publicUrl}
+        sheetNames={sheetNames}
+        currentSheet={currentSheet}
+        onSheetChange={setCurrentSheet}
+        title={title}
       />
       
       <div className="flex-1 overflow-auto">

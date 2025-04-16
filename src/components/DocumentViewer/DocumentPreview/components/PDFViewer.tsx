@@ -23,6 +23,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [scale, setScale] = useState<number>(1);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
 
   // Reset current page when file URL changes
   useEffect(() => {
@@ -42,9 +43,46 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     };
   }, []);
 
+  // Define handlers for toolbar
+  const handleZoomIn = () => {
+    setZoomLevel(prev => prev + 10);
+    setScale(prev => prev + 0.1);
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => prev - 10);
+    setScale(prev => Math.max(prev - 0.1, 0.1));
+  };
+
+  const handleRefresh = () => {
+    // Refresh logic
+  };
+
+  const handleOpenInNewTab = () => {
+    window.open(fileUrl, '_blank');
+  };
+
+  const handleDownload = () => {
+    const link = document.createElement("a");
+    link.href = fileUrl;
+    link.download = "document.pdf";
+    link.click();
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open(fileUrl, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <ViewerToolbar 
+        title="PDF Document"
+        zoomLevel={zoomLevel}
         numPages={numPages} 
         currentPage={currentPage} 
         setCurrentPage={setCurrentPage}
@@ -52,6 +90,12 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         setScale={setScale}
         isFullscreen={isFullscreen}
         setIsFullscreen={setIsFullscreen}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onRefresh={handleRefresh}
+        onOpenInNewTab={handleOpenInNewTab}
+        onDownload={handleDownload}
+        onPrint={handlePrint}
       />
       
       <div className="flex-1 overflow-auto relative bg-muted/20">
@@ -63,10 +107,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         
         {risks && risks.length > 0 && (
           <RiskHighlightOverlay 
-            risks={risks} 
+            risks={risks}
+            documentWidth={800}
+            documentHeight={1100}
+            activeRiskId={activeRiskId || null}
+            onRiskClick={(risk) => onRiskSelect?.(risk.type)}
+            containerRef={{ current: null }}
             currentPage={currentPage}
-            activeRiskId={activeRiskId}
-            onRiskSelect={onRiskSelect}
           />
         )}
       </div>

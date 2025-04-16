@@ -1,6 +1,7 @@
 
 export interface ExcelPreviewProps {
   storageUrl: string;
+  storagePath?: string;
   title?: string;
   documentId?: string;
 }
@@ -9,6 +10,7 @@ export interface ExcelData {
   headers: string[];
   rows: any[][];
   length?: number;
+  sheets?: string[];
 }
 
 export interface ExcelHeaderActionsProps {

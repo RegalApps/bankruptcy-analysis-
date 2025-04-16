@@ -1,3 +1,4 @@
+
 export interface RegulatoryCompliance {
   status: "needs_review" | "compliant" | "non_compliant";
   details: string;
@@ -83,7 +84,7 @@ export interface Risk {
   requiredAction?: string;
   solution?: string;
   deadline?: string;
-  position: {
+  position?: {
     x: number;
     y: number;
     width: number;
