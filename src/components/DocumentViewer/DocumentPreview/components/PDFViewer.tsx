@@ -1,191 +1,75 @@
 
-import React, { useState, useEffect, useRef } from "react";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { AlertTriangle, Download, ExternalLink, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import React, { useState, useEffect } from "react";
+import { Risk } from "@/utils/documents/types/analysisTypes";
+import { RiskHighlightOverlay } from "./RiskHighlightOverlay";
+import { ViewerToolbar } from "./ViewerToolbar";
 
 interface PDFViewerProps {
-  fileUrl: string | null;
-  title: string;
-  zoomLevel: number;
-  onLoad?: () => void;
-  onError?: () => void;
+  fileUrl: string;
+  activeRiskId?: string | null;
+  onRiskSelect?: (id: string) => void;
+  risks?: Risk[];
+  documentId?: string;
 }
 
 export const PDFViewer: React.FC<PDFViewerProps> = ({
   fileUrl,
-  title,
-  zoomLevel,
-  onLoad,
-  onError
+  activeRiskId,
+  onRiskSelect,
+  risks = [],
+  documentId
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [useGoogleViewer, setUseGoogleViewer] = useState(false);
-  const [forceReload, setForceReload] = useState(0);
-  const [retryCount, setRetryCount] = useState(0);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const objectRef = useRef<HTMLObjectElement>(null);
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [scale, setScale] = useState<number>(1);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // Cache-bust the URL to ensure fresh content
-  const cacheBustedUrl = fileUrl ? `${fileUrl}?t=${Date.now()}-${forceReload}` : '';
-  const googleDocsViewerUrl = fileUrl ? 
-    `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true` : '';
-
+  // Reset current page when file URL changes
   useEffect(() => {
-    // Reset loading state when URL changes
-    if (fileUrl) {
-      setIsLoading(true);
-      setLoadError(null);
-    }
-  }, [fileUrl, forceReload]);
+    setCurrentPage(1);
+  }, [fileUrl]);
 
-  const handleLoadSuccess = () => {
-    setIsLoading(false);
-    setLoadError(null);
-    setRetryCount(0);
-    if (onLoad) onLoad();
-  };
+  // Handle fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
 
-  const handleLoadError = () => {
-    console.error("Error loading PDF:", fileUrl);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
     
-    setRetryCount(prev => prev + 1);
-    
-    // First retry immediately without changing modes
-    if (retryCount === 1) {
-      console.log("First load failed, retrying immediately");
-      setForceReload(prev => prev + 1);
-      return;
-    }
-    
-    // After first retry fails, switch to Google Docs viewer
-    if (!useGoogleViewer && retryCount >= 2) {
-      console.log("Falling back to Google Docs viewer");
-      setUseGoogleViewer(true);
-      setIsLoading(true);
-    } else if (useGoogleViewer && retryCount >= 3) {
-      // Both methods failed
-      setIsLoading(false);
-      setLoadError("Could not load the document. It may be in an unsupported format or inaccessible.");
-      if (onError) onError();
-    }
-  };
-
-  const handleOpenInNewTab = () => {
-    if (fileUrl) {
-      window.open(fileUrl, '_blank');
-      toast.success("Document opened in new tab");
-    }
-  };
-
-  const handleDownload = () => {
-    if (fileUrl) {
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = title || 'document.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success("Download started");
-    }
-  };
-
-  const handleRetry = () => {
-    setUseGoogleViewer(false);
-    setLoadError(null);
-    setIsLoading(true);
-    setRetryCount(0);
-    setForceReload(prev => prev + 1);
-  };
-
-  if (!fileUrl) {
-    return (
-      <div className="flex items-center justify-center h-full bg-muted/30">
-        <p className="text-muted-foreground">No document URL provided</p>
-      </div>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <div className="flex items-center justify-center h-full bg-muted/30">
-        <div className="text-center max-w-md p-6">
-          <AlertTriangle className="h-10 w-10 text-destructive mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">Document Load Error</h3>
-          <p className="text-muted-foreground mb-6">{loadError}</p>
-          <div className="flex flex-col gap-3">
-            <Button onClick={handleRetry} className="w-full">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
-            </Button>
-            <Button variant="outline" onClick={handleOpenInNewTab} className="w-full">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Open in New Tab
-            </Button>
-            <Button variant="outline" onClick={handleDownload} className="w-full">
-              <Download className="h-4 w-4 mr-2" />
-              Download
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   return (
-    <div className="relative w-full h-full">
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-          <div className="text-center">
-            <LoadingSpinner size="large" className="mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading document...</p>
-            {retryCount > 0 && (
-              <p className="text-xs text-muted-foreground mt-2">
-                {retryCount === 1 ? "Retrying..." : 
-                 useGoogleViewer ? "Using alternative viewer..." : 
-                 "Attempting direct view..."}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {useGoogleViewer ? (
-        <iframe
-          src={googleDocsViewerUrl}
+    <div className="flex flex-col h-full">
+      <ViewerToolbar 
+        numPages={numPages} 
+        currentPage={currentPage} 
+        setCurrentPage={setCurrentPage}
+        scale={scale}
+        setScale={setScale}
+        isFullscreen={isFullscreen}
+        setIsFullscreen={setIsFullscreen}
+      />
+      
+      <div className="flex-1 overflow-auto relative bg-muted/20">
+        <iframe 
+          src={`${fileUrl}#page=${currentPage}&zoom=${scale * 100}`}
           className="w-full h-full border-0"
-          onLoad={handleLoadSuccess}
-          onError={handleLoadError}
-          title={`Google Docs viewer: ${title}`}
-          referrerPolicy="no-referrer"
-          allow="fullscreen"
+          title="PDF Viewer"
         />
-      ) : (
-        <object
-          ref={objectRef}
-          data={cacheBustedUrl}
-          type="application/pdf"
-          className="w-full h-full"
-          style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
-          onLoad={handleLoadSuccess}
-          onError={handleLoadError}
-        >
-          <iframe
-            ref={iframeRef}
-            src={cacheBustedUrl}
-            className="w-full h-full border-0"
-            title={`Document Preview: ${title}`}
-            style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
-            onLoad={handleLoadSuccess}
-            onError={handleLoadError}
-            sandbox="allow-same-origin allow-scripts allow-forms"
-            referrerPolicy="no-referrer"
-            allow="fullscreen"
+        
+        {risks && risks.length > 0 && (
+          <RiskHighlightOverlay 
+            risks={risks} 
+            currentPage={currentPage}
+            activeRiskId={activeRiskId}
+            onRiskSelect={onRiskSelect}
           />
-        </object>
-      )}
+        )}
+      </div>
     </div>
   );
 };

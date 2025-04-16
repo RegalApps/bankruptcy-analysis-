@@ -7,7 +7,7 @@ import { DocumentViewerFrame } from "./components/DocumentViewerFrame";
 import { PreviewErrorAlert } from "./components/PreviewErrorAlert";
 import { AnalysisProgress } from "./components/AnalysisProgress";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/lib/hooks/useToast";
+import { useToast } from "@/hooks/use-toast"; // Fixed import path
 import { ExcelPreview } from "../ExcelPreview";
 
 interface DocumentPreviewProps {
@@ -110,7 +110,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
 
     if (previewError) {
-      return <PreviewErrorAlert error={previewError} onRetry={checkFile} attemptCount={attemptCount} />;
+      return <PreviewErrorAlert 
+        error={previewError} 
+        onRefresh={checkFile} 
+        publicUrl={fileUrl || ""}
+        documentId={documentId}
+      />;
     }
 
     if (!fileExists || !fileUrl) {
@@ -118,14 +123,13 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     }
 
     if (isExcelFile(storagePath)) {
-      return <ExcelPreview documentId={documentId} storageUrl={fileUrl} />;
+      return <ExcelPreview storageUrl={fileUrl} />;
     }
 
     // Default to PDF viewer
     return (
       <PDFViewer
         fileUrl={fileUrl}
-        documentId={documentId}
         activeRiskId={activeRiskId}
         onRiskSelect={onRiskSelect}
         risks={documentRisks}
@@ -137,10 +141,9 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     <DocumentViewerFrame>
       {!bypassAnalysis && analyzing && (
         <AnalysisProgress
-          step={analysisStep}
           progress={progress}
-          stage={processingStage}
-          error={analysisError}
+          analysisStep={analysisStep}
+          processingStage={processingStage}
         />
       )}
       {renderDocument()}

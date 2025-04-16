@@ -7,12 +7,14 @@ interface AnalysisProgressProps {
   progress: number;
   analysisStep: string;
   processingStage?: string;
+  error?: string;
 }
 
 export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
   analysisStep,
   progress,
-  processingStage
+  processingStage,
+  error
 }) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<number | null>(null);
@@ -60,6 +62,16 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
     
     return stageDescriptions[stage] || 'Processing document';
   };
+
+  // Show error if present
+  if (error) {
+    return (
+      <div className="bg-destructive/10 border border-destructive rounded-lg p-6 my-4">
+        <h3 className="text-lg font-medium text-center mb-2">Analysis Error</h3>
+        <p className="text-sm text-muted-foreground text-center">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-muted/30 border rounded-lg p-6 my-4 flex flex-col items-center">

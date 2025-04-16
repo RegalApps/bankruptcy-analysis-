@@ -10,6 +10,7 @@ interface PreviewErrorAlertProps {
   publicUrl: string;
   documentId?: string;
   onRunDiagnostics?: () => void;
+  attemptCount?: number;
 }
 
 export const PreviewErrorAlert: React.FC<PreviewErrorAlertProps> = ({
@@ -17,7 +18,8 @@ export const PreviewErrorAlert: React.FC<PreviewErrorAlertProps> = ({
   onRefresh,
   publicUrl,
   documentId,
-  onRunDiagnostics
+  onRunDiagnostics,
+  attemptCount
 }) => {
   // Identify only format errors - removed network and database error detection
   const isFormatError = error.includes('format') || 
@@ -30,6 +32,9 @@ export const PreviewErrorAlert: React.FC<PreviewErrorAlertProps> = ({
       <AlertDescription className="space-y-4">
         <div>
           <span className="font-medium">Error: </span>{error}
+          {attemptCount !== undefined && attemptCount > 1 && (
+            <span className="text-xs ml-2 opacity-70">(Attempt {attemptCount})</span>
+          )}
         </div>
         
         <div className="flex flex-wrap gap-2 mt-1">
