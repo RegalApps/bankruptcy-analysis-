@@ -84,6 +84,10 @@ export interface Risk {
   requiredAction?: string;
   solution?: string;
   deadline?: string;
+  id?: string; // Added id to make referencing risks easier
+  metadata?: {
+    section?: string;
+  };
   position?: {
     x: number;
     y: number;

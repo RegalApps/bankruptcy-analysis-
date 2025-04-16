@@ -8,24 +8,53 @@ export interface Risk {
   solution?: string;
   regulation?: string;
   reference?: string;
+  deadline?: string;
+  position?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    page?: number;
+    rect?: number[];
+  };
+}
+
+export interface RegulatoryCompliance {
+  status: 'compliant' | 'non_compliant' | 'error';
+  details: string;
+  references: string[];
 }
 
 export interface ExtractedInfo {
-  type?: string;
-  clientName?: string;
-  clientAddress?: string;
-  trusteeName?: string;
-  trusteeAddress?: string;
+  formType?: string;
   formNumber?: string;
+  clientName?: string;
+  creditorName?: string;
+  creditorMailingAddress?: string;
+  creditorEmail?: string;
+  contactPersonName?: string;
+  contactTelephone?: string;
+  debtorName?: string;
+  debtorCity?: string;
+  debtorProvince?: string;
+  debtAmount?: string;
+  executionDate?: string;
+  documentStatus?: string;
+  trusteeName?: string;
   dateSigned?: string;
-  estateNumber?: string;
-  district?: string;
-  divisionNumber?: string;
-  courtNumber?: string;
-  meetingOfCreditors?: string;
-  chairInfo?: string;
-  securityInfo?: string;
-  dateBankruptcy?: string;
-  officialReceiver?: string;
   summary?: string;
+  administratorName?: string;
+  filingDate?: string;
+  submissionDeadline?: string;
+  estimatedCompletion?: string;
+  lastUpdated?: string;
+  [key: string]: any;
+}
+
+export interface FormField {
+  id: string;
+  name: string;
+  type: string;
+  required?: boolean;
+  regulatoryReferences?: Record<string, string[]>;
 }
