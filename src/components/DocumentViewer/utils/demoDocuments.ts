@@ -29,7 +29,10 @@ export const createForm47DemoDocument = (documentId: string): DocumentDetails =>
         title: "Submission Deadline",
         description: "Submit the consumer proposal by this date",
         due_date: new Date(new Date().getTime() + 14 * 24 * 60 * 60 * 1000).toISOString(),  // 14 days from now
-        severity: "high"
+        status: "pending",
+        priority: "high",
+        created_at: new Date().toISOString(),
+        type: "submission"
       }
     ],
     version: 1
@@ -40,8 +43,6 @@ export const createForm47DemoDocument = (documentId: string): DocumentDetails =>
 export const createForm47DemoAnalysis = (documentId: string): Analysis => {
   return {
     id: "analysis-" + documentId,
-    document_id: documentId,
-    user_id: "1", 
     created_at: new Date().toISOString(),
     content: {
       extracted_info: {
@@ -100,7 +101,7 @@ export const createForm47DemoAnalysis = (documentId: string): Analysis => {
 };
 
 // Form 31 demo document
-export const createForm31GreenTechDemoDocument = (documentId: string): DocumentDetails => {
+export const createForm31DemoDocument = (documentId: string): DocumentDetails => {
   return {
     id: documentId,
     title: "Form 31 - GreenTech Proof of Claim",
@@ -127,7 +128,10 @@ export const createForm31GreenTechDemoDocument = (documentId: string): DocumentD
         title: "Documentation Deadline",
         description: "Submit all supporting documentation by this date",
         due_date: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-        severity: "medium"
+        status: "pending", 
+        priority: "medium",
+        created_at: new Date().toISOString(),
+        type: "documentation"
       }
     ],
     version: 1
@@ -135,11 +139,9 @@ export const createForm31GreenTechDemoDocument = (documentId: string): DocumentD
 };
 
 // Form 31 demo analysis
-export const createForm31GreenTechDemoAnalysis = (documentId: string): Analysis => {
+export const createForm31DemoAnalysis = (documentId: string): Analysis => {
   return {
     id: "analysis-" + documentId,
-    document_id: documentId,
-    user_id: "1",
     created_at: new Date().toISOString(),
     content: {
       extracted_info: {
