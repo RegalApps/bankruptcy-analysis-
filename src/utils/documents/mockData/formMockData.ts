@@ -20,7 +20,7 @@ export const Form31Risks = [
     requiredAction: "Add missing creditor information",
     solution: "Complete section 3 with full creditor details",
     deadline: "2023-04-30",
-    position: { ...defaultPosition, y: 0.15 }
+    position: { ...defaultPosition, y: 0.15, page: 1 }
   },
   {
     type: "Missing Supporting Documentation",
@@ -31,7 +31,7 @@ export const Form31Risks = [
     requiredAction: "Attach supporting documents",
     solution: "Upload all relevant documentation to verify debt",
     deadline: "2023-04-25",
-    position: { ...defaultPosition, y: 0.35 }
+    position: { ...defaultPosition, y: 0.35, page: 1 }
   },
   {
     type: "Claim Not Signed",
@@ -42,7 +42,7 @@ export const Form31Risks = [
     requiredAction: "Sign the claim form",
     solution: "Complete the execution section with signature and date",
     deadline: "2023-04-20",
-    position: { ...defaultPosition, y: 0.55 }
+    position: { ...defaultPosition, y: 0.55, page: 2 }
   },
   {
     type: "Incorrect Claim Amount",
@@ -53,7 +53,7 @@ export const Form31Risks = [
     requiredAction: "Recalculate claim amount",
     solution: "Verify all calculations and update the claim amount",
     deadline: "2023-04-25",
-    position: { ...defaultPosition, y: 0.75 }
+    position: { ...defaultPosition, y: 0.75, page: 2 }
   }
 ];
 

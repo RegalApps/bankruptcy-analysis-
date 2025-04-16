@@ -9,6 +9,7 @@ interface RiskHighlightWithPosition extends Risk {
     y: number;
     width: number;
     height: number;
+    page?: number;
   };
 }
 
