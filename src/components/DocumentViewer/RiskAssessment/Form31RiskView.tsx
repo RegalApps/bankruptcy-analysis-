@@ -135,7 +135,19 @@ export const Form31RiskView: React.FC<Form31RiskViewProps> = ({
                         )}
                       </dl>
                       <div className="mt-3 flex justify-end">
-                        <Button variant="outline" size="sm" className="text-xs">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Navigate to the risk's page in document if applicable
+                            if (risk.position?.page) {
+                              // Logic to navigate to page could be added here
+                              console.log(`Navigate to page ${risk.position.page}`);
+                            }
+                          }}
+                        >
                           <ExternalLink className="h-3 w-3 mr-1" />
                           View in Document
                         </Button>
