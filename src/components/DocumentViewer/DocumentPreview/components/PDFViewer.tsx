@@ -3,11 +3,18 @@ import React, { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PDFViewerProps, Risk } from "../types";
+import { Risk } from "@/components/DocumentViewer/types";
 import { RiskHighlighter } from "./RiskHighlighter";
 
 // Set the worker source
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+
+export interface PDFViewerProps {
+  fileUrl: string;
+  activeRiskId: string | null;
+  onRiskSelect?: (riskId: string) => void;
+  risks?: Risk[];
+}
 
 export const PDFViewer: React.FC<PDFViewerProps> = ({
   fileUrl,
@@ -21,7 +28,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Function to go to next page
   const nextPage = () => {
     if (numPages && pageNumber < numPages) {

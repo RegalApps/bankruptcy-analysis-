@@ -2,7 +2,14 @@
 import React, { useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import logger from "@/utils/logger";
-import { DocumentObjectProps } from "../types";
+
+export interface DocumentObjectProps {
+  publicUrl: string | null;
+  isExcelFile?: boolean;
+  storagePath?: string;
+  documentId?: string;
+  onError?: () => void;
+}
 
 export const DocumentObject: React.FC<DocumentObjectProps> = ({ 
   publicUrl, 
@@ -23,11 +30,28 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
   // Cache-bust the URL to ensure fresh content
   const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
   
-  // Check file extension from the URL to verify if it's really Excel
-  const isPdfFromUrl = publicUrl?.toLowerCase().includes('.pdf');
-  const actuallyIsExcel = isExcelFile && !isPdfFromUrl;
+  // Handle demo documents for Form 31 GreenTech
+  const isGreenTechForm31 = storagePath?.includes('greentech-form31') || 
+                            documentId?.includes('form31') ||
+                            (publicUrl?.includes('form31') || publicUrl?.includes('greentech'));
+                            
+  if (isGreenTechForm31 && !publicUrl) {
+    console.log("Using fallback path for GreenTech Form 31");
+    // Use local path for demo documents
+    const localPath = "/documents/sample-form31-greentech.pdf";
+    return (
+      <div className="relative w-full h-full rounded-md overflow-hidden border">
+        <iframe
+          className="w-full h-full border-0"
+          title="Document Preview"
+          src={localPath}
+          onError={handleError}
+        />
+      </div>
+    );
+  }
 
-  if (actuallyIsExcel) {
+  if (isExcelFile) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center p-6 bg-muted rounded-lg">
