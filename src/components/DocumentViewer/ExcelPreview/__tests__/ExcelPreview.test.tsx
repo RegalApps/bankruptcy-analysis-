@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ExcelPreview } from '../index';
 import { useExcelPreview } from '../hooks/useExcelPreview';
-import { vi } from 'vitest';
+import { vi, describe, it, beforeEach, expect } from 'vitest';
 
 // Mock the custom hook
 vi.mock('../hooks/useExcelPreview');

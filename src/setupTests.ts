@@ -25,7 +25,7 @@ declare global {
   }
   
   // Add global jest for backward compatibility
-  const jest: {
+  var jest: {
     fn: typeof vi.fn;
     mock: typeof vi.mock;
   };

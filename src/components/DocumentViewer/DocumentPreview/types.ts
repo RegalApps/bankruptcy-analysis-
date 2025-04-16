@@ -54,12 +54,22 @@ export interface DocumentPreviewContentProps {
 
 export interface UseNetworkMonitorReturn {
   networkStatus: 'online' | 'offline' | 'unknown';
+  isOnline?: boolean;
+  handleOnline: () => void;
 }
 
 export interface UseRetryStrategyReturn {
   attemptCount: number;
   incrementAttempt: () => void;
   resetAttempts: () => void;
+  retryCount?: number;
+  isRetrying?: boolean;
+  retry?: () => void;
+  reset?: () => void;
+  lastAttempt: Date | null;
+  setLastAttempt: (date: Date | null) => void;
+  shouldRetry: (count: number) => boolean;
+  getRetryDelay: (count: number) => number;
 }
 
 export interface RiskHighlightOverlayProps {
@@ -71,4 +81,3 @@ export interface RiskHighlightOverlayProps {
   containerRef: React.RefObject<HTMLDivElement>;
   currentPage?: number;
 }
-
