@@ -1,17 +1,19 @@
-
 import { supabase } from '@/lib/supabase';
 import { extractTextFromPdf } from './pdfUtils';
+import { DocumentProcessingQueue } from './utils/documentProcessingQueue';
 
 export const handleDocumentUpload = async (
   file: File,
   documentId: string,
   updateProgress: (message: string, percentage?: number) => void
 ) => {
-  let documentText = '';
-  
   try {
     // Step 1: Initial processing (10%)
     updateProgress('Initializing document processing...', 10);
+    
+    // Extract initial text content for type detection
+    let documentText = '';
+    let documentType = 'unknown';
     
     if (file.type === 'application/pdf') {
       updateProgress('Processing PDF document...', 20);
@@ -19,56 +21,47 @@ export const handleDocumentUpload = async (
       const result = await extractTextFromPdf(arrayBuffer);
       documentText = result.text;
       
-      if (result.errors.length > 0) {
-        console.warn(`PDF processing completed with ${result.errors.length} errors`);
-        console.warn('Pages with errors:', result.errors.map(e => e.pageNum).join(', '));
+      // Basic document type detection
+      if (documentText.toLowerCase().includes('form 31') || 
+          documentText.toLowerCase().includes('proof of claim')) {
+        documentType = 'form31';
+      } else if (documentText.toLowerCase().includes('form 47')) {
+        documentType = 'form47';
       }
       
-      console.log(`Successfully processed ${result.successfulPages} of ${result.totalPages} pages`);
-      updateProgress('PDF text extraction complete', 40);
-    } else {
-      const text = await file.text();
-      documentText = text;
-      updateProgress('Document text extracted', 40);
+      updateProgress('Initial document analysis complete', 40);
     }
 
-    // Validate text content
-    if (!documentText || documentText.trim().length === 0) {
-      throw new Error('No text could be extracted from the document');
-    }
-
-    // Step 2: Document Analysis (40-80%)
-    updateProgress('Analyzing document content...', 50);
-
-    // Extract potential client name from document text (basic example)
+    // Step 2: Save initial metadata
     const metadata = {
-      client_name: 'Uncategorized', // Default value
-      processed_at: new Date().toISOString(),
-      extraction_status: 'completed'
+      initial_text_length: documentText.length,
+      detected_type: documentType,
+      upload_timestamp: new Date().toISOString(),
+      original_filename: file.name
     };
 
-    // Update document with metadata
+    // Update document with initial metadata
     const { error: updateError } = await supabase
       .from('documents')
       .update({ 
         metadata,
-        type: file.type 
+        type: file.type,
+        ai_processing_status: 'pending'
       })
       .eq('id', documentId);
 
     if (updateError) throw updateError;
 
-    // Continue with document analysis
-    const { error } = await supabase.functions.invoke('analyze-document', {
-      body: {
-        documentText,
-        documentId
-      }
+    // Step 3: Add to processing queue
+    await DocumentProcessingQueue.addTask({
+      documentId,
+      storagePath: file.name,
+      type: documentType,
+      priority: 1
     });
 
-    if (error) throw error;
-
-    updateProgress('Document analysis completed successfully', 100);
+    updateProgress('Document queued for detailed analysis', 100);
+    
   } catch (error) {
     console.error('Document processing error:', error);
     updateProgress('Error processing document');
