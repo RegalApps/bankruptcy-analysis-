@@ -32,7 +32,10 @@ export const DocumentTree = ({
           title: node.name,
           type: node.folderType || 'document',
           storage_path: node.filePath || '',
-          size: 0
+          size: 0,
+          // Add the missing required properties
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         });
         clientMap.set(clientId, client);
       }
