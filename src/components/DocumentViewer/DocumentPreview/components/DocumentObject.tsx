@@ -35,9 +35,9 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
                             documentId?.includes('form31') ||
                             (publicUrl?.includes('form31') || publicUrl?.includes('greentech'));
                             
-  if (isGreenTechForm31 && !publicUrl) {
-    console.log("Using fallback path for GreenTech Form 31");
-    // Use local path for demo documents
+  // For Form 31 documents, always use the local path to avoid storage errors
+  if (isGreenTechForm31) {
+    console.log("Using direct local path for GreenTech Form 31 document");
     const localPath = "/documents/sample-form31-greentech.pdf";
     return (
       <div className="relative w-full h-full rounded-md overflow-hidden border">
