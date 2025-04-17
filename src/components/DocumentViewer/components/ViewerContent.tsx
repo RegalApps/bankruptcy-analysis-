@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { DocumentPreview } from "../DocumentPreview";
 import { AnalysisPanel } from "../components/AnalysisPanel";
+import { isDocumentForm31, getEffectiveStoragePath } from "../utils/documentTypeUtils";
 
 interface ViewerContentProps {
   documentId: string;
@@ -31,6 +32,8 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   analysis,
   onAnalysisComplete
 }) => {
+  const [documentLoadAttempt, setDocumentLoadAttempt] = useState(0);
+  
   // Add debug logs to help trace the component rendering
   useEffect(() => {
     console.log("ViewerContent rendered with:", {
@@ -44,23 +47,22 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
     });
   }, [documentId, storagePath, title, bypassProcessing, isForm47, isForm31GreenTech, onAnalysisComplete]);
 
-  // Detect if we're looking at a Form 31 document based on title or ID
-  const detectedForm31 = 
-    title?.toLowerCase().includes('form 31') || 
-    title?.toLowerCase().includes('proof of claim') || 
-    documentId?.toLowerCase().includes('form31') ||
-    documentId?.toLowerCase().includes('form-31') ||
-    isForm31GreenTech;
+  // Use the centralized utility function to detect Form 31 documents
+  const isForm31Document = isDocumentForm31(
+    null,
+    documentId,
+    storagePath,
+    title
+  );
   
-  const finalIsForm31GreenTech = isForm31GreenTech || detectedForm31;
+  const finalIsForm31GreenTech = isForm31GreenTech || isForm31Document;
 
   // Enhanced document path handling for Form 31
-  let effectiveStoragePath = storagePath;
-  if (finalIsForm31GreenTech) {
-    console.log("Form 31 GreenTech document detected! Using demo path");
-    // Always use the demo path for GreenTech Form 31 for reliability
-    effectiveStoragePath = "demo/greentech-form31-proof-of-claim.pdf";
-  }
+  const effectiveStoragePath = getEffectiveStoragePath(
+    storagePath,
+    finalIsForm31GreenTech,
+    documentId
+  );
 
   const handleAnalysisComplete = (id: string) => {
     console.log("Analysis completed in ViewerContent for document:", id);
@@ -69,6 +71,19 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
       onAnalysisComplete(id);
     } else {
       console.log("No onAnalysisComplete callback provided");
+    }
+  };
+
+  // Handle document load failure with retry logic
+  const handleDocumentLoadFailure = () => {
+    console.error("Document load failure in ViewerContent, attempt:", documentLoadAttempt);
+    
+    // Retry logic - if we've tried less than 2 times and it's a Form 31, try again with the fallback
+    if (documentLoadAttempt < 2 && finalIsForm31GreenTech) {
+      console.log("Attempting Form 31 fallback reload");
+      setDocumentLoadAttempt(prev => prev + 1);
+    } else if (onLoadFailure) {
+      onLoadFailure();
     }
   };
 
@@ -85,10 +100,11 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
           activeRiskId={selectedRiskId}
           onRiskSelect={onRiskSelect}
           bypassAnalysis={bypassProcessing}
-          onLoadFailure={onLoadFailure}
+          onLoadFailure={handleDocumentLoadFailure}
           isForm31GreenTech={finalIsForm31GreenTech}
           isForm47={isForm47}
           onAnalysisComplete={handleAnalysisComplete}
+          key={`preview-${documentId}-${documentLoadAttempt}`}
         />
       </ResizablePanel>
       

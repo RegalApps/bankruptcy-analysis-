@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { EnhancedPDFViewer } from "./EnhancedPDFViewer";
 import { DocumentViewerFrame } from "./DocumentViewerFrame";
 import { PreviewControls } from "../PreviewControls";
 import { DocumentObject } from "../DocumentObject";
 import { DocumentPreviewContentProps } from "../types";
+import { isDocumentForm31 } from "../../utils/documentTypeUtils";
 
 export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   documentId,
@@ -17,6 +19,17 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
 }) => {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [forceReload, setForceReload] = useState(Date.now());
+  const [localErrorState, setLocalErrorState] = useState<string | null>(null);
+  
+  // Use enhanced Form 31 detection
+  const isForm31Document = isDocumentForm31(
+    null, 
+    documentId,
+    storagePath,
+    title
+  );
+  
+  const finalIsForm31GreenTech = isForm31GreenTech || isForm31Document;
   
   // Debug information
   useEffect(() => {
@@ -28,9 +41,10 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
       isExcelFile: previewState.isExcelFile,
       isLoading: previewState.isLoading,
       previewError: previewState.previewError,
-      isForm31GreenTech
+      isForm31GreenTech: finalIsForm31GreenTech,
+      localError: localErrorState
     });
-  }, [documentId, storagePath, previewState, isForm31GreenTech]);
+  }, [documentId, storagePath, previewState, finalIsForm31GreenTech, localErrorState]);
   
   // Handle zoom in/out functions
   const handleZoomIn = () => {
@@ -48,6 +62,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   const handleRefresh = () => {
     console.log("Manual refresh triggered");
     setForceReload(Date.now());
+    setLocalErrorState(null);
     // Also trigger the file check to reload the document
     if (previewState && previewState.checkFile) {
       previewState.checkFile();
@@ -56,11 +71,12 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
 
   // Call onLoadFailure when there's a preview error
   useEffect(() => {
-    if (previewState.previewError && onLoadFailure) {
-      console.error("Preview error detected, calling onLoadFailure:", previewState.previewError);
+    if ((previewState.previewError || localErrorState) && onLoadFailure) {
+      console.error("Preview error detected, calling onLoadFailure:", 
+        previewState.previewError || localErrorState);
       onLoadFailure();
     }
-  }, [previewState.previewError, onLoadFailure]);
+  }, [previewState.previewError, localErrorState, onLoadFailure]);
 
   const { 
     fileExists,
@@ -77,6 +93,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   
   const handleDocumentError = () => {
     console.error("Error loading document in DocumentPreviewContent");
+    setLocalErrorState("Failed to load document content");
     if (onLoadFailure) onLoadFailure();
   };
 
@@ -93,13 +110,16 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   }
 
   // Special case for Form 31 documents - provide a fallback path
-  if (isForm31GreenTech) {
+  if (finalIsForm31GreenTech) {
     console.log("Form 31 detected in DocumentPreviewContent, using special handling");
     return (
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-2 bg-muted/20">
           <div className="flex-1 truncate">
             <h3 className="text-sm font-medium">{title || "Form 31 - Proof of Claim"}</h3>
+          </div>
+          <div className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+            Form 31
           </div>
         </div>
         <div className="flex-1 relative">
@@ -116,7 +136,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   }
 
   // If we have an error or no file URL
-  if (previewError || !fileUrl) {
+  if (previewError || localErrorState || !fileUrl) {
     return (
       <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center p-6">
         <div className="bg-destructive text-white rounded-full p-3 mb-4">
@@ -125,7 +145,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           </svg>
         </div>
         <h3 className="text-xl font-semibold mb-2">Document Error</h3>
-        <p className="text-sm text-muted-foreground mb-4">{previewError || "Could not load the document. It might be in an unsupported format or inaccessible."}</p>
+        <p className="text-sm text-muted-foreground mb-4">{previewError || localErrorState || "Could not load the document. It might be in an unsupported format or inaccessible."}</p>
         <button 
           className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 font-medium"
           onClick={handleRefresh}
@@ -139,6 +159,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           <p>File URL exists: {fileUrl ? 'Yes' : 'No'}</p>
           <p>Network Status: {previewState.networkStatus}</p>
           <p>Attempt Count: {previewState.attemptCount}</p>
+          {finalIsForm31GreenTech && <p>Form 31 Document: Yes</p>}
         </div>
       </div>
     );

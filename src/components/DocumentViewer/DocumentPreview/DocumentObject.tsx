@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { DocumentObjectProps } from "./types";
+import { isDocumentForm31 } from "../utils/documentTypeUtils";
 
 export const DocumentObject: React.FC<DocumentObjectProps> = ({ 
   publicUrl, 
@@ -21,12 +22,13 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
   // Cache-bust the URL to ensure fresh content
   const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
 
-  // Enhanced handling for Form 31 documents - expanded detection logic
-  const isGreenTechForm31 = storagePath?.includes('greentech-form31') || 
-                           storagePath?.includes('form31') ||
-                           documentId?.includes('form31') ||
-                           documentId?.includes('form-31') ||
-                           (publicUrl?.includes('form31') || publicUrl?.includes('greentech'));
+  // Use the centralized utility function to detect Form 31 documents
+  const isGreenTechForm31 = isDocumentForm31(
+    null, 
+    documentId,
+    storagePath, 
+    null
+  );
                             
   if (isGreenTechForm31) {
     console.log("Using fallback path for GreenTech Form 31");
