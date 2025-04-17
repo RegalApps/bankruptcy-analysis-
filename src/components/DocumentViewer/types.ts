@@ -1,61 +1,48 @@
 export interface DocumentDetails {
   id: string;
   title: string;
-  type: string;
-  content?: string;
+  storage_path: string;
   created_at: string;
   updated_at: string;
   user_id: string;
-  comments?: Comment[];
+  parent_folder_id: string | null;  // Add this field to match what's used in demoDocuments
+  file_type: string;
+  file_size: number;
+  is_public: boolean;
+  is_favorite: boolean;
+  labels: string[];
+  status: string;
+  metadata: {
+    [key: string]: any;
+  };
+  deadlines: Deadline[];
+  version: number;
   analysis?: Analysis[];
-  versions?: DocumentVersion[];
-  tasks?: Task[];
-  deadlines?: Deadline[];
-  metadata?: any;
-  status?: string;
-  storage_path?: string;
-  file_size?: number;
-  size?: number;
 }
 
-export interface Comment {
+export interface Deadline {
   id: string;
-  content: string;
+  title: string;
+  description: string;
+  due_date: string;
+  status: string;
+  priority: string;
   created_at: string;
-  user_id: string;
-  document_id: string;
-  parent_id?: string;
-  is_resolved: boolean;
-  user_name?: string;
+  type: string;
 }
 
 export interface Analysis {
   id: string;
-  content: AnalysisContent;
   created_at: string;
-}
-
-export interface AnalysisContent {
-  extracted_info?: {
-    clientName?: string;
-    trusteeName?: string;
-    administratorName?: string;
-    dateSigned?: string;
-    formNumber?: string;
-    estateNumber?: string;
-    filingDate?: string;
-    submissionDeadline?: string;
-    documentStatus?: string;
-    type?: string;
-    summary?: string;
-    [key: string]: any;
-  };
-  risks?: Risk[];
-  regulatory_compliance?: {
-    status: string;
-    details: string;
-    references: string[];
-  };
+  content: {
+    extracted_info: any;
+    risks: Risk[];
+    regulatory_compliance: {
+      status: "needs_review" | "compliant" | "non_compliant";
+      details: string;
+      references: string[];
+    }
+  }
 }
 
 export interface Risk {
@@ -63,112 +50,26 @@ export interface Risk {
   type: string;
   title?: string;
   description: string;
-  severity: "low" | "medium" | "high";
-  regulation?: string;
-  impact?: string;
-  requiredAction?: string;
-  solution?: string;
+  severity: 'high' | 'medium' | 'low';
+  regulation: string;
+  impact: string;
+  requiredAction: string;
+  solution: string;
   deadline?: string;
   position?: {
-    page?: number;
-    rect?: number[];
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    page: number;
+    rect?: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
   };
-}
-
-export interface DocumentVersion {
-  id: string;
-  document_id: string;
-  version_number: number;
-  created_at: string;
-  is_current: boolean;
-  description?: string;
-  changes_summary?: string;
-  version_name?: string;
-}
-
-export interface Task {
-  id: string;
-  document_id: string;
-  title: string;
-  description?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  severity: string;
-  priority: string;
-  created_at: string;
-  due_date?: string;
-  assigned_to?: string;
-  regulation?: string;
-  solution?: string;
-}
-
-export interface Deadline {
-  id: string;
-  title: string;
-  description?: string;
-  due_date: string;
-  status: 'pending' | 'completed' | 'overdue';
-  priority: 'low' | 'medium' | 'high';
-  created_at: string;
-  type?: string;
-}
-
-export interface DocumentViewerProps {
-  documentId: string;
-  documentTitle?: string;
-  isForm47?: boolean;
-  isForm31GreenTech?: boolean;
-  onLoadFailure?: () => void;
-  bypassProcessing?: boolean;
-  onAnalysisComplete?: (id: string) => void;
-}
-
-export interface DocumentPreviewProps {
-  documentId: string;
-  storagePath?: string;
-  title?: string;
-  activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string) => void;
-  bypassAnalysis?: boolean;
-  onLoadFailure?: () => void;
-  isForm31GreenTech?: boolean;
-  isForm47?: boolean;
-  onAnalysisComplete?: (id: string) => void;
-}
-
-export interface CommentsProps {
-  documentId: string;
-  comments?: Comment[];
-  isLoading?: boolean;
-  onCommentAdded?: () => void;
-}
-
-export interface TaskManagerProps {
-  documentId: string;
-  activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string | null) => void;
-  isLoading?: boolean;
-}
-
-export interface DocumentVersionsProps {
-  documentId: string;
-  documentVersions?: DocumentVersion[];
-  currentDocumentId?: string;
-  isLoading?: boolean;
-}
-
-export interface DeadlineManagerProps {
-  documentId: string;
-  deadlines?: Deadline[];
-  isLoading?: boolean;
-  onDeadlineUpdated?: () => void;
-}
-
-export interface AnalysisPanelProps {
-  documentId: string;
-  isLoading?: boolean;
-  analysis?: AnalysisContent;
+  metadata?: {
+    section?: string;
+  };
 }
