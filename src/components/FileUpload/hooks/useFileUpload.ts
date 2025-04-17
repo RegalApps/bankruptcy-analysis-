@@ -23,7 +23,9 @@ export const useFileUpload = (onUploadComplete?: (documentId: string) => void) =
 
     try {
       // Step 1: Upload to storage
-      const result = await uploadToStorage(file, await supabase.auth.getUser(), updateProgress);
+      const userResponse = await supabase.auth.getUser();
+      const userId = userResponse.data.user?.id || 'anonymous';
+      const result = await uploadToStorage(file, userId, updateProgress);
       fileName = result.fileName;
       documentData = result.documentData;
 
@@ -38,7 +40,7 @@ export const useFileUpload = (onUploadComplete?: (documentId: string) => void) =
       if (onUploadComplete) {
         onUploadComplete(documentData.id);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
       toast({
         variant: "destructive",
