@@ -7,8 +7,15 @@ export const uploadDocument = async (file: File): Promise<any> => {
   const isBucketReady = await ensureStorageBucket();
   
   if (!isBucketReady) {
-    toast.error("Storage system unavailable. Please contact support.");
-    throw new Error('Storage system not properly configured');
+    toast.error("Storage system unavailable. Attempting to create storage bucket...");
+    // Try creating the bucket one more time
+    const secondAttempt = await ensureStorageBucket();
+    if (!secondAttempt) {
+      toast.error("Failed to create storage bucket. Please contact support.");
+      throw new Error('Storage system not properly configured');
+    } else {
+      toast.success("Storage system created successfully!");
+    }
   }
   
   try {
@@ -53,6 +60,8 @@ export const uploadDocument = async (file: File): Promise<any> => {
         storage_path: filePath,
         user_id: userData.user.id,
         ai_processing_status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         metadata: {
           original_filename: file.name,
           upload_date: new Date().toISOString(),

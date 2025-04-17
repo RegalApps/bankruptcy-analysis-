@@ -62,7 +62,7 @@ export const getForm31DemoAnalysisData = () => {
       summary: "This Form 31 Proof of Claim document requires attention to several compliance issues before submission."
     },
     regulatory_compliance: {
-      status: 'non_compliant',
+      status: 'non_compliant' as 'non_compliant' | 'compliant' | 'needs_review',
       details: 'This document has compliance issues that must be addressed before submission.',
       references: [
         'BIA Section 124(1)(b) - Supporting documentation requirements',

@@ -27,10 +27,21 @@ export const ensureStorageBucket = async () => {
     const documentsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
     
     if (!documentsBucketExists) {
-      console.warn('Documents bucket not found - creating it now');
-      // For security purposes, log this but don't automatically create
-      // Bucket should be created through proper migrations
-      return false;
+      console.log('Documents bucket not found - creating it automatically');
+      // Create the documents bucket
+      const { error: createError } = await supabase.storage.createBucket('documents', {
+        public: true,
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+      });
+      
+      if (createError) {
+        console.error('Error creating documents bucket:', createError);
+        return false;
+      }
+      
+      console.log('Documents bucket created successfully');
+      return true;
     }
     
     return true;

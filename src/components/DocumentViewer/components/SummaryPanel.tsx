@@ -39,7 +39,7 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
                             extractedInfo;
   
   const finalRegCompliance = isForm31 && !regulatoryCompliance?.status ? 
-                            getForm31DemoAnalysisData().regulatory_compliance : 
+                            getForm31DemoAnalysisData().regulatory_compliance as RegulatoryCompliance : 
                             regulatoryCompliance;
   
   if (isLoading) {
