@@ -5,6 +5,7 @@
 export interface DocumentRecord {
   id: string;
   title: string;
+  storage_path: string; // Adding the required storage_path property
   metadata?: {
     formType?: string;
     processing_stage?: string;
