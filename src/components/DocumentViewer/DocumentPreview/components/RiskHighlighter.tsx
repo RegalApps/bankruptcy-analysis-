@@ -1,51 +1,53 @@
 
 import React from "react";
+import { Risk } from "@/components/DocumentViewer/types";
 import { cn } from "@/lib/utils";
-import { Risk } from "../../types";
 
 interface RiskHighlighterProps {
   risk: Risk;
-  isActive: boolean;
-  onClick: () => void;
+  isActive?: boolean;
+  onClick?: () => void;
 }
 
 export const RiskHighlighter: React.FC<RiskHighlighterProps> = ({
   risk,
-  isActive,
-  onClick
+  isActive = false,
+  onClick = () => {}
 }) => {
   if (!risk.position) return null;
-
+  
   const { x, y, width, height } = risk.position;
-
-  const getSeverityColor = (severity: 'high' | 'medium' | 'low' = 'medium') => {
+  
+  const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'high':
-        return 'bg-red-500/20 border-red-500';
+        return 'border-red-500 bg-red-200/40 hover:bg-red-200/60';
       case 'medium':
-        return 'bg-amber-500/20 border-amber-500';
+        return 'border-amber-500 bg-amber-200/40 hover:bg-amber-200/60';
       case 'low':
-        return 'bg-blue-500/20 border-blue-500';
+        return 'border-green-500 bg-green-200/40 hover:bg-green-200/60';
       default:
-        return 'bg-amber-500/20 border-amber-500';
+        return 'border-blue-500 bg-blue-200/40 hover:bg-blue-200/60';
     }
   };
-
+  
   return (
     <div
       className={cn(
-        'absolute border-2 rounded pointer-events-auto transition-all duration-200',
-        getSeverityColor(risk.severity as 'high' | 'medium' | 'low'),
-        isActive ? 'z-20 ring-2 ring-offset-2 ring-primary' : 'z-10 opacity-50 hover:opacity-100'
+        "absolute border-2 rounded-sm transition-all cursor-pointer",
+        getSeverityColor(risk.severity),
+        isActive && "ring-2 ring-primary shadow-md"
       )}
       style={{
-        left: `${x * 100}%`,
         top: `${y * 100}%`,
+        left: `${x * 100}%`,
         width: `${width * 100}%`,
         height: `${height * 100}%`,
+        zIndex: isActive ? 20 : 10,
+        transition: "all 0.2s ease"
       }}
       onClick={onClick}
-      title={risk.description || risk.type}
+      title={risk.description}
     />
   );
 };

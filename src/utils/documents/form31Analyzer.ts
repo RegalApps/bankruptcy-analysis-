@@ -70,7 +70,7 @@ const analyzeForm31 = (title: string): AnalysisResult => {
         impact: "May delay claim processing or result in partial rejection",
         requiredAction: "Attach delivery confirmation for invoice #GT-7845",
         solution: "Upload signed delivery receipt or proof of service for invoice #GT-7845",
-        position: { x: 0.35, y: 0.42, width: 0.3, height: 0.05 }
+        position: { x: 0.35, y: 0.42, width: 0.3, height: 0.05, page: 1 }
       },
       {
         type: "Incomplete Creditor Information",
@@ -80,7 +80,7 @@ const analyzeForm31 = (title: string): AnalysisResult => {
         impact: "May hinder communication regarding claim resolution",
         requiredAction: "Add contact telephone number",
         solution: "Complete Section 1 by adding required contact telephone number",
-        position: { x: 0.15, y: 0.22, width: 0.25, height: 0.04 }
+        position: { x: 0.15, y: 0.22, width: 0.25, height: 0.04, page: 1 }
       },
       {
         type: "Potential Related Party Transaction",
@@ -90,7 +90,7 @@ const analyzeForm31 = (title: string): AnalysisResult => {
         impact: "Could affect claim priority and scrutiny level",
         requiredAction: "Complete related party disclosure",
         solution: "Check appropriate box in Section 6 indicating related/non-related status",
-        position: { x: 0.6, y: 0.65, width: 0.2, height: 0.04 }
+        position: { x: 0.6, y: 0.65, width: 0.2, height: 0.04, page: 1 }
       },
       {
         type: "Missing Security Documentation",
@@ -100,7 +100,7 @@ const analyzeForm31 = (title: string): AnalysisResult => {
         impact: "Claim may be processed as unsecured if security not proven",
         requiredAction: "Attach security agreement documentation",
         solution: "Upload security agreement and proof of registration (PPSA)",
-        position: { x: 0.3, y: 0.55, width: 0.35, height: 0.06 }
+        position: { x: 0.3, y: 0.55, width: 0.35, height: 0.06, page: 1 }
       }
     ],
     regulatory_compliance: {

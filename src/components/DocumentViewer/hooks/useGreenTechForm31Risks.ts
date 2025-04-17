@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Risk } from '../RiskAssessment/types';
+import { Risk } from '../types';
 
 export const useGreenTechForm31Risks = () => {
   const [risks, setRisks] = useState<Risk[]>([]);
