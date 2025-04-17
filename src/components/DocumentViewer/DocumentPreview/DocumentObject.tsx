@@ -21,8 +21,9 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
   // Cache-bust the URL to ensure fresh content
   const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
 
-  // Enhanced handling for Form 31 documents
+  // Enhanced handling for Form 31 documents - expanded detection logic
   const isGreenTechForm31 = storagePath?.includes('greentech-form31') || 
+                           storagePath?.includes('form31') ||
                            documentId?.includes('form31') ||
                            documentId?.includes('form-31') ||
                            (publicUrl?.includes('form31') || publicUrl?.includes('greentech'));
@@ -31,6 +32,7 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
     console.log("Using fallback path for GreenTech Form 31");
     // Always use local path for Form 31 demo documents to ensure reliability
     const localPath = "/documents/sample-form31-greentech.pdf";
+    console.log("Loading Form 31 from local path:", localPath);
     return (
       <div className="relative w-full h-full rounded-md overflow-hidden border">
         <iframe

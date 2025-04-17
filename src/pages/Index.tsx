@@ -60,10 +60,11 @@ const Index = () => {
         console.log("Document is Form 47");
       }
 
-      // Check if it's a GreenTech Form 31 document
+      // Check if it's a GreenTech Form 31 document - enhanced detection
       if (location.state.isForm31GreenTech || 
           docId === "greentech-form31" || 
           docId === "form31" || 
+          docId.includes("form-31") ||
           docId === "form-31-greentech") {
         setIsForm31GreenTech(true);
         console.log("Document is GreenTech Form 31");

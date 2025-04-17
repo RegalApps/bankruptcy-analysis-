@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { EnhancedPDFViewer } from "./EnhancedPDFViewer";
 import { DocumentViewerFrame } from "./DocumentViewerFrame";
 import { PreviewControls } from "../PreviewControls";
-import { DocumentObject } from "./DocumentObject";
+import { DocumentObject } from "../DocumentObject";
 import { DocumentPreviewContentProps } from "../types";
 
 export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
@@ -28,9 +27,10 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
       fileExists: previewState.fileExists,
       isExcelFile: previewState.isExcelFile,
       isLoading: previewState.isLoading,
-      previewError: previewState.previewError
+      previewError: previewState.previewError,
+      isForm31GreenTech
     });
-  }, [documentId, storagePath, previewState]);
+  }, [documentId, storagePath, previewState, isForm31GreenTech]);
   
   // Handle zoom in/out functions
   const handleZoomIn = () => {
@@ -87,6 +87,29 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
         <div className="flex flex-col items-center">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
           <p className="text-sm text-muted-foreground">Loading document...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Special case for Form 31 documents - provide a fallback path
+  if (isForm31GreenTech) {
+    console.log("Form 31 detected in DocumentPreviewContent, using special handling");
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between p-2 bg-muted/20">
+          <div className="flex-1 truncate">
+            <h3 className="text-sm font-medium">{title || "Form 31 - Proof of Claim"}</h3>
+          </div>
+        </div>
+        <div className="flex-1 relative">
+          <DocumentObject
+            publicUrl={null}
+            isExcelFile={false}
+            storagePath="demo/greentech-form31-proof-of-claim.pdf"
+            documentId={documentId}
+            onError={() => onLoadFailure && onLoadFailure()}
+          />
         </div>
       </div>
     );
