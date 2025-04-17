@@ -8,6 +8,7 @@ import { Comments } from "../Comments";
 import { MessageSquare, ClipboardList, Clock, Calendar, FileBarChart } from "lucide-react";
 import { TaskManager } from "../TaskManager";
 import { DeadlineManager } from "../DeadlineManager";
+import { DocumentVersions } from "../components/DocumentVersions";
 
 interface CollaborationPanelProps {
   document?: DocumentDetails;
@@ -71,7 +72,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
                 <Comments 
-                  documentId={docId} 
+                  documentId={docId}
                   onCommentAdded={onCommentAdded}
                   comments={document?.comments || []}
                 />
@@ -94,12 +95,10 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
           <TabsContent value="versions" className="mt-0 h-full">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
-                <div className="text-sm">
-                  <h3 className="font-medium mb-2">Document History</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Version history for this document will appear here.
-                  </p>
-                </div>
+                <DocumentVersions
+                  documentId={docId}
+                  documentVersions={[]}
+                />
               </div>
             </ScrollArea>
           </TabsContent>

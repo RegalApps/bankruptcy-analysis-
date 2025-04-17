@@ -30,6 +30,10 @@ export interface Comment {
   content: string;
   created_at: string;
   user_id: string;
+  document_id: string;
+  parent_id?: string;
+  mentions?: string[];
+  is_resolved?: boolean;
 }
 
 export interface Deadline {
@@ -88,14 +92,17 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: 'todo' | 'in_progress' | 'completed';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled'; // Updated to match usage
   priority: 'low' | 'medium' | 'high';
+  severity?: 'low' | 'medium' | 'high'; // Added missing property
   due_date?: string;
   assigned_to?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   document_id: string;
   risk_id?: string;
+  regulation?: string; // Added missing property
+  solution?: string; // Added missing property
 }
 
 // Document version interface needed by DocumentVersions
@@ -103,10 +110,13 @@ export interface DocumentVersion {
   id: string;
   document_id: string;
   version_number: number;
+  version_name?: string; // Added missing property
   storage_path: string;
   created_at: string;
   created_by: string;
   comment?: string;
+  is_current?: boolean; // Added missing property
+  changes_summary?: string; // Added missing property
 }
 
 // Analysis Panel Props interface
