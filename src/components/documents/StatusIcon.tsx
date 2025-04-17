@@ -1,9 +1,7 @@
 
 import { CircleCheck, CircleAlert, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Export the type so it can be used by other components
-export type DocumentStatus = "needs-review" | "complete" | "needs-signature" | undefined;
+import { DocumentStatus } from "@/utils/documents/types";
 
 interface StatusIconProps {
   status: DocumentStatus;

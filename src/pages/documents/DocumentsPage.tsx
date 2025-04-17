@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { toast } from "sonner";
+import { DocumentTreeNode } from "@/utils/documents/types";
 
 // Hardcoded demo data for Josh Hart
 const DEMO_CLIENTS = [
@@ -44,31 +45,31 @@ const DEMO_CLIENTS = [
 ];
 
 // Josh Hart's document tree structure
-const JOSH_HART_DOCUMENTS = [
+const JOSH_HART_DOCUMENTS: DocumentTreeNode[] = [
   {
     id: "josh-hart-root",
     name: "Josh Hart",
-    type: "folder" as const,
-    folderType: "client" as const,
-    status: "needs-review" as const,
+    type: "folder",
+    folderType: "client",
+    status: "needs-review",
     children: [
       {
         id: "estate-folder",
         name: "Estate 2025-47",
-        type: "folder" as const,
-        folderType: "estate" as const,
+        type: "folder",
+        folderType: "estate",
         children: [
           {
             id: "form47-folder",
             name: "Form 47 - Consumer Proposal",
-            type: "folder" as const,
-            folderType: "form" as const,
+            type: "folder",
+            folderType: "form",
             children: [
               {
                 id: "form47-file",
                 name: "Form47_Draft1.pdf",
-                type: "file" as const,
-                status: "needs-review" as const,
+                type: "file",
+                status: "needs-review",
                 filePath: "/documents/form47.pdf"
               }
             ]
@@ -76,14 +77,14 @@ const JOSH_HART_DOCUMENTS = [
           {
             id: "financials-folder",
             name: "Financials",
-            type: "folder" as const,
-            folderType: "financials" as const,
+            type: "folder",
+            folderType: "financials",
             children: [
               {
                 id: "budget-file",
                 name: "Budget_2025.xlsx",
-                type: "file" as const,
-                status: "needs-review" as const,
+                type: "file",
+                status: "needs-review",
                 filePath: "/documents/budget.xlsx"
               }
             ]

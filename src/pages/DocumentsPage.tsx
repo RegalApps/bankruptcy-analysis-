@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { ClientList } from "@/components/documents/ClientList";
 import { DocumentTree } from "@/components/documents/DocumentTree";
@@ -6,23 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { toast } from "sonner";
-
-// Define a proper DocumentStatus type to match what DocumentTree expects
-type DocumentStatus = "needs-review" | "complete" | "needs-signature" | undefined;
-
-// Define FolderType to match what DocumentTree expects
-type FolderType = 'client' | 'estate' | 'form' | 'financials' | 'default';
-
-// Updated type definition for TreeNode that matches DocumentTree expectations
-interface TreeNode {
-  id: string;
-  name: string;
-  type: "folder" | "file";
-  folderType?: FolderType;
-  status?: DocumentStatus;
-  children?: TreeNode[];
-  filePath?: string;
-}
+import { DocumentTreeNode, DocumentStatus } from "@/utils/documents/types";
 
 // Hardcoded demo data for clients
 const DEMO_CLIENTS = [
@@ -61,7 +44,7 @@ const DEMO_CLIENTS = [
 ];
 
 // Document tree structure for all clients - fixed status to match DocumentStatus type
-const CLIENT_DOCUMENTS: TreeNode[] = [
+const CLIENT_DOCUMENTS: DocumentTreeNode[] = [
   // Josh Hart's documents
   {
     id: "josh-hart-root",
