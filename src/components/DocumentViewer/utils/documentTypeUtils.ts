@@ -3,7 +3,7 @@
  * Centralized utility for document type detection and path handling
  */
 
-import { logDebug } from "@/utils/logger";
+import logger from "@/utils/logger";
 
 /**
  * Determines if a document is a Form 31 (Proof of Claim) based on various indicators
@@ -28,7 +28,7 @@ export const isDocumentForm31 = (
     if (formType.toLowerCase().includes('form-31') || 
         formType.toLowerCase().includes('proof of claim') ||
         formNumber === '31') {
-      logDebug('Form 31 detected via metadata');
+      logger.debug('Form 31 detected via metadata');
       return true;
     }
   }
@@ -38,7 +38,7 @@ export const isDocumentForm31 = (
     if (documentId.toLowerCase().includes('form31') ||
         documentId.toLowerCase().includes('form-31') ||
         documentId.toLowerCase().includes('greentech')) {
-      logDebug('Form 31 detected via document ID');
+      logger.debug('Form 31 detected via document ID');
       return true;
     }
   }
@@ -48,7 +48,7 @@ export const isDocumentForm31 = (
     if (storagePath.toLowerCase().includes('form31') ||
         storagePath.toLowerCase().includes('form-31') ||
         storagePath.toLowerCase().includes('greentech')) {
-      logDebug('Form 31 detected via storage path');
+      logger.debug('Form 31 detected via storage path');
       return true;
     }
   }
@@ -59,7 +59,7 @@ export const isDocumentForm31 = (
         title.toLowerCase().includes('form31') ||
         title.toLowerCase().includes('proof of claim') ||
         title.toLowerCase().includes('greentech')) {
-      logDebug('Form 31 detected via document title');
+      logger.debug('Form 31 detected via document title');
       return true;
     }
   }

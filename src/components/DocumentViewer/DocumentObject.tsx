@@ -1,8 +1,16 @@
 
 import React, { useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { DocumentObjectProps } from "./types";
 import { isDocumentForm31 } from "./utils/documentTypeUtils";
+
+// Define the DocumentObjectProps interface directly in this file
+export interface DocumentObjectProps {
+  publicUrl: string | null;
+  isExcelFile?: boolean;
+  storagePath?: string | null;
+  documentId?: string | null;
+  onError?: () => void;
+}
 
 export const DocumentObject: React.FC<DocumentObjectProps> = ({ 
   publicUrl, 
