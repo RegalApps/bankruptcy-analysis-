@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useGreenTechForm31Risks } from './DocumentViewer/hooks/useGreenTechForm31Risks';
 import { Risk } from './DocumentViewer/types';
 import { Badge } from './ui/badge';
+import { RegulatoryCompliance } from '@/utils/documents/types/analysisTypes';
 
 export const TestForm31Viewer: React.FC = () => {
   const [documentId, setDocumentId] = useState<string | null>(null);
@@ -133,7 +134,7 @@ export const TestForm31Viewer: React.FC = () => {
   };
 
   const renderBIAComplianceSection = () => {
-    const mockBIAStatus = 'non_compliant';
+    const mockBIAStatus: RegulatoryCompliance['status'] = 'non_compliant';
     
     return (
       <div className="space-y-4">
