@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AlertTriangle, Download, ExternalLink, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
@@ -58,7 +57,6 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
     setLocalZoom(zoomLevel);
   }, [zoomLevel]);
   
-  // Set up a more efficient scroll handler using requestAnimationFrame
   useEffect(() => {
     const container = pdfContainerRef.current;
     
@@ -340,7 +338,7 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="text-center">
-            <LoadingSpinner size="large" className="mx-auto mb-4" />
+            <LoadingSpinner size="lg" className="mx-auto mb-4" />
             <p className="text-muted-foreground">Loading document...</p>
             {retryCount > 0 && (
               <p className="text-xs text-muted-foreground mt-2">

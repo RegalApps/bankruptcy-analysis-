@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -19,14 +18,12 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
   const [showRetry, setShowRetry] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   
-  // Track loading time
   useEffect(() => {
     const startTime = Date.now();
     const interval = setInterval(() => {
       const newTime = Math.floor((Date.now() - startTime) / 1000);
       setLoadingTime(newTime);
       
-      // Show retry button earlier (after 3 seconds) when there are network issues
       if ((networkError && newTime > 2) || (!networkError && newTime > 5)) {
         setShowRetry(true);
       }
@@ -35,7 +32,6 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
     return () => clearInterval(interval);
   }, [networkError]);
   
-  // Different messages based on loading time and network status
   const getLoadingMessage = useCallback(() => {
     if (networkError) {
       return "Network connection issues detected. The server might be unavailable or there may be connectivity problems.";
@@ -55,7 +51,6 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
     if (onRetry) {
       setIsRetrying(true);
       
-      // Add a small delay to give feedback that retry is happening
       setTimeout(() => {
         onRetry();
         setLoadingTime(0);
@@ -73,7 +68,7 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
           <WifiOff size={40} className="text-destructive" />
         </div>
       ) : (
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="lg" />
       )}
       
       <div className="text-center max-w-md px-4">
@@ -105,7 +100,6 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
         )}
       </div>
       
-      {/* Clean up skeleton UI to be more compact */}
       {!networkError && (
         <div className="w-full max-w-3xl px-6 mt-4">
           <Skeleton className="h-6 w-2/3 mb-4" />

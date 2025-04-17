@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useClientData } from "../../hooks/useClientData";
 import { ClientHeader } from "./ClientHeader";
@@ -28,7 +27,6 @@ export const ClientViewerContainer = ({
     setClient
   } = useClientData(clientId, onBack);
 
-  // If there's an error, call the error callback
   useEffect(() => {
     if (error && onError) {
       console.error("ClientViewerContainer: Error loading client data:", error);
@@ -36,7 +34,6 @@ export const ClientViewerContainer = ({
     }
   }, [error, onError]);
 
-  // Prevent flickering by delaying the mount
   useEffect(() => {
     console.log("ClientViewerContainer: Setting up mount timer for clientId:", clientId);
     const timer = setTimeout(() => {
@@ -50,7 +47,6 @@ export const ClientViewerContainer = ({
     };
   }, [clientId]);
 
-  // Notify the user when client data is successfully loaded
   useEffect(() => {
     if (isMounted && client && !isLoading) {
       console.log("ClientViewerContainer: Client data loaded successfully:", client.name);
@@ -61,11 +57,8 @@ export const ClientViewerContainer = ({
   const handleClientUpdate = (updatedClient: Client) => {
     console.log("ClientViewerContainer: Updating client information:", updatedClient);
     
-    // Update the client data in state
     setClient(updatedClient);
     
-    // In a real app, this would save to a database
-    // For now, we'll simulate successful saving with a toast
     toast.success("Client information saved", {
       description: "Changes will be persisted for this session"
     });
@@ -75,7 +68,7 @@ export const ClientViewerContainer = ({
     console.log("ClientViewerContainer: Still loading or not mounted yet");
     return (
       <div className="h-full flex items-center justify-center">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }

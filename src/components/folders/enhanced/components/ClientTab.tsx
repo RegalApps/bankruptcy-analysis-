@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ClientViewer } from "@/components/client/ClientViewer";
 import { ClientNotFound } from "@/components/client/components/ClientNotFound";
@@ -119,7 +118,7 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <LoadingSpinner size="large" className="mx-auto mb-4" />
+          <LoadingSpinner size="lg" className="mx-auto mb-4" />
           <p className="text-muted-foreground">Loading client information...</p>
           {clientId.toLowerCase().includes('josh') && (
             <p className="text-xs text-muted-foreground mt-2">
