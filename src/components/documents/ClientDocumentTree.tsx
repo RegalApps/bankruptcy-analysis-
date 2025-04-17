@@ -1,81 +1,65 @@
 
-import { Document } from "@/components/DocumentList/types";
-import { ChevronDown, ChevronRight, FileText, Folder, User } from "lucide-react";
+import { ChevronRight, ChevronDown, FileText, FolderOpen } from "lucide-react";
 import { useState } from "react";
+import { StatusIcon } from "./StatusIcon";
 import { cn } from "@/lib/utils";
 
 interface ClientDocumentTreeProps {
   client: {
     id: string;
     name: string;
-    documents: Document[];
+    documents: any[];
   };
   onDocumentSelect: (documentId: string) => void;
-  selectedDocumentId?: string;
 }
 
 export const ClientDocumentTree = ({ 
-  client, 
-  onDocumentSelect,
-  selectedDocumentId 
+  client,
+  onDocumentSelect
 }: ClientDocumentTreeProps) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-
-  const documentsByType = client.documents.reduce((acc, doc) => {
-    const type = doc.type || 'Other';
-    if (!acc[type]) {
-      acc[type] = [];
-    }
-    acc[type].push(doc);
-    return acc;
-  }, {} as Record<string, Document[]>);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="space-y-1">
+    <div className="border rounded-md overflow-hidden shadow-sm">
       <div 
-        className={cn(
-          "flex items-center gap-2 p-2 hover:bg-accent/50 rounded-md cursor-pointer",
-          "text-sm font-medium"
-        )}
+        className="flex items-center justify-between bg-muted/50 px-3 py-2 cursor-pointer hover:bg-muted transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
+        <div className="flex items-center gap-2">
+          <FolderOpen className="h-4 w-4 text-primary" />
+          <span className="font-medium">{client.name}</span>
+          <span className="text-xs text-muted-foreground ml-2">
+            ({client.documents.length} document{client.documents.length !== 1 ? 's' : ''})
+          </span>
+        </div>
         {isExpanded ? (
           <ChevronDown className="h-4 w-4" />
         ) : (
           <ChevronRight className="h-4 w-4" />
         )}
-        <User className="h-4 w-4 text-primary" />
-        <span>{client.name}</span>
-        <span className="text-xs text-muted-foreground ml-2">
-          ({client.documents.length} documents)
-        </span>
       </div>
-
+      
       {isExpanded && (
-        <div className="ml-6 space-y-1">
-          {Object.entries(documentsByType).map(([type, docs]) => (
-            <div key={type} className="space-y-1">
-              <div className="flex items-center gap-2 p-1 text-sm text-muted-foreground">
-                <Folder className="h-4 w-4" />
-                {type}
+        <div className="divide-y">
+          {client.documents.map((doc) => (
+            <div 
+              key={doc.id}
+              className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-accent/20 transition-colors"
+              onClick={() => onDocumentSelect(doc.id)}
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className={cn("text-sm", doc.status === "needs-review" ? "font-medium" : "")}>{doc.name}</span>
               </div>
-              <div className="ml-4 space-y-1">
-                {docs.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className={cn(
-                      "flex items-center gap-2 p-2 hover:bg-accent/50 rounded-md cursor-pointer",
-                      selectedDocumentId === doc.id && "bg-accent"
-                    )}
-                    onClick={() => onDocumentSelect(doc.id)}
-                  >
-                    <FileText className="h-4 w-4" />
-                    <span className="text-sm truncate">{doc.title}</span>
-                  </div>
-                ))}
-              </div>
+              <StatusIcon status={doc.status} />
             </div>
           ))}
+          
+          {client.documents.length === 0 && (
+            <div className="px-3 py-2 text-sm text-muted-foreground">
+              No documents available
+            </div>
+          )}
         </div>
       )}
     </div>

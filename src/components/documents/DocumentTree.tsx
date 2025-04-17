@@ -8,13 +8,13 @@ import { DocumentTreeNode } from "@/utils/documents/types";
 interface DocumentTreeProps {
   onNodeSelect: (node: any) => void;
   onFileOpen: (node: any) => void;
-  rootNodes?: DocumentTreeNode[]; // Add this prop for compatibility
+  rootNodes?: DocumentTreeNode[]; // This prop should be defined
 }
 
 export const DocumentTree = ({ 
   onNodeSelect,
   onFileOpen,
-  rootNodes // Add this prop for compatibility
+  rootNodes // Make sure this prop is recognized
 }: DocumentTreeProps) => {
   const { documentTree, isLoading } = useDocumentTree();
   

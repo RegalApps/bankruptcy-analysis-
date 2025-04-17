@@ -1,35 +1,55 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { DocumentRecord } from '../types';
+import { toast } from "sonner";
+import { DocumentRecord } from '@/utils/documents/types/documentTypes';
 
-export const useAnalysisStatus = (documentId: string) => {
-  const [status, setStatus] = useState<string>('');
-  const [isComplete, setIsComplete] = useState(false);
+interface UseAnalysisStatusProps {
+  documentId: string;
+  onAnalysisComplete?: () => void;
+}
 
+export const useAnalysisStatus = ({ documentId, onAnalysisComplete }: UseAnalysisStatusProps) => {
+  const [isAnalyzed, setIsAnalyzed] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(true);
+  const [document, setDocument] = useState<DocumentRecord | null>(null);
+
+  // Fetch initial document status
   useEffect(() => {
-    // Initial fetch
-    const fetchStatus = async () => {
-      const { data, error } = await supabase
-        .from('documents')
-        .select('ai_processing_status')
-        .eq('id', documentId)
-        .single();
+    const fetchDocumentStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('documents')
+          .select('*')
+          .eq('id', documentId)
+          .single();
         
-      if (error) {
-        console.error('Error fetching analysis status:', error);
-        return;
+        if (error) throw error;
+        
+        setDocument(data);
+        const status = data?.ai_processing_status;
+        setIsProcessing(status === 'pending' || status === 'processing');
+        setIsAnalyzed(status === 'completed' || status === 'complete');
+        
+        if (status === 'completed' || status === 'complete') {
+          onAnalysisComplete?.();
+        }
+      } catch (error) {
+        console.error('Error fetching document status:', error);
       }
-      
-      setStatus(data.ai_processing_status);
-      setIsComplete(data.ai_processing_status === 'completed');
     };
 
-    fetchStatus();
+    if (documentId) {
+      fetchDocumentStatus();
+    }
+  }, [documentId, onAnalysisComplete]);
 
-    // Subscribe to changes
+  // Set up real-time subscription for document status updates
+  useEffect(() => {
+    if (!documentId) return;
+
     const channel = supabase
-      .channel(`document-${documentId}`)
+      .channel(`document_status_${documentId}`)
       .on(
         'postgres_changes',
         {
@@ -38,10 +58,21 @@ export const useAnalysisStatus = (documentId: string) => {
           table: 'documents',
           filter: `id=eq.${documentId}`
         },
-        (payload: any) => {
-          const newStatus = payload.new.ai_processing_status;
-          setStatus(newStatus);
-          setIsComplete(newStatus === 'completed');
+        (payload) => {
+          console.log('Document status update:', payload);
+          const updatedDoc = payload.new as DocumentRecord;
+          setDocument(updatedDoc);
+          
+          const status = updatedDoc.ai_processing_status;
+          setIsProcessing(status === 'pending' || status === 'processing');
+          
+          if (status === 'completed' || status === 'complete') {
+            setIsAnalyzed(true);
+            onAnalysisComplete?.();
+            toast.success("Document analysis complete");
+          } else if (status === 'error') {
+            toast.error("Error analyzing document");
+          }
         }
       )
       .subscribe();
@@ -49,7 +80,11 @@ export const useAnalysisStatus = (documentId: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [documentId]);
+  }, [documentId, onAnalysisComplete]);
 
-  return { status, isComplete };
+  return {
+    isAnalyzed,
+    isProcessing,
+    document
+  };
 };
