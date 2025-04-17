@@ -4,6 +4,7 @@ import { useUploadProgress } from '@/utils/documents/uploadTracker';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export const UploadProgressTracker = () => {
   const [activeUploads, setActiveUploads] = useState<any[]>([]);
@@ -62,20 +63,13 @@ export const UploadProgressTracker = () => {
               </div>
               <Progress 
                 value={upload.progress} 
-                className={`h-1.5 ${
+                className={cn("h-1.5", 
                   upload.status === 'error' 
                     ? 'bg-destructive/20' 
                     : upload.status === 'complete' 
                       ? 'bg-green-500/20' 
                       : 'bg-muted'
-                }`}
-                indicatorClassName={
-                  upload.status === 'error' 
-                    ? 'bg-destructive' 
-                    : upload.status === 'complete' 
-                      ? 'bg-green-500'
-                      : undefined
-                }
+                )}
               />
             </div>
           ))}

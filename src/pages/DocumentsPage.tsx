@@ -51,7 +51,7 @@ const CLIENT_DOCUMENTS: DocumentTreeNode[] = [
     name: "Josh Hart",
     type: "folder",
     folderType: "client",
-    status: "needs-review",
+    status: "needs-review" as DocumentStatus,
     children: [
       {
         id: "estate-folder",
@@ -195,7 +195,7 @@ const CLIENT_DOCUMENTS: DocumentTreeNode[] = [
             id: "form43-file",
             name: "Form43_ConsumerProposal.pdf",
             type: "file",
-            status: "needs-signature",
+            status: "needs-signature" as DocumentStatus,
             filePath: "/documents/form43.pdf"
           },
           {

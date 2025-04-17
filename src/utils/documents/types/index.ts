@@ -1,4 +1,3 @@
-
 // Define the possible document statuses
 export type DocumentStatus = 
   | 'pending'
@@ -8,7 +7,8 @@ export type DocumentStatus =
   | 'error'
   | 'needs-review'
   | 'approved'
-  | 'rejected';
+  | 'rejected'
+  | 'needs-signature';
 
 // Define document tree node structure
 export interface DocumentTreeNode {
