@@ -1,20 +1,27 @@
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClientDocumentTree } from "./ClientDocumentTree";
 import { useDocumentTree } from "./useDocumentTree";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { DocumentTreeNode } from "@/utils/documents/types";
 
 interface DocumentTreeProps {
   onNodeSelect: (node: any) => void;
   onFileOpen: (node: any) => void;
+  rootNodes?: DocumentTreeNode[]; // Add this prop for compatibility
 }
 
 export const DocumentTree = ({ 
   onNodeSelect,
-  onFileOpen 
+  onFileOpen,
+  rootNodes // Add this prop for compatibility
 }: DocumentTreeProps) => {
   const { documentTree, isLoading } = useDocumentTree();
+  
+  // Use passed rootNodes if available, otherwise use documentTree from hook
+  const effectiveNodes = rootNodes || documentTree;
 
-  if (isLoading) {
+  if (isLoading && !rootNodes) {
     return (
       <div className="flex items-center justify-center h-full">
         <LoadingSpinner />
@@ -39,11 +46,11 @@ export const DocumentTree = ({
       node.children?.forEach(processNode);
     };
 
-    documentTree.forEach(processNode);
+    effectiveNodes.forEach(processNode);
     return Array.from(clientMap.values());
   };
 
-  const clients = groupDocumentsByClient(documentTree);
+  const clients = groupDocumentsByClient(effectiveNodes);
 
   return (
     <ScrollArea className="h-[calc(100vh-16rem)]">
@@ -53,7 +60,7 @@ export const DocumentTree = ({
             key={client.id}
             client={client}
             onDocumentSelect={(documentId) => {
-              const node = findDocumentNode(documentTree, documentId);
+              const node = findDocumentNode(effectiveNodes, documentId);
               if (node) {
                 onFileOpen(node);
               }

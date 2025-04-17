@@ -1,4 +1,3 @@
-
 export interface ViewerToolbarProps {
   title: string;
   zoomLevel: number;
@@ -80,4 +79,16 @@ export interface RiskHighlightOverlayProps {
   onRiskClick: (risk: any) => void;
   containerRef: React.RefObject<HTMLDivElement>;
   currentPage?: number;
+}
+
+export interface DocumentRecord {
+  id: string;
+  title: string;
+  storage_path: string;
+  metadata: Record<string, any>;
+  ai_processing_status: string;
+  type?: string;
+  created_at?: string;
+  updated_at?: string;
+  url?: string;
 }
