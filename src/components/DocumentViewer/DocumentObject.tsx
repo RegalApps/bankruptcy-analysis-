@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { isDocumentForm31, getEffectiveStoragePath } from "./utils/documentTypeUtils";
 
@@ -20,12 +20,24 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
   onError
 }) => {
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadAttempts, setLoadAttempts] = useState(0);
 
   const handleError = () => {
     console.error('Error loading document in iframe');
     setLoadError("The document couldn't be displayed. It may be in an unsupported format or inaccessible.");
+    setLoadAttempts(prev => prev + 1);
+    
     if (onError) onError();
   };
+  
+  useEffect(() => {
+    console.log("DocumentObject rendered with:", { 
+      publicUrl: publicUrl ? "exists" : "null", 
+      storagePath, 
+      documentId, 
+      loadAttempts 
+    });
+  }, [publicUrl, storagePath, documentId, loadAttempts]);
 
   // Cache-bust the URL to ensure fresh content
   const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
@@ -50,6 +62,7 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
           title="Document Preview"
           src={localPath}
           onError={handleError}
+          onLoad={() => console.log("Form 31 document loaded successfully")}
         />
       </div>
     );
@@ -78,6 +91,11 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
             <p className="text-xs text-muted-foreground">
               Try downloading the document directly if you need to view its contents.
             </p>
+            {loadAttempts > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Attempt: {loadAttempts} of 3
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -87,6 +105,7 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
         title="Document Preview"
         src={cacheBustedUrl}
         onError={handleError}
+        onLoad={() => console.log("Document loaded successfully from URL:", cacheBustedUrl ? "exists" : "null")}
       />
     </div>
   );

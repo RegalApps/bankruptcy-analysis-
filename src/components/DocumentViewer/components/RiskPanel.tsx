@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -14,7 +15,7 @@ interface RiskPanelProps {
 }
 
 const RiskRegulationLink = ({ regulation }: { regulation: string }) => {
-  if (!isValidBIAReference(regulation)) return <span>{regulation}</span>;
+  if (!regulation || !isValidBIAReference(regulation)) return <span>{regulation}</span>;
   
   return (
     <a

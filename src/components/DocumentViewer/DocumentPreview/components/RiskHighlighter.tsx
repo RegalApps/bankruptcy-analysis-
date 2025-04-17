@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Risk } from "@/components/DocumentViewer/types";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,13 @@ export const RiskHighlighter: React.FC<RiskHighlighterProps> = ({
   
   const handleClick = (e: React.MouseEvent) => {
     if (risk.regulation && isValidBIAReference(risk.regulation)) {
-      window.open(getBIALink(risk.regulation), '_blank');
+      try {
+        const url = getBIALink(risk.regulation);
+        console.log(`Opening BIA regulation link: ${url}`);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } catch (error) {
+        console.error("Error opening regulation link:", error);
+      }
       e.stopPropagation();
     } else {
       onClick();
