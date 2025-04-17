@@ -134,3 +134,41 @@ export const getDocumentPublicUrl = async (storagePath: string): Promise<string 
     return null;
   }
 };
+
+// Adding the missing function that's being imported in riskAssessment.ts
+export const createForm47RiskAssessment = async (documentId: string): Promise<any> => {
+  try {
+    // This function would typically create a risk assessment for a Form 47 document
+    // Since we're just adding this to fix the import error, we'll provide a basic implementation
+    console.log(`Creating risk assessment for Form 47 document: ${documentId}`);
+    
+    // Return mock risk data similar to what would be expected
+    return {
+      risks: [
+        {
+          type: "Missing Income Details",
+          description: "The consumer proposal form is missing detailed income verification.",
+          severity: "high",
+          regulation: "Consumer Proposal Regulations Section 66.12",
+          impact: "May delay approval process by regulatory authorities.",
+          requiredAction: "Add complete income statements for the last 3 months.",
+          solution: "Upload pay stubs or income verification documents."
+        },
+        {
+          type: "Creditor Information",
+          description: "One or more creditors are missing contact information.",
+          severity: "medium",
+          regulation: "BIA Directive 1R4",
+          impact: "Creditors may not receive proper notification.",
+          requiredAction: "Complete all creditor contact information fields.",
+          solution: "Use the creditor lookup tool to complete missing fields."
+        }
+      ],
+      documentId,
+      createdAt: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error(`Error creating Form 47 risk assessment: ${error}`);
+    throw error;
+  }
+};

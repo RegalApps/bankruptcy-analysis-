@@ -9,7 +9,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
   },
   global: {
-    fetch: (...args) => fetch(...args),
+    // Fix the spread issue by providing the fetch function directly
+    fetch: (url: RequestInfo | URL, init?: RequestInit) => fetch(url, init),
   },
 });
 
