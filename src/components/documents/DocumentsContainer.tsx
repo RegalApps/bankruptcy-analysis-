@@ -70,6 +70,20 @@ export const DocumentsContainer = ({
     setSelectedDocumentId(documentId);
   };
 
+  // Define handler functions required by DocumentTree
+  const handleNodeSelect = (node: any) => {
+    console.log("Selected node:", node);
+    // If the node is a file, select it
+    if (node.type === 'file') {
+      setSelectedDocumentId(node.id);
+    }
+  };
+  
+  const handleFileOpen = (node: any) => {
+    console.log("Opening file:", node);
+    setSelectedDocumentId(node.id);
+  };
+
   const handleDocumentUploaded = (documentId: string) => {
     // Refresh the document tree
     buildDocumentTree().then(tree => {
@@ -104,10 +118,12 @@ export const DocumentsContainer = ({
           </div>
         ) : (
           <DocumentTree 
-            documents={documentTree} 
+            documents={documentTree}
             selectedDocumentId={selectedDocumentId}
             onDocumentSelect={handleDocumentSelected}
             clientId={clientId}
+            onNodeSelect={handleNodeSelect}
+            onFileOpen={handleFileOpen}
           />
         )}
       </div>
