@@ -17,6 +17,8 @@ serve(async (req) => {
   try {
     const { query } = await req.json();
 
+    console.log('Searching regulations with query:', query);
+    
     const response = await fetch('https://api.exa.ai/search', {
       method: 'POST',
       headers: {
@@ -36,9 +38,12 @@ serve(async (req) => {
     const data = await response.json();
     
     if (!response.ok) {
+      console.error('Error from Exa API:', data);
       throw new Error(data.message || 'Failed to fetch regulations');
     }
 
+    console.log('Successfully retrieved regulation results');
+    
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

@@ -19,16 +19,23 @@ export const useRegulationSearch = () => {
     setError(null);
 
     try {
+      console.log('Invoking search-regulations function with query:', query);
+      
       const { data, error } = await supabase.functions.invoke('search-regulations', {
         body: { query }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
 
+      console.log('Received regulation search results:', data);
       setResults(data.results);
     } catch (err: any) {
       console.error('Error searching regulations:', err);
       setError(err.message || 'Failed to search regulations');
+      setResults([]);
     } finally {
       setIsLoading(false);
     }
