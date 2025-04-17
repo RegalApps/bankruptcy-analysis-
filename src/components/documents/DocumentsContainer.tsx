@@ -1,0 +1,127 @@
+
+import { useEffect, useState } from "react";
+import { buildDocumentTree, setupDocumentSync } from "@/utils/documents/documentSync";
+import { DocumentTreeNode } from "@/utils/documents/types";
+import { DocumentDisplay } from "./DocumentDisplay";
+import { DocumentTree } from "./DocumentTree";
+import { DocumentViewerPanel } from "../DocumentViewer/DocumentViewerPanel";
+import { useToast } from "@/hooks/use-toast";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { UploadButton } from "./UploadButton";
+
+interface DocumentsContainerProps {
+  clientId?: string;
+  clientName?: string;
+  initialDocumentId?: string;
+}
+
+export const DocumentsContainer = ({
+  clientId,
+  clientName,
+  initialDocumentId
+}: DocumentsContainerProps) => {
+  const [documentTree, setDocumentTree] = useState<DocumentTreeNode[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(initialDocumentId || null);
+  const { toast } = useToast();
+
+  // Load document tree
+  useEffect(() => {
+    const loadDocuments = async () => {
+      setIsLoading(true);
+      try {
+        const tree = await buildDocumentTree();
+        setDocumentTree(tree);
+      } catch (error) {
+        console.error("Error loading document tree:", error);
+        toast({
+          title: "Error loading documents",
+          description: "There was a problem loading your documents. Please try refreshing the page.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadDocuments();
+  }, [toast]);
+  
+  // Set up sync for real-time updates
+  useEffect(() => {
+    const unsubscribe = setupDocumentSync(() => {
+      // Rebuild document tree when changes are detected
+      buildDocumentTree().then(tree => {
+        setDocumentTree(tree);
+      });
+    });
+    
+    return unsubscribe;
+  }, []);
+
+  // Set initial document selection from prop
+  useEffect(() => {
+    if (initialDocumentId) {
+      setSelectedDocumentId(initialDocumentId);
+    }
+  }, [initialDocumentId]);
+
+  const handleDocumentSelected = (documentId: string) => {
+    setSelectedDocumentId(documentId);
+  };
+
+  const handleDocumentUploaded = (documentId: string) => {
+    // Refresh the document tree
+    buildDocumentTree().then(tree => {
+      setDocumentTree(tree);
+    });
+    
+    // Select the newly uploaded document
+    setSelectedDocumentId(documentId);
+    
+    toast({
+      title: "Document uploaded successfully",
+      description: "The document will be processed and analyzed"
+    });
+  };
+
+  return (
+    <div className="flex h-full">
+      <div className="w-1/4 border-r p-4">
+        <div className="mb-4">
+          <UploadButton 
+            clientId={clientId} 
+            clientName={clientName} 
+            onUploadComplete={handleDocumentUploaded}
+            variant="outline"
+            className="w-full"
+          />
+        </div>
+        
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <LoadingSpinner size="md" />
+          </div>
+        ) : (
+          <DocumentTree 
+            documents={documentTree} 
+            selectedDocumentId={selectedDocumentId}
+            onDocumentSelect={handleDocumentSelected}
+            clientId={clientId}
+          />
+        )}
+      </div>
+      
+      <div className="flex-1">
+        {selectedDocumentId ? (
+          <DocumentViewerPanel 
+            documentId={selectedDocumentId} 
+            onClose={() => setSelectedDocumentId(null)}
+          />
+        ) : (
+          <DocumentDisplay />
+        )}
+      </div>
+    </div>
+  );
+};
