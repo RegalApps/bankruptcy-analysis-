@@ -10,7 +10,7 @@ export const createForm47DemoDocument = (documentId: string): DocumentDetails =>
     created_at: new Date().toISOString(),
     user_id: "1",
     updated_at: new Date().toISOString(),
-    folder_id: null,
+    parent_folder_id: null, // Changed from folder_id to parent_folder_id
     file_type: "application/pdf",
     file_size: 1024 * 1024 * 2, // 2MB
     is_public: false,
@@ -109,7 +109,7 @@ export const createForm31DemoDocument = (documentId: string): DocumentDetails =>
     created_at: new Date().toISOString(),
     user_id: "1",
     updated_at: new Date().toISOString(),
-    folder_id: null,
+    parent_folder_id: null, // Changed from folder_id to parent_folder_id
     file_type: "application/pdf",
     file_size: 1024 * 1024 * 1.5, // 1.5MB
     is_public: false,
