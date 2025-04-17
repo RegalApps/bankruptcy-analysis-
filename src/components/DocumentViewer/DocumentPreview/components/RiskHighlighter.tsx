@@ -1,7 +1,7 @@
-
 import React from "react";
 import { Risk } from "@/components/DocumentViewer/types";
 import { cn } from "@/lib/utils";
+import { getBIALink, isValidBIAReference } from "@/utils/regulationUtils";
 
 interface RiskHighlighterProps {
   risk: Risk;
@@ -31,6 +31,15 @@ export const RiskHighlighter: React.FC<RiskHighlighterProps> = ({
     }
   };
   
+  const handleClick = (e: React.MouseEvent) => {
+    if (risk.regulation && isValidBIAReference(risk.regulation)) {
+      window.open(getBIALink(risk.regulation), '_blank');
+      e.stopPropagation();
+    } else {
+      onClick();
+    }
+  };
+  
   return (
     <div
       className={cn(
@@ -46,8 +55,8 @@ export const RiskHighlighter: React.FC<RiskHighlighterProps> = ({
         zIndex: isActive ? 20 : 10,
         transition: "all 0.2s ease"
       }}
-      onClick={onClick}
-      title={risk.description}
+      onClick={handleClick}
+      title={`${risk.description}${risk.regulation ? `\nRegulation: ${risk.regulation}` : ''}`}
     />
   );
 };

@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, Check } from "lucide-react";
 import { getForm31DemoAnalysisData } from "../utils/documentTypeUtils";
+import { getBIALink, isValidBIAReference } from "@/utils/regulationUtils";
 
 interface RiskPanelProps {
   risks: any[];
@@ -13,6 +13,22 @@ interface RiskPanelProps {
   isForm31GreenTech?: boolean;
 }
 
+const RiskRegulationLink = ({ regulation }: { regulation: string }) => {
+  if (!isValidBIAReference(regulation)) return <span>{regulation}</span>;
+  
+  return (
+    <a
+      href={getBIALink(regulation)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 hover:underline"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {regulation}
+    </a>
+  );
+};
+
 export const RiskPanel: React.FC<RiskPanelProps> = ({
   risks,
   isLoading,
@@ -20,7 +36,6 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
   documentId,
   isForm31GreenTech = false
 }) => {
-  // For Form 31 documents, ensure we always have risk data
   const finalRisks = isForm31GreenTech && (!risks || risks.length === 0) 
                     ? getForm31DemoAnalysisData().risks
                     : risks;
@@ -47,7 +62,6 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
     );
   }
   
-  // Group risks by severity
   const highRisks = finalRisks.filter(risk => risk.severity === 'high');
   const mediumRisks = finalRisks.filter(risk => risk.severity === 'medium');
   const lowRisks = finalRisks.filter(risk => risk.severity === 'low');
@@ -66,7 +80,10 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
                 <h4 className="font-medium text-sm">{risk.type}</h4>
                 <p className="text-xs text-gray-700 mt-1">{risk.description}</p>
                 <div className="mt-2 text-xs text-gray-600">
-                  <p><span className="font-medium">Regulation:</span> {risk.regulation}</p>
+                  <p>
+                    <span className="font-medium">Regulation: </span>
+                    <RiskRegulationLink regulation={risk.regulation} />
+                  </p>
                   <p><span className="font-medium">Solution:</span> {risk.solution}</p>
                   <p><span className="font-medium">Deadline:</span> {risk.deadline}</p>
                 </div>
@@ -85,7 +102,10 @@ export const RiskPanel: React.FC<RiskPanelProps> = ({
                 <h4 className="font-medium text-sm">{risk.type}</h4>
                 <p className="text-xs text-gray-700 mt-1">{risk.description}</p>
                 <div className="mt-2 text-xs text-gray-600">
-                  <p><span className="font-medium">Regulation:</span> {risk.regulation}</p>
+                  <p>
+                    <span className="font-medium">Regulation: </span>
+                    <RiskRegulationLink regulation={risk.regulation} />
+                  </p>
                   <p><span className="font-medium">Solution:</span> {risk.solution}</p>
                 </div>
               </div>
