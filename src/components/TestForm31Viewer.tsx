@@ -135,7 +135,8 @@ export const TestForm31Viewer: React.FC = () => {
 
   const renderBIAComplianceSection = () => {
     // Fix TypeScript errors by using proper type comparison
-    const mockBIAStatus: RegulatoryCompliance['status'] = 'non_compliant';
+    // Define the status explicitly with type assertion
+    const mockBIAStatus = 'non_compliant' as RegulatoryCompliance['status'];
     
     return (
       <div className="space-y-4">

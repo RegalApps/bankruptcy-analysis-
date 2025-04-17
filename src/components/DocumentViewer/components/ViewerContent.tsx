@@ -49,14 +49,17 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
     title?.toLowerCase().includes('form 31') || 
     title?.toLowerCase().includes('proof of claim') || 
     documentId?.toLowerCase().includes('form31') ||
+    documentId?.toLowerCase().includes('form-31') ||
     isForm31GreenTech;
   
   const finalIsForm31GreenTech = isForm31GreenTech || detectedForm31;
 
+  // Enhanced document path handling for Form 31
+  let effectiveStoragePath = storagePath;
   if (finalIsForm31GreenTech) {
-    console.log("Form 31 GreenTech document detected!");
-    // Make sure we're using the demo path for GreenTech Form 31
-    storagePath = "demo/greentech-form31-proof-of-claim.pdf";
+    console.log("Form 31 GreenTech document detected! Using demo path");
+    // Always use the demo path for GreenTech Form 31 for reliability
+    effectiveStoragePath = "demo/greentech-form31-proof-of-claim.pdf";
   }
 
   const handleAnalysisComplete = (id: string) => {
@@ -77,7 +80,7 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
       <ResizablePanel defaultSize={70} minSize={40} className="h-full">
         <DocumentPreview
           documentId={documentId}
-          storagePath={storagePath}
+          storagePath={effectiveStoragePath}
           title={title || "Document"}
           activeRiskId={selectedRiskId}
           onRiskSelect={onRiskSelect}
