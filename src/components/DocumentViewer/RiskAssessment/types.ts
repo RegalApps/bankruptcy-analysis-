@@ -1,4 +1,3 @@
-
 export interface Risk {
   id?: string;
   type: string;
@@ -26,7 +25,7 @@ export interface Risk {
   };
   position?: {
     page?: number;
-    rect?: number[];
+    rect?: number[]; // Changed to match the expected type in EnhancedPDFViewer
     x?: number;
     y?: number;
     width?: number;

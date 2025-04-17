@@ -94,7 +94,7 @@ export interface Risk {
     width: number;
     height: number;
     page?: number;
-    rect?: number[];
+    rect?: number[]; // Changed to match RiskAssessment/types.ts
   };
 }
 
