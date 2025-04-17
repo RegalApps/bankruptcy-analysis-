@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { isDocumentForm31 } from "./utils/documentTypeUtils";
+import { isDocumentForm31, getEffectiveStoragePath } from "./utils/documentTypeUtils";
 
 // Define the DocumentObjectProps interface directly in this file
 export interface DocumentObjectProps {

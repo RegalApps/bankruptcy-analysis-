@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { DocumentPreview } from "../DocumentPreview";
 import { AnalysisPanel } from "../components/AnalysisPanel";
-import { isDocumentForm31, getEffectiveStoragePath } from "../utils/documentTypeUtils";
+import { isDocumentForm31, getEffectiveStoragePath, getForm31DemoAnalysisData } from "../utils/documentTypeUtils";
 
 interface ViewerContentProps {
   documentId: string;
@@ -33,6 +33,7 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
   onAnalysisComplete
 }) => {
   const [documentLoadAttempt, setDocumentLoadAttempt] = useState(0);
+  const [riskAnalysisData, setRiskAnalysisData] = useState<any>(null);
   
   // Add debug logs to help trace the component rendering
   useEffect(() => {
@@ -63,6 +64,22 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
     finalIsForm31GreenTech,
     documentId
   );
+
+  // Load Form 31 specific analysis data when needed
+  useEffect(() => {
+    if (finalIsForm31GreenTech && !analysis) {
+      console.log("Loading Form 31 demo analysis data");
+      setRiskAnalysisData(getForm31DemoAnalysisData());
+      
+      // Notify that analysis is complete for Form 31
+      if (onAnalysisComplete) {
+        console.log("Calling onAnalysisComplete for Form 31");
+        onAnalysisComplete(documentId);
+      }
+    } else {
+      setRiskAnalysisData(analysis);
+    }
+  }, [finalIsForm31GreenTech, analysis, documentId, onAnalysisComplete]);
 
   const handleAnalysisComplete = (id: string) => {
     console.log("Analysis completed in ViewerContent for document:", id);
@@ -114,7 +131,10 @@ export const ViewerContent: React.FC<ViewerContentProps> = ({
         <AnalysisPanel
           documentId={documentId}
           isLoading={false}
-          analysis={analysis}
+          analysis={riskAnalysisData}
+          isForm31GreenTech={finalIsForm31GreenTech}
+          title={title}
+          storagePath={storagePath}
         />
       </ResizablePanel>
     </ResizablePanelGroup>
