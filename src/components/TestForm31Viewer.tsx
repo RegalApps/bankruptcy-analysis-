@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DocumentViewer } from './DocumentViewer';
 import { Button } from './ui/button';
@@ -133,6 +134,7 @@ export const TestForm31Viewer: React.FC = () => {
   };
 
   const renderBIAComplianceSection = () => {
+    // Fix TypeScript errors by using proper type comparison
     const mockBIAStatus: RegulatoryCompliance['status'] = 'non_compliant';
     
     return (
