@@ -21,9 +21,10 @@ export const UploadProgressTracker = () => {
         
         // Determine the upload status
         let status = 'uploading';
-        if (stage.toLowerCase().includes('error')) {
+        const stageStr = String(stage);
+        if (stageStr.includes('error')) {
           status = 'error';
-        } else if (stage.toLowerCase().includes('complete')) {
+        } else if (stageStr.includes('complete')) {
           status = 'complete';
         } else if (progress >= 80) {
           status = 'processing';
