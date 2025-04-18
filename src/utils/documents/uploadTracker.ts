@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 type ProgressCallback = (id: string, progress: number, stage: string) => void;
@@ -64,7 +63,7 @@ export const trackUpload = (
       duration: Infinity,
     });
     
-    // Notify global callbacks with the string version
+    // Notify global callbacks
     globalCallbacks.forEach(cb => cb(documentId, progress, stageString));
   };
   
