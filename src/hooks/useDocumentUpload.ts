@@ -106,7 +106,7 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
       
       if (insertError) throw insertError;
       
-      // Fix TypeScript error - Convert stage parameter to string
+      // Create a tracker with proper string conversion for stages
       const uploadTracker = trackUpload(document.id, 0, {
         fileType,
         fileSize: file.size,
