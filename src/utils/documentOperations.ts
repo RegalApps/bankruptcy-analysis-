@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { toast } from "sonner";
 
@@ -9,39 +8,24 @@ export const uploadDocument = async (
   progressCallback?: ProgressCallback,
   extraMetadata?: Record<string, any>
 ): Promise<any> => {
-  // First ensure storage bucket exists
+  // First ensure storage bucket exists and handle errors properly
   try {
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const documentsBucketExists = buckets?.some(b => b.name === 'documents');
+    progressCallback?.(10, "Setting up storage system...");
     
-    if (!documentsBucketExists) {
-      console.log("Documents bucket doesn't exist, attempting to create it");
-      const { error } = await supabase.storage.createBucket('documents', { public: false });
-      if (error) {
-        console.error("Failed to create documents bucket:", error);
-        throw new Error('Storage system not properly configured');
-      }
-    }
-  } catch (error) {
-    console.error("Error checking storage buckets:", error);
-    toast.error("Storage system unavailable. Please contact support.");
-    throw new Error('Storage system not properly configured');
-  }
-  
-  try {
-    // Update progress
-    progressCallback?.(20, "Validating user session...");
-    
-    // Get current user
+    // Get current user to ensure authentication
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
     if (userError) {
       console.error("Auth error:", userError);
       progressCallback?.(0, "Authentication failed");
+      toast.error("Authentication required. Please login again.");
       throw new Error('Authentication required. Please login again.');
     }
     
-    const userId = userData?.user?.id || 'anonymous';
+    // Try to use the documents bucket without creating it
+    // Since it should already exist in Supabase
+    const { data: userData2, error: userError2 } = await supabase.auth.getUser();
+    const userId = userData2?.user?.id || 'anonymous';
     
     // Generate unique file path
     const fileExt = file.name.split('.').pop();
@@ -62,10 +46,21 @@ export const uploadDocument = async (
 
     if (uploadError) {
       console.error('Storage upload error:', uploadError);
-      progressCallback?.(0, "Upload failed");
-      throw new Error("Upload failed. Please try again.");
+      
+      // Check if this is a bucket not found error
+      if (uploadError.message.includes('not found')) {
+        toast.error("Storage not configured", { 
+          description: "Please contact your administrator to set up document storage."
+        });
+        throw new Error("Storage system not properly configured");
+      } else {
+        progressCallback?.(0, "Upload failed");
+        toast.error("Upload failed", { description: uploadError.message });
+        throw new Error("Upload failed. Please try again.");
+      }
     }
     
+    // Continue with the rest of the upload process
     progressCallback?.(60, "Processing document...");
     console.log('File uploaded successfully, creating DB record');
 
@@ -108,6 +103,7 @@ export const uploadDocument = async (
       await supabase.storage.from('documents').remove([filePath]);
       
       progressCallback?.(0, "Failed to save document");
+      toast.error("Database error", { description: dbError.message });
       throw new Error("Failed to save document information.");
     }
     
@@ -121,6 +117,9 @@ export const uploadDocument = async (
     return documentData;
   } catch (error) {
     console.error('Document upload error:', error);
+    toast.error("Upload failed", {
+      description: error instanceof Error ? error.message : "An unexpected error occurred"
+    });
     throw error;
   }
 };

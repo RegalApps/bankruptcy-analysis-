@@ -115,47 +115,30 @@ export const RecentlyAccessedPage = () => {
       logger.info(`Starting upload for file: ${file.name}, size: ${file.size} bytes`);
       
       try {
-        const documentData = await uploadDocument(file);
+        const { fixed, message } = await fixDocumentUpload();
+        
+        if (!fixed) {
+          toast({
+            variant: "destructive",
+            title: "Storage System Error",
+            description: message
+          });
+          throw new Error('Storage system not properly configured');
+        }
+        
+        const documentData = await uploadDocument(
+          file,
+          (progress, message) => {
+            setUploadProgress(Math.min(Math.floor(progress * 0.7) + 15, 85)); // Scale to fit our UI stages
+            setUploadStep(message);
+          }
+        );
+        
         logger.info(`Document uploaded with ID: ${documentData?.id}`);
         
-        setUploadProgress(25);
-        setUploadStep("Stage 4: Document classification & understanding...");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        const isExcelFile = file.type.includes('excel') || 
-                           file.name.endsWith('.xls') || 
-                           file.name.endsWith('.xlsx');
-                           
-        const isForm76 = file.name.toLowerCase().includes('form 76') || 
-                        file.name.toLowerCase().includes('f76') || 
-                        file.name.toLowerCase().includes('form76');
-        
-        setUploadProgress(40);
-        if (isExcelFile) {
-          setUploadStep("Stage 5: Processing financial data from spreadsheet...");
-        } else if (isForm76) {
-          setUploadStep("Stage 5: Extracting client information from Form 76...");
-        } else {
-          setUploadStep("Stage 5: Data extraction & content processing...");
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 2500));
-        setUploadProgress(55);
-        
-        if (isForm76) {
-          setUploadStep("Stage 6: Performing risk & compliance assessment...");
-        } else if (isExcelFile) {
-          setUploadStep("Stage 6: Validating financial data structure...");
-        } else {
-          setUploadStep("Stage 6: Analyzing document structure and content...");
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        setUploadProgress(70);
-        
+        setUploadProgress(85);
         setUploadStep("Stage 7: Issue prioritization & task management...");
         await new Promise(resolve => setTimeout(resolve, 2000));
-        setUploadProgress(85);
         
         setUploadStep("Stage 8: Document organization & client management...");
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -200,22 +183,13 @@ export const RecentlyAccessedPage = () => {
           }, 1500);
         }
       } catch (error: any) {
-        if (error.message === 'Storage system not properly configured') {
-          console.log("Attempting to fix storage system...");
-          const { fixed, message } = await fixDocumentUpload();
-          
-          if (fixed) {
-            toast({
-              title: "Storage system fixed",
-              description: "Please try uploading your document again."
-            });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Storage Error",
-              description: message
-            });
-          }
+        if (error.message.includes('Storage system not properly configured')) {
+          console.log("Storage system error detected, showing detailed error");
+          toast({
+            variant: "destructive",
+            title: "Storage System Unavailable",
+            description: "The document storage system is not properly configured. This might require administrator assistance."
+          });
         } else {
           throw error;
         }

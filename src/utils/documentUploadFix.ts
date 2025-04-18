@@ -11,50 +11,47 @@ export const fixDocumentUpload = async (): Promise<{
   message: string;
 }> => {
   try {
-    // Step 1: Check if storage is available
+    // Check if we have a user session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      return {
+        fixed: false,
+        message: `Authentication required: ${sessionError?.message || "No active session"}`
+      };
+    }
+    
+    // Check if we can access the storage
     const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
     
     if (bucketError) {
       return {
         fixed: false,
-        message: `Storage system error: ${bucketError.message}`
+        message: `Storage system error: ${bucketError.message}. This is likely a permissions issue.`
       };
     }
     
-    // Step 2: Check if documents bucket exists
+    // Check if documents bucket exists
     const docBucket = buckets?.find(b => b.name === 'documents');
     
     if (!docBucket) {
-      // Create the bucket
-      const { error: createError } = await supabase.storage.createBucket('documents', {
-        public: true,
-        fileSizeLimit: 10485760 // 10MB
-      });
-      
-      if (createError) {
-        return {
-          fixed: false,
-          message: `Failed to create documents bucket: ${createError.message}`
-        };
-      }
-      
+      // Note: Users typically can't create buckets due to RLS
+      // so we just inform them of the issue
       return {
-        fixed: true,
-        message: "Created documents storage bucket successfully"
+        fixed: false,
+        message: "The 'documents' storage bucket doesn't exist. Please contact an administrator to set up the storage bucket."
       };
     }
     
-    // Step 3: Verify we can upload to the bucket
-    const testContent = new Blob(['test'], { type: 'text/plain' });
-    const testFile = new File([testContent], 'upload-test.txt');
-    const { error: uploadError } = await supabase.storage
+    // Step 3: Try to list files in the bucket to verify access
+    const { data: files, error: listError } = await supabase.storage
       .from('documents')
-      .upload(`system-test/${Date.now()}.txt`, testFile);
+      .list();
       
-    if (uploadError) {
+    if (listError) {
       return {
         fixed: false,
-        message: `Cannot upload to documents bucket: ${uploadError.message}`
+        message: `Cannot access documents bucket: ${listError.message}`
       };
     }
     
@@ -83,7 +80,9 @@ export const runDocumentUploadFix = async () => {
     toast.success(result.message);
     return true;
   } else {
-    toast.error(result.message);
+    toast.error(result.message, {
+      description: "You may need administrator assistance to resolve this issue."
+    });
     return false;
   }
 };
