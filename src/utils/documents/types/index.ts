@@ -1,3 +1,4 @@
+
 // Define the possible document statuses
 export type DocumentStatus = 
   | 'pending'
@@ -91,3 +92,6 @@ export interface DocumentRisk {
   status?: 'open' | 'reviewing' | 'resolved';
   deadline?: string;
 }
+
+// Reexport the existing types from uploadTracker to maintain compatibility
+export type { ProgressCallback, UploadTracker, UploadInfo, UploadMetric } from '../documents/types';

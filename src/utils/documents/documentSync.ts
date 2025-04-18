@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { DocumentTreeNode } from '@/utils/documents/types';
+import { DocumentTreeNode } from '@/utils/documents/types/index';
 import { toast } from 'sonner';
 
 export const buildDocumentTree = async (): Promise<DocumentTreeNode[]> => {
