@@ -61,7 +61,7 @@ export const trackUpload = (
       duration: Infinity,
     });
     
-    // Notify global callbacks
+    // Notify global callbacks - ensure stage is always a string
     globalCallbacks.forEach(cb => cb(documentId, progress, stage));
   };
   
@@ -115,7 +115,7 @@ export const trackUpload = (
       duration: 5000,
     });
     
-    // Notify global callbacks
+    // Notify global callbacks - ensure we're passing a string for the stage parameter
     globalCallbacks.forEach(cb => cb(documentId, 0, `Error: ${message}`));
     
     // Remove from active uploads after a delay
