@@ -44,6 +44,9 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
         throw new Error("Unsupported file type. Please upload PDF, Word, or Excel documents.");
       }
       
+      // Get file type for analytics
+      const fileType = file.type || file.name.split('.').pop() || 'unknown';
+      
       // Generate a unique file path
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -70,8 +73,12 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
       
       if (insertError) throw insertError;
       
-      // Set up upload tracking
-      const uploadTracker = trackUpload(document.id, 0);
+      // Set up upload tracking with metadata
+      const uploadTracker = trackUpload(document.id, 0, {
+        fileType,
+        fileSize: file.size,
+        fileName: file.name
+      });
       uploadTracker.updateProgress(5, 'Preparing upload...');
       
       // Start file upload

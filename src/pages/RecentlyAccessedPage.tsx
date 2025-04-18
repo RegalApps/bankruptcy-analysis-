@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +12,8 @@ import { detectDocumentType } from "@/components/FileUpload/utils/fileTypeDetect
 import logger from "@/utils/logger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import { UploadAnalytics } from "@/components/documents/UploadAnalytics";
+import { trackUpload } from "@/utils/documents/uploadTracker";
 
 export const RecentlyAccessedPage = () => {
   const navigate = useNavigate();
@@ -129,11 +132,22 @@ export const RecentlyAccessedPage = () => {
         
         const { isForm76, isExcel } = detectDocumentType(file);
         
+        // Create a upload tracker with file metadata
+        const documentId = crypto.randomUUID();
+        const uploadTracker = trackUpload(documentId, 15, {
+          fileType: file.type || (file.name.split('.').pop() || 'unknown'),
+          fileSize: file.size,
+          fileName: file.name,
+          isForm76,
+          isExcel
+        });
+        
         const documentData = await uploadDocument(
           file,
           (progress, message) => {
             setUploadProgress(Math.min(Math.floor(progress * 0.7) + 15, 85)); // Scale to fit our UI stages
             setUploadStep(message);
+            uploadTracker.updateProgress(progress, message);
           }
         );
         
@@ -141,15 +155,18 @@ export const RecentlyAccessedPage = () => {
         
         setUploadProgress(85);
         setUploadStep("Stage 7: Issue prioritization & task management...");
+        uploadTracker.updateProgress(85, "Issue prioritization & task management...");
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         setUploadStep("Stage 8: Document organization & client management...");
+        uploadTracker.updateProgress(95, "Document organization & client management...");
         await new Promise(resolve => setTimeout(resolve, 2000));
         setUploadProgress(95);
         
         await new Promise(resolve => setTimeout(resolve, 1500));
         setUploadStep("Complete: Document processing finalized.");
         setUploadProgress(100);
+        uploadTracker.completeUpload("Document processing finalized.");
 
         toast({
           title: "Success",
@@ -227,6 +244,7 @@ export const RecentlyAccessedPage = () => {
           <TabsList className="mb-4">
             <TabsTrigger value="recent">Recent Activity</TabsTrigger>
             <TabsTrigger value="clients">Recent Clients</TabsTrigger>
+            <TabsTrigger value="analytics">Upload Analytics</TabsTrigger>
           </TabsList>
           
           <TabsContent value="recent" className="space-y-4">
@@ -241,6 +259,10 @@ export const RecentlyAccessedPage = () => {
               <h2 className="text-lg font-semibold mb-4">Recently Accessed Clients</h2>
               <RecentClients onClientSelect={handleClientSelect} />
             </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4">
+            <UploadAnalytics />
           </TabsContent>
         </Tabs>
       </div>
