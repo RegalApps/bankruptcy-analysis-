@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 
 type ProgressCallback = (id: string, progress: number, stage: string) => void;
@@ -34,14 +35,17 @@ export const trackUpload = (
   initialProgress = 0,
   metadata?: Record<string, any>
 ): UploadTracker => {
+  // Ensure documentId is converted to a string
+  const id = String(documentId);
+  
   // Create a toast to track the progress
   const toastId = toast.loading("Preparing upload...", {
-    id: `upload-${documentId}`,
+    id: `upload-${id}`,
     duration: Infinity,
   });
   
   // Store the upload info with timestamp
-  activeUploads.set(documentId, {
+  activeUploads.set(id, {
     toastId,
     progress: initialProgress,
     stage: "Initializing...",
