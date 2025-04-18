@@ -14,12 +14,45 @@ interface UseDocumentUploadOptions {
 export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
   const [isUploading, setIsUploading] = useState(false);
   
+  const ensureStorageBucket = async () => {
+    try {
+      // Check if the documents bucket exists
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const docsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
+      
+      // If the bucket doesn't exist, create it
+      if (!docsBucketExists) {
+        console.log('Documents bucket does not exist, creating it...');
+        const { error } = await supabase.storage.createBucket('documents', {
+          public: false, // Set to false for security, we'll use signed URLs
+          fileSizeLimit: 10485760, // 10MB limit
+        });
+        
+        if (error) {
+          console.error('Error creating documents bucket:', error);
+          throw new Error('Failed to create storage bucket. Please contact support.');
+        }
+        console.log('Documents bucket created successfully');
+      }
+      return true;
+    } catch (error) {
+      console.error('Error ensuring storage bucket exists:', error);
+      return false;
+    }
+  };
+  
   const uploadDocument = useCallback(async (file: File) => {
     if (isUploading) return;
     
     setIsUploading(true);
     
     try {
+      // Ensure storage bucket exists before proceeding
+      const bucketReady = await ensureStorageBucket();
+      if (!bucketReady) {
+        throw new Error("Storage system not properly configured. Please try again later.");
+      }
+      
       // Validate file before proceeding
       if (file.size > 10 * 1024 * 1024) { // 10MB limit
         throw new Error("File size should be less than 10MB");
@@ -73,7 +106,7 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
       
       if (insertError) throw insertError;
       
-      // Set up upload tracking with metadata
+      // Fix TypeScript error - Convert stage parameter to string
       const uploadTracker = trackUpload(document.id, 0, {
         fileType,
         fileSize: file.size,
