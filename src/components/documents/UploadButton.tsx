@@ -21,6 +21,8 @@ export const UploadButton = ({
   ...props 
 }: UploadButtonProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
   const { uploadDocument } = useDocumentUpload({
     clientId,
     clientName,
@@ -48,11 +50,16 @@ export const UploadButton = ({
     }
   };
 
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <Button 
       variant={variant} 
       className={cn("gap-2", className)} 
       disabled={isUploading}
+      onClick={handleButtonClick}
       {...props}
     >
       {isUploading ? (
@@ -64,15 +71,16 @@ export const UploadButton = ({
         <>
           {variant === "outline" ? <Plus className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
           Upload Document
-          <input 
-            type="file" 
-            className="hidden" 
-            onChange={handleFileChange} 
-            accept=".pdf,.doc,.docx,.xls,.xlsx"
-            disabled={isUploading}
-          />
         </>
       )}
+      <input 
+        ref={fileInputRef}
+        type="file" 
+        className="hidden" 
+        onChange={handleFileChange} 
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+        disabled={isUploading}
+      />
     </Button>
   );
 };

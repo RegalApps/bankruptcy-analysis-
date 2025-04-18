@@ -47,16 +47,7 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
       // Generate a unique file path
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `documents/${fileName}`;
-      
-      // Check if storage bucket exists, create if it doesn't
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const documentsBucketExists = buckets?.some(b => b.name === 'documents');
-      
-      if (!documentsBucketExists) {
-        const { error } = await supabase.storage.createBucket('documents', { public: false });
-        if (error) throw error;
-      }
+      const filePath = `${fileName}`;
       
       // Create document record first to get the ID
       const { data: document, error: insertError } = await supabase

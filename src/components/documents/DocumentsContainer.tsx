@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { buildDocumentTree, setupDocumentSync } from "@/utils/documents/documentSync";
+import { buildDocumentTree } from "@/utils/documents/documentSync";
 import { DocumentTreeNode } from "@/utils/documents/types";
 import { DocumentDisplay } from "./DocumentDisplay";
 import { DocumentTree } from "./DocumentTree";
@@ -8,6 +8,7 @@ import { DocumentViewerPanel } from "../DocumentViewer/DocumentViewerPanel";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { UploadButton } from "./UploadButton";
+import { useDocumentSync } from "@/hooks/useDocumentSync";
 
 interface DocumentsContainerProps {
   clientId?: string;
@@ -49,18 +50,13 @@ export const DocumentsContainer = ({
   }, [toast]);
   
   // Set up sync for real-time updates
-  useEffect(() => {
-    console.log("DocumentsContainer: Setting up document sync");
-    const unsubscribe = setupDocumentSync(() => {
-      // Rebuild document tree when changes are detected
-      buildDocumentTree().then(tree => {
-        console.log("DocumentsContainer: Document tree updated from sync", tree.length, "root items");
-        setDocumentTree(tree);
-      });
+  useDocumentSync(() => {
+    // Rebuild document tree when changes are detected
+    buildDocumentTree().then(tree => {
+      console.log("DocumentsContainer: Document tree updated from sync", tree.length, "root items");
+      setDocumentTree(tree);
     });
-    
-    return unsubscribe;
-  }, []);
+  });
 
   // Set initial document selection from prop
   useEffect(() => {

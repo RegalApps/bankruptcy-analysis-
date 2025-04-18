@@ -14,44 +14,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Helper to check if storage bucket exists and create if not
-export const ensureStorageBucket = async () => {
-  try {
-    // Check if documents bucket exists
-    const { data: buckets, error } = await supabase.storage.listBuckets();
-    
-    if (error) {
-      console.error('Error checking storage buckets:', error);
-      return false;
-    }
-    
-    const documentsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
-    
-    if (!documentsBucketExists) {
-      console.log('Documents bucket not found - creating it automatically');
-      // Create the documents bucket
-      const { error: createError } = await supabase.storage.createBucket('documents', {
-        public: true,
-        fileSizeLimit: 10485760, // 10MB
-        allowedMimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-      });
-      
-      if (createError) {
-        console.error('Error creating documents bucket:', createError);
-        return false;
-      }
-      
-      console.log('Documents bucket created successfully');
-      return true;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error ensuring storage bucket:', error);
-    return false;
-  }
-};
-
 // Helper to get document URL with better error handling
 export const getDocumentUrl = async (storagePath: string): Promise<string | null> => {
   if (!storagePath) {

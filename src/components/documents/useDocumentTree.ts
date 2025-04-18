@@ -21,19 +21,24 @@ export const useDocumentTree = () => {
       if (error) {
         throw error;
       }
+
+      if (!documents || documents.length === 0) {
+        setDocumentTree([]);
+        return [];
+      }
       
       // Transform flat list to hierarchical structure
       const tree: DocumentTreeNode[] = [];
       const nodeMap = new Map<string, DocumentTreeNode>();
       
       // First pass: Create all nodes
-      documents?.forEach(doc => {
+      documents.forEach(doc => {
         const node: DocumentTreeNode = {
           id: doc.id,
           name: doc.title,
           type: doc.is_folder ? 'folder' : 'file',
           status: doc.ai_processing_status,
-          metadata: doc.metadata,
+          metadata: doc.metadata || {},
           storagePath: doc.storage_path,
           folderType: doc.folder_type,
           children: [],
@@ -44,7 +49,7 @@ export const useDocumentTree = () => {
       });
       
       // Second pass: Build the tree
-      documents?.forEach(doc => {
+      documents.forEach(doc => {
         const node = nodeMap.get(doc.id);
         if (!node) return;
         
@@ -95,8 +100,8 @@ export const useDocumentTree = () => {
           schema: 'public',
           table: 'documents'
         },
-        () => {
-          console.log('Document change detected, refreshing tree');
+        (payload) => {
+          console.log('Document change detected, refreshing tree', payload);
           refreshTree();
         }
       )
