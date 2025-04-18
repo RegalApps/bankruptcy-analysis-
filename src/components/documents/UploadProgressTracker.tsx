@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useUploadProgress } from '@/utils/documents/uploadTracker';
+import { addUploadProgressCallback, getAllActiveUploads } from '@/utils/documents/uploadTracker';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -8,18 +8,61 @@ import { cn } from '@/lib/utils';
 
 export const UploadProgressTracker = () => {
   const [activeUploads, setActiveUploads] = useState<any[]>([]);
-  const { getActiveUploads, listenToUploadEvents } = useUploadProgress();
   
   useEffect(() => {
     // Initialize with current uploads
-    setActiveUploads(getActiveUploads());
+    setActiveUploads(getAllActiveUploads());
     
     // Listen for upload progress events
-    const unsubscribe = listenToUploadEvents((uploads) => {
-      setActiveUploads([...uploads]);
+    const unsubscribe = addUploadProgressCallback((id, progress, stage) => {
+      setActiveUploads(prevUploads => {
+        // Check if this upload already exists in our state
+        const existingIndex = prevUploads.findIndex(upload => upload.id === id);
+        
+        // Determine the upload status
+        let status = 'uploading';
+        if (stage.toLowerCase().includes('error')) {
+          status = 'error';
+        } else if (stage.toLowerCase().includes('complete')) {
+          status = 'complete';
+        } else if (progress >= 80) {
+          status = 'processing';
+        }
+        
+        const updatedUpload = {
+          documentId: id,
+          progress,
+          message: stage,
+          status
+        };
+        
+        if (existingIndex >= 0) {
+          // Update existing upload
+          const newUploads = [...prevUploads];
+          newUploads[existingIndex] = updatedUpload;
+          return newUploads;
+        } else {
+          // Add new upload
+          return [...prevUploads, updatedUpload];
+        }
+      });
     });
     
     return unsubscribe;
+  }, []);
+  
+  // Remove completed uploads after 5 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveUploads(prevUploads => 
+        prevUploads.filter(upload => 
+          upload.status !== 'complete' || 
+          Date.now() - upload.completedAt < 5000
+        )
+      );
+    }, 1000);
+    
+    return () => clearInterval(timer);
   }, []);
   
   if (activeUploads.length === 0) {

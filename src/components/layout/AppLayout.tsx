@@ -4,12 +4,16 @@ import { AppShell } from "./AppShell";
 import { Toaster } from "sonner";
 import { UploadProgressTracker } from "@/components/documents/UploadProgressTracker";
 import { useEffect } from "react";
-import { setupDocumentProcessingListener } from "@/utils/documents/uploadTracker";
+import { addUploadProgressCallback } from "@/utils/documents/uploadTracker";
 
 export const AppLayout = () => {
   // Set up document processing listener when the app loads
   useEffect(() => {
-    const unsubscribe = setupDocumentProcessingListener();
+    // Create a listener that will be removed on component unmount
+    const unsubscribe = addUploadProgressCallback((id, progress, stage) => {
+      console.log(`Document ${id} - Progress: ${progress}%, Stage: ${stage}`);
+    });
+    
     return unsubscribe;
   }, []);
 
