@@ -1,3 +1,4 @@
+
 // Define the possible document statuses
 export type DocumentStatus = 
   | 'pending'

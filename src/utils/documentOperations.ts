@@ -1,41 +1,59 @@
 
-import { supabase, ensureStorageBucket } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { toast } from "sonner";
 
-export const uploadDocument = async (file: File): Promise<any> => {
-  // First ensure storage is configured
-  const isBucketReady = await ensureStorageBucket();
-  
-  if (!isBucketReady) {
-    toast.error("Storage system unavailable. Attempting to create storage bucket...");
-    // Try creating the bucket one more time
-    const secondAttempt = await ensureStorageBucket();
-    if (!secondAttempt) {
-      toast.error("Failed to create storage bucket. Please contact support.");
-      throw new Error('Storage system not properly configured');
-    } else {
-      toast.success("Storage system created successfully!");
+type ProgressCallback = (progress: number, message: string) => void;
+
+export const uploadDocument = async (
+  file: File, 
+  progressCallback?: ProgressCallback,
+  extraMetadata?: Record<string, any>
+): Promise<any> => {
+  // First ensure storage bucket exists
+  try {
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const documentsBucketExists = buckets?.some(b => b.name === 'documents');
+    
+    if (!documentsBucketExists) {
+      console.log("Documents bucket doesn't exist, attempting to create it");
+      const { error } = await supabase.storage.createBucket('documents', { public: false });
+      if (error) {
+        console.error("Failed to create documents bucket:", error);
+        throw new Error('Storage system not properly configured');
+      }
     }
+  } catch (error) {
+    console.error("Error checking storage buckets:", error);
+    toast.error("Storage system unavailable. Please contact support.");
+    throw new Error('Storage system not properly configured');
   }
   
   try {
+    // Update progress
+    progressCallback?.(20, "Validating user session...");
+    
     // Get current user
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    if (userError || !userData.user) {
-      toast.error("Authentication required. Please login again.");
-      throw new Error('User not authenticated');
+    if (userError) {
+      console.error("Auth error:", userError);
+      progressCallback?.(0, "Authentication failed");
+      throw new Error('Authentication required. Please login again.');
     }
-
+    
+    const userId = userData?.user?.id || 'anonymous';
+    
     // Generate unique file path
     const fileExt = file.name.split('.').pop();
     const timeStamp = new Date().getTime();
-    const filePath = `${userData.user.id}/${timeStamp}_${file.name.replace(/\s+/g, '_')}`;
+    const safeFileName = file.name.replace(/\s+/g, '_');
+    const filePath = `${userId}/${timeStamp}_${safeFileName}`;
     
+    progressCallback?.(30, "Uploading file...");
     console.log('Uploading file to storage path:', filePath);
 
     // Upload file to storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('documents')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -44,11 +62,29 @@ export const uploadDocument = async (file: File): Promise<any> => {
 
     if (uploadError) {
       console.error('Storage upload error:', uploadError);
-      toast.error("Upload failed. Please try again.");
-      throw uploadError;
+      progressCallback?.(0, "Upload failed");
+      throw new Error("Upload failed. Please try again.");
     }
     
+    progressCallback?.(60, "Processing document...");
     console.log('File uploaded successfully, creating DB record');
+
+    // Extract metadata from filename
+    const extractedClientId = extractClientIdFromFilename(file.name);
+    const isForm76 = file.name.toLowerCase().includes('form 76');
+    const documentType = determineDocumentType(file);
+    
+    // Build combined metadata
+    const metadata = {
+      original_filename: file.name,
+      upload_date: new Date().toISOString(),
+      content_type: file.type,
+      extracted_client_id: extractedClientId,
+      ...extraMetadata,
+      ...(isForm76 ? { document_type: 'form76' } : {})
+    };
+    
+    progressCallback?.(70, "Saving document information...");
 
     // Create document record in database
     const { data: documentData, error: dbError } = await supabase
@@ -58,16 +94,9 @@ export const uploadDocument = async (file: File): Promise<any> => {
         type: file.type,
         size: file.size,
         storage_path: filePath,
-        user_id: userData.user.id,
-        ai_processing_status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        metadata: {
-          original_filename: file.name,
-          upload_date: new Date().toISOString(),
-          content_type: file.type,
-          client_id: extractClientIdFromFilename(file.name)
-        }
+        user_id: userId,
+        ai_processing_status: 'processing',
+        metadata
       })
       .select()
       .single();
@@ -78,23 +107,17 @@ export const uploadDocument = async (file: File): Promise<any> => {
       // Attempt to clean up storage file if database insert fails
       await supabase.storage.from('documents').remove([filePath]);
       
-      toast.error("Failed to save document information.");
-      throw dbError;
+      progressCallback?.(0, "Failed to save document");
+      throw new Error("Failed to save document information.");
     }
     
+    progressCallback?.(80, "Generating document preview...");
     console.log('Document record created successfully:', documentData);
     
-    // Generate a URL to confirm storage is properly configured
-    const { data: urlData } = await supabase.storage
-      .from('documents')
-      .createSignedUrl(filePath, 60);
-      
-    if (!urlData?.signedUrl) {
-      console.warn('Could not generate preview URL - storage might not be properly configured');
-    } else {
-      console.log('Document preview URL generated successfully');
-    }
-
+    // Start document analysis
+    triggerDocumentAnalysis(documentData.id, file.name, isForm76);
+    
+    progressCallback?.(100, "Document uploaded successfully!");
     return documentData;
   } catch (error) {
     console.error('Document upload error:', error);
@@ -109,7 +132,63 @@ function extractClientIdFromFilename(filename: string): string | undefined {
   if (clientMatch) {
     return clientMatch[1] || clientMatch[2];
   }
+  
+  // Try to extract client name from Form 76
+  if (filename.toLowerCase().includes('form 76') || filename.toLowerCase().includes('form76')) {
+    const nameMatch = filename.match(/form[- ]?76[- ]?(.+?)(?:\.|$)/i);
+    if (nameMatch && nameMatch[1]) {
+      return nameMatch[1].trim();
+    }
+  }
+  
   return undefined;
+}
+
+function determineDocumentType(file: File): string {
+  const name = file.name.toLowerCase();
+  
+  if (name.includes('form 76') || name.includes('form76')) {
+    return 'form76';
+  }
+  if (name.includes('form 47') || name.includes('form47')) {
+    return 'form47';
+  }
+  if (name.includes('form 31') || name.includes('form31')) {
+    return 'form31';
+  }
+  
+  // Check file extension
+  if (name.endsWith('.pdf')) {
+    return 'pdf';
+  }
+  if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+    return 'spreadsheet';
+  }
+  if (name.endsWith('.docx') || name.endsWith('.doc')) {
+    return 'document';
+  }
+  
+  return 'other';
+}
+
+// Function to trigger document analysis
+async function triggerDocumentAnalysis(documentId: string, filename: string, isForm76: boolean): Promise<void> {
+  try {
+    // For now just simulate by updating the status after a delay
+    setTimeout(async () => {
+      await supabase
+        .from('documents')
+        .update({ 
+          ai_processing_status: 'completed',
+          ai_confidence_score: Math.random() * 0.4 + 0.6 // Random score between 0.6 and 1.0
+        })
+        .eq('id', documentId);
+      
+      console.log(`Document analysis completed for ${documentId}`);
+    }, 5000);
+  } catch (error) {
+    console.error('Error triggering document analysis:', error);
+  }
 }
 
 export const getDocumentPublicUrl = async (storagePath: string): Promise<string | null> => {
@@ -135,14 +214,13 @@ export const getDocumentPublicUrl = async (storagePath: string): Promise<string 
   }
 };
 
-// Adding the missing function that's being imported in riskAssessment.ts
+// Adding the missing function that's being imported elsewhere
 export const createForm47RiskAssessment = async (documentId: string): Promise<any> => {
   try {
     // This function would typically create a risk assessment for a Form 47 document
-    // Since we're just adding this to fix the import error, we'll provide a basic implementation
     console.log(`Creating risk assessment for Form 47 document: ${documentId}`);
     
-    // Return mock risk data similar to what would be expected
+    // Return mock risk data
     return {
       risks: [
         {

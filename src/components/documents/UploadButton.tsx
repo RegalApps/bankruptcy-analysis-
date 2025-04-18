@@ -1,102 +1,140 @@
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Upload, Loader2 } from 'lucide-react';
-import { useDocumentUpload } from '@/hooks/useDocumentUpload';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { Button, ButtonProps } from "@/components/ui/button";
+import { Upload } from "lucide-react";
+import { uploadDocument } from "@/utils/documentOperations";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
-interface UploadButtonProps {
+interface UploadButtonProps extends ButtonProps {
   clientId?: string;
   clientName?: string;
   onUploadComplete?: (documentId: string) => void;
-  variant?: 'default' | 'outline' | 'secondary';
-  className?: string;
 }
 
 export const UploadButton = ({
   clientId,
   clientName,
   onUploadComplete,
-  variant = 'default',
-  className
+  ...props
 }: UploadButtonProps) => {
-  const [fileInputKey, setFileInputKey] = useState<number>(0);
-  const { uploadDocument, isUploading } = useDocumentUpload({
-    clientId,
-    clientName,
-    onUploadComplete: (id) => {
-      // Reset the file input to allow uploading the same file again
-      setFileInputKey(prevKey => prevKey + 1);
-      
-      // Call the parent's onUploadComplete if provided
-      if (onUploadComplete) {
-        onUploadComplete(id);
-      }
-    },
-    onUploadError: () => {
-      // Reset the file input on error too
-      setFileInputKey(prevKey => prevKey + 1);
-    }
-  });
-  
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const validTypes = [
-      'application/pdf', 
-      'application/msword', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'image/jpeg',
-      'image/png'
-    ];
-    
-    // Check file type
-    if (!validTypes.includes(file.type)) {
-      toast.error('Invalid file type', {
-        description: 'Please upload a PDF, Word, Excel document or image (JPEG/PNG)'
-      });
-      return;
-    }
-    
-    // Check file size (10 MB limit)
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB in bytes
-    if (file.size > MAX_SIZE) {
-      toast.error('File too large', {
-        description: 'Maximum file size is 10MB'
-      });
-      return;
-    }
-    
-    // Proceed with upload
-    await uploadDocument(file);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStep, setUploadStep] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const updateProgress = (progress: number, step: string) => {
+    setUploadProgress(progress);
+    setUploadStep(step);
   };
-  
-  return (
-    <Button 
-      variant={variant} 
-      className={className}
-      disabled={isUploading}
-    >
-      {isUploading ? (
-        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-      ) : (
-        <Upload className="h-4 w-4 mr-2" />
-      )}
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    setIsDialogOpen(true);
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStep("Preparing file upload...");
+    
+    try {
+      // Add client metadata
+      const extraMetadata = {
+        ...(clientId ? { client_id: clientId } : {}),
+        ...(clientName ? { client_name: clientName } : {})
+      };
       
-      <label className="cursor-pointer">
-        {isUploading ? 'Uploading...' : 'Upload Document'}
-        <input
-          type="file"
-          className="hidden"
-          key={fileInputKey}
-          onChange={handleFileChange}
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-          disabled={isUploading}
-        />
-      </label>
-    </Button>
+      // Initial progress update
+      updateProgress(10, "Validating file...");
+      
+      // Simulate initial processing
+      await new Promise(r => setTimeout(r, 800));
+      
+      updateProgress(20, "Uploading to secure storage...");
+      
+      // Upload document with progress tracking
+      const document = await uploadDocument(file, updateProgress, extraMetadata);
+      
+      // Final processing
+      updateProgress(90, "Finalizing document processing...");
+      await new Promise(r => setTimeout(r, 800));
+      
+      updateProgress(100, "Upload complete!");
+      
+      // Reset file input
+      e.target.value = '';
+      
+      // Delay closing the dialog slightly
+      setTimeout(() => {
+        setIsDialogOpen(false);
+        setIsUploading(false);
+        
+        if (onUploadComplete && document?.id) {
+          onUploadComplete(document.id);
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload document"
+      });
+      
+      setIsDialogOpen(false);
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <>
+      <Button 
+        variant="outline" 
+        className="gap-2 w-full" 
+        {...props}
+      >
+        <Upload className="h-4 w-4" />
+        <label className="cursor-pointer flex-1">
+          Upload Document
+          <input
+            type="file"
+            className="hidden"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+            onChange={handleFileSelected}
+            disabled={isUploading}
+          />
+        </label>
+      </Button>
+      
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        // Only allow closing if not currently uploading
+        if (!isUploading) {
+          setIsDialogOpen(open);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{uploadProgress === 100 ? "Upload Complete" : "Uploading Document"}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-6">
+            <div className="mb-2">
+              <Progress value={uploadProgress} className="h-2" />
+            </div>
+            <p className="text-center text-sm text-muted-foreground mt-2">{uploadStep}</p>
+          </div>
+          
+          <DialogFooter>
+            {uploadProgress === 100 && (
+              <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

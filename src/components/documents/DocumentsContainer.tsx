@@ -32,6 +32,7 @@ export const DocumentsContainer = ({
       try {
         const tree = await buildDocumentTree();
         setDocumentTree(tree);
+        console.log("DocumentsContainer: Document tree loaded successfully", tree.length, "root items");
       } catch (error) {
         console.error("Error loading document tree:", error);
         toast({
@@ -49,9 +50,11 @@ export const DocumentsContainer = ({
   
   // Set up sync for real-time updates
   useEffect(() => {
+    console.log("DocumentsContainer: Setting up document sync");
     const unsubscribe = setupDocumentSync(() => {
       // Rebuild document tree when changes are detected
       buildDocumentTree().then(tree => {
+        console.log("DocumentsContainer: Document tree updated from sync", tree.length, "root items");
         setDocumentTree(tree);
       });
     });
@@ -62,11 +65,13 @@ export const DocumentsContainer = ({
   // Set initial document selection from prop
   useEffect(() => {
     if (initialDocumentId) {
+      console.log("DocumentsContainer: Setting initial document ID:", initialDocumentId);
       setSelectedDocumentId(initialDocumentId);
     }
   }, [initialDocumentId]);
 
   const handleDocumentSelected = (documentId: string) => {
+    console.log("DocumentsContainer: Document selected:", documentId);
     setSelectedDocumentId(documentId);
   };
 
@@ -85,8 +90,10 @@ export const DocumentsContainer = ({
   };
 
   const handleDocumentUploaded = (documentId: string) => {
+    console.log("DocumentsContainer: Document uploaded:", documentId);
     // Refresh the document tree
     buildDocumentTree().then(tree => {
+      console.log("DocumentsContainer: Tree refreshed after upload", tree.length, "root items");
       setDocumentTree(tree);
     });
     

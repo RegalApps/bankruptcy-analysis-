@@ -22,7 +22,14 @@ export const setupDocumentSync = (onUpdate: () => void) => {
         if (payload.eventType === 'INSERT') {
           toast.success('New document added');
         } else if (payload.eventType === 'UPDATE') {
-          toast.success('Document updated');
+          const newStatus = (payload.new as any).ai_processing_status;
+          if (newStatus === 'completed') {
+            toast.success('Document processing completed');
+          } else if (newStatus === 'error') {
+            toast.error('Document processing failed');
+          } else {
+            toast.success('Document updated');
+          }
         }
       }
     )
@@ -63,8 +70,9 @@ export const buildDocumentTree = async (): Promise<DocumentTreeNode[]> => {
         type: doc.is_folder ? 'folder' : 'file',
         parentId: doc.parent_folder_id,
         status: doc.ai_processing_status,
-        metadata: doc.metadata,
+        metadata: doc.metadata || {},
         storagePath: doc.storage_path,
+        filePath: doc.storage_path, // Ensure filePath is set for compatibility
         folderType: doc.folder_type
       };
 
@@ -139,8 +147,9 @@ const buildClientDocumentTree = (documents: DocumentRecord[]): DocumentTreeNode[
       type: doc.is_folder ? 'folder' : 'file',
       parentId: doc.parent_folder_id,
       status: doc.ai_processing_status,
-      metadata: doc.metadata,
+      metadata: doc.metadata || {},
       storagePath: doc.storage_path,
+      filePath: doc.storage_path, // Set filePath for consistency
       folderType: doc.folder_type
     };
 
