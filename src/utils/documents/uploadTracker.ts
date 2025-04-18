@@ -1,10 +1,9 @@
-
 import { toast } from "sonner";
 
-type ProgressCallback = (id: string, progress: number, stage: string) => void;
+type ProgressCallback = (id: string, progress: number, stage: string | number) => void;
 
 interface UploadTracker {
-  updateProgress: (progress: number, stage: string) => void;
+  updateProgress: (progress: number, stage: string | number) => void;
   setProcessing: (message: string) => void;
   completeUpload: (message: string) => void;
   setError: (message: string) => void;
@@ -45,7 +44,7 @@ export const trackUpload = (
     stage: "Initializing...",
   });
   
-  const updateProgress = (progress: number, stage: string) => {
+  const updateProgress = (progress: number, stage: string | number) => {
     const uploadInfo = activeUploads.get(documentId);
     if (!uploadInfo) return;
     
@@ -56,12 +55,12 @@ export const trackUpload = (
     });
     
     // Update the toast
-    toast.loading(stage, {
+    toast.loading(stage.toString(), {
       id: uploadInfo.toastId,
       duration: Infinity,
     });
     
-    // Notify global callbacks - make sure stage is always a string
+    // Notify global callbacks - ensure stage is always converted to string
     globalCallbacks.forEach(cb => cb(documentId, progress, stage.toString()));
   };
   
