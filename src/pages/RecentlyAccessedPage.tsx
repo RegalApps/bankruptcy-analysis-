@@ -7,6 +7,7 @@ import { RecentClients } from "@/components/dashboard/RecentClients";
 import { RecentDocuments } from "@/components/dashboard/RecentDocuments";
 import { uploadDocument } from "@/utils/documentOperations";
 import { fixDocumentUpload } from "@/utils/documentUploadFix";
+import { detectDocumentType } from "@/components/FileUpload/utils/fileTypeDetector";
 import logger from "@/utils/logger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -126,6 +127,8 @@ export const RecentlyAccessedPage = () => {
           throw new Error('Storage system not properly configured');
         }
         
+        const { isForm76, isExcel } = detectDocumentType(file);
+        
         const documentData = await uploadDocument(
           file,
           (progress, message) => {
@@ -152,7 +155,7 @@ export const RecentlyAccessedPage = () => {
           title: "Success",
           description: isForm76 
             ? "Form 76 uploaded and analyzed successfully. Client details extracted."
-            : isExcelFile
+            : isExcel
               ? "Financial document uploaded and processed successfully"
               : "Document uploaded and processed successfully"
         });
