@@ -63,7 +63,7 @@ export const trackUpload = (
       duration: Infinity,
     });
     
-    // Notify global callbacks
+    // Notify global callbacks with the string version
     globalCallbacks.forEach(cb => cb(documentId, progress, stageString));
   };
   
