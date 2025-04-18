@@ -1,7 +1,7 @@
 
 import { CircleCheck, CircleAlert, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DocumentStatus } from "@/utils/documents/types";
+import { DocumentStatus } from "@/utils/documents/types/index";
 
 interface StatusIconProps {
   status: DocumentStatus;

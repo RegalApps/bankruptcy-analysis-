@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { ChevronRight, ChevronDown, File, Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DocumentStatus } from '@/utils/documents/types';
+import { DocumentStatus } from '@/utils/documents/types/index';
 
 interface ClientDocumentTreeProps {
   client: {

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { DocumentTreeNode } from '@/utils/documents/types';
+import { DocumentTreeNode } from '@/utils/documents/types/index';
 import { toast } from 'sonner';
 
 export const useDocumentTree = () => {

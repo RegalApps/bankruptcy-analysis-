@@ -1,9 +1,8 @@
-
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClientDocumentTree } from "./ClientDocumentTree";
 import { useDocumentTree } from "./useDocumentTree";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { DocumentTreeNode } from "@/utils/documents/types";
+import { DocumentTreeNode } from "@/utils/documents/types/index";
 import { useEffect } from "react";
 
 export interface DocumentTreeProps {

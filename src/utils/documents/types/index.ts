@@ -94,4 +94,4 @@ export interface DocumentRisk {
 }
 
 // Reexport the existing types from uploadTracker to maintain compatibility
-export type { ProgressCallback, UploadTracker, UploadInfo, UploadMetric } from '../documents/types';
+export type { ProgressCallback, UploadTracker, UploadInfo, UploadMetric } from '../types';
