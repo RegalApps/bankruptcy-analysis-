@@ -61,8 +61,8 @@ export const trackUpload = (
       duration: Infinity,
     });
     
-    // Notify global callbacks - ensure stage is always a string
-    globalCallbacks.forEach(cb => cb(documentId, progress, stage));
+    // Notify global callbacks - make sure stage is always a string
+    globalCallbacks.forEach(cb => cb(documentId, progress, stage.toString()));
   };
   
   const setProcessing = (message: string) => {
