@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 type ProgressCallback = (id: string, progress: number, stage: string) => void;
@@ -31,7 +30,7 @@ export const addUploadProgressCallback = (callback: ProgressCallback) => {
 };
 
 export const trackUpload = (
-  documentId: string,
+  documentId: string | number,
   initialProgress = 0,
   metadata?: Record<string, any>
 ): UploadTracker => {
@@ -54,13 +53,13 @@ export const trackUpload = (
   });
   
   const updateProgress = (progress: number, stage: string | number) => {
-    const uploadInfo = activeUploads.get(documentId);
+    const uploadInfo = activeUploads.get(id);
     if (!uploadInfo) return;
     
     // Convert stage to string to maintain consistent typing
     const stageString = String(stage);
     
-    activeUploads.set(documentId, {
+    activeUploads.set(id, {
       ...uploadInfo,
       progress,
       stage: stageString,
@@ -72,12 +71,12 @@ export const trackUpload = (
       duration: Infinity,
     });
     
-    // Notify global callbacks with the string version
-    globalCallbacks.forEach(cb => cb(documentId, progress, stageString));
+    // Notify global callbacks
+    globalCallbacks.forEach(cb => cb(id, progress, stageString));
   };
   
   const setProcessing = (message: string) => {
-    const uploadInfo = activeUploads.get(documentId);
+    const uploadInfo = activeUploads.get(id);
     if (!uploadInfo) return;
     
     // Update the toast to processing state
@@ -87,18 +86,18 @@ export const trackUpload = (
     });
     
     // Update the stored state
-    activeUploads.set(documentId, {
+    activeUploads.set(id, {
       ...uploadInfo,
       progress: 80,
       stage: message,
     });
     
     // Notify global callbacks
-    globalCallbacks.forEach(cb => cb(documentId, 80, message));
+    globalCallbacks.forEach(cb => cb(id, 80, message));
   };
   
   const completeUpload = (message: string) => {
-    const uploadInfo = activeUploads.get(documentId);
+    const uploadInfo = activeUploads.get(id);
     if (!uploadInfo) return;
     
     const endTime = Date.now();
@@ -111,11 +110,11 @@ export const trackUpload = (
     });
     
     // Notify global callbacks
-    globalCallbacks.forEach(cb => cb(documentId, 100, message));
+    globalCallbacks.forEach(cb => cb(id, 100, message));
     
     // Save upload metrics before removal
     if (uploadInfo.startTime) {
-      logUploadMetrics(documentId, {
+      logUploadMetrics(id, {
         duration,
         fileType: uploadInfo.metadata?.fileType || 'unknown',
         fileSize: uploadInfo.metadata?.fileSize || 0,
@@ -125,12 +124,12 @@ export const trackUpload = (
     
     // Remove from active uploads after a delay
     setTimeout(() => {
-      activeUploads.delete(documentId);
+      activeUploads.delete(id);
     }, 5000);
   };
   
   const setError = (message: string) => {
-    const uploadInfo = activeUploads.get(documentId);
+    const uploadInfo = activeUploads.get(id);
     if (!uploadInfo) return;
     
     const endTime = Date.now();
@@ -143,11 +142,11 @@ export const trackUpload = (
     });
     
     // Notify global callbacks - ensure we're passing a string for the stage parameter
-    globalCallbacks.forEach(cb => cb(documentId, 0, `Error: ${message}`));
+    globalCallbacks.forEach(cb => cb(id, 0, `Error: ${message}`));
     
     // Save upload metrics for failed uploads
     if (uploadInfo.startTime) {
-      logUploadMetrics(documentId, {
+      logUploadMetrics(id, {
         duration,
         fileType: uploadInfo.metadata?.fileType || 'unknown',
         fileSize: uploadInfo.metadata?.fileSize || 0,
@@ -158,7 +157,7 @@ export const trackUpload = (
     
     // Remove from active uploads after a delay
     setTimeout(() => {
-      activeUploads.delete(documentId);
+      activeUploads.delete(id);
     }, 5000);
   };
   
