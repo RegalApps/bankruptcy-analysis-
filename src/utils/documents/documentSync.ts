@@ -1,12 +1,72 @@
 
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
-import { DocumentTreeNode, DocumentRecord } from "./types";
+import { supabase } from '@/lib/supabase';
+import { DocumentTreeNode } from '@/utils/documents/types';
+import { toast } from 'sonner';
 
-export const setupDocumentSync = (onUpdate: () => void) => {
-  console.log("Setting up document sync");
+export const buildDocumentTree = async (): Promise<DocumentTreeNode[]> => {
+  try {
+    // Fetch all documents
+    const { data: documents, error } = await supabase
+      .from('documents')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw error;
+    }
+    
+    // Transform flat list to hierarchical structure
+    const tree: DocumentTreeNode[] = [];
+    const nodeMap = new Map<string, DocumentTreeNode>();
+    
+    // First pass: Create all nodes
+    documents?.forEach(doc => {
+      const node: DocumentTreeNode = {
+        id: doc.id,
+        name: doc.title,
+        type: doc.is_folder ? 'folder' : 'file',
+        status: doc.ai_processing_status,
+        metadata: doc.metadata,
+        storagePath: doc.storage_path,
+        folderType: doc.folder_type,
+        children: [],
+        url: doc.url
+      };
+      
+      nodeMap.set(doc.id, node);
+    });
+    
+    // Second pass: Build the tree
+    documents?.forEach(doc => {
+      const node = nodeMap.get(doc.id);
+      if (!node) return;
+      
+      if (doc.parent_folder_id) {
+        const parent = nodeMap.get(doc.parent_folder_id);
+        if (parent && parent.children) {
+          parent.children.push(node);
+        } else {
+          // If parent not found, add to root
+          tree.push(node);
+        }
+      } else {
+        // Root level node
+        tree.push(node);
+      }
+    });
+    
+    console.log('Document tree built with', tree.length, 'root nodes');
+    return tree;
+  } catch (error) {
+    console.error('Error building document tree:', error);
+    toast.error('Failed to load document tree');
+    return [];
+  }
+};
+
+export const setupDocumentSync = (onUpdate: () => void): (() => void) => {
   const channel = supabase
-    .channel('document_changes')
+    .channel('document-changes')
     .on(
       'postgres_changes',
       {
@@ -16,162 +76,29 @@ export const setupDocumentSync = (onUpdate: () => void) => {
       },
       (payload) => {
         console.log('Document change detected:', payload);
-        onUpdate();
         
-        // Show toast notification based on the event
+        // Show toast based on the event type
         if (payload.eventType === 'INSERT') {
-          toast.success('New document added');
+          toast.success('New document added', {
+            description: `Document "${payload.new.title}" has been added`
+          });
         } else if (payload.eventType === 'UPDATE') {
-          const newStatus = (payload.new as any).ai_processing_status;
-          if (newStatus === 'completed') {
-            toast.success('Document processing completed');
-          } else if (newStatus === 'error') {
-            toast.error('Document processing failed');
-          } else {
-            toast.success('Document updated');
+          // Only show toast for meaningful updates (status changes, etc.)
+          if (payload.old.ai_processing_status !== payload.new.ai_processing_status) {
+            toast.info('Document updated', {
+              description: `Document "${payload.new.title}" status changed to ${payload.new.ai_processing_status}`
+            });
           }
+        } else if (payload.eventType === 'DELETE') {
+          toast.info('Document removed');
         }
+        
+        onUpdate();
       }
     )
-    .subscribe((status) => {
-      console.log("Document sync subscription status:", status);
-    });
+    .subscribe();
 
   return () => {
-    console.log("Cleaning up document sync");
     supabase.removeChannel(channel);
   };
-};
-
-export const buildDocumentTree = async (): Promise<DocumentTreeNode[]> => {
-  console.log("Building document tree");
-  try {
-    const { data: documents, error } = await supabase
-      .from('documents')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching documents:', error);
-      return [];
-    }
-
-    console.log(`Fetched ${documents.length} documents`);
-
-    // Create a map of parent ids to children
-    const childrenMap = new Map<string, DocumentTreeNode[]>();
-    const roots: DocumentTreeNode[] = [];
-
-    // First pass: create all nodes
-    documents.forEach((doc: DocumentRecord) => {
-      const node: DocumentTreeNode = {
-        id: doc.id,
-        name: doc.title,
-        type: doc.is_folder ? 'folder' : 'file',
-        parentId: doc.parent_folder_id,
-        status: doc.ai_processing_status,
-        metadata: doc.metadata || {},
-        storagePath: doc.storage_path,
-        filePath: doc.storage_path, // Ensure filePath is set for compatibility
-        folderType: doc.folder_type
-      };
-
-      if (doc.parent_folder_id) {
-        if (!childrenMap.has(doc.parent_folder_id)) {
-          childrenMap.set(doc.parent_folder_id, []);
-        }
-        childrenMap.get(doc.parent_folder_id)?.push(node);
-      } else {
-        roots.push(node);
-      }
-    });
-
-    // Second pass: build tree by assigning children
-    const assignChildren = (node: DocumentTreeNode): DocumentTreeNode => {
-      const children = childrenMap.get(node.id);
-      if (children) {
-        node.children = children;
-        children.forEach(assignChildren);
-      }
-      return node;
-    };
-
-    const result = roots.map(assignChildren);
-    console.log("Document tree built successfully");
-    return result;
-  } catch (err) {
-    console.error("Error building document tree:", err);
-    return [];
-  }
-};
-
-// Function to add client-specific metadata filtering
-export const getClientSpecificDocuments = async (clientId: string): Promise<DocumentTreeNode[]> => {
-  if (!clientId) return [];
-  
-  console.log(`Fetching documents for client: ${clientId}`);
-  try {
-    const { data: documents, error } = await supabase
-      .from('documents')
-      .select('*')
-      .or(`metadata->client_id.eq.${clientId},metadata->client_name.ilike.%${clientId}%`)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error(`Error fetching documents for client ${clientId}:`, error);
-      return [];
-    }
-
-    console.log(`Fetched ${documents?.length || 0} documents for client ${clientId}`);
-    
-    // Process into tree structure
-    const tree = buildClientDocumentTree(documents || []);
-    return tree;
-  } catch (err) {
-    console.error(`Error processing documents for client ${clientId}:`, err);
-    return [];
-  }
-};
-
-// Helper function to build a client-specific document tree
-const buildClientDocumentTree = (documents: DocumentRecord[]): DocumentTreeNode[] => {
-  // Create a map of parent ids to children
-  const childrenMap = new Map<string, DocumentTreeNode[]>();
-  const roots: DocumentTreeNode[] = [];
-
-  // First pass: create all nodes
-  documents.forEach((doc) => {
-    const node: DocumentTreeNode = {
-      id: doc.id,
-      name: doc.title,
-      type: doc.is_folder ? 'folder' : 'file',
-      parentId: doc.parent_folder_id,
-      status: doc.ai_processing_status,
-      metadata: doc.metadata || {},
-      storagePath: doc.storage_path,
-      filePath: doc.storage_path, // Set filePath for consistency
-      folderType: doc.folder_type
-    };
-
-    if (doc.parent_folder_id && documents.some(d => d.id === doc.parent_folder_id)) {
-      if (!childrenMap.has(doc.parent_folder_id)) {
-        childrenMap.set(doc.parent_folder_id, []);
-      }
-      childrenMap.get(doc.parent_folder_id)?.push(node);
-    } else {
-      roots.push(node);
-    }
-  });
-
-  // Second pass: build tree by assigning children
-  const assignChildren = (node: DocumentTreeNode): DocumentTreeNode => {
-    const children = childrenMap.get(node.id);
-    if (children) {
-      node.children = children;
-      children.forEach(assignChildren);
-    }
-    return node;
-  };
-
-  return roots.map(assignChildren);
 };

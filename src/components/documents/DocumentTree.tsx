@@ -53,7 +53,7 @@ export const DocumentTree = ({
       if (node.type === 'file') {
         const clientName = node.metadata?.client_name || 'Uncategorized';
         const client = clientMap.get(clientName) || {
-          id: node.id,
+          id: node.metadata?.client_id || node.id,
           name: clientName,
           documents: []
         };
@@ -67,8 +67,6 @@ export const DocumentTree = ({
     return Array.from(clientMap.values());
   };
 
-  const clients = groupDocumentsByClient(effectiveNodes);
-
   // Handle document selection
   const handleDocumentSelection = (documentId: string) => {
     console.log("DocumentTree: Document selected:", documentId);
@@ -81,6 +79,8 @@ export const DocumentTree = ({
       }
     }
   };
+
+  const clients = groupDocumentsByClient(effectiveNodes);
 
   return (
     <ScrollArea className="h-[calc(100vh-16rem)]">

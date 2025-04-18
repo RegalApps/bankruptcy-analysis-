@@ -75,7 +75,7 @@ export const DocumentsContainer = ({
     setSelectedDocumentId(documentId);
   };
 
-  // Define handler functions required by DocumentTree
+  // Define handler functions for DocumentTree
   const handleNodeSelect = (node: any) => {
     console.log("Selected node:", node);
     // If the node is a file, select it

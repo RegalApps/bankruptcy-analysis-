@@ -1,4 +1,3 @@
-
 // Define the possible document statuses
 export type DocumentStatus = 
   | 'pending'
@@ -9,7 +8,9 @@ export type DocumentStatus =
   | 'needs-review'
   | 'approved'
   | 'rejected'
-  | 'needs-signature';
+  | 'needs-signature'
+  | 'analyzing' // Added for upload process consistency
+  | 'uploading'; // Added for upload process consistency
 
 // Define document tree node structure
 export interface DocumentTreeNode {
@@ -23,6 +24,7 @@ export interface DocumentTreeNode {
   filePath?: string;
   folderType?: string;
   children?: DocumentTreeNode[];
+  url?: string; // Added for direct access to document URLs
 }
 
 // DocumentRecord interface for documents from the database
