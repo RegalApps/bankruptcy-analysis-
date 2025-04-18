@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
-import { DocumentTreeNode } from '@/utils/documents/types/index';
+import { DocumentTreeNode } from '@/utils/documents/types';
 import { toast } from 'sonner';
 
 interface DocumentsContextType {

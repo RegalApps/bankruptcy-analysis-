@@ -1,463 +1,301 @@
 
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle, AlertCircle, Info, Download, RefreshCw } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useDocumentAnalysisAI } from "../hooks/useDocumentAnalysisAI";
+import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Card,
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { DocumentRisk } from '@/utils/documents/types';
+import { RiskList } from './RiskList';
+import { InfoCircle, AlertTriangle, AlertOctagon, Ban } from 'lucide-react';
 
 interface DocumentAnalysisProps {
-  documentId: string;
-  initialData?: any;
+  summary: string;
+  risks: DocumentRisk[];
+  extractedInfo?: Record<string, any>;
+  complianceStatus?: {
+    overall: string;
+    details: string;
+    score?: number;
+  };
 }
 
-export const DocumentAnalysis: React.FC<DocumentAnalysisProps> = ({ documentId, initialData }) => {
-  const { analyzeDocument, isAnalyzing, result, error } = useDocumentAnalysisAI();
-  const analysisData = result || initialData;
-
-  const handleAnalyze = () => {
-    analyzeDocument(documentId);
-  };
-
-  const getSeverityIcon = (severity: string) => {
-    switch (severity.toLowerCase()) {
-      case 'high':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'medium':
-        return <AlertCircle className="h-4 w-4 text-amber-500" />;
-      case 'low':
-        return <Info className="h-4 w-4 text-blue-500" />;
-      default:
-        return <Info className="h-4 w-4" />;
-    }
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity.toLowerCase()) {
-      case 'high':
-        return 'text-red-700 bg-red-50 border-red-200';
-      case 'medium':
-        return 'text-amber-700 bg-amber-50 border-amber-200';
-      case 'low':
-        return 'text-blue-700 bg-blue-50 border-blue-200';
-      default:
-        return 'text-gray-700 bg-gray-50 border-gray-200';
-    }
-  };
-
+export function DocumentAnalysis({
+  summary,
+  risks,
+  extractedInfo,
+  complianceStatus
+}: DocumentAnalysisProps) {
+  // Filter risks by severity
+  const criticalRisks = risks.filter(risk => risk.severity === 'critical');
+  const highRisks = risks.filter(risk => risk.severity === 'high');
+  const mediumRisks = risks.filter(risk => risk.severity === 'medium');
+  const lowRisks = risks.filter(risk => risk.severity === 'low');
+  
+  const hasRisks = risks.length > 0;
+  
   return (
-    <Card className="h-full">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-medium">Document Analysis</CardTitle>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleAnalyze} 
-          disabled={isAnalyzing}
-          className="flex items-center gap-1"
-        >
-          {isAnalyzing ? (
-            <>
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              <span>Analyzing...</span>
-            </>
-          ) : (
-            <>
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>Re-analyze</span>
-            </>
-          )}
-        </Button>
-      </CardHeader>
+    <div className="space-y-6">
+      {/* Document Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Document Summary</CardTitle>
+          <CardDescription>AI-generated summary of this document</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-700 leading-relaxed">{summary}</p>
+        </CardContent>
+      </Card>
       
-      <CardContent className="p-0">
-        {error && (
-          <div className="p-3 m-3 bg-red-50 text-red-700 rounded-md text-sm">
-            Error: {error}
+      {/* Risk Assessment */}
+      <Card>
+        <CardHeader className="space-y-1.5">
+          <div className="flex justify-between items-center">
+            <CardTitle>Risk Assessment</CardTitle>
+            <RiskLevelBadge count={criticalRisks.length + highRisks.length + mediumRisks.length + lowRisks.length} />
           </div>
-        )}
-        
-        {!analysisData ? (
-          <div className="p-6 text-center">
-            <p className="text-muted-foreground mb-4">No analysis data available</p>
-            <Button onClick={handleAnalyze} disabled={isAnalyzing}>
-              {isAnalyzing ? "Analyzing..." : "Analyze Document"}
-            </Button>
-          </div>
-        ) : (
-          <Tabs defaultValue="summary" className="h-full">
-            <div className="px-4 border-b">
-              <TabsList className="mt-2">
-                <TabsTrigger value="summary">Summary</TabsTrigger>
-                <TabsTrigger value="risks">Risks</TabsTrigger>
-                <TabsTrigger value="extracted">Extracted Data</TabsTrigger>
+          <CardDescription>
+            Identified issues and compliance requirements
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!hasRisks ? (
+            <Alert className="bg-green-50 border-green-200">
+              <InfoCircle className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-700">No Issues Detected</AlertTitle>
+              <AlertDescription className="text-green-600">
+                This document appears to meet all compliance requirements with no identified issues.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Tabs defaultValue="critical">
+              <TabsList className="w-full mb-4">
+                <TabsTrigger value="critical" className="flex-1">
+                  Critical
+                  {criticalRisks.length > 0 && (
+                    <Badge variant="destructive" className="ml-2">{criticalRisks.length}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="high" className="flex-1">
+                  High
+                  {highRisks.length > 0 && (
+                    <Badge variant="destructive" className="ml-2 bg-orange-500">{highRisks.length}</Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="medium" className="flex-1">
+                  Medium
+                  {mediumRisks.length > 0 && (
+                    <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-300">
+                      {mediumRisks.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="low" className="flex-1">
+                  Low
+                  {lowRisks.length > 0 && (
+                    <Badge variant="outline" className="ml-2">{lowRisks.length}</Badge>
+                  )}
+                </TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="critical">
+                {criticalRisks.length === 0 ? (
+                  <Alert>
+                    <InfoCircle className="h-4 w-4" />
+                    <AlertTitle>No Critical Issues</AlertTitle>
+                    <AlertDescription>
+                      No critical issues were detected in this document.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <RiskList risks={criticalRisks} />
+                )}
+              </TabsContent>
+              
+              <TabsContent value="high">
+                {highRisks.length === 0 ? (
+                  <Alert>
+                    <InfoCircle className="h-4 w-4" />
+                    <AlertTitle>No High-Priority Issues</AlertTitle>
+                    <AlertDescription>
+                      No high-priority issues were detected in this document.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <RiskList risks={highRisks} />
+                )}
+              </TabsContent>
+              
+              <TabsContent value="medium">
+                {mediumRisks.length === 0 ? (
+                  <Alert>
+                    <InfoCircle className="h-4 w-4" />
+                    <AlertTitle>No Medium-Priority Issues</AlertTitle>
+                    <AlertDescription>
+                      No medium-priority issues were detected in this document.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <RiskList risks={mediumRisks} />
+                )}
+              </TabsContent>
+              
+              <TabsContent value="low">
+                {lowRisks.length === 0 ? (
+                  <Alert>
+                    <InfoCircle className="h-4 w-4" />
+                    <AlertTitle>No Low-Priority Issues</AlertTitle>
+                    <AlertDescription>
+                      No low-priority issues were detected in this document.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <RiskList risks={lowRisks} />
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Extracted Information */}
+      {extractedInfo && Object.keys(extractedInfo).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Extracted Information</CardTitle>
+            <CardDescription>Key data extracted from this document</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(extractedInfo).map(([key, value]) => (
+                <div key={key} className="border rounded p-3">
+                  <div className="text-sm font-medium text-gray-500 mb-1">
+                    {formatFieldName(key)}
+                  </div>
+                  <div className="text-base">
+                    {formatFieldValue(value)}
+                  </div>
+                </div>
+              ))}
             </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Compliance Status */}
+      {complianceStatus && (
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Compliance Status</CardTitle>
+              <ComplianceBadge status={complianceStatus.overall} />
+            </div>
+            <CardDescription>Regulatory compliance assessment</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-700 mb-4">{complianceStatus.details}</p>
             
-            <ScrollArea className="h-[calc(100vh-16rem)]">
-              <TabsContent value="summary" className="m-0 p-4">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium mb-2">Document Information</h3>
-                    <div className="text-sm">
-                      <p><span className="text-muted-foreground">Type:</span> {analysisData.documentType || "Form 31 - Proof of Claim"}</p>
-                      <p><span className="text-muted-foreground">Client:</span> {analysisData.clientInformation?.name || "GreenTech Supplies Inc."}</p>
-                      <p><span className="text-muted-foreground">Date:</span> {analysisData.documentDate || "April 8, 2025"}</p>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h3 className="font-medium mb-2 flex items-center gap-2">
-                      Risk Assessment
-                      {analysisData.risks?.some((r: any) => r.severity.toLowerCase() === 'high') && 
-                        <Badge variant="destructive" className="h-5">High Risk</Badge>
-                      }
-                    </h3>
-                    <div className="text-sm space-y-2">
-                      <p className="text-muted-foreground">
-                        {analysisData.riskSummary || 
-                          "This document contains several issues that need to be addressed, including missing selections in required fields and incomplete information."}
-                      </p>
-                      
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                          {analysisData.risks?.filter((r: any) => r.severity.toLowerCase() === 'high').length || 3} High
-                        </Badge>
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                          {analysisData.risks?.filter((r: any) => r.severity.toLowerCase() === 'medium').length || 2} Medium
-                        </Badge>
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {analysisData.risks?.filter((r: any) => r.severity.toLowerCase() === 'low').length || 2} Low
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex justify-between items-center">
-                    <Button variant="outline" size="sm" className="flex items-center gap-1">
-                      <Download className="h-3.5 w-3.5" />
-                      Export Analysis
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Analyzed on {new Date().toLocaleDateString()}
-                    </p>
-                  </div>
+            {complianceStatus.score !== undefined && (
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className={`h-2.5 rounded-full ${getComplianceScoreColor(complianceScore)}`}
+                  style={{ width: `${complianceStatus.score * 100}%` }}
+                ></div>
+                <div className="flex justify-between mt-1 text-xs text-gray-500">
+                  <span>0%</span>
+                  <span>Compliance Score: {Math.round(complianceStatus.score * 100)}%</span>
+                  <span>100%</span>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="risks" className="m-0">
-                <div className="p-4 space-y-6">
-                  {/* High Risk Items */}
-                  <div className="space-y-3">
-                    <h3 className="font-medium text-red-700 flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      High Risk Issues
-                    </h3>
-                    {(analysisData.risks || [])
-                      .filter((risk: any) => risk.severity.toLowerCase() === 'high')
-                      .map((risk: any, index: number) => (
-                        <div 
-                          key={`high-${index}`} 
-                          className="p-3 border rounded-lg bg-red-50 border-red-200 text-sm"
-                        >
-                          <div className="font-medium mb-1">{risk.title || risk.issue || "Missing Checkbox Selections"}</div>
-                          <p className="text-red-700 text-xs mb-2">
-                            {risk.description || "None of the checkboxes are checked, although $89,355 is listed."}
-                          </p>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 text-xs">
-                            {risk.regulation && (
-                              <div>
-                                <span className="font-medium">Regulation:</span>
-                                <span className="ml-1 text-red-600">{risk.regulation}</span>
-                              </div>
-                            )}
-                            
-                            {risk.impact && (
-                              <div>
-                                <span className="font-medium">Impact:</span>
-                                <span className="ml-1">{risk.impact}</span>
-                              </div>
-                            )}
-                            
-                            {risk.solution && (
-                              <div className="md:col-span-2">
-                                <span className="font-medium">Solution:</span>
-                                <span className="ml-1">{risk.solution}</span>
-                              </div>
-                            )}
-                            
-                            {risk.deadline && (
-                              <div>
-                                <span className="font-medium">Deadline:</span>
-                                <span className="ml-1">{risk.deadline}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Default high risk items if none in data */}
-                      {(!analysisData.risks || !analysisData.risks.some((r: any) => r.severity.toLowerCase() === 'high')) && (
-                        <>
-                          <div className="p-3 border rounded-lg bg-red-50 border-red-200 text-sm">
-                            <div className="font-medium mb-1">Missing Checkbox Selections in Claim Category</div>
-                            <p className="text-red-700 text-xs mb-2">
-                              None of the checkboxes (Unsecured, Secured, Lessor, etc.) are checked, although $89,355 is listed.
-                            </p>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 text-xs">
-                              <div>
-                                <span className="font-medium">Regulation:</span>
-                                <span className="ml-1 text-red-600">BIA Subsection 124(2)</span>
-                              </div>
-                              <div>
-                                <span className="font-medium">Impact:</span>
-                                <span className="ml-1">This creates ambiguity about the nature of the claim.</span>
-                              </div>
-                              <div className="md:col-span-2">
-                                <span className="font-medium">Solution:</span>
-                                <span className="ml-1">Select the appropriate claim type checkbox (likely 'A. Unsecured Claim').</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-3 border rounded-lg bg-red-50 border-red-200 text-sm">
-                            <div className="font-medium mb-1">Missing Confirmation of Relatedness/Arm's-Length Status</div>
-                            <p className="text-red-700 text-xs mb-2">
-                              The declaration of whether the creditor is related to the debtor or dealt at arm's length is incomplete.
-                            </p>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 text-xs">
-                              <div>
-                                <span className="font-medium">Regulation:</span>
-                                <span className="ml-1 text-red-600">BIA Section 4(1) and Section 95</span>
-                              </div>
-                              <div>
-                                <span className="font-medium">Impact:</span>
-                                <span className="ml-1">Required for assessing transfers and preferences.</span>
-                              </div>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                  </div>
-                  
-                  {/* Medium Risk Items */}
-                  <div className="space-y-3">
-                    <h3 className="font-medium text-amber-700 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      Medium Risk Issues
-                    </h3>
-                    
-                    {(analysisData.risks || [])
-                      .filter((risk: any) => risk.severity.toLowerCase() === 'medium')
-                      .map((risk: any, index: number) => (
-                        <div 
-                          key={`medium-${index}`} 
-                          className="p-3 border rounded-lg bg-amber-50 border-amber-200 text-sm"
-                        >
-                          <div className="font-medium mb-1">{risk.title || risk.issue || "Incorrect Date Format"}</div>
-                          <p className="text-amber-700 text-xs mb-2">{risk.description || '"Dated at 2025, this 8 day of 0." is invalid.'}</p>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 text-xs">
-                            {risk.regulation && (
-                              <div>
-                                <span className="font-medium">Regulation:</span>
-                                <span className="ml-1 text-amber-600">{risk.regulation}</span>
-                              </div>
-                            )}
-                            
-                            {risk.impact && (
-                              <div>
-                                <span className="font-medium">Impact:</span>
-                                <span className="ml-1">{risk.impact}</span>
-                              </div>
-                            )}
-                            
-                            {risk.solution && (
-                              <div className="md:col-span-2">
-                                <span className="font-medium">Solution:</span>
-                                <span className="ml-1">{risk.solution}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {/* Default medium risk items if none in data */}
-                      {(!analysisData.risks || !analysisData.risks.some((r: any) => r.severity.toLowerCase() === 'medium')) && (
-                        <div className="p-3 border rounded-lg bg-amber-50 border-amber-200 text-sm">
-                          <div className="font-medium mb-1">Incorrect or Incomplete Date Format</div>
-                          <p className="text-amber-700 text-xs mb-2">
-                            "Dated at 2025, this 8 day of 0." is invalid.
-                          </p>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 text-xs">
-                            <div>
-                              <span className="font-medium">Regulation:</span>
-                              <span className="ml-1 text-amber-600">BIA Form Regulations Rule 1</span>
-                            </div>
-                            <div>
-                              <span className="font-medium">Solution:</span>
-                              <span className="ml-1">Correct to "Dated at Toronto, this 8th day of April, 2025."</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                  
-                  {/* Low Risk Items */}
-                  <div className="space-y-3">
-                    <h3 className="font-medium text-blue-700 flex items-center gap-2">
-                      <Info className="h-4 w-4" />
-                      Low Risk Issues
-                    </h3>
-                    
-                    {(analysisData.risks || [])
-                      .filter((risk: any) => risk.severity.toLowerCase() === 'low')
-                      .map((risk: any, index: number) => (
-                        <div 
-                          key={`low-${index}`} 
-                          className="p-3 border rounded-lg bg-blue-50 border-blue-200 text-sm"
-                        >
-                          <div className="font-medium mb-1">{risk.title || risk.issue || "No Attached Schedule A"}</div>
-                          <p className="text-blue-700 text-xs mb-2">{risk.description || "Schedule 'A' showing breakdown of amount is not attached."}</p>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 text-xs">
-                            {risk.regulation && (
-                              <div>
-                                <span className="font-medium">Regulation:</span>
-                                <span className="ml-1 text-blue-600">{risk.regulation}</span>
-                              </div>
-                            )}
-                            
-                            {risk.solution && (
-                              <div className="md:col-span-2">
-                                <span className="font-medium">Solution:</span>
-                                <span className="ml-1">{risk.solution}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {/* Default low risk items if none in data */}
-                      {(!analysisData.risks || !analysisData.risks.some((r: any) => r.severity.toLowerCase() === 'low')) && (
-                        <div className="p-3 border rounded-lg bg-blue-50 border-blue-200 text-sm">
-                          <div className="font-medium mb-1">No Attached Schedule "A"</div>
-                          <p className="text-blue-700 text-xs mb-2">
-                            While referenced, Schedule "A" showing the breakdown of the $89,355 is not attached.
-                          </p>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3 text-xs">
-                            <div>
-                              <span className="font-medium">Regulation:</span>
-                              <span className="ml-1 text-blue-600">BIA Subsection 124(2)</span>
-                            </div>
-                            <div>
-                              <span className="font-medium">Solution:</span>
-                              <span className="ml-1">Attach a detailed account statement showing calculation of amount owing.</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="extracted" className="m-0">
-                <div className="p-4 space-y-6">
-                  <div>
-                    <h3 className="font-medium mb-3">🔹 Creditor Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm ml-4">
-                      <div>
-                        <span className="text-muted-foreground">Name:</span>
-                        <span className="ml-1">Neil Armstrong</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Role:</span>
-                        <span className="ml-1">Licensed Insolvency Trustee</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Firm:</span>
-                        <span className="ml-1">ABC Restructuring Ltd.</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Phone:</span>
-                        <span className="ml-1">416-988-2442</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Email:</span>
-                        <span className="ml-1">neil.armstrong@fallouttrusteelimited.com</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">City/Province:</span>
-                        <span className="ml-1">Trenton, Ontario</span>
-                      </div>
-                      <div className="col-span-2">
-                        <span className="text-muted-foreground">Address:</span>
-                        <span className="ml-1">100 Bay Street, Suite 400, Toronto, Ontario, M5J 2N8</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h3 className="font-medium mb-3">🔹 Debtor Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm ml-4">
-                      <div>
-                        <span className="text-muted-foreground">Name:</span>
-                        <span className="ml-1">GreenTech Supplies Inc.</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">City/Province:</span>
-                        <span className="ml-1">Trenton, Ontario</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h3 className="font-medium mb-3">🔹 Claim Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm ml-4">
-                      <div>
-                        <span className="text-muted-foreground">Type:</span>
-                        <span className="ml-1">Unsecured</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Amount:</span>
-                        <span className="ml-1">$89,355.00</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Basis:</span>
-                        <span className="ml-1">Debt owed as of March 15, 2025</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Security Held:</span>
-                        <span className="ml-1">None declared</span>
-                      </div>
-                      <div className="col-span-2">
-                        <span className="text-muted-foreground">Related Party Status:</span>
-                        <span className="ml-1 text-red-600">Not confirmed (Missing)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-            </ScrollArea>
-          </Tabs>
-        )}
-      </CardContent>
-    </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
-};
+}
+
+// Helper components
+function RiskLevelBadge({ count }: { count: number }) {
+  if (count === 0) {
+    return (
+      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+        No Issues
+      </Badge>
+    );
+  } else {
+    return (
+      <Badge variant="destructive">
+        {count} {count === 1 ? 'Issue' : 'Issues'}
+      </Badge>
+    );
+  }
+}
+
+function ComplianceBadge({ status }: { status: string }) {
+  switch (status.toLowerCase()) {
+    case 'compliant':
+      return (
+        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+          Compliant
+        </Badge>
+      );
+    case 'attention_required':
+    case 'attention required':
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
+          Attention Required
+        </Badge>
+      );
+    case 'non_compliant':
+    case 'non-compliant':
+      return (
+        <Badge variant="destructive">
+          Non-compliant
+        </Badge>
+      );
+    default:
+      return (
+        <Badge variant="outline">
+          {status}
+        </Badge>
+      );
+  }
+}
+
+function getComplianceScoreColor(score: number): string {
+  if (score >= 0.9) return 'bg-green-500';
+  if (score >= 0.75) return 'bg-yellow-400';
+  if (score >= 0.5) return 'bg-orange-500';
+  return 'bg-red-500';
+}
+
+function formatFieldName(key: string): string {
+  return key
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function formatFieldValue(value: any): string {
+  if (value === null || value === undefined) {
+    return 'N/A';
+  }
+  
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  
+  return String(value);
+}

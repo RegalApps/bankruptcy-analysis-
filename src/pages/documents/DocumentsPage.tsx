@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { toast } from "sonner";
-import { DocumentTreeNode } from "@/utils/documents/types/index";
+import { DocumentTreeNode } from "@/utils/documents/types";
 
 // Hardcoded demo data for Josh Hart
 const DEMO_CLIENTS = [
