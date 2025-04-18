@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { toast } from "sonner";
-import { DocumentTreeNode, DocumentStatus } from "@/utils/documents/types";
+import { DocumentTreeNode, DocumentStatus } from "@/utils/documents/types/index";
 
 // Hardcoded demo data for clients
 const DEMO_CLIENTS = [

@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { buildDocumentTree } from "@/utils/documents/documentSync";
-import { DocumentTreeNode } from "@/utils/documents/types";
+import { DocumentTreeNode } from "@/utils/documents/types/index";
 import { DocumentDisplay } from "./DocumentDisplay";
 import { DocumentTree } from "./DocumentTree";
 import { DocumentViewerPanel } from "../DocumentViewer/DocumentViewerPanel";

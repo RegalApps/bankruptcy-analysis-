@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { ClientList } from "@/components/documents/ClientList";
 import { DocumentTree } from "@/components/documents/DocumentTree";
@@ -6,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { toast } from "sonner";
-import { DocumentTreeNode } from "@/utils/documents/types";
+import { DocumentTreeNode } from "@/utils/documents/types/index";
 
 // Hardcoded demo data for Josh Hart
 const DEMO_CLIENTS = [
