@@ -11,11 +11,13 @@ interface ClientDocumentTreeProps {
     documents: any[];
   };
   onDocumentSelect: (documentId: string) => void;
+  selectedDocumentId?: string;
 }
 
 export const ClientDocumentTree = ({ 
   client,
-  onDocumentSelect
+  onDocumentSelect,
+  selectedDocumentId
 }: ClientDocumentTreeProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -44,7 +46,10 @@ export const ClientDocumentTree = ({
           {client.documents.map((doc) => (
             <div 
               key={doc.id}
-              className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-accent/20 transition-colors"
+              className={cn(
+                "flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-accent/20 transition-colors",
+                selectedDocumentId === doc.id && "bg-accent/40"
+              )}
               onClick={() => onDocumentSelect(doc.id)}
             >
               <div className="flex items-center gap-2">
