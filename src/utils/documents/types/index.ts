@@ -110,13 +110,3 @@ export interface UploadInfo {
   startTime?: number;
   metadata?: Record<string, any>;
 }
-
-export interface UploadMetric {
-  documentId: string;
-  timestamp: number;
-  duration: number;
-  fileType: string;
-  fileSize: number;
-  success: boolean;
-  errorMessage?: string;
-}
