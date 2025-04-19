@@ -1,5 +1,7 @@
 
 import { create } from "zustand";
+import { uploadAnalytics } from "./uploadAnalytics";
+import { UploadMetric } from "./types";
 
 type UploadStatus = "uploading" | "processing" | "complete" | "error";
 
@@ -72,6 +74,24 @@ const useUploadStore = create<UploadTracker>((set) => ({
   completeUpload: (id, message) => set((state) => {
     if (!state.uploads[id]) return state;
     
+    // Record the completion in analytics
+    if (state.uploads[id].metadata) {
+      const startTime = state.uploads[id].startTime;
+      const duration = Date.now() - startTime.getTime();
+      const fileType = state.uploads[id].metadata.fileType || 'unknown';
+      const fileSize = state.uploads[id].metadata.fileSize || 0;
+      
+      // Log successful upload to analytics
+      uploadAnalytics.logMetric({
+        documentId: id,
+        timestamp: Date.now(),
+        duration,
+        fileType,
+        fileSize,
+        success: true
+      });
+    }
+    
     return {
       uploads: {
         ...state.uploads,
@@ -87,6 +107,25 @@ const useUploadStore = create<UploadTracker>((set) => ({
   
   setError: (id, message) => set((state) => {
     if (!state.uploads[id]) return state;
+    
+    // Record the error in analytics
+    if (state.uploads[id].metadata) {
+      const startTime = state.uploads[id].startTime;
+      const duration = Date.now() - startTime.getTime();
+      const fileType = state.uploads[id].metadata.fileType || 'unknown';
+      const fileSize = state.uploads[id].metadata.fileSize || 0;
+      
+      // Log failed upload to analytics
+      uploadAnalytics.logMetric({
+        documentId: id,
+        timestamp: Date.now(),
+        duration,
+        fileType,
+        fileSize,
+        success: false,
+        errorMessage: message
+      });
+    }
     
     return {
       uploads: {
@@ -160,6 +199,15 @@ export const trackUpload = (id: string, initialProgress: number = 0, metadata?: 
       progressCallbacks.forEach(callback => callback(id, -1, `Error: ${message}`));
     }
   };
+};
+
+// Add missing functions that are referenced in UploadAnalytics.tsx
+export const getUploadAnalytics = () => {
+  return uploadAnalytics.getAnalytics();
+};
+
+export const getUploadSpeedTrend = () => {
+  return uploadAnalytics.getTrendData();
 };
 
 // Add missing functions that are referenced in other components
