@@ -35,6 +35,17 @@ const DocumentViewerPage = () => {
     documentId === "form31" || 
     documentId === "form-31-greentech";
   
+  // Determine form type based on document ID
+  const getFormType = () => {
+    if (documentId === "form47" || documentId === "form-47") {
+      return "form-47";
+    }
+    if (isGreenTechForm31) {
+      return "form-31";
+    }
+    return undefined;
+  };
+  
   return (
     <MainLayout>
       <div className="mb-4">
@@ -60,6 +71,7 @@ const DocumentViewerPage = () => {
               documentId="form47" 
               documentTitle="Form 47 - Consumer Proposal"
               isForm47={true}
+              formType="form-47"
               onLoadFailure={handleLoadFailure}
             />
           ) : isGreenTechForm31 ? (
@@ -67,6 +79,7 @@ const DocumentViewerPage = () => {
               documentId="greentech-form31" 
               documentTitle="Form 31 - GreenTech Supplies Inc. - Proof of Claim"
               isForm31GreenTech={true}
+              formType="form-31"
               onLoadFailure={handleLoadFailure}
             />
           ) : (

@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { DocumentPreview } from "./DocumentPreview";
-import RiskAssessment from "./RiskAssessment";
+import RiskAssessment, { RiskAssessment as NamedRiskAssessment } from "./RiskAssessment";
 import { Form31RiskView } from "./RiskAssessment/Form31RiskView";
+import { FormRiskView } from "./FormRiskView";
 import { Risk } from "./RiskAssessment/types";
 import { toast } from "sonner";
 import { useGreenTechForm31Risks } from "./hooks/useGreenTechForm31Risks";
@@ -14,6 +15,7 @@ interface DocumentViewerProps {
   isForm31GreenTech?: boolean;
   onLoadFailure?: (errorMessage?: string) => void;
   bypassProcessing?: boolean;
+  formType?: string;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
@@ -22,7 +24,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   isForm47 = false,
   isForm31GreenTech = false,
   onLoadFailure,
-  bypassProcessing = false
+  bypassProcessing = false,
+  formType
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeRiskId, setActiveRiskId] = useState<string | null>(null);
@@ -30,6 +33,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   
   // Get GreenTech Form 31 risks if applicable
   const greenTechRisks = useGreenTechForm31Risks();
+  
+  // Determine the appropriate form type
+  const derivedFormType = formType || 
+                          (isForm47 ? 'form-47' : 
+                           isForm31GreenTech ? 'form-31' : '');
+  
+  // Determine the appropriate risks based on form type
   const risks = isForm31GreenTech ? greenTechRisks : [];
 
   // Simulate loading document
@@ -92,8 +102,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       </div>
       
       <div className="w-[350px] bg-card border rounded-lg overflow-hidden">
-        {isForm31GreenTech ? (
-          <Form31RiskView 
+        {derivedFormType ? (
+          <FormRiskView 
+            formType={derivedFormType}
             documentId={documentId} 
             risks={risks}
             activeRiskId={activeRiskId}
