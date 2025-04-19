@@ -1,8 +1,10 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { UseFileCheckerReturn } from "../../types";
 
+/**
+ * Hook for checking file existence and accessibility in storage
+ */
 export const useFileChecker = (
   setFileExists: (exists: boolean) => void,
   setFileUrl: (url: string | null) => void,
@@ -11,90 +13,171 @@ export const useFileChecker = (
   setNetworkStatus: (status: 'online' | 'offline') => void
 ): UseFileCheckerReturn => {
   
-  const getFileExtension = (path: string): string => {
-    return path.split('.').pop()?.toLowerCase() || '';
-  };
-
-  const isPdfFile = useCallback((path: string): boolean => {
-    return getFileExtension(path) === 'pdf';
-  }, []);
-
-  const isExcelFile = useCallback((path: string): boolean => {
-    const ext = getFileExtension(path);
-    return ['xlsx', 'xls', 'csv'].includes(ext);
-  }, []);
-
-  const isDocFile = useCallback((path: string): boolean => {
-    const ext = getFileExtension(path);
-    return ['doc', 'docx'].includes(ext);
-  }, []);
-
-  // Main function to check file existence and properties
-  const checkFile = useCallback(async (storagePath: string): Promise<void> => {
+  /**
+   * Handle errors that occur during file checking
+   */
+  const handleFileCheckError = useCallback((error: any, publicUrl?: string | null) => {
+    console.error("Error checking file existence:", error);
+    
+    // More specific error handling
+    if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
+      setPreviewError(`Network error: ${navigator.onLine ? "Server connection issue" : "You appear to be offline"}`);
+      setNetworkStatus('offline');
+      
+      // In case of network error but URL is already set, we'll still try to display
+      if (publicUrl) {
+        setFileExists(true);
+        setFileUrl(publicUrl);
+      } else {
+        setFileExists(false);
+        setFileUrl(null);
+      }
+    } else {
+      setFileExists(false);
+      setFileUrl(null);
+      setPreviewError(`Database error: ${error.message || "Failed to check file existence"}`);
+    }
+  }, [setFileExists, setFileUrl, setPreviewError, setNetworkStatus]);
+  
+  /**
+   * Check if file exists in storage and get its public URL
+   */
+  const checkFile = useCallback(async (storagePath: string) => {
     if (!storagePath) {
       setFileExists(false);
       setFileUrl(null);
-      setPreviewError('No storage path provided');
+      setPreviewError("No storage path provided");
       return;
     }
 
     try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .createSignedUrl(storagePath, 3600); // 1 hour expiry
-
-      if (error) {
-        console.error('Error getting file URL:', error);
-        setFileExists(false);
-        setFileUrl(null);
-        
-        // Check if error is network-related
-        if (error.message.includes('network') || error.message.includes('connect')) {
-          setNetworkStatus('offline');
-          setPreviewError('Network connection issue. Please check your internet connection.');
-        } else {
-          setNetworkStatus('online');
-          setPreviewError(`Error accessing file: ${error.message}`);
-        }
-        return;
-      }
-
-      if (!data?.signedUrl) {
-        setFileExists(false);
-        setFileUrl(null);
-        setPreviewError('File not found or access denied');
-        return;
-      }
-
-      // File exists and URL retrieved successfully
-      setFileExists(true);
-      setFileUrl(data.signedUrl);
-      setNetworkStatus('online');
-      setIsExcelFile(isExcelFile(storagePath));
-    } catch (error: any) {
-      console.error('Exception when checking file:', error);
-      setFileExists(false);
-      setFileUrl(null);
+      console.log("Checking file at path:", storagePath);
       
-      // Categorize error as network-related or other
-      if (error.message?.includes('network') || 
-          error.message?.includes('fetch') || 
-          error.message?.includes('connection')) {
-        setNetworkStatus('offline');
-        setPreviewError('Network connection error. Please check your internet connection and try again.');
+      // Get public URL for file with specific options to prevent caching
+      const { data } = await supabase.storage
+        .from('documents')
+        .getPublicUrl(storagePath);
+      
+      if (data?.publicUrl) {
+        console.log("File found with URL:", data.publicUrl);
+        
+        // Set the URL regardless of fetch success
+        setFileUrl(data.publicUrl);
+        
+        try {
+          // Generate a unique URL to avoid browser caching issues
+          const cacheBreakingUrl = `${data.publicUrl}?cache=${Date.now()}`;
+          
+          // Use a combination of fetch API and timeout to check accessibility
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          
+          const response = await fetch(cacheBreakingUrl, { 
+            method: 'HEAD',
+            cache: 'no-cache',
+            signal: controller.signal,
+            // Add credentials to ensure cookies are sent with the request
+            credentials: 'same-origin'
+          });
+          
+          clearTimeout(timeoutId);
+          
+          console.log("File accessibility check response:", response.status);
+          
+          if (response.ok) {
+            setFileExists(true);
+            
+            // Check file type
+            const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
+                           storagePath.toLowerCase().endsWith('.xls') ||
+                           storagePath.toLowerCase().endsWith('.csv');
+                           
+            setIsExcelFile(isExcel);
+            setPreviewError(null);
+            setNetworkStatus('online'); // Explicitly set online status on success
+          } else {
+            // Status code error
+            setFileExists(false);
+            setPreviewError(`File accessibility error: HTTP ${response.status}`);
+            
+            // Try no-cors mode as fallback
+            try {
+              await fetch(data.publicUrl, { 
+                method: 'HEAD',
+                mode: 'no-cors' 
+              });
+              
+              // If we get here, assume file might exist
+              console.log("No-cors fetch didn't throw, assuming file exists");
+              setFileExists(true);
+              
+              // Check file type
+              const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
+                            storagePath.toLowerCase().endsWith('.xls') ||
+                            storagePath.toLowerCase().endsWith('.csv');
+                            
+              setIsExcelFile(isExcel);
+              setPreviewError(null);
+            } catch (corsError) {
+              console.error("No-cors fetch also failed:", corsError);
+            }
+          }
+        } catch (fetchError: any) {
+          console.error("Error fetching file:", fetchError);
+          
+          if (fetchError.name === 'AbortError') {
+            setPreviewError("Request timed out. The server might be busy or the file too large.");
+            // Still try to show the file
+            setFileExists(true);
+          } else if (fetchError.message?.includes('network') || 
+                    fetchError.message?.includes('fetch')) {
+            // Network error, but we'll still try to show the file
+            setFileExists(true);
+            setPreviewError("Network issue detected. Preview might be limited.");
+            
+            // Check if it's an Excel file anyway
+            const isExcel = storagePath.toLowerCase().endsWith('.xlsx') || 
+                          storagePath.toLowerCase().endsWith('.xls') ||
+                          storagePath.toLowerCase().endsWith('.csv');
+            setIsExcelFile(isExcel);
+            
+            // Update network status
+            setNetworkStatus('offline');
+          } else {
+            // Other errors
+            setFileExists(false);
+            setPreviewError(`Error accessing file: ${fetchError.message || "Unknown error"}`);
+          }
+        }
       } else {
-        setNetworkStatus('online');
-        setPreviewError(`Error: ${error.message || 'Unknown error occurred'}`);
+        console.error("No public URL returned for file:", storagePath);
+        setFileExists(false);
+        setFileUrl(null);
+        setPreviewError("File not found in storage or not accessible");
+      }
+    } catch (error: any) {
+      // Use the error handler with the data from the current scope
+      try {
+        const result = await supabase.storage
+          .from('documents')
+          .getPublicUrl(storagePath);
+          
+        handleFileCheckError(error, result.data?.publicUrl);
+      } catch (innerError) {
+        handleFileCheckError(error);
       }
     }
-  }, [setFileExists, setFileUrl, setIsExcelFile, setPreviewError, setNetworkStatus, isExcelFile]);
+  }, [
+    setFileExists, 
+    setFileUrl, 
+    setIsExcelFile, 
+    setPreviewError, 
+    setNetworkStatus, 
+    handleFileCheckError
+  ]);
 
   return {
-    fileExists: false,
-    fileUrl: null,
-    isPdfFile,
-    isExcelFile,
-    isDocFile,
-    checkFile
+    checkFile,
+    handleFileCheckError
   };
 };

@@ -1,47 +1,31 @@
 
-import React, { useState } from "react";
+import { useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import logger from "@/utils/logger";
-import { DocumentObjectProps } from "../types";
+
+interface DocumentObjectProps {
+  publicUrl: string;
+  onError?: () => void;
+}
 
 export const DocumentObject: React.FC<DocumentObjectProps> = ({ 
   publicUrl, 
-  isExcelFile,
-  storagePath,
-  documentId,
   onError 
 }) => {
-  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const handleError = () => {
-    console.error('Error loading document in iframe');
+    logger.error('Error loading document in iframe');
     setLoadError("The document couldn't be displayed. It may be in an unsupported format or inaccessible.");
     if (onError) onError();
   };
 
   // Cache-bust the URL to ensure fresh content
-  const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
-  
-  // Check file extension from the URL to verify if it's really Excel
-  const isPdfFromUrl = publicUrl?.toLowerCase().includes('.pdf');
-  const actuallyIsExcel = isExcelFile && !isPdfFromUrl;
-
-  if (actuallyIsExcel) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center p-6 bg-muted rounded-lg">
-          <p className="font-medium">Excel Viewer Not Available</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Excel files cannot be previewed directly. Please download the file to view its contents.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
 
   return (
-    <div className="relative w-full h-full rounded-md overflow-hidden border">
+    <div className="relative w-full rounded-md overflow-hidden border">
       {loadError && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/10 z-10">
           <div className="bg-destructive/10 border border-destructive/30 p-4 rounded-md max-w-md text-center space-y-3">
@@ -56,7 +40,7 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
       
       <iframe
         ref={iframeRef}
-        className="w-full h-full border-0"
+        className="w-full h-[70vh] border-0"
         title="Document Preview"
         src={cacheBustedUrl}
         onError={handleError}

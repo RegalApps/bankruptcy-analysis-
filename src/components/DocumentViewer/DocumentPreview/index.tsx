@@ -2,29 +2,13 @@
 import React from "react";
 import { DocumentPreviewContent } from "./components/DocumentPreviewContent";
 import usePreviewState from "./hooks/usePreviewState";
-import { Risk } from "../RiskAssessment/types";
 
 interface DocumentPreviewProps {
   storagePath: string;
   documentId: string;
   title: string;
   bypassAnalysis?: boolean;
-  activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string) => void;
   onAnalysisComplete?: () => void;
-  // Add the previewState prop
-  previewState?: {
-    fileExists: boolean;
-    fileUrl: string | null;
-    isPdfFile: (path: string) => boolean;
-    isExcelFile: (path: string) => boolean;
-    isDocFile: (path: string) => boolean;
-    isLoading: boolean;
-    previewError: string | null;
-    setPreviewError: (error: string | null) => void;
-    checkFile: () => Promise<void>;
-    documentRisks: Risk[];
-  };
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
@@ -32,15 +16,9 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   documentId,
   title,
   bypassAnalysis = false,
-  activeRiskId = null,
-  onRiskSelect = () => {},
-  onAnalysisComplete,
-  previewState: providedPreviewState
+  onAnalysisComplete
 }) => {
-  // Generate preview state if not provided
-  const generatedPreviewState = usePreviewState(storagePath, documentId, title, onAnalysisComplete, bypassAnalysis);
-  // Use provided state or generated state
-  const previewState = providedPreviewState || generatedPreviewState;
+  const previewState = usePreviewState(storagePath, documentId, title, onAnalysisComplete, bypassAnalysis);
 
   return (
     <DocumentPreviewContent 
@@ -48,8 +26,6 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
       documentId={documentId}
       title={title}
       previewState={previewState}
-      activeRiskId={activeRiskId}
-      onRiskSelect={onRiskSelect}
     />
   );
 };

@@ -2,6 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MeetingsAnalytics } from "@/components/analytics/meetings/MeetingsAnalytics";
 import { FeedbackAnalytics } from "./feedback/FeedbackAnalytics";
 
 export const MeetingAnalytics = () => {
@@ -15,19 +16,7 @@ export const MeetingAnalytics = () => {
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Meetings Overview</CardTitle>
-              <CardDescription>Summary of your recent meetings</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  Meeting analytics have moved to the CRM page under Scheduling.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <MeetingsAnalytics />
         </TabsContent>
         
         <TabsContent value="feedback" className="space-y-4">

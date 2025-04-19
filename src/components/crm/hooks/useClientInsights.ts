@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { ClientInsightData } from "../types";
+import { ClientInsightData } from "../../activity/hooks/predictiveData/types";
 
 export const useClientInsights = (clientId: string) => {
   const [insightData, setInsightData] = useState<ClientInsightData | null>(null);
@@ -8,174 +8,153 @@ export const useClientInsights = (clientId: string) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInsights = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        // Simulate API call delay
+        // In a real app, this would be an API call
+        // For demo purposes, we'll simulate a delay and return mock data
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Mock data - in a real app, this would be fetched from an API
-        const mockClientData: ClientInsightData = {
-          clientProfile: {
-            name: "John Doe",
-            email: "john.doe@example.com",
-            phone: "+1 (555) 123-4567",
-            company: "Acme Inc.",
-            role: "Chief Technology Officer",
-            website: "www.acmeinc.com",
-            tags: ["VIP", "Tech", "Enterprise"],
-            assignedAgent: "Jane Smith",
-            leadDescription: "Looking for financial restructuring options",
-            leadSource: "Website Inquiry",
-            accountStatus: "Active",
-          },
-          financialData: {
-            income: 120000,
-            expenses: 85000,
-            assets: 350000,
-            liabilities: 275000,
-            creditScore: 720,
-          },
-          riskLevel: "low",
-          riskScore: 75,
-          complianceStatus: "compliant",
-          caseProgress: 65,
-          lastContactDate: "2023-06-10",
-          nextFollowUp: "2023-06-25",
-          caseStatus: "In Progress",
-          assignedTrustee: "David Johnson",
+        // Mock client insight data tailored to our new dashboard
+        const mockInsightData: ClientInsightData = {
+          riskLevel: Math.random() > 0.7 ? "high" : Math.random() > 0.4 ? "medium" : "low",
+          riskScore: Math.floor(Math.random() * 100),
+          complianceStatus: Math.random() > 0.7 ? "critical" : Math.random() > 0.4 ? "issues" : "compliant",
+          caseProgress: Math.floor(Math.random() * 100),
           pendingTasks: [
-            {
-              id: "task-1",
-              title: "Submit financial documents",
-              dueDate: "2023-06-20",
-              priority: "high"
-            },
-            {
-              id: "task-2",
-              title: "Complete assessment form",
-              dueDate: "2023-06-18",
-              priority: "medium"
-            },
-            {
-              id: "task-3",
-              title: "Schedule follow-up meeting",
-              dueDate: "2023-06-25",
-              priority: "low"
-            }
+            { id: "1", title: "Review financial documents", priority: "high" },
+            { id: "2", title: "Schedule follow-up call", priority: "medium" },
           ],
           missingDocuments: [
-            {
-              id: "doc-1",
-              name: "Income Verification",
-              requiredBy: "2023-06-15"
-            },
-            {
-              id: "doc-2",
-              name: "Asset Declaration",
-              requiredBy: "2023-06-22"
-            }
+            "Bank Statement",
+            "Tax Returns",
           ],
           recentActivities: [
-            {
-              id: "act-1",
-              type: "call",
-              description: "Initial consultation call",
-              date: "2023-06-01",
-              timestamp: "2023-06-01T10:30:00"
+            { 
+              id: "1", 
+              type: "email", 
+              action: "Email opened: Monthly Newsletter", 
+              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() 
             },
-            {
-              id: "act-2",
-              type: "email",
-              description: "Sent information package",
-              date: "2023-06-03",
-              timestamp: "2023-06-03T14:45:00"
+            { 
+              id: "2", 
+              type: "form", 
+              action: "Form submitted: Contact Request", 
+              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() 
             },
-            {
-              id: "act-3",
-              type: "meeting",
-              description: "In-person document review",
-              date: "2023-06-10",
-              timestamp: "2023-06-10T11:00:00"
+            { 
+              id: "3", 
+              type: "call", 
+              action: "Call completed: Initial consultation", 
+              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString() 
+            },
+            { 
+              id: "4", 
+              type: "meeting", 
+              action: "Meeting booked: Financial planning session", 
+              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString() 
             }
           ],
           aiSuggestions: [
             {
-              id: "sug-1",
-              text: "Client hasn't submitted financial documents that are due in 5 days",
-              type: "warning",
-              message: "Client hasn't submitted financial documents that are due in 5 days"
+              id: "1",
+              type: "info",
+              message: "Client hasn't been contacted in 14 days.",
+              action: "Schedule follow-up"
             },
             {
-              id: "sug-2",
-              text: "Based on client profile, recommend discussing debt consolidation options",
+              id: "2",
               type: "info",
-              message: "Based on client profile, recommend discussing debt consolidation options"
+              message: "Last touchpoint was a form submission on " + 
+                new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toLocaleDateString() + 
+                ". Consider follow-up.",
+              action: "Send follow-up email"
+            },
+            {
+              id: "3",
+              type: "warning",
+              message: "Client has opened 3 emails but hasn't responded.",
+              action: "Try a different communication channel"
+            },
+            {
+              id: "4",
+              type: "urgent",
+              message: "High churn risk detected based on engagement patterns.",
+              action: "Escalate to account manager"
             }
           ],
+          // New fields for our enhanced client profile
+          clientProfile: {
+            email: "client@example.com",
+            phone: "(555) 123-4567",
+            website: "www.clientwebsite.com",
+            company: "Acme Corporation",
+            role: "Chief Financial Officer",
+            assignedAgent: "Sarah Johnson",
+            avatarUrl: "",
+            tags: ["Lead", "Financial Services", "High Value"]
+          },
+          // Client notes for the activity tab
+          clientNotes: [
+            {
+              title: "Initial Consultation Notes",
+              content: "Client expressed interest in our premium services. Discussed timeline and budget constraints.",
+              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
+              attachments: ["meeting_notes.pdf", "initial_proposal.docx"]
+            },
+            {
+              title: "Follow-up Call",
+              content: "Addressed client's concerns about implementation timeline. They requested a more detailed breakdown of costs.",
+              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
+              attachments: []
+            }
+          ],
+          // Milestones for case progress
+          milestones: [
+            { name: "Initial Contact Made", completed: true },
+            { name: "Needs Assessment", completed: true },
+            { name: "Proposal Sent", completed: true },
+            { name: "Contract Negotiation", completed: false },
+            { name: "Deal Closed", completed: false }
+          ],
+          // Adding required upcomingDeadlines field
           upcomingDeadlines: [
             {
-              id: "deadline-1",
-              title: "Document submission deadline",
-              date: "2023-06-20",
-              type: "document",
+              id: "1",
+              title: "Submit Financial Documents",
+              date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString().split('T')[0],
               priority: "high"
             },
             {
-              id: "deadline-2",
-              title: "Financial assessment completion",
-              date: "2023-07-05",
-              type: "assessment",
+              id: "2",
+              title: "Compliance Review Meeting",
+              date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString().split('T')[0],
               priority: "medium"
-            }
-          ],
-          interactions: [
-            {
-              date: "2023-06-01",
-              type: "email",
-              description: "Sent welcome package and intake forms",
             },
             {
-              date: "2023-06-03",
-              type: "call",
-              description: "Initial consultation call - 30 minutes",
-            },
-            {
-              date: "2023-06-10",
-              type: "meeting",
-              description: "In-person meeting to review options",
-            }
-          ],
-          clientNotes: [
-            {
-              id: "note-1",
-              title: "Initial Consultation Notes",
-              content: "Client is interested in exploring debt consolidation options. Current financial strain due to medical expenses. Needs to reduce monthly payments.",
-              timestamp: "2023-06-03T11:30:00",
-              attachments: ["financial_summary.pdf"]
-            },
-            {
-              id: "note-2",
-              title: "Document Review",
-              content: "Reviewed income verification and expense documents. Client is missing asset statements and tax returns for the past year.",
-              timestamp: "2023-06-10T14:15:00"
+              id: "3",
+              title: "Contract Signing",
+              date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString().split('T')[0],
+              priority: "low"
             }
           ]
         };
 
-        setInsightData(mockClientData);
+        setInsightData(mockInsightData);
       } catch (err) {
-        setError("Failed to fetch client insights. Please try again later.");
         console.error("Error fetching client insights:", err);
+        setError("Failed to load client insights. Please try again later.");
       } finally {
         setIsLoading(false);
       }
     };
 
     if (clientId) {
-      fetchData();
+      fetchInsights();
+    } else {
+      setIsLoading(false);
     }
   }, [clientId]);
 

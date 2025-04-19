@@ -28,23 +28,6 @@ const DocumentViewerPage = () => {
     console.error("Failed to load document");
     // Could navigate back or show an error state
   };
-
-  // Special case for GreenTech Form 31 demo
-  const isGreenTechForm31 = 
-    documentId === "greentech-form31" || 
-    documentId === "form31" || 
-    documentId === "form-31-greentech";
-  
-  // Determine form type based on document ID
-  const getFormType = () => {
-    if (documentId === "form47" || documentId === "form-47") {
-      return "form-47";
-    }
-    if (isGreenTechForm31) {
-      return "form-31";
-    }
-    return undefined;
-  };
   
   return (
     <MainLayout>
@@ -71,15 +54,6 @@ const DocumentViewerPage = () => {
               documentId="form47" 
               documentTitle="Form 47 - Consumer Proposal"
               isForm47={true}
-              formType="form-47"
-              onLoadFailure={handleLoadFailure}
-            />
-          ) : isGreenTechForm31 ? (
-            <DocumentViewer 
-              documentId="greentech-form31" 
-              documentTitle="Form 31 - GreenTech Supplies Inc. - Proof of Claim"
-              isForm31GreenTech={true}
-              formType="form-31"
               onLoadFailure={handleLoadFailure}
             />
           ) : (

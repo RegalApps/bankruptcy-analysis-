@@ -1,32 +1,61 @@
 
-import { Risk } from "../types";
+import { RefObject } from "react";
+
+export interface DocumentPreviewProps {
+  storagePath: string;
+  documentId: string;
+  title: string;
+  bypassAnalysis?: boolean;
+  onAnalysisComplete?: () => void;
+}
+
+export interface PreviewState {
+  fileExists: boolean;
+  fileUrl: string | null;
+  isExcelFile: boolean;
+  previewError: string | null;
+  setPreviewError: (error: string | null) => void;
+  analyzing: boolean;
+  error: string | null;
+  analysisStep: string;
+  progress: number;
+  processingStage: string;
+  session: any;
+  setSession: (session: any) => void;
+  handleAnalyzeDocument: (session: any) => void;
+  isAnalysisStuck: {
+    stuck: boolean;
+    minutesStuck: number;
+  };
+  checkFile: (path?: string) => Promise<void>;
+  isLoading: boolean;
+  handleAnalysisRetry: () => void;
+  hasFallbackToDirectUrl: boolean;
+  networkStatus: 'online' | 'offline';
+  attemptCount: number;
+}
 
 export interface DocumentPreviewContentProps {
   storagePath: string;
   documentId: string;
   title: string;
-  previewState: {
-    fileExists: boolean;
-    fileUrl: string | null;
-    isPdfFile: (path: string) => boolean;
-    isExcelFile: (path: string) => boolean;
-    isDocFile: (path: string) => boolean;
-    isLoading: boolean;
-    previewError: string | null;
-    setPreviewError: (error: string | null) => void;
-    checkFile: () => Promise<void>;
-    documentRisks: Risk[];
-  };
-  activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string) => void;
+  previewState: PreviewState;
 }
 
-export interface DocumentObjectProps {
-  publicUrl: string | null;
-  isExcelFile: boolean;
-  storagePath: string;
-  documentId: string;
-  onError?: () => void;
+export interface DocumentViewerFrameProps {
+  fileUrl: string;
+  title: string;
+  isLoading: boolean;
+  useDirectLink: boolean;
+  zoomLevel: number;
+  isPdfFile: boolean;
+  isDocFile: boolean;
+  onIframeLoad: () => void;
+  onIframeError: () => void;
+  iframeRef: RefObject<HTMLIFrameElement>;
+  forceReload: number;
+  onOpenInNewTab?: () => void;
+  onDownload?: () => void;
 }
 
 export interface ViewerToolbarProps {
@@ -46,41 +75,37 @@ export interface ErrorDisplayProps {
   onRetry: () => void;
 }
 
-export interface UseFileCheckerReturn {
-  fileExists: boolean;
+export interface PDFViewerProps {
   fileUrl: string | null;
-  isPdfFile: (path: string) => boolean;
-  isExcelFile: (path: string) => boolean;
-  isDocFile: (path: string) => boolean;
-  checkFile: (storagePath: string) => Promise<void>;
+  title: string;
+  zoomLevel: number;
+  onLoad?: () => void;
+  onError?: () => void;
+}
+
+export interface NetworkStatusIndicatorProps {
+  isOnline: boolean;
+  onRetry: () => void;
+  attemptCount?: number;
 }
 
 export interface UseNetworkMonitorReturn {
-  networkStatus: 'online' | 'offline' | 'unknown';
-  isOnline: boolean;
+  networkStatus: 'online' | 'offline';
   handleOnline: () => void;
+  handleOffline: () => void;
+}
+
+export interface UseFileCheckerReturn {
+  checkFile: (storagePath: string) => Promise<void>;
+  handleFileCheckError: (error: any, publicUrl?: string | null) => void;
 }
 
 export interface UseRetryStrategyReturn {
-  retryCount: number;
-  isRetrying: boolean;
-  retry: () => void;
-  reset: () => void;
   attemptCount: number;
   incrementAttempt: () => void;
   resetAttempts: () => void;
   lastAttempt: Date | null;
   setLastAttempt: (date: Date) => void;
-  shouldRetry: (attemptCount: number) => boolean;
-  getRetryDelay: (attemptCount: number) => number;
-}
-
-export interface DocumentViewerFrameProps {
-  children: React.ReactNode;
-  controls?: React.ReactNode;
-}
-
-export interface PreviewControlsProps {
-  publicUrl: string;
-  onRefresh: () => void;
+  shouldRetry: (currentAttempt: number) => boolean;
+  getRetryDelay: (attempt: number) => number;
 }

@@ -1,44 +1,51 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { UseNetworkMonitorReturn } from "../../types";
 
-export const useNetworkMonitor = (onStatusChange?: (status: 'online' | 'offline' | 'unknown') => void): UseNetworkMonitorReturn => {
-  const [networkStatus, setNetworkStatus] = useState<'online' | 'offline' | 'unknown'>(
+/**
+ * Hook to monitor network status changes
+ */
+export const useNetworkMonitor = (
+  onNetworkStatusChange?: (status: 'online' | 'offline') => void
+): UseNetworkMonitorReturn => {
+  const [networkStatus, setNetworkStatus] = useState<'online' | 'offline'>(
     navigator.onLine ? 'online' : 'offline'
   );
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
 
-  const handleOnline = useCallback(() => {
+  const handleOnline = () => {
     setNetworkStatus('online');
-    setIsOnline(true);
-    if (onStatusChange) onStatusChange('online');
-  }, [onStatusChange]);
-
-  const handleOffline = useCallback(() => {
+    // Only show toast if we were previously offline and now coming back online
+    if (networkStatus === 'offline') {
+      toast.success("Connection restored. Retrying document load...");
+      if (onNetworkStatusChange) {
+        onNetworkStatusChange('online');
+      }
+    }
+  };
+  
+  const handleOffline = () => {
     setNetworkStatus('offline');
-    setIsOnline(false);
-    if (onStatusChange) onStatusChange('offline');
-  }, [onStatusChange]);
-
+    toast.error("You're offline. Document loading paused.");
+    if (onNetworkStatusChange) {
+      onNetworkStatusChange('offline');
+    }
+  };
+  
+  // Set up event listeners for online/offline events
   useEffect(() => {
-    // Set initial status
-    setNetworkStatus(navigator.onLine ? 'online' : 'offline');
-    setIsOnline(navigator.onLine);
-
-    // Listen for online/offline events
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
-    // Clean up event listeners
+    
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [handleOnline, handleOffline]);
-
+  }, [networkStatus]);
+  
   return {
     networkStatus,
-    isOnline,
-    handleOnline
+    handleOnline,
+    handleOffline
   };
 };

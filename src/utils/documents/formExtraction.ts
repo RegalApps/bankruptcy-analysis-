@@ -1,3 +1,4 @@
+
 import logger from "@/utils/logger";
 
 /**
@@ -7,25 +8,6 @@ import logger from "@/utils/logger";
  */
 export const extractClientInfo = (text: string) => {
   try {
-    // Check if this is GreenTech Supplies Form 31
-    if (text.toLowerCase().includes('greentech supplies') || 
-        text.toLowerCase().includes('green tech supplies')) {
-      return {
-        clientName: 'GreenTech Supplies Inc.',
-        isCompany: 'true',
-        totalDebts: '$89,355.00',
-        formType: 'form-31',
-        formNumber: '31',
-        riskLevel: 'high'
-      };
-    }
-    
-    // Check if this is Form 31 (Proof of Claim)
-    if (isForm31(text)) {
-      return extractForm31ClientInfo(text);
-    }
-    
-    // Standard extraction for other forms
     const clientInfo = {
       clientName: extractName(text),
       clientAddress: extractAddress(text),
@@ -33,8 +15,7 @@ export const extractClientInfo = (text: string) => {
       clientEmail: extractEmail(text),
       totalDebts: extractTotalDebts(text),
       totalAssets: extractTotalAssets(text),
-      monthlyIncome: extractMonthlyIncome(text),
-      isCompany: extractIsCompany(text)
+      monthlyIncome: extractMonthlyIncome(text)
     };
     
     logger.info("Extracted client information:", clientInfo);
@@ -43,119 +24,6 @@ export const extractClientInfo = (text: string) => {
     logger.error("Error extracting client information:", error);
     return {};
   }
-};
-
-/**
- * Helper function to determine if client is a company based on text
- */
-const extractIsCompany = (text: string): string => {
-  // Look for company indicators
-  const companyIndicators = [
-    /ltd\.?|inc\.?|limited|corporation|corp\.?/i,
-    /company|enterprise|business/i
-  ];
-
-  for (const pattern of companyIndicators) {
-    if (pattern.test(text)) {
-      return 'true';
-    }
-  }
-  
-  return 'false';
-};
-
-/**
- * Checks if document is Form 31 (Proof of Claim)
- */
-const isForm31 = (text: string): boolean => {
-  const form31Patterns = [
-    /form\s*31/i,
-    /proof\s*of\s*claim/i,
-    /bankruptcy\s*and\s*insolvency\s*act.*proof\s*of\s*claim/i
-  ];
-  
-  return form31Patterns.some(pattern => pattern.test(text));
-};
-
-/**
- * Extracts client information specific to Form 31
- */
-const extractForm31ClientInfo = (text: string) => {
-  const clientInfo: Record<string, string> = {};
-  
-  // In Form 31, the debtor/bankrupt is the client
-  const debtorPatterns = [
-    /(?:debtor|bankrupt)(?:\s*name)?(?:\s*:|is)?\s*([A-Z][a-zA-Z0-9\s.-]+?)(?:\r?\n|$|,|\.|;)/i,
-    /re:(?:\s*)([A-Z][a-zA-Z0-9\s.-]+?)(?:\r?\n|$|,|\.|;)/i,
-    /in\s+the\s+matter\s+of\s+([A-Z][a-zA-Z0-9\s.-]+?)(?:\r?\n|$|,|\.|;)/i
-  ];
-  
-  // Try each pattern until we find a match
-  for (const pattern of debtorPatterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      clientInfo.clientName = match[1].trim();
-      break;
-    }
-  }
-  
-  // Extract company indicator if present
-  const companyIndicators = [
-    /ltd\.?|inc\.?|limited|corporation|corp\.?/i,
-    /company|enterprise|business/i
-  ];
-  
-  clientInfo.isCompany = 'false';
-  if (clientInfo.clientName) {
-    for (const pattern of companyIndicators) {
-      if (pattern.test(clientInfo.clientName)) {
-        clientInfo.isCompany = 'true';
-        break;
-      }
-    }
-  }
-  
-  // Extract claim amount as debt
-  const claimAmountPatterns = [
-    /(?:amount\s*claimed|claim\s*amount|total\s*claim)[\s:]*(?:\$)?([0-9,.]+)/i,
-    /(?:amount\s*of\s*claim)[\s:]*(?:\$)?([0-9,.]+)/i
-  ];
-  
-  for (const pattern of claimAmountPatterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      clientInfo.totalDebts = `$${match[1].replace(/[,$]/g, '').trim()}`;
-      break;
-    }
-  }
-  
-  // Try to extract creditor information
-  const creditorPatterns = [
-    /(?:creditor|claimant)(?:\s*name)?(?:\s*:|is)?\s*([A-Z][a-zA-Z0-9\s.-]+?)(?:\r?\n|$|,|\.|;)/i,
-    /(?:creditor|claimant)(?:\s*address)?(?:\s*:|is)?\s*([0-9][a-zA-Z0-9\s.-]+?)(?:\r?\n|$|,|\.|;)/i
-  ];
-  
-  for (const pattern of creditorPatterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      clientInfo.creditorName = match[1].trim();
-      break;
-    }
-  }
-  
-  // Mark this as a Form 31 for future processing
-  clientInfo.formType = 'form-31';
-  clientInfo.formNumber = '31';
-  
-  // Assess risk level based on extracted data
-  let riskLevel = 'low';
-  if (!clientInfo.totalDebts || !clientInfo.clientName) {
-    riskLevel = 'high';
-  }
-  clientInfo.riskLevel = riskLevel;
-  
-  logger.info("Extracted Form 31 client information:", clientInfo);
-  return clientInfo;
 };
 
 /**

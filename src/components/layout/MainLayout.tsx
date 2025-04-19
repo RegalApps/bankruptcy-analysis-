@@ -3,7 +3,6 @@ import { ReactNode } from "react";
 import { MainSidebar } from "@/components/layout/MainSidebar";
 import { MainHeader } from "@/components/header/MainHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { PageTransition } from "@/components/navigation/PageTransition";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -17,16 +16,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     <div className="min-h-screen h-screen w-full flex overflow-hidden bg-white dark:bg-background">
       <MainSidebar />
       <div className={`flex-1 flex flex-col w-full overflow-hidden ${!isMobile ? 'pl-64' : 'pl-0'}`}>
-        {/* Fixed header that stays in place when scrolling */}
-        <div className="sticky top-0 z-30 w-full">
-          <MainHeader />
-        </div>
-        {/* Scrollable content area */}
+        <MainHeader />
         <main className="flex-1 overflow-auto p-2 sm:p-4 md:p-6 bg-gray-50 dark:bg-background w-full">
           <div className="container mx-auto max-w-full pb-16 sm:pb-20">
-            <PageTransition>
-              {children}
-            </PageTransition>
+            {children}
           </div>
         </main>
       </div>

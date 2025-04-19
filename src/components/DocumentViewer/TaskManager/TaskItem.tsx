@@ -1,175 +1,181 @@
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { format } from "date-fns";
 import { 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  Edit, 
-  MoreVertical, 
-  PlayCircle, 
-  Trash2, 
-  XCircle 
+  CheckCircle,
+  AlertTriangle,
+  AlertOctagon,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  UserCircle2
 } from "lucide-react";
-import { Task } from "../types";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import type { Task } from "../types";
+
+interface AvailableUser {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
 
 interface TaskItemProps {
   task: Task;
-  onStatusChange: (newStatus: 'pending' | 'in_progress' | 'completed' | 'cancelled') => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  isHighlighted?: boolean;
+  availableUsers: AvailableUser[];
+  onUpdateStatus: (taskId: string, newStatus: Task['status']) => void;
+  onAssignTask: (taskId: string, userId: string) => void;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({
-  task,
-  onStatusChange,
-  onEdit,
-  onDelete,
-  isHighlighted = false
-}) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'text-amber-500 bg-amber-50 border-amber-200';
-      case 'in_progress':
-        return 'text-blue-500 bg-blue-50 border-blue-200';
-      case 'completed':
-        return 'text-green-500 bg-green-50 border-green-200';
-      case 'cancelled':
-        return 'text-gray-500 bg-gray-50 border-gray-200';
+export const TaskItem = ({ task, availableUsers, onUpdateStatus, onAssignTask }: TaskItemProps) => {
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'low':
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'medium':
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      case 'high':
+        return <AlertOctagon className="h-5 w-5 text-red-500" />;
       default:
-        return 'text-gray-500 bg-gray-50 border-gray-200';
+        return null;
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Clock className="h-4 w-4" />;
-      case 'in_progress':
-        return <PlayCircle className="h-4 w-4" />;
       case 'completed':
-        return <CheckCircle className="h-4 w-4" />;
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
       case 'cancelled':
-        return <XCircle className="h-4 w-4" />;
+        return <XCircle className="h-5 w-5 text-red-500" />;
+      case 'in_progress':
+        return <Clock className="h-5 w-5 text-blue-500" />;
       default:
-        return <Clock className="h-4 w-4" />;
+        return <Clock className="h-5 w-5 text-gray-500" />;
     }
   };
 
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'high':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'medium':
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-      case 'low':
-        return <AlertTriangle className="h-4 w-4 text-green-500" />;
-      default:
-        return <AlertTriangle className="h-4 w-4 text-gray-500" />;
-    }
-  };
+  const assignedUser = availableUsers.find(user => user.id === task.assigned_to);
 
   return (
-    <Card 
-      className={`p-4 transition-all ${
-        isHighlighted 
-          ? 'ring-2 ring-primary border-primary/30 shadow-md' 
-          : 'hover:shadow-sm'
-      }`}
-    >
-      <div className="flex justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            {getSeverityIcon(task.severity)}
-            <h3 className="font-medium text-sm line-clamp-1">
-              {task.title}
-            </h3>
+    <>
+      <div className="p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="mt-1">
+              {getSeverityIcon(task.severity)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="font-medium truncate">{task.title}</h4>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Due: {format(new Date(task.due_date), 'MMM d')}
+                  </span>
+                  {getStatusIcon(task.status)}
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                {task.description}
+              </p>
+              {task.regulation && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  <span className="font-medium">Regulation:</span> {task.regulation}
+                </p>
+              )}
+              <div className="mt-2 flex items-center gap-2">
+                <UserCircle2 className="h-4 w-4 text-muted-foreground" />
+                <Select
+                  value={task.assigned_to || ""}
+                  onValueChange={(value) => onAssignTask(task.id, value)}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Assign to..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.full_name || user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
-          {task.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {task.description}
-            </p>
-          )}
         </div>
 
-        <div className="flex flex-col items-end gap-2">
-          <Badge variant="outline" className={`${getStatusColor(task.status)} flex items-center gap-1`}>
-            {getStatusIcon(task.status)} {task.status.replace('_', ' ')}
-          </Badge>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
+        <div className="mt-4 flex items-center justify-end gap-2">
+          {task.status !== 'completed' && task.status !== 'cancelled' && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onUpdateStatus(task.id, 'cancelled')}
+              >
+                Cancel
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              
-              <DropdownMenuItem onClick={onEdit}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Task
-              </DropdownMenuItem>
-              
-              <DropdownMenuSeparator />
-              
-              {task.status !== 'pending' && (
-                <DropdownMenuItem onClick={() => onStatusChange('pending')}>
-                  <Clock className="h-4 w-4 mr-2 text-amber-500" />
-                  Mark as Pending
-                </DropdownMenuItem>
+              {task.status === 'pending' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onUpdateStatus(task.id, 'in_progress')}
+                >
+                  Start
+                </Button>
               )}
-              
-              {task.status !== 'in_progress' && (
-                <DropdownMenuItem onClick={() => onStatusChange('in_progress')}>
-                  <PlayCircle className="h-4 w-4 mr-2 text-blue-500" />
-                  Mark as In Progress
-                </DropdownMenuItem>
+              {task.status === 'in_progress' && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setShowCompleteDialog(true)}
+                >
+                  Complete
+                </Button>
               )}
-              
-              {task.status !== 'completed' && (
-                <DropdownMenuItem onClick={() => onStatusChange('completed')}>
-                  <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                  Mark as Completed
-                </DropdownMenuItem>
-              )}
-              
-              {task.status !== 'cancelled' && (
-                <DropdownMenuItem onClick={() => onStatusChange('cancelled')}>
-                  <XCircle className="h-4 w-4 mr-2 text-gray-500" />
-                  Mark as Cancelled
-                </DropdownMenuItem>
-              )}
-              
-              <DropdownMenuSeparator />
-              
-              <DropdownMenuItem className="text-red-600" onClick={onDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Task
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </>
+          )}
         </div>
       </div>
-      
-      {task.due_date && (
-        <div className="flex items-center mt-2 text-xs text-muted-foreground">
-          <Clock className="h-3.5 w-3.5 mr-1" />
-          Due: {new Date(task.due_date).toLocaleDateString()}
-        </div>
-      )}
-    </Card>
+
+      <AlertDialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Task</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to mark this task as completed? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onUpdateStatus(task.id, 'completed');
+                setShowCompleteDialog(false);
+              }}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

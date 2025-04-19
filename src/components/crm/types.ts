@@ -3,8 +3,8 @@ export interface ClientInsightData {
   id?: string;
   clientProfile?: {
     name?: string;
-    email: string; // Making this required as per the error
-    phone: string; // Making this required as per the error
+    email?: string;
+    phone?: string;
     company?: string;
     role?: string;
     website?: string;
@@ -27,19 +27,20 @@ export interface ClientInsightData {
     type: string;
     description: string;
   }[];
-  riskLevel: "high" | "medium" | "low";
-  riskScore: number;
-  complianceStatus: "compliant" | "issues" | "critical";
-  caseProgress: number;
+  riskLevel?: "high" | "medium" | "low";
+  riskScore?: number;
+  complianceStatus?: string;
+  caseProgress?: number;
   lastContactDate?: string;
   nextFollowUp?: string;
   caseStatus?: string;
   assignedTrustee?: string;
-  pendingTasks: {
+  // Add the missing properties
+  pendingTasks?: {
     id: string;
     title: string;
     dueDate: string;
-    priority: "high" | "medium" | "low";
+    priority: string;
   }[];
   missingDocuments?: {
     id: string;
@@ -51,29 +52,17 @@ export interface ClientInsightData {
     type: string;
     description: string;
     date: string;
-    action?: string;
-    timestamp?: string;
   }[];
-  aiSuggestions: {
+  aiSuggestions?: {
     id: string;
-    type: 'urgent' | 'warning' | 'info';
-    message: string;
-    text?: string;
-    action?: string;
+    text: string;
+    type: string;
   }[];
-  upcomingDeadlines: {  // Changed from optional to required
+  upcomingDeadlines?: {
     id: string;
     title: string;
     date: string;
     type: string;
-    priority: 'low' | 'medium' | 'high';
-  }[];
-  clientNotes?: {
-    id: string;
-    title: string;
-    content: string;
-    timestamp: string;
-    attachments?: string[];
   }[];
 }
 
@@ -87,6 +76,7 @@ export interface ClientInfo {
   tags?: string[];
 }
 
+// Add FormData interface
 export interface FormData {
   fullName: string;
   email: string;
@@ -122,15 +112,4 @@ export interface FormData {
   vehicles?: string;
   bankAccounts?: string;
   [key: string]: string | undefined;
-}
-
-export interface MeetingFeedback {
-  id: string;
-  meetingId: string;
-  clientId: string;
-  clientName: string;
-  ratings: Record<string, number>;
-  comments: string;
-  submittedAt: string;
-  status: 'pending' | 'completed';
 }

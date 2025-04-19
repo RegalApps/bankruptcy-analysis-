@@ -9,25 +9,18 @@ export interface ClientInsightData {
     title: string;
     priority: 'low' | 'medium' | 'high';
   }[];
-  missingDocuments?: {
-    id: string;
-    name: string;
-    requiredBy: string;
-  }[];
-  recentActivities?: {
+  missingDocuments: string[];
+  recentActivities: {
     id: string;
     type: string;
-    description?: string;
-    date?: string;
-    action?: string;
-    timestamp?: string;
+    action: string;
+    timestamp: string;
   }[];
   aiSuggestions: {
     id: string;
     type: 'urgent' | 'warning' | 'info';
     message: string;
     action?: string;
-    text?: string;
   }[];
   // New fields for enhanced client profile
   clientProfile?: {
@@ -64,6 +57,7 @@ export interface InsightDataResponse {
   data: ClientInsightData;
 }
 
+// Adding missing AdvancedRiskMetrics type
 export interface AdvancedRiskMetrics {
   riskLevel: 'low' | 'medium' | 'high';
   overallRiskScore: number;
@@ -99,6 +93,7 @@ export interface AdvancedRiskMetrics {
   }[];
 }
 
+// Adding missing PredictiveData interface
 export interface PredictiveData {
   isLoading: boolean;
   processedData: any[];

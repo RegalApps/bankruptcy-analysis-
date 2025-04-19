@@ -1,124 +1,117 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useEffect, useMemo } from "react";
 import { DocumentPreview } from "./DocumentPreview";
-import RiskAssessment, { RiskAssessment as NamedRiskAssessment } from "./RiskAssessment";
-import { Form31RiskView } from "./RiskAssessment/Form31RiskView";
-import { FormRiskView } from "./FormRiskView";
-import { Risk } from "./RiskAssessment/types";
-import { toast } from "sonner";
-import { useGreenTechForm31Risks } from "./hooks/useGreenTechForm31Risks";
+import { useDocumentViewer } from "./hooks/useDocumentViewer";
+import { Sidebar } from "./Sidebar";
+import { CollaborationPanel } from "./CollaborationPanel";
+import { ViewerLayout } from "./layout/ViewerLayout";
+import { ViewerLoadingState } from "./components/ViewerLoadingState";
+import { ViewerErrorState } from "./components/ViewerErrorState";
+import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
+import { isDocumentForm47 } from "./utils/documentTypeUtils";
+import { TaskManager } from "./TaskManager";
+import { VersionTab } from "./VersionTab";
+import { debugTiming, isDebugMode } from "@/utils/debugMode";
 
 interface DocumentViewerProps {
   documentId: string;
-  documentTitle?: string;
-  isForm47?: boolean;
-  isForm31GreenTech?: boolean;
-  onLoadFailure?: (errorMessage?: string) => void;
   bypassProcessing?: boolean;
-  formType?: string;
+  documentTitle?: string | null;
+  isForm47?: boolean;
+  onLoadFailure?: () => void;
 }
 
-export const DocumentViewer: React.FC<DocumentViewerProps> = ({
-  documentId,
-  documentTitle = "Document",
-  isForm47 = false,
-  isForm31GreenTech = false,
-  onLoadFailure,
+export const DocumentViewer: React.FC<DocumentViewerProps> = ({ 
+  documentId, 
   bypassProcessing = false,
-  formType
+  documentTitle,
+  isForm47 = false,
+  onLoadFailure
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeRiskId, setActiveRiskId] = useState<string | null>(null);
-  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+  // Use a stable key for this component to force full remount when documentId changes
+  const componentKey = useMemo(() => `document-viewer-${documentId}`, [documentId]);
   
-  // Get GreenTech Form 31 risks if applicable
-  const greenTechRisks = useGreenTechForm31Risks();
-  
-  // Determine the appropriate form type
-  const derivedFormType = formType || 
-                          (isForm47 ? 'form-47' : 
-                           isForm31GreenTech ? 'form-31' : '');
-  
-  // Determine the appropriate risks based on form type
-  const risks = isForm31GreenTech ? greenTechRisks : [];
+  const loadStart = performance.now();
+  const { document, loading, loadingError, handleRefresh, isNetworkError } = useDocumentViewer(documentId);
 
-  // Simulate loading document
   useEffect(() => {
-    const loadDocument = async () => {
-      try {
-        setIsLoading(true);
-        
-        if (isForm47) {
-          // Use sample Form 47
-          setDocumentUrl("/documents/sample-form47.pdf");
-        } else if (isForm31GreenTech) {
-          // Use sample Form 31
-          setDocumentUrl("/documents/sample-form31-greentech.pdf");
-        } else {
-          // Generic document handling
-          setDocumentUrl("/documents/sample-document.pdf");
-        }
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error loading document:", error);
-        toast.error("Failed to load document");
-        if (onLoadFailure) onLoadFailure("Document failed to load");
-        setIsLoading(false);
+    if (document) {
+      console.log("Document data loaded:", document.id);
+      if (isDebugMode() || bypassProcessing) {
+        debugTiming('document-viewer-load', performance.now() - loadStart);
       }
-    };
-    
-    loadDocument();
-  }, [documentId, isForm47, isForm31GreenTech, onLoadFailure]);
+    }
+  }, [document, loadStart, bypassProcessing]);
 
-  // Handle risk selection
-  const handleRiskSelect = useCallback((riskId: string | null) => {
-    console.log("Selected risk:", riskId);
-    setActiveRiskId(riskId);
-  }, []);
+  // Call onLoadFailure when there's an error loading the document
+  useEffect(() => {
+    if (loadingError && onLoadFailure) {
+      console.log("Document load failed, calling onLoadFailure callback");
+      onLoadFailure();
+    }
+  }, [loadingError, onLoadFailure]);
+
+  // Function to handle document updates (like comments added)
+  const handleDocumentUpdated = () => {
+    handleRefresh();
+  };
+
+  if (loading) {
+    return <ViewerLoadingState 
+      key={`${componentKey}-loading`} 
+      onRetry={handleRefresh}
+      networkError={isNetworkError}
+    />;
+  }
+
+  if (loadingError) {
+    return <ViewerErrorState key={`${componentKey}-error`} error={loadingError} onRetry={handleRefresh} />;
+  }
+
+  if (!document) {
+    return <ViewerNotFoundState key={`${componentKey}-not-found`} />;
+  }
+
+  // If isForm47 is explicitly passed as prop, use that, otherwise check from document
+  const isForm47Document = isForm47 || isDocumentForm47(document);
+  // Use passed documentTitle if available, otherwise use the one from document
+  const displayTitle = documentTitle || document.title;
 
   return (
-    <div className="flex h-full gap-4">
-      <div className="flex-1 bg-card border rounded-lg overflow-hidden">
-        <DocumentPreview
-          storagePath={documentUrl || ""}
-          documentId={documentId}
-          title={documentTitle || ""}
-          previewState={{
-            fileExists: !!documentUrl,
-            fileUrl: documentUrl,
-            isPdfFile: () => true,
-            isExcelFile: () => false,
-            isDocFile: () => false,
-            isLoading,
-            previewError: null,
-            setPreviewError: () => {},
-            checkFile: async () => {},
-            documentRisks: risks
-          }}
-          activeRiskId={activeRiskId}
-          onRiskSelect={handleRiskSelect}
-        />
-      </div>
-      
-      <div className="w-[350px] bg-card border rounded-lg overflow-hidden">
-        {derivedFormType ? (
-          <FormRiskView 
-            formType={derivedFormType}
-            documentId={documentId} 
-            risks={risks}
-            activeRiskId={activeRiskId}
-            onRiskSelect={handleRiskSelect}
+    <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20" key={componentKey}>
+      <ViewerLayout
+        isForm47={isForm47Document}
+        documentTitle={displayTitle}
+        documentType={document.type}
+        sidebar={
+          <Sidebar document={document} onDeadlineUpdated={handleDocumentUpdated} />
+        }
+        mainContent={
+          <DocumentPreview 
+            storagePath={document.storage_path} 
+            title={displayTitle}
+            documentId={documentId}
+            bypassAnalysis={bypassProcessing || isDebugMode()}
+            key={`preview-${documentId}`}
           />
-        ) : (
-          <RiskAssessment 
+        }
+        collaborationPanel={
+          <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
+        }
+        taskPanel={
+          <TaskManager 
             documentId={documentId} 
-            risks={risks}
-            activeRiskId={activeRiskId}
-            onRiskSelect={handleRiskSelect}
+            tasks={document.tasks || []} 
+            onTaskUpdate={handleDocumentUpdated} 
           />
-        )}
-      </div>
+        }
+        versionPanel={
+          <VersionTab 
+            documentId={documentId}
+            versions={document.versions || []}
+          />
+        }
+      />
     </div>
   );
 };

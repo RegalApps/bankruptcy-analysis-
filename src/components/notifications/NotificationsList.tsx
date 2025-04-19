@@ -2,6 +2,7 @@
 import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell, X, Check, ExternalLink } from "lucide-react";
+import { NotificationCard } from "./NotificationCard";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { Notification } from "@/types/notifications";
@@ -10,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-export interface NotificationsListProps {
+interface NotificationsListProps {
   notifications: Notification[] | undefined;
   isLoading: boolean;
   onMarkAsRead?: (id: string) => void;
@@ -97,27 +98,11 @@ export const NotificationsList = ({ notifications, isLoading, onMarkAsRead }: No
         ) : (
           <div className="p-0">
             {notifications?.map((notification) => (
-              <div
-                key={notification.id}
-                className={`p-4 border-b cursor-pointer hover:bg-muted/50 ${!notification.read ? 'bg-muted/20' : ''}`}
-                onClick={() => onMarkAsRead?.(notification.id)}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="bg-primary/10 rounded-full p-2">
-                    <Bell className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`text-sm ${!notification.read ? 'font-medium' : ''}`}>{notification.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{notification.description || notification.message}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {notification.createdAt && formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                    </p>
-                  </div>
-                  {!notification.read && (
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                  )}
-                </div>
-              </div>
+              <NotificationCard 
+                key={notification.id} 
+                notification={notification} 
+                onMarkAsRead={onMarkAsRead}
+              />
             ))}
           </div>
         )}

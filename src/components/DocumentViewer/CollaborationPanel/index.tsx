@@ -1,50 +1,24 @@
 
-import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DocumentDetails } from "../types";
+import { DocumentDetails as DocumentDetailsType } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { EnhancedComments } from "../Comments/EnhancedComments";
-import { MessageSquare, ClipboardList, Calendar } from "lucide-react";
+import { MessageSquare, Clock, ClipboardList } from "lucide-react";
 import { TaskManager } from "../TaskManager";
-import { DeadlineManager } from "../DeadlineManager";
 
 interface CollaborationPanelProps {
-  document?: DocumentDetails;
-  documentId?: string;  // Ensuring documentId is explicitly defined in the interface
-  onCommentAdded?: () => void;
-  activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string | null) => void;
+  document: DocumentDetailsType;
+  onCommentAdded: () => void;
 }
 
 export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ 
   document,
-  documentId,
-  onCommentAdded = () => {},
-  activeRiskId,
-  onRiskSelect
+  onCommentAdded
 }) => {
-  const docId = documentId || document?.id;
-  const [activeTab, setActiveTab] = useState("comments");
-  
-  // Effect to activate tasks tab when a risk is selected
-  useEffect(() => {
-    if (activeRiskId) {
-      setActiveTab("tasks");
-    }
-  }, [activeRiskId]);
-  
-  if (!docId) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-muted-foreground">No document information available</p>
-      </div>
-    );
-  }
-
   return (
     <Card className="h-full">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+      <Tabs defaultValue="comments" className="h-full flex flex-col">
         <div className="p-1 px-2 border-b">
           <TabsList className="w-full">
             <TabsTrigger value="comments" className="flex items-center text-xs py-1.5">
@@ -55,9 +29,9 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
               <ClipboardList className="h-3.5 w-3.5 mr-1" />
               Tasks
             </TabsTrigger>
-            <TabsTrigger value="deadlines" className="flex items-center text-xs py-1.5">
-              <Calendar className="h-3.5 w-3.5 mr-1" />
-              Deadlines
+            <TabsTrigger value="versions" className="flex items-center text-xs py-1.5">
+              <Clock className="h-3.5 w-3.5 mr-1" />
+              Versions
             </TabsTrigger>
           </TabsList>
         </div>
@@ -67,7 +41,7 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
                 <EnhancedComments 
-                  documentId={docId} 
+                  documentId={document.id} 
                   onCommentAdded={onCommentAdded}
                 />
               </div>
@@ -78,18 +52,19 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
                 <TaskManager
-                  documentId={docId}
-                  activeRiskId={activeRiskId}
-                  onRiskSelect={onRiskSelect}
+                  documentId={document.id}
+                  tasks={document.tasks || []}
+                  onTaskUpdate={onCommentAdded}
                 />
               </div>
             </ScrollArea>
           </TabsContent>
           
-          <TabsContent value="deadlines" className="mt-0 h-full">
+          <TabsContent value="versions" className="mt-0 h-full">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
-                {document && <DeadlineManager document={document} onDeadlineUpdated={onCommentAdded} />}
+                {/* Version history component removed as it's not properly exported */}
+                <p className="text-muted-foreground">Version history is not available at this time.</p>
               </div>
             </ScrollArea>
           </TabsContent>

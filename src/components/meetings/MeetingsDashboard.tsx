@@ -1,136 +1,154 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MeetingsHeader } from "./MeetingsHeader";
-import { RequestFeedbackDialog } from "./feedback/RequestFeedbackDialog";
-import { InviteClientDialog } from "./invitations/InviteClientDialog";
+import { MeetingsTabs } from "./MeetingsTabs";
+import { UpcomingMeetings } from "./UpcomingMeetings";
+import { JoinMeetingPanel } from "./JoinMeetingPanel";
+import { MeetingNotes } from "./MeetingNotes";
+import { MeetingAgenda } from "./MeetingAgenda";
+import { MeetingAnalytics } from "./MeetingAnalytics";
+import { MeetingReviewForm } from "./MeetingReviewForm";
+import { MeetingFeedbackDialog } from "./feedback/MeetingFeedbackDialog";
+import { useToast } from "@/hooks/use-toast";
+import { useEnhancedAnalytics } from "@/hooks/useEnhancedAnalytics";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ExternalLink, Video, Clipboard, ListChecks, X, BarChart2, MessageSquare } from "lucide-react";
+import { HotkeysProvider } from "@/hooks/useHotkeys";
 
 export const MeetingsDashboard = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "join" | "notes" | "agenda" | "analytics">("upcoming");
-  const [isRequestFeedbackOpen, setIsRequestFeedbackOpen] = useState(false);
-  const [isInviteClientOpen, setIsInviteClientOpen] = useState(false);
-  const [selectedMeeting, setSelectedMeeting] = useState({
-    id: "meeting-123",
-    title: "Financial Planning Session",
-    clientName: "John Doe"
-  });
-  
-  const handleRequestFeedback = () => {
-    setIsRequestFeedbackOpen(true);
+  const [isActiveCall, setIsActiveCall] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const { toast } = useToast();
+  const analytics = useEnhancedAnalytics({ pageName: "Meetings" });
+
+  // Track tab changes
+  const handleTabChange = (tab: "upcoming" | "join" | "notes" | "agenda" | "analytics") => {
+    setActiveTab(tab);
+    analytics.trackInteraction("MeetingsTabs", `Changed to ${tab} tab`);
   };
-  
-  const handleInviteClient = () => {
-    setIsInviteClientOpen(true);
+
+  const openNotesWindow = () => {
+    const features = 'width=800,height=700,resizable=yes,scrollbars=yes';
+    const notesWindow = window.open('/meetings/notes-standalone', 'meetingNotes', features);
+    
+    if (notesWindow) {
+      notesWindow.focus();
+      // Store current notes in localStorage to make them available in the new window
+      const currentNotes = localStorage.getItem('meeting-notes');
+      if (currentNotes) {
+        localStorage.setItem('standalone-notes', currentNotes);
+      }
+    } else {
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups for this site to open the notes in a new window.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openAgendaWindow = () => {
+    const features = 'width=500,height=700,resizable=yes,scrollbars=yes';
+    const agendaWindow = window.open('/meetings/agenda-standalone', 'meetingAgenda', features);
+    
+    if (agendaWindow) {
+      agendaWindow.focus();
+    } else {
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups for this site to open the agenda in a new window.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const startActiveCallMode = () => {
+    setIsActiveCall(true);
+    openNotesWindow();
+    openAgendaWindow();
+    
+    toast({
+      title: "Meeting Mode Activated",
+      description: "Meeting tools opened in separate windows for easy access during your call."
+    });
+  };
+
+  const endActiveCallMode = () => {
+    setIsActiveCall(false);
+    setShowReviewDialog(true);
+  };
+
+  const handleReviewComplete = () => {
+    setShowReviewDialog(false);
+    
+    // After review completion, show a toast about analytics updates
+    toast({
+      title: "Analytics Updated",
+      description: "Meeting data has been processed. View the Analytics tab to see insights."
+    });
+    
+    // Prompt for client feedback
+    setTimeout(() => {
+      setShowFeedbackDialog(true);
+    }, 1000);
+    
+    // Switch to analytics tab to show the updated information
+    setActiveTab("analytics");
+  };
+
+  const handleRequestFeedback = () => {
+    setShowFeedbackDialog(true);
+    
+    toast({
+      title: "Feedback Request",
+      description: "A feedback form has been opened. You can also send this to the client via email."
+    });
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <MeetingsHeader 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isActiveCall={false}
-        onRequestFeedback={handleRequestFeedback}
-        onInviteClient={handleInviteClient}
-      />
-      
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="join">Join Meeting</TabsTrigger>
-          <TabsTrigger value="notes">Meeting Notes</TabsTrigger>
-          <TabsTrigger value="agenda">Agendas</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
+    <HotkeysProvider>
+      <div className="space-y-6 relative">
+        <MeetingsHeader 
+          activeTab={activeTab} 
+          setActiveTab={handleTabChange} 
+          isActiveCall={isActiveCall} 
+          onRequestFeedback={handleRequestFeedback}
+        />
         
-        <TabsContent value="upcoming">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upcoming Meetings</CardTitle>
-              <CardDescription>
-                View and manage your scheduled meetings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Upcoming meetings will be displayed here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <MeetingsTabs activeTab={activeTab} setActiveTab={handleTabChange} />
         
-        <TabsContent value="join">
-          <Card>
-            <CardHeader>
-              <CardTitle>Join a Meeting</CardTitle>
-              <CardDescription>
-                Join a scheduled meeting or start a new one
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Meeting joining options will be displayed here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <div className="mt-6">
+          {activeTab === "upcoming" && <UpcomingMeetings />}
+          {activeTab === "join" && <JoinMeetingPanel />}
+          {activeTab === "notes" && <MeetingNotes />}
+          {activeTab === "agenda" && <MeetingAgenda />}
+          {activeTab === "analytics" && <MeetingAnalytics />}
+        </div>
+
+        {/* Meeting Review Dialog */}
+        <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+          <DialogContent className="sm:max-w-xl">
+            <MeetingReviewForm 
+              meetingId="recent-meeting-123"
+              meetingTitle="Weekly Team Sync"
+              onComplete={handleReviewComplete}
+            />
+          </DialogContent>
+        </Dialog>
         
-        <TabsContent value="notes">
-          <Card>
-            <CardHeader>
-              <CardTitle>Meeting Notes</CardTitle>
-              <CardDescription>
-                Access and manage your meeting notes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Meeting notes will be displayed here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="agenda">
-          <Card>
-            <CardHeader>
-              <CardTitle>Meeting Agendas</CardTitle>
-              <CardDescription>
-                Create and manage meeting agendas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Meeting agendas will be displayed here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="analytics">
-          <Card>
-            <CardHeader>
-              <CardTitle>Meeting Analytics</CardTitle>
-              <CardDescription>
-                View insights about your meetings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Meeting analytics will be displayed here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      {/* Request Feedback Dialog */}
-      <RequestFeedbackDialog
-        open={isRequestFeedbackOpen}
-        onOpenChange={setIsRequestFeedbackOpen}
-        meetingId={selectedMeeting.id}
-        meetingTitle={selectedMeeting.title}
-        clientName={selectedMeeting.clientName}
-      />
-      
-      {/* Invite Client Dialog */}
-      <InviteClientDialog
-        open={isInviteClientOpen}
-        onOpenChange={setIsInviteClientOpen}
-        meetingId={selectedMeeting.id}
-        meetingTitle={selectedMeeting.title}
-      />
-    </div>
+        {/* Meeting Feedback Dialog */}
+        <MeetingFeedbackDialog
+          open={showFeedbackDialog}
+          onOpenChange={setShowFeedbackDialog}
+          meetingId="recent-meeting-123"
+          meetingTitle="Weekly Team Sync"
+          clientName="John Smith"
+        />
+      </div>
+    </HotkeysProvider>
   );
 };

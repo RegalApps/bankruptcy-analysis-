@@ -16,8 +16,7 @@ export const DeadlineManager: React.FC<DeadlineManagerProps> = ({ document, onDe
   useEffect(() => {
     const checkDeadlines = () => {
       const now = new Date();
-      const deadlines = document.deadlines || [];
-      deadlines.forEach(deadline => {
+      document.deadlines?.forEach(deadline => {
         const dueDate = new Date(deadline.dueDate);
         const hoursDiff = (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 

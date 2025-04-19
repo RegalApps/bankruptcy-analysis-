@@ -10,8 +10,8 @@ import { ClientInsightData } from "./types";
 const mockClientData: ClientInsightData = {
   clientProfile: {
     name: "John Doe",
-    email: "john.doe@example.com", // Now required
-    phone: "+1 (555) 123-4567", // Now required
+    email: "john.doe@example.com",
+    phone: "+1 (555) 123-4567",
     company: "Acme Inc.",
     role: "Chief Technology Officer",
     website: "www.acmeinc.com",
@@ -46,66 +46,6 @@ const mockClientData: ClientInsightData = {
       description: "In-person meeting to review documents",
     },
   ],
-  // Required fields to fix type errors
-  riskLevel: "low",
-  riskScore: 75,
-  complianceStatus: "compliant",
-  caseProgress: 65,
-  pendingTasks: [
-    {
-      id: "task-1",
-      title: "Submit income verification",
-      dueDate: "2023-07-15",
-      priority: "high"
-    },
-    {
-      id: "task-2",
-      title: "Complete financial assessment",
-      dueDate: "2023-07-20",
-      priority: "medium"
-    }
-  ],
-  missingDocuments: [
-    {
-      id: "doc-1",
-      name: "Income Verification",
-      requiredBy: "2023-07-15"
-    },
-    {
-      id: "doc-2",
-      name: "Asset Declaration",
-      requiredBy: "2023-07-22"
-    }
-  ],
-  // Adding the required aiSuggestions array with the correct type structure
-  aiSuggestions: [
-    {
-      id: "sug-1",
-      type: "warning",
-      message: "Client hasn't submitted financial documents that are due in 5 days"
-    },
-    {
-      id: "sug-2",
-      type: "info",
-      message: "Based on client profile, recommend discussing debt consolidation options"
-    }
-  ],
-  upcomingDeadlines: [
-    {
-      id: "deadline-1",
-      title: "Financial Statement Submission",
-      date: "2023-07-30",
-      type: "document",
-      priority: "high"
-    },
-    {
-      id: "deadline-2",
-      title: "Creditor Meeting",
-      date: "2023-08-15",
-      type: "meeting",
-      priority: "medium"
-    }
-  ]
 };
 
 interface ClientViewProps {
@@ -155,6 +95,7 @@ export const ClientView = ({ clientId = '1' }: ClientViewProps) => {
           <TabsContent value="interactions" className="mt-0 h-full">
             <ClientInteractionsPanel
               clientId={clientId}
+              interactions={mockClientData.interactions || []}
             />
           </TabsContent>
 

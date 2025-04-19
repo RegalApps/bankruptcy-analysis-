@@ -1,145 +1,99 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Task } from "../types";
+import { useState } from 'react';
+import { useToast } from "@/hooks/use-toast";
+import type { Task } from "../types";
 import { TaskItem } from "./TaskItem";
-import { useTaskManager } from "./hooks/useTaskManager";
-import AddTaskDialog from "./components/AddTaskDialog";
-import { TaskFilter } from "./TaskFilter";
+import { EmptyState } from "./EmptyState";
+import { TaskCreationDialog } from "./TaskCreationDialog";
 import { TaskHeader } from "./components/TaskHeader";
+import { useTaskManager } from "./hooks/useTaskManager";
+import { useAvailableUsers } from "./hooks/useAvailableUsers";
+import { updateTaskStatus, assignTask } from "./services/taskService";
 
 interface TaskManagerProps {
   documentId: string;
-  activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string | null) => void;
+  tasks: Task[];
+  onTaskUpdate: () => void;
 }
 
-export const TaskManager: React.FC<TaskManagerProps> = ({ 
-  documentId,
-  activeRiskId,
-  onRiskSelect
-}) => {
-  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [filterSeverity, setFilterSeverity] = useState<string | null>(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+export const TaskManager = ({ documentId, tasks: initialTasks, onTaskUpdate }: TaskManagerProps) => {
+  const { toast } = useToast();
+  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  
+  const { localTasks } = useTaskManager({ documentId, initialTasks, onTaskUpdate });
+  const { availableUsers } = useAvailableUsers();
 
-  const { localTasks, addTask, updateTaskStatus, deleteTask, loading } = useTaskManager({ documentId });
-
-  const handleOpenAddTask = () => {
-    setEditingTask(null);
-    setIsAddTaskOpen(true);
-  };
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsAddTaskOpen(true);
-  };
-
-  const handleSaveTask = (task: Partial<Task>) => {
-    if (editingTask) {
-      updateTaskStatus({ ...editingTask, ...task });
-    } else {
-      addTask(task);
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: Task['status']) => {
+    try {
+      await updateTaskStatus(taskId, newStatus);
+      toast({
+        title: "Task Updated",
+        description: `Task status changed to ${newStatus}`,
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update task status"
+      });
     }
   };
 
-  // Handle risk highlight selection if a risk ID is provided
-  React.useEffect(() => {
-    if (activeRiskId && onRiskSelect) {
-      // Find if we have any task related to this risk
-      const relatedTask = localTasks.find(task => task.id === activeRiskId);
-      if (relatedTask) {
-        // Highlight the task somehow
-        console.log("Task related to risk found:", relatedTask);
-      }
+  const handleAssignTask = async (taskId: string, userId: string) => {
+    try {
+      await assignTask(taskId, userId);
+      toast({
+        title: "Task Assigned",
+        description: "Task has been assigned successfully",
+      });
+    } catch (error) {
+      console.error('Error assigning task:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to assign task"
+      });
     }
-  }, [activeRiskId, localTasks, onRiskSelect]);
+  };
 
   const filteredTasks = localTasks.filter(task => {
-    if (filterStatus && task.status !== filterStatus) {
-      return false;
-    }
-    if (filterSeverity && task.severity !== filterSeverity) {
-      return false;
-    }
-    return true;
+    if (filter === 'all') return true;
+    if (filter === 'pending') return ['pending', 'in_progress'].includes(task.status);
+    return task.status === 'completed';
   });
-
-  const completedTasks = localTasks.filter(task => task.status === 'completed').length;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <TaskHeader 
-          onFilterClick={() => setIsFilterOpen(!isFilterOpen)}
-          isFilterOpen={isFilterOpen}
-          totalTasks={localTasks.length}
-          completedTasks={completedTasks}
-        />
-        <Button onClick={handleOpenAddTask} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Add Task
-        </Button>
-      </div>
-      
-      {isFilterOpen && (
-        <TaskFilter 
-          onStatusChange={setFilterStatus} 
-          onSeverityChange={setFilterSeverity}
-          selectedStatus={filterStatus}
-          selectedSeverity={filterSeverity} 
-        />
-      )}
-      
-      <ScrollArea className="h-[calc(100vh-280px)]">
-        {loading ? (
-          <div className="py-8 text-center">
-            <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-            <p className="text-sm text-muted-foreground">Loading tasks...</p>
-          </div>
-        ) : filteredTasks.length === 0 ? (
-          <div className="py-8 text-center border rounded-md">
-            <p className="text-sm text-muted-foreground">
-              {filterStatus || filterSeverity ? "No tasks match your filters" : "No tasks yet"}
-            </p>
-            {(filterStatus || filterSeverity) && (
-              <Button 
-                variant="link" 
-                onClick={() => { 
-                  setFilterStatus(null);
-                  setFilterSeverity(null);
-                }}
-                className="text-sm"
-              >
-                Clear filters
-              </Button>
-            )}
-          </div>
+      <TaskHeader 
+        filter={filter}
+        onFilterChange={setFilter}
+        onCreateTask={() => setIsCreatingTask(true)}
+      />
+
+      <div className="space-y-3">
+        {filteredTasks.length > 0 ? (
+          filteredTasks.map((task) => (
+            <TaskItem 
+              key={task.id} 
+              task={task} 
+              availableUsers={availableUsers}
+              onUpdateStatus={handleUpdateTaskStatus}
+              onAssignTask={handleAssignTask}
+            />
+          ))
         ) : (
-          <div className="space-y-3">
-            {filteredTasks.map((task) => (
-              <TaskItem 
-                key={task.id} 
-                task={task}
-                onStatusChange={(newStatus) => updateTaskStatus({ ...task, status: newStatus })}
-                onEdit={() => handleEditTask(task)}
-                onDelete={() => deleteTask(task.id)}
-                isHighlighted={activeRiskId === task.id}
-              />
-            ))}
-          </div>
+          <EmptyState filter={filter} />
         )}
-      </ScrollArea>
-      
-      <AddTaskDialog
-        isOpen={isAddTaskOpen}
-        onClose={() => setIsAddTaskOpen(false)}
-        onSave={handleSaveTask}
-        initialTask={editingTask || {}}
+      </div>
+
+      <TaskCreationDialog 
+        isOpen={isCreatingTask}
+        onClose={() => setIsCreatingTask(false)}
         documentId={documentId}
+        availableUsers={availableUsers}
+        onTaskCreated={onTaskUpdate}
       />
     </div>
   );

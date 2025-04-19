@@ -22,11 +22,11 @@ export const useFilePreview = ({
 }: UseFilePreviewProps) => {
   const [hasFileLoadStarted, setHasFileLoadStarted] = useState(false);
   
-  // Use our network monitor hook with a callback
+  // Use our network monitor hook
   const { networkStatus, handleOnline } = useNetworkMonitor((status) => {
     // Auto-retry when connection is restored
     if (status === 'online') {
-      setTimeout(() => checkFile(), 1000);
+      setTimeout(() => checkFile(storagePath), 1000);
     }
   });
   
@@ -41,14 +41,14 @@ export const useFilePreview = ({
     getRetryDelay
   } = useRetryStrategy(5);
   
-  // Use our file checker hook with a wrapper to set network status
+  // Use our file checker hook
   const setNetworkStatusWrapper = useCallback((status: 'online' | 'offline') => {
     if (status === 'online') {
       handleOnline();
     }
   }, [handleOnline]);
   
-  const { checkFile: checkFileFn } = useFileChecker(
+  const { checkFile } = useFileChecker(
     setFileExists,
     setFileUrl,
     setIsExcelFile,
@@ -56,22 +56,17 @@ export const useFilePreview = ({
     setNetworkStatusWrapper
   );
 
-  // Wrap the checkFile function to use the storagePath
-  const checkFile = useCallback(() => {
-    return checkFileFn(storagePath);
-  }, [checkFileFn, storagePath]);
-
   // Initial file check
   useEffect(() => {
     const doInitialCheck = async () => {
       setHasFileLoadStarted(true);
       setLastAttempt(new Date());
       incrementAttempt();
-      await checkFile();
+      await checkFile(storagePath);
     };
     
     doInitialCheck();
-  }, [checkFile, setLastAttempt, incrementAttempt]);
+  }, [checkFile, storagePath, setLastAttempt, incrementAttempt]);
 
   // Periodically check file accessibility when loading hasn't started yet or has failed
   useEffect(() => {
@@ -82,7 +77,7 @@ export const useFilePreview = ({
       const checkInterval = setTimeout(() => {
         console.log("Doing periodic file accessibility check");
         incrementAttempt();
-        checkFile();
+        checkFile(storagePath);
       }, 5000);
       
       return () => clearTimeout(checkInterval);
@@ -101,7 +96,7 @@ export const useFilePreview = ({
       const timeoutId = setTimeout(() => {
         console.log("Auto-retrying file check");
         incrementAttempt();
-        checkFile();
+        checkFile(storagePath);
       }, retryDelay);
       
       return () => clearTimeout(timeoutId);
@@ -109,7 +104,8 @@ export const useFilePreview = ({
   }, [
     networkStatus, 
     attemptCount, 
-    checkFile,
+    checkFile, 
+    storagePath,
     shouldRetry,
     getRetryDelay,
     incrementAttempt
@@ -121,15 +117,15 @@ export const useFilePreview = ({
       console.log("All regular retries failed, scheduling one final attempt after longer delay");
       const finalRetryTimeout = setTimeout(() => {
         incrementAttempt();
-        checkFile();
+        checkFile(storagePath);
       }, 15000); // Wait 15 seconds
       
       return () => clearTimeout(finalRetryTimeout);
     }
-  }, [attemptCount, checkFile, incrementAttempt]);
+  }, [attemptCount, checkFile, storagePath, incrementAttempt]);
 
   return {
-    checkFile,
+    checkFile: (path: string = storagePath) => checkFile(path),
     lastAttempt,
     attemptCount,
     networkStatus,

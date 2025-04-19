@@ -1,160 +1,158 @@
 
-import React, { useState, useEffect } from 'react';
-import { Risk } from '../types';
-import { Form47RiskView } from './Form47RiskView';
-import { toast } from 'sonner';
+import { 
+  CheckCircle, 
+  ShieldAlert, 
+  AlertTriangle, 
+  AlertCircle, 
+  Info,
+  FileText,
+  FileCheck
+} from "lucide-react";
+import { TooltipProvider } from "../../ui/tooltip";
+import { RiskItem } from "./RiskItem";
+import { Form47RiskView } from "./Form47RiskView";
+import { RiskAssessmentProps } from "./types";
+import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
 
-interface RiskAssessmentProps {
-  documentId: string;
-  onRiskSelect?: (riskId: string | null) => void;
-  risks?: Risk[];
-  activeRiskId?: string | null;
-}
-
-const RiskAssessment: React.FC<RiskAssessmentProps> = ({ 
-  documentId, 
-  onRiskSelect,
-  risks: providedRisks,
-  activeRiskId
-}) => {
-  const [localActiveRisk, setLocalActiveRisk] = useState<string | null>(activeRiskId || null);
-  const [risks, setRisks] = useState<Risk[]>(providedRisks || []);
-
+export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], documentId, isLoading }) => {
+  const [isForm47, setIsForm47] = useState(false);
+  
+  // Detect if this is a Form 47 (Consumer Proposal) document based on risks
   useEffect(() => {
-    // Update localActiveRisk when activeRiskId prop changes
-    if (activeRiskId !== undefined) {
-      setLocalActiveRisk(activeRiskId);
-    }
-  }, [activeRiskId]);
+    if (!risks?.length) return;
+    
+    const isConsumerProposal = risks.some(risk => 
+      (risk.regulation && (
+        risk.regulation.includes('66.13') || 
+        risk.regulation.includes('66.14') ||
+        risk.regulation.includes('66.15')
+      )) || 
+      (risk.description && (
+        risk.description.toLowerCase().includes('consumer proposal') ||
+        risk.description.toLowerCase().includes('secured creditors payment') ||
+        risk.description.toLowerCase().includes('unsecured creditors payment')
+      )) ||
+      (risk.type && (
+        risk.type.toLowerCase().includes('consumer proposal') ||
+        risk.type.toLowerCase().includes('proposal')
+      ))
+    );
 
-  useEffect(() => {
-    // Update risks when providedRisks changes
-    if (providedRisks) {
-      setRisks(providedRisks);
-      return;
-    }
+    console.log('Is Form 47 detected from risks:', isConsumerProposal);
+    setIsForm47(isConsumerProposal);
+  }, [risks]);
+  
+  // Count risks by severity
+  const criticalCount = risks?.filter(r => r.severity === 'high').length || 0;
+  const moderateCount = risks?.filter(r => r.severity === 'medium').length || 0;
+  const minorCount = risks?.filter(r => r.severity === 'low').length || 0;
+  
+  // Group risks by severity for better organization
+  const criticalRisks = risks?.filter(r => r.severity === 'high') || [];
+  const moderateRisks = risks?.filter(r => r.severity === 'medium') || [];
+  const minorRisks = risks?.filter(r => r.severity === 'low') || [];
 
-    // Only fetch mock risks if none were provided
-    const fetchRisks = async () => {
-      // Mock API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Mock risk data based on documentId
-      let mockRisks: Risk[] = [];
-      if (documentId === 'sample-document') {
-        mockRisks = [
-          {
-            type: "Data Breach Risk",
-            description: "Potential exposure of sensitive customer data.",
-            severity: "high",
-            regulation: "GDPR",
-            solution: "Implement encryption and access controls.",
-            deadline: "1 week"
-          },
-          {
-            type: "Compliance Violation",
-            description: "Non-compliance with industry regulations.",
-            severity: "medium",
-            regulation: "HIPAA",
-            solution: "Conduct compliance audit and training.",
-            deadline: "2 weeks"
-          }
-        ];
-      } else if (documentId === 'financial-report') {
-        mockRisks = [
-          {
-            type: "Financial Misstatement",
-            description: "Inaccurate financial reporting.",
-            severity: "high",
-            regulation: "SOX",
-            solution: "Review and correct financial statements.",
-            deadline: "1 month"
-          },
-          {
-            type: "Fraud Risk",
-            description: "Potential for fraudulent activities.",
-            severity: "medium",
-            regulation: "FCPA",
-            solution: "Implement fraud detection measures.",
-            deadline: "2 months"
-          }
-        ];
-      } else if (documentId === 'form47') {
-        // Risks will be loaded in Form47RiskView
-      } else {
-        mockRisks = [
-          {
-            type: "Generic Risk",
-            description: "This is a generic risk for demonstration.",
-            severity: "low",
-            regulation: "N/A",
-            solution: "Review and mitigate as necessary.",
-            deadline: "3 months"
-          }
-        ];
-      }
-
-      setRisks(mockRisks);
-    };
-
-    fetchRisks();
-  }, [documentId, providedRisks]);
-
-  const handleRiskSelect = (riskId: string | null) => {
-    setLocalActiveRisk(riskId);
-    if (onRiskSelect) {
-      onRiskSelect(riskId);
-    }
-  };
-
-  if (documentId === 'form47') {
+  if (isLoading) {
     return (
-      <Form47RiskView 
-        risks={risks} 
-        documentId={documentId}
-        activeRiskId={localActiveRisk}
-        onRiskSelect={handleRiskSelect}
-      />
+      <div className="space-y-4 animate-pulse">
+        <div className="h-6 bg-muted rounded w-3/4"></div>
+        <div className="h-20 bg-muted rounded"></div>
+        <div className="h-24 bg-muted rounded"></div>
+      </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h2 className="text-xl font-bold mb-4">Risk Assessment</h2>
-      {risks.length > 0 ? (
-        <ul className="space-y-2">
-          {risks.map((risk, index) => (
-            <li 
-              key={`risk-${index}`}
-              className={`p-3 border rounded-md shadow-sm cursor-pointer ${localActiveRisk === `risk-${index}` ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-              onClick={() => {
-                const riskId = `risk-${index}`;
-                handleRiskSelect(riskId);
-                toast.info(`Selected risk: ${risk.type}`, {
-                  description: risk.description
-                });
-              }}
-            >
-              <h3 className="text-lg font-semibold">{risk.type}</h3>
-              <p className="text-sm text-gray-600">{risk.description}</p>
-              <div className="mt-2">
-                <span className="inline-block bg-red-200 text-red-700 rounded-full px-3 py-1 text-xs font-semibold mr-2">
-                  Severity: {risk.severity}
-                </span>
-                <span className="inline-block bg-purple-200 text-purple-700 rounded-full px-3 py-1 text-xs font-semibold">
-                  Regulation: {risk.regulation}
-                </span>
+    <TooltipProvider>
+      <div className="space-y-4">
+        {/* Use specialized view for Form 47 */}
+        {isForm47 ? (
+          <Form47RiskView risks={risks} documentId={documentId} />
+        ) : (
+          <>
+            {/* Risk summary badges */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {criticalCount > 0 && (
+                <Badge variant="destructive" className="flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {criticalCount} Critical
+                </Badge>
+              )}
+              {moderateCount > 0 && (
+                <Badge variant="default" className="bg-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {moderateCount} Moderate
+                </Badge>
+              )}
+              {minorCount > 0 && (
+                <Badge variant="outline" className="text-yellow-600 flex items-center gap-1">
+                  <Info className="h-3 w-3" />
+                  {minorCount} Minor
+                </Badge>
+              )}
+              {risks?.length === 0 && (
+                <Badge variant="outline" className="text-green-600 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  No Risks
+                </Badge>
+              )}
+            </div>
+
+            {/* Critical risks section */}
+            {criticalRisks.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium flex items-center gap-2 text-red-600">
+                  <AlertCircle className="h-4 w-4" />
+                  Critical Issues
+                </h4>
+                <div className="space-y-2">
+                  {criticalRisks.map((risk, index) => (
+                    <RiskItem key={`critical-${index}`} risk={risk} documentId={documentId} />
+                  ))}
+                </div>
               </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-gray-500">No risks identified for this document.</p>
-      )}
-    </div>
+            )}
+
+            {/* Moderate risks section */}
+            {moderateRisks.length > 0 && (
+              <div className="space-y-2 mt-4">
+                <h4 className="text-sm font-medium flex items-center gap-2 text-amber-600">
+                  <AlertTriangle className="h-4 w-4" />
+                  Moderate Concerns
+                </h4>
+                <div className="space-y-2">
+                  {moderateRisks.map((risk, index) => (
+                    <RiskItem key={`moderate-${index}`} risk={risk} documentId={documentId} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Minor risks section */}
+            {minorRisks.length > 0 && (
+              <div className="space-y-2 mt-4">
+                <h4 className="text-sm font-medium flex items-center gap-2 text-yellow-600">
+                  <Info className="h-4 w-4" />
+                  Minor Issues
+                </h4>
+                <div className="space-y-2">
+                  {minorRisks.map((risk, index) => (
+                    <RiskItem key={`minor-${index}`} risk={risk} documentId={documentId} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {risks && risks.length === 0 && (
+              <div className="text-center p-6 border rounded-lg bg-muted/10">
+                <FileCheck className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No risks identified in this document</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
-
-// Export as default and named export to support both import styles
-export default RiskAssessment;
-export { RiskAssessment };

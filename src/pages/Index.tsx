@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { DocumentViewer } from "@/components/DocumentViewer";
@@ -23,7 +22,6 @@ const Index = () => {
   const [documentKey, setDocumentKey] = useState<number>(0); // Key for forcing re-render
   const [documentTitle, setDocumentTitle] = useState<string | null>(null);
   const [isForm47, setIsForm47] = useState<boolean>(false);
-  const [isForm31GreenTech, setIsForm31GreenTech] = useState<boolean>(false);
   const [loadFailed, setLoadFailed] = useState<boolean>(false);
   
   const location = useLocation();
@@ -59,15 +57,6 @@ const Index = () => {
         setIsForm47(true);
         console.log("Document is Form 47");
       }
-
-      // Check if it's a GreenTech Form 31 document
-      if (location.state.isForm31GreenTech || 
-          docId === "greentech-form31" || 
-          docId === "form31" || 
-          docId === "form-31-greentech") {
-        setIsForm31GreenTech(true);
-        console.log("Document is GreenTech Form 31");
-      }
       
       if (location.state.documentTitle) {
         setDocumentTitle(location.state.documentTitle);
@@ -93,7 +82,6 @@ const Index = () => {
     setSelectedDocument(null);
     setDocumentTitle(null);
     setIsForm47(false);
-    setIsForm31GreenTech(false);
     setLoadFailed(false);
     navigate('/', { replace: true });
   }, [navigate]);
@@ -153,11 +141,10 @@ const Index = () => {
             <DocumentViewer 
               documentId={selectedDocument} 
               key={`doc-${selectedDocument}-${documentKey}`}
-              bypassProcessing={isDebugMode()}
+              bypassProcessing={isDebugMode() || isForm47}
               onLoadFailure={handleDocumentLoadFailure}
               documentTitle={documentTitle}
               isForm47={isForm47}
-              isForm31GreenTech={isForm31GreenTech}
             />
           </div>
         </div>

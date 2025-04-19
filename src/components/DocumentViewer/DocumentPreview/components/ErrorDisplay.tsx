@@ -1,16 +1,34 @@
 
 import React from "react";
+import { RefreshCw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
 import { ErrorDisplayProps } from "../types";
 
 export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ error, onRetry }) => {
+  // Determine if the error is network related
+  const isNetworkError = 
+    error.toLowerCase().includes('network') ||
+    error.toLowerCase().includes('fetch') ||
+    error.toLowerCase().includes('connection') ||
+    error.toLowerCase().includes('offline');
+
   return (
-    <div className="flex items-center justify-center h-full bg-muted/10">
-      <div className="text-center max-w-md p-6">
-        <AlertTriangle className="h-10 w-10 text-destructive mx-auto mb-4" />
-        <h3 className="text-lg font-medium mb-2">Error Loading Document</h3>
+    <div className="flex flex-col items-center justify-center h-full p-6 rounded-md">
+      <div className="text-center max-w-md">
+        <div className="mb-4 text-destructive">
+          <AlertTriangle className="h-12 w-12 mx-auto" />
+        </div>
+        <h3 className="text-lg font-medium mb-2">
+          {isNetworkError ? "Network Connection Issue" : "Document Preview Issue"}
+        </h3>
         <p className="text-muted-foreground mb-6">{error}</p>
+        
+        {isNetworkError && (
+          <p className="text-sm text-muted-foreground mb-4">
+            Check your internet connection and ensure you have access to the document storage.
+          </p>
+        )}
+        
         <Button onClick={onRetry} className="mx-auto">
           <RefreshCw className="h-4 w-4 mr-2" />
           Try Again

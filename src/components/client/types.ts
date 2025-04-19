@@ -3,7 +3,7 @@ export interface Client {
   id: string;
   name: string;
   status: string;
-  location?: string;
+  location: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -14,11 +14,9 @@ export interface Client {
   notes?: string;
   company?: string;
   occupation?: string;
-  metrics?: ClientMetrics;
+  metrics: ClientMetrics;
   last_interaction?: string;
   engagement_score?: number;
-  created_at?: string;
-  metadata?: Record<string, any>;
 }
 
 export interface ClientMetrics {
@@ -33,15 +31,10 @@ export interface Document {
   type: string;
   created_at: string;
   updated_at: string;
-  size?: number;
   metadata?: Record<string, any>;
   is_folder?: boolean;
   folder_type?: string;
   parent_folder_id?: string;
-  storage_path?: string;
-  ai_processing_status?: string;
-  deadlines?: any[];
-  url?: string;
 }
 
 export interface ClientViewerProps {

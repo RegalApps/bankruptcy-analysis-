@@ -1,5 +1,5 @@
 
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Generate a sharing link for a specific meeting
@@ -35,7 +35,9 @@ export const shareMeetingViaEmail = (
   // Open the default email client
   window.open(mailtoLink);
   
-  toast("Email client opened with meeting details");
+  toast({
+    description: "Email client opened with meeting details",
+  });
 };
 
 /**
@@ -45,10 +47,15 @@ export const copyMeetingLink = (meetingId: string, meetingTitle: string): void =
   const link = generateMeetingLink(meetingId);
   
   navigator.clipboard.writeText(link).then(() => {
-    toast(`Link to "${meetingTitle}" copied to clipboard`);
+    toast({
+      description: `Link to "${meetingTitle}" copied to clipboard`,
+    });
   }).catch(err => {
     console.error('Failed to copy link:', err);
-    toast("Failed to copy link. Please try again.");
+    toast({
+      description: "Failed to copy link. Please try again.",
+      variant: "destructive",
+    });
   });
 };
 
@@ -68,35 +75,43 @@ export const shareFeedbackFormViaEmail = (
   meetingId: string,
   meetingTitle: string,
   clientName: string,
-  recipientEmail: string,
-  customMessage?: string
+  recipientEmail: string
 ): void => {
   const subject = encodeURIComponent(`Your feedback is important to us: ${meetingTitle}`);
   const feedbackLink = generateFeedbackFormLink(meetingId, meetingTitle, clientName);
   
-  const defaultMessage = `Dear ${clientName},\n\n` +
+  const body = encodeURIComponent(
+    `Dear ${clientName},\n\n` +
     `Thank you for attending our recent meeting regarding "${meetingTitle}".\n\n` +
     `We value your feedback and would appreciate if you could take a moment to share your thoughts with us:\n\n` +
     `${feedbackLink}\n\n` +
     `Your input helps us improve our services and ensure we're meeting your needs.\n\n` +
     `Thank you for your time,\n` +
-    `Your Trustee`;
-    
-  const body = encodeURIComponent(customMessage || defaultMessage);
+    `Your Trustee`
+  );
   
   const mailtoLink = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
   
   // Open the default email client
   window.open(mailtoLink);
+  
+  toast({
+    description: "Email client opened with feedback request",
+  });
 };
 
 export const copyFeedbackFormLink = (meetingId: string, meetingTitle: string, clientName?: string): void => {
   const link = generateFeedbackFormLink(meetingId, meetingTitle, clientName);
   
   navigator.clipboard.writeText(link).then(() => {
-    toast("Feedback form link copied to clipboard");
+    toast({
+      description: "Feedback form link copied to clipboard",
+    });
   }).catch(err => {
     console.error('Failed to copy link:', err);
-    toast("Failed to copy link. Please try again.");
+    toast({
+      description: "Failed to copy link. Please try again.",
+      variant: "destructive",
+    });
   });
 };

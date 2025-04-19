@@ -1,9 +1,11 @@
 
+import React from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, FileText, Calendar, MessageSquare, AlertCircle, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Notification } from "@/types/notifications";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import type { Notification } from "@/types/notifications";
+import { categoryConfig, getIconForNotification } from "@/lib/notifications/categoryConfig";
 
 interface NotificationCardProps {
   notification: Notification;
@@ -11,58 +13,79 @@ interface NotificationCardProps {
 }
 
 export const NotificationCard = ({ notification, onMarkAsRead }: NotificationCardProps) => {
-  const getIcon = () => {
-    switch (notification.type) {
-      case 'document':
-        return <FileText className="h-5 w-5 text-blue-500" />;
-      case 'meeting':
-        return <Calendar className="h-5 w-5 text-green-500" />;
-      case 'message':
-        return <MessageSquare className="h-5 w-5 text-purple-500" />;
-      case 'system':
-        return <AlertCircle className="h-5 w-5 text-orange-500" />;
-      default:
-        return <Bell className="h-5 w-5 text-gray-500" />;
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    if (notification.action_url) {
+      navigate(notification.action_url);
     }
-  };
-
-  const handleMarkAsRead = () => {
-    if (onMarkAsRead) {
+    
+    if (!notification.read && onMarkAsRead) {
       onMarkAsRead(notification.id);
     }
   };
-
+  
+  const Icon = getIconForNotification(notification.category, notification.type);
+  const categorySettings = categoryConfig[notification.category];
+  
+  const getPriorityStyles = () => {
+    switch (notification.priority) {
+      case 'high':
+        return "border-l-4 border-destructive";
+      case 'medium':
+        return "border-l-4 border-warning";
+      default:
+        return "";
+    }
+  };
+  
   return (
-    <div className={`p-4 ${notification.read ? 'bg-background' : 'bg-accent/10'}`}>
+    <div 
+      className={cn(
+        "p-4 rounded-md hover:bg-accent/30 transition-colors cursor-pointer",
+        !notification.read && "bg-accent/10",
+        getPriorityStyles()
+      )}
+      onClick={handleClick}
+    >
       <div className="flex items-start gap-3">
-        <div className="mt-0.5">{getIcon()}</div>
+        <div className={cn(
+          "p-2 rounded-full",
+          notification.priority === 'high' 
+            ? "bg-destructive/10 text-destructive" 
+            : `${categorySettings?.bgColor || ''} ${categorySettings?.color || ''}`
+        )}>
+          <Icon className="h-5 w-5" />
+        </div>
         
-        <div className="flex-1 min-w-0">
+        <div className="flex-1">
           <div className="flex justify-between items-start">
-            <div>
-              <h4 className="font-medium text-sm">{notification.title}</h4>
-              <p className="text-sm text-muted-foreground">{notification.description}</p>
-            </div>
-            
-            {!notification.read && (
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                className="h-6 w-6" 
-                onClick={handleMarkAsRead}
-              >
-                <Check className="h-4 w-4" />
-                <span className="sr-only">Mark as read</span>
-              </Button>
-            )}
+            <h4 className="font-medium text-sm">{notification.title}</h4>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+            </span>
           </div>
           
-          <div className="text-xs text-muted-foreground mt-1">
-            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-          </div>
+          <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
+          
+          {notification.action_url && (
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="p-0 h-auto mt-1 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(notification.action_url!);
+                if (!notification.read && onMarkAsRead) {
+                  onMarkAsRead(notification.id);
+                }
+              }}
+            >
+              View details
+            </Button>
+          )}
         </div>
       </div>
-      <Separator className="mt-4" />
     </div>
   );
 };

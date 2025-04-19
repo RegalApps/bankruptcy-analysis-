@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { categoryConfig } from "@/lib/notifications/categoryConfig";
-import type { Notification, NotificationCategory } from "@/types/notifications";
+import type { Notification } from "@/types/notifications";
 
 interface NotificationsSidebarProps {
   notifications: Notification[] | undefined;
@@ -30,11 +30,7 @@ export const NotificationsSidebar = ({
             </span>
           </Button>
           {Object.entries(categoryConfig).map(([key, config]) => {
-            const count = notifications?.filter(n => 
-              // Check both potential locations for category
-              (n.category === key || n.metadata?.category === key) && 
-              !n.read
-            ).length || 0;
+            const count = notifications?.filter(n => n.category === key && !n.read).length || 0;
             const Icon = config.icon;
             return (
               <Button
