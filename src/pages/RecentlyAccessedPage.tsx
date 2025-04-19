@@ -12,7 +12,6 @@ import { detectDocumentType } from "@/components/FileUpload/utils/fileTypeDetect
 import logger from "@/utils/logger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { UploadAnalytics } from "@/components/documents/UploadAnalytics";
 import { trackUpload } from "@/utils/documents/uploadTracker";
 
 export const RecentlyAccessedPage = () => {
@@ -244,7 +243,6 @@ export const RecentlyAccessedPage = () => {
           <TabsList className="mb-4">
             <TabsTrigger value="recent">Recent Activity</TabsTrigger>
             <TabsTrigger value="clients">Recent Clients</TabsTrigger>
-            <TabsTrigger value="analytics">Upload Analytics</TabsTrigger>
           </TabsList>
           
           <TabsContent value="recent" className="space-y-4">
@@ -259,10 +257,6 @@ export const RecentlyAccessedPage = () => {
               <h2 className="text-lg font-semibold mb-4">Recently Accessed Clients</h2>
               <RecentClients onClientSelect={handleClientSelect} />
             </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-4">
-            <UploadAnalytics />
           </TabsContent>
         </Tabs>
       </div>

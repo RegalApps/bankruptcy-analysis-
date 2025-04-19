@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { toast } from "sonner";
 
@@ -22,16 +23,31 @@ export const uploadDocument = async (
       throw new Error('Authentication required. Please login again.');
     }
     
-    // Try to use the documents bucket without creating it
-    // Since it should already exist in Supabase
-    const { data: userData2, error: userError2 } = await supabase.auth.getUser();
-    const userId = userData2?.user?.id || 'anonymous';
+    // Check if documents bucket exists, create if not
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some(bucket => bucket.name === 'documents');
+    
+    if (!bucketExists) {
+      console.log("Creating documents bucket...");
+      const { error: bucketError } = await supabase.storage
+        .createBucket('documents', { 
+          public: false,
+          fileSizeLimit: 10485760 // 10MB
+        });
+        
+      if (bucketError) {
+        console.error("Error creating bucket:", bucketError);
+        progressCallback?.(0, "Failed to create storage");
+        throw new Error(`Storage system setup failed: ${bucketError.message}`);
+      }
+      console.log("Documents bucket created successfully");
+    }
     
     // Generate unique file path
     const fileExt = file.name.split('.').pop();
     const timeStamp = new Date().getTime();
     const safeFileName = file.name.replace(/\s+/g, '_');
-    const filePath = `${userId}/${timeStamp}_${safeFileName}`;
+    const filePath = `${userData.user?.id || 'anonymous'}/${timeStamp}_${safeFileName}`;
     
     progressCallback?.(30, "Uploading file...");
     console.log('Uploading file to storage path:', filePath);
@@ -46,18 +62,9 @@ export const uploadDocument = async (
 
     if (uploadError) {
       console.error('Storage upload error:', uploadError);
-      
-      // Check if this is a bucket not found error
-      if (uploadError.message.includes('not found')) {
-        toast.error("Storage not configured", { 
-          description: "Please contact your administrator to set up document storage."
-        });
-        throw new Error("Storage system not properly configured");
-      } else {
-        progressCallback?.(0, "Upload failed");
-        toast.error("Upload failed", { description: uploadError.message });
-        throw new Error("Upload failed. Please try again.");
-      }
+      progressCallback?.(0, "Upload failed");
+      toast.error("Upload failed", { description: uploadError.message });
+      throw new Error("Upload failed. Please try again.");
     }
     
     // Continue with the rest of the upload process
@@ -89,7 +96,7 @@ export const uploadDocument = async (
         type: file.type,
         size: file.size,
         storage_path: filePath,
-        user_id: userId,
+        user_id: userData.user?.id,
         ai_processing_status: 'processing',
         metadata
       })

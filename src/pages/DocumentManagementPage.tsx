@@ -1,3 +1,4 @@
+
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -11,6 +12,7 @@ import logger from "@/utils/logger";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
@@ -86,51 +88,35 @@ export const DocumentManagementPage = () => {
       
       logger.info(`Starting upload for file: ${file.name}, size: ${file.size} bytes`);
       
-      const documentData = await uploadDocument(file);
+      // Create storage bucket if it doesn't exist
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const documentsExists = buckets?.some(bucket => bucket.name === 'documents');
+      
+      if (!documentsExists) {
+        // Create the documents bucket
+        const { error: bucketError } = await supabase.storage
+          .createBucket('documents', { public: false });
+        
+        if (bucketError) {
+          throw new Error(`Failed to create storage: ${bucketError.message}`);
+        }
+        logger.info("Created documents storage bucket");
+      }
+      
+      const documentData = await uploadDocument(file, (progress, message) => {
+        setUploadProgress(15 + Math.floor(progress * 0.7));
+        setUploadStep(message);
+      });
+      
       logger.info(`Document uploaded with ID: ${documentData?.id}`);
       
-      setUploadProgress(25);
-      setUploadStep("Stage 4: Document classification & understanding...");
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const isExcelFile = file.type.includes('excel') || 
-                          file.name.endsWith('.xls') || 
-                          file.name.endsWith('.xlsx');
-                          
-      const isForm76 = file.name.toLowerCase().includes('form 76') || 
-                       file.name.toLowerCase().includes('f76') || 
-                       file.name.toLowerCase().includes('form76');
-      
-      setUploadProgress(40);
-      if (isExcelFile) {
-        setUploadStep("Stage 5: Processing financial data from spreadsheet...");
-      } else if (isForm76) {
-        setUploadStep("Stage 5: Extracting client information from Form 76...");
-      } else {
-        setUploadStep("Stage 5: Data extraction & content processing...");
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      setUploadProgress(55);
-      
-      if (isForm76) {
-        setUploadStep("Stage 6: Performing risk & compliance assessment...");
-      } else if (isExcelFile) {
-        setUploadStep("Stage 6: Validating financial data structure...");
-      } else {
-        setUploadStep("Stage 6: Analyzing document structure and content...");
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      setUploadProgress(70);
-      
+      setUploadProgress(85);
       setUploadStep("Stage 7: Issue prioritization & task management...");
       await new Promise(resolve => setTimeout(resolve, 2000));
-      setUploadProgress(85);
       
+      setUploadProgress(95);
       setUploadStep("Stage 8: Document organization & client management...");
       await new Promise(resolve => setTimeout(resolve, 2000));
-      setUploadProgress(95);
       
       await new Promise(resolve => setTimeout(resolve, 1500));
       setUploadStep("Complete: Document processing finalized.");
@@ -138,9 +124,9 @@ export const DocumentManagementPage = () => {
 
       toast({
         title: "Success",
-        description: isForm76 
-          ? "Form 76 uploaded and analyzed successfully. Client details extracted."
-          : isExcelFile
+        description: file.name.toLowerCase().includes('form 31') || file.name.toLowerCase().includes('proof of claim')
+          ? "Form 31 uploaded and analyzed successfully. Client details extracted."
+          : file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
             ? "Financial document uploaded and processed successfully"
             : "Document uploaded and processed successfully"
       });
