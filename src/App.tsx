@@ -1,47 +1,37 @@
 
 import { Routes, Route } from "react-router-dom";
-import CRMPage from "./pages/CRMPage";
-import DocumentsPage from "./pages/documents/DocumentsPage";
-import NotFound from "./pages/NotFound";
-import CalendarFullscreenPage from "./pages/CalendarFullscreenPage";
-import Index from "./pages/Index";
-import EFilingPage from "./pages/EFilingPage";
-import ActivityPage from "./pages/ActivityPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import ProfilePage from "./pages/ProfilePage";
-import SettingsPage from "./pages/SettingsPage";
-import NewSupportTicket from "./pages/NewSupportTicket";
-import SAFAPage from "./pages/ConBrandingPage";
-import NotificationsPage from "./pages/NotificationsPage";
-import Support from "./pages/Support";
-import ClientViewerPage from "./pages/ClientViewerPage";
-import DocumentViewerPage from "./pages/DocumentViewerPage";
-import Form31TestPage from './pages/Form31TestPage';
-import "./App.css";
+import { Toaster } from "sonner";
+import { AppLayout } from "@/components/AppLayout";
+import { LoginPage } from "@/pages/LoginPage";
+import { ClerkProvider } from "@clerk/clerk-react";
+import DashboardPage from "@/pages/DashboardPage";
+import DocumentsPage from "@/pages/DocumentsPage";
+import DocumentsPageProvider from "@/pages/documents/DocumentsPageProvider";
+import RecentlyAccessedPage from "@/pages/RecentlyAccessedPage";
+import DocumentManagementPage from "@/pages/DocumentManagementPage";
+import UploadDiagnosticsPage from "@/pages/UploadDiagnosticsPage";
+
+// Check if we're in a Lovable environment
+const isLovableEnv = 
+  typeof window !== "undefined" && 
+  window.location.hostname.includes("lovableproject.com");
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/index" element={<Index />} />
-      <Route path="/crm" element={<CRMPage />} />
-      <Route path="/documents/*" element={<DocumentsPage />} />
-      <Route path="/document-viewer/:documentId" element={<DocumentViewerPage />} />
-      <Route path="/document-viewer/form47" element={<DocumentViewerPage />} />
-      <Route path="/calendar-fullscreen" element={<CalendarFullscreenPage />} />
-      <Route path="/e-filing" element={<EFilingPage />} />
-      <Route path="/activity" element={<ActivityPage />} />
-      <Route path="/analytics" element={<AnalyticsPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/settings" element={<SettingsPage />} />
-      <Route path="/support" element={<Support />} />
-      <Route path="/support/new-ticket" element={<NewSupportTicket />} />
-      <Route path="/SAFA" element={<SAFAPage />} />
-      <Route path="/notifications" element={<NotificationsPage />} />
-      <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
-      <Route path="/form31-test" element={<Form31TestPage />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <ClerkProvider publishableKey={isLovableEnv ? "pk_test_ZnVuLWdvYXQtNjAuY2xlcmsuYWNjb3VudHMuZGV2JA" : ""}>
+      <Toaster position="top-center" />
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<AppLayout />}>
+          <Route index element={<RecentlyAccessedPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/documents" element={<DocumentsPageProvider />} />
+          <Route path="/documents/browse" element={<DocumentsPage />} />
+          <Route path="/documents/manage" element={<DocumentManagementPage />} />
+          <Route path="/upload-diagnostics" element={<UploadDiagnosticsPage />} />
+        </Route>
+      </Routes>
+    </ClerkProvider>
   );
 }
 

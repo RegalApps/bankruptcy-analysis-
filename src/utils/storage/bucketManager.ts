@@ -1,5 +1,6 @@
 
 import { supabase } from "@/lib/supabase";
+import logger from "@/utils/logger";
 
 /**
  * Ensures the required storage buckets exist and have proper configuration
@@ -7,13 +8,13 @@ import { supabase } from "@/lib/supabase";
  */
 export const ensureStorageBuckets = async (): Promise<boolean> => {
   try {
-    console.log("Checking storage buckets...");
+    logger.info("Checking storage buckets...");
     
     // Get all existing buckets
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
     
     if (bucketsError) {
-      console.error("Error checking storage buckets:", bucketsError);
+      logger.error("Error checking storage buckets:", bucketsError);
       return false;
     }
     
@@ -21,7 +22,7 @@ export const ensureStorageBuckets = async (): Promise<boolean> => {
     const documentsExists = buckets?.some(bucket => bucket.name === 'documents');
     
     if (!documentsExists) {
-      console.log("Creating documents bucket...");
+      logger.info("Creating documents bucket...");
       
       // Create the documents bucket with proper configuration
       const { error: bucketError } = await supabase.storage
@@ -40,18 +41,18 @@ export const ensureStorageBuckets = async (): Promise<boolean> => {
         });
       
       if (bucketError) {
-        console.error("Error creating documents bucket:", bucketError);
+        logger.error("Error creating documents bucket:", bucketError);
         return false;
       }
       
-      console.log("Documents bucket created successfully");
+      logger.info("Documents bucket created successfully");
     } else {
-      console.log("Documents bucket exists");
+      logger.info("Documents bucket exists");
     }
     
     return true;
   } catch (error) {
-    console.error("Storage bucket initialization failed:", error);
+    logger.error("Storage bucket initialization failed:", error);
     return false;
   }
 };
@@ -117,7 +118,7 @@ export const diagnoseUploadIssues = async (file?: File): Promise<{
       diagnostic
     };
   } catch (error) {
-    console.error("Diagnostics error:", error);
+    logger.error("Diagnostics error:", error);
     return {
       isAuthenticated: false,
       bucketExists: false,

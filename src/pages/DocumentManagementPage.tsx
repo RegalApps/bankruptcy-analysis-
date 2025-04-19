@@ -9,60 +9,35 @@ import { cleanupExistingForm31 } from "@/utils/documents/formCleanup";
 import logger from "@/utils/logger";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { RobustFileUploader } from "@/components/documents/RobustFileUploader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UploadProgressTracker } from "@/components/documents/UploadProgressTracker";
+import { ensureStorageBuckets } from "@/utils/storage/bucketManager";
 
 export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [uploadErrorMessage, setUploadErrorMessage] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   
   // Initialize storage on component mount
   useEffect(() => {
     const initializeStorage = async () => {
       try {
-        // Get all existing buckets
-        const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+        setIsInitializing(true);
+        const success = await ensureStorageBuckets();
         
-        if (bucketsError) {
-          console.error("Error checking storage buckets:", bucketsError);
-          setUploadErrorMessage("Unable to access storage system. Please try again later.");
-          return;
-        }
-        
-        // Check if documents bucket exists
-        const documentsExists = buckets?.some(bucket => bucket.name === 'documents');
-        
-        if (!documentsExists) {
-          console.log("Creating documents bucket...");
-          
-          // Create the documents bucket
-          const { error: bucketError } = await supabase.storage
-            .createBucket('documents', {
-              public: false,
-              fileSizeLimit: 31457280 // 30MB
-            });
-          
-          if (bucketError) {
-            console.error("Error creating documents bucket:", bucketError);
-            setUploadErrorMessage("Failed to initialize storage system. Please contact support.");
-          } else {
-            console.log("Documents bucket created successfully");
-            toast({
-              title: "Storage initialized",
-              description: "Document storage system is ready to use"
-            });
-          }
-        } else {
-          console.log("Documents bucket exists");
+        if (!success) {
+          setUploadErrorMessage("Failed to initialize storage system. Please check the diagnostics page for more information.");
         }
       } catch (error) {
-        console.error("Storage initialization failed:", error);
+        logger.error("Storage initialization failed:", error);
         setUploadErrorMessage("Failed to set up document storage. Please try again later.");
+      } finally {
+        setIsInitializing(false);
       }
     };
     
@@ -144,28 +119,41 @@ export const DocumentManagementPage = () => {
           </CardHeader>
           <CardContent>
             <div className="p-6 border-2 border-dashed border-muted-foreground/25 rounded-lg flex flex-col items-center justify-center">
-              <RobustFileUploader
-                onUploadComplete={handleUploadComplete}
-                onError={handleUploadError}
-                buttonText="Click to Upload Document"
-                maxSizeMB={30}
-              />
+              {isInitializing ? (
+                <div className="flex flex-col items-center">
+                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mb-2"></div>
+                  <p>Initializing document storage...</p>
+                </div>
+              ) : (
+                <RobustFileUploader
+                  onUploadComplete={handleUploadComplete}
+                  onError={handleUploadError}
+                  buttonText="Click to Upload Document"
+                  maxSizeMB={30}
+                />
+              )}
               <p className="text-sm text-muted-foreground mt-4">
                 Upload PDF, Word, Excel or image files (max 30MB)
               </p>
               
               {uploadErrorMessage && (
                 <div className="mt-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm">
-                  <p className="font-semibold">Upload Error:</p>
-                  <p>{uploadErrorMessage}</p>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => navigate('/upload-diagnostics')}
-                  >
-                    Run Upload Diagnostics
-                  </Button>
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 mr-2 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">Upload Error:</p>
+                      <p>{uploadErrorMessage}</p>
+                      <div className="mt-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/upload-diagnostics')}
+                        >
+                          Run Upload Diagnostics
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
