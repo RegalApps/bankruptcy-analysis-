@@ -24,7 +24,6 @@ export const authService = {
     });
     
     if (signUpError) throw signUpError;
-
     return data;
   },
 
