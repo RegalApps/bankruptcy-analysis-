@@ -10,8 +10,8 @@ export type DocumentStatus =
   | 'approved'
   | 'rejected'
   | 'needs-signature'
-  | 'analyzing' // Added for upload process consistency
-  | 'uploading'; // Added for upload process consistency
+  | 'analyzing' 
+  | 'uploading';
 
 // Define document tree node structure
 export interface DocumentTreeNode {
@@ -25,7 +25,7 @@ export interface DocumentTreeNode {
   filePath?: string;
   folderType?: string;
   children?: DocumentTreeNode[];
-  url?: string; // Added for direct access to document URLs
+  url?: string;
 }
 
 // DocumentRecord interface for documents from the database
@@ -59,6 +59,7 @@ export interface FileInfo {
   url?: string;
 }
 
+// Document metadata interface
 export interface DocumentMetadata {
   client_name?: string;
   client_id?: string;
@@ -110,3 +111,4 @@ export interface UploadInfo {
   startTime?: number;
   metadata?: Record<string, any>;
 }
+
