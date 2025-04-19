@@ -13,13 +13,11 @@ import { Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { RobustFileUploader } from "@/components/documents/RobustFileUploader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UploadProgressTracker } from "@/components/documents/UploadProgressTracker";
 
 export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
   const navigate = useNavigate();
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStep, setUploadStep] = useState("");
   const { toast } = useToast();
 
   // Auto-refresh document list periodically
@@ -112,6 +110,9 @@ export const DocumentManagementPage = () => {
           </ScrollArea>
         </section>
       </div>
+      
+      {/* Add progress tracker */}
+      <UploadProgressTracker />
     </div>
   );
 };

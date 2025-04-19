@@ -32,10 +32,11 @@ export const UploadProgressTracker = () => {
         
         const updatedUpload = {
           documentId: id,
-          id: id,  // Added id field for consistency
+          id: id,
           progress,
           message: stage,
-          status
+          status,
+          completedAt: status === 'complete' ? Date.now() : undefined
         };
         
         if (existingIndex >= 0) {
@@ -59,6 +60,7 @@ export const UploadProgressTracker = () => {
       setActiveUploads(prevUploads => 
         prevUploads.filter(upload => 
           upload.status !== 'complete' || 
+          !upload.completedAt || 
           Date.now() - upload.completedAt < 5000
         )
       );
@@ -103,7 +105,7 @@ export const UploadProgressTracker = () => {
                   </span>
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  {upload.progress}%
+                  {upload.progress > 0 ? `${upload.progress}%` : ''}
                 </span>
               </div>
               <Progress 
