@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Risk } from '../types';
 import { Form47RiskView } from './Form47RiskView';
@@ -5,15 +6,35 @@ import { toast } from 'sonner';
 
 interface RiskAssessmentProps {
   documentId: string;
-  onRiskSelect?: (riskId: string) => void; 
+  onRiskSelect?: (riskId: string | null) => void;
+  risks?: Risk[];
+  activeRiskId?: string | null;
 }
 
-const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, onRiskSelect }) => {
-  const [activeRisk, setActiveRisk] = useState<string>('');
-  const [risks, setRisks] = useState<Risk[]>([]);
+const RiskAssessment: React.FC<RiskAssessmentProps> = ({ 
+  documentId, 
+  onRiskSelect,
+  risks: providedRisks,
+  activeRiskId
+}) => {
+  const [localActiveRisk, setLocalActiveRisk] = useState<string | null>(activeRiskId || null);
+  const [risks, setRisks] = useState<Risk[]>(providedRisks || []);
 
   useEffect(() => {
-    // Simulate fetching risks based on documentId
+    // Update localActiveRisk when activeRiskId prop changes
+    if (activeRiskId !== undefined) {
+      setLocalActiveRisk(activeRiskId);
+    }
+  }, [activeRiskId]);
+
+  useEffect(() => {
+    // Update risks when providedRisks changes
+    if (providedRisks) {
+      setRisks(providedRisks);
+      return;
+    }
+
+    // Only fetch mock risks if none were provided
     const fetchRisks = async () => {
       // Mock API call delay
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -77,10 +98,10 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, onRiskSelec
     };
 
     fetchRisks();
-  }, [documentId]);
+  }, [documentId, providedRisks]);
 
-  const handleRiskSelect = (riskId: string) => {
-    setActiveRisk(riskId);
+  const handleRiskSelect = (riskId: string | null) => {
+    setLocalActiveRisk(riskId);
     if (onRiskSelect) {
       onRiskSelect(riskId);
     }
@@ -91,7 +112,8 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, onRiskSelec
       <Form47RiskView 
         risks={risks} 
         documentId={documentId}
-        onRiskSelect={onRiskSelect || (() => {})}
+        activeRiskId={localActiveRisk}
+        onRiskSelect={handleRiskSelect}
       />
     );
   }
@@ -104,9 +126,10 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, onRiskSelec
           {risks.map((risk, index) => (
             <li 
               key={`risk-${index}`}
-              className={`p-3 border rounded-md shadow-sm cursor-pointer ${activeRisk === `risk-${index}` ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+              className={`p-3 border rounded-md shadow-sm cursor-pointer ${localActiveRisk === `risk-${index}` ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
               onClick={() => {
-                handleRiskSelect(`risk-${index}`);
+                const riskId = `risk-${index}`;
+                handleRiskSelect(riskId);
                 toast.info(`Selected risk: ${risk.type}`, {
                   description: risk.description
                 });
@@ -132,4 +155,6 @@ const RiskAssessment: React.FC<RiskAssessmentProps> = ({ documentId, onRiskSelec
   );
 };
 
+// Export as default and named export to support both import styles
 export default RiskAssessment;
+export { RiskAssessment };

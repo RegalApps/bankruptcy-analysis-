@@ -1,6 +1,6 @@
 
 import { DocumentDetails } from "../DocumentDetails";
-import { RiskAssessment } from "../RiskAssessment";
+import RiskAssessment from "../RiskAssessment";
 import { DeadlineManager } from "../DeadlineManager";
 import { DocumentDetails as DocumentDetailsType } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";

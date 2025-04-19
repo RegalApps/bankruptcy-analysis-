@@ -16,14 +16,18 @@ import {
 import { Risk } from "./types";
 import { RiskItem } from "./RiskItem";
 
-interface Form47RiskViewProps {
+export interface Form47RiskViewProps {
   risks: Risk[];
   documentId: string;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string | null) => void;
 }
 
 export const Form47RiskView: React.FC<Form47RiskViewProps> = ({ 
   risks, 
-  documentId 
+  documentId,
+  activeRiskId,
+  onRiskSelect = () => {}
 }) => {
   // Filter for Form 47 specific categories
   const paymentRisks = risks.filter(r => 

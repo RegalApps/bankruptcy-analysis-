@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { DocumentPreview } from "./DocumentPreview";
-import { RiskAssessment } from "./RiskAssessment";
+import RiskAssessment from "./RiskAssessment";
 import { Form31RiskView } from "./RiskAssessment/Form31RiskView";
 import { Risk } from "./RiskAssessment/types";
 import { toast } from "sonner";
