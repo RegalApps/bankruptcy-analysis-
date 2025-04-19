@@ -27,21 +27,9 @@ export const authService = {
     
     if (signUpError) throw signUpError;
 
-    // Only create profile if we have a user
-    if (data?.user) {
-      // Create profile for the user even though they haven't confirmed email yet
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: data.user.id,
-          full_name: fullName,
-          user_id: userId,
-          avatar_url: avatarUrl,
-          email: email,
-        });
-
-      if (profileError) throw profileError;
-    }
+    // Don't try to create the profile record here because it violates RLS
+    // The profile will be created automatically through the database trigger
+    // that was set up in Supabase (handle_new_user function)
 
     return data;
   },
