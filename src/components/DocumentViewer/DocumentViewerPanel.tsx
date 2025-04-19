@@ -9,6 +9,7 @@ import { X, RefreshCw, AlertTriangle } from "lucide-react";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 import { DocumentAnalysis } from "./DocumentAnalysis";
 import { DocumentTasks } from "./DocumentTasks";
+import { DocumentRisk } from "@/utils/documents/types";
 
 interface DocumentViewerPanelProps {
   documentId: string;
@@ -38,7 +39,20 @@ export const DocumentViewerPanel: React.FC<DocumentViewerPanelProps> = ({
   
   // Extract summary and risks from analysis if available
   const summary = analysis?.extracted_info?.summary || "No summary available.";
-  const risks = analysis?.risks || [];
+  
+  // Convert risks to the expected DocumentRisk format, ensuring each risk has an id
+  const risks: DocumentRisk[] = (analysis?.risks || []).map((risk: any, index: number) => ({
+    id: risk.id || `risk-${index}`, // Add id if missing
+    type: risk.type || '',
+    severity: risk.severity || 'low',
+    description: risk.description || '',
+    position: risk.position || undefined,
+    regulation: risk.regulation || undefined,
+    impact: risk.impact || undefined,
+    solution: risk.solution || undefined,
+    status: risk.status || 'open',
+    deadline: risk.deadline || undefined
+  }));
 
   return (
     <div className="flex flex-col h-full">
@@ -108,6 +122,7 @@ export const DocumentViewerPanel: React.FC<DocumentViewerPanelProps> = ({
               className="flex-1 overflow-auto p-0 m-0 data-[state=active]:flex flex-col"
             >
               <DocumentPreview 
+                documentId={documentId}
                 storagePath={document.storage_path}
                 title={document.title}
               />
@@ -160,7 +175,7 @@ export const DocumentViewerPanel: React.FC<DocumentViewerPanelProps> = ({
 };
 
 // Helper function to generate sample tasks from risks (in a production app, these would come from the backend)
-function generateSampleTasks(documentId: string, documentName: string, risks: any[]) {
+function generateSampleTasks(documentId: string, documentName: string, risks: DocumentRisk[]) {
   const tasks = [];
   
   // Add one task for each critical or high risk
@@ -228,7 +243,7 @@ function generateSampleTasks(documentId: string, documentName: string, risks: an
   return tasks;
 }
 
-function getTaskTitleFromRisk(risk: any): string {
+function getTaskTitleFromRisk(risk: DocumentRisk): string {
   if (risk.type.includes('MISSING')) {
     return `Add missing ${risk.type.replace('MISSING_', '').replace(/_/g, ' ').toLowerCase()}`;
   }

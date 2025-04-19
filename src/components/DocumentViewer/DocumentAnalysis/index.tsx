@@ -17,7 +17,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DocumentRisk } from '@/utils/documents/types';
 import { RiskList } from './RiskList';
-import { InfoCircle, AlertTriangle, AlertOctagon, Ban } from 'lucide-react';
+import { AlertTriangle, AlertOctagon, Info, Ban } from 'lucide-react';
 
 interface DocumentAnalysisProps {
   summary: string;
@@ -71,7 +71,7 @@ export function DocumentAnalysis({
         <CardContent>
           {!hasRisks ? (
             <Alert className="bg-green-50 border-green-200">
-              <InfoCircle className="h-4 w-4 text-green-600" />
+              <Info className="h-4 w-4 text-green-600" />
               <AlertTitle className="text-green-700">No Issues Detected</AlertTitle>
               <AlertDescription className="text-green-600">
                 This document appears to meet all compliance requirements with no identified issues.
@@ -111,7 +111,7 @@ export function DocumentAnalysis({
               <TabsContent value="critical">
                 {criticalRisks.length === 0 ? (
                   <Alert>
-                    <InfoCircle className="h-4 w-4" />
+                    <Info className="h-4 w-4" />
                     <AlertTitle>No Critical Issues</AlertTitle>
                     <AlertDescription>
                       No critical issues were detected in this document.
@@ -125,7 +125,7 @@ export function DocumentAnalysis({
               <TabsContent value="high">
                 {highRisks.length === 0 ? (
                   <Alert>
-                    <InfoCircle className="h-4 w-4" />
+                    <Info className="h-4 w-4" />
                     <AlertTitle>No High-Priority Issues</AlertTitle>
                     <AlertDescription>
                       No high-priority issues were detected in this document.
@@ -139,7 +139,7 @@ export function DocumentAnalysis({
               <TabsContent value="medium">
                 {mediumRisks.length === 0 ? (
                   <Alert>
-                    <InfoCircle className="h-4 w-4" />
+                    <Info className="h-4 w-4" />
                     <AlertTitle>No Medium-Priority Issues</AlertTitle>
                     <AlertDescription>
                       No medium-priority issues were detected in this document.
@@ -153,7 +153,7 @@ export function DocumentAnalysis({
               <TabsContent value="low">
                 {lowRisks.length === 0 ? (
                   <Alert>
-                    <InfoCircle className="h-4 w-4" />
+                    <Info className="h-4 w-4" />
                     <AlertTitle>No Low-Priority Issues</AlertTitle>
                     <AlertDescription>
                       No low-priority issues were detected in this document.
@@ -208,7 +208,7 @@ export function DocumentAnalysis({
             {complianceStatus.score !== undefined && (
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div 
-                  className={`h-2.5 rounded-full ${getComplianceScoreColor(complianceScore)}`}
+                  className={`h-2.5 rounded-full ${getComplianceScoreColor(complianceStatus.score)}`}
                   style={{ width: `${complianceStatus.score * 100}%` }}
                 ></div>
                 <div className="flex justify-between mt-1 text-xs text-gray-500">

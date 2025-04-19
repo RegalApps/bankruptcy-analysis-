@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { addUploadProgressCallback, getAllActiveUploads } from '@/utils/documents/uploadTracker';
+import { addUploadProgressCallback, getActiveUploads } from '@/utils/documents/uploadTracker';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ export const UploadProgressTracker = () => {
   
   useEffect(() => {
     // Initialize with current uploads
-    setActiveUploads(getAllActiveUploads());
+    setActiveUploads(getActiveUploads());
     
     // Listen for upload progress events
     const unsubscribe = addUploadProgressCallback((id, progress, stage) => {
@@ -32,6 +32,7 @@ export const UploadProgressTracker = () => {
         
         const updatedUpload = {
           documentId: id,
+          id: id,  // Added id field for consistency
           progress,
           message: stage,
           status
