@@ -11,7 +11,7 @@ import DocumentManagementPage from "@/pages/DocumentManagementPage";
 import UploadDiagnosticsPage from "@/pages/UploadDiagnosticsPage";
 import DocumentViewerPage from "@/pages/DocumentViewerPage";
 import Index from "@/pages/Index";
-import SAFAPage from "@/pages/SAFA";
+import SAFAPage from "@/pages/SAFAPage";
 import CRMPage from "@/pages/CRMPage";
 import ActivityPage from "@/pages/ActivityPage";
 import EFilingPage from "@/pages/EFilingPage";
