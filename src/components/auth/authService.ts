@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 interface SignUpData {
@@ -11,7 +10,6 @@ interface SignUpData {
 
 export const authService = {
   async signUp({ email, password, fullName, userId, avatarUrl }: SignUpData) {
-    // First, sign up the user
     const { error: signUpError, data } = await supabase.auth.signUp({
       email,
       password,
@@ -26,10 +24,6 @@ export const authService = {
     });
     
     if (signUpError) throw signUpError;
-
-    // Don't try to create the profile record here because it violates RLS
-    // The profile will be created automatically through the database trigger
-    // that was set up in Supabase (handle_new_user function)
 
     return data;
   },
