@@ -1,4 +1,3 @@
-
 import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -7,8 +6,11 @@ import { uploadDocument } from "@/utils/documentOperations";
 import { UploadArea } from "@/components/documents/UploadArea";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { TestForm31Upload } from "@/components/documents/TestForm31Upload";
+import { cleanupExistingForm31 } from "@/utils/documents/formCleanup";
 import logger from "@/utils/logger";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
@@ -166,10 +168,40 @@ export const DocumentManagementPage = () => {
       }, 2000);
     }
   };
+  
+  // Add cleanup handler
+  const handleCleanupForm31 = async () => {
+    try {
+      const success = await cleanupExistingForm31();
+      if (success) {
+        // Refresh document list after cleanup
+        refetch();
+      }
+    } catch (error) {
+      logger.error('Error cleaning up Form 31 documents:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to remove Form 31 documents"
+      });
+    }
+  };
 
   return (
     <div className="h-full py-6">
       <div className="container max-w-6xl mx-auto space-y-8">
+        <div className="flex justify-end">
+          <Button 
+            variant="destructive" 
+            onClick={handleCleanupForm31} 
+            size="sm"
+            className="gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            Remove All Form 31 Documents
+          </Button>
+        </div>
+
         {/* Add TestForm31Upload component for testing */}
         <TestForm31Upload />
         
