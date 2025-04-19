@@ -2,134 +2,110 @@
 export interface DocumentDetails {
   id: string;
   title: string;
-  storage_path: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  parent_folder_id: string | null;
-  file_type: string;
-  file_size: number;
-  is_public: boolean;
-  is_favorite: boolean;
-  labels: string[];
-  status: string;
-  metadata: {
-    [key: string]: any;
-  };
-  deadlines: Deadline[];
-  version: number;
-  analysis?: Analysis[];
-  // Additional properties needed by the components
   type?: string;
-  size?: number;
-  comments?: Comment[];
-}
-
-export interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  document_id: string;
-  parent_id?: string;
-  mentions?: string[];
-  is_resolved?: boolean;
-}
-
-export interface Deadline {
-  id: string;
-  title: string;
-  description: string;
-  due_date: string;
-  status: string;
-  priority: string;
-  created_at: string;
-  type: string;
-  severity?: string; // Added to match usage in demoDocuments.ts
-}
-
-export interface Analysis {
-  id: string;
-  created_at: string;
-  document_id?: string; // Added to match usage in demoDocuments.ts
-  content: {
-    extracted_info: any;
-    risks: Risk[];
-    regulatory_compliance: {
-      status: "needs_review" | "compliant" | "non_compliant";
-      details: string;
-      references: string[];
-    }
-  }
-}
-
-export interface Risk {
-  id?: string;
-  type: string;
-  title?: string;
-  description: string;
-  severity: 'high' | 'medium' | 'low';
-  regulation: string;
-  impact: string;
-  requiredAction: string;
-  solution: string;
-  deadline?: string;
-  position?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    page: number;
-    rect?: number[]; // Changed to match RiskAssessment/types.ts
-  };
-  metadata?: {
-    section?: string;
-  };
-}
-
-// Task interface needed by TaskManager components
-export interface Task {
-  id: string;
-  title: string;
   description?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled'; // Updated to match usage
-  priority: 'low' | 'medium' | 'high';
-  severity?: 'low' | 'medium' | 'high'; // Added missing property
-  due_date?: string;
-  assigned_to?: string;
-  created_at: string;
+  size?: number;
+  created_at?: string;
   updated_at?: string;
-  document_id: string;
-  risk_id?: string;
-  regulation?: string; // Added missing property
-  solution?: string; // Added missing property
+  user_id?: string;
+  status?: string;
+  tags?: string[];
+  content?: string;
+  storage_path: string;
+  metadata?: Record<string, any>;
+  url?: string;
+  analysis?: Array<{
+    content: any;
+  }>;
+  versions?: DocumentVersion[];
+  comments?: Array<{
+    id: string;
+    content: any;
+    created_at: string;
+    user_id: string;
+  }>;
+  tasks?: Task[];
+  deadlines?: Deadline[];
+  file_size?: number;
+  creation_date?: string;
 }
 
-// Document version interface needed by DocumentVersions
 export interface DocumentVersion {
   id: string;
   document_id: string;
   version_number: number;
-  version_name?: string; // Added missing property
+  version_name?: string;
   storage_path: string;
   created_at: string;
   created_by: string;
-  comment?: string;
-  is_current?: boolean; // Added missing property
-  changes_summary?: string; // Added missing property
+  is_current: boolean;
+  change_summary?: string;
+  metadata?: Record<string, any>;
 }
 
-// Analysis Panel Props interface
-export interface AnalysisPanelProps {
-  documentId: string;
-  isLoading?: boolean;
-  analysis?: any;
+export interface Risk {
+  type: string;
+  description: string;
+  severity: "low" | "medium" | "high";
+  regulation?: string;
+  impact?: string;
+  requiredAction?: string;
+  solution?: string;
+  deadline?: string;
 }
 
-// DeadlineManager Props interface
-export interface DeadlineManagerProps {
+export interface DocumentComment {
+  id: string;
+  document_id: string;
+  user_id: string;
+  content: {
+    text: string;
+    attachments?: string[];
+    page?: number;
+    position?: {
+      x: number;
+      y: number;
+    };
+  };
+  parent_id?: string | null;
+  created_at: string;
+  updated_at?: string;
+  status?: "active" | "deleted" | "resolved";
+  replies?: DocumentComment[];
+}
+
+export interface Deadline {
+  title: string;
+  dueDate: string;
+  description?: string;
+}
+
+export interface Task {
+  id: string;
+  document_id?: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  severity: 'low' | 'medium' | 'high';
+  created_at?: string;
+  due_date?: string;
+  assigned_to?: string;
+  created_by?: string;
+  regulation?: string;
+  solution?: string;
+}
+
+export interface CollaborationPanelProps {
+  document: DocumentDetails;
+  onCommentAdded?: () => void;
+  activeRiskId?: string | null;
+  onRiskSelect?: (riskId: string) => void;
+}
+
+export interface DocumentPreviewProps {
+  storagePath: string;
   documentId: string;
-  deadlines?: Deadline[];
-  isLoading?: boolean;
-  onDeadlineUpdated?: () => void;
+  title: string;
+  bypassAnalysis?: boolean;
+  onAnalysisComplete?: () => void;
 }

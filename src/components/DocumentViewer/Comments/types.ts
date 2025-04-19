@@ -21,7 +21,6 @@ export interface CommentsProps {
   documentId: string;
   comments?: Comment[];
   onCommentAdded: () => void;
-  isLoading?: boolean;
 }
 
 export interface CommentItemProps {

@@ -1,18 +1,15 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { UploadArea } from "@/components/documents/UploadArea";
 import { RecentClients } from "@/components/dashboard/RecentClients";
 import { RecentDocuments } from "@/components/dashboard/RecentDocuments";
 import { uploadDocument } from "@/utils/documentOperations";
-import { fixDocumentUpload } from "@/utils/documentUploadFix";
-import { detectDocumentType } from "@/components/FileUpload/utils/fileTypeDetector";
 import logger from "@/utils/logger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { trackUpload } from "@/utils/documents/uploadTracker";
 
 export const RecentlyAccessedPage = () => {
   const navigate = useNavigate();
@@ -21,28 +18,13 @@ export const RecentlyAccessedPage = () => {
   const [uploadStep, setUploadStep] = useState("");
   const { toast } = useToast();
 
-  useEffect(() => {
-    const checkStorage = async () => {
-      try {
-        const { data: buckets } = await supabase.storage.listBuckets();
-        const hasDocumentsBucket = buckets?.some(bucket => bucket.name === 'documents');
-        
-        if (!hasDocumentsBucket) {
-          console.warn('Documents bucket is missing - will be created when needed');
-        }
-      } catch (err) {
-        console.error('Error checking storage:', err);
-      }
-    };
-    
-    checkStorage();
-  }, []);
-
   const handleDocumentSelect = async (documentId: string) => {
     try {
+      // Record document access before navigating
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
+        // Insert record into document access history
         await supabase
           .from('document_access_history')
           .insert({
@@ -105,6 +87,7 @@ export const RecentlyAccessedPage = () => {
         return;
       }
 
+      // Continue with the existing upload process
       setUploadProgress(5);
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -117,101 +100,90 @@ export const RecentlyAccessedPage = () => {
       
       logger.info(`Starting upload for file: ${file.name}, size: ${file.size} bytes`);
       
-      try {
-        const { fixed, message } = await fixDocumentUpload();
-        
-        if (!fixed) {
-          toast({
-            variant: "destructive",
-            title: "Storage System Error",
-            description: message
-          });
-          throw new Error('Storage system not properly configured');
-        }
-        
-        const { isForm76, isExcel } = detectDocumentType(file);
-        
-        // Create a upload tracker with file metadata
-        const documentId = crypto.randomUUID();
-        const uploadTracker = trackUpload(documentId, 15, {
-          fileType: file.type || (file.name.split('.').pop() || 'unknown'),
-          fileSize: file.size,
-          fileName: file.name,
-          isForm76,
-          isExcel
-        });
-        
-        const documentData = await uploadDocument(
-          file,
-          (progress, message) => {
-            setUploadProgress(Math.min(Math.floor(progress * 0.7) + 15, 85)); // Scale to fit our UI stages
-            setUploadStep(message);
-            uploadTracker.updateProgress(progress, message);
-          }
-        );
-        
-        logger.info(`Document uploaded with ID: ${documentData?.id}`);
-        
-        setUploadProgress(85);
-        setUploadStep("Stage 7: Issue prioritization & task management...");
-        uploadTracker.updateProgress(85, "Issue prioritization & task management...");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        setUploadStep("Stage 8: Document organization & client management...");
-        uploadTracker.updateProgress(95, "Document organization & client management...");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setUploadProgress(95);
-        
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setUploadStep("Complete: Document processing finalized.");
-        setUploadProgress(100);
-        uploadTracker.completeUpload("Document processing finalized.");
-
-        toast({
-          title: "Success",
-          description: isForm76 
-            ? "Form 76 uploaded and analyzed successfully. Client details extracted."
-            : isExcel
-              ? "Financial document uploaded and processed successfully"
-              : "Document uploaded and processed successfully"
-        });
+      const documentData = await uploadDocument(file);
+      logger.info(`Document uploaded with ID: ${documentData?.id}`);
       
-        if (documentData && documentData.id) {
-          logger.info(`Navigating to document view for ID: ${documentData.id}`);
+      setUploadProgress(25);
+      setUploadStep("Stage 4: Document classification & understanding...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const isExcelFile = file.type.includes('excel') || 
+                          file.name.endsWith('.xls') || 
+                          file.name.endsWith('.xlsx');
+                          
+      const isForm76 = file.name.toLowerCase().includes('form 76') || 
+                       file.name.toLowerCase().includes('f76') || 
+                       file.name.toLowerCase().includes('form76');
+      
+      setUploadProgress(40);
+      if (isExcelFile) {
+        setUploadStep("Stage 5: Processing financial data from spreadsheet...");
+      } else if (isForm76) {
+        setUploadStep("Stage 5: Extracting client information from Form 76...");
+      } else {
+        setUploadStep("Stage 5: Data extraction & content processing...");
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      setUploadProgress(55);
+      
+      if (isForm76) {
+        setUploadStep("Stage 6: Performing risk & compliance assessment...");
+      } else if (isExcelFile) {
+        setUploadStep("Stage 6: Validating financial data structure...");
+      } else {
+        setUploadStep("Stage 6: Analyzing document structure and content...");
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      setUploadProgress(70);
+      
+      setUploadStep("Stage 7: Issue prioritization & task management...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setUploadProgress(85);
+      
+      setUploadStep("Stage 8: Document organization & client management...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setUploadProgress(95);
+      
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setUploadStep("Complete: Document processing finalized.");
+      setUploadProgress(100);
+
+      toast({
+        title: "Success",
+        description: isForm76 
+          ? "Form 76 uploaded and analyzed successfully. Client details extracted."
+          : isExcelFile
+            ? "Financial document uploaded and processed successfully"
+            : "Document uploaded and processed successfully"
+      });
+      
+      if (documentData && documentData.id) {
+        logger.info(`Navigating to document view for ID: ${documentData.id}`);
+        
+        // Record the document access before navigating
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
           
-          try {
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            if (user) {
-              await supabase
-                .from('document_access_history')
-                .insert({
-                  user_id: user.id,
-                  document_id: documentData.id,
-                  accessed_at: new Date().toISOString(),
-                  access_source: 'upload',
-                  session_id: Math.random().toString(36).substring(2, 15) // Simple session ID
-                });
-            }
-          } catch (error) {
-            console.error("Error recording document access:", error);
+          if (user) {
+            await supabase
+              .from('document_access_history')
+              .insert({
+                user_id: user.id,
+                document_id: documentData.id,
+                accessed_at: new Date().toISOString(),
+                access_source: 'upload',
+                session_id: Math.random().toString(36).substring(2, 15) // Simple session ID
+              });
           }
-          
-          setTimeout(() => {
-            navigate('/', { state: { selectedDocument: documentData.id } });
-          }, 1500);
+        } catch (error) {
+          console.error("Error recording document access:", error);
         }
-      } catch (error: any) {
-        if (error.message.includes('Storage system not properly configured')) {
-          console.log("Storage system error detected, showing detailed error");
-          toast({
-            variant: "destructive",
-            title: "Storage System Unavailable",
-            description: "The document storage system is not properly configured. This might require administrator assistance."
-          });
-        } else {
-          throw error;
-        }
+        
+        setTimeout(() => {
+          navigate('/', { state: { selectedDocument: documentData.id } });
+        }, 1500);
       }
     } catch (error) {
       logger.error('Error uploading document:', error);

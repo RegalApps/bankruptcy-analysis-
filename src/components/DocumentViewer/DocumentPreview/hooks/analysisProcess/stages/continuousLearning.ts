@@ -1,53 +1,39 @@
 
 import { supabase } from "@/lib/supabase";
+import { DocumentRecord } from "../../types";
 import { AnalysisProcessContext } from "../types";
 
 export const continuousLearning = async (
-  documentRecord: any,
+  documentRecord: DocumentRecord,
   context: AnalysisProcessContext
-) => {
-  const { setAnalysisStep, setProgress, setProcessingStage } = context;
+): Promise<void> => {
+  const { setAnalysisStep, setProgress, toast, onAnalysisComplete, isForm76 } = context;
   
-  try {
-    setAnalysisStep("Continuous AI Learning & Improvement");
-    setProcessingStage("continuous_learning");
-    
-    // Simulate AI learning process
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Update document metadata to include the learning completion
-    if (documentRecord && documentRecord.id) {
-      const { data, error } = await supabase
-        .from('documents')
-        .update({
-          metadata: {
-            ...documentRecord.metadata,
-            continuous_learning_completed: true,
-            ai_learning_timestamp: new Date().toISOString(),
-            processing_steps_completed: [
-              ...(documentRecord.metadata?.processing_steps_completed || []),
-              "continuous_learning"
-            ]
-          }
-        })
-        .eq('id', documentRecord.id);
-      
-      if (error) {
-        console.error("Error updating document with continuous learning data:", error);
+  // Final update - processing complete
+  await supabase
+    .from('documents')
+    .update({
+      ai_processing_status: 'completed',
+      metadata: {
+        ...documentRecord.metadata,
+        processing_stage: 'completed',
+        processing_steps_completed: [...(documentRecord.metadata?.processing_steps_completed || []), 'analysis_completed'],
+        completion_date: new Date().toISOString()
       }
-    }
-    
-    // If we have an onAnalysisComplete callback, call it with the document ID
-    if (context.onAnalysisComplete && documentRecord && documentRecord.id) {
-      context.onAnalysisComplete(documentRecord.id);
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error("Error in continuous learning stage:", error);
-    return { 
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error in continuous learning"
-    };
+    })
+    .eq('id', documentRecord.id);
+
+  setAnalysisStep("Stage 8: Continuous AI Learning & Improvement...");
+  setProgress(100);
+  
+  toast({
+    title: "Analysis Complete",
+    description: isForm76 ? 
+      "Form 76 has been fully analyzed with client details extraction" : 
+      "Document has been analyzed with content extraction"
+  });
+
+  if (onAnalysisComplete) {
+    onAnalysisComplete();
   }
 };

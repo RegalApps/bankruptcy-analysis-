@@ -6,14 +6,14 @@ import { useFileUpload } from './hooks/useFileUpload';
 import { FileUploadProps } from './types';
 
 export const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete }) => {
-  const { handleUpload, isUploading, progress } = useFileUpload(onUploadComplete);
+  const { handleUpload, isUploading, uploadProgress, uploadStep } = useFileUpload(onUploadComplete);
 
   return (
     <div className="space-y-4">
       {isUploading ? (
         <UploadProgressDisplay 
-          uploadProgress={progress.percentage || 0} 
-          uploadStep={progress.message} 
+          uploadProgress={uploadProgress} 
+          uploadStep={uploadStep} 
         />
       ) : (
         <div className="flex items-center justify-center w-full">

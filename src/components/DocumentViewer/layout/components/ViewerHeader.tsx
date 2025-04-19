@@ -1,70 +1,73 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Sidebar, PanelRight, ChevronLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { FileBarChart, FileText } from "lucide-react";
 
 interface ViewerHeaderProps {
-  documentTitle?: string;
-  documentType?: string;
+  documentTitle: string;
+  documentType: string;
+  isForm47: boolean;
+  isTablet: boolean;
+  isMobile: boolean;
   toggleSidebar: () => void;
-  toggleRightPanel: () => void;
-  isForm47?: boolean;
-  isTablet?: boolean;
-  isMobile?: boolean;
-  showSidebar: boolean;
-  showRightPanel: boolean;
+  toggleCollaborationPanel: () => void;
 }
 
 export const ViewerHeader: React.FC<ViewerHeaderProps> = ({
-  documentTitle = "Document",
-  documentType = "Document",
+  documentTitle,
+  documentType,
+  isForm47,
+  isTablet,
+  isMobile,
   toggleSidebar,
-  toggleRightPanel,
-  isForm47 = false,
-  isTablet = false,
-  isMobile = false,
-  showSidebar,
-  showRightPanel,
+  toggleCollaborationPanel,
 }) => {
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   return (
-    <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
-      <div className="flex items-center space-x-2">
-        <Button variant="ghost" size="icon" onClick={handleBack} title="Go back">
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        
-        <Button 
-          variant={showSidebar ? "secondary" : "ghost"} 
-          size="icon" 
-          onClick={toggleSidebar}
-          title={showSidebar ? "Hide collaboration panel" : "Show collaboration panel"}
-        >
-          <Sidebar className="h-5 w-5" />
-        </Button>
-        
-        <div className="ml-2">
-          <h2 className="text-sm font-medium">{documentTitle}</h2>
-          <p className="text-xs text-muted-foreground">{documentType}</p>
+    <div className="sticky top-0 z-10 flex justify-between items-center p-2 sm:p-3 bg-muted/30 border-b">
+      <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
+        <div className="bg-muted/50 p-1.5 sm:p-2 rounded-md flex-shrink-0">
+          {isForm47 ? (
+            <FileBarChart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          ) : (
+            <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          )}
+        </div>
+        <div className="flex flex-col overflow-hidden">
+          <h1 className="text-sm sm:text-lg font-bold text-foreground truncate">{documentTitle}</h1>
+          <div className="flex flex-wrap gap-1 sm:gap-2 mt-0.5 sm:mt-1">
+            {isForm47 && (
+              <div className="bg-primary/10 text-primary px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
+                Consumer Proposal
+              </div>
+            )}
+            <div className="bg-muted text-muted-foreground px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
+              Form {documentType.includes('47') ? '47' : documentType}
+            </div>
+          </div>
         </div>
       </div>
       
-      <div className="flex items-center">
-        <Button 
-          variant={showRightPanel ? "secondary" : "ghost"} 
-          size="icon" 
-          onClick={toggleRightPanel}
-          title={showRightPanel ? "Hide details panel" : "Show details panel"}
-        >
-          <PanelRight className="h-5 w-5" />
-        </Button>
-      </div>
+      {(isMobile || isTablet) && (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleSidebar}
+            className="h-8 px-2"
+          >
+            {isTablet && !isMobile ? "Document Details" : "Details"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm" 
+            onClick={toggleCollaborationPanel}
+            className="h-8 px-2"
+          >
+            {isTablet && !isMobile ? "Collaboration" : "Comments"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
+
+import { Button } from "@/components/ui/button";

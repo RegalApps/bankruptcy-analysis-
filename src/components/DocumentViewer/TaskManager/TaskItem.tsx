@@ -67,7 +67,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     }
   };
 
-  const getSeverityIcon = (severity: string | undefined) => {
+  const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'high':
         return <AlertTriangle className="h-4 w-4 text-red-500" />;

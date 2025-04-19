@@ -52,7 +52,6 @@ export const useTaskManager = ({ documentId }: UseTaskManagerProps): UseTaskMana
         description: taskData.description || '',
         status: taskData.status || 'pending',
         severity: taskData.severity || 'medium',
-        priority: taskData.priority || 'medium',
         created_at: new Date().toISOString(),
         due_date: taskData.due_date,
         assigned_to: taskData.assigned_to,

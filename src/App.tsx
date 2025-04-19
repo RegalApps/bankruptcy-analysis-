@@ -1,27 +1,42 @@
 
 import { Routes, Route } from "react-router-dom";
-import { Toaster } from "sonner";
-import { AppLayout } from "./components/layout/AppLayout";
-import DocumentsPage from "./pages/DocumentsPage";
-import DocumentsPageProvider from "./pages/documents/DocumentsPageProvider";
-import RecentlyAccessedPage from "./pages/RecentlyAccessedPage";
-import DocumentManagementPage from "./pages/DocumentManagementPage";
-import UploadDiagnosticsPage from "./pages/UploadDiagnosticsPage";
+import CRMPage from "./pages/CRMPage";
+import DocumentsPage from "./pages/documents/DocumentsPage";
+import NotFound from "./pages/NotFound";
+import CalendarFullscreenPage from "./pages/CalendarFullscreenPage";
+import Index from "./pages/Index";
+import EFilingPage from "./pages/EFilingPage";
+import ActivityPage from "./pages/ActivityPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
+import NewSupportTicket from "./pages/NewSupportTicket";
+import SAFAPage from "./pages/ConBrandingPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import Support from "./pages/Support";
+import ClientViewerPage from "./pages/ClientViewerPage";
+import "./App.css";
 
 function App() {
   return (
-    <>
-      <Toaster position="top-center" />
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route index element={<RecentlyAccessedPage />} />
-          <Route path="/documents" element={<DocumentsPageProvider />} />
-          <Route path="/documents/browse" element={<DocumentsPage />} />
-          <Route path="/documents/manage" element={<DocumentManagementPage />} />
-          <Route path="/upload-diagnostics" element={<UploadDiagnosticsPage />} />
-        </Route>
-      </Routes>
-    </>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/index" element={<Index />} />
+      <Route path="/crm" element={<CRMPage />} />
+      <Route path="/documents/*" element={<DocumentsPage />} />
+      <Route path="/calendar-fullscreen" element={<CalendarFullscreenPage />} />
+      <Route path="/e-filing" element={<EFilingPage />} />
+      <Route path="/activity" element={<ActivityPage />} />
+      <Route path="/analytics" element={<AnalyticsPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/support" element={<Support />} />
+      <Route path="/support/new-ticket" element={<NewSupportTicket />} />
+      <Route path="/SAFA" element={<SAFAPage />} />
+      <Route path="/notifications" element={<NotificationsPage />} />
+      <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 

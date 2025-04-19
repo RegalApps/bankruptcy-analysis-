@@ -1,64 +1,70 @@
 
 import React from "react";
+import { 
+  ResizablePanelGroup, 
+  ResizablePanel, 
+  ResizableHandle 
+} from "@/components/ui/resizable";
 import { TabsContainer } from "./TabsContainer";
 
 interface DesktopLayoutProps {
-  showSidebar: boolean;
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
-  rightPanel: React.ReactNode;
-  showRightPanel: boolean;
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
-  analysisPanel: React.ReactNode;
-  deadlinesPanel: React.ReactNode;
   selectedTab: string;
   setSelectedTab: (value: string) => void;
 }
 
 export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
-  showSidebar,
   sidebar,
   mainContent,
-  rightPanel,
-  showRightPanel,
   collaborationPanel,
   taskPanel,
   versionPanel,
-  analysisPanel,
-  deadlinesPanel,
   selectedTab,
   setSelectedTab,
 }) => {
   return (
-    <div className="flex h-full">
-      {/* Left Panel - Contains Tabs for Comments, Tasks, Versions */}
-      {showSidebar && (
-        <div className="w-72 border-r border-border/50 h-full overflow-hidden flex-shrink-0">
-          <TabsContainer
-            selectedTab={selectedTab}
-            setSelectedTab={setSelectedTab}
-            collaborationPanel={collaborationPanel}
-            taskPanel={taskPanel}
-            versionPanel={versionPanel}
-            analysisPanel={analysisPanel}
-            deadlinesPanel={deadlinesPanel}
-          />
+    <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
+      <ResizablePanel 
+        defaultSize={25} 
+        minSize={15}
+        maxSize={40}
+        className="h-full overflow-auto border-r border-border/50 bg-white dark:bg-background"
+      >
+        <div className="p-3 h-full overflow-auto">
+          {sidebar}
         </div>
-      )}
+      </ResizablePanel>
       
-      {/* Center Panel - Document Preview */}
-      <div className="flex-1 min-w-0 overflow-auto h-full bg-white">
-        {mainContent}
-      </div>
+      <ResizableHandle withHandle />
       
-      {/* Right Panel - Client Info, Document Summary, Risk Assessment */}
-      {showRightPanel && (
-        <div className="w-80 border-l border-border/50 h-full overflow-auto flex-shrink-0">
-          <div className="p-4 h-full">{rightPanel}</div>
-        </div>
-      )}
-    </div>
+      <ResizablePanel defaultSize={75} className="flex h-full overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          <ResizablePanel defaultSize={70} minSize={50} className="overflow-auto flex flex-col">
+            {mainContent}
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          <ResizablePanel 
+            defaultSize={30} 
+            minSize={20} 
+            maxSize={40}
+            className="border-l border-border/50"
+          >
+            <TabsContainer
+              selectedTab={selectedTab}
+              setSelectedTab={setSelectedTab}
+              collaborationPanel={collaborationPanel}
+              taskPanel={taskPanel}
+              versionPanel={versionPanel}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 };

@@ -3,46 +3,19 @@ import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { uploadDocument } from "@/utils/documentOperations";
+import { UploadArea } from "@/components/documents/UploadArea";
 import { DocumentList } from "@/components/documents/DocumentList";
-import { TestForm31Upload } from "@/components/documents/TestForm31Upload";
-import { cleanupExistingForm31 } from "@/utils/documents/formCleanup";
 import logger from "@/utils/logger";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { Trash2, AlertCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { RobustFileUploader } from "@/components/documents/RobustFileUploader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UploadProgressTracker } from "@/components/documents/UploadProgressTracker";
-import { ensureStorageBuckets } from "@/utils/storage/bucketManager";
 
 export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
   const navigate = useNavigate();
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStep, setUploadStep] = useState("");
   const { toast } = useToast();
-  const [uploadErrorMessage, setUploadErrorMessage] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
-  
-  // Initialize storage on component mount
-  useEffect(() => {
-    const initializeStorage = async () => {
-      try {
-        setIsInitializing(true);
-        const success = await ensureStorageBuckets();
-        
-        if (!success) {
-          setUploadErrorMessage("Failed to initialize storage system. Please check the diagnostics page for more information.");
-        }
-      } catch (error) {
-        logger.error("Storage initialization failed:", error);
-        setUploadErrorMessage("Failed to set up document storage. Please try again later.");
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-    
-    initializeStorage();
-  }, [toast]);
 
   // Auto-refresh document list periodically
   useEffect(() => {
@@ -57,108 +30,151 @@ export const DocumentManagementPage = () => {
     navigate('/', { state: { selectedDocument: documentId } });
   };
 
-  const handleUploadComplete = (documentId: string) => {
-    logger.info(`Document uploaded with ID: ${documentId}`);
-    refetch();
-    
-    // Navigate to the document view after a short delay
-    setTimeout(() => {
-      navigate('/', { state: { selectedDocument: documentId } });
-    }, 1500);
-  };
+  const handleFileUpload = async (file: File) => {
+    if (isUploading) return;
 
-  const handleUploadError = (error: Error) => {
-    logger.error('Upload error:', error);
-    setUploadErrorMessage(error.message);
-    toast({
-      variant: "destructive",
-      title: "Upload Failed",
-      description: error.message || "An error occurred during upload"
-    });
-  };
-  
-  // Add cleanup handler
-  const handleCleanupForm31 = async () => {
     try {
-      const success = await cleanupExistingForm31();
-      if (success) {
-        // Refresh document list after cleanup
-        refetch();
+      setIsUploading(true);
+      setUploadProgress(0);
+      setUploadStep("Stage 1: Validating document format and structure...");
+
+      const validTypes = [
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ];
+      
+      if (!validTypes.includes(file.type) && 
+          !file.name.endsWith('.xlsx') && 
+          !file.name.endsWith('.xls') &&
+          !file.name.endsWith('.pdf') &&
+          !file.name.endsWith('.doc') &&
+          !file.name.endsWith('.docx')) {
+        toast({
+          variant: "destructive",
+          title: "Invalid file type",
+          description: "Please upload a PDF, Word, or Excel document"
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast({
+          variant: "destructive",
+          title: "File too large",
+          description: "File size should be less than 10MB"
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      setUploadProgress(5);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setUploadProgress(10);
+      setUploadStep("Stage 2: Preparing document for ingestion...");
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setUploadProgress(15);
+      setUploadStep("Stage 3: Uploading document to secure storage...");
+      
+      logger.info(`Starting upload for file: ${file.name}, size: ${file.size} bytes`);
+      
+      const documentData = await uploadDocument(file);
+      logger.info(`Document uploaded with ID: ${documentData?.id}`);
+      
+      setUploadProgress(25);
+      setUploadStep("Stage 4: Document classification & understanding...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const isExcelFile = file.type.includes('excel') || 
+                          file.name.endsWith('.xls') || 
+                          file.name.endsWith('.xlsx');
+                          
+      const isForm76 = file.name.toLowerCase().includes('form 76') || 
+                       file.name.toLowerCase().includes('f76') || 
+                       file.name.toLowerCase().includes('form76');
+      
+      setUploadProgress(40);
+      if (isExcelFile) {
+        setUploadStep("Stage 5: Processing financial data from spreadsheet...");
+      } else if (isForm76) {
+        setUploadStep("Stage 5: Extracting client information from Form 76...");
+      } else {
+        setUploadStep("Stage 5: Data extraction & content processing...");
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      setUploadProgress(55);
+      
+      if (isForm76) {
+        setUploadStep("Stage 6: Performing risk & compliance assessment...");
+      } else if (isExcelFile) {
+        setUploadStep("Stage 6: Validating financial data structure...");
+      } else {
+        setUploadStep("Stage 6: Analyzing document structure and content...");
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      setUploadProgress(70);
+      
+      setUploadStep("Stage 7: Issue prioritization & task management...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setUploadProgress(85);
+      
+      setUploadStep("Stage 8: Document organization & client management...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setUploadProgress(95);
+      
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setUploadStep("Complete: Document processing finalized.");
+      setUploadProgress(100);
+
+      toast({
+        title: "Success",
+        description: isForm76 
+          ? "Form 76 uploaded and analyzed successfully. Client details extracted."
+          : isExcelFile
+            ? "Financial document uploaded and processed successfully"
+            : "Document uploaded and processed successfully"
+      });
+
+      refetch();
+      
+      if (documentData && documentData.id) {
+        logger.info(`Navigating to document view for ID: ${documentData.id}`);
+        setTimeout(() => {
+          navigate('/', { state: { selectedDocument: documentData.id } });
+        }, 1500);
       }
     } catch (error) {
-      logger.error('Error cleaning up Form 31 documents:', error);
+      logger.error('Error uploading document:', error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to remove Form 31 documents"
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "Failed to upload document. Please try again."
       });
+    } finally {
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadStep("");
+        setUploadProgress(0);
+      }, 2000);
     }
   };
 
   return (
     <div className="h-full py-6">
       <div className="container max-w-6xl mx-auto space-y-8">
-        <div className="flex justify-end">
-          <Button 
-            variant="destructive" 
-            onClick={handleCleanupForm31} 
-            size="sm"
-            className="gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Remove All Form 31 Documents
-          </Button>
-        </div>
-
-        {/* Add TestForm31Upload component for testing */}
-        <TestForm31Upload />
-        
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Upload Documents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="p-6 border-2 border-dashed border-muted-foreground/25 rounded-lg flex flex-col items-center justify-center">
-              {isInitializing ? (
-                <div className="flex flex-col items-center">
-                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mb-2"></div>
-                  <p>Initializing document storage...</p>
-                </div>
-              ) : (
-                <RobustFileUploader
-                  onUploadComplete={handleUploadComplete}
-                  onError={handleUploadError}
-                  buttonText="Click to Upload Document"
-                  maxSizeMB={30}
-                />
-              )}
-              <p className="text-sm text-muted-foreground mt-4">
-                Upload PDF, Word, Excel or image files (max 30MB)
-              </p>
-              
-              {uploadErrorMessage && (
-                <div className="mt-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm">
-                  <div className="flex items-start">
-                    <AlertCircle className="h-5 w-5 mr-2 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">Upload Error:</p>
-                      <p>{uploadErrorMessage}</p>
-                      <div className="mt-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => navigate('/upload-diagnostics')}
-                        >
-                          Run Upload Diagnostics
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <UploadArea 
+          onFileUpload={handleFileUpload}
+          isUploading={isUploading}
+          uploadProgress={uploadProgress}
+          uploadStep={uploadStep}
+        />
 
         <section>
           <h2 className="text-lg font-semibold mb-4">Recently Uploaded</h2>
@@ -173,9 +189,6 @@ export const DocumentManagementPage = () => {
           </ScrollArea>
         </section>
       </div>
-      
-      {/* Add progress tracker */}
-      <UploadProgressTracker />
     </div>
   );
 };

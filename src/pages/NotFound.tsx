@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 
-const NotFoundPage = () => {
+const NotFound = () => {
   const navigate = useNavigate();
 
   return (
@@ -23,4 +23,4 @@ const NotFoundPage = () => {
   );
 };
 
-export default NotFoundPage;
+export default NotFound;

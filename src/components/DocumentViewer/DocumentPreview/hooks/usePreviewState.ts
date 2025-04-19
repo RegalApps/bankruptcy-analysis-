@@ -23,8 +23,8 @@ const usePreviewState = (
   storagePath: string, 
   documentId: string, 
   title: string,
-  bypassAnalysis: boolean = false,
-  onAnalysisComplete?: (id: string) => void
+  onAnalysisComplete?: () => void,
+  bypassAnalysis: boolean = false
 ): PreviewState => {
   const [fileExists, setFileExists] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -33,7 +33,6 @@ const usePreviewState = (
   const [networkStatus, setNetworkStatus] = useState<'online' | 'offline' | 'unknown'>('unknown');
   const [attemptCount, setAttemptCount] = useState(0);
   const [documentRisks, setDocumentRisks] = useState<Risk[]>([]);
-  const [hasCheckedFile, setHasCheckedFile] = useState(false);
 
   const getFileExtension = (path: string): string => {
     return path.split('.').pop()?.toLowerCase() || '';
@@ -54,9 +53,7 @@ const usePreviewState = (
   }, []);
 
   const checkFile = useCallback(async () => {
-    console.log(`Checking file for path: ${storagePath}, documentId: ${documentId}`);
-    
-    if (!storagePath && !documentId.includes('form')) {
+    if (!storagePath) {
       setPreviewError("No storage path provided");
       setIsLoading(false);
       return;
@@ -66,54 +63,6 @@ const usePreviewState = (
     setAttemptCount(prev => prev + 1);
 
     try {
-      // For demo documents with special paths, set fileExists and fileUrl directly
-      if (storagePath.includes('demo/') || 
-          documentId.includes('form47') || 
-          documentId.includes('form31')) {
-        
-        let demoPath = storagePath;
-        if (storagePath === "" && documentId.includes('form47')) {
-          demoPath = "demo/form47-consumer-proposal.pdf";
-        } else if (storagePath === "" && documentId.includes('form31')) {
-          demoPath = "demo/greentech-form31-proof-of-claim.pdf";
-        }
-        
-        console.log("Using demo document path:", demoPath);
-        
-        // For demo files, we'll still try to get a signed URL, but if it fails we'll use a mock URL
-        try {
-          const { data, error } = await supabase.storage
-            .from('documents')
-            .createSignedUrl(demoPath, 3600);
-            
-          if (data && data.signedUrl) {
-            setFileExists(true);
-            setFileUrl(data.signedUrl);
-          } else {
-            // If we can't get a real signed URL, use a mock one for demo purposes
-            console.log("Using mock URL for demo document");
-            setFileExists(true);
-            // Use a public URL for demo files
-            setFileUrl(`/documents/sample-form31-greentech.pdf`);
-          }
-        } catch (err) {
-          console.log("Using fallback for demo document");
-          setFileExists(true);
-          // Use a public URL for demo files
-          setFileUrl(`/documents/sample-form31-greentech.pdf`);
-        }
-        
-        setNetworkStatus('online');
-        
-        if (!bypassAnalysis) {
-          await fetchDocumentRisks(documentId);
-        }
-        
-        setIsLoading(false);
-        setHasCheckedFile(true);
-        return;
-      }
-
       const { data, error } = await supabase.storage
         .from('documents')
         .createSignedUrl(storagePath, 3600);
@@ -125,7 +74,6 @@ const usePreviewState = (
         setPreviewError(`Error loading document: ${error.message}`);
         setNetworkStatus(error.message.includes("network") ? 'offline' : 'online');
         setIsLoading(false);
-        setHasCheckedFile(true);
         return;
       }
 
@@ -134,7 +82,6 @@ const usePreviewState = (
         setFileUrl(null);
         setPreviewError("File not found or access denied");
         setIsLoading(false);
-        setHasCheckedFile(true);
         return;
       }
 
@@ -147,7 +94,6 @@ const usePreviewState = (
       }
       
       setIsLoading(false);
-      setHasCheckedFile(true);
     } catch (error: any) {
       console.error("Exception checking file:", error);
       setFileExists(false);
@@ -161,24 +107,22 @@ const usePreviewState = (
           : 'online'
       );
       setIsLoading(false);
-      setHasCheckedFile(true);
     }
   }, [storagePath, documentId, bypassAnalysis]);
 
-  const isDocumentForm47 = (docTitle: string, docType: string): boolean => {
-    if (!docTitle && !docType) return false;
+  const isDocumentForm47 = (document: DocumentDetails): boolean => {
+    if (!document) return false;
     
-    const isForm47InTitle = docTitle?.toLowerCase().includes('form 47') || 
-                           docTitle?.toLowerCase().includes('f47');
-    const isForm47InType = docType?.toLowerCase().includes('form-47') || 
-                          docType?.toLowerCase().includes('form 47');
+    const isForm47InTitle = document.title?.toLowerCase().includes('form 47') || 
+                           document.title?.toLowerCase().includes('f47');
+    const isForm47InType = document.type?.toLowerCase().includes('form-47') || 
+                          document.type?.toLowerCase().includes('form 47');
     
     return isForm47InTitle || isForm47InType;
   };
 
   const fetchDocumentRisks = async (docId: string) => {
     try {
-      console.log("Fetching risks for document:", docId);
       const { data, error } = await supabase
         .from('document_analysis')
         .select('content')
@@ -193,7 +137,12 @@ const usePreviewState = (
       if (data?.content?.risks) {
         setDocumentRisks(data.content.risks);
       } else if (data?.content?.extracted_info?.formType === 'form-47' || 
-                isDocumentForm47(title, 'form-47')) {
+                isDocumentForm47({ 
+                  id: documentId, 
+                  title, 
+                  type: 'form-47',
+                  storage_path: storagePath 
+                })) {
         const defaultForm47Risks: Risk[] = [
           {
             type: "Missing Creditor Information",
@@ -225,29 +174,19 @@ const usePreviewState = (
         ];
         setDocumentRisks(defaultForm47Risks);
       }
-      
-      // Call the onAnalysisComplete callback when analysis is done
-      if (onAnalysisComplete) {
-        console.log("Analysis complete, calling callback with ID:", docId);
-        onAnalysisComplete(docId);
-      }
     } catch (err) {
       console.error("Error fetching document risks:", err);
     }
   };
 
-  // Only run checkFile once on mount, not on every render
   useEffect(() => {
-    if (!hasCheckedFile) {
-      console.log("Initial file check for document:", documentId, "path:", storagePath);
-      checkFile();
-    }
-  }, [checkFile, hasCheckedFile]);
+    checkFile();
+  }, [checkFile]);
 
   useEffect(() => {
     const handleOnline = () => {
       setNetworkStatus('online');
-      if (previewError && previewError.includes("network") && !hasCheckedFile) {
+      if (previewError && previewError.includes("network")) {
         checkFile();
       }
     };
@@ -263,7 +202,7 @@ const usePreviewState = (
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [checkFile, previewError, hasCheckedFile]);
+  }, [checkFile, previewError]);
 
   return {
     fileExists,

@@ -1,106 +1,133 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { AlertTriangle, Download, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Risk } from "@/components/DocumentViewer/types";
-import { RiskHighlighter } from "./RiskHighlighter";
+import { toast } from "sonner";
 
-// Set the worker source
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
-
-export interface PDFViewerProps {
-  fileUrl: string;
-  activeRiskId: string | null;
-  onRiskSelect?: (riskId: string) => void;
-  risks?: Risk[];
+interface PDFViewerProps {
+  fileUrl: string | null;
+  title: string;
+  zoomLevel: number;
+  onLoad?: () => void;
+  onError?: () => void;
 }
 
 export const PDFViewer: React.FC<PDFViewerProps> = ({
   fileUrl,
-  activeRiskId,
-  onRiskSelect,
-  risks = []
+  title,
+  zoomLevel,
+  onLoad,
+  onError
 }) => {
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [loadError, setLoadError] = useState<Error | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [useGoogleViewer, setUseGoogleViewer] = useState(false);
+  const [forceReload, setForceReload] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const objectRef = useRef<HTMLObjectElement>(null);
 
-  // Function to go to next page
-  const nextPage = () => {
-    if (numPages && pageNumber < numPages) {
-      setPageNumber(pageNumber + 1);
+  // Cache-bust the URL to ensure fresh content
+  const cacheBustedUrl = fileUrl ? `${fileUrl}?t=${Date.now()}-${forceReload}` : '';
+  const googleDocsViewerUrl = fileUrl ? 
+    `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true` : '';
+
+  useEffect(() => {
+    // Reset loading state when URL changes
+    if (fileUrl) {
+      setIsLoading(true);
+      setLoadError(null);
     }
-  };
+  }, [fileUrl, forceReload]);
 
-  // Function to go to previous page
-  const prevPage = () => {
-    if (pageNumber > 1) {
-      setPageNumber(pageNumber - 1);
-    }
-  };
-
-  // Handle document load success
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
+  const handleLoadSuccess = () => {
     setIsLoading(false);
     setLoadError(null);
-    // Reset to page 1 when loading a new document
-    setPageNumber(1);
+    setRetryCount(0);
+    if (onLoad) onLoad();
   };
 
-  // Handle document load error
-  const onDocumentLoadError = (error: Error) => {
-    console.error("Error loading PDF:", error);
-    setIsLoading(false);
-    setLoadError(error);
-  };
-
-  // Update page based on active risk
-  useEffect(() => {
-    if (activeRiskId && risks && risks.length > 0) {
-      const selectedRisk = risks.find(risk => risk.id === activeRiskId);
-      if (selectedRisk && selectedRisk.position?.page) {
-        setPageNumber(selectedRisk.position.page);
-      }
+  const handleLoadError = () => {
+    console.error("Error loading PDF:", fileUrl);
+    
+    setRetryCount(prev => prev + 1);
+    
+    // First retry immediately without changing modes
+    if (retryCount === 1) {
+      console.log("First load failed, retrying immediately");
+      setForceReload(prev => prev + 1);
+      return;
     }
-  }, [activeRiskId, risks]);
+    
+    // After first retry fails, switch to Google Docs viewer
+    if (!useGoogleViewer && retryCount >= 2) {
+      console.log("Falling back to Google Docs viewer");
+      setUseGoogleViewer(true);
+      setIsLoading(true);
+    } else if (useGoogleViewer && retryCount >= 3) {
+      // Both methods failed
+      setIsLoading(false);
+      setLoadError("Could not load the document. It may be in an unsupported format or inaccessible.");
+      if (onError) onError();
+    }
+  };
 
-  // Get risks for current page only
-  const currentPageRisks = risks
-    ? risks.filter(risk => 
-        risk.position && 
-        (risk.position.page === pageNumber || 
-         (risk.position.page === undefined && pageNumber === 1))
-      )
-    : [];
+  const handleOpenInNewTab = () => {
+    if (fileUrl) {
+      window.open(fileUrl, '_blank');
+      toast.success("Document opened in new tab");
+    }
+  };
 
-  // Render a loading state
-  if (isLoading) {
+  const handleDownload = () => {
+    if (fileUrl) {
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = title || 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Download started");
+    }
+  };
+
+  const handleRetry = () => {
+    setUseGoogleViewer(false);
+    setLoadError(null);
+    setIsLoading(true);
+    setRetryCount(0);
+    setForceReload(prev => prev + 1);
+  };
+
+  if (!fileUrl) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-muted/20">
-        <div className="flex flex-col items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="mt-2 text-sm text-muted-foreground">Loading document...</p>
-        </div>
+      <div className="flex items-center justify-center h-full bg-muted/30">
+        <p className="text-muted-foreground">No document URL provided</p>
       </div>
     );
   }
 
-  // Render an error state
   if (loadError) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-muted/20">
-        <div className="text-center max-w-sm p-6 border rounded-lg bg-destructive/10">
-          <h3 className="text-lg font-medium mb-2">Error Loading Document</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {loadError.message || "The document could not be loaded. It may be corrupted or in an unsupported format."}
-          </p>
-          <div className="text-xs text-muted-foreground mt-4">
-            <p>File URL: {fileUrl ? "Provided" : "Not provided"}</p>
+      <div className="flex items-center justify-center h-full bg-muted/30">
+        <div className="text-center max-w-md p-6">
+          <AlertTriangle className="h-10 w-10 text-destructive mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">Document Load Error</h3>
+          <p className="text-muted-foreground mb-6">{loadError}</p>
+          <div className="flex flex-col gap-3">
+            <Button onClick={handleRetry} className="w-full">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+            <Button variant="outline" onClick={handleOpenInNewTab} className="w-full">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open in New Tab
+            </Button>
+            <Button variant="outline" onClick={handleDownload} className="w-full">
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
           </div>
         </div>
       </div>
@@ -108,95 +135,57 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full" ref={containerRef}>
-      {/* PDF Navigation */}
-      <div className="flex items-center justify-between p-2 border-b">
-        <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={prevPage} 
-            disabled={pageNumber <= 1}
-            className="h-8 w-8 p-0"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm mx-2">
-            Page {pageNumber} of {numPages || "?"}
-          </span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={nextPage} 
-            disabled={!numPages || pageNumber >= numPages}
-            className="h-8 w-8 p-0"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+    <div className="relative w-full h-full">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+          <div className="text-center">
+            <LoadingSpinner size="large" className="mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading document...</p>
+            {retryCount > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {retryCount === 1 ? "Retrying..." : 
+                 useGoogleViewer ? "Using alternative viewer..." : 
+                 "Attempting direct view..."}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setScale(scale => Math.max(0.5, scale - 0.1))}
-            className="h-8 w-8 p-0"
-          >
-            -
-          </Button>
-          <span className="text-xs mx-2">{Math.round(scale * 100)}%</span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setScale(scale => Math.min(2, scale + 0.1))}
-            className="h-8 w-8 p-0"
-          >
-            +
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setScale(1.0)}
-            className="text-xs ml-1"
-          >
-            Reset
-          </Button>
-        </div>
-      </div>
-      
-      {/* PDF Document */}
-      <div className="flex-1 overflow-auto bg-zinc-100 p-4 flex justify-center">
-        <div className="relative">
-          <Document
-            file={fileUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={
-              <div className="flex items-center justify-center h-[500px]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            }
-          >
-            <div className="relative shadow-lg">
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-              />
-              
-              {/* Risk Highlighters */}
-              {currentPageRisks.map((risk, index) => (
-                <RiskHighlighter
-                  key={`risk-${risk.id || index}`}
-                  risk={risk}
-                  isActive={activeRiskId === risk.id}
-                  onClick={() => onRiskSelect && risk.id && onRiskSelect(risk.id)}
-                />
-              ))}
-            </div>
-          </Document>
-        </div>
-      </div>
+      )}
+
+      {useGoogleViewer ? (
+        <iframe
+          src={googleDocsViewerUrl}
+          className="w-full h-full border-0"
+          onLoad={handleLoadSuccess}
+          onError={handleLoadError}
+          title={`Google Docs viewer: ${title}`}
+          referrerPolicy="no-referrer"
+          allow="fullscreen"
+        />
+      ) : (
+        <object
+          ref={objectRef}
+          data={cacheBustedUrl}
+          type="application/pdf"
+          className="w-full h-full"
+          style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
+          onLoad={handleLoadSuccess}
+          onError={handleLoadError}
+        >
+          <iframe
+            ref={iframeRef}
+            src={cacheBustedUrl}
+            className="w-full h-full border-0"
+            title={`Document Preview: ${title}`}
+            style={{transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center top'}}
+            onLoad={handleLoadSuccess}
+            onError={handleLoadError}
+            sandbox="allow-same-origin allow-scripts allow-forms"
+            referrerPolicy="no-referrer"
+            allow="fullscreen"
+          />
+        </object>
+      )}
     </div>
   );
 };

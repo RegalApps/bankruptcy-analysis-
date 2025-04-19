@@ -4,15 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentDetails } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Comments } from "../Comments";
-import { MessageSquare, ClipboardList, Clock, Calendar, FileBarChart } from "lucide-react";
+import { EnhancedComments } from "../Comments/EnhancedComments";
+import { MessageSquare, ClipboardList, Calendar } from "lucide-react";
 import { TaskManager } from "../TaskManager";
 import { DeadlineManager } from "../DeadlineManager";
-import { DocumentVersions } from "../components/DocumentVersions";
 
 interface CollaborationPanelProps {
   document?: DocumentDetails;
-  documentId?: string;
+  documentId?: string;  // Ensuring documentId is explicitly defined in the interface
   onCommentAdded?: () => void;
   activeRiskId?: string | null;
   onRiskSelect?: (riskId: string | null) => void;
@@ -46,23 +45,19 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
   return (
     <Card className="h-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-        <div className="p-2 bg-muted/20">
-          <TabsList className="w-full grid grid-cols-4 p-1">
-            <TabsTrigger value="comments" className="flex items-center gap-1 py-2 text-xs">
-              <MessageSquare className="h-3 w-3" />
-              <span>Comments</span>
+        <div className="p-1 px-2 border-b">
+          <TabsList className="w-full">
+            <TabsTrigger value="comments" className="flex items-center text-xs py-1.5">
+              <MessageSquare className="h-3.5 w-3.5 mr-1" />
+              Comments
             </TabsTrigger>
-            <TabsTrigger value="tasks" className="flex items-center gap-1 py-2 text-xs">
-              <ClipboardList className="h-3 w-3" />
-              <span>Tasks</span>
+            <TabsTrigger value="tasks" className="flex items-center text-xs py-1.5">
+              <ClipboardList className="h-3.5 w-3.5 mr-1" />
+              Tasks
             </TabsTrigger>
-            <TabsTrigger value="versions" className="flex items-center gap-1 py-2 text-xs">
-              <Clock className="h-3 w-3" />
-              <span>Versions</span>
-            </TabsTrigger>
-            <TabsTrigger value="deadlines" className="flex items-center gap-1 py-2 text-xs">
-              <Calendar className="h-3 w-3" />
-              <span>Deadlines</span>
+            <TabsTrigger value="deadlines" className="flex items-center text-xs py-1.5">
+              <Calendar className="h-3.5 w-3.5 mr-1" />
+              Deadlines
             </TabsTrigger>
           </TabsList>
         </div>
@@ -71,10 +66,9 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
           <TabsContent value="comments" className="mt-0 h-full">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
-                <Comments 
-                  documentId={docId}
+                <EnhancedComments 
+                  documentId={docId} 
                   onCommentAdded={onCommentAdded}
-                  comments={document?.comments || []}
                 />
               </div>
             </ScrollArea>
@@ -92,27 +86,10 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({
             </ScrollArea>
           </TabsContent>
           
-          <TabsContent value="versions" className="mt-0 h-full">
-            <ScrollArea className="h-[calc(100vh-12rem)]">
-              <div className="p-3">
-                <DocumentVersions
-                  documentId={docId}
-                  documentVersions={[]}
-                />
-              </div>
-            </ScrollArea>
-          </TabsContent>
-          
           <TabsContent value="deadlines" className="mt-0 h-full">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <div className="p-3">
-                {document && 
-                  <DeadlineManager 
-                    documentId={docId}
-                    deadlines={document?.deadlines || []}
-                    onDeadlineUpdated={onCommentAdded}
-                  />
-                }
+                {document && <DeadlineManager document={document} onDeadlineUpdated={onCommentAdded} />}
               </div>
             </ScrollArea>
           </TabsContent>

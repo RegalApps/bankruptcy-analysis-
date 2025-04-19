@@ -1,8 +1,9 @@
 
-import React, { useEffect, useState, useCallback } from "react";
+import React from "react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, WifiOff } from "lucide-react";
+import { RefreshCw, AlertCircle, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -19,13 +20,15 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
   const [showRetry, setShowRetry] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   
+  // Track loading time
   useEffect(() => {
     const startTime = Date.now();
     const interval = setInterval(() => {
       const newTime = Math.floor((Date.now() - startTime) / 1000);
       setLoadingTime(newTime);
       
-      if ((networkError && newTime > 2) || (!networkError && newTime > 5)) {
+      // Show retry button earlier (after 5 seconds) when there are network issues
+      if ((networkError && newTime > 3) || (!networkError && newTime > 7)) {
         setShowRetry(true);
       }
     }, 1000);
@@ -33,17 +36,18 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
     return () => clearInterval(interval);
   }, [networkError]);
   
+  // Different messages based on loading time and network status
   const getLoadingMessage = useCallback(() => {
     if (networkError) {
       return "Network connection issues detected. The server might be unavailable or there may be connectivity problems.";
     }
     
-    if (loadingTime > 10) {
+    if (loadingTime > 15) {
       return "This document is taking longer than expected to load. It may be unavailable or the server may be experiencing issues.";
-    } else if (loadingTime > 5) {
+    } else if (loadingTime > 8) {
       return "Still loading document... This may take a moment for large files or if the system is busy.";
-    } else if (loadingTime > 2) {
-      return "Loading document content...";
+    } else if (loadingTime > 3) {
+      return "Loading document content... This may take a moment for large files.";
     }
     return "Preparing document viewer...";
   }, [loadingTime, networkError]);
@@ -52,6 +56,7 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
     if (onRetry) {
       setIsRetrying(true);
       
+      // Add a small delay to give feedback that retry is happening
       setTimeout(() => {
         onRetry();
         setLoadingTime(0);
@@ -69,7 +74,7 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
           <WifiOff size={40} className="text-destructive" />
         </div>
       ) : (
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner size="large" />
       )}
       
       <div className="text-center max-w-md px-4">
@@ -101,15 +106,16 @@ export const ViewerLoadingState: React.FC<ViewerLoadingStateProps> = ({
         )}
       </div>
       
+      {/* Skeleton loading UI to indicate content is being loaded */}
       {!networkError && (
         <div className="w-full max-w-3xl px-6 mt-4">
-          <Skeleton className="h-6 w-2/3 mb-4" />
-          <Skeleton className="h-24 w-full mb-3" />
+          <Skeleton className="h-7 w-3/4 mb-4" />
+          <Skeleton className="h-32 w-full mb-3" />
           <div className="flex gap-2 mb-4">
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
           </div>
-          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-24 w-full" />
         </div>
       )}
     </div>

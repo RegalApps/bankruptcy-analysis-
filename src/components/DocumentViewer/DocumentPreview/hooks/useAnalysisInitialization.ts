@@ -1,18 +1,19 @@
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
 
-interface UseAnalysisInitializationProps {
+interface AnalysisInitializationProps {
   storagePath: string;
   fileExists: boolean;
   isExcelFile: boolean;
   analyzing: boolean;
   error: string | null;
   setSession: (session: Session | null) => void;
-  handleAnalyzeDocument: (session?: Session | null) => void;
+  handleAnalyzeDocument: (session: Session | null) => void;
   setPreviewError: (error: string | null) => void;
-  onAnalysisComplete?: (id: string) => void;
+  onAnalysisComplete?: () => void;
   bypassAnalysis?: boolean;
 }
 
@@ -27,82 +28,129 @@ export const useAnalysisInitialization = ({
   setPreviewError,
   onAnalysisComplete,
   bypassAnalysis = false
-}: UseAnalysisInitializationProps) => {
-  // Set up session
+}: AnalysisInitializationProps) => {
+  const { toast } = useToast();
+
+  // Fetch session on component mount and start analysis when ready
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [setSession]);
-
-  // Auto-analyze if appropriate conditions are met
-  useEffect(() => {
-    if (
-      fileExists &&
-      !isExcelFile &&
-      !analyzing &&
-      !error &&
-      !bypassAnalysis
-    ) {
-      console.log("Auto-triggering document analysis");
-      handleAnalyzeDocument();
-    } else if (fileExists && isExcelFile && !analyzing && !error) {
-      console.log("Skipping analysis for Excel file");
-      if (onAnalysisComplete) {
-        onAnalysisComplete("excel-file-skipped");
-      }
-    } else if (bypassAnalysis && fileExists) {
-      console.log("Analysis bypassed as requested");
-      if (onAnalysisComplete) {
-        // For bypassed analysis, try to get the document ID if possible
-        const extractDocumentId = async () => {
-          try {
-            const { data } = await supabase
+    console.log('DocumentPreview initialized with storagePath:', storagePath, 'bypassAnalysis:', bypassAnalysis);
+    
+    if (!fileExists) {
+      console.error('File does not exist, skipping analysis');
+      return;
+    }
+    
+    if (bypassAnalysis) {
+      console.log('Bypassing analysis due to user preference');
+      return;
+    }
+    
+    let mounted = true;
+    const initializeComponent = async () => {
+      try {
+        // Get the current session
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        console.log("Current auth session in DocumentPreview:", currentSession);
+        
+        if (currentSession) {
+          setSession(currentSession);
+          
+          // For Excel files, only extract basic metadata (client name, etc.) without full analysis
+          if (isExcelFile) {
+            console.log('Excel file detected - skipping full analysis, only extracting metadata');
+            
+            // Mark Excel file as processed to prevent repeated analysis attempts
+            if (storagePath) {
+              try {
+                const { data: document } = await supabase
+                  .from('documents')
+                  .select('id, ai_processing_status')
+                  .eq('storage_path', storagePath)
+                  .maybeSingle();
+                  
+                if (document) {
+                  await supabase
+                    .from('documents')
+                    .update({
+                      ai_processing_status: 'complete',
+                      metadata: {
+                        processing_complete: true,
+                        file_type: 'excel',
+                        last_analyzed: new Date().toISOString(),
+                        processing_time_ms: 0,
+                        excel_processing_only: true
+                      }
+                    })
+                    .eq('id', document.id);
+                    
+                  console.log('Excel file marked as processed without full analysis');
+                  
+                  if (onAnalysisComplete) {
+                    onAnalysisComplete();
+                  }
+                }
+              } catch (err) {
+                console.error('Error updating Excel document status:', err);
+              }
+            }
+            return;
+          }
+          
+          // Check document status to determine if analysis is needed (for non-Excel files)
+          if (storagePath) {
+            const { data: document, error: docError } = await supabase
               .from('documents')
-              .select('id')
+              .select('ai_processing_status, metadata')
               .eq('storage_path', storagePath)
               .maybeSingle();
-            
-            if (data?.id) {
-              onAnalysisComplete(data.id);
-            } else {
-              // Fall back to a generated ID if no document record exists
-              const fallbackId = `${storagePath.split('/').pop()}-${Date.now()}`;
-              onAnalysisComplete(fallbackId);
+              
+            if (docError) {
+              console.error('Error fetching document record:', docError);
+              setPreviewError(`Database error: ${docError.message}`);
+              return;
             }
-          } catch (err) {
-            // If database lookup fails, use a fallback ID
-            const fallbackId = `bypass-${Date.now()}`;
-            onAnalysisComplete(fallbackId);
+              
+            if (document) {
+              const shouldStartAnalysis = 
+                document.ai_processing_status === 'pending' || 
+                document.ai_processing_status === 'failed' || 
+                !document.metadata?.processing_steps_completed ||
+                document.metadata?.processing_steps_completed.length < 6;
+                
+              if (shouldStartAnalysis && !analyzing && !error) {
+                console.log('Starting analysis based on document status:', document.ai_processing_status);
+                // Small delay to ensure the session state is updated
+                setTimeout(() => {
+                  if (mounted) handleAnalyzeDocument(currentSession);
+                }, 100);
+              } else if (document.ai_processing_status === 'completed') {
+                toast({
+                  title: "Document Analyzed",
+                  description: "This document has already been fully processed",
+                  duration: 3000
+                });
+              }
+            } else {
+              // If no document record found, show error
+              setPreviewError("Document record not found in the database. It may have been deleted.");
+            }
           }
-        };
-        
-        extractDocumentId();
+        } else {
+          throw new Error("No active session found. Please sign in again.");
+        }
+      } catch (err: any) {
+        console.error("Error fetching session:", err);
+        setPreviewError(err.message || "Failed to initialize document preview");
       }
-    }
-  }, [
-    fileExists,
-    isExcelFile,
-    analyzing,
-    error,
-    handleAnalyzeDocument,
-    bypassAnalysis,
-    onAnalysisComplete,
-    storagePath
-  ]);
-
-  // Handle errors
-  useEffect(() => {
-    if (error) {
-      setPreviewError(`Analysis error: ${error}`);
-    }
-  }, [error, setPreviewError]);
+    };
+    
+    initializeComponent();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [storagePath, analyzing, error, setSession, handleAnalyzeDocument, isExcelFile, onAnalysisComplete, toast, fileExists, setPreviewError, bypassAnalysis]);
 };

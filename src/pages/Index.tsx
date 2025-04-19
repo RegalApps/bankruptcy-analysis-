@@ -17,7 +17,6 @@ import { toast } from "sonner";
 import { isDebugMode, debugTiming } from "@/utils/debugMode";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
-import { isDocumentForm31 } from "@/components/DocumentViewer/utils/documentTypeUtils";
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -26,7 +25,6 @@ const Index = () => {
   const [isForm47, setIsForm47] = useState<boolean>(false);
   const [isForm31GreenTech, setIsForm31GreenTech] = useState<boolean>(false);
   const [loadFailed, setLoadFailed] = useState<boolean>(false);
-  const [loadAttempts, setLoadAttempts] = useState<number>(0);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -62,19 +60,10 @@ const Index = () => {
         console.log("Document is Form 47");
       }
 
-      // Enhanced Form 31 detection using our centralized utility
-      const isForm31 = isDocumentForm31(
-        null,
-        docId,
-        location.state.storagePath || null,
-        location.state.documentTitle || null
-      );
-
-      // Check if it's a GreenTech Form 31 document - enhanced detection
-      if (location.state.isForm31GreenTech || isForm31 || 
+      // Check if it's a GreenTech Form 31 document
+      if (location.state.isForm31GreenTech || 
           docId === "greentech-form31" || 
           docId === "form31" || 
-          docId.includes("form-31") ||
           docId === "form-31-greentech") {
         setIsForm31GreenTech(true);
         console.log("Document is GreenTech Form 31");
@@ -106,47 +95,22 @@ const Index = () => {
     setIsForm47(false);
     setIsForm31GreenTech(false);
     setLoadFailed(false);
-    setLoadAttempts(0);
     navigate('/', { replace: true });
   }, [navigate]);
 
   const handleDocumentLoadFailure = useCallback(() => {
     console.log("Document load failed, showing error state");
-    
-    // Increment load attempts
-    setLoadAttempts(prev => {
-      const newCount = prev + 1;
-      
-      // Only mark as failed after multiple attempts
-      if (newCount > 2) {
-        setLoadFailed(true);
-        toast.error("Failed to load document after multiple attempts");
-      } else if (isForm31GreenTech) {
-        // For Form 31 documents, we'll try a refresh with fallback paths
-        console.log("Attempting Form 31 document reload");
-        setDocumentKey(prev => prev + 1);
-        toast.info("Trying alternative document source...");
-      }
-      
-      return newCount;
-    });
-  }, [isForm31GreenTech]);
-
-  const handleAnalysisComplete = useCallback((id: string) => {
-    console.log("Analysis completed for document:", id);
-    // You might want to do something when analysis completes
-    toast.success("Document analysis completed");
+    setLoadFailed(true);
   }, []);
 
   useEffect(() => {
     if (selectedDocument) {
       console.log("Selected document in Index.tsx:", selectedDocument);
-      console.log("Is Form 31:", isForm31GreenTech);
       if (isDebugMode()) {
         console.log("🛠️ DEBUG: Document viewer loaded in debug mode");
       }
     }
-  }, [selectedDocument, isForm31GreenTech]);
+  }, [selectedDocument]);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -184,22 +148,16 @@ const Index = () => {
               {(!isMobile || isTablet) && "Back to Documents"}
               {isMobile && !isTablet && "Back"}
             </Button>
-            {isForm31GreenTech && (
-              <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                Form 31 - Proof of Claim
-              </span>
-            )}
           </div>
           <div className="flex-1 overflow-hidden">
             <DocumentViewer 
               documentId={selectedDocument} 
-              key={`doc-${selectedDocument}-${documentKey}-${loadAttempts}`}
+              key={`doc-${selectedDocument}-${documentKey}`}
               bypassProcessing={isDebugMode()}
               onLoadFailure={handleDocumentLoadFailure}
               documentTitle={documentTitle}
               isForm47={isForm47}
               isForm31GreenTech={isForm31GreenTech}
-              onAnalysisComplete={handleAnalysisComplete}
             />
           </div>
         </div>

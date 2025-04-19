@@ -1,7 +1,7 @@
 
 import React from "react";
-import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, ClipboardList, Clock, FileText, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MessageSquare, ListTodo, History } from "lucide-react";
 
 interface TabsContainerProps {
   selectedTab: string;
@@ -9,8 +9,6 @@ interface TabsContainerProps {
   collaborationPanel: React.ReactNode;
   taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
-  analysisPanel: React.ReactNode;
-  deadlinesPanel: React.ReactNode;
 }
 
 export const TabsContainer: React.FC<TabsContainerProps> = ({
@@ -19,55 +17,37 @@ export const TabsContainer: React.FC<TabsContainerProps> = ({
   collaborationPanel,
   taskPanel,
   versionPanel,
-  analysisPanel,
-  deadlinesPanel,
 }) => {
   return (
-    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="h-full flex flex-col">
-      <div className="border-b sticky top-0 bg-background z-10">
-        <TabsList className="w-full grid grid-cols-5">
-          <TabsTrigger value="comments" className="flex flex-col items-center py-2">
-            <MessageSquare className="h-4 w-4 mb-1" />
-            <span className="text-xs">Comments</span>
+    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full h-full">
+      <div className="flex items-center justify-between bg-muted/30 px-2 py-1 border-b border-border/50">
+        <TabsList className="grid grid-cols-3 w-full">
+          <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span>Comments</span>
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="flex flex-col items-center py-2">
-            <ClipboardList className="h-4 w-4 mb-1" />
-            <span className="text-xs">Tasks</span>
+          <TabsTrigger value="tasks" className="flex items-center gap-1 text-xs">
+            <ListTodo className="h-3.5 w-3.5" />
+            <span>Tasks</span>
           </TabsTrigger>
-          <TabsTrigger value="versions" className="flex flex-col items-center py-2">
-            <Clock className="h-4 w-4 mb-1" />
-            <span className="text-xs">Versions</span>
-          </TabsTrigger>
-          <TabsTrigger value="analysis" className="flex flex-col items-center py-2">
-            <FileText className="h-4 w-4 mb-1" />
-            <span className="text-xs">Analysis</span>
-          </TabsTrigger>
-          <TabsTrigger value="deadlines" className="flex flex-col items-center py-2">
-            <Calendar className="h-4 w-4 mb-1" />
-            <span className="text-xs">Deadlines</span>
+          <TabsTrigger value="versions" className="flex items-center gap-1 text-xs">
+            <History className="h-3.5 w-3.5" />
+            <span>Versions</span>
           </TabsTrigger>
         </TabsList>
       </div>
       
-      <TabsContent value="comments" className="p-0 m-0 flex-1 overflow-auto">
-        {collaborationPanel}
-      </TabsContent>
-      
-      <TabsContent value="tasks" className="p-3 m-0 flex-1 overflow-auto">
-        {taskPanel}
-      </TabsContent>
-      
-      <TabsContent value="versions" className="p-3 m-0 flex-1 overflow-auto">
-        {versionPanel}
-      </TabsContent>
-      
-      <TabsContent value="analysis" className="p-3 m-0 flex-1 overflow-auto">
-        {analysisPanel}
-      </TabsContent>
-      
-      <TabsContent value="deadlines" className="p-3 m-0 flex-1 overflow-auto">
-        {deadlinesPanel}
-      </TabsContent>
+      <div className="flex-1 overflow-auto">
+        <TabsContent value="comments" className="m-0 p-2 h-full overflow-auto">
+          {collaborationPanel}
+        </TabsContent>
+        <TabsContent value="tasks" className="m-0 p-2 h-full overflow-auto">
+          {taskPanel}
+        </TabsContent>
+        <TabsContent value="versions" className="m-0 p-2 h-full overflow-auto">
+          {versionPanel}
+        </TabsContent>
+      </div>
     </Tabs>
   );
 };

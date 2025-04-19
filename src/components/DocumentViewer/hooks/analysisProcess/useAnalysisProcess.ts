@@ -1,5 +1,5 @@
 
-import { AnalysisProcessProps } from "../../DocumentPreview/hooks/analysisProcess/types";
+import { AnalysisProcessProps, AnalysisProcessContext } from "./types";
 import {
   documentIngestion,
   documentClassification,
@@ -33,7 +33,7 @@ export const useAnalysisProcess = ({
       });
       
       // Enhanced context with form type information
-      const enhancedContext = { 
+      const enhancedContext: AnalysisProcessContext = { 
         setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete, isForm76 
       };
       
@@ -56,11 +56,6 @@ export const useAnalysisProcess = ({
       await continuousLearning(documentRecord, enhancedContext);
       
       console.log('Analysis completed successfully.');
-      
-      // Call onAnalysisComplete with the document record ID if available
-      if (onAnalysisComplete && documentRecord && documentRecord.id) {
-        onAnalysisComplete(documentRecord.id);
-      }
       
     } catch (error) {
       throw error;

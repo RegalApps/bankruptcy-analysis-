@@ -1,65 +1,151 @@
 
 import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { handleDocumentUpload, uploadToStorage, cleanupUpload } from '../uploadService';
-import { supabase } from '@/lib/supabase';
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useFileValidator } from '../components/FileValidator';
+import logger from "@/utils/logger";
+import { 
+  simulateProcessingStages, 
+  createDocumentRecord, 
+  uploadToStorage, 
+  triggerDocumentAnalysis,
+  createNotification
+} from '../utils/uploadProcessor';
+import { detectDocumentType } from '../utils/fileTypeDetector';
 
-export const useFileUpload = (onUploadComplete?: (documentId: string) => void) => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [progress, setProgress] = useState<{ message: string; percentage?: number }>({ 
-    message: '', 
-    percentage: 0 
-  });
+export const useFileUpload = (onUploadComplete: (documentId: string) => Promise<void> | void) => {
   const { toast } = useToast();
-
-  const updateProgress = (message: string, percentage?: number) => {
-    setProgress({ message, percentage });
-  };
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStep, setUploadStep] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const { validateFile } = useFileValidator();
 
   const handleUpload = useCallback(async (file: File) => {
-    setIsUploading(true);
-    let fileName = null;
-    let documentData = null;
+    if (!validateFile(file)) {
+      return;
+    }
 
     try {
-      // Step 1: Upload to storage
-      const userResponse = await supabase.auth.getUser();
-      const userId = userResponse.data.user?.id || 'anonymous';
-      const result = await uploadToStorage(file, userId, updateProgress);
-      fileName = result.fileName;
-      documentData = result.documentData;
+      setIsUploading(true);
+      setUploadProgress(5);
+      setUploadStep("Preparing document for upload...");
+      
+      logger.info(`Starting upload process for: ${file.name}, size: ${file.size} bytes`);
 
-      // Step 2: Process the document
-      await handleDocumentUpload(file, documentData.id, updateProgress);
+      // Get user ID for document ownership
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "You must be logged in to upload documents"
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Detect file type
+      const { isForm76, isExcel } = detectDocumentType(file);
+      logger.info(`Document type detected: ${isForm76 ? 'Form 76' : isExcel ? 'Excel' : 'Standard document'}`);
+
+      // Start processing stage simulation (runs in parallel with actual upload)
+      const processingSimulation = simulateProcessingStages(
+        isForm76, 
+        isExcel, 
+        setUploadProgress, 
+        setUploadStep
+      );
+
+      // Create database record
+      const { data: documentData, error: documentError } = await createDocumentRecord(
+        file, 
+        user.id, 
+        undefined, // client name will be extracted if it's Form 76
+        isForm76
+      );
+
+      if (documentError) {
+        throw documentError;
+      }
+      
+      logger.info(`Document record created with ID: ${documentData.id}`);
+
+      // Upload file to storage
+      const filePath = `${user.id}/${documentData.id}/${file.name}`;
+      const { error: uploadError } = await uploadToStorage(file, user.id, filePath);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Update document with storage path
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update({ storage_path: filePath })
+        .eq('id', documentData.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Create notification for document upload
+      await createNotification(
+        user.id,
+        'Document Upload Started',
+        `"${file.name}" has been uploaded and is being processed`,
+        'info',
+        documentData.id,
+        file.name,
+        'upload_complete'
+      );
+
+      // Trigger document analysis
+      await triggerDocumentAnalysis(documentData.id, file.name, isForm76);
+
+      // Wait for processing simulation to complete
+      await processingSimulation;
+
+      // Call the completion callback
+      await onUploadComplete(documentData.id);
+
+      // Create notification for successful processing
+      await createNotification(
+        user.id,
+        'Document Processing Complete',
+        `"${file.name}" has been fully processed`,
+        'success',
+        documentData.id,
+        file.name,
+        'complete'
+      );
 
       toast({
-        title: "Document uploaded successfully",
-        description: "Your document is being analyzed. This may take a few moments."
+        title: "Success",
+        description: isForm76 
+          ? "Form 76 uploaded and analyzed successfully" 
+          : "Document uploaded and processed successfully",
       });
-
-      if (onUploadComplete) {
-        onUploadComplete(documentData.id);
-      }
-    } catch (error: any) {
-      console.error('Upload error:', error);
+    } catch (error) {
+      logger.error('Upload error:', error);
       toast({
         variant: "destructive",
-        title: "Upload failed",
-        description: error.message || "Failed to upload document"
+        title: "Error",
+        description: "Failed to upload document. Please try again.",
       });
-
-      if (fileName) {
-        await cleanupUpload(fileName);
-      }
     } finally {
-      setIsUploading(false);
-      setProgress({ message: '', percentage: 0 });
+      // Delay resetting the state to let users see the completion message
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadStep("");
+      }, 3000); // Show completion for 3 seconds
     }
-  }, [onUploadComplete, toast]);
+  }, [onUploadComplete, toast, validateFile]);
 
   return {
+    handleUpload,
     isUploading,
-    progress,
-    handleUpload
+    uploadProgress,
+    uploadStep
   };
 };

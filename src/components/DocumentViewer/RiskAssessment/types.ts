@@ -1,77 +1,69 @@
+
 export interface Risk {
-  id?: string;
   type: string;
-  title?: string;
   description: string;
-  severity: "low" | "medium" | "high";
+  severity: 'low' | 'medium' | 'high';
   regulation?: string;
   impact?: string;
   requiredAction?: string;
   solution?: string;
   deadline?: string;
-  metadata?: {
-    section?: string;
-    details?: string;
-    biaReference?: string;
-    clientName?: string;
-    position?: {
-      x?: number;
-      y?: number;
-      width?: number;
-      height?: number;
-      page?: number;
-      rect?: number[];
-    };
-  };
-  position?: {
-    page?: number;
-    rect?: number[]; // Changed to match the expected type in EnhancedPDFViewer
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
-  };
+  metadata?: Record<string, any>;
 }
 
 export interface RiskAssessmentProps {
   documentId: string;
-  risks: Risk[];
+  risks?: Risk[];
   isLoading?: boolean;
   activeRiskId?: string | null;
-  onRiskSelect?: (riskId: string) => void;
+  onRiskSelect?: (riskId: string | null) => void;
+}
+
+export interface Form47Risk extends Risk {
+  status?: 'pending' | 'in_progress' | 'resolved';
+  assignedTo?: string;
+  paymentScheduleAffected?: boolean;
+  complianceSection?: string;
+  documentationRequirement?: string;
+  deadlineStatus?: 'upcoming' | 'immediate' | 'overdue';
+}
+
+export interface Form76Risk extends Risk {
+  signatureRequired?: boolean;
+  verificationStatus?: 'pending' | 'verified' | 'rejected';
+}
+
+export interface Form31Risk extends Risk {
+  section?: string;
+  biaReference?: string;
+  details?: string;
+  isResolved?: boolean;
+  riskCategory?: 'section4' | 'section5' | 'section6' | 'date' | 'trustee' | 'schedule' | 'other';
+}
+
+// Add GreenTech specific types
+export interface GreenTechRisk extends Form31Risk {
+  // Specific fields for GreenTech risks
+  position?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  documentSection?: string;
 }
 
 export interface Form31RiskViewProps {
   risks: Risk[];
   documentId: string;
-  onRiskSelect?: (riskId: string) => void;
+  onRiskSelect?: (riskId: string | null) => void;
   activeRiskId?: string | null;
 }
 
+// Add missing interface for Form47RiskView component
 export interface Form47RiskViewProps {
   risks: Risk[];
   documentId: string;
-  onRiskSelect?: (riskId: string) => void;
   activeRiskId?: string | null;
-}
-
-// Alias for Form47 risks
-export type Form47Risk = Risk;
-
-// Alias for GreenTech risks
-export type GreenTechRisk = Risk;
-
-// Form 31 specific risk type with BIA specific fields
-export interface Form31Risk extends Risk {
-  biaSection?: string;
-  complianceDetails?: {
-    requirement: string;
-    statusDetails: string;
-    remediation: string;
-  };
-  formSection?: {
-    name: string;
-    fieldName: string;
-    requiredAction: string;
-  };
+  onRiskSelect?: (riskId: string | null) => void;
 }

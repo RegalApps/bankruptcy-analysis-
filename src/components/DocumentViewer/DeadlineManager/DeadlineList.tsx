@@ -1,30 +1,20 @@
 
 import React from 'react';
-import { Deadline } from '../types';
-import { DeadlineItem } from './DeadlineItem';
 import { DeadlineListProps } from './types';
+import { DeadlineItem } from './DeadlineItem';
 
-export const DeadlineList: React.FC<DeadlineListProps> = ({ 
-  deadlines, 
-  onRemove, 
-  onStatusChange, 
-  onEdit, 
-  onDelete 
-}) => {
-  if (!deadlines || deadlines.length === 0) {
-    return <div className="text-sm text-muted-foreground p-2">No deadlines set</div>;
+export const DeadlineList: React.FC<DeadlineListProps> = ({ deadlines, onRemove }) => {
+  if (!deadlines?.length) {
+    return <p className="text-sm text-muted-foreground">No deadlines set</p>;
   }
 
   return (
-    <div>
-      {deadlines.map((deadline) => (
-        <DeadlineItem 
-          key={deadline.id} 
-          deadline={deadline} 
-          onRemove={() => onRemove(deadline.id)}
-          onStatusChange={onStatusChange}
-          onEdit={onEdit}
-          onDelete={onDelete}
+    <div className="space-y-2">
+      {deadlines.map((deadline, index) => (
+        <DeadlineItem
+          key={index}
+          deadline={deadline}
+          onRemove={() => onRemove(index)}
         />
       ))}
     </div>

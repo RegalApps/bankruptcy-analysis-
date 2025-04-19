@@ -1,139 +1,8 @@
 
-import { Risk, AnalysisResult } from "../types/analysisTypes";
-
-// Default position for risks when not specified
-const defaultPosition = {
-  x: 0.2,
-  y: 0.3,
-  width: 0.4,
-  height: 0.1
-};
-
-// Add position to all risk objects in mock data
-export const Form31Risks = [
-  {
-    type: "Missing Creditor Information",
-    description: "The proof of claim must include complete details of all creditors.",
-    severity: "high" as const,
-    regulation: "BIA Section 124",
-    impact: "Claim may be rejected by the Official Receiver",
-    requiredAction: "Add missing creditor information",
-    solution: "Complete section 3 with full creditor details",
-    deadline: "2023-04-30",
-    position: { ...defaultPosition, y: 0.15, page: 1 }
-  },
-  {
-    type: "Missing Supporting Documentation",
-    description: "Supporting documents are required to substantiate your claim",
-    severity: "medium" as const,
-    regulation: "BIA Rules 106",
-    impact: "Claim may be disallowed pending documentation",
-    requiredAction: "Attach supporting documents",
-    solution: "Upload all relevant documentation to verify debt",
-    deadline: "2023-04-25",
-    position: { ...defaultPosition, y: 0.35, page: 1 }
-  },
-  {
-    type: "Claim Not Signed",
-    description: "The proof of claim form requires a valid signature",
-    severity: "high" as const,
-    regulation: "BIA Section 124(4)",
-    impact: "Claim will be rejected without proper attestation",
-    requiredAction: "Sign the claim form",
-    solution: "Complete the execution section with signature and date",
-    deadline: "2023-04-20",
-    position: { ...defaultPosition, y: 0.55, page: 2 }
-  },
-  {
-    type: "Incorrect Claim Amount",
-    description: "The claim amount calculation appears to be incorrect",
-    severity: "medium" as const,
-    regulation: "BIA Section 125",
-    impact: "Claim will be adjusted by the trustee",
-    requiredAction: "Recalculate claim amount",
-    solution: "Verify all calculations and update the claim amount",
-    deadline: "2023-04-25",
-    position: { ...defaultPosition, y: 0.75, page: 2 }
-  }
-];
-
-export const Form47Risks = [
-  {
-    type: "Missing Creditor Information",
-    description: "The proposal must include complete details of all creditors.",
-    severity: "medium" as const,
-    regulation: "BIA Section 66.13",
-    impact: "Proposal may be rejected by the Official Receiver",
-    requiredAction: "Add missing creditor information",
-    solution: "Complete the creditor section with names, addresses, and amounts owed",
-    deadline: "2023-05-15",
-    position: { ...defaultPosition, y: 0.15 }
-  },
-  {
-    type: "Missing Administrator Certificate",
-    description: "The proposal requires a signed certificate from the administrator",
-    severity: "high" as const,
-    regulation: "BIA Rules 66(2)",
-    impact: "Proposal cannot be filed without this certificate",
-    requiredAction: "Obtain administrator certificate",
-    solution: "Have the Licensed Insolvency Trustee complete and sign the certificate section",
-    deadline: "2023-05-10",
-    position: { ...defaultPosition, y: 0.35 }
-  },
-  {
-    type: "Payment Schedule Incomplete",
-    description: "The payment schedule lacks specific repayment terms",
-    severity: "high" as const,
-    regulation: "BIA Section 66.14",
-    impact: "May lead to implementation issues during proposal execution",
-    requiredAction: "Complete payment schedule details",
-    solution: "Specify payment amounts, frequency, and start/end dates",
-    deadline: "2023-05-12",
-    position: { ...defaultPosition, y: 0.55 }
-  }
-];
-
-export const Form76Risks = [
-  {
-    type: "Income Not Verified",
-    description: "Client's income information has not been verified",
-    severity: "high" as const,
-    regulation: "BIA Directive 11R2",
-    impact: "Cannot accurately assess surplus income",
-    requiredAction: "Verify income sources",
-    solution: "Request pay stubs or income tax assessments",
-    deadline: "2023-06-10",
-    position: { ...defaultPosition, y: 0.15 }
-  },
-  {
-    type: "Missing Assets",
-    description: "Potential assets not disclosed in the assessment",
-    severity: "high" as const,
-    regulation: "BIA Section 158(d)",
-    impact: "Incomplete estate valuation",
-    requiredAction: "Complete asset disclosure",
-    solution: "Interview client regarding property, vehicles, investments",
-    deadline: "2023-06-08",
-    position: { ...defaultPosition, y: 0.35 }
-  },
-  {
-    type: "Creditor List Incomplete",
-    description: "Not all creditors appear to be listed",
-    severity: "medium" as const,
-    regulation: "BIA Section 158(c)",
-    impact: "Inaccurate assessment of insolvency",
-    requiredAction: "Complete creditor list",
-    solution: "Request credit report and review with client",
-    deadline: "2023-06-15",
-    position: { ...defaultPosition, y: 0.55 }
-  }
-];
+import { AnalysisResult } from '../types/analysisTypes';
 
 export const getMockForm76Data = (): AnalysisResult => {
   return {
-    structureValid: true,
-    requiredFieldsPresent: true,
-    signaturesValid: true,
     extracted_info: {
       formNumber: "Form 76",
       clientName: "Reginald Dickerson",
@@ -258,7 +127,7 @@ export const getMockForm66Data = (): AnalysisResult => {
       }
     ],
     regulatory_compliance: {
-      status: "needs_review",
+      status: "requires_review",
       details: "Consumer proposal requires verification of key elements under BIA Section 66.13 and OSB Directive 6R3",
       references: [
         "BIA Section 66.13 - Consumer Proposal Requirements",
@@ -321,7 +190,7 @@ export const getMockForm65Data = (): AnalysisResult => {
       }
     ],
     regulatory_compliance: {
-      status: "needs_review",
+      status: "requires_immediate_action",
       details: "This Notice of Intention filing requires immediate action to address timeline constraints, creditor disclosure issues, and cash flow concerns to ensure BIA compliance.",
       references: [
         "BIA Section 50.4(8) - Timeline for filing proposal",

@@ -1,121 +1,132 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectGroup, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { AddDeadlineFormProps } from './types';
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { cn } from "@/lib/utils";
 import { Deadline } from '../types';
+import { AddDeadlineFormProps } from './types';
+import { useToast } from "@/hooks/use-toast";
 
-export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({ onSubmit, onCancel }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!title || !dueDate) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      const newDeadline: Omit<Deadline, 'id' | 'created_at'> = {
-        title,
-        description,
-        due_date: dueDate,
-        status: 'pending',
-        priority,
-        type: 'general'
-      };
-      
-      await onSubmit(newDeadline);
-    } catch (error) {
-      console.error('Error adding deadline:', error);
-    } finally {
-      setIsSubmitting(false);
+export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({ onAdd, onCancel }) => {
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedTime, setSelectedTime] = useState<string>();
+  const [newDeadline, setNewDeadline] = useState<Deadline>({
+    title: '',
+    dueDate: '',
+    description: ''
+  });
+  const { toast } = useToast();
+
+  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
+    const hour = Math.floor(i / 4);
+    const minute = (i % 4) * 15;
+    return format(new Date().setHours(hour, minute), 'HH:mm');
+  });
+
+  const handleSubmit = async () => {
+    if (!selectedDate || !selectedTime || !newDeadline.title) {
+      toast({
+        variant: "destructive",
+        title: "Invalid deadline",
+        description: "Please provide a title, date, and time"
+      });
+      return;
     }
+
+    const deadlineDate = new Date(selectedDate);
+    const [hours, minutes] = selectedTime.split(':').map(Number);
+    deadlineDate.setHours(hours, minutes);
+
+    await onAdd({
+      ...newDeadline,
+      dueDate: deadlineDate.toISOString()
+    });
   };
-  
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 border rounded-md p-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input 
-          id="title" 
-          value={title} 
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter deadline title"
-          required
-        />
+    <div className="space-y-3 mb-4 p-3 bg-background rounded-md">
+      <input
+        type="text"
+        placeholder="Title"
+        className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+        value={newDeadline.title}
+        onChange={(e) => setNewDeadline({ ...newDeadline, title: e.target.value })}
+      />
+
+      <div className="grid gap-2">
+        <label className="text-sm">Date:</label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "w-full justify-start text-left font-normal rounded-md border bg-background px-3 py-2 text-sm",
+                !selectedDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
       </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="description">Description (optional)</Label>
-        <Textarea 
-          id="description" 
-          value={description} 
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter description"
-          rows={2}
-        />
+
+      <div className="grid gap-2">
+        <label className="text-sm">Time:</label>
+        <Select onValueChange={setSelectedTime}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select time">
+              {selectedTime ? (
+                <div className="flex items-center">
+                  <Clock className="mr-2 h-4 w-4" />
+                  {selectedTime}
+                </div>
+              ) : (
+                "Select time"
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {timeOptions.map((time) => (
+              <SelectItem key={time} value={time}>
+                {time}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="due-date">Due Date</Label>
-          <Input 
-            id="due-date" 
-            type="date" 
-            value={dueDate} 
-            onChange={(e) => setDueDate(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="priority">Priority</Label>
-          <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
-            <SelectTrigger id="priority">
-              <SelectValue placeholder="Select priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      <div className="flex justify-end space-x-2 pt-2">
-        <Button 
-          type="button" 
-          variant="outline" 
+
+      <textarea
+        placeholder="Description (optional)"
+        className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+        value={newDeadline.description}
+        onChange={(e) => setNewDeadline({ ...newDeadline, description: e.target.value })}
+      />
+
+      <div className="flex justify-end space-x-2">
+        <button
           onClick={onCancel}
-          disabled={isSubmitting}
+          className="px-3 py-1 text-sm text-muted-foreground hover:text-foreground"
         >
           Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={!title || !dueDate || isSubmitting}
+        </button>
+        <button
+          onClick={handleSubmit}
+          className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
         >
-          {isSubmitting ? 'Adding...' : 'Add Deadline'}
-        </Button>
+          Add Deadline
+        </button>
       </div>
-    </form>
+    </div>
   );
 };

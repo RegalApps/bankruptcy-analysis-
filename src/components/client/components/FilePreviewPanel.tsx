@@ -63,6 +63,7 @@ export const FilePreviewPanel = ({ document, onDocumentOpen }: FilePreviewPanelP
         <TabsContent value="comments" className="mt-0 flex-1 flex flex-col">
           <CommentsTab 
             document={document}
+            effectiveDocumentId={effectiveDocumentId}
           />
         </TabsContent>
         

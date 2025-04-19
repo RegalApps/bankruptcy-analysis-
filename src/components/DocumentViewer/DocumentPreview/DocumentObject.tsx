@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { DocumentObjectProps } from "./types";
-import { isDocumentForm31 } from "../utils/documentTypeUtils";
 
 export const DocumentObject: React.FC<DocumentObjectProps> = ({ 
   publicUrl, 
@@ -21,31 +20,6 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
 
   // Cache-bust the URL to ensure fresh content
   const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
-
-  // Use the centralized utility function to detect Form 31 documents
-  const isGreenTechForm31 = isDocumentForm31(
-    null, 
-    documentId,
-    storagePath, 
-    null
-  );
-                            
-  if (isGreenTechForm31) {
-    console.log("Using fallback path for GreenTech Form 31");
-    // Always use local path for Form 31 demo documents to ensure reliability
-    const localPath = "/documents/sample-form31-greentech.pdf";
-    console.log("Loading Form 31 from local path:", localPath);
-    return (
-      <div className="relative w-full h-full rounded-md overflow-hidden border">
-        <iframe
-          className="w-full h-full border-0"
-          title="Document Preview"
-          src={localPath}
-          onError={handleError}
-        />
-      </div>
-    );
-  }
 
   if (isExcelFile) {
     return (

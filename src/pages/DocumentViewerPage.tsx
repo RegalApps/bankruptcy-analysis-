@@ -1,48 +1,82 @@
 
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { useDocumentPageState } from "./DocumentViewer/hooks/useDocumentPageState";
-import { useForm31Handler } from "./DocumentViewer/hooks/useForm31Handler";
-import { ViewerContent } from "./DocumentViewer/components/ViewerContent";
-import { BackNavigation } from "./DocumentViewer/components/BackNavigation";
-import NotFoundPage from "./NotFound";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+import { DocumentViewer } from "@/components/DocumentViewer";
 
 const DocumentViewerPage = () => {
-  const {
-    documentId,
-    isLoading,
-    documentNotFound,
-    isForm47,
-    isGreenTechForm31
-  } = useDocumentPageState();
-
-  // Process Form31 data if needed
-  useForm31Handler(documentId || "", isForm47);
+  const { documentId } = useParams<{ documentId: string }>();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   
-  // If document not found and not a special document type, show 404
-  if (documentNotFound && !isForm47 && !isGreenTechForm31) {
-    return <NotFoundPage />;
-  }
+  useEffect(() => {
+    // Simulate loading document data
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [documentId]);
+  
+  const handleBack = () => {
+    navigate(-1);
+  };
+  
+  const handleLoadFailure = () => {
+    console.error("Failed to load document");
+    // Could navigate back or show an error state
+  };
+
+  // Special case for GreenTech Form 31 demo
+  const isGreenTechForm31 = 
+    documentId === "greentech-form31" || 
+    documentId === "form31" || 
+    documentId === "form-31-greentech";
   
   return (
     <MainLayout>
-      <div className="flex flex-col h-full">
-        <BackNavigation />
-        
-        <div className="flex-1 h-[calc(100vh-8rem)]">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-            </div>
-          ) : (
-            <ViewerContent
-              documentId={documentId || ""}
-              isForm47={isForm47}
-              isGreenTechForm31={isGreenTechForm31}
-              documentTitle={isForm47 ? "Form 47 - Consumer Proposal" : undefined}
+      <div className="mb-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleBack}
+          className="flex items-center"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" /> 
+          Back
+        </Button>
+      </div>
+      
+      <div className="h-[calc(100vh-8rem)]">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+          </div>
+        ) : (
+          documentId === "form47" ? (
+            <DocumentViewer 
+              documentId="form47" 
+              documentTitle="Form 47 - Consumer Proposal"
+              isForm47={true}
+              onLoadFailure={handleLoadFailure}
             />
-          )}
-        </div>
+          ) : isGreenTechForm31 ? (
+            <DocumentViewer 
+              documentId="greentech-form31" 
+              documentTitle="Form 31 - GreenTech Supplies Inc. - Proof of Claim"
+              isForm31GreenTech={true}
+              onLoadFailure={handleLoadFailure}
+            />
+          ) : (
+            <div className="border rounded-lg bg-card p-4 text-center">
+              <h2 className="text-lg font-semibold mb-2">Document Not Found</h2>
+              <p className="text-muted-foreground mb-4">The document you're looking for doesn't exist or you don't have access.</p>
+              <Button onClick={handleBack}>Go Back</Button>
+            </div>
+          )
+        )}
       </div>
     </MainLayout>
   );

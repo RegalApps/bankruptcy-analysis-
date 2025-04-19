@@ -2,14 +2,7 @@
 import React, { useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import logger from "@/utils/logger";
-
-export interface DocumentObjectProps {
-  publicUrl: string | null;
-  isExcelFile?: boolean;
-  storagePath?: string;
-  documentId?: string;
-  onError?: () => void;
-}
+import { DocumentObjectProps } from "../types";
 
 export const DocumentObject: React.FC<DocumentObjectProps> = ({ 
   publicUrl, 
@@ -30,28 +23,11 @@ export const DocumentObject: React.FC<DocumentObjectProps> = ({
   // Cache-bust the URL to ensure fresh content
   const cacheBustedUrl = publicUrl ? `${publicUrl}?t=${Date.now()}` : '';
   
-  // Handle demo documents for Form 31 GreenTech
-  const isGreenTechForm31 = storagePath?.includes('greentech-form31') || 
-                            documentId?.includes('form31') ||
-                            (publicUrl?.includes('form31') || publicUrl?.includes('greentech'));
-                            
-  // For Form 31 documents, always use the local path to avoid storage errors
-  if (isGreenTechForm31) {
-    console.log("Using direct local path for GreenTech Form 31 document");
-    const localPath = "/documents/sample-form31-greentech.pdf";
-    return (
-      <div className="relative w-full h-full rounded-md overflow-hidden border">
-        <iframe
-          className="w-full h-full border-0"
-          title="Document Preview"
-          src={localPath}
-          onError={handleError}
-        />
-      </div>
-    );
-  }
+  // Check file extension from the URL to verify if it's really Excel
+  const isPdfFromUrl = publicUrl?.toLowerCase().includes('.pdf');
+  const actuallyIsExcel = isExcelFile && !isPdfFromUrl;
 
-  if (isExcelFile) {
+  if (actuallyIsExcel) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center p-6 bg-muted rounded-lg">

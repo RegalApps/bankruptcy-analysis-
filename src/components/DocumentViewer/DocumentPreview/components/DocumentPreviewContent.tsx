@@ -1,11 +1,10 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { EnhancedPDFViewer } from "./EnhancedPDFViewer";
 import { DocumentViewerFrame } from "./DocumentViewerFrame";
 import { PreviewControls } from "../PreviewControls";
-import { DocumentObject } from "../DocumentObject";
+import { DocumentObject } from "./DocumentObject";
 import { DocumentPreviewContentProps } from "../types";
-import { isDocumentForm31 } from "../../utils/documentTypeUtils";
 
 export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   documentId,
@@ -13,38 +12,10 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   title,
   previewState,
   activeRiskId = null,
-  onRiskSelect = () => {},
-  onLoadFailure,
-  isForm31GreenTech
+  onRiskSelect = () => {}
 }) => {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [forceReload, setForceReload] = useState(Date.now());
-  const [localErrorState, setLocalErrorState] = useState<string | null>(null);
-  
-  // Use enhanced Form 31 detection
-  const isForm31Document = isDocumentForm31(
-    null, 
-    documentId,
-    storagePath,
-    title
-  );
-  
-  const finalIsForm31GreenTech = isForm31GreenTech || isForm31Document;
-  
-  // Debug information
-  useEffect(() => {
-    console.log("DocumentPreviewContent rendered with:", {
-      documentId,
-      storagePath,
-      fileUrl: previewState.fileUrl,
-      fileExists: previewState.fileExists,
-      isExcelFile: previewState.isExcelFile,
-      isLoading: previewState.isLoading,
-      previewError: previewState.previewError,
-      isForm31GreenTech: finalIsForm31GreenTech,
-      localError: localErrorState
-    });
-  }, [documentId, storagePath, previewState, finalIsForm31GreenTech, localErrorState]);
   
   // Handle zoom in/out functions
   const handleZoomIn = () => {
@@ -60,28 +31,15 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   };
 
   const handleRefresh = () => {
-    console.log("Manual refresh triggered");
     setForceReload(Date.now());
-    setLocalErrorState(null);
-    // Also trigger the file check to reload the document
-    if (previewState && previewState.checkFile) {
-      previewState.checkFile();
-    }
   };
-
-  // Call onLoadFailure when there's a preview error
-  useEffect(() => {
-    if ((previewState.previewError || localErrorState) && onLoadFailure) {
-      console.error("Preview error detected, calling onLoadFailure:", 
-        previewState.previewError || localErrorState);
-      onLoadFailure();
-    }
-  }, [previewState.previewError, localErrorState, onLoadFailure]);
 
   const { 
     fileExists,
     fileUrl,
+    isPdfFile,
     isExcelFile,
+    isDocFile,
     isLoading,
     previewError,
     documentRisks
@@ -92,51 +50,19 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   };
   
   const handleDocumentError = () => {
-    console.error("Error loading document in DocumentPreviewContent");
-    setLocalErrorState("Failed to load document content");
-    if (onLoadFailure) onLoadFailure();
+    console.error("Error loading document");
   };
 
   // Define content based on loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-          <p className="text-sm text-muted-foreground">Loading document...</p>
-        </div>
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }
 
-  // Special case for Form 31 documents - provide a fallback path
-  if (finalIsForm31GreenTech) {
-    console.log("Form 31 detected in DocumentPreviewContent, using special handling");
-    return (
-      <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-2 bg-muted/20">
-          <div className="flex-1 truncate">
-            <h3 className="text-sm font-medium">{title || "Form 31 - Proof of Claim"}</h3>
-          </div>
-          <div className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-            Form 31
-          </div>
-        </div>
-        <div className="flex-1 relative">
-          <DocumentObject
-            publicUrl={null}
-            isExcelFile={false}
-            storagePath="demo/greentech-form31-proof-of-claim.pdf"
-            documentId={documentId}
-            onError={() => onLoadFailure && onLoadFailure()}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // If we have an error or no file URL
-  if (previewError || localErrorState || !fileUrl) {
+  if (previewError || !fileUrl) {
     return (
       <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center p-6">
         <div className="bg-destructive text-white rounded-full p-3 mb-4">
@@ -145,22 +71,13 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           </svg>
         </div>
         <h3 className="text-xl font-semibold mb-2">Document Error</h3>
-        <p className="text-sm text-muted-foreground mb-4">{previewError || localErrorState || "Could not load the document. It might be in an unsupported format or inaccessible."}</p>
+        <p className="text-sm text-muted-foreground mb-4">{previewError || "Could not load the document. It might be in an unsupported format or inaccessible."}</p>
         <button 
           className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 font-medium"
           onClick={handleRefresh}
         >
           Try Again
         </button>
-        <div className="mt-4 text-xs text-muted-foreground border border-muted p-3 rounded">
-          <p>Debug Info:</p>
-          <p>Document ID: {documentId}</p>
-          <p>Storage Path: {storagePath}</p>
-          <p>File URL exists: {fileUrl ? 'Yes' : 'No'}</p>
-          <p>Network Status: {previewState.networkStatus}</p>
-          <p>Attempt Count: {previewState.attemptCount}</p>
-          {finalIsForm31GreenTech && <p>Form 31 Document: Yes</p>}
-        </div>
       </div>
     );
   }
@@ -171,7 +88,7 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
   // For Form47, we know it's a PDF regardless of what the system thinks
   const isForm47 = title?.toLowerCase().includes('form 47') || title?.toLowerCase().includes('consumer proposal');
   
-  // For Excel files that aren't actually Form 47
+  // Success state - render the PDF viewer or other document viewer based on file type
   if (actuallyIsExcel && !isForm47) {
     return (
       <div className="h-full flex flex-col">
@@ -258,9 +175,8 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           
           <button 
             className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
-            onClick={() => fileUrl && window.open(fileUrl, "_blank")}
+            onClick={() => window.open(fileUrl, "_blank")}
             title="Open in new tab"
-            disabled={!fileUrl}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 3H6a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M16 3h5v5"/><path d="M21 3 10 14"/></svg>
           </button>
@@ -268,15 +184,12 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           <button 
             className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
             onClick={() => {
-              if (fileUrl) {
-                const link = document.createElement("a");
-                link.href = fileUrl;
-                link.download = title;
-                link.click();
-              }
+              const link = document.createElement("a");
+              link.href = fileUrl;
+              link.download = title;
+              link.click();
             }}
             title="Download document"
-            disabled={!fileUrl}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 17v-10H5.5A2.5 2.5 0 0 1 3 4.5v0A2.5 2.5 0 0 1 5.5 2H18a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-2"/><path d="m8 15-2 2 2 2"/></svg>
           </button>
@@ -294,7 +207,6 @@ export const DocumentPreviewContent: React.FC<DocumentPreviewContentProps> = ({
           onRiskSelect={onRiskSelect}
           onLoad={handleDocumentLoad}
           onError={handleDocumentError}
-          key={`doc-${documentId}-${forceReload}`}
         />
       </div>
     </div>

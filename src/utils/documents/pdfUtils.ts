@@ -17,11 +17,7 @@ export const extractTextFromPdf = async (url: string): Promise<string> => {
     const cacheBustedUrl = `${url}?t=${Date.now()}`;
     
     // Load the PDF document
-    const loadingTask = pdfjs.getDocument({
-      url: cacheBustedUrl,
-      cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
-      cMapPacked: true,
-    });
+    const loadingTask = pdfjs.getDocument(cacheBustedUrl);
     
     // Add a reasonable timeout to avoid hanging
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -39,7 +35,7 @@ export const extractTextFromPdf = async (url: string): Promise<string> => {
     let successfulPages = 0;
     
     // Extract text from each page with individual page error handling
-    for (let i = 1; i <= Math.min(numPages, 20); i++) { // Limit to first 20 pages for performance
+    for (let i = 1; i <= numPages; i++) {
       try {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
@@ -114,16 +110,12 @@ const fallbackExtraction = async (url: string): Promise<string> => {
         }
         
         const arrayBuffer = await response.arrayBuffer();
-        const pdf = await pdfjs.getDocument({ 
-          data: arrayBuffer,
-          cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
-          cMapPacked: true,
-        }).promise;
+        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
         
         let text = '';
         const numPages = pdf.numPages;
         
-        for (let i = 1; i <= Math.min(numPages, 10); i++) { // Limit to first 10 pages for performance
+        for (let i = 1; i <= numPages; i++) {
           try {
             const page = await pdf.getPage(i);
             const content = await page.getTextContent();
