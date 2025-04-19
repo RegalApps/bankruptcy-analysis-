@@ -147,13 +147,12 @@ export const RobustFileUploader = ({
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
       
       try {
+        // Modified to remove the signal property which was causing the TS error
         const { error: uploadError } = await supabase.storage
           .from('documents')
           .upload(filePath, file, {
             cacheControl: '3600',
-            upsert: false,
-            // Specify signal for abort controller
-            signal: controller.signal as any
+            upsert: false
           });
           
         clearTimeout(timeoutId);

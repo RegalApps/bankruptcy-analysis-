@@ -3,7 +3,6 @@ import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { UploadArea } from "@/components/documents/UploadArea";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { TestForm31Upload } from "@/components/documents/TestForm31Upload";
 import { cleanupExistingForm31 } from "@/utils/documents/formCleanup";

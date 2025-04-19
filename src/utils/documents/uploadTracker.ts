@@ -162,4 +162,31 @@ export const trackUpload = (id: string, initialProgress: number = 0, metadata?: 
   };
 };
 
+// Add missing functions that are referenced in other components
+export const getActiveUploads = () => {
+  const store = useUploadStore.getState();
+  return Object.entries(store.uploads).map(([id, info]) => ({
+    documentId: id,
+    id,
+    progress: info.progress,
+    message: info.message,
+    status: info.status
+  }));
+};
+
+// Mock functions for analytics that we plan to remove
+export const getUploadAnalytics = () => {
+  return {
+    totalUploads: 0,
+    successRate: 0,
+    averageDuration: 0,
+    byFileType: {},
+    recent: []
+  };
+};
+
+export const getUploadSpeedTrend = () => {
+  return [];
+};
+
 export { useUploadStore };
