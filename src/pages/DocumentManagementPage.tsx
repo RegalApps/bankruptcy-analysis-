@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadDocument } from "@/utils/documentOperations";
 import { UploadArea } from "@/components/documents/UploadArea";
 import { DocumentList } from "@/components/documents/DocumentList";
+import { TestForm31Upload } from "@/components/documents/TestForm31Upload";
 import logger from "@/utils/logger";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -169,6 +170,9 @@ export const DocumentManagementPage = () => {
   return (
     <div className="h-full py-6">
       <div className="container max-w-6xl mx-auto space-y-8">
+        {/* Add TestForm31Upload component for testing */}
+        <TestForm31Upload />
+        
         <UploadArea 
           onFileUpload={handleFileUpload}
           isUploading={isUploading}

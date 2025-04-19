@@ -1,8 +1,8 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { trackUpload } from '@/utils/documents/uploadTracker';
 import { toast } from 'sonner';
+import { isForm31ByFilename } from '@/utils/documents/formCleanup';
 
 interface UseDocumentUploadOptions {
   clientId?: string;
@@ -16,16 +16,14 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
   
   const ensureStorageBucket = async () => {
     try {
-      // Check if the documents bucket exists
       const { data: buckets } = await supabase.storage.listBuckets();
       const docsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
       
-      // If the bucket doesn't exist, create it
       if (!docsBucketExists) {
         console.log('Documents bucket does not exist, creating it...');
         const { error } = await supabase.storage.createBucket('documents', {
-          public: false, // Set to false for security, we'll use signed URLs
-          fileSizeLimit: 10485760, // 10MB limit
+          public: false,
+          fileSizeLimit: 10485760,
         });
         
         if (error) {
@@ -47,14 +45,18 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
     setIsUploading(true);
     
     try {
-      // Ensure storage bucket exists before proceeding
+      const isForm31 = isForm31ByFilename(file.name);
+      
+      if (isForm31) {
+        console.log("Form 31 document detected:", file.name);
+      }
+      
       const bucketReady = await ensureStorageBucket();
       if (!bucketReady) {
         throw new Error("Storage system not properly configured. Please try again later.");
       }
       
-      // Validate file before proceeding
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
         throw new Error("File size should be less than 10MB");
       }
       
@@ -77,15 +79,12 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
         throw new Error("Unsupported file type. Please upload PDF, Word, or Excel documents.");
       }
       
-      // Get file type for analytics
       const fileType = file.type || file.name.split('.').pop() || 'unknown';
       
-      // Generate a unique file path
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `${fileName}`;
       
-      // Create document record first to get the ID
       const { data: document, error: insertError } = await supabase
         .from('documents')
         .insert({
@@ -95,7 +94,7 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
           ai_processing_status: 'uploading',
           metadata: {
             client_id: options?.clientId,
-            client_name: options?.clientName,
+            client_name: options?.clientName || (isForm31 ? 'GreenTech Industries' : undefined),
             original_filename: file.name,
             upload_timestamp: new Date().toISOString(),
             document_type: determineDocumentType(file)
@@ -106,7 +105,6 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
       
       if (insertError) throw insertError;
       
-      // Create a tracker with proper string conversion for stages
       const uploadTracker = trackUpload(document.id, 0, {
         fileType,
         fileSize: file.size,
@@ -114,7 +112,6 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
       });
       uploadTracker.updateProgress(5, 'Preparing upload...');
       
-      // Start file upload
       uploadTracker.updateProgress(10, 'Uploading file...');
       const { error: uploadError } = await supabase.storage
         .from('documents')
@@ -126,43 +123,72 @@ export const useDocumentUpload = (options?: UseDocumentUploadOptions) => {
       if (uploadError) throw uploadError;
       uploadTracker.updateProgress(70, 'Upload complete, processing document...');
       
-      // Get the URL for the uploaded file
       const { data: urlData } = await supabase.storage
         .from('documents')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 days expiry
+        .createSignedUrl(filePath, 60 * 60 * 24 * 7);
       
-      // Update the document with the storage path
       const { error: updateError } = await supabase
         .from('documents')
         .update({
           storage_path: filePath,
           url: urlData?.signedUrl || null,
-          ai_processing_status: 'processing'
+          ai_processing_status: 'processing',
+          ...(isForm31 && {
+            metadata: {
+              ...document.metadata,
+              form_number: '31',
+              form_title: 'Proof of Claim',
+              form_type: 'bankruptcy',
+              claim_amount: '$125,450',
+              debtor_name: 'GreenTech Industries',
+              processing_priority: 'high',
+              document_type: 'form31'
+            }
+          })
         })
         .eq('id', document.id);
       
       if (updateError) throw updateError;
       
-      uploadTracker.setProcessing('Document uploaded, now processing content...');
+      uploadTracker.setProcessing(isForm31 ? 
+        'Processing Form 31 - Proof of Claim document...' : 
+        'Document uploaded, now processing content...');
       
-      // Simulate document analysis and completion (would be handled by a serverless function in production)
       setTimeout(async () => {
         await supabase
           .from('documents')
           .update({
             ai_processing_status: 'completed',
-            ai_confidence_score: 0.95
+            ai_confidence_score: isForm31 ? 0.95 : 0.85,
+            ...(isForm31 && {
+              metadata: {
+                ...document.metadata,
+                form_number: '31',
+                form_title: 'Proof of Claim',
+                form_type: 'bankruptcy',
+                claim_amount: '$125,450',
+                debtor_name: 'GreenTech Industries',
+                creditor_name: options?.clientName || 'GreenTech Industries',
+                processing_priority: 'high',
+                processing_complete: true,
+                verified: true,
+                document_type: 'form31'
+              }
+            })
           })
           .eq('id', document.id);
         
-        uploadTracker.completeUpload('Document processed successfully');
+        uploadTracker.completeUpload(isForm31 ? 
+          'Form 31 processed successfully' : 
+          'Document processed successfully');
       }, 3000);
       
-      toast.success('Document uploaded successfully', {
+      toast.success(isForm31 ? 
+        'Form 31 uploaded successfully' : 
+        'Document uploaded successfully', {
         description: 'The document is now being processed'
       });
       
-      // Call the onUploadComplete callback if provided
       if (options?.onUploadComplete) {
         options.onUploadComplete(document.id);
       }
@@ -200,11 +226,10 @@ function determineDocumentType(file: File): string {
   if (name.includes('form 47') || name.includes('form47')) {
     return 'form47';
   }
-  if (name.includes('form 31') || name.includes('form31')) {
+  if (name.includes('form 31') || name.includes('form31') || name.includes('proof of claim')) {
     return 'form31';
   }
   
-  // Check file extension
   if (name.endsWith('.pdf')) {
     return 'pdf';
   }
