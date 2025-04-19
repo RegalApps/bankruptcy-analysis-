@@ -3,7 +3,6 @@ import { useDocuments } from "@/components/DocumentList/hooks/useDocuments";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { uploadDocument } from "@/utils/documentOperations";
 import { UploadArea } from "@/components/documents/UploadArea";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { TestForm31Upload } from "@/components/documents/TestForm31Upload";
@@ -13,6 +12,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { RobustFileUploader } from "@/components/documents/RobustFileUploader";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
@@ -35,124 +36,14 @@ export const DocumentManagementPage = () => {
     navigate('/', { state: { selectedDocument: documentId } });
   };
 
-  const handleFileUpload = async (file: File) => {
-    if (isUploading) return;
-
-    try {
-      setIsUploading(true);
-      setUploadProgress(0);
-      setUploadStep("Stage 1: Validating document format and structure...");
-
-      const validTypes = [
-        'application/pdf', 
-        'application/msword', 
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      ];
-      
-      if (!validTypes.includes(file.type) && 
-          !file.name.endsWith('.xlsx') && 
-          !file.name.endsWith('.xls') &&
-          !file.name.endsWith('.pdf') &&
-          !file.name.endsWith('.doc') &&
-          !file.name.endsWith('.docx')) {
-        toast({
-          variant: "destructive",
-          title: "Invalid file type",
-          description: "Please upload a PDF, Word, or Excel document"
-        });
-        setIsUploading(false);
-        return;
-      }
-
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        toast({
-          variant: "destructive",
-          title: "File too large",
-          description: "File size should be less than 10MB"
-        });
-        setIsUploading(false);
-        return;
-      }
-
-      setUploadProgress(5);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setUploadProgress(10);
-      setUploadStep("Stage 2: Preparing document for ingestion...");
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setUploadProgress(15);
-      setUploadStep("Stage 3: Uploading document to secure storage...");
-      
-      logger.info(`Starting upload for file: ${file.name}, size: ${file.size} bytes`);
-      
-      // Create storage bucket if it doesn't exist
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const documentsExists = buckets?.some(bucket => bucket.name === 'documents');
-      
-      if (!documentsExists) {
-        // Create the documents bucket
-        const { error: bucketError } = await supabase.storage
-          .createBucket('documents', { public: false });
-        
-        if (bucketError) {
-          throw new Error(`Failed to create storage: ${bucketError.message}`);
-        }
-        logger.info("Created documents storage bucket");
-      }
-      
-      const documentData = await uploadDocument(file, (progress, message) => {
-        setUploadProgress(15 + Math.floor(progress * 0.7));
-        setUploadStep(message);
-      });
-      
-      logger.info(`Document uploaded with ID: ${documentData?.id}`);
-      
-      setUploadProgress(85);
-      setUploadStep("Stage 7: Issue prioritization & task management...");
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setUploadProgress(95);
-      setUploadStep("Stage 8: Document organization & client management...");
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setUploadStep("Complete: Document processing finalized.");
-      setUploadProgress(100);
-
-      toast({
-        title: "Success",
-        description: file.name.toLowerCase().includes('form 31') || file.name.toLowerCase().includes('proof of claim')
-          ? "Form 31 uploaded and analyzed successfully. Client details extracted."
-          : file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
-            ? "Financial document uploaded and processed successfully"
-            : "Document uploaded and processed successfully"
-      });
-
-      refetch();
-      
-      if (documentData && documentData.id) {
-        logger.info(`Navigating to document view for ID: ${documentData.id}`);
-        setTimeout(() => {
-          navigate('/', { state: { selectedDocument: documentData.id } });
-        }, 1500);
-      }
-    } catch (error) {
-      logger.error('Error uploading document:', error);
-      toast({
-        variant: "destructive",
-        title: "Upload Failed",
-        description: error instanceof Error ? error.message : "Failed to upload document. Please try again."
-      });
-    } finally {
-      setTimeout(() => {
-        setIsUploading(false);
-        setUploadStep("");
-        setUploadProgress(0);
-      }, 2000);
-    }
+  const handleUploadComplete = (documentId: string) => {
+    logger.info(`Document uploaded with ID: ${documentId}`);
+    refetch();
+    
+    // Navigate to the document view after a short delay
+    setTimeout(() => {
+      navigate('/', { state: { selectedDocument: documentId } });
+    }, 1500);
   };
   
   // Add cleanup handler
@@ -191,12 +82,23 @@ export const DocumentManagementPage = () => {
         {/* Add TestForm31Upload component for testing */}
         <TestForm31Upload />
         
-        <UploadArea 
-          onFileUpload={handleFileUpload}
-          isUploading={isUploading}
-          uploadProgress={uploadProgress}
-          uploadStep={uploadStep}
-        />
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Upload Documents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-6 border-2 border-dashed border-muted-foreground/25 rounded-lg flex flex-col items-center justify-center">
+              <RobustFileUploader
+                onUploadComplete={handleUploadComplete}
+                buttonText="Click to Upload Document"
+                maxSizeMB={30}
+              />
+              <p className="text-sm text-muted-foreground mt-4">
+                Upload PDF, Word, Excel or image files (max 30MB)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <section>
           <h2 className="text-lg font-semibold mb-4">Recently Uploaded</h2>
