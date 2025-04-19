@@ -1,203 +1,253 @@
 
 import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Check, X, AlertCircle, RefreshCw, HelpCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { diagnoseUploadIssues } from "@/utils/storage/bucketManager";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 export const StorageDiagnostic = () => {
-  const [isRunningTests, setIsRunningTests] = useState(false);
-  const [results, setResults] = useState<{
-    authentication: boolean;
-    bucket: boolean;
-    permissions: boolean;
-    limits: boolean;
-    diagnostic: string;
-    lastRun: Date | null;
-  }>({
-    authentication: false,
-    bucket: false,
-    permissions: false,
-    limits: true,
-    diagnostic: "",
-    lastRun: null
+  const [isRunning, setIsRunning] = useState(false);
+  const [checks, setChecks] = useState({
+    userAuthenticated: { status: "pending", message: "Checking authentication" },
+    bucketExists: { status: "pending", message: "Checking storage bucket" },
+    createPermission: { status: "pending", message: "Checking upload permission" },
+    storageAccess: { status: "pending", message: "Checking storage access" },
   });
-
+  
   const runDiagnostics = async () => {
-    setIsRunningTests(true);
+    setIsRunning(true);
+    setChecks({
+      userAuthenticated: { status: "running", message: "Checking authentication" },
+      bucketExists: { status: "pending", message: "Checking storage bucket" },
+      createPermission: { status: "pending", message: "Checking upload permission" },
+      storageAccess: { status: "pending", message: "Checking storage access" },
+    });
     
+    // Check 1: Authentication
     try {
-      // Check authentication
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      const isAuthenticated = !!user && !authError;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      // Check if documents bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'documents') || false;
-
-      // Check if user has permission to access the bucket
-      let hasPermission = false;
-      if (bucketExists && isAuthenticated) {
-        const { error: listError } = await supabase.storage
-          .from('documents')
-          .list();
-        
-        hasPermission = !listError;
+      if (userError || !user) {
+        setChecks(prev => ({
+          ...prev,
+          userAuthenticated: { 
+            status: "failed", 
+            message: userError?.message || "User is not authenticated"
+          }
+        }));
+        setIsRunning(false);
+        return;
       }
       
-      // Check file limits
-      const testFile = new File(['test'], 'test.txt', { type: 'text/plain' });
-      const diagnosticResult = await diagnoseUploadIssues(testFile);
+      setChecks(prev => ({
+        ...prev,
+        userAuthenticated: { 
+          status: "passed", 
+          message: `Authenticated as ${user.email}`
+        }
+      }));
       
-      setResults({
-        authentication: isAuthenticated,
-        bucket: bucketExists,
-        permissions: hasPermission,
-        limits: diagnosticResult.fileSizeValid,
-        diagnostic: diagnosticResult.diagnostic,
-        lastRun: new Date()
-      });
+      // Check 2: Bucket exists
+      setChecks(prev => ({
+        ...prev,
+        bucketExists: { status: "running", message: "Checking storage bucket" }
+      }));
+      
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        setChecks(prev => ({
+          ...prev,
+          bucketExists: { 
+            status: "failed", 
+            message: `Error checking buckets: ${bucketsError.message}`
+          }
+        }));
+        setIsRunning(false);
+        return;
+      }
+      
+      const documentsExists = buckets?.some(bucket => bucket.name === 'documents');
+      
+      if (!documentsExists) {
+        setChecks(prev => ({
+          ...prev,
+          bucketExists: { 
+            status: "failed", 
+            message: "Documents bucket does not exist"
+          }
+        }));
+        
+        // Try to create the bucket
+        try {
+          const { error: createError } = await supabase.storage
+            .createBucket('documents', {
+              public: false,
+              fileSizeLimit: 30 * 1024 * 1024
+            });
+            
+          if (createError) {
+            toast.error("Failed to create storage bucket", {
+              description: createError.message
+            });
+          } else {
+            toast.success("Created documents bucket", {
+              description: "Storage bucket has been created successfully"
+            });
+            
+            setChecks(prev => ({
+              ...prev,
+              bucketExists: { 
+                status: "passed", 
+                message: "Documents bucket created successfully"
+              }
+            }));
+          }
+        } catch (error) {
+          console.error("Error creating bucket:", error);
+        }
+      } else {
+        setChecks(prev => ({
+          ...prev,
+          bucketExists: { 
+            status: "passed", 
+            message: "Documents bucket exists"
+          }
+        }));
+      }
+      
+      // Check 3: Create permission
+      setChecks(prev => ({
+        ...prev,
+        createPermission: { status: "running", message: "Checking upload permission" }
+      }));
+      
+      // Create a small test file
+      const testData = new Blob(["test"], { type: 'text/plain' });
+      const testFile = new File([testData], 'permission-test.txt', { type: 'text/plain' });
+      
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(`test-${Date.now()}.txt`, testFile);
+      
+      if (uploadError) {
+        setChecks(prev => ({
+          ...prev,
+          createPermission: { 
+            status: "failed", 
+            message: `Upload permission error: ${uploadError.message}`
+          }
+        }));
+      } else {
+        setChecks(prev => ({
+          ...prev,
+          createPermission: { 
+            status: "passed", 
+            message: "You have permission to upload files"
+          }
+        }));
+      }
+      
+      // Check 4: Storage access
+      setChecks(prev => ({
+        ...prev,
+        storageAccess: { status: "running", message: "Checking storage access" }
+      }));
+      
+      const { data: files, error: listError } = await supabase.storage
+        .from('documents')
+        .list();
+      
+      if (listError) {
+        setChecks(prev => ({
+          ...prev,
+          storageAccess: { 
+            status: "failed", 
+            message: `Storage access error: ${listError.message}`
+          }
+        }));
+      } else {
+        setChecks(prev => ({
+          ...prev,
+          storageAccess: { 
+            status: "passed", 
+            message: `Access confirmed, found ${files?.length || 0} files`
+          }
+        }));
+      }
       
     } catch (error) {
       console.error("Error running diagnostics:", error);
+      toast.error("Diagnostic error", {
+        description: error instanceof Error ? error.message : "An unknown error occurred"
+      });
     } finally {
-      setIsRunningTests(false);
+      setIsRunning(false);
+    }
+  };
+  
+  useEffect(() => {
+    // Run diagnostics automatically when the component mounts
+    runDiagnostics();
+  }, []);
+  
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'passed':
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+      case 'failed':
+        return <XCircle className="h-5 w-5 text-destructive" />;
+      case 'running':
+        return <Loader2 className="h-5 w-5 animate-spin text-primary" />;
+      default:
+        return <div className="h-5 w-5 rounded-full bg-muted"></div>;
     }
   };
 
-  useEffect(() => {
-    // Run diagnostics once when component mounts
-    runDiagnostics();
-  }, []);
-
-  const ResultBadge = ({ passed }: { passed: boolean }) => (
-    passed ? 
-      <Badge variant="outline" className="bg-green-50 text-green-600 hover:bg-green-50">
-        <Check className="w-3 h-3 mr-1" /> Pass
-      </Badge> : 
-      <Badge variant="outline" className="bg-red-50 text-red-600 hover:bg-red-50">
-        <X className="w-3 h-3 mr-1" /> Fail
-      </Badge>
-  );
-
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          Storage System Diagnostics
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={runDiagnostics} 
-            disabled={isRunningTests}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isRunningTests ? 'animate-spin' : ''}`} />
-            {isRunningTests ? 'Running...' : 'Run Tests'}
-          </Button>
-        </CardTitle>
-        <CardDescription>
-          Tests the configuration of your Supabase storage system
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Storage System Diagnostics</CardTitle>
+        <Button 
+          variant="outline"
+          size="sm"
+          onClick={runDiagnostics}
+          disabled={isRunning}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
+          {isRunning ? 'Running...' : 'Run Diagnostics'}
+        </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              User Authentication
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="w-80">
-                      Checks if the current user is authenticated with Supabase.
-                      This is required for file uploads with Row Level Security.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+        {Object.entries(checks).map(([key, check]) => (
+          <div key={key} className="flex items-center space-x-4">
+            <div className="flex-shrink-0">
+              {getStatusIcon(check.status)}
             </div>
-            <ResultBadge passed={results.authentication} />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              Storage Bucket
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="w-80">
-                      Verifies that the 'documents' storage bucket exists in your Supabase project.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex-1">
+              <p className="font-medium">{check.message}</p>
             </div>
-            <ResultBadge passed={results.bucket} />
           </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              Access Permissions
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="w-80">
-                      Tests if the current user has permission to access and upload to the bucket 
-                      based on Row Level Security policies.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <ResultBadge passed={results.permissions} />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              File Size Limits
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="w-80">
-                      Verifies that the bucket settings allow files within the expected size limit.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <ResultBadge passed={results.limits} />
-          </div>
-        </div>
+        ))}
         
-        {results.diagnostic && (
-          <Alert className={`${!results.authentication || !results.bucket || !results.permissions ? 'border-red-300' : 'border-green-300'}`}>
-            <AlertCircle className="h-4 w-4" />
+        {Object.values(checks).some(check => check.status === 'failed') && (
+          <Alert variant="destructive">
             <AlertDescription>
-              {results.diagnostic}
+              Some storage checks failed. This may prevent file uploads from working properly.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {Object.values(checks).every(check => check.status === 'passed') && (
+          <Alert variant="default" className="bg-green-50 border-green-200">
+            <AlertDescription className="text-green-800">
+              All storage checks passed. Your system is properly configured for file uploads.
             </AlertDescription>
           </Alert>
         )}
       </CardContent>
-      <CardFooter className="text-xs text-muted-foreground">
-        {results.lastRun && (
-          <>Last diagnostic run: {results.lastRun.toLocaleTimeString()}</>
-        )}
-      </CardFooter>
     </Card>
   );
 };

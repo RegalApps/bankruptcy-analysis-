@@ -19,6 +19,55 @@ export const DocumentManagementPage = () => {
   const { documents, isLoading, refetch } = useDocuments();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [uploadErrorMessage, setUploadErrorMessage] = useState<string | null>(null);
+  
+  // Initialize storage on component mount
+  useEffect(() => {
+    const initializeStorage = async () => {
+      try {
+        // Get all existing buckets
+        const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+        
+        if (bucketsError) {
+          console.error("Error checking storage buckets:", bucketsError);
+          setUploadErrorMessage("Unable to access storage system. Please try again later.");
+          return;
+        }
+        
+        // Check if documents bucket exists
+        const documentsExists = buckets?.some(bucket => bucket.name === 'documents');
+        
+        if (!documentsExists) {
+          console.log("Creating documents bucket...");
+          
+          // Create the documents bucket
+          const { error: bucketError } = await supabase.storage
+            .createBucket('documents', {
+              public: false,
+              fileSizeLimit: 31457280 // 30MB
+            });
+          
+          if (bucketError) {
+            console.error("Error creating documents bucket:", bucketError);
+            setUploadErrorMessage("Failed to initialize storage system. Please contact support.");
+          } else {
+            console.log("Documents bucket created successfully");
+            toast({
+              title: "Storage initialized",
+              description: "Document storage system is ready to use"
+            });
+          }
+        } else {
+          console.log("Documents bucket exists");
+        }
+      } catch (error) {
+        console.error("Storage initialization failed:", error);
+        setUploadErrorMessage("Failed to set up document storage. Please try again later.");
+      }
+    };
+    
+    initializeStorage();
+  }, [toast]);
 
   // Auto-refresh document list periodically
   useEffect(() => {
@@ -41,6 +90,16 @@ export const DocumentManagementPage = () => {
     setTimeout(() => {
       navigate('/', { state: { selectedDocument: documentId } });
     }, 1500);
+  };
+
+  const handleUploadError = (error: Error) => {
+    logger.error('Upload error:', error);
+    setUploadErrorMessage(error.message);
+    toast({
+      variant: "destructive",
+      title: "Upload Failed",
+      description: error.message || "An error occurred during upload"
+    });
   };
   
   // Add cleanup handler
@@ -87,12 +146,28 @@ export const DocumentManagementPage = () => {
             <div className="p-6 border-2 border-dashed border-muted-foreground/25 rounded-lg flex flex-col items-center justify-center">
               <RobustFileUploader
                 onUploadComplete={handleUploadComplete}
+                onError={handleUploadError}
                 buttonText="Click to Upload Document"
                 maxSizeMB={30}
               />
               <p className="text-sm text-muted-foreground mt-4">
                 Upload PDF, Word, Excel or image files (max 30MB)
               </p>
+              
+              {uploadErrorMessage && (
+                <div className="mt-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm">
+                  <p className="font-semibold">Upload Error:</p>
+                  <p>{uploadErrorMessage}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => navigate('/upload-diagnostics')}
+                  >
+                    Run Upload Diagnostics
+                  </Button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

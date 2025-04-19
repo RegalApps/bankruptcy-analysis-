@@ -174,19 +174,4 @@ export const getActiveUploads = () => {
   }));
 };
 
-// Mock functions for analytics that we plan to remove
-export const getUploadAnalytics = () => {
-  return {
-    totalUploads: 0,
-    successRate: 0,
-    averageDuration: 0,
-    byFileType: {},
-    recent: []
-  };
-};
-
-export const getUploadSpeedTrend = () => {
-  return [];
-};
-
 export { useUploadStore };

@@ -1,15 +1,15 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Upload, AlertCircle, FileX } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { ensureStorageBuckets, diagnoseUploadIssues, formatFileSize } from "@/utils/storage/bucketManager";
+import { trackUpload } from "@/utils/documents/uploadTracker";
 
 interface RobustFileUploaderProps {
-  onUploadComplete?: (documentId: string, uploadData: any) => void;
+  onUploadComplete?: (documentId: string, uploadData?: any) => void;
   onError?: (error: Error) => void;
   className?: string;
   maxSizeMB?: number;
@@ -42,9 +42,38 @@ export const RobustFileUploader = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
+  // Ensure storage bucket exists
+  useEffect(() => {
+    const checkBucket = async () => {
+      try {
+        const { data, error } = await supabase.storage.listBuckets();
+        if (error) {
+          console.error("Error checking buckets:", error);
+          return;
+        }
+        
+        const bucketExists = data?.some(bucket => bucket.name === 'documents');
+        if (!bucketExists) {
+          console.log("Documents bucket doesn't exist, will create on upload");
+        }
+      } catch (err) {
+        console.error("Error in bucket check:", err);
+      }
+    };
+    
+    checkBucket();
+  }, []);
+  
   // Utility to extract file extension
   const getFileExtension = (filename: string): string => {
     return filename.split('.').pop()?.toLowerCase() || '';
+  };
+  
+  // Utility to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / 1048576).toFixed(1) + ' MB';
   };
   
   // Utility to check file type validity
@@ -79,54 +108,74 @@ export const RobustFileUploader = ({
     handleUpload(file);
   };
   
+  const createBucketIfNeeded = async (): Promise<boolean> => {
+    try {
+      // Check if bucket exists
+      const { data, error } = await supabase.storage.listBuckets();
+      
+      if (error) {
+        console.error("Error checking buckets:", error);
+        return false;
+      }
+      
+      const bucketExists = data?.some(bucket => bucket.name === 'documents');
+      
+      if (!bucketExists) {
+        console.log("Creating documents bucket...");
+        const { error: createError } = await supabase.storage.createBucket('documents', {
+          public: false,
+          fileSizeLimit: 30 * 1024 * 1024 // 30MB
+        });
+        
+        if (createError) {
+          console.error("Error creating bucket:", createError);
+          return false;
+        }
+        
+        console.log("Bucket created successfully");
+      }
+      
+      return true;
+    } catch (err) {
+      console.error("Error creating bucket:", err);
+      return false;
+    }
+  };
+  
   const handleUpload = async (file: File) => {
     try {
       setUploading(true);
       setProgress(5);
       setError(null);
       
-      // Step 1: Ensure storage bucket exists
-      setProgress(10);
-      const bucketReady = await ensureStorageBuckets();
+      console.log(`Starting upload for file: ${file.name}, size: ${file.size} bytes`);
       
+      // Ensure storage bucket exists
+      const bucketReady = await createBucketIfNeeded();
       if (!bucketReady) {
-        throw new Error("Unable to initialize storage system. Please try again or contact support.");
+        throw new Error("Unable to initialize document storage. Please try again later.");
       }
       
-      // Step 2: Run diagnostics
       setProgress(15);
-      const diagnostics = await diagnoseUploadIssues(file);
       
-      if (!diagnostics.isAuthenticated || !diagnostics.bucketExists || 
-          !diagnostics.hasPermission || !diagnostics.fileSizeValid) {
-        throw new Error(diagnostics.diagnostic);
-      }
-      
-      // Step 3: Generate unique file path
-      setProgress(20);
+      // Create document record first
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError) {
         throw new Error("Authentication required. Please login again.");
       }
       
-      const userId = user?.id || 'anonymous';
-      const timeStamp = new Date().getTime();
-      const safeFileName = file.name.replace(/\s+/g, '_');
-      const filePath = `${userId}/${timeStamp}_${safeFileName}`;
+      setProgress(25);
       
-      console.log(`Uploading file to storage path: ${filePath}`);
-      
-      // Step 4: Create document record first (to track even failed uploads)
-      setProgress(30);
-      const { data: documentData, error: documentError } = await supabase
+      // Create document record in database
+      const { data: document, error: documentError } = await supabase
         .from('documents')
         .insert({
           title: file.name,
-          type: file.type,
+          type: file.type || getFileExtension(file.name),
           size: file.size,
           ai_processing_status: 'uploading',
-          user_id: userId,
+          user_id: user?.id,
           metadata: {
             client_id: clientId,
             client_name: clientName,
@@ -138,65 +187,87 @@ export const RobustFileUploader = ({
         .single();
         
       if (documentError) {
-        throw new Error(`Database error: ${documentError.message}`);
+        console.error("Database error:", documentError);
+        throw new Error(`Failed to create document record: ${documentError.message}`);
       }
       
-      // Step 5: Upload file to storage with abort controller for timeout handling
-      setProgress(40);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      // Set up upload tracking
+      const uploadTracker = trackUpload(document.id, 25);
       
-      try {
-        // Modified to remove the signal property which was causing the TS error
-        const { error: uploadError } = await supabase.storage
-          .from('documents')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-          
-        clearTimeout(timeoutId);
-          
-        if (uploadError) {
-          // Handle storage full or other issues
-          await supabase
-            .from('documents')
-            .update({ ai_processing_status: 'failed' })
-            .eq('id', documentData.id);
-            
-          throw uploadError;
-        }
-      } catch (uploadError) {
-        clearTimeout(timeoutId);
+      // Generate unique file path
+      const fileExt = getFileExtension(file.name);
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = fileName;
+      
+      uploadTracker.updateProgress(40, "Uploading to secure storage...");
+      
+      // Upload file with explicit content type
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type
+        });
+      
+      if (uploadError) {
+        console.error("Storage system error detected, showing detailed error", uploadError);
         
-        if ((uploadError as any)?.name === 'AbortError') {
-          throw new Error("Upload timed out. Please try a smaller file or check your connection.");
+        // Handle specific error cases
+        if (uploadError.message.includes('permission') || uploadError.message.includes('403')) {
+          throw new Error("Permission denied. You don't have access to upload files.");
+        } else if (uploadError.message.includes('size')) {
+          throw new Error(`File size (${formatFileSize(file.size)}) exceeds the maximum allowed size.`);
+        } else if (uploadError.message.includes('network') || uploadError.message.includes('timeout')) {
+          throw new Error("Network error. Please check your connection and try again.");
         }
-        throw uploadError;
+        
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
       
-      // Step 6: Update document record with storage path
-      setProgress(80);
+      uploadTracker.updateProgress(70, "Processing document...");
+      
+      // Update document with storage path
       const { error: updateError } = await supabase
         .from('documents')
         .update({
           storage_path: filePath,
+          url: null, // We'll generate signed URLs on demand
           ai_processing_status: 'processing'
         })
-        .eq('id', documentData.id);
+        .eq('id', document.id);
         
       if (updateError) {
-        throw updateError;
+        throw new Error(`Failed to update document: ${updateError.message}`);
       }
       
-      // Step 7: Complete the upload process
+      uploadTracker.updateProgress(90, "Finalizing upload...");
+      
+      // Create signed URL
+      const { data: urlData } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
+      
+      if (urlData?.signedUrl) {
+        // Update document with signed URL
+        await supabase
+          .from('documents')
+          .update({
+            url: urlData.signedUrl,
+            ai_processing_status: 'completed'
+          })
+          .eq('id', document.id);
+      }
+      
       setProgress(100);
+      uploadTracker.completeUpload("Document uploaded successfully");
+      
       toast.success("Document uploaded successfully", {
-        description: "Your document is now being processed"
+        description: "Your document is now available"
       });
       
       if (onUploadComplete) {
-        onUploadComplete(documentData.id, {
+        onUploadComplete(document.id, {
           title: file.name,
           storagePath: filePath,
           size: file.size
@@ -224,8 +295,7 @@ export const RobustFileUploader = ({
     } finally {
       setTimeout(() => {
         setUploading(false);
-        setProgress(0);
-      }, 1500);
+      }, 1000);
     }
   };
 
@@ -249,7 +319,7 @@ export const RobustFileUploader = ({
           className="hidden"
           onChange={handleFileChange}
           disabled={uploading}
-          accept={acceptedFileTypes.join(',')}
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
         />
         
         {!selectedFile && (

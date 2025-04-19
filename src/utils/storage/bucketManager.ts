@@ -1,6 +1,5 @@
 
 import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
 
 /**
  * Ensures the required storage buckets exist and have proper configuration
