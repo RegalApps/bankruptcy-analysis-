@@ -38,12 +38,12 @@ export interface ClientInsightData {
     priority: "high" | "medium" | "low";
   }[];
   missingDocuments: string[]; // String array type
-  recentActivities?: {
+  recentActivities: { // Changed from optional to required
     id: string;
     type: string;
     description?: string;
-    action: string; // Making action required to match the predictiveData type
-    timestamp: string; // Making timestamp required to match the predictiveData type
+    action: string; 
+    timestamp: string;
     date?: string;
   }[];
   aiSuggestions?: {
