@@ -1,20 +1,38 @@
-
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Download, Clock, ArrowDownToLine, Share2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Users } from "lucide-react";
 
 interface AuditTrailHeaderProps {
   onClientChange: (clientId: number) => void;
 }
 
-export const AuditTrailHeader = ({ onClientChange }: AuditTrailHeaderProps) => {
+export const AuditTrailHeader = ({ onClientChange, condensed = false }: AuditTrailHeaderProps & { condensed?: boolean }) => {
   const clients = [
     { id: 1, name: "John Doe - #CASE12345" },
     { id: 2, name: "Sarah Johnson - #CASE45678" },
     { id: 3, name: "Michael Brown - #CASE98765" }
   ];
-  
+
+  if (condensed) {
+    return (
+      <Select onValueChange={(value) => onClientChange(Number(value))} defaultValue="1">
+        <SelectTrigger className="w-full">
+          <Users className="h-4 w-4 mr-2" />
+          <SelectValue placeholder="Select Client" />
+        </SelectTrigger>
+        <SelectContent>
+          {clients.map(client => (
+            <SelectItem key={client.id} value={client.id.toString()}>
+              {client.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
   return (
     <div className="mb-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -44,7 +62,6 @@ export const AuditTrailHeader = ({ onClientChange }: AuditTrailHeaderProps) => {
       </div>
       
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Client Selection Dropdown */}
         <Select onValueChange={(value) => onClientChange(Number(value))} defaultValue="1">
           <SelectTrigger className="w-full sm:w-[250px]">
             <SelectValue placeholder="Select Client" />
@@ -58,13 +75,11 @@ export const AuditTrailHeader = ({ onClientChange }: AuditTrailHeaderProps) => {
           </SelectContent>
         </Select>
         
-        {/* Search Bar */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Search audit entries..." className="pl-10" />
         </div>
         
-        {/* Export Button - Mobile Only */}
         <Button variant="outline" size="icon" className="md:hidden">
           <ArrowDownToLine className="h-4 w-4" />
         </Button>

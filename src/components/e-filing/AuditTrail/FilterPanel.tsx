@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { FilterOptions } from "./types/filterTypes";
 import { TimeframeFilter } from "./FilterComponents/TimeframeFilter";
@@ -19,7 +18,6 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
     users: new Set<string>()
   });
   
-  // Extract unique values from entries for filtering - memoized
   const { uniqueActionTypes, uniqueUsers, recentActivity } = useMemo(() => {
     return {
       uniqueActionTypes: [...new Set(entries.map(entry => entry.actionType))],
@@ -28,7 +26,6 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
     };
   }, [entries]);
 
-  // Apply filters when they change, but debounced
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       onFilterChange(filters);
@@ -50,14 +47,12 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
     setFilters(newFilters);
   }, []);
   
-  // Calculate active filter count for the badge - memoized
   const activeFilterCount = useMemo(() => 
     (filters.actionTypes.size || 0) + 
     (filters.users.size || 0) + 
     (filters.timeframe !== 'all' ? 1 : 0),
   [filters]);
   
-  // Memoize filter change handlers to prevent recreation on each render
   const handleTimeframeChange = useCallback((timeframe: string) => {
     updateFilters({ ...filters, timeframe });
   }, [filters, updateFilters]);
@@ -85,40 +80,36 @@ export const FilterPanel = ({ entries, onFilterChange }: FilterPanelProps) => {
   }, [filters, updateFilters]);
   
   return (
-    <div className="space-y-4 h-full overflow-y-auto">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Filters</h3>
+    <div className="space-y-4 h-full overflow-y-auto px-2">
+      <div className="flex items-center justify-between pb-2">
+        <h3 className="text-base font-semibold">Filters</h3>
         {activeFilterCount > 0 && (
           <button 
             className="text-xs text-muted-foreground hover:text-foreground"
             onClick={clearAllFilters}
           >
-            Clear All
+            Clear
           </button>
         )}
       </div>
       
-      {/* Time Period Filter */}
       <TimeframeFilter 
         selectedTimeframe={filters.timeframe} 
         onTimeframeChange={handleTimeframeChange}
       />
       
-      {/* Action Types Filter */}
       <ActionTypesFilter 
         actionTypes={uniqueActionTypes}
         selectedActionTypes={filters.actionTypes}
         onActionTypeChange={handleActionTypeChange}
       />
       
-      {/* Users Filter */}
       <UsersFilter 
         users={uniqueUsers}
         selectedUsers={filters.users}
         onUserChange={handleUserChange}
       />
       
-      {/* Recent Activity */}
       <RecentActivityPanel recentActivity={recentActivity} />
     </div>
   );

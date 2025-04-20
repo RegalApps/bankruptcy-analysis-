@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ChevronDown, ChevronRight, FileText, Upload, Trash2, Eye, Edit, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
-// Define action types and their properties
 const actionIcons = {
   upload: <Upload className="h-4 w-4" />,
   view: <Eye className="h-4 w-4" />,
@@ -46,98 +44,60 @@ interface TimelineEntryProps {
   onSelect: (entry: AuditEntry) => void;
 }
 
-export const TimelineEntry = ({ entry, isSelected = false, onSelect }: TimelineEntryProps) => {
+export const TimelineEntry = ({ entry, isSelected = false, onSelect, dense = false }: TimelineEntryProps & { dense?: boolean }) => {
   const [expanded, setExpanded] = useState(false);
-  
-  const toggleExpand = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setExpanded(!expanded);
-  };
-  
-  const handleSelect = () => {
+
+  const handleClick = () => {
     onSelect(entry);
+    setExpanded((e) => !e);
   };
-  
+
   return (
-    <div 
+    <div
       className={cn(
-        "border rounded-lg mb-3 transition-all shadow-sm",
-        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-gray-300 hover:bg-accent/5",
-        expanded && "shadow"
+        "flex items-start gap-2 group cursor-pointer py-2 px-3 border-l-4 transition-all",
+        isSelected ? "border-primary bg-primary/5" : "border-transparent hover:bg-accent/40",
+        dense && "py-1 px-1"
       )}
-      onClick={handleSelect}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      aria-selected={isSelected}
     >
-      <div className={`flex items-center p-3 cursor-pointer ${expanded ? 'border-b' : ''}`}>
-        <button 
-          onClick={toggleExpand}
-          className="mr-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-          aria-label={expanded ? "Collapse details" : "Expand details"}
-        >
-          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </button>
-        
-        <div className={`flex items-center justify-center h-9 w-9 rounded-full mr-3 ${actionColors[entry.actionType]}`}>
-          {actionIcons[entry.actionType]}
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center">
-            <span className="font-medium truncate">{entry.documentName}</span>
-            <Badge variant="outline" className="ml-2 text-xs">{entry.documentType}</Badge>
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
-          </div>
-        </div>
-        
-        <div className="flex items-center ml-4">
-          <Avatar className="h-7 w-7 mr-2 border">
-            <AvatarImage src={entry.user.avatar} />
-            <AvatarFallback className="bg-primary/10 text-primary text-xs">
-              {entry.user.name.split(' ').map(n => n[0]).join('')}
-            </AvatarFallback>
-          </Avatar>
-          <div className="text-sm hidden sm:block">{entry.user.name}</div>
-        </div>
+      <div className={cn(
+        "flex flex-col items-center mr-2 w-6",
+        isSelected && "text-primary"
+      )}>
+        <span className={cn(
+          "rounded-full border-2 box-content border-border bg-white transition-colors w-4 h-4 flex items-center justify-center shadow",
+          isSelected ? "border-primary bg-primary/90" : "bg-accent"
+        )}>{actionIcons[entry.actionType]}</span>
+        <div className="flex-1 w-px min-h-[12px] bg-muted/40 mx-auto" />
       </div>
-      
-      {expanded && (
-        <div className="p-4 bg-accent/5 text-sm rounded-b-lg">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="text-xs uppercase font-semibold text-muted-foreground">User Details</div>
-              <div className="grid grid-cols-[100px_1fr] gap-1">
-                <span className="text-muted-foreground">Role:</span> 
-                <span>{entry.user.role}</span>
-                
-                <span className="text-muted-foreground">IP Address:</span> 
-                <span className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{entry.user.ip}</span>
-                
-                <span className="text-muted-foreground">Location:</span> 
-                <span>{entry.user.location}</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-xs uppercase font-semibold text-muted-foreground">Action Details</div>
-              <div className="grid grid-cols-[100px_1fr] gap-1">
-                <span className="text-muted-foreground">Time:</span>
-                <span title={entry.timestamp.toISOString()}>
-                  {entry.timestamp.toLocaleString()}
-                </span>
-                
-                <span className="text-muted-foreground">Type:</span>
-                <Badge variant="outline" className={cn("capitalize w-fit", actionColors[entry.actionType])}>
-                  {entry.actionType.replace('_', ' ')}
-                </Badge>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="text-xs uppercase font-semibold text-muted-foreground mb-2">Details</div>
-            <div className="p-2 bg-muted rounded-md">{entry.details}</div>
-          </div>
+      <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex items-baseline justify-between pr-2">
+          <div className="font-medium truncate text-sm">{entry.documentName}</div>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDistanceToNow(entry.timestamp, { addSuffix: true })}</span>
         </div>
-      )}
+        <div className="flex items-center gap-x-2">
+          <Badge variant="outline" className="text-xs capitalize">{entry.actionType.replace("_", "")}</Badge>
+          <span className="text-[11px] text-muted-foreground">{entry.user.name}</span>
+          {entry.details && <span className="text-[11px] text-muted-foreground ml-2 truncate">{entry.details}</span>}
+        </div>
+        {expanded && (
+          <div className="ml-1 mt-1 border-l-2 border-primary/30 pl-4 animate-fade-in">
+            <div className="text-xs text-muted-foreground">{entry.details}</div>
+          </div>
+        )}
+      </div>
+      <button
+        className="ml-auto"
+        tabIndex={-1}
+        aria-label={expanded ? "Hide details" : "Show details"}
+        onClick={e => {e.stopPropagation(); setExpanded((v) => !v)}}
+      >
+        {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+      </button>
     </div>
   );
 };
