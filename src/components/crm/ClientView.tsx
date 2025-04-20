@@ -46,6 +46,11 @@ const mockClientData: ClientInsightData = {
       description: "In-person meeting to review documents",
     },
   ],
+  // Add required fields to match the type definition
+  riskLevel: "medium",
+  riskScore: 65,
+  complianceStatus: "compliant",
+  caseProgress: 42,
 };
 
 interface ClientViewProps {

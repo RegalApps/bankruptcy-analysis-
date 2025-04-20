@@ -27,13 +27,10 @@ export interface ClientInsightData {
     type: string;
     description: string;
   }[];
-  riskLevel?: "high" | "medium" | "low";
-  riskScore?: number;
-  complianceStatus?: string;
-  caseProgress?: number;
-  lastContactDate?: string;
-  nextFollowUp?: string;
-  caseStatus?: string;
+  riskLevel: "high" | "medium" | "low"; // Changed to non-optional to match activity hooks type
+  riskScore: number; // Changed to non-optional to match activity hooks type
+  complianceStatus: string; // Changed to non-optional to match activity hooks type
+  caseProgress: number; // Changed to non-optional to match activity hooks type
   assignedTrustee?: string;
   // Add the missing properties
   pendingTasks?: {
@@ -64,6 +61,9 @@ export interface ClientInsightData {
     date: string;
     type: string;
   }[];
+  lastContactDate?: string;
+  nextFollowUp?: string;
+  caseStatus?: string;
 }
 
 export interface ClientInfo {
