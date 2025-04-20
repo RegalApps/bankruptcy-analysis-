@@ -121,7 +121,7 @@ export const useClientInsights = (clientId: string) => {
             { name: "Contract Negotiation", completed: false },
             { name: "Deal Closed", completed: false }
           ],
-          // Adding upcomingDeadlines field with proper structure
+          // Adding upcomingDeadlines field with proper structure and required priority
           upcomingDeadlines: [
             {
               id: "1",

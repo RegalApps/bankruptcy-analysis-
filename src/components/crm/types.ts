@@ -57,7 +57,7 @@ export interface ClientInsightData {
     id: string;
     title: string;
     date: string;
-    priority?: "high" | "medium" | "low";
+    priority: "high" | "medium" | "low"; // Make priority required
   }[];
   lastContactDate?: string;
   nextFollowUp?: string;
