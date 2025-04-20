@@ -88,8 +88,9 @@ export const useClientInsights = (clientId: string) => {
           ],
           // New fields for our enhanced client profile
           clientProfile: {
-            email: "client@example.com",
-            phone: "(555) 123-4567",
+            name: "John Doe",
+            email: "client@example.com", // Now required
+            phone: "(555) 123-4567", // Now required
             website: "www.clientwebsite.com",
             company: "Acme Corporation",
             role: "Chief Financial Officer",

@@ -3,8 +3,8 @@ export interface ClientInsightData {
   id?: string;
   clientProfile?: {
     name?: string;
-    email?: string;
-    phone?: string;
+    email: string; // Make email required to match the other interface
+    phone: string; // Make phone required to match the other interface
     company?: string;
     role?: string;
     website?: string;
@@ -46,7 +46,7 @@ export interface ClientInsightData {
     timestamp: string;
     date?: string;
   }[];
-  aiSuggestions: { // Changed from optional to required
+  aiSuggestions: { // Required field
     id: string;
     text?: string;
     message: string; // Make message required

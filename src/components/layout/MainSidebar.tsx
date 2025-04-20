@@ -28,7 +28,7 @@ export const MainSidebar = () => {
     if (path === "/") {
       return location.pathname === "/" || location.pathname === "/index";
     }
-    return location.pathname === path;
+    return location.pathname.startsWith(path);
   };
 
   const handleNavigation = (path: string) => {

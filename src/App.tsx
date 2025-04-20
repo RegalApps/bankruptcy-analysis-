@@ -15,6 +15,7 @@ import DocumentViewerPage from "./pages/DocumentViewerPage";
 import ClientViewerPage from "./pages/ClientViewerPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import ConBrandingPage from "./pages/ConBrandingPage";
 import "./App.css";
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/support" element={<Support />} />
+      <Route path="/SAFA" element={<ConBrandingPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
