@@ -38,7 +38,7 @@ export interface ClientInsightData {
     priority: "high" | "medium" | "low";
   }[];
   missingDocuments: string[]; // String array type
-  recentActivities: { // Changed from optional to required
+  recentActivities: { // Required field
     id: string;
     type: string;
     description?: string;
@@ -46,7 +46,7 @@ export interface ClientInsightData {
     timestamp: string;
     date?: string;
   }[];
-  aiSuggestions?: {
+  aiSuggestions: { // Changed from optional to required
     id: string;
     text?: string;
     message: string; // Make message required
