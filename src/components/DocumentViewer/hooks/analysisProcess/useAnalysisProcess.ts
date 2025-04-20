@@ -28,13 +28,14 @@ export const useAnalysisProcess = ({
       });
       
       // Step 2: Document Classification & Understanding
-      const { documentText, isForm76 } = await documentClassification(documentRecord, { 
+      const { documentText, isForm76, isForm47 } = await documentClassification(documentRecord, { 
         setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
       });
       
       // Enhanced context with form type information
       const enhancedContext: AnalysisProcessContext = { 
-        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete, isForm76 
+        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete, 
+        isForm76, isForm47 
       };
       
       // Step 3: Data Extraction & Content Processing
