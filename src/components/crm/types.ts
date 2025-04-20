@@ -1,3 +1,4 @@
+
 export interface ClientInsightData {
   id?: string;
   clientProfile?: {
@@ -36,13 +37,13 @@ export interface ClientInsightData {
     title: string;
     priority: "high" | "medium" | "low";
   }[];
-  missingDocuments: string[]; // Modified to be string[] to match the activity/hooks/predictiveData/types
+  missingDocuments: string[]; // String array type
   recentActivities?: {
     id: string;
     type: string;
     description?: string;
-    action?: string;
-    timestamp?: string;
+    action: string; // Making action required to match the predictiveData type
+    timestamp: string; // Making timestamp required to match the predictiveData type
     date?: string;
   }[];
   aiSuggestions?: {

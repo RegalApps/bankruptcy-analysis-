@@ -60,6 +60,20 @@ const mockClientData: ClientInsightData = {
     "Tax return",
     "Credit report"
   ],
+  recentActivities: [
+    { 
+      id: "1", 
+      type: "email", 
+      action: "Sent initial proposal", 
+      timestamp: "2023-06-15T10:30:00Z" 
+    },
+    { 
+      id: "2", 
+      type: "call", 
+      action: "Follow-up call", 
+      timestamp: "2023-06-16T14:45:00Z" 
+    }
+  ],
   upcomingDeadlines: [
     { id: "1", title: "Submit documents", date: "2023-07-15", priority: "high" },
     { id: "2", title: "Review meeting", date: "2023-07-20", priority: "medium" }
