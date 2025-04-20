@@ -49,7 +49,7 @@ const mockClientData: ClientInsightData = {
   // Add required fields to match the type definition
   riskLevel: "medium",
   riskScore: 65,
-  complianceStatus: "compliant",
+  complianceStatus: "compliant", // This is now of the correct type
   caseProgress: 42,
 };
 

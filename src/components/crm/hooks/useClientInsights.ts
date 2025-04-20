@@ -28,8 +28,8 @@ export const useClientInsights = (clientId: string) => {
             { id: "2", title: "Schedule follow-up call", priority: "medium" },
           ],
           missingDocuments: [
-            "Bank Statement",
-            "Tax Returns",
+            { id: "1", name: "Bank Statement", requiredBy: "2023-07-01" },
+            { id: "2", name: "Tax Returns", requiredBy: "2023-07-15" },
           ],
           recentActivities: [
             { 
@@ -125,19 +125,19 @@ export const useClientInsights = (clientId: string) => {
               id: "1",
               title: "Submit Financial Documents",
               date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString().split('T')[0],
-              priority: "high"
+              type: "document"
             },
             {
               id: "2",
               title: "Compliance Review Meeting",
               date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString().split('T')[0],
-              priority: "medium"
+              type: "meeting"
             },
             {
               id: "3",
               title: "Contract Signing",
               date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString().split('T')[0],
-              priority: "low"
+              type: "document"
             }
           ]
         };

@@ -29,14 +29,13 @@ export interface ClientInsightData {
   }[];
   riskLevel: "high" | "medium" | "low"; // Changed to non-optional to match activity hooks type
   riskScore: number; // Changed to non-optional to match activity hooks type
-  complianceStatus: string; // Changed to non-optional to match activity hooks type
+  complianceStatus: 'compliant' | 'issues' | 'critical'; // Updated to use specific union type
   caseProgress: number; // Changed to non-optional to match activity hooks type
   assignedTrustee?: string;
   // Add the missing properties
   pendingTasks?: {
     id: string;
     title: string;
-    dueDate: string;
     priority: string;
   }[];
   missingDocuments?: {
