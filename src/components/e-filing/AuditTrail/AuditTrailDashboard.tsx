@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { AuditTrailHeader } from "./AuditTrailHeader";
 import { Timeline } from "./Timeline";
@@ -213,7 +214,7 @@ export const AuditTrailDashboard = () => {
         </div>
 
         <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-          <SheetContent side="right" className="w-[380px] p-0" closeIcon>
+          <SheetContent side="right" className="w-[380px] p-0">
             <div className="p-5">
               <FilterPanel entries={allEntries} onFilterChange={handleFilterChange} />
             </div>
