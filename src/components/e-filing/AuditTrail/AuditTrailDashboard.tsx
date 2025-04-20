@@ -7,6 +7,7 @@ import { FilterPanel } from "./FilterPanel";
 import { FilterOptions } from "./types/filterTypes";
 import { AuditEntry } from "./TimelineEntry";
 import { isWithinTimeframe } from "@/utils/validation";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 // Generate mock audit data - Memoized to prevent regeneration on re-renders
 const generateMockData = (): AuditEntry[] => {
@@ -175,28 +176,40 @@ export const AuditTrailDashboard = () => {
     <div className="flex flex-col h-full container max-w-screen-2xl">
       <AuditTrailHeader onClientChange={handleClientChange} />
       
-      <div className="flex flex-1 gap-4 py-4 h-[calc(100vh-10rem)] overflow-hidden">
-        {/* Left panel - Timeline */}
-        <div className="w-1/3 border rounded-md p-4">
-          <Timeline 
-            entries={filteredEntries} 
-            onEntrySelect={handleEntrySelect}
-            selectedEntryId={selectedEntry?.id}
-          />
-        </div>
-        
-        {/* Center panel - Entry details */}
-        <div className="w-1/3 border rounded-md p-4">
-          <DetailPanel entry={selectedEntry} />
-        </div>
-        
-        {/* Right panel - Filters and widgets */}
-        <div className="w-1/3 border rounded-md p-4">
-          <FilterPanel 
-            entries={allEntries} 
-            onFilterChange={handleFilterChange} 
-          />
-        </div>
+      <div className="flex-1 py-4 h-[calc(100vh-10rem)] overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="rounded-lg border bg-card shadow-sm">
+          {/* Left panel - Timeline */}
+          <ResizablePanel defaultSize={30} minSize={25}>
+            <div className="p-4 h-full">
+              <Timeline 
+                entries={filteredEntries} 
+                onEntrySelect={handleEntrySelect}
+                selectedEntryId={selectedEntry?.id}
+              />
+            </div>
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Center panel - Entry details */}
+          <ResizablePanel defaultSize={40} minSize={30}>
+            <div className="p-4 h-full border-l">
+              <DetailPanel entry={selectedEntry} />
+            </div>
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Right panel - Filters and widgets */}
+          <ResizablePanel defaultSize={30} minSize={25}>
+            <div className="p-4 h-full border-l">
+              <FilterPanel 
+                entries={allEntries} 
+                onFilterChange={handleFilterChange} 
+              />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );
