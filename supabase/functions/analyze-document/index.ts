@@ -1,4 +1,4 @@
-
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -46,7 +46,7 @@ serve(async (req) => {
       title = '',
       formType = '',
       isExcelFile = false
-    } = await req.json() as AnalysisRequest;
+    } = await req.json();
 
     console.log(`Analysis request received for document ID: ${documentId}, form type: ${formType}, isExcelFile: ${isExcelFile}`);
 
@@ -101,172 +101,153 @@ serve(async (req) => {
       });
     }
 
-    // Prepare analysis results for non-Excel files
-    const result = {
-      structureValid: true,
-      requiredFieldsPresent: true,
-      signaturesValid: true,
-      risks: [],
-      extracted_info: {
-        clientName: "",
-        formNumber: formType === 'form-76' ? '76' : (formType === 'form-47' ? '47' : (title.match(/Form\s+(\d+)/i)?.[1] || '')),
-        formType: formType || 'unknown',
-        trusteeName: "",
-        dateSigned: "",
-        summary: "Document successfully processed"
+    // --------- 1. Enhanced form field extraction ---------
+    // Extract form fields for specialized OpenAI prompt
+    let formFields: any = {};
+    if (documentText) {
+      // Use same logic as extractFormFields (JS duplicated here for Deno)
+      const getField = (regex: RegExp) => {
+        const match = documentText.match(regex);
+        return match ? match[1].trim() : "";
+      };
+      let detectedFormNumber = "";
+      if (/form[\s\-]*31\b/i.test(documentText) || /\bproof of claim\b/i.test(documentText)) {
+        detectedFormNumber = "31";
+      } else if (/form[\s\-]*47\b/i.test(documentText) || /\bconsumer proposal\b/i.test(documentText)) {
+        detectedFormNumber = "47";
       }
-    };
-    
-    // Extract form number from title if available
-    if (title && !result.extracted_info.formNumber) {
-      const formMatch = title.match(/Form\s+(\d+)/i) || title.match(/F(\d+)/i);
-      if (formMatch) {
-        result.extracted_info.formNumber = formMatch[1];
-      }
-    }
-    
-    // Check for consumer proposal patterns in title or content
-    const isConsumerProposal = title.toLowerCase().includes('consumer proposal') || 
-                               (documentText && documentText.toLowerCase().includes('consumer proposal'));
-    
-    if (isConsumerProposal && !result.extracted_info.formNumber) {
-      result.extracted_info.formNumber = '47';
-      result.extracted_info.formType = 'form-47';
-    }
-    
-    // For Form 76, add specific compliance details
-    if (formType === 'form-76' || title.toLowerCase().includes('form 76')) {
-      result.extracted_info.formType = 'form-76';
-      result.extracted_info.formNumber = '76';
-      result.extracted_info.summary = "Statement of Affairs (Form 76) processed successfully";
-      result.extracted_info.clientName = "Reginald Dickerson";
-      result.extracted_info.trusteeName = "Gradey Henderson";
-      result.extracted_info.dateSigned = "February 22, 2025";
-      
-      // Add sample risks for Form 76
-      result.risks = [
-        {
-          type: "compliance",
-          description: "Missing financial details",
-          severity: "high",
-          regulation: "BIA Section 158(d)",
-          impact: "Form incomplete, cannot be processed",
-          requiredAction: "Ensure the form includes full asset & liability disclosure",
-          solution: "Complete all financial sections of Form 76",
-          deadline: "Before submission"
-        },
-        {
-          type: "legal",
-          description: "No debtor signature",
-          severity: "high",
-          regulation: "BIA Section 66",
-          impact: "Document may be invalid",
-          requiredAction: "Obtain official debtor signature",
-          solution: "Have client sign required fields",
-          deadline: "Immediately"
-        },
-        {
-          type: "compliance",
-          description: "No trustee credentials",
-          severity: "medium",
-          regulation: "OSB Directive 13R",
-          impact: "Cannot verify trustee authority",
-          requiredAction: "Verify trustee registration with OSB",
-          solution: "Add trustee license number to form",
-          deadline: "Before submission"
-        },
-        {
-          type: "document",
-          description: "Missing court reference",
-          severity: "medium",
-          regulation: "BIA Procedure",
-          impact: "Difficult to track in system",
-          requiredAction: "Add court file number",
-          solution: "Include case/file number in header",
-          deadline: "Immediately"
-        }
-      ];
-    }
-    
-    // For Form 47 (Consumer Proposal), add specific compliance details
-    if (formType === 'form-47' || result.extracted_info.formNumber === '47' || 
-        title.toLowerCase().includes('form 47') || isConsumerProposal) {
-      result.extracted_info.formType = 'form-47';
-      result.extracted_info.formNumber = '47';
-      result.extracted_info.summary = "Consumer Proposal (Form 47) processed successfully";
-      result.extracted_info.clientName = "Josh Hart";
-      result.extracted_info.administratorName = "Tom Francis";
-      result.extracted_info.filingDate = "February 1, 2025";
-      result.extracted_info.submissionDeadline = "March 3, 2025";
-      result.extracted_info.documentStatus = "Draft - Pending Review";
-      
-      // Add risks for Form 47 Consumer Proposal
-      result.risks = [
-        {
-          type: "compliance",
-          description: "Secured Creditors Payment Terms Missing",
-          severity: "high",
-          regulation: "BIA Section 66.13(2)(c)",
-          impact: "Non-compliance with BIA Sec. 66.13(2)(c)",
-          requiredAction: "Specify how secured debts will be paid",
-          solution: "Add detailed payment terms for secured creditors",
-          deadline: "Immediately"
-        },
-        {
-          type: "compliance",
-          description: "Unsecured Creditors Payment Plan Not Provided",
-          severity: "high",
-          regulation: "BIA Section 66.14",
-          impact: "Proposal will be invalid under BIA Sec. 66.14",
-          requiredAction: "Add a structured payment plan for unsecured creditors",
-          solution: "Create detailed payment schedule for unsecured creditors",
-          deadline: "Immediately"
-        },
-        {
-          type: "compliance",
-          description: "No Dividend Distribution Schedule",
-          severity: "high",
-          regulation: "BIA Section 66.15",
-          impact: "Fails to meet regulatory distribution rules",
-          requiredAction: "Define how funds will be distributed among creditors",
-          solution: "Add dividend distribution schedule with percentages and timeline",
-          deadline: "Immediately"
-        },
-        {
-          type: "compliance",
-          description: "Administrator Fees & Expenses Not Specified",
-          severity: "medium",
-          regulation: "OSB Directive",
-          impact: "Can delay approval from the Office of the Superintendent of Bankruptcy (OSB)",
-          requiredAction: "Detail administrator fees to meet regulatory transparency",
-          solution: "Specify administrator fees and expenses with breakdown",
-          deadline: "3 days"
-        },
-        {
-          type: "legal",
-          description: "Proposal Not Signed by Witness",
-          severity: "medium",
-          regulation: "BIA Requirement",
-          impact: "May cause legal delays",
-          requiredAction: "Ensure a witness signs before submission",
-          solution: "Obtain witness signature on proposal document",
-          deadline: "3 days"
-        },
-        {
-          type: "compliance",
-          description: "No Additional Terms Specified",
-          severity: "low",
-          regulation: "BIA Best Practice",
-          impact: "Could be required for unique creditor terms",
-          requiredAction: "Add custom clauses if applicable",
-          solution: "Review if additional terms are needed for special cases",
-          deadline: "5 days"
-        }
-      ];
+      formFields = {
+        formNumber: detectedFormNumber || getField(/form\s*(?:no\.?|number)?[\s:]*([\w-]+)/i),
+        clientName: getField(/(?:debtor|client)(?:'s)?\s*name[\s:]*([\w\s.-]+)/i),
+        claimantName: getField(/(?:claimant|creditor)\s*name[\s:]*([\w\s.-]+)/i),
+        trusteeName: getField(/(?:trustee|lit)[\s:]*([\w\s.-]+)/i),
+        dateSigned: getField(/(?:date|signed)[\s:]*([\d\/.-]+)/i),
+      };
     }
 
-    // If we have a documentId, save the analysis to the database
-    // Race this against the timeout
+    // --------- 2. Specialized OpenAI prompt per form type ---------
+    let openAIPrompt = "";
+    if (
+      formFields.formNumber === "47" ||
+      formType === "form-47" ||
+      /form[\s-]*47\b/i.test(title) ||
+      /consumer proposal/i.test(title)
+    ) {
+      openAIPrompt =
+`You are a professional document analyst for Canadian insolvency forms.
+
+FORM: 47 - Consumer Proposal
+
+Please extract the following details:
+
+- **Client/Consumer Debtor Name**
+- **Administrator (Trustee) Name and Address**
+- **Filing Date, Submission Deadline, First Payment Date**
+- **Secured Creditors Payment Terms**
+- **Preferred Claims Payment Terms**
+- **Administrator Fees and Expenses**
+- **Unsecured Creditors Payment Schedule**
+- **Dividend Distribution Schedule**
+- **Signatures (debtor, administrator, witness - include detected names/roles and if missing)**
+- **Summary of document purpose (1-2 sentences, plain English)**
+- **ALL regulatory deadlines and their status (met/missing/approaching)**
+
+Also, perform a detailed compliance & risk review as follows:
+
+- Identify and list any *missing fields, signature issues, deadline risks, payment discrepancies, incomplete schedules, or regulatory problems*.
+- For each risk, include: **type (compliance/legal/etc), severity (high/med/low), BIA/OSB reference, impact, required action, recommended solution, and a deadline if relevant.**
+
+Return a structured JSON result:
+{
+  "summary":"",
+  "extracted_info": { ... },
+  "risk_assessment": [ ... ],
+  "signatures": [
+    { "role":"debtor", "present":true, ... }
+  ]
+}`;
+    }
+    else if (
+      formFields.formNumber === "31" ||
+      formType === "form-31" ||
+      /form[\s-]*31\b/i.test(title) ||
+      /proof of claim/i.test(title)
+    ) {
+      openAIPrompt =
+`You are a Canadian insolvency and bankruptcy document analysis assistant.
+
+FORM: 31 - Proof of Claim
+
+Extract these details:
+
+- **Creditor/Claimant Name**
+- **Debtor Name**
+- **Amount of Claim, Classification (secured/unsecured/preferred)**
+- **Execution Date and Location**
+- **Signature of Creditor and Witness (are they present?)**
+- **Bankruptcy estate/case number**
+
+Provide a concise summary of claim details.
+
+Perform a compliance & legal risk check:
+
+- Check for missing or incorrectly completed sections.
+- Check statutory references (e.g., BIA Section 124/125), signature requirements and deadlines.
+
+List all detected risks/problems as a JSON array including for each: type, section, severity, impact, solution.
+
+Return a structured JSON like:
+{
+  "summary":"",
+  "form_fields": {},
+  "risk_assessment": []
+}`;
+    }
+    else {
+      openAIPrompt =
+`You are an expert in Canadian bankruptcy and insolvency document analysis. Please extract the client detail, summary, and compliance risk assessment for this form.`;
+    }
+
+    // --------- 3. Send tailored prompt to OpenAI ---------
+    // In production, ensure you have openAIApiKey wired/available here
+    let openAIResponseContent = "";
+    if (documentText) {
+      const fetchAI = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: openAIPrompt },
+            { role: 'user', content: documentText }
+          ],
+          temperature: 0.2
+        }),
+      });
+      const aiJSON = await fetchAI.json();
+      openAIResponseContent = aiJSON.choices?.[0]?.message?.content || "";
+    }
+
+    // --------- 4. Parse AI result (as best as possible) and save ---------
+    let aiData = {};
+    try {
+      aiData = openAIResponseContent ? JSON.parse(openAIResponseContent) : {};
+    } catch (err) {
+      aiData = { summary: openAIResponseContent, error: "Could not parse JSON; original OpenAI response provided." };
+    }
+
+    const result = {
+      ...(
+        typeof aiData === "object" && aiData !== null
+        ? aiData
+        : { summary: openAIResponseContent }
+      ),
+      extracted_fields: formFields
+    };
+
     if (documentId) {
       await Promise.race([
         (async () => {
@@ -392,6 +373,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
+
   } catch (error) {
     console.error('Error in analyze-document function:', error);
     

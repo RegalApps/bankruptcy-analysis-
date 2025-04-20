@@ -1,4 +1,3 @@
-
 import { FINANCIAL_TERMS } from './constants';
 
 interface FormField {
@@ -9,9 +8,12 @@ interface FormField {
 
 export interface FormFields {
   formNumber?: string;
+  formType?: string;
   clientName?: string;
   trusteeName?: string;
+  claimantName?: string;
   dateSigned?: string;
+  proposalType?: string;
   [key: string]: string | undefined;
 }
 
@@ -35,15 +37,16 @@ export const identifyFormType = (text: string): string => {
 export const extractFormFields = (text: string): FormFields => {
   const fields: FormFields = {};
   
-  // Common field patterns
+  // Add robust form type, number, and section detection for Form 47 & Form 31
   const patterns = {
     formNumber: /form\s*(?:no\.?|number)?[\s:]*([\w-]+)/i,
     clientName: /(?:debtor|client)(?:'s)?\s*name[\s:]*([\w\s.-]+)/i,
     trusteeName: /(?:trustee|lit)[\s:]*([\w\s.-]+)/i,
+    claimantName: /(?:claimant|creditor)\s*name[\s:]*([\w\s.-]+)/i,
     dateSigned: /(?:date|signed)(?:[\s:]*)([\d\/.-]+)/i,
+    proposalType: /(consumer proposal|division[i1] proposal)/i
   };
 
-  // Extract fields using patterns
   for (const [field, pattern] of Object.entries(patterns)) {
     const match = text.match(pattern);
     if (match && match[1]) {
@@ -51,15 +54,19 @@ export const extractFormFields = (text: string): FormFields => {
     }
   }
 
-  // Additional processing for financial terms
-  const foundTerms = FINANCIAL_TERMS.filter(term => 
-    new RegExp(`\\b${term}\\b`, 'i').test(text)
-  );
-
-  if (foundTerms.length > 0) {
-    console.log('Found financial terms:', foundTerms);
+  // New: detect Form 31 (Proof of Claim)
+  if (/form[\s-]*31\b/i.test(text) || /\bproof of claim\b/i.test(text)) {
+    fields.formNumber = "31";
+    fields.formType = "proof-of-claim";
   }
 
+  // Enhance detection for Form 47 Consumer Proposal
+  if (/form[\s-]*47\b/i.test(text) || /\bconsumer proposal\b/i.test(text)) {
+    fields.formNumber = "47";
+    fields.formType = "consumer-proposal";
+  }
+
+  // Add more heuristics or fields as needed
   return fields;
 };
 
