@@ -140,19 +140,52 @@ export const isForm47 = (documentRecord: DocumentRecord, documentText: string): 
     cleanText.includes(section.toLowerCase())
   );
   
+  // Method 5: Check for Form 47 specific legal references
+  const legalReferences = [
+    'paragraph 66.13(2)(c)',
+    'section 66.14',
+    'section 66.15',
+    'division ii of part iii',
+    'bia s. 66',
+    'directive 6r3'
+  ];
+  
+  const hasLegalReferences = legalReferences.some(reference => 
+    cleanText.includes(reference.toLowerCase())
+  );
+  
+  // Method 6: Check for Form 47 structural indicators
+  const structuralIndicators = [
+    'statement of affairs',
+    'income and expense',
+    'surplus income',
+    'osb threshold',
+    'administrator fees',
+    'proposal payment',
+    'sworn declaration'
+  ];
+  
+  const hasStructuralIndicators = structuralIndicators.some(indicator => 
+    cleanText.includes(indicator.toLowerCase())
+  );
+  
   // Log all detection results for debugging
   console.log({
     titleIndicatesForm47,
     metadataIndicatesForm47,
     textIndicatesForm47,
-    hasForm47Sections
+    hasForm47Sections,
+    hasLegalReferences,
+    hasStructuralIndicators
   });
   
   // Document is Form 47 if any method indicates it is
   const result = titleIndicatesForm47 || 
                 metadataIndicatesForm47 || 
                 textIndicatesForm47 || 
-                hasForm47Sections;
+                hasForm47Sections ||
+                hasLegalReferences ||
+                hasStructuralIndicators;
   
   console.log(`Form 47 detection result: ${result}`);
   return result;

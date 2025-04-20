@@ -1,3 +1,4 @@
+
 /**
  * Creates a detailed risk assessment for Form 47 Consumer Proposal documents
  * @param documentId The document ID to create the risk assessment for
@@ -79,6 +80,46 @@ export const createForm47RiskAssessment = async (documentId: string): Promise<vo
         requiredAction: "Add custom clauses if applicable",
         solution: "Review if additional terms are needed for special cases",
         deadline: "5 days"
+      },
+      {
+        type: "financial",
+        description: "Surplus Income Calculation Missing",
+        severity: "high",
+        regulation: "BIA Directive No. 6R3",
+        impact: "Cannot determine if proposal payments meet minimum requirements",
+        requiredAction: "Calculate surplus income according to Directive 6R3",
+        solution: "Add detailed surplus income calculation with OSB thresholds",
+        deadline: "Immediate"
+      },
+      {
+        type: "documentation",
+        description: "Missing Income & Expense Documentation",
+        severity: "medium",
+        regulation: "Form 47 Requirements",
+        impact: "Cannot verify financial disclosure accuracy",
+        requiredAction: "Attach supporting documents for income/expenses",
+        solution: "Include pay stubs, bank statements, and expense receipts",
+        deadline: "5 days"
+      },
+      {
+        type: "compliance",
+        description: "Incomplete Statement of Affairs",
+        severity: "high",
+        regulation: "BIA s. 66.13",
+        impact: "Proposal may be rejected for incomplete disclosure",
+        requiredAction: "Complete all sections of the Statement of Affairs",
+        solution: "Review and complete all asset and liability sections",
+        deadline: "Immediate"
+      },
+      {
+        type: "legal",
+        description: "No Sworn Declaration",
+        severity: "high",
+        regulation: "BIA Rule 47",
+        impact: "Document lacks legal validity without oath",
+        requiredAction: "Ensure form is properly sworn",
+        solution: "Have document sworn before trustee or commissioner",
+        deadline: "Immediate"
       }
     ];
 
@@ -114,8 +155,17 @@ export const createForm47RiskAssessment = async (documentId: string): Promise<vo
             'BIA Section 66.13(2)(c)', 
             'BIA Section 66.14', 
             'BIA Section 66.15', 
-            'OSB Directive on Consumer Proposals'
+            'OSB Directive on Consumer Proposals',
+            'Directive No. 6R3 - Surplus Income',
+            'Rule 47 - Prescribed Forms'
           ]
+        },
+        form47_specific_analysis: {
+          surplus_income_status: 'requires_calculation',
+          proposal_payment_adequacy: 'requires_verification',
+          assets_vs_proposal_value: 'requires_comparison',
+          oath_status: 'requires_verification',
+          supporting_documents: 'requires_review'
         }
       };
       
@@ -142,8 +192,17 @@ export const createForm47RiskAssessment = async (documentId: string): Promise<vo
                 'BIA Section 66.13(2)(c)', 
                 'BIA Section 66.14', 
                 'BIA Section 66.15', 
-                'OSB Directive on Consumer Proposals'
+                'OSB Directive on Consumer Proposals',
+                'Directive No. 6R3 - Surplus Income',
+                'Rule 47 - Prescribed Forms'
               ]
+            },
+            form47_specific_analysis: {
+              surplus_income_status: 'requires_calculation',
+              proposal_payment_adequacy: 'requires_verification',
+              assets_vs_proposal_value: 'requires_comparison',
+              oath_status: 'requires_verification',
+              supporting_documents: 'requires_review'
             }
           }
         });
@@ -166,13 +225,31 @@ export const createForm47RiskAssessment = async (documentId: string): Promise<vo
           signaturesRequired: ['debtor', 'administrator', 'witness'],
           signedParties: [],
           signatureStatus: 'pending',
-          legislation: "Paragraph 66.13(2)(c) of the Bankruptcy and Insolvency Act"
+          legislation: "Paragraph 66.13(2)(c) of the Bankruptcy and Insolvency Act",
+          form_specific_details: {
+            proposal_type: "Consumer Proposal",
+            surplus_income: "Calculation Required",
+            family_size: "Unknown", 
+            monthly_payment: "To Be Determined",
+            proposal_duration: "36 months", // Default
+            proposal_total_value: "To Be Calculated"
+          }
         },
         deadlines: [
           {
             title: "Consumer Proposal Submission Deadline",
             dueDate: new Date("March 3, 2025").toISOString(),
             description: "Final deadline for submitting Form 47 Consumer Proposal"
+          },
+          {
+            title: "Surplus Income Calculation Deadline",
+            dueDate: new Date(new Date().getTime() + 7*24*60*60*1000).toISOString(), // 7 days from now
+            description: "Complete Directive 6R3 surplus income calculation"
+          },
+          {
+            title: "Meeting of Creditors",
+            dueDate: new Date(new Date().getTime() + 45*24*60*60*1000).toISOString(), // 45 days from now
+            description: "Schedule meeting of creditors to vote on proposal (within 45 days of filing)"
           }
         ]
       })

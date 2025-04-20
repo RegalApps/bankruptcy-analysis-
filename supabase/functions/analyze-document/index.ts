@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
@@ -22,16 +21,13 @@ interface AnalysisRequest {
   isExcelFile?: boolean;
 }
 
-// Add timeout to prevent function from running indefinitely
 const FUNCTION_TIMEOUT = 25000; // 25 seconds - edge functions have a 30s limit
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Use a timer to enforce function timeout
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => reject(new Error('Function timed out after 25 seconds')), FUNCTION_TIMEOUT);
   });
@@ -51,16 +47,13 @@ serve(async (req) => {
 
     console.log(`Analysis request received for document ID: ${documentId}, form type: ${formType}, isExcelFile: ${isExcelFile}`);
 
-    // If no document ID or text, return error
     if (!documentId && !documentText) {
       throw new Error('Either documentId or documentText must be provided');
     }
     
-    // Fast path for Excel files - just extract client name and metadata, no full analysis
     if (isExcelFile && documentId) {
       console.log("Processing Excel file with simplified workflow");
       
-      // Extract client name from filename if possible
       let clientName = "Unknown Client";
       if (title) {
         const nameMatch = title.match(/(?:form[- ]?76[- ]?|)([a-z\s]+)(?:\.|$)/i);
@@ -70,7 +63,6 @@ serve(async (req) => {
         }
       }
       
-      // Update document with basic metadata - fast operation
       await supabase
         .from('documents')
         .update({ 
@@ -102,17 +94,13 @@ serve(async (req) => {
       });
     }
 
-    // --------- 1. Enhanced form field extraction ---------
-    // Extract form fields for specialized OpenAI prompt
     let formFields: any = {};
     if (documentText) {
-      // Use same logic as extractFormFields (JS duplicated here for Deno)
       const getField = (regex: RegExp) => {
         const match = documentText.match(regex);
         return match ? match[1].trim() : "";
       };
       
-      // Detect form type
       let detectedFormNumber = "";
       if (/form[\s\-]*31\b/i.test(documentText) || /\bproof of claim\b/i.test(documentText)) {
         detectedFormNumber = "31";
@@ -120,7 +108,6 @@ serve(async (req) => {
         detectedFormNumber = "47";
       }
       
-      // Extract common fields
       formFields = {
         formNumber: detectedFormNumber || getField(/form\s*(?:no\.?|number)?[\s:]*([\w-]+)/i),
         clientName: getField(/(?:debtor|client)(?:'s)?\s*name[\s:]*([\w\s.-]+)/i),
@@ -132,12 +119,10 @@ serve(async (req) => {
         courtFileNumber: getField(/court\s+file\s+(?:no|number)[\s:.]*([a-z0-9-]+)/i),
       };
       
-      // Form 31 specific fields
       if (detectedFormNumber === "31") {
         formFields.securityDescription = getField(/security\s+(?:held|described|valued)[\s:]*([^.]+)/i);
         formFields.claimType = getField(/claim(?:s|ed)?\s+as\s+(?:an?\s+)?(unsecured|secured|preferred|priority|wage earner|farmer|fisherman|director)/i);
         
-        // Try to determine which checkbox (A-G) is selected
         const checkboxPattern = /\b[☑✓✗]?\s*([a-g])(?:\s*\.|\s+[a-z]+)/i;
         const checkboxMatch = documentText.match(checkboxPattern);
         if (checkboxMatch && checkboxMatch[1]) {
@@ -146,7 +131,6 @@ serve(async (req) => {
       }
     }
 
-    // --------- 2. Specialized OpenAI prompt per form type ---------
     let openAIPrompt = "";
     if (
       formFields.formNumber === "47" ||
@@ -157,35 +141,115 @@ serve(async (req) => {
       openAIPrompt =
 `You are a professional document analyst for Canadian insolvency forms.
 
-FORM: 47 - Consumer Proposal
+FORM: 47 - Consumer Proposal (Statement of Affairs)
 
-Please extract the following details:
+Please extract the following critical details from this document according to the Bankruptcy and Insolvency Act (BIA):
 
-- **Client/Consumer Debtor Name**
-- **Administrator (Trustee) Name and Address**
-- **Filing Date, Submission Deadline, First Payment Date**
-- **Secured Creditors Payment Terms**
-- **Preferred Claims Payment Terms**
-- **Administrator Fees and Expenses**
-- **Unsecured Creditors Payment Schedule**
-- **Dividend Distribution Schedule**
-- **Signatures (debtor, administrator, witness - include detected names/roles and if missing)**
-- **Summary of document purpose (1-2 sentences, plain English)**
-- **ALL regulatory deadlines and their status (met/missing/approaching)**
+# 1. IDENTIFICATION AND FILING DETAILS
+- **Client/Consumer Name** (full legal name)
+- **Address** (current residential)
+- **Administrator/Trustee Name and License Number**
+- **Filing Date** and if present, the Submission Deadline
+- **Marital Status** and details of any Spouse/Partner
+- **Occupation** and Employer information
+- **Business Interests** if self-employed or director positions
 
-Also, perform a detailed compliance & risk review as follows:
+# 2. FINANCIAL SNAPSHOT
+## Assets Section:
+- **Primary Residence Value** (market value, mortgage)
+- **Vehicles** (make, model, year, value)
+- **Bank Accounts** (institutions, balances)
+- **Investments** (RRSP, stocks, other investments with values)
+- **Other Significant Assets** (list all with values)
+- **Total Value of Assets**
 
-- Identify and list any *missing fields, signature issues, deadline risks, payment discrepancies, incomplete schedules, or regulatory problems*.
-- For each risk, include: **type (compliance/legal/etc), severity (high/med/low), BIA/OSB reference, impact, required action, recommended solution, and a deadline if relevant.**
+## Liabilities Section:
+- **Secured Debts** (creditors, amounts, security details)
+- **Preferred Creditors** (name, reason for preference, amounts)
+- **Unsecured Creditors** (names and amounts)
+- **Total Liabilities**
 
-Return a structured JSON result:
+# 3. INCOME & EXPENSE ANALYSIS
+- **Monthly Income** (all sources, breakdown)
+- **Monthly Expenses** (categorized)
+- **Surplus Income Calculation** (if present: net income minus threshold)
+- **OSB Threshold** used (based on family size)
+- **Family Size** (number of dependents)
+
+# 4. PROPOSAL DETAILS
+- **Monthly Proposal Payment** amount
+- **Proposal Duration** (months/years)
+- **Total Proposal Value** (payment × months)
+- **Secured Creditor Payment Terms**
+- **Unsecured Creditor Distribution**
+- **Administrator Fees & Costs**
+
+# 5. SIGNATURES & AUTHENTICATION
+- **Debtor Signature** (present: yes/no)
+- **Administrator Signature** (present: yes/no)
+- **Witness Signature/Oath** (present: yes/no)
+- **Electronic Filing Indicators** (Form 1.1 reference)
+
+# 6. COMPREHENSIVE RISK ASSESSMENT
+Identify all compliance and legal risks including:
+- **Missing Mandatory Fields** (specify which sections are incomplete)
+- **Signature Issues** (missing signatures or improper authentication)
+- **Financial Discrepancies** (unusual values, missing assets)
+- **Surplus Calculation Issues** (errors in calculation or missing)
+- **Proposal Adequacy Risk** (insufficient payments relative to assets/income)
+- **Documentation Gaps** (missing supporting documents)
+
+For each risk, provide:
+- Risk type (compliance, legal, financial, documentation)
+- Severity (high, medium, low)
+- Specific BIA or OSB reference (e.g., "BIA Section 66.13" or "Directive 6R3")
+- Detailed impact description
+- Required action and solution
+- Suggested deadline
+
+Return all information in a structured JSON format:
 {
-  "summary":"",
-  "extracted_info": { ... },
-  "risk_assessment": [ ... ],
-  "signatures": [
-    { "role":"debtor", "present":true, ... }
-  ]
+  "summary": "One-paragraph consumer proposal summary",
+  "extracted_info": {
+    "clientName": "",
+    "filingDate": "",
+    "submissionDeadline": "",
+    // all other extracted fields
+  },
+  "financial_data": {
+    "total_assets": "$0.00",
+    "total_liabilities": "$0.00",
+    "monthly_income": "$0.00",
+    "monthly_expenses": "$0.00",
+    "surplus_income": "$0.00"
+  },
+  "proposal_details": {
+    "monthly_payment": "$0.00",
+    "duration_months": 0,
+    "total_value": "$0.00"
+  },
+  "signature_verification": {
+    "debtor_signed": true/false,
+    "administrator_signed": true/false,
+    "properly_sworn": true/false
+  },
+  "comprehensive_risks": [
+    {
+      "type": "compliance",
+      "description": "",
+      "severity": "high/medium/low", 
+      "regulation": "BIA Section X",
+      "impact": "",
+      "required_action": "",
+      "solution": "",
+      "deadline": ""
+    }
+  ],
+  "regulatory_compliance": {
+    "status": "compliant/requires_review/non_compliant",
+    "references": ["BIA Section 66.13", "Directive 6R3"],
+    "details": "Compliance assessment summary"
+  }
 }`;
     }
     else if (
@@ -194,7 +258,6 @@ Return a structured JSON result:
       /form[\s-]*31\b/i.test(title) ||
       /proof of claim/i.test(title)
     ) {
-      // Enhanced Form 31 Prompt based on the comprehensive guide
       openAIPrompt =
 `You are a Canadian insolvency and bankruptcy document expert analyzing Form 31 - Proof of Claim.
 
@@ -319,8 +382,6 @@ Return a comprehensive JSON response with these sections:
 `You are an expert in Canadian bankruptcy and insolvency document analysis. Please extract the client detail, summary, and compliance risk assessment for this form.`;
     }
 
-    // --------- 3. Send tailored prompt to OpenAI ---------
-    // In production, ensure you have openAIApiKey wired/available here
     let openAIResponseContent = "";
     if (documentText) {
       const fetchAI = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -342,7 +403,6 @@ Return a comprehensive JSON response with these sections:
       openAIResponseContent = aiJSON.choices?.[0]?.message?.content || "";
     }
 
-    // --------- 4. Parse AI result (as best as possible) and save ---------
     let aiData = {};
     try {
       aiData = openAIResponseContent ? JSON.parse(openAIResponseContent) : {};
@@ -363,7 +423,6 @@ Return a comprehensive JSON response with these sections:
       await Promise.race([
         (async () => {
           try {
-            // Get the user ID who owns the document
             const { data: documentOwner, error: ownerError } = await supabase
               .from('documents')
               .select('user_id')
@@ -376,7 +435,6 @@ Return a comprehensive JSON response with these sections:
             } 
             
             if (documentOwner) {
-              // Save analysis results
               const { error: analysisError } = await supabase
                 .from('document_analysis')
                 .upsert({
@@ -390,7 +448,6 @@ Return a comprehensive JSON response with these sections:
                 console.error('Error saving analysis:', analysisError);
               }
 
-              // Update document status with enhanced metadata
               let documentMetadata = {
                 formType: result.extracted_info?.formType,
                 formNumber: result.extracted_info?.formNumber,
@@ -404,7 +461,6 @@ Return a comprehensive JSON response with these sections:
                 administratorName: result.extracted_info?.administratorName
               };
               
-              // Form 31 specific fields
               if (formFields.formNumber === "31" || 
                   /form[\s-]*31\b/i.test(title) || 
                   /proof of claim/i.test(title)) {
@@ -433,14 +489,12 @@ Return a comprehensive JSON response with these sections:
                 console.error('Error updating document status:', updateError);
               }
               
-              // Create a deadline notification for Form 47 based on submission deadline
-              if (result.extracted_info?.formNumber === '47' && result.extracted_info?.submissionDeadline) {
-                const submissionDate = new Date(result.extracted_info.submissionDeadline);
-                const now = new Date();
+              if (formFields.formNumber === "47" || 
+                  /form[\s-]*47\b/i.test(title) || 
+                  /consumer proposal/i.test(title)) {
                 
-                if (submissionDate > now) {
+                if (aiData.proposal_details?.duration_months && aiData.extracted_info?.filingDate) {
                   try {
-                    // Add deadline to document
                     const { data: document } = await supabase
                       .from('documents')
                       .select('deadlines')
@@ -448,80 +502,116 @@ Return a comprehensive JSON response with these sections:
                       .single();
                       
                     const deadlines = document?.deadlines || [];
+                    const newDeadlines = [];
                     
-                    await supabase
-                      .from('documents')
-                      .update({
-                        deadlines: [
-                          ...deadlines,
-                          {
-                            title: "Consumer Proposal Submission Deadline",
-                            dueDate: submissionDate.toISOString(),
-                            description: "Final deadline for submitting Form 47 Consumer Proposal"
+                    const filingDate = new Date(aiData.extracted_info.filingDate);
+                    
+                    const creditorsMeetingDate = new Date(filingDate);
+                    creditorsMeetingDate.setDate(filingDate.getDate() + 45);
+                    
+                    newDeadlines.push({
+                      title: "Meeting of Creditors Deadline",
+                      dueDate: creditorsMeetingDate.toISOString(),
+                      description: "Must hold meeting within 45 days of filing (BIA s. 66.15(1))",
+                      severity: "high",
+                      reference: "BIA s. 66.15(1)"
+                    });
+                    
+                    const courtApprovalDate = new Date(creditorsMeetingDate);
+                    courtApprovalDate.setDate(creditorsMeetingDate.getDate() + 15);
+                    
+                    newDeadlines.push({
+                      title: "Court Application Deadline (if needed)",
+                      dueDate: courtApprovalDate.toISOString(),
+                      description: "Apply to court within 15 days after meeting if needed (BIA s. 66.22)",
+                      severity: "medium",
+                      reference: "BIA s. 66.22"
+                    });
+                    
+                    const firstPaymentDate = new Date(courtApprovalDate);
+                    firstPaymentDate.setDate(courtApprovalDate.getDate() + 30);
+                    
+                    newDeadlines.push({
+                      title: "First Payment Due",
+                      dueDate: firstPaymentDate.toISOString(),
+                      description: "First proposal payment due (estimate)",
+                      severity: "medium",
+                      reference: "Consumer Proposal Terms"
+                    });
+                    
+                    if (Array.isArray(aiData.comprehensive_risks)) {
+                      for (const risk of aiData.comprehensive_risks) {
+                        if (risk.deadline && risk.severity === 'high') {
+                          const dueDate = new Date();
+                          if (/\d+ days?/.test(risk.deadline)) {
+                            const days = parseInt(risk.deadline.match(/(\d+)/)[1]);
+                            dueDate.setDate(dueDate.getDate() + days);
+                          } else if (/immediate|asap/i.test(risk.deadline)) {
+                            dueDate.setDate(dueDate.getDate() + 1); // Tomorrow
                           }
-                        ]
-                      })
-                      .eq('id', documentId);
-                      
-                    console.log('Added submission deadline to document');
-                  } catch (err) {
-                    console.error('Error adding deadline:', err);
-                  }
-                }
-              }
-              
-              // Handle Form 31 specific deadlines from comprehensive assessment
-              if (formFields.formNumber === "31" && Array.isArray(result.comprehensive_risks)) {
-                try {
-                  // Get existing deadlines
-                  const { data: document } = await supabase
-                    .from('documents')
-                    .select('deadlines')
-                    .eq('id', documentId)
-                    .single();
-                    
-                  const deadlines = document?.deadlines || [];
-                  const newDeadlines = [];
-                  
-                  // Add deadlines from risk assessment
-                  for (const risk of result.comprehensive_risks) {
-                    if (risk.deadline && risk.severity === 'high') {
-                      const dueDate = new Date();
-                      // Simple parsing of common deadline formats
-                      if (/\d+ days?/.test(risk.deadline)) {
-                        const days = parseInt(risk.deadline.match(/(\d+)/)[1]);
-                        dueDate.setDate(dueDate.getDate() + days);
-                      } else if (/immediate|asap/i.test(risk.deadline)) {
-                        dueDate.setDate(dueDate.getDate() + 1); // Tomorrow
+                          
+                          newDeadlines.push({
+                            title: `Form 47 - ${risk.type}`,
+                            dueDate: dueDate.toISOString(),
+                            description: risk.required_action || risk.description,
+                            severity: risk.severity,
+                            reference: risk.regulation
+                          });
+                        }
                       }
-                      
-                      newDeadlines.push({
-                        title: `Form 31 - ${risk.type}`,
-                        dueDate: dueDate.toISOString(),
-                        description: risk.required_action || risk.description,
-                        severity: risk.severity,
-                        reference: risk.reference
-                      });
                     }
+                    
+                    if (newDeadlines.length > 0) {
+                      await supabase
+                        .from('documents')
+                        .update({
+                          deadlines: [...deadlines, ...newDeadlines]
+                        })
+                        .eq('id', documentId);
+                        
+                      console.log(`Added ${newDeadlines.length} deadlines from Form 47 analysis`);
+                    }
+                  } catch (err) {
+                    console.error('Error adding Form 47 deadlines:', err);
                   }
-                  
-                  // Add deadlines if we found any
-                  if (newDeadlines.length > 0) {
-                    await supabase
-                      .from('documents')
-                      .update({
-                        deadlines: [...deadlines, ...newDeadlines]
-                      })
-                      .eq('id', documentId);
-                      
-                    console.log(`Added ${newDeadlines.length} deadlines from Form 31 risk assessment`);
-                  }
-                } catch (err) {
-                  console.error('Error adding Form 31 deadlines:', err);
                 }
+
+                const documentMetadata = {
+                  formType: "form-47",
+                  formNumber: "47",
+                  processing_complete: true,
+                  last_analyzed: new Date().toISOString(),
+                  processing_steps_completed: ["analysis_complete"],
+                  client_name: aiData.extracted_info?.clientName,
+                  administrator_name: aiData.extracted_info?.administratorName,
+                  filing_date: aiData.extracted_info?.filingDate,
+                  submission_deadline: aiData.extracted_info?.submissionDeadline,
+                  form47_details: {
+                    proposal_duration: aiData.proposal_details?.duration_months || 0,
+                    monthly_payment: aiData.proposal_details?.monthly_payment || "$0.00",
+                    total_value: aiData.proposal_details?.total_value || "$0.00",
+                    surplus_income: aiData.financial_data?.surplus_income || "$0.00",
+                    total_assets: aiData.financial_data?.total_assets || "$0.00",
+                    total_liabilities: aiData.financial_data?.total_liabilities || "$0.00"
+                  },
+                  signature_status: aiData.signature_verification?.debtor_signed && 
+                                 aiData.signature_verification?.administrator_signed ? 
+                                 "signed" : "unsigned",
+                  has_compliance_issues: (aiData.comprehensive_risks?.length > 0) || false,
+                  oath_status: aiData.signature_verification?.properly_sworn ? "sworn" : "unsworn"
+                };
+
+                await supabase
+                  .from('documents')
+                  .update({ 
+                    ai_processing_status: 'complete',
+                    metadata: documentMetadata
+                  })
+                  .eq('id', documentId);
+                  
+                console.log('Updated document metadata with Form 47 details');
               }
             } else {
-              // If we can't find the owner, still update the document status
               const { error: updateError } = await supabase
                 .from('documents')
                 .update({ 
@@ -557,7 +647,6 @@ Return a comprehensive JSON response with these sections:
   } catch (error) {
     console.error('Error in analyze-document function:', error);
     
-    // If we have a document ID, update its status to failed
     try {
       const requestData = await req.json() as AnalysisRequest;
       if (requestData.documentId) {
@@ -594,9 +683,7 @@ Return a comprehensive JSON response with these sections:
   }
 });
 
-// Helper function to extract client name
 function extractClientName(text: string): string {
-  // Simple extraction logic
   const namePattern = /client\s*name\s*[:;]\s*([^\n,]+)/i;
   const match = text.match(namePattern);
   return match ? match[1].trim() : "Unknown Client";

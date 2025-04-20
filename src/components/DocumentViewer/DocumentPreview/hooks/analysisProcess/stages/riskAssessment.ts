@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabase";
 import { DocumentRecord } from "../../types";
 import { updateAnalysisStatus } from "../documentStatusUpdates";
@@ -10,10 +9,10 @@ export const riskAssessment = async (
   isForm76: boolean,
   context: AnalysisProcessContext
 ): Promise<void> => {
-  const { setAnalysisStep, setProgress } = context;
+  const { setAnalysisStep, setProgress, isForm47 = false } = context;
   
-  // Check if this is a Form 47 (Consumer Proposal)
-  const isForm47 = documentRecord.metadata?.formType === 'form-47' || 
+  // Check if this is a Form 47 (Consumer Proposal) - use either context or metadata
+  const isForm47Document = isForm47 || documentRecord.metadata?.formType === 'form-47' || 
                   documentRecord.title?.toLowerCase().includes('form 47') ||
                   documentRecord.title?.toLowerCase().includes('consumer proposal');
                   
@@ -23,7 +22,7 @@ export const riskAssessment = async (
                   documentRecord.title?.toLowerCase().includes('form 31') ||
                   documentRecord.title?.toLowerCase().includes('proof of claim');
   
-  if (isForm47) {
+  if (isForm47Document) {
     setAnalysisStep("Stage 4: Analyzing Consumer Proposal for compliance...");
   } else if (isForm76) {
     setAnalysisStep("Stage 4: Performing regulatory compliance analysis for Form 76..."); 
@@ -35,7 +34,7 @@ export const riskAssessment = async (
   
   setProgress(55);
   
-  console.log(`Starting risk assessment for document ${documentRecord.id}, Form 76: ${isForm76}, Form 47: ${isForm47}, Form 31: ${isForm31}`);
+  console.log(`Starting risk assessment for document ${documentRecord.id}, Form 76: ${isForm76}, Form 47: ${isForm47Document}, Form 31: ${isForm31}`);
   
   try {
     // For Form 76, add specific risks related to Statement of Affairs
@@ -149,7 +148,7 @@ export const riskAssessment = async (
           
         console.log('Created new analysis with Form 76 risks');
       }
-    } else if (isForm47) {
+    } else if (isForm47Document) {
       // Process Form 47 Consumer Proposal
       await createForm47RiskAssessment(documentRecord.id);
       console.log('Created Form 47 risk assessment');
