@@ -56,8 +56,9 @@ const mockClientData: ClientInsightData = {
     { id: "2", title: "Schedule meeting", priority: "medium" }
   ],
   missingDocuments: [
-    { id: "1", name: "Bank statement", requiredBy: "2023-07-15" },
-    { id: "2", name: "Tax return", requiredBy: "2023-07-20" }
+    "Bank statement",
+    "Tax return",
+    "Credit report"
   ],
   upcomingDeadlines: [
     { id: "1", title: "Submit documents", date: "2023-07-15", priority: "high" },

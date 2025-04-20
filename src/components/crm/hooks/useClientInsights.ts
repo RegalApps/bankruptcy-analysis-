@@ -28,8 +28,9 @@ export const useClientInsights = (clientId: string) => {
             { id: "2", title: "Schedule follow-up call", priority: "medium" }
           ],
           missingDocuments: [
-            { id: "1", name: "Bank Statement", requiredBy: "2023-07-01" },
-            { id: "2", name: "Tax Returns", requiredBy: "2023-07-15" }
+            "Bank Statement", 
+            "Tax Returns", 
+            "Credit Report"
           ],
           recentActivities: [
             { 

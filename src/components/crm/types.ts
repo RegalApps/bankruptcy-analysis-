@@ -1,4 +1,3 @@
-
 export interface ClientInsightData {
   id?: string;
   clientProfile?: {
@@ -37,11 +36,7 @@ export interface ClientInsightData {
     title: string;
     priority: "high" | "medium" | "low";
   }[];
-  missingDocuments: { // Required field
-    id: string;
-    name: string;
-    requiredBy: string;
-  }[];
+  missingDocuments: string[]; // Modified to be string[] to match the activity/hooks/predictiveData/types
   recentActivities?: {
     id: string;
     type: string;
@@ -88,7 +83,7 @@ export interface ClientInfo {
   tags?: string[];
 }
 
-// Add FormData interface
+// Keep existing FormData interface
 export interface FormData {
   fullName: string;
   email: string;

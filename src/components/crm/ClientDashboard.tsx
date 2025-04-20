@@ -1,15 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { useClientInsights } from "./hooks/useClientInsights";
 import { ClientProfilePanel } from "./components/profile/ClientProfilePanel";
 import { ClientActivityPanel } from "./components/profile/ClientActivityPanel";
 import { ClientIntelligencePanel } from "./components/profile/ClientIntelligencePanel";
 import { ClientGridView } from "./components/ClientGridView";
-import { DocumentSignaturesPanel } from "./components/documents/DocumentSignaturesPanel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, LayoutGrid, User, Activity, FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,7 +30,6 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
   const [activeTab, setActiveTab] = useState<string>("profile");
   const { insightData, isLoading, error } = useClientInsights(selectedClientId);
 
-  // Mock client list - in a real app, this would come from an API
   const clients = [
     { id: "1", name: "John Doe", company: "Acme Inc.", status: "active", lastActivity: "2023-06-10", riskScore: 85 },
     { id: "2", name: "Jane Smith", company: "Tech Solutions", status: "inactive", lastActivity: "2023-05-20", riskScore: 45 },
@@ -95,7 +91,6 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
     );
   }
 
-  // Render grid view for multiple clients
   if (view === "grid") {
     return (
       <div className="space-y-4">
@@ -139,10 +134,8 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
     );
   }
 
-  // Render detailed client profile view
   return (
     <div className="space-y-6">
-      {/* Main CRM Navigation Tabs */}
       <Tabs defaultValue="client" className="w-full">
         <TabsList className="w-full justify-start mb-6 bg-muted/30">
           <TabsTrigger value="client" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -225,7 +218,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
             
             <div className="bg-card p-6 rounded-lg border">
               <div className="space-y-4">
-                {insightData.recentActivities.map((activity, index) => (
+                {insightData.recentActivities && insightData.recentActivities.map((activity, index) => (
                   <div key={activity.id} className="flex items-start gap-4">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                       {index + 1}
@@ -233,7 +226,7 @@ export const ClientDashboard = ({ clientId: propClientId, clientName: propClient
                     <div>
                       <p className="font-medium">{activity.action}</p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(activity.timestamp).toLocaleString()}
+                        {new Date(activity.timestamp || "").toLocaleString()}
                       </p>
                     </div>
                   </div>
