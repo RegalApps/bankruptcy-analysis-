@@ -9,6 +9,7 @@ import ActivityPage from "./pages/ActivityPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import EFilingPage from "./pages/EFilingPage";
 import ProfilePage from "./pages/ProfilePage";
+import Support from "./pages/Support";
 import "./App.css";
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
       <Route path="/analytics" element={<AnalyticsPage />} />
       <Route path="/e-filing" element={<EFilingPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/support" element={<Support />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
