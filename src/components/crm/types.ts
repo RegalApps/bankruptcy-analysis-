@@ -49,8 +49,8 @@ export interface ClientInsightData {
   aiSuggestions?: {
     id: string;
     text?: string;
-    message?: string;
-    type: string;
+    message: string; // Make message required
+    type: "info" | "warning" | "urgent"; // Restrict type to these specific values
     action?: string;
   }[];
   upcomingDeadlines: { // Required field

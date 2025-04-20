@@ -74,6 +74,20 @@ const mockClientData: ClientInsightData = {
       timestamp: "2023-06-16T14:45:00Z" 
     }
   ],
+  aiSuggestions: [
+    {
+      id: "1",
+      type: "info",
+      message: "Client hasn't been contacted in 14 days",
+      action: "Schedule follow-up"
+    },
+    {
+      id: "2",
+      type: "warning",
+      message: "Missing important documents",
+      action: "Request documents"
+    }
+  ],
   upcomingDeadlines: [
     { id: "1", title: "Submit documents", date: "2023-07-15", priority: "high" },
     { id: "2", title: "Review meeting", date: "2023-07-20", priority: "medium" }
