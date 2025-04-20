@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { ClientInsightData } from "../../activity/hooks/predictiveData/types";
+import { ClientInsightData } from "../types";
 
 export const useClientInsights = (clientId: string) => {
   const [insightData, setInsightData] = useState<ClientInsightData | null>(null);
@@ -25,11 +25,11 @@ export const useClientInsights = (clientId: string) => {
           caseProgress: Math.floor(Math.random() * 100),
           pendingTasks: [
             { id: "1", title: "Review financial documents", priority: "high" },
-            { id: "2", title: "Schedule follow-up call", priority: "medium" },
+            { id: "2", title: "Schedule follow-up call", priority: "medium" }
           ],
           missingDocuments: [
             { id: "1", name: "Bank Statement", requiredBy: "2023-07-01" },
-            { id: "2", name: "Tax Returns", requiredBy: "2023-07-15" },
+            { id: "2", name: "Tax Returns", requiredBy: "2023-07-15" }
           ],
           recentActivities: [
             { 
@@ -119,25 +119,25 @@ export const useClientInsights = (clientId: string) => {
             { name: "Contract Negotiation", completed: false },
             { name: "Deal Closed", completed: false }
           ],
-          // Adding required upcomingDeadlines field
+          // Adding upcomingDeadlines field with proper structure
           upcomingDeadlines: [
             {
               id: "1",
               title: "Submit Financial Documents",
               date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString().split('T')[0],
-              type: "document"
+              priority: "high"
             },
             {
               id: "2",
               title: "Compliance Review Meeting",
               date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString().split('T')[0],
-              type: "meeting"
+              priority: "medium"
             },
             {
               id: "3",
               title: "Contract Signing",
               date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString().split('T')[0],
-              type: "document"
+              priority: "low"
             }
           ]
         };

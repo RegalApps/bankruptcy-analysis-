@@ -46,11 +46,23 @@ const mockClientData: ClientInsightData = {
       description: "In-person meeting to review documents",
     },
   ],
-  // Add required fields to match the type definition
+  // Required fields to match the type definition
   riskLevel: "medium",
   riskScore: 65,
-  complianceStatus: "compliant", // This is now of the correct type
+  complianceStatus: "compliant",
   caseProgress: 42,
+  pendingTasks: [
+    { id: "1", title: "Review proposal", priority: "high" },
+    { id: "2", title: "Schedule meeting", priority: "medium" }
+  ],
+  missingDocuments: [
+    { id: "1", name: "Bank statement", requiredBy: "2023-07-15" },
+    { id: "2", name: "Tax return", requiredBy: "2023-07-20" }
+  ],
+  upcomingDeadlines: [
+    { id: "1", title: "Submit documents", date: "2023-07-15", priority: "high" },
+    { id: "2", title: "Review meeting", date: "2023-07-20", priority: "medium" }
+  ]
 };
 
 interface ClientViewProps {

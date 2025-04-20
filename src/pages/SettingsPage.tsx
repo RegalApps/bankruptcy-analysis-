@@ -14,14 +14,26 @@ const SettingsPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const settings = useSettings();
 
-  const handleSaveSettings = async () => {
+  const handleSaveGeneralSettings = async () => {
     setIsLoading(true);
     try {
-      // In a real app, this would save settings to your backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Settings saved successfully");
+      await settings.saveSettings("general");
+      toast.success("General settings saved successfully");
     } catch (error) {
-      toast.error("Failed to save settings");
+      toast.error("Failed to save general settings");
+      console.error("Settings save error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveSecuritySettings = async () => {
+    setIsLoading(true);
+    try {
+      await settings.saveSettings("security");
+      toast.success("Security settings saved successfully");
+    } catch (error) {
+      toast.error("Failed to save security settings");
       console.error("Settings save error:", error);
     } finally {
       setIsLoading(false);
@@ -72,16 +84,16 @@ const SettingsPage = () => {
           
           <TabsContent value="general" className="mt-6">
             <GeneralSettings 
-              settings={settings} 
-              onSave={handleSaveSettings}
+              settings={settings.generalSettings} 
+              onSave={handleSaveGeneralSettings}
               isLoading={isLoading}
             />
           </TabsContent>
           
           <TabsContent value="security" className="mt-6">
             <SecuritySettings 
-              settings={settings} 
-              onSave={handleSaveSettings}
+              settings={settings.securitySettings} 
+              onSave={handleSaveSecuritySettings}
               isLoading={isLoading}
             />
           </TabsContent>

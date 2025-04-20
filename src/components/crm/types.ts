@@ -27,18 +27,17 @@ export interface ClientInsightData {
     type: string;
     description: string;
   }[];
-  riskLevel: "high" | "medium" | "low"; // Changed to non-optional to match activity hooks type
-  riskScore: number; // Changed to non-optional to match activity hooks type
-  complianceStatus: 'compliant' | 'issues' | 'critical'; // Updated to use specific union type
-  caseProgress: number; // Changed to non-optional to match activity hooks type
+  riskLevel: "high" | "medium" | "low"; // Required field
+  riskScore: number; // Required field
+  complianceStatus: 'compliant' | 'issues' | 'critical'; // Required field with specific union type
+  caseProgress: number; // Required field
   assignedTrustee?: string;
-  // Add the missing properties
-  pendingTasks?: {
+  pendingTasks: { // Required field
     id: string;
     title: string;
-    priority: "high" | "medium" | "low"; // Updated to use proper union type
+    priority: "high" | "medium" | "low";
   }[];
-  missingDocuments?: {
+  missingDocuments: { // Required field
     id: string;
     name: string;
     requiredBy: string;
@@ -46,23 +45,37 @@ export interface ClientInsightData {
   recentActivities?: {
     id: string;
     type: string;
-    description: string;
-    date: string;
+    description?: string;
+    action?: string;
+    timestamp?: string;
+    date?: string;
   }[];
   aiSuggestions?: {
     id: string;
-    text: string;
+    text?: string;
+    message?: string;
     type: string;
+    action?: string;
   }[];
-  upcomingDeadlines?: {
+  upcomingDeadlines: { // Required field
     id: string;
     title: string;
     date: string;
-    type: string; // Added type field to match usage in useClientInsights
+    priority?: "high" | "medium" | "low";
   }[];
   lastContactDate?: string;
   nextFollowUp?: string;
   caseStatus?: string;
+  clientNotes?: {
+    title: string;
+    content: string;
+    timestamp: string;
+    attachments?: string[];
+  }[];
+  milestones?: {
+    name: string;
+    completed: boolean;
+  }[];
 }
 
 export interface ClientInfo {
