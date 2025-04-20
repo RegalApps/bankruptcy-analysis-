@@ -1,74 +1,101 @@
 
-import { MainHeader } from "@/components/header/MainHeader";
-import { MainSidebar } from "@/components/layout/MainSidebar";
+import React, { useState } from "react";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { IntegrationsSection } from "@/components/crm/integrations/IntegrationsSection";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
-import { MeetingIntegrationsSection } from "@/components/settings/MeetingIntegrationsSection";
 import { AccessControlSettings } from "@/components/settings/AccessControlSettings";
+import { MeetingIntegrationsSection } from "@/components/settings/MeetingIntegrationsSection";
 import { useSettings } from "@/hooks/useSettings";
-import { useState } from "react";
+import { toast } from "sonner";
 
-export const SettingsPage = () => {
-  const { isLoading, isSaving, generalSettings, securitySettings, saveSettings } = useSettings();
-  const [activeTab, setActiveTab] = useState("general");
+const SettingsPage = () => {
+  const [activeTab, setActiveTab] = useState<string>("general");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const settings = useSettings();
+
+  const handleSaveSettings = async () => {
+    setIsLoading(true);
+    try {
+      // In a real app, this would save settings to your backend
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Settings saved successfully");
+    } catch (error) {
+      toast.error("Failed to save settings");
+      console.error("Settings save error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <MainSidebar />
-      <div className="flex-1 flex flex-col pl-64">
-        <MainHeader />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold">Settings</h1>
-              <p className="text-muted-foreground mt-1">
-                Manage your application settings and integrations
-              </p>
-            </div>
+    <MainLayout>
+      <div className="container mx-auto py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your account settings and preferences.
+          </p>
+        </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="w-full justify-start">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="integrations">API Integrations</TabsTrigger>
-                <TabsTrigger value="meetings">Meeting Integrations</TabsTrigger>
-                <TabsTrigger value="security">Security</TabsTrigger>
-                <TabsTrigger value="access-control">Access Control</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="general">
-                <GeneralSettings 
-                  settings={generalSettings}
-                  onSave={() => saveSettings("general")}
-                  isLoading={isLoading || (isSaving && activeTab === "general")}
-                />
-              </TabsContent>
-
-              <TabsContent value="integrations">
-                <IntegrationsSection />
-              </TabsContent>
-              
-              <TabsContent value="meetings">
-                <MeetingIntegrationsSection />
-              </TabsContent>
-
-              <TabsContent value="security">
-                <SecuritySettings 
-                  settings={securitySettings}
-                  onSave={() => saveSettings("security")}
-                  isLoading={isLoading || (isSaving && activeTab === "security")}
-                />
-              </TabsContent>
-              
-              <TabsContent value="access-control">
-                <AccessControlSettings />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
+        <Tabs 
+          value={activeTab} 
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
+          <TabsList className="border-b w-full justify-start rounded-none p-0">
+            <TabsTrigger 
+              value="general" 
+              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+            >
+              General
+            </TabsTrigger>
+            <TabsTrigger 
+              value="security" 
+              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+            >
+              Security
+            </TabsTrigger>
+            <TabsTrigger 
+              value="access" 
+              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+            >
+              Access Control
+            </TabsTrigger>
+            <TabsTrigger 
+              value="integrations" 
+              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+            >
+              Integrations
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="general" className="mt-6">
+            <GeneralSettings 
+              settings={settings} 
+              onSave={handleSaveSettings}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+          
+          <TabsContent value="security" className="mt-6">
+            <SecuritySettings 
+              settings={settings} 
+              onSave={handleSaveSettings}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+          
+          <TabsContent value="access" className="mt-6">
+            <AccessControlSettings />
+          </TabsContent>
+          
+          <TabsContent value="integrations" className="mt-6">
+            <MeetingIntegrationsSection />
+          </TabsContent>
+        </Tabs>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 

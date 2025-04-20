@@ -36,7 +36,7 @@ export interface ClientInsightData {
   pendingTasks?: {
     id: string;
     title: string;
-    priority: string;
+    priority: "high" | "medium" | "low"; // Updated to use proper union type
   }[];
   missingDocuments?: {
     id: string;
@@ -58,7 +58,7 @@ export interface ClientInsightData {
     id: string;
     title: string;
     date: string;
-    type: string;
+    type: string; // Added type field to match usage in useClientInsights
   }[];
   lastContactDate?: string;
   nextFollowUp?: string;
