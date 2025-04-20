@@ -41,6 +41,7 @@ const ResizablePanel = React.forwardRef<
 ));
 ResizablePanel.displayName = "ResizablePanel";
 
+// Fix the type definition for ResizableHandle
 const ResizableHandle = React.forwardRef<
   React.ElementRef<typeof ResizablePrimitive.PanelResizeHandle>,
   React.ComponentPropsWithoutRef<typeof ResizablePrimitive.PanelResizeHandle> & {
