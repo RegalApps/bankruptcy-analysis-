@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +10,10 @@ export const useDocumentViewer = (documentId: string) => {
 
   const fetchDocumentDetails = async () => {
     try {
+      setLoading(true);
+      
+      console.log('Fetching document details for ID:', documentId);
+      
       const { data: document, error: docError } = await supabase
         .from('documents')
         .select(`
@@ -28,6 +31,7 @@ export const useDocumentViewer = (documentId: string) => {
           title: "Error",
           description: "Document not found"
         });
+        setLoading(false);
         return;
       }
       
@@ -41,7 +45,13 @@ export const useDocumentViewer = (documentId: string) => {
           
           // Handle both string and object content
           if (typeof analysisContent === 'string') {
-            analysisContent = JSON.parse(analysisContent);
+            try {
+              analysisContent = JSON.parse(analysisContent);
+              console.log("Successfully parsed analysis content from string");
+            } catch (parseError) {
+              console.error("Error parsing analysis content:", parseError);
+              // Keep as string if parsing fails
+            }
           }
 
           // Ensure extracted info has all required fields with better defaults and formatting
@@ -52,6 +62,21 @@ export const useDocumentViewer = (documentId: string) => {
             clientPhone: analysisContent.extracted_info?.clientPhone || '',
             clientId: analysisContent.extracted_info?.clientId || analysisContent.extracted_info?.caseNumber || '',
             clientEmail: analysisContent.extracted_info?.clientEmail || '',
+            
+            // Form 31 (Proof of Claim) specific fields
+            creditorName: analysisContent.extracted_info?.creditorName || 
+                         analysisContent.extracted_info?.claimantName || '',
+            claimantName: analysisContent.extracted_info?.claimantName || 
+                         analysisContent.extracted_info?.creditorName || '',
+            claimAmount: analysisContent.extracted_info?.claimAmount || '',
+            claimType: analysisContent.extracted_info?.claimType || 
+                      analysisContent.extracted_info?.claimClassification || '',
+            claimClassification: analysisContent.extracted_info?.claimClassification || 
+                                analysisContent.extracted_info?.claimType || '',
+            securityDetails: analysisContent.extracted_info?.securityDetails || '',
+            creditorAddress: analysisContent.extracted_info?.creditorAddress || '',
+            creditorRepresentative: analysisContent.extracted_info?.creditorRepresentative || '',
+            creditorContactInfo: analysisContent.extracted_info?.creditorContactInfo || '',
             
             // Document Details
             formNumber: analysisContent.extracted_info?.formNumber || 
@@ -84,6 +109,15 @@ export const useDocumentViewer = (documentId: string) => {
             dateBankruptcy: analysisContent.extracted_info?.dateBankruptcy || 
                            analysisContent.extracted_info?.dateOfBankruptcy || '',
             officialReceiver: analysisContent.extracted_info?.officialReceiver || '',
+            documentStatus: analysisContent.extracted_info?.documentStatus || '',
+            filingDate: analysisContent.extracted_info?.filingDate || '',
+            submissionDeadline: analysisContent.extracted_info?.submissionDeadline || '',
+            
+            // Form 47 specific fields
+            proposalType: analysisContent.extracted_info?.proposalType || '',
+            monthlyPayment: analysisContent.extracted_info?.monthlyPayment || '',
+            proposalDuration: analysisContent.extracted_info?.proposalDuration || '',
+            paymentSchedule: analysisContent.extracted_info?.paymentSchedule || '',
             
             // Financial Information
             totalDebts: analysisContent.extracted_info?.totalDebts || '',
@@ -92,6 +126,9 @@ export const useDocumentViewer = (documentId: string) => {
             
             // Document Summary
             summary: analysisContent.extracted_info?.summary || '',
+            
+            // Original text for form type detection
+            fullText: analysisContent.extracted_info?.fullText || '',
           };
 
           // Ensure risks are properly formatted and enhanced
@@ -122,7 +159,7 @@ export const useDocumentViewer = (documentId: string) => {
         } catch (e) {
           console.error('Error processing analysis content:', e);
           toast({
-            variant: "destructive",
+            variant: "warning",
             title: "Warning",
             description: "Could not process document analysis"
           });

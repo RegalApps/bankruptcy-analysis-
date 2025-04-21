@@ -11,14 +11,16 @@ import {
 import { TooltipProvider } from "../../ui/tooltip";
 import { RiskItem } from "./RiskItem";
 import { Form47RiskView } from "./Form47RiskView";
+import { Form31RiskView } from "./Form31RiskView";
 import { RiskAssessmentProps } from "./types";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 
 export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], documentId, isLoading }) => {
   const [isForm47, setIsForm47] = useState(false);
+  const [isForm31, setIsForm31] = useState(false);
   
-  // Detect if this is a Form 47 (Consumer Proposal) document based on risks
+  // Detect if this is a Form 47 (Consumer Proposal) or Form 31 (Proof of Claim) document based on risks
   useEffect(() => {
     if (!risks?.length) return;
     
@@ -39,8 +41,26 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
       ))
     );
 
-    console.log('Is Form 47 detected from risks:', isConsumerProposal);
+    const isProofOfClaim = risks.some(risk => 
+      (risk.regulation && (
+        risk.regulation.includes('proof of claim') || 
+        risk.regulation.includes('form 31')
+      )) || 
+      (risk.description && (
+        risk.description.toLowerCase().includes('proof of claim') ||
+        risk.description.toLowerCase().includes('creditor claim') ||
+        risk.description.toLowerCase().includes('form 31')
+      )) ||
+      (risk.type && (
+        risk.type.toLowerCase().includes('proof of claim') ||
+        risk.type.toLowerCase().includes('form 31')
+      ))
+    );
+
     setIsForm47(isConsumerProposal);
+    setIsForm31(isProofOfClaim);
+    
+    console.log('Form type detection from risks:', { isForm47: isConsumerProposal, isForm31: isProofOfClaim });
   }, [risks]);
   
   // Count risks by severity
@@ -51,7 +71,7 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
   // Group risks by severity for better organization
   const criticalRisks = risks?.filter(r => r.severity === 'high') || [];
   const moderateRisks = risks?.filter(r => r.severity === 'medium') || [];
-  const minorRisks = risks?.filter(r => r.severity === 'low') || [];
+  const minorRisks = risks?.filter(r => r.severity === 'low').length || [];
 
   if (isLoading) {
     return (
@@ -66,9 +86,11 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        {/* Use specialized view for Form 47 */}
+        {/* Use specialized view for Form 47 or Form 31 */}
         {isForm47 ? (
           <Form47RiskView risks={risks} documentId={documentId} />
+        ) : isForm31 ? (
+          <Form31RiskView risks={risks} documentId={documentId} />
         ) : (
           <>
             {/* Risk summary badges */}
@@ -130,7 +152,9 @@ export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], docu
             )}
 
             {/* Minor risks section */}
-            {minorRisks.length > 0 && (
+            {typeof minorRisks === 'number' ? (
+              <></>
+            ) : (
               <div className="space-y-2 mt-4">
                 <h4 className="text-sm font-medium flex items-center gap-2 text-yellow-600">
                   <Info className="h-4 w-4" />
