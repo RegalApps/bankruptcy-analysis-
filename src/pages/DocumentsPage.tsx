@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { ClientList } from "@/components/documents/ClientList";
 import { DocumentTree } from "@/components/documents/DocumentTree";
@@ -248,32 +249,38 @@ const DocumentsPage = () => {
   const handleNodeSelect = (node: any) => {
     console.log("Selected node:", node);
   };
-  
+
   const handleClientSelect = (clientId: string) => {
     console.log("DocumentsPage: Selected client:", clientId);
     setSelectedClient(clientId);
-    
     // Navigate to the client viewer page
     navigate(`/client-viewer/${clientId}`);
   };
-  
+
   const handleFileOpen = (node: any) => {
     console.log("Opening file:", node);
-    
-    // Navigate to the client viewer with the appropriate client ID
-    if (node.id) {
-      const clientId = node.id.split("-")[0];
-      if (clientId) {
-        navigate(`/client-viewer/${clientId}`);
+    // If the node is a file and its name or id references Form 47, navigate to the proper viewer route
+    if (node?.type === "file") {
+      // Check for Form 47 or Consumer Proposal files
+      const lowerName = (node.name || "").toLowerCase();
+      if (
+        lowerName.includes("form 47") ||
+        lowerName.includes("consumer proposal") ||
+        node.id === "form47-file"
+      ) {
+        navigate("/document-viewer/form47");
+        return;
       }
+      // General fallback for other files (could be extended in future)
+      // Optionally: navigate(`/document-viewer/${node.id}`);
     }
   };
-  
+
   // Filter documents based on selected client
   const filteredDocuments = selectedClient 
     ? CLIENT_DOCUMENTS.filter(doc => doc.id.startsWith(selectedClient))
     : CLIENT_DOCUMENTS;
-  
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
