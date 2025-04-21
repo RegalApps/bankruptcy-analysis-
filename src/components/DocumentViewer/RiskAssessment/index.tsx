@@ -1,182 +1,195 @@
 
-import { 
-  CheckCircle, 
-  ShieldAlert, 
-  AlertTriangle, 
-  AlertCircle, 
-  Info,
-  FileText,
-  FileCheck
-} from "lucide-react";
-import { TooltipProvider } from "../../ui/tooltip";
-import { RiskItem } from "./RiskItem";
-import { Form47RiskView } from "./Form47RiskView";
-import { Form31RiskView } from "./Form31RiskView";
-import { RiskAssessmentProps } from "./types";
-import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { Risk } from "../types";
+import { AlertTriangle, CheckCircle, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
-export const RiskAssessment: React.FC<RiskAssessmentProps> = ({ risks = [], documentId, isLoading }) => {
-  const [isForm47, setIsForm47] = useState(false);
-  const [isForm31, setIsForm31] = useState(false);
-  
-  // Detect if this is a Form 47 (Consumer Proposal) or Form 31 (Proof of Claim) document based on risks
-  useEffect(() => {
-    if (!risks?.length) return;
+interface RiskProps {
+  risks?: Risk[];
+  documentId: string;
+  isLoading?: boolean;
+}
+
+export const RiskAssessment: React.FC<RiskProps> = ({ risks = [], documentId, isLoading = false }) => {
+  const { toast } = useToast();
+  const [expandedRiskId, setExpandedRiskId] = useState<string | null>(null);
+
+  // Helper to properly format BIA references
+  const formatBIAReference = (ref: string) => {
+    if (!ref) return "Not specified";
     
-    const isConsumerProposal = risks.some(risk => 
-      (risk.regulation && (
-        risk.regulation.includes('66.13') || 
-        risk.regulation.includes('66.14') ||
-        risk.regulation.includes('66.15')
-      )) || 
-      (risk.description && (
-        risk.description.toLowerCase().includes('consumer proposal') ||
-        risk.description.toLowerCase().includes('secured creditors payment') ||
-        risk.description.toLowerCase().includes('unsecured creditors payment')
-      )) ||
-      (risk.type && (
-        risk.type.toLowerCase().includes('consumer proposal') ||
-        risk.type.toLowerCase().includes('proposal')
-      ))
-    );
-
-    const isProofOfClaim = risks.some(risk => 
-      (risk.regulation && (
-        risk.regulation.includes('proof of claim') || 
-        risk.regulation.includes('form 31')
-      )) || 
-      (risk.description && (
-        risk.description.toLowerCase().includes('proof of claim') ||
-        risk.description.toLowerCase().includes('creditor claim') ||
-        risk.description.toLowerCase().includes('form 31')
-      )) ||
-      (risk.type && (
-        risk.type.toLowerCase().includes('proof of claim') ||
-        risk.type.toLowerCase().includes('form 31')
-      ))
-    );
-
-    setIsForm47(isConsumerProposal);
-    setIsForm31(isProofOfClaim);
+    // If it already includes BIA or OSB references, return as is
+    if (ref.includes("BIA") || ref.includes("OSB") || ref.includes("Section") || ref.includes("Directive")) {
+      return ref;
+    }
     
-    console.log('Form type detection from risks:', { isForm47: isConsumerProposal, isForm31: isProofOfClaim });
-  }, [risks]);
+    // Look for section numbers or rule patterns
+    const sectionMatch = ref.match(/(?:section|s\.)\s*(\d+(?:\.\d+)?)/i);
+    if (sectionMatch) {
+      return `BIA Section ${sectionMatch[1]}`;
+    }
+    
+    const ruleMatch = ref.match(/(?:rule)\s*(\d+)/i);
+    if (ruleMatch) {
+      return `BIA Rule ${ruleMatch[1]}`;
+    }
+    
+    // Default case: add BIA prefix if it appears to be a reference
+    if (/^\d+(\.\d+)?$/.test(ref)) {
+      return `BIA Section ${ref}`;
+    }
+    
+    return ref;
+  };
+
+  // Sort risks by severity
+  const sortedRisks = [...risks].sort((a, b) => {
+    const severityOrder = { high: 0, medium: 1, low: 2, undefined: 3 };
+    return severityOrder[a.severity as keyof typeof severityOrder] - 
+           severityOrder[b.severity as keyof typeof severityOrder];
+  });
   
-  // Count risks by severity
-  const criticalCount = risks?.filter(r => r.severity === 'high').length || 0;
-  const moderateCount = risks?.filter(r => r.severity === 'medium').length || 0;
-  const minorCount = risks?.filter(r => r.severity === 'low').length || 0;
+  const toggleRisk = (riskId: string) => {
+    setExpandedRiskId(expandedRiskId === riskId ? null : riskId);
+  };
   
-  // Group risks by severity for better organization
-  const criticalRisks = risks?.filter(r => r.severity === 'high') || [];
-  const moderateRisks = risks?.filter(r => r.severity === 'medium') || [];
-  const minorRisks = risks?.filter(r => r.severity === 'low').length || [];
+  // Filter out incomplete risk entries
+  const validRisks = sortedRisks.filter(risk => 
+    risk && risk.description && (risk.type || risk.description)
+  );
 
   if (isLoading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-6 bg-muted rounded w-3/4"></div>
-        <div className="h-20 bg-muted rounded"></div>
-        <div className="h-24 bg-muted rounded"></div>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-1">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <h3 className="text-sm font-medium">Risk Assessment</h3>
+        </div>
+        <Card className="animate-pulse h-16 bg-muted/50" />
+        <Card className="animate-pulse h-16 bg-muted/50" />
+      </div>
+    );
+  }
+
+  if (!validRisks || validRisks.length === 0) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-1">
+          <CheckCircle className="h-4 w-4 text-green-500" />
+          <h3 className="text-sm font-medium">Risk Assessment</h3>
+        </div>
+        <Card className="p-3">
+          <div className="text-sm text-muted-foreground">
+            <p>No risks detected in document.</p>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <TooltipProvider>
-      <div className="space-y-4">
-        {/* Use specialized view for Form 47 or Form 31 */}
-        {isForm47 ? (
-          <Form47RiskView risks={risks} documentId={documentId} />
-        ) : isForm31 ? (
-          <Form31RiskView risks={risks} documentId={documentId} />
-        ) : (
-          <>
-            {/* Risk summary badges */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {criticalCount > 0 && (
-                <Badge variant="destructive" className="flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {criticalCount} Critical
-                </Badge>
-              )}
-              {moderateCount > 0 && (
-                <Badge variant="default" className="bg-amber-500 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  {moderateCount} Moderate
-                </Badge>
-              )}
-              {minorCount > 0 && (
-                <Badge variant="outline" className="text-yellow-600 flex items-center gap-1">
-                  <Info className="h-3 w-3" />
-                  {minorCount} Minor
-                </Badge>
-              )}
-              {risks?.length === 0 && (
-                <Badge variant="outline" className="text-green-600 flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  No Risks
-                </Badge>
-              )}
-            </div>
-
-            {/* Critical risks section */}
-            {criticalRisks.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium flex items-center gap-2 text-red-600">
-                  <AlertCircle className="h-4 w-4" />
-                  Critical Issues
-                </h4>
-                <div className="space-y-2">
-                  {criticalRisks.map((risk, index) => (
-                    <RiskItem key={`critical-${index}`} risk={risk} documentId={documentId} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Moderate risks section */}
-            {moderateRisks.length > 0 && (
-              <div className="space-y-2 mt-4">
-                <h4 className="text-sm font-medium flex items-center gap-2 text-amber-600">
-                  <AlertTriangle className="h-4 w-4" />
-                  Moderate Concerns
-                </h4>
-                <div className="space-y-2">
-                  {moderateRisks.map((risk, index) => (
-                    <RiskItem key={`moderate-${index}`} risk={risk} documentId={documentId} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Minor risks section */}
-            {typeof minorRisks === 'number' ? (
-              <></>
-            ) : (
-              <div className="space-y-2 mt-4">
-                <h4 className="text-sm font-medium flex items-center gap-2 text-yellow-600">
-                  <Info className="h-4 w-4" />
-                  Minor Issues
-                </h4>
-                <div className="space-y-2">
-                  {minorRisks.map((risk, index) => (
-                    <RiskItem key={`minor-${index}`} risk={risk} documentId={documentId} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {risks && risks.length === 0 && (
-              <div className="text-center p-6 border rounded-lg bg-muted/10">
-                <FileCheck className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No risks identified in this document</p>
-              </div>
-            )}
-          </>
-        )}
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 mb-1">
+        <AlertTriangle className="h-4 w-4 text-amber-500" />
+        <h3 className="text-sm font-medium">Risk Assessment</h3>
+        <span className="text-xs text-muted-foreground ml-auto">
+          {validRisks.length} {validRisks.length === 1 ? 'risk' : 'risks'} found
+        </span>
       </div>
-    </TooltipProvider>
+
+      <div className="space-y-2">
+        {validRisks.map((risk, index) => (
+          <Card 
+            key={`${risk.type}-${index}`}
+            className={cn(
+              "overflow-hidden transition-all",
+              expandedRiskId === `${risk.type}-${index}` ? "max-h-96" : "max-h-20"
+            )}
+          >
+            <div className="p-3 cursor-pointer" onClick={() => toggleRisk(`${risk.type}-${index}`)}>
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex items-center gap-2">
+                  {risk.severity === 'high' && (
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                  )}
+                  {risk.severity === 'medium' && (
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  )}
+                  {risk.severity === 'low' && (
+                    <Info className="h-4 w-4 text-blue-500" />
+                  )}
+                  <span className="font-medium text-sm">
+                    {risk.type || 'Risk Issue'}
+                  </span>
+                </div>
+                <span className={cn(
+                  "text-xs rounded-full px-2 py-0.5",
+                  risk.severity === 'high' ? "bg-destructive/10 text-destructive" :
+                  risk.severity === 'medium' ? "bg-amber-500/10 text-amber-500" :
+                  "bg-blue-500/10 text-blue-500"
+                )}>
+                  {risk.severity || 'medium'}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                {risk.description}
+              </p>
+            </div>
+            
+            {expandedRiskId === `${risk.type}-${index}` && (
+              <>
+                <Separator />
+                <div className="p-3 space-y-2">
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-semibold">Description</h4>
+                    <p className="text-xs">{risk.description}</p>
+                  </div>
+                  
+                  {risk.regulation && (
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-semibold">Regulation Reference</h4>
+                      <p className="text-xs">{formatBIAReference(risk.regulation)}</p>
+                    </div>
+                  )}
+                  
+                  {risk.solution && (
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-semibold">Recommended Solution</h4>
+                      <p className="text-xs">{risk.solution}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end space-x-2 pt-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setExpandedRiskId(null)}
+                    >
+                      Close
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: "Task created",
+                          description: `Added task for "${risk.type}"`,
+                        });
+                      }}
+                    >
+                      Create Task
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 };

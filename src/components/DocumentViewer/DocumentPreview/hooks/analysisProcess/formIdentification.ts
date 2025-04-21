@@ -29,10 +29,30 @@ export const detectFormType = (document: any, documentText: string) => {
     return formType;
   }
 
-  // Check document text for forms
-  const form31Keywords = ["proof of claim", "form 31", "creditor claim"];
-  const form47Keywords = ["consumer proposal", "form 47", "payment schedule"];
-  const form76Keywords = ["statement of affairs", "form 76", "monthly income"];
+  // Check document text for forms - improved form detection for common form types
+  const form31Keywords = [
+    "proof of claim", 
+    "form 31", 
+    "creditor claim",
+    "type a: unsecured claim",
+    "claimant name:"
+  ];
+  
+  const form47Keywords = [
+    "consumer proposal", 
+    "form 47", 
+    "payment schedule",
+    "proposal administrator",
+    "consumer debtor"
+  ];
+  
+  const form76Keywords = [
+    "statement of affairs", 
+    "form 76", 
+    "monthly income",
+    "assets and liabilities",
+    "personal information"
+  ];
   
   // Convert text to lowercase for case-insensitive matching
   const lowerText = documentText ? documentText.toLowerCase() : '';
@@ -46,18 +66,33 @@ export const detectFormType = (document: any, documentText: string) => {
       return `form-${formNumber}`;
     }
     
-    // Check for form-specific keywords
-    if (form31Keywords.some(keyword => lowerText.includes(keyword))) {
+    // Enhanced keyword matching with score-based approach
+    const matchScore = (keywords: string[]) => {
+      return keywords.reduce((score, keyword) => {
+        return score + (lowerText.includes(keyword) ? 1 : 0);
+      }, 0);
+    };
+    
+    const form31Score = matchScore(form31Keywords);
+    const form47Score = matchScore(form47Keywords);
+    const form76Score = matchScore(form76Keywords);
+    
+    logger.debug(`Form keyword match scores - Form 31: ${form31Score}, Form 47: ${form47Score}, Form 76: ${form76Score}`);
+    
+    // Determine form type based on highest score with a minimum threshold
+    const minThreshold = 1; // At least one keyword must match
+    
+    if (form31Score >= minThreshold && form31Score >= form47Score && form31Score >= form76Score) {
       logger.debug('Form 31 detected based on keywords');
       return 'form-31';
     }
     
-    if (form47Keywords.some(keyword => lowerText.includes(keyword))) {
+    if (form47Score >= minThreshold && form47Score >= form31Score && form47Score >= form76Score) {
       logger.debug('Form 47 detected based on keywords');
       return 'form-47';
     }
     
-    if (form76Keywords.some(keyword => lowerText.includes(keyword))) {
+    if (form76Score >= minThreshold && form76Score >= form31Score && form76Score >= form47Score) {
       logger.debug('Form 76 detected based on keywords');
       return 'form-76';
     }
@@ -68,7 +103,7 @@ export const detectFormType = (document: any, documentText: string) => {
   return 'unknown';
 };
 
-// Add these missing form detection functions
+// Form detection functions with enhanced validation
 export const isForm31 = (document: any, documentText: string = ''): boolean => {
   // Check if document title contains form 31 or proof of claim references
   if (document.title?.toLowerCase().includes('form 31') || 
@@ -88,15 +123,29 @@ export const isForm31 = (document: any, documentText: string = ''): boolean => {
     return true;
   }
   
-  // Check document text for Form 31 keywords
+  // Enhanced text search for Form 31 specific patterns
   const lowerText = documentText.toLowerCase();
-  const form31Keywords = ["proof of claim", "form 31", "creditor claim"];
+  const form31Keywords = [
+    "proof of claim", 
+    "form 31", 
+    "creditor claim",
+    "bankrupt or person",
+    "type a: unsecured claim",
+    "particulars of security",
+    "claim amount $",
+    "claimant's name"
+  ];
   
-  if (form31Keywords.some(keyword => lowerText.includes(keyword))) {
-    return true;
-  }
+  // Count how many keywords match for confidence scoring
+  let matchCount = 0;
+  form31Keywords.forEach(keyword => {
+    if (lowerText.includes(keyword)) {
+      matchCount++;
+    }
+  });
   
-  return false;
+  // If we have multiple Form 31 indicators, it's likely a Form 31
+  return matchCount >= 2;
 };
 
 export const isForm47 = (document: any, documentText: string = ''): boolean => {
@@ -118,15 +167,29 @@ export const isForm47 = (document: any, documentText: string = ''): boolean => {
     return true;
   }
   
-  // Check document text for Form 47 keywords
+  // Enhanced text search for Form 47 specific patterns
   const lowerText = documentText.toLowerCase();
-  const form47Keywords = ["consumer proposal", "form 47", "payment schedule"];
+  const form47Keywords = [
+    "consumer proposal", 
+    "form 47", 
+    "payment schedule",
+    "proposal administrator",
+    "consumer debtor",
+    "insolvency date",
+    "proposal payments",
+    "monthly payment of"
+  ];
   
-  if (form47Keywords.some(keyword => lowerText.includes(keyword))) {
-    return true;
-  }
+  // Count how many keywords match for confidence scoring
+  let matchCount = 0;
+  form47Keywords.forEach(keyword => {
+    if (lowerText.includes(keyword)) {
+      matchCount++;
+    }
+  });
   
-  return false;
+  // If we have multiple Form 47 indicators, it's likely a Form 47
+  return matchCount >= 2;
 };
 
 export const isForm76 = (document: any, documentText: string = ''): boolean => {
@@ -148,13 +211,27 @@ export const isForm76 = (document: any, documentText: string = ''): boolean => {
     return true;
   }
   
-  // Check document text for Form 76 keywords
+  // Enhanced text search for Form 76 specific patterns
   const lowerText = documentText.toLowerCase();
-  const form76Keywords = ["statement of affairs", "form 76", "monthly income"];
+  const form76Keywords = [
+    "statement of affairs", 
+    "form 76", 
+    "monthly income",
+    "assets and liabilities",
+    "personal information",
+    "secured creditors",
+    "unsecured creditors",
+    "preferred creditors"
+  ];
   
-  if (form76Keywords.some(keyword => lowerText.includes(keyword))) {
-    return true;
-  }
+  // Count how many keywords match for confidence scoring
+  let matchCount = 0;
+  form76Keywords.forEach(keyword => {
+    if (lowerText.includes(keyword)) {
+      matchCount++;
+    }
+  });
   
-  return false;
+  // If we have multiple Form 76 indicators, it's likely a Form 76
+  return matchCount >= 2;
 };
