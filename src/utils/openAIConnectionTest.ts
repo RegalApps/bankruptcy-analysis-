@@ -16,10 +16,28 @@ export const testOpenAIConnection = async () => {
     connectionEstablished: false,
     responseReceived: false,
     details: {} as Record<string, any>,
-    errors: [] as string[]
+    errors: [] as string[],
+    troubleshooting: {
+      networkConnectivity: true,
+      edgeFunctionAccess: false,
+      apiKeyPresent: false,
+      apiKeyValid: false,
+      validResponse: false
+    }
   };
   
   try {
+    // First, check network connectivity
+    try {
+      const networkTest = await fetch('https://www.google.com');
+      results.troubleshooting.networkConnectivity = networkTest.ok;
+      console.log("Network connectivity test:", results.troubleshooting.networkConnectivity ? "Passed" : "Failed");
+    } catch (networkErr) {
+      results.troubleshooting.networkConnectivity = false;
+      results.errors.push(`Network connectivity issue: ${networkErr.message}`);
+      console.error("Network connectivity test failed:", networkErr);
+    }
+    
     console.log("Calling the edge function to test OpenAI connectivity");
     
     const { data, error } = await supabase.functions.invoke('process-ai-request', {
@@ -33,21 +51,39 @@ export const testOpenAIConnection = async () => {
       console.error("Edge function error:", error);
       results.errors.push(`Edge function error: ${error.message}`);
       results.message = `Failed to connect to edge function: ${error.message}`;
+      results.troubleshooting.edgeFunctionAccess = false;
       return results;
     }
     
     console.log("Edge function response:", data);
-    
     results.connectionEstablished = true;
+    results.troubleshooting.edgeFunctionAccess = true;
     results.details.edgeFunctionResponse = data;
+    
+    // Check if API key is present in the edge function
+    if (data?.debugInfo?.status?.openAIKeyPresent) {
+      results.troubleshooting.apiKeyPresent = true;
+    } else {
+      results.errors.push("OpenAI API key is not configured in edge function");
+      results.message = "OpenAI API key missing. Please add it to Supabase secrets.";
+      return results;
+    }
     
     if (data?.success) {
       results.responseReceived = true;
+      results.troubleshooting.apiKeyValid = true;
+      results.troubleshooting.validResponse = true;
       results.success = true;
       results.message = "Successfully connected to OpenAI via edge function";
     } else if (data?.error) {
+      results.troubleshooting.apiKeyValid = false;
       results.message = data.error;
       results.errors.push(data.error);
+      
+      if (data.error.includes("401") || data.error.includes("invalid") || data.error.includes("authentication")) {
+        results.errors.push("OpenAI API key appears to be invalid or expired");
+        results.message = "Invalid or expired OpenAI API key";
+      }
     }
     
     if (data?.debugInfo) {
@@ -90,7 +126,7 @@ export const useOpenAITest = () => {
       } else {
         toast({
           title: "OpenAI Connection Failed",
-          description: `${results.message}. Check console for details.`,
+          description: `${results.message}. Check the diagnostics for details.`,
           variant: "destructive",
         });
         console.error("OpenAI connection test failed:", results);
