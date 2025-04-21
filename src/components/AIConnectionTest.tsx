@@ -30,36 +30,7 @@ export const AIConnectionTest = () => {
     }
   };
 
-  const refreshSession = async () => {
-    try {
-      const { data, error } = await supabase.auth.refreshSession();
-      
-      if (error || !data.session) {
-        toast({
-          variant: "destructive",
-          title: "Session Refresh Failed",
-          description: error?.message || "Failed to refresh your session."
-        });
-        return false;
-      }
-      
-      setAuthStatus('valid');
-      toast({
-        title: "Session Refreshed",
-        description: "Your authentication session has been refreshed."
-      });
-      return true;
-    } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Session Refresh Error",
-        description: err.message || "An unknown error occurred"
-      });
-      return false;
-    }
-  };
-
-  const testConnection = async () => {
+  const testOpenAIConnection = async () => {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -69,17 +40,18 @@ export const AIConnectionTest = () => {
       const isAuthenticated = await checkAuthStatus();
       
       if (!isAuthenticated) {
-        const refreshed = await refreshSession();
-        if (!refreshed) {
-          throw new Error('Authentication required. Please log in to test the connection.');
-        }
+        throw new Error('Authentication required. Please log in to test the connection.');
       }
       
-      console.log("Using authenticated session for connection test");
+      console.log("Testing OpenAI connection via edge function");
       
-      // Test the OpenAI connection
+      // Test the OpenAI connection by sending a simple prompt
       const { data, error } = await supabase.functions.invoke('process-ai-request', {
-        body: { testMode: true, message: "Test connection" }
+        body: { 
+          message: "Test OpenAI connection and model availability",
+          module: "connection-test",
+          testMode: true
+        }
       });
 
       if (error) {
@@ -88,25 +60,26 @@ export const AIConnectionTest = () => {
 
       setResult(data);
       
-      if (data.success) {
+      if (data?.success) {
         toast({
-          title: "Connection successful!",
-          description: "The AI system is configured correctly and ready to use."
+          title: "OpenAI Connection Successful!",
+          description: "The OpenAI API is configured and ready to use.",
+          variant: "default"
         });
       } else {
         toast({
           variant: "destructive",
-          title: "Connection test failed",
-          description: data.error || "An unknown error occurred."
+          title: "OpenAI Connection Test Failed",
+          description: data.error || "Unable to connect to OpenAI API"
         });
       }
     } catch (err: any) {
-      console.error("Connection test error:", err);
-      setError(err.message || "An unknown error occurred");
+      console.error("OpenAI connection test error:", err);
+      setError(err.message || "An unexpected error occurred");
       toast({
         variant: "destructive",
-        title: "Connection test failed",
-        description: err.message || "Failed to test connection."
+        title: "Connection Test Failed",
+        description: err.message || "Failed to test OpenAI connection"
       });
     } finally {
       setLoading(false);
@@ -116,50 +89,12 @@ export const AIConnectionTest = () => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>AI Connection Test</CardTitle>
+        <CardTitle>OpenAI Connection Test</CardTitle>
         <CardDescription>
-          Test the connection to the OpenAI API and verify authentication
+          Verify the connection to the OpenAI API and check authentication
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 p-4 rounded-md bg-slate-50 border border-slate-200">
-          <div className="flex items-center">
-            <User className="h-5 w-5 text-slate-500 mr-2" />
-            <div>
-              <p className="font-medium text-slate-700">Authentication Status</p>
-              <div className="flex items-center mt-1">
-                {authStatus === 'unknown' && (
-                  <p className="text-sm text-slate-500">Not checked yet</p>
-                )}
-                {authStatus === 'valid' && (
-                  <>
-                    <Check className="h-4 w-4 text-green-500 mr-1" />
-                    <p className="text-sm text-green-700">Authentication valid</p>
-                  </>
-                )}
-                {authStatus === 'invalid' && (
-                  <>
-                    <X className="h-4 w-4 text-red-500 mr-1" />
-                    <p className="text-sm text-red-700">Authentication invalid or expired</p>
-                  </>
-                )}
-              </div>
-              
-              <div className="mt-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={refreshSession}
-                  className="text-xs"
-                >
-                  <RefreshCw className="h-3 w-3 mr-1" />
-                  Refresh Session
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {result && (
           <div className={`p-4 rounded-md mb-4 ${result.success ? 'bg-green-50' : 'bg-red-50'}`}>
             <div className="flex items-center">
@@ -173,7 +108,7 @@ export const AIConnectionTest = () => {
                   {result.success ? 'Connection Successful' : 'Connection Failed'}
                 </p>
                 <p className={`text-sm ${result.success ? 'text-green-600' : 'text-red-600'}`}>
-                  {result.message || result.error || 'No additional information available'}
+                  {result.message || 'No additional information available'}
                 </p>
                 
                 {result.debugInfo && (
@@ -194,14 +129,14 @@ export const AIConnectionTest = () => {
                       </li>
                       <li>
                         <span className="inline-flex items-center">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Service Role: {result.debugInfo.status?.serviceRoleUsed ? 'Used ✅' : 'Not Used'}
+                          <Clock className="h-3 w-3 mr-1" />
+                          Timestamp: {result.debugInfo.status?.timestamp || 'Not available'}
                         </span>
                       </li>
                       <li>
                         <span className="inline-flex items-center">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Timestamp: {result.debugInfo.status?.timestamp || 'Not available'}
+                          <Shield className="h-3 w-3 mr-1" />
+                          Model Availability: {result.debugInfo.status?.modelAvailable ? 'Available ✅' : 'Unavailable ❌'}
                         </span>
                       </li>
                     </ul>
@@ -212,31 +147,21 @@ export const AIConnectionTest = () => {
           </div>
         )}
 
-        {error && !result && (
+        {error && (
           <div className="bg-red-50 p-4 rounded-md mb-4">
             <div className="flex items-center">
               <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
               <div>
-                <p className="font-medium text-red-800">Authentication Error</p>
+                <p className="font-medium text-red-800">Connection Error</p>
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             </div>
           </div>
         )}
-
-        <p className="text-sm text-muted-foreground">
-          This will test the connection to the OpenAI API and verify that authentication is working properly. 
-          The test will check if:
-        </p>
-        <ul className="list-disc list-inside mt-2 text-sm text-muted-foreground">
-          <li>Your user is authenticated with valid JWT</li>
-          <li>The OpenAI API key is configured and valid</li>
-          <li>The edge function is accessible and properly configured</li>
-        </ul>
       </CardContent>
       <CardFooter>
         <Button 
-          onClick={testConnection} 
+          onClick={testOpenAIConnection} 
           disabled={loading}
           className="w-full"
         >
@@ -246,7 +171,7 @@ export const AIConnectionTest = () => {
               Testing Connection...
             </>
           ) : (
-            'Test Connection'
+            'Test OpenAI Connection'
           )}
         </Button>
       </CardFooter>
