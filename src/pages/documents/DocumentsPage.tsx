@@ -108,6 +108,11 @@ const DocumentsPage = () => {
     console.log("Selected node:", node);
   };
   
+  const handleClientSelect = (clientId: string) => {
+    // Navigate to the client viewer page
+    navigate(`/client-viewer/${clientId}`);
+  };
+  
   const handleFileOpen = (node: any) => {
     console.log("Opening file:", node);
     
@@ -127,7 +132,8 @@ const DocumentsPage = () => {
           {/* Left Panel: Client List */}
           <div className="w-72 flex-shrink-0">
             <ClientList 
-              clients={DEMO_CLIENTS} 
+              clients={DEMO_CLIENTS}
+              onClientSelect={handleClientSelect}
             />
           </div>
           

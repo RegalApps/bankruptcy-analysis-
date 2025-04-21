@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { ClientList } from "@/components/documents/ClientList";
 import { DocumentTree } from "@/components/documents/DocumentTree";
@@ -285,8 +284,8 @@ const DocumentsPage = () => {
           <div className="w-72 flex-shrink-0">
             <ClientList 
               clients={DEMO_CLIENTS}
-              onClientSelect={handleClientSelect}
               selectedClientId={selectedClient}
+              onClientSelect={handleClientSelect}
             />
           </div>
           

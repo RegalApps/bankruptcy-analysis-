@@ -1,10 +1,9 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Alert } from "lucide-react";
+import { Calendar, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -20,16 +19,22 @@ interface Client {
 interface ClientListProps {
   clients: Client[];
   selectedClientId?: string;
+  onClientSelect?: (clientId: string) => void;
 }
 
-export const ClientList = ({ clients, selectedClientId }: ClientListProps) => {
+export const ClientList = ({ clients, selectedClientId, onClientSelect }: ClientListProps) => {
   const navigate = useNavigate();
   
   const handleSelectClient = (clientId: string) => {
     console.log("ClientList: Selected client ID:", clientId);
     toast.info(`Loading client: ${clientId}`);
-    console.log("Navigating to client viewer:", `/client-viewer/${clientId}`);
-    navigate(`/client-viewer/${clientId}`);
+    
+    if (onClientSelect) {
+      onClientSelect(clientId);
+    } else {
+      console.log("Navigating to client viewer:", `/client-viewer/${clientId}`);
+      navigate(`/client-viewer/${clientId}`);
+    }
   };
   
   return (
@@ -79,7 +84,7 @@ export const ClientList = ({ clients, selectedClientId }: ClientListProps) => {
                 
                 {client.needsAttention && (
                   <div className="flex items-center gap-1 text-amber-600 text-xs mt-1">
-                    <Alert className="h-3 w-3" />
+                    <AlertCircle className="h-3 w-3" />
                     <span>Needs attention</span>
                   </div>
                 )}
