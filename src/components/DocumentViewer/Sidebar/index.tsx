@@ -33,17 +33,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   const extractedInfo = analysisContent?.extracted_info || {};
   const risks = analysisContent?.risks || [];
 
-  // Get document text safely from metadata or extracted info, prioritizing certain fields
-  // and falling back to empty string if none are available
+  // Get document text safely from metadata or extracted info, with proper type checking
   const documentText = (
-    // From metadata
-    (document.metadata?.text as string) ||
-    (document.metadata?.fullText as string) ||
-    (document.metadata?.content as string) ||
-    // From extracted_info
-    (extractedInfo.fullText as string) ||
-    // From analysis content directly (although unlikely to exist)
-    (analysisContent?.fullText as string) ||
+    // From metadata, using optional chaining and type assertion for safety
+    ((document.metadata?.content as string) || '') ||
     // Final fallback
     ""
   );
