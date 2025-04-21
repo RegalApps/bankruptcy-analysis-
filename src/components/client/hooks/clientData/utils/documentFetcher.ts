@@ -1,9 +1,9 @@
-
 import { supabase } from "@/lib/supabase";
 import { Document, Client } from "../../../types";
 import { createClientData } from "./clientDataCreator";
 import { getDefaultDocuments } from "./defaultData";
-import { getClientData, getClientDocuments } from "../../../data/clientTemplates";
+import { getClientData } from "../../../data/clientInfoTemplates";
+import { getClientDocuments } from "../../../data/clientDocumentTemplates";
 
 /**
  * Fetches documents for a specific client ID

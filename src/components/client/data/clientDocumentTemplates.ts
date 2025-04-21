@@ -1,9 +1,62 @@
-
 import { Document } from "../types";
 import { getDateFromDaysAgo, setDefaultDocumentProps } from "./clientDocumentHelpers";
 
+// Dynamic/async handling for future: you would replace this default with
+// an async `getDynamicClientDocuments(clientId)` if needed.
+const getFormDocumentTemplate = (formId: string, clientId: string): Document | null => {
+  const now = getDateFromDaysAgo(0);
+  switch (formId) {
+    case "47":
+      return setDefaultDocumentProps({
+        id: `${clientId}-form-47`,
+        title: "Form 47 - Consumer Proposal",
+        type: "form-47",
+        created_at: now,
+        updated_at: now,
+        storage_path: `documents/${clientId}-form47.pdf`,
+        parent_folder_id: "client-folder",
+        metadata: {
+          client_name: clientId,
+          client_id: clientId,
+          document_type: "form",
+          form_number: "47"
+        }
+      });
+    case "31":
+      return setDefaultDocumentProps({
+        id: `${clientId}-form-31`,
+        title: "Form 31 - Proof of Claim",
+        type: "form-31",
+        created_at: now,
+        updated_at: now,
+        storage_path: `documents/${clientId}-form31.pdf`,
+        parent_folder_id: "client-folder",
+        metadata: {
+          client_name: clientId,
+          client_id: clientId,
+          document_type: "form",
+          form_number: "31"
+        }
+      });
+    default:
+      return null;
+  }
+};
+
 // All static document templates for each client
 export const getClientDocuments = (clientId: string): Document[] => {
+  // Handle Form 47/31 if called directly
+  if (clientId.startsWith("form-47")) {
+    const [_, realClientId = "generic"] = clientId.split(":");
+    const doc = getFormDocumentTemplate("47", realClientId);
+    return doc ? [doc] : [];
+  }
+  if (clientId.startsWith("form-31")) {
+    const [_, realClientId = "generic"] = clientId.split(":");
+    const doc = getFormDocumentTemplate("31", realClientId);
+    return doc ? [doc] : [];
+  }
+
   const now = getDateFromDaysAgo(0);
   const oneWeekAgo = getDateFromDaysAgo(7);
   const twoWeeksAgo = getDateFromDaysAgo(14);

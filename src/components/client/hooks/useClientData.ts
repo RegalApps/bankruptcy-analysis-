@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useClientFetching } from "./clientData/useClientFetching";
 import { useClientTabs } from "./clientData/useClientTabs";
