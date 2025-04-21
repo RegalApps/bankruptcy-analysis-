@@ -186,7 +186,7 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
   }, [documentId]);
 
   if (loading) {
-    return <ViewerLoadingState title={documentTitle || "Loading Document"} />;
+    return <ViewerLoadingState message={`Loading ${documentTitle || "Document"}...`} />;
   }
 
   if (loadingError) {
@@ -199,7 +199,8 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
 
   const risks = document?.analysis?.[0]?.content?.risks as Risk[] || [];
   const extractedInfo = document?.analysis?.[0]?.content?.extracted_info || {};
-  const documentSummary = document?.analysis?.[0]?.content?.summary || extractedInfo.summary || "";
+  // Fix the summary access by getting it from the right place
+  const documentSummary = document?.analysis?.[0]?.content?.extracted_info?.summary || "";
   
   return (
     <div className="flex flex-col h-full">
@@ -224,8 +225,10 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
       {/* Document Preview */}
       <div className="flex-grow">
         <DocumentPreview 
-          document={document} 
-          showFullPage={true}
+          documentId={documentId}
+          title={document.title}
+          storagePath={document.storage_path || ""}
+          bypassAnalysis={true}
         />
       </div>
       

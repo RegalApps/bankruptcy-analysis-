@@ -4,7 +4,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
-import { DocumentViewer } from "@/components/DocumentViewer";
 import { EnhancedDocumentViewer } from "@/components/DocumentViewer/EnhancedDocumentViewer";
 import { toast } from "sonner";
 import { runFullSystemDiagnostics } from "@/utils/diagnoseBiaSystem";
@@ -59,15 +58,6 @@ const DocumentViewerPage = () => {
     navigate('/documents');
   };
   
-  const handleLoadFailure = () => {
-    console.error("Failed to load document");
-    setDocumentNotFound(true);
-    toast.error("Failed to load document", {
-      description: "There was an error loading the document. Please try again."
-    });
-    // We'll stay on the page to allow retrying
-  };
-  
   // Special case for Form 47 document - we'll provide a demo version instead
   const isForm47 = documentId === "form47";
   const documentTitle = isForm47 ? "Form 47 - Consumer Proposal" : undefined;
@@ -99,15 +89,10 @@ const DocumentViewerPage = () => {
             </p>
             <Button onClick={handleBack}>Return to Documents</Button>
           </div>
-        ) : isForm47 ? (
-          <EnhancedDocumentViewer 
-            documentId="form47" 
-            documentTitle="Form 47 - Consumer Proposal"
-          />
         ) : (
           <EnhancedDocumentViewer 
-            documentId={documentId!} 
-            documentTitle={undefined}
+            documentId={documentId!}
+            documentTitle={documentTitle}
           />
         )}
       </div>

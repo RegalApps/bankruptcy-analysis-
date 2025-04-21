@@ -2,439 +2,169 @@
 import { supabase } from "@/lib/supabase";
 
 /**
- * Diagnostic utility for BIA system
- * Use this to check connections, test processing, and validate data structure
+ * Runs comprehensive diagnostics on the Bankruptcy & Insolvency Act (BIA) system
+ * @param documentId The document ID to diagnose
+ * @returns Diagnostic results
  */
-
-// Test OpenAI API connectivity
-export const testOpenAIConnection = async (): Promise<{ success: boolean; message: string }> => {
+export const runFullSystemDiagnostics = async (documentId: string) => {
+  console.log(`Running full system diagnostics for document: ${documentId}`);
+  
+  const results = {
+    success: true,
+    message: "All systems operational",
+    supabaseConnection: true,
+    documentFound: false,
+    analysisFound: false,
+    storagePathValid: false,
+    analysisStatus: "unknown",
+    details: {} as Record<string, any>
+  };
+  
   try {
-    // We'll use our process-ai-request function to test OpenAI connectivity
+    // Test 1: Basic Supabase Connection
+    try {
+      const { count, error } = await supabase
+        .from('documents')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        results.supabaseConnection = false;
+        results.success = false;
+        results.message = `Supabase connection issue: ${error.message}`;
+        return results;
+      }
+      
+      results.details.documentCount = count;
+    } catch (e: any) {
+      results.supabaseConnection = false;
+      results.success = false;
+      results.message = `Supabase connection error: ${e.message}`;
+      return results;
+    }
+    
+    // Test 2: Document Existence
+    try {
+      const { data: document, error } = await supabase
+        .from('documents')
+        .select('id, title, storage_path, ai_processing_status')
+        .eq('id', documentId)
+        .single();
+      
+      if (error || !document) {
+        results.documentFound = false;
+        results.success = false;
+        results.message = `Document not found: ${error?.message || 'Unknown error'}`;
+        return results;
+      }
+      
+      results.documentFound = true;
+      results.details.documentTitle = document.title;
+      results.details.aiProcessingStatus = document.ai_processing_status;
+      
+      // Test storage path validity
+      if (document.storage_path) {
+        results.storagePathValid = true;
+        results.details.storagePath = document.storage_path;
+      } else {
+        results.storagePathValid = false;
+        results.details.storagePathMissing = true;
+      }
+    } catch (e: any) {
+      results.documentFound = false;
+      results.success = false;
+      results.message = `Error checking document: ${e.message}`;
+      return results;
+    }
+    
+    // Test 3: Analysis Existence
+    try {
+      const { data: analysis, error } = await supabase
+        .from('document_analysis')
+        .select('id, content')
+        .eq('document_id', documentId)
+        .maybeSingle();
+      
+      if (error) {
+        results.success = false;
+        results.message = `Error checking analysis: ${error.message}`;
+        return results;
+      }
+      
+      if (!analysis) {
+        results.analysisFound = false;
+        results.analysisStatus = "missing";
+        results.success = false;
+        results.message = "Document analysis not found. Document may need processing.";
+      } else {
+        results.analysisFound = true;
+        results.analysisStatus = "found";
+        
+        // Check if content exists and has proper structure
+        if (!analysis.content) {
+          results.analysisStatus = "empty";
+          results.success = false;
+          results.message = "Analysis exists but content is empty";
+        } else {
+          // Check extracted_info
+          if (!analysis.content.extracted_info) {
+            results.analysisStatus = "incomplete";
+            results.success = false;
+            results.message = "Analysis missing extracted_info";
+          }
+          
+          // Check risks
+          if (!analysis.content.risks || !Array.isArray(analysis.content.risks)) {
+            if (results.analysisStatus === "incomplete") {
+              results.message += " and risks";
+            } else {
+              results.analysisStatus = "incomplete";
+              results.success = false;
+              results.message = "Analysis missing risks array";
+            }
+          }
+        }
+        
+        results.details.analysisId = analysis.id;
+      }
+    } catch (e: any) {
+      results.analysisFound = false;
+      results.success = false;
+      results.message = `Error checking analysis: ${e.message}`;
+      return results;
+    }
+    
+    return results;
+    
+  } catch (e: any) {
+    console.error("Diagnostic error:", e);
+    return {
+      success: false,
+      message: `System diagnostic failed: ${e.message}`,
+      error: e
+    };
+  }
+};
+
+/**
+ * Tests if the OpenAI API key is valid and operational
+ */
+export const testOpenAIKey = async () => {
+  try {
+    // Call the edge function to test the OpenAI key
     const { data, error } = await supabase.functions.invoke('process-ai-request', {
-      body: { 
-        message: "Test connection. Please respond with 'OpenAI connection successful'.",
-        module: "system-test"
+      body: {
+        message: "This is a test to verify OpenAI connectivity.",
+        testMode: true
       }
     });
-
+    
     if (error) {
-      return { 
-        success: false, 
-        message: `OpenAI connection failed: ${error.message}` 
-      };
-    }
-
-    return { 
-      success: true, 
-      message: "OpenAI connection successful" 
-    };
-  } catch (err: any) {
-    console.error("OpenAI connection test failed:", err);
-    return { 
-      success: false, 
-      message: `OpenAI connection test error: ${err.message}` 
-    };
-  }
-};
-
-// Test Supabase connectivity and permissions
-export const testSupabaseConnection = async (): Promise<{ 
-  success: boolean; 
-  message: string;
-  details?: { [key: string]: boolean }; 
-}> => {
-  try {
-    const results = {
-      documentsTableAccess: false,
-      documentAnalysisTableAccess: false,
-      storageAccess: false,
-      functionAccess: false
-    };
-
-    // Test documents table access
-    const { data: documentsData, error: documentsError } = await supabase
-      .from('documents')
-      .select('id')
-      .limit(1);
-    
-    results.documentsTableAccess = !documentsError;
-
-    // Test document_analysis table access
-    const { data: analysisData, error: analysisError } = await supabase
-      .from('document_analysis')
-      .select('id')
-      .limit(1);
-    
-    results.documentAnalysisTableAccess = !analysisError;
-
-    // Test storage access (list buckets)
-    const { data: storageData, error: storageError } = await supabase
-      .storage
-      .listBuckets();
-    
-    results.storageAccess = !storageError;
-
-    // Test function access
-    try {
-      const { data: functionData, error: functionError } = await supabase.functions.invoke(
-        'process-ai-request',
-        { body: { message: 'test', module: 'test' } }
-      );
-      results.functionAccess = !functionError;
-    } catch (err) {
-      results.functionAccess = false;
-    }
-
-    // Determine overall status
-    const allSuccess = Object.values(results).every(value => value);
-    
-    return {
-      success: allSuccess,
-      message: allSuccess 
-        ? "All Supabase connections successful" 
-        : "Some Supabase connections failed",
-      details: results
-    };
-  } catch (err: any) {
-    console.error("Supabase connection test failed:", err);
-    return { 
-      success: false, 
-      message: `Supabase connection test error: ${err.message}` 
-    };
-  }
-};
-
-// Check document processing pipeline
-export const testDocumentPipeline = async (documentId: string): Promise<{
-  success: boolean;
-  message: string;
-  stages: {
-    documentExists: boolean;
-    documentHasStoragePath: boolean;
-    fileAccessible: boolean;
-    analysisExists: boolean;
-    analysisComplete: boolean;
-  };
-  details?: any;
-}> => {
-  try {
-    const stages = {
-      documentExists: false,
-      documentHasStoragePath: false,
-      fileAccessible: false, 
-      analysisExists: false,
-      analysisComplete: false
-    };
-    
-    let details = {};
-
-    // Check if document exists
-    const { data: document, error: docError } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('id', documentId)
-      .single();
-
-    if (docError) {
-      return {
-        success: false,
-        message: `Document lookup failed: ${docError.message}`,
-        stages
-      };
-    }
-
-    stages.documentExists = true;
-    details = { ...details, document };
-
-    // Check if document has a storage path
-    if (!document.storage_path) {
-      return {
-        success: false,
-        message: "Document exists but has no storage path",
-        stages,
-        details
-      };
-    }
-
-    stages.documentHasStoragePath = true;
-
-    // Check if file is accessible in storage
-    try {
-      const { data: fileData, error: fileError } = await supabase
-        .storage
-        .from('documents')
-        .download(document.storage_path);
-
-      if (fileError) {
-        return {
-          success: false,
-          message: `File not accessible in storage: ${fileError.message}`,
-          stages,
-          details
-        };
-      }
-
-      stages.fileAccessible = true;
-    } catch (err: any) {
-      return {
-        success: false,
-        message: `File access error: ${err.message}`,
-        stages,
-        details
-      };
-    }
-
-    // Check if analysis exists
-    const { data: analysis, error: analysisError } = await supabase
-      .from('document_analysis')
-      .select('*')
-      .eq('document_id', documentId);
-
-    if (analysisError) {
-      return {
-        success: false,
-        message: `Analysis lookup failed: ${analysisError.message}`,
-        stages,
-        details
-      };
-    }
-
-    if (!analysis || analysis.length === 0) {
-      return {
-        success: false,
-        message: "No analysis found for this document",
-        stages,
-        details
-      };
-    }
-
-    stages.analysisExists = true;
-    details = { ...details, analysis: analysis[0] };
-
-    // Check if analysis content is valid
-    const analysisContent = analysis[0].content;
-    if (!analysisContent) {
-      return {
-        success: false,
-        message: "Analysis exists but has no content",
-        stages,
-        details
-      };
-    }
-
-    // Check for required analysis components
-    const hasExtractedInfo = !!analysisContent.extracted_info;
-    const hasRisks = !!analysisContent.risks;
-    
-    if (!hasExtractedInfo || !hasRisks) {
-      return {
-        success: false,
-        message: "Analysis content is missing required fields (extracted_info or risks)",
-        stages,
-        details: {
-          ...details,
-          hasExtractedInfo,
-          hasRisks
-        }
-      };
-    }
-
-    stages.analysisComplete = true;
-
-    return {
-      success: true,
-      message: "Document pipeline validation successful",
-      stages,
-      details
-    };
-  } catch (err: any) {
-    console.error("Document pipeline test failed:", err);
-    return {
-      success: false, 
-      message: `Document pipeline test error: ${err.message}`,
-      stages: {
-        documentExists: false,
-        documentHasStoragePath: false,
-        fileAccessible: false,
-        analysisExists: false,
-        analysisComplete: false
-      }
-    };
-  }
-};
-
-// Validate BIA system data structure
-export const validateDataStructure = async (): Promise<{
-  success: boolean;
-  message: string;
-  tables: {
-    documents: boolean;
-    documentAnalysis: boolean;
-  };
-  columns: {
-    documentsColumns: string[];
-    analysisColumns: string[];
-    missingRequired: string[];
-  };
-}> => {
-  try {
-    let tables = {
-      documents: false,
-      documentAnalysis: false
-    };
-    
-    let columns = {
-      documentsColumns: [] as string[],
-      analysisColumns: [] as string[],
-      missingRequired: [] as string[]
-    };
-
-    // Check documents table
-    const { data: documents, error: docsError } = await supabase
-      .from('documents')
-      .select('*')
-      .limit(1);
-    
-    if (docsError) {
-      return {
-        success: false,
-        message: `Documents table check failed: ${docsError.message}`,
-        tables,
-        columns
-      };
+      return { success: false, message: `OpenAI test failed: ${error.message}` };
     }
     
-    tables.documents = true;
-    
-    // Check document_analysis table
-    const { data: analysis, error: analysisError } = await supabase
-      .from('document_analysis')
-      .select('*')
-      .limit(1);
-    
-    if (analysisError) {
-      return {
-        success: false,
-        message: `Document analysis table check failed: ${analysisError.message}`,
-        tables,
-        columns
-      };
-    }
-    
-    tables.documentAnalysis = true;
-    
-    // Check columns in documents table
-    if (documents && documents.length > 0) {
-      columns.documentsColumns = Object.keys(documents[0] || {});
-      
-      // Check for required columns
-      const requiredDocumentColumns = ['id', 'storage_path', 'ai_processing_status', 'metadata'];
-      const missingDocColumns = requiredDocumentColumns.filter(col => !columns.documentsColumns.includes(col));
-      
-      if (missingDocColumns.length > 0) {
-        columns.missingRequired.push(...missingDocColumns.map(col => `documents.${col}`));
-      }
-    }
-    
-    // Check columns in document_analysis table
-    if (analysis && analysis.length > 0) {
-      columns.analysisColumns = Object.keys(analysis[0] || {});
-      
-      // Check for required columns
-      const requiredAnalysisColumns = ['id', 'document_id', 'content'];
-      const missingAnalysisColumns = requiredAnalysisColumns.filter(col => !columns.analysisColumns.includes(col));
-      
-      if (missingAnalysisColumns.length > 0) {
-        columns.missingRequired.push(...missingAnalysisColumns.map(col => `document_analysis.${col}`));
-      }
-    }
-    
-    const success = tables.documents && tables.documentAnalysis && columns.missingRequired.length === 0;
-    
-    return {
-      success,
-      message: success ? 
-        "Data structure validation successful" : 
-        "Data structure validation failed",
-      tables,
-      columns
-    };
-  } catch (err: any) {
-    console.error("Data structure validation failed:", err);
-    return {
-      success: false,
-      message: `Data structure validation error: ${err.message}`,
-      tables: {
-        documents: false,
-        documentAnalysis: false
-      },
-      columns: {
-        documentsColumns: [],
-        analysisColumns: [],
-        missingRequired: []
-      }
-    };
-  }
-};
-
-// Run full system diagnostics
-export const runFullSystemDiagnostics = async (sampleDocumentId?: string): Promise<{
-  success: boolean;
-  message: string;
-  results: {
-    openai: { success: boolean; message: string };
-    supabase: { success: boolean; message: string; details?: any };
-    dataStructure: { success: boolean; message: string; tables: any; columns: any };
-    pipeline?: { success: boolean; message: string; stages: any; details?: any };
-  };
-}> => {
-  try {
-    // Test OpenAI connection
-    const openaiTest = await testOpenAIConnection();
-    
-    // Test Supabase connection
-    const supabaseTest = await testSupabaseConnection();
-    
-    // Test data structure
-    const dataStructureTest = await validateDataStructure();
-    
-    // Test document pipeline if sample document provided
-    const pipelineTest = sampleDocumentId ? 
-      await testDocumentPipeline(sampleDocumentId) : 
-      undefined;
-    
-    // Determine overall success
-    const coreSuccess = openaiTest.success && supabaseTest.success && dataStructureTest.success;
-    const pipelineSuccess = pipelineTest ? pipelineTest.success : true;
-    const success = coreSuccess && pipelineSuccess;
-    
-    return {
-      success,
-      message: success ? 
-        "All diagnostic tests passed successfully" : 
-        "Some diagnostic tests failed",
-      results: {
-        openai: openaiTest,
-        supabase: supabaseTest,
-        dataStructure: dataStructureTest,
-        pipeline: pipelineTest
-      }
-    };
-  } catch (err: any) {
-    console.error("Full system diagnostics failed:", err);
-    return {
-      success: false,
-      message: `System diagnostic error: ${err.message}`,
-      results: {
-        openai: { success: false, message: "Test failed due to an error" },
-        supabase: { success: false, message: "Test failed due to an error" },
-        dataStructure: { 
-          success: false, 
-          message: "Test failed due to an error",
-          tables: { documents: false, documentAnalysis: false },
-          columns: { documentsColumns: [], analysisColumns: [], missingRequired: [] }
-        }
-      }
-    };
+    return { success: true, message: "OpenAI API key is valid", details: data };
+  } catch (e: any) {
+    console.error("OpenAI key test error:", e);
+    return { success: false, message: `OpenAI test error: ${e.message}` };
   }
 };
