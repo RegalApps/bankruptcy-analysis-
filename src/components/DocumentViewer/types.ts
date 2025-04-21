@@ -1,4 +1,3 @@
-
 export interface DocumentDetails {
   id: string;
   title: string;
@@ -90,16 +89,16 @@ export interface DocumentComment {
 }
 
 export interface DocumentDeadline {
-  id: string;
+  id?: string;
   title: string;
   description?: string;
   due_date: string;
-  status: 'pending' | 'completed' | 'overdue';
-  created_at: string;
-  updated_at: string;
+  status?: 'pending' | 'completed' | 'overdue';
+  created_at?: string;
+  updated_at?: string;
 }
 
-export type Deadline = DocumentDeadline;
+export type Deadline = Partial<DocumentDeadline>;
 
 export interface Task {
   id: string;

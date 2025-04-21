@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({ onAdd, onCancel }) => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>();
-  const [newDeadline, setNewDeadline] = useState<Deadline>({
+  const [newDeadline, setNewDeadline] = useState<Partial<Deadline>>({
     title: '',
     due_date: '',
     description: ''
@@ -42,8 +42,9 @@ export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({ onAdd, onCance
 
     await onAdd({
       ...newDeadline,
+      status: 'pending',
       due_date: deadlineDate.toISOString()
-    });
+    } as Deadline);
   };
 
   return (
