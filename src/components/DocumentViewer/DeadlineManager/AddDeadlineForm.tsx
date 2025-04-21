@@ -8,7 +8,7 @@ import { AddDeadlineFormProps } from "./types";
 export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({ onAdd, onCancel }) => {
   const [deadline, setDeadline] = useState({
     title: "",
-    dueDate: "",
+    dueDate: "", // Changed from due_date to dueDate to match the type
     description: "",
   });
 

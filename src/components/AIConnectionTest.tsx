@@ -3,14 +3,61 @@ import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, X, AlertCircle, RefreshCw } from 'lucide-react';
+import { Check, X, AlertCircle, RefreshCw, Key, User, Shield, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const AIConnectionTest = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [authStatus, setAuthStatus] = useState<'unknown' | 'valid' | 'invalid'>('unknown');
   const { toast } = useToast();
+
+  const checkAuthStatus = async () => {
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        setAuthStatus('invalid');
+        return false;
+      } else {
+        setAuthStatus('valid');
+        return true;
+      }
+    } catch (err) {
+      setAuthStatus('invalid');
+      return false;
+    }
+  };
+
+  const refreshSession = async () => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error || !data.session) {
+        toast({
+          variant: "destructive",
+          title: "Session Refresh Failed",
+          description: error?.message || "Failed to refresh your session."
+        });
+        return false;
+      }
+      
+      setAuthStatus('valid');
+      toast({
+        title: "Session Refreshed",
+        description: "Your authentication session has been refreshed."
+      });
+      return true;
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Session Refresh Error",
+        description: err.message || "An unknown error occurred"
+      });
+      return false;
+    }
+  };
 
   const testConnection = async () => {
     setLoading(true);
@@ -19,21 +66,20 @@ export const AIConnectionTest = () => {
     
     try {
       // First ensure we have a valid session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const isAuthenticated = await checkAuthStatus();
       
-      if (sessionError) {
-        throw new Error(`Authentication error: ${sessionError.message}`);
-      }
-      
-      if (!sessionData.session) {
-        throw new Error('Not authenticated. Please log in to test the connection.');
+      if (!isAuthenticated) {
+        const refreshed = await refreshSession();
+        if (!refreshed) {
+          throw new Error('Authentication required. Please log in to test the connection.');
+        }
       }
       
       console.log("Using authenticated session for connection test");
       
       // Test the OpenAI connection
       const { data, error } = await supabase.functions.invoke('process-ai-request', {
-        body: { testMode: true }
+        body: { testMode: true, message: "Test connection" }
       });
 
       if (error) {
@@ -76,6 +122,44 @@ export const AIConnectionTest = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 p-4 rounded-md bg-slate-50 border border-slate-200">
+          <div className="flex items-center">
+            <User className="h-5 w-5 text-slate-500 mr-2" />
+            <div>
+              <p className="font-medium text-slate-700">Authentication Status</p>
+              <div className="flex items-center mt-1">
+                {authStatus === 'unknown' && (
+                  <p className="text-sm text-slate-500">Not checked yet</p>
+                )}
+                {authStatus === 'valid' && (
+                  <>
+                    <Check className="h-4 w-4 text-green-500 mr-1" />
+                    <p className="text-sm text-green-700">Authentication valid</p>
+                  </>
+                )}
+                {authStatus === 'invalid' && (
+                  <>
+                    <X className="h-4 w-4 text-red-500 mr-1" />
+                    <p className="text-sm text-red-700">Authentication invalid or expired</p>
+                  </>
+                )}
+              </div>
+              
+              <div className="mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={refreshSession}
+                  className="text-xs"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Refresh Session
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {result && (
           <div className={`p-4 rounded-md mb-4 ${result.success ? 'bg-green-50' : 'bg-red-50'}`}>
             <div className="flex items-center">
@@ -97,16 +181,28 @@ export const AIConnectionTest = () => {
                     <p className="font-medium">Diagnostic Information:</p>
                     <ul className="list-disc list-inside mt-1 space-y-1">
                       <li>
-                        OpenAI API Key: {result.debugInfo.status?.openAIKeyPresent ? 'Configured ✅' : 'Missing ❌'}
+                        <span className="inline-flex items-center">
+                          <Key className="h-3 w-3 mr-1" />
+                          OpenAI API Key: {result.debugInfo.status?.openAIKeyPresent ? 'Configured ✅' : 'Missing ❌'}
+                        </span>
                       </li>
                       <li>
-                        Authentication: {result.debugInfo.status?.authPresent ? 'Valid ✅' : 'Invalid ❌'}
+                        <span className="inline-flex items-center">
+                          <User className="h-3 w-3 mr-1" />
+                          Authentication: {result.debugInfo.status?.authPresent ? 'Valid ✅' : 'Invalid ❌'}
+                        </span>
                       </li>
                       <li>
-                        Service Role: {result.debugInfo.status?.serviceRoleUsed ? 'Used ✅' : 'Not Used'}
+                        <span className="inline-flex items-center">
+                          <Shield className="h-3 w-3 mr-1" />
+                          Service Role: {result.debugInfo.status?.serviceRoleUsed ? 'Used ✅' : 'Not Used'}
+                        </span>
                       </li>
                       <li>
-                        Timestamp: {result.debugInfo.status?.timestamp || 'Not available'}
+                        <span className="inline-flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Timestamp: {result.debugInfo.status?.timestamp || 'Not available'}
+                        </span>
                       </li>
                     </ul>
                   </div>

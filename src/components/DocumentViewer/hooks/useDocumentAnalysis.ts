@@ -4,10 +4,11 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalysisProcess } from "./analysisProcess/useAnalysisProcess";
 import { AnalysisProcessProps } from "./analysisProcess/types";
+import { Session } from "@supabase/supabase-js";
 
 export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: () => void) => {
   const [analyzing, setAnalyzing] = useState(false);
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [analysisStep, setAnalysisStep] = useState<string>("");
   const [progress, setProgress] = useState<number>(0);
@@ -31,8 +32,16 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
     
     try {
       if (!currentSession) {
-        console.error("No session available for document analysis");
-        throw new Error('You must be logged in to analyze documents');
+        // First attempt to refresh the token before giving up
+        const { data: refreshedSession, error: refreshError } = await supabase.auth.getSession();
+        
+        if (refreshError || !refreshedSession.session) {
+          console.error("No active session found for document analysis:", refreshError);
+          throw new Error('Authentication required: You must be logged in to analyze documents');
+        }
+        
+        currentSession = refreshedSession.session;
+        setSession(currentSession);
       }
 
       setAnalyzing(true);
@@ -70,7 +79,7 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
         })
         .eq('id', document.id);
       
-      // Execute the analysis process
+      // Execute the analysis process with valid session
       await executeAnalysisProcess(storagePath, currentSession);
       
       toast({
@@ -137,11 +146,37 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
     };
   }, [storagePath, onAnalysisComplete]);
 
-  // Check document status on initial load
+  // Check document status and session on initial load
   useEffect(() => {
-    if (session && storagePath && !analyzing) {
-      const checkDocumentStatus = async () => {
-        try {
+    const checkSessionAndDocument = async () => {
+      try {
+        // Always get a fresh session to prevent token expiration issues
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          setError(`Authentication error: ${sessionError.message}`);
+          return;
+        }
+        
+        if (!sessionData.session) {
+          console.log("No active session found, trying to refresh");
+          // Try to refresh the session
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError || !refreshData.session) {
+            console.error("Failed to refresh session:", refreshError);
+            setError("Your session has expired. Please log in again.");
+            return;
+          }
+          
+          setSession(refreshData.session);
+        } else {
+          setSession(sessionData.session);
+        }
+        
+        // Now check document status if we have a session and storagePath
+        if (sessionData.session && storagePath && !analyzing && !error) {
           const { data: document, error: docError } = await supabase
             .from('documents')
             .select('id, ai_processing_status, metadata, type, title')
@@ -153,30 +188,30 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
             return;
           }
             
-          if (!document) {
-            console.log("Document not found in database, cannot check status");
-            return;
-          }
+          if (document) {
+            console.log("Checking document analysis status:", document.ai_processing_status);
             
-          console.log("Checking document analysis status:", document.ai_processing_status);
-          
-          // For documents without complete analysis, trigger analysis
-          if (document && 
-             (document.ai_processing_status === 'pending' || 
-              document.ai_processing_status === 'failed' ||
-              !document.metadata?.processing_steps_completed?.length ||
-              document.metadata?.processing_steps_completed?.length < 4)) {
-            console.log('Document needs analysis, current status:', document.ai_processing_status);
-            handleAnalyzeDocument(session);
+            // For documents without complete analysis, trigger analysis
+            if (document.ai_processing_status === 'pending' || 
+                document.ai_processing_status === 'failed' ||
+                !document.metadata?.processing_steps_completed?.length ||
+                document.metadata?.processing_steps_completed?.length < 4) {
+              console.log('Document needs analysis, current status:', document.ai_processing_status);
+              handleAnalyzeDocument(sessionData.session);
+            }
+          } else {
+            console.log("Document not found in database, cannot check status");
           }
-        } catch (err) {
-          console.error('Error checking document status:', err);
         }
-      };
-      
-      checkDocumentStatus();
+      } catch (err) {
+        console.error("Error in session/document check:", err);
+      }
+    };
+    
+    if (storagePath) {
+      checkSessionAndDocument();
     }
-  }, [session, storagePath, analyzing]);
+  }, [storagePath, analyzing, error]);
 
   return {
     analyzing,
