@@ -30,8 +30,15 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
     
     try {
       if (!currentSession) {
-        console.error("No session available for document analysis");
-        throw new Error('You must be logged in to analyze documents');
+        // Attempt to get current session if not provided
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !sessionData.session) {
+          console.error("No active session found for document analysis:", sessionError);
+          throw new Error('Authentication required: You must be logged in to analyze documents');
+        }
+        
+        currentSession = sessionData.session;
       }
 
       setAnalyzing(true);
@@ -52,30 +59,47 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
   };
 
   useEffect(() => {
-    if (session && storagePath && !analyzing) {
-      const checkDocumentStatus = async () => {
-        try {
-          const { data: document } = await supabase
-            .from('documents')
-            .select('ai_processing_status, metadata')
-            .eq('storage_path', storagePath)
-            .maybeSingle();
-            
-          if (document && 
-             (document.ai_processing_status === 'pending' || 
-              document.ai_processing_status === 'failed' ||
-              document.metadata?.processing_steps_completed?.length < 8)) {
-            console.log('Document needs analysis, current status:', document.ai_processing_status);
-            handleAnalyzeDocument(session);
-          }
-        } catch (err) {
-          console.error('Error checking document status:', err);
+    const checkSession = async () => {
+      try {
+        // Refresh the session state to ensure it's current
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session check error:", error);
+          setError("Authentication error: " + error.message);
+          return;
         }
-      };
-      
-      checkDocumentStatus();
-    }
-  }, [session, storagePath, analyzing]);
+        
+        setSession(data.session);
+        
+        // Check document status if we have a valid session
+        if (data.session && storagePath && !analyzing) {
+          try {
+            const { data: document } = await supabase
+              .from('documents')
+              .select('ai_processing_status, metadata')
+              .eq('storage_path', storagePath)
+              .maybeSingle();
+              
+            if (document && 
+               (document.ai_processing_status === 'pending' || 
+                document.ai_processing_status === 'failed' ||
+                document.metadata?.processing_steps_completed?.length < 8)) {
+              console.log('Document needs analysis, current status:', document.ai_processing_status);
+              handleAnalyzeDocument(data.session);
+            }
+          } catch (err) {
+            console.error('Error checking document status:', err);
+          }
+        }
+      } catch (e) {
+        console.error("Error in session check:", e);
+      }
+    };
+    
+    // Always check for a valid session on mount and when storagePath changes
+    checkSession();
+  }, [storagePath, analyzing]);
 
   return {
     analyzing,

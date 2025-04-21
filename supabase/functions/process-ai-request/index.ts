@@ -9,8 +9,8 @@ const corsHeaders = {
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL')
-const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
-const supabase = createClient(supabaseUrl!, supabaseAnonKey!)
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') // For anonymous functions
+const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') // For privileged operations
 
 // OpenAI API key from environment variable
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
@@ -22,11 +22,50 @@ serve(async (req) => {
   }
   
   try {
+    // Extract authorization header for JWT verification
+    const authHeader = req.headers.get('Authorization')
+    
+    // Create clients based on auth context
+    let supabase;
+    let isServiceRole = false;
+
+    // Check authorization for all non-test requests
     const body = await req.json()
-    const { message, module, documentId, testMode, debug, formType, title } = body
+    const { testMode, module, documentId } = body
     
     console.log(`Processing request - testMode: ${testMode}, module: ${module}, documentId: ${documentId}`)
     
+    // For service operations, use service role key
+    if (documentId && module === "document-analysis") {
+      console.log("Using service role for document analysis operations")
+      supabase = createClient(supabaseUrl!, serviceRoleKey!)
+      isServiceRole = true
+    } else {
+      // For user operations, use the JWT from authorization header
+      if (!authHeader && !testMode) {
+        console.error("Missing authorization header")
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Unauthorized - Missing authorization header"
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 401
+          }
+        )
+      }
+      
+      // Initialize with anon key but JWT will be used from Authorization header
+      supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
+        global: {
+          headers: {
+            Authorization: authHeader || ''
+          }
+        }
+      })
+    }
+
     // Test mode just checks if OpenAI API key is working
     if (testMode) {
       // Verify OpenAI API connection without sending full prompts
@@ -35,10 +74,13 @@ serve(async (req) => {
           status: {
             openAIKeyPresent: !!openAIApiKey,
             timestamp: new Date().toISOString(),
+            authPresent: !!authHeader || isServiceRole,
+            serviceRoleUsed: isServiceRole
           },
           environment: {
             supabaseUrl: !!supabaseUrl,
-            supabaseAnonKey: !!supabaseAnonKey
+            supabaseAnonKey: !!supabaseAnonKey,
+            serviceRoleKey: !!serviceRoleKey
           }
         }
         
@@ -113,10 +155,10 @@ serve(async (req) => {
         }
         
         // Get document information for analysis context
-        let documentTitle = title || "Unknown Document"
-        let documentFormType = formType || null
+        let documentTitle = body.title || "Unknown Document"
+        let documentFormType = body.formType || null
         
-        if (!title) {
+        if (!body.title) {
           try {
             const { data: document, error: documentError } = await supabase
               .from('documents')
@@ -176,7 +218,7 @@ serve(async (req) => {
         const analysisPrompt = `
         Analyze the following document with title "${documentTitle}" ${documentFormType ? `(${documentFormType})` : ""}:
         
-        ${message}
+        ${body.message}
         
         Your analysis should include:
         1. A structured extraction of all client/debtor information (name, address, financial details, etc.)
@@ -277,10 +319,10 @@ serve(async (req) => {
           .update({
             ai_processing_status: 'complete',
             metadata: {
-              ...parsedData.extracted_info,
+              formType: documentFormType || parsedData.extracted_info?.formNumber || 'unknown',
+              has_risks: parsedData.risks && parsedData.risks.length > 0,
               analyzed_at: new Date().toISOString(),
-              form_type: documentFormType || parsedData.extracted_info?.formNumber || 'unknown',
-              has_risks: parsedData.risks && parsedData.risks.length > 0
+              ...parsedData.extracted_info
             }
           })
           .eq('id', documentId)

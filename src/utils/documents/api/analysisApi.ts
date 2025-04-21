@@ -23,11 +23,11 @@ export const triggerDocumentAnalysis = async (documentId: string) => {
     let formType = 'unknown';
     const title = document?.title?.toLowerCase() || '';
     
-    if (title.includes('form 31') || title.includes('proof of claim')) {
+    if (title.includes('form 31') || title.includes('form31') || title.includes('proof of claim')) {
       formType = 'form-31';
-    } else if (title.includes('form 47') || title.includes('consumer proposal')) {
+    } else if (title.includes('form 47') || title.includes('form47') || title.includes('consumer proposal')) {
       formType = 'form-47';
-    } else if (title.includes('form 76') || title.includes('statement of affairs')) {
+    } else if (title.includes('form 76') || title.includes('form76') || title.includes('statement of affairs')) {
       formType = 'form-76';
     }
     
@@ -36,8 +36,21 @@ export const triggerDocumentAnalysis = async (documentId: string) => {
                        document?.type?.includes('spreadsheet') ||
                        title.includes('.xls');
 
-    // Call the analyze-document edge function with enhanced context
-    const { error } = await supabase.functions.invoke('analyze-document', {
+    // Get current auth session to ensure valid JWT token
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error("Authentication error when retrieving session:", sessionError);
+      throw new Error(`Authentication error: ${sessionError.message}`);
+    }
+    
+    if (!sessionData.session) {
+      throw new Error("No active session found. User must be authenticated.");
+    }
+
+    // Call the analyze-document edge function with enhanced context and valid session
+    console.log("Invoking process-ai-request edge function with authenticated session");
+    const { data, error } = await supabase.functions.invoke('process-ai-request', {
       body: { 
         documentId, 
         includeRegulatory: true,
@@ -64,11 +77,16 @@ export const triggerDocumentAnalysis = async (documentId: string) => {
     });
 
     if (error) {
-      console.error('Error triggering document analysis:', error);
+      console.error('Error from process-ai-request edge function:', error);
       throw error;
+    }
+
+    if (data) {
+      console.log('Analysis request successful:', data);
     }
     
     logger.debug(`Successfully triggered document analysis for ID: ${documentId}`);
+    return data;
   } catch (error) {
     console.error('Failed to trigger document analysis:', error);
     throw error;

@@ -1,249 +1,159 @@
 
-import { useState } from "react";
-import { useOpenAITest } from "@/utils/openAIConnectionTest";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle, XCircle, ExternalLink, Globe, Key, Server, ShieldCheck, ArrowRight } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import React, { useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Check, X, AlertCircle, RefreshCw } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-export function AIConnectionTest() {
-  const { runOpenAITest } = useOpenAITest();
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
-  
-  const handleTest = async () => {
-    setIsLoading(true);
+export const AIConnectionTest = () => {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const testConnection = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    
     try {
-      const testResults = await runOpenAITest();
-      setResults(testResults);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      // First ensure we have a valid session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        throw new Error(`Authentication error: ${sessionError.message}`);
+      }
+      
+      if (!sessionData.session) {
+        throw new Error('Not authenticated. Please log in to test the connection.');
+      }
+      
+      console.log("Using authenticated session for connection test");
+      
+      // Test the OpenAI connection
+      const { data, error } = await supabase.functions.invoke('process-ai-request', {
+        body: { testMode: true }
+      });
 
-  const getTroubleshootingSteps = (results: any) => {
-    const steps = [];
-    
-    if (!results.troubleshooting.networkConnectivity) {
-      steps.push({
-        title: "Network Connectivity Issue",
-        description: "Your app cannot connect to the internet. Check your network connection and any firewall settings.",
-        solution: "Verify your internet connection is working properly."
+      if (error) {
+        throw new Error(`API test failed: ${error.message || JSON.stringify(error)}`);
+      }
+
+      setResult(data);
+      
+      if (data.success) {
+        toast({
+          title: "Connection successful!",
+          description: "The AI system is configured correctly and ready to use."
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Connection test failed",
+          description: data.error || "An unknown error occurred."
+        });
+      }
+    } catch (err: any) {
+      console.error("Connection test error:", err);
+      setError(err.message || "An unknown error occurred");
+      toast({
+        variant: "destructive",
+        title: "Connection test failed",
+        description: err.message || "Failed to test connection."
       });
+    } finally {
+      setLoading(false);
     }
-    
-    if (!results.troubleshooting.edgeFunctionAccess) {
-      steps.push({
-        title: "Edge Function Access Issue",
-        description: "Your app cannot connect to the Supabase Edge Function. This could be due to CORS issues or function availability.",
-        solution: "Check if the process-ai-request function is deployed in your Supabase project. Also verify your Supabase configuration."
-      });
-    }
-    
-    if (!results.troubleshooting.apiKeyPresent) {
-      steps.push({
-        title: "OpenAI API Key Missing",
-        description: "The OpenAI API key is not configured in your Supabase Edge Function.",
-        solution: "Add your OpenAI API key to Supabase secrets with the name OPENAI_API_KEY."
-      });
-    }
-    
-    if (results.troubleshooting.apiKeyPresent && !results.troubleshooting.apiKeyValid) {
-      steps.push({
-        title: "Invalid OpenAI API Key",
-        description: "Your OpenAI API key is present but appears to be invalid or expired.",
-        solution: "Generate a new API key from the OpenAI dashboard and update the OPENAI_API_KEY secret in Supabase."
-      });
-    }
-    
-    if (steps.length === 0 && !results.success) {
-      steps.push({
-        title: "Unexpected Error",
-        description: "An unexpected error occurred during the connection test.",
-        solution: "Check the console logs and error details for more information."
-      });
-    }
-    
-    return steps;
   };
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-amber-500" />
-          OpenAI Connection Diagnostics
-        </CardTitle>
+        <CardTitle>AI Connection Test</CardTitle>
         <CardDescription>
-          Test the OpenAI connection to diagnose why document analysis might not be working
+          Test the connection to the OpenAI API and verify authentication
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {results ? (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Status:</span>
-              {results.success ? (
-                <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-200">
-                  <CheckCircle className="h-4 w-4 mr-1" /> Connected Successfully
-                </Badge>
+        {result && (
+          <div className={`p-4 rounded-md mb-4 ${result.success ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className="flex items-center">
+              {result.success ? (
+                <Check className="h-5 w-5 text-green-500 mr-2" />
               ) : (
-                <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-200">
-                  <XCircle className="h-4 w-4 mr-1" /> Connection Failed
-                </Badge>
+                <X className="h-5 w-5 text-red-500 mr-2" />
               )}
-            </div>
-            
-            <div>
-              <span className="font-medium">Message:</span> {results.message}
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="font-medium">Edge Function:</span> 
-                <Badge variant={results.connectionEstablished ? "outline" : "destructive"}>
-                  {results.connectionEstablished ? "Connected" : "Failed"}
-                </Badge>
-              </div>
-              <div>
-                <span className="font-medium">OpenAI API:</span> 
-                <Badge variant={results.responseReceived ? "outline" : "destructive"}>
-                  {results.responseReceived ? "Responded" : "No Response"}
-                </Badge>
-              </div>
-            </div>
-            
-            {!results.success && (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-3">Troubleshooting</h3>
-                <div className="space-y-4">
-                  {getTroubleshootingSteps(results).map((step, index) => (
-                    <Alert key={index} className={index === 0 ? "border-red-300 bg-red-50" : "border-amber-200 bg-amber-50"}>
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                      <AlertTitle className="text-red-800">{step.title}</AlertTitle>
-                      <AlertDescription className="mt-2">
-                        <p className="text-sm text-gray-700 mb-2">{step.description}</p>
-                        <div className="flex items-center text-sm font-medium text-blue-700">
-                          <ArrowRight className="h-3 w-3 mr-1" /> {step.solution}
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  ))}
-
-                  <div className="flex flex-col gap-2 mt-3">
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">Network Connectivity:</span>
-                      <Badge variant={results.troubleshooting?.networkConnectivity ? "outline" : "destructive"} className="ml-auto">
-                        {results.troubleshooting?.networkConnectivity ? "OK" : "Failed"}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Server className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">Edge Function Access:</span>
-                      <Badge variant={results.troubleshooting?.edgeFunctionAccess ? "outline" : "destructive"} className="ml-auto">
-                        {results.troubleshooting?.edgeFunctionAccess ? "OK" : "Failed"}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Key className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">API Key Present:</span>
-                      <Badge variant={results.troubleshooting?.apiKeyPresent ? "outline" : "destructive"} className="ml-auto">
-                        {results.troubleshooting?.apiKeyPresent ? "OK" : "Missing"}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">API Key Valid:</span>
-                      <Badge variant={results.troubleshooting?.apiKeyValid ? "outline" : "destructive"} className="ml-auto">
-                        {results.troubleshooting?.apiKeyValid ? "Valid" : "Invalid"}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+                <p className={`font-medium ${result.success ? 'text-green-800' : 'text-red-800'}`}>
+                  {result.success ? 'Connection Successful' : 'Connection Failed'}
+                </p>
+                <p className={`text-sm ${result.success ? 'text-green-600' : 'text-red-600'}`}>
+                  {result.message || result.error || 'No additional information available'}
+                </p>
                 
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-medium mb-2">Common Solutions:</h4>
-                  <ul className="list-disc pl-5 space-y-2 text-sm">
-                    <li>
-                      <span className="text-gray-700">
-                        Verify OpenAI API key is correctly set as a <code className="bg-gray-100 px-1 py-0.5 rounded">OPENAI_API_KEY</code> secret in your Supabase project
-                      </span>
-                    </li>
-                    <li>
-                      <span className="text-gray-700">
-                        Check if your OpenAI account has billing configured and sufficient credits
-                      </span>
-                    </li>
-                    <li>
-                      <span className="text-gray-700">
-                        Ensure the process-ai-request edge function is deployed properly
-                      </span>
-                    </li>
-                    <li>
-                      <span className="text-gray-700">
-                        Generate a new API key from OpenAI and update the secret
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            )}
-            
-            {results.errors && results.errors.length > 0 && (
-              <div className="mt-4">
-                <h4 className="font-medium text-red-600 mb-1">Errors Detected:</h4>
-                <ul className="list-disc pl-5 space-y-1">
-                  {results.errors.map((error: string, index: number) => (
-                    <li key={index} className="text-sm text-red-600">{error}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            <Separator />
-            
-            <Accordion type="single" collapsible>
-              <AccordionItem value="item-1">
-                <AccordionTrigger>Advanced Debug Information</AccordionTrigger>
-                <AccordionContent>
-                  <div className="bg-muted p-3 rounded-md overflow-auto max-h-60">
-                    <pre className="text-xs">{JSON.stringify(results.details, null, 2)}</pre>
+                {result.debugInfo && (
+                  <div className="mt-2 text-xs">
+                    <p className="font-medium">Diagnostic Information:</p>
+                    <ul className="list-disc list-inside mt-1 space-y-1">
+                      <li>
+                        OpenAI API Key: {result.debugInfo.status?.openAIKeyPresent ? 'Configured ✅' : 'Missing ❌'}
+                      </li>
+                      <li>
+                        Authentication: {result.debugInfo.status?.authPresent ? 'Valid ✅' : 'Invalid ❌'}
+                      </li>
+                      <li>
+                        Service Role: {result.debugInfo.status?.serviceRoleUsed ? 'Used ✅' : 'Not Used'}
+                      </li>
+                      <li>
+                        Timestamp: {result.debugInfo.status?.timestamp || 'Not available'}
+                      </li>
+                    </ul>
                   </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            Click the button below to test OpenAI connectivity
+                )}
+              </div>
+            </div>
           </div>
         )}
+
+        {error && !result && (
+          <div className="bg-red-50 p-4 rounded-md mb-4">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+              <div>
+                <p className="font-medium text-red-800">Authentication Error</p>
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <p className="text-sm text-muted-foreground">
+          This will test the connection to the OpenAI API and verify that authentication is working properly. 
+          The test will check if:
+        </p>
+        <ul className="list-disc list-inside mt-2 text-sm text-muted-foreground">
+          <li>Your user is authenticated with valid JWT</li>
+          <li>The OpenAI API key is configured and valid</li>
+          <li>The edge function is accessible and properly configured</li>
+        </ul>
       </CardContent>
-      <CardFooter className="flex flex-col gap-3">
-        <Button onClick={handleTest} disabled={isLoading} className="w-full">
-          {isLoading ? "Testing Connection..." : "Test OpenAI Connection"}
+      <CardFooter>
+        <Button 
+          onClick={testConnection} 
+          disabled={loading}
+          className="w-full"
+        >
+          {loading ? (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              Testing Connection...
+            </>
+          ) : (
+            'Test Connection'
+          )}
         </Button>
-        
-        {results && !results.success && (
-          <div className="text-xs text-center text-gray-600 w-full">
-            <a 
-              href="https://supabase.com/dashboard/project/plxuyxacefgttimodrbp/functions/process-ai-request/logs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1 text-blue-600 hover:underline"
-            >
-              <ExternalLink className="h-3 w-3" /> View Edge Function Logs
-            </a>
-          </div>
-        )}
       </CardFooter>
     </Card>
   );
-}
+};

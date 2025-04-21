@@ -6,6 +6,7 @@ import { DocumentDetails, Risk } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { startTiming, endTiming } from "@/utils/performanceMonitor";
+import { supabase } from "@/lib/supabase";
 
 export const useDocumentViewer = (documentId: string) => {
   const [document, setDocument] = useState<DocumentDetails | null>(null);
@@ -17,6 +18,25 @@ export const useDocumentViewer = (documentId: string) => {
   const cachedDocumentId = useRef<string | null>(null);
   const timeoutRef = useRef<number | null>(null);
   const maxAttempts = 2; // Limit the number of retries to prevent infinite loops
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) {
+        console.error("Authentication error:", error);
+        setLoadingError("Authentication required: Please log in to view documents");
+        setLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please log in to view documents"
+        });
+      }
+    };
+    
+    checkAuth();
+  }, [toast]);
 
   const handleDocumentSuccess = useCallback((data: DocumentDetails) => {
     console.log("Document loaded successfully:", data.id);
@@ -78,6 +98,32 @@ export const useDocumentViewer = (documentId: string) => {
                      error.message?.includes('CORS');
     
     setIsNetworkError(isNetwork);
+    
+    // Check if this is an authentication error
+    const isAuthError = error.message?.includes('JWT') || 
+                       error.message?.includes('auth') || 
+                       error.message?.includes('token') || 
+                       error.message?.includes('permission') ||
+                       error.message?.includes('authorization') ||
+                       error.status === 401 || 
+                       error.status === 403;
+    
+    if (isAuthError) {
+      setLoadingError("Authentication error: Please log in and try again");
+      setLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Your session may have expired. Please log in again."
+      });
+      
+      // Try to refresh session
+      supabase.auth.refreshSession();
+      
+      // End timing if we started it
+      endTiming(`document-load-${documentId}`);
+      return;
+    }
     
     // Only show the error toast after retries or when max attempts reached
     if (fetchAttempts.current >= maxAttempts) {
@@ -211,8 +257,17 @@ export const useDocumentViewer = (documentId: string) => {
 
   useDocumentRealtime(documentId !== "form47" ? documentId : null, document ? fetchDocumentDetails : null);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     sonnerToast.info("Refreshing document...");
+    
+    // Check authentication first
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data.session) {
+      sonnerToast.error("Authentication required to refresh");
+      setLoadingError("Authentication required: Please log in to view documents");
+      return;
+    }
+    
     setLoading(true);
     setLoadingError(null);
     setIsNetworkError(false);
