@@ -1,22 +1,24 @@
 import { Client, Document, Task } from "../types";
 
-// Helper function to get ISO date string based on days ago
+// Helper to produce a valid ISO date X days ago
 const getDateFromDaysAgo = (daysAgo: number): string => {
   const date = new Date();
   date.setDate(date.getDate() - daysAgo);
   return date.toISOString();
 };
 
-// Helper function to set default storage_path and size for documents
+// Core helper: ensures all Document objects have proper fields (compliant typing)
 const setDefaultDocumentProps = (doc: Partial<Document>): Document => {
+  // Prefer a .pdf for forms, otherwise keep as-is
+  const fileType = doc.type === "form" || doc.type?.startsWith("form-") ? "pdf" : "pdf";
   return {
     ...doc,
-    storage_path: doc.storage_path || `${doc.id}.pdf`,
-    size: doc.size || 1024 // Default size of 1KB
+    storage_path: doc.storage_path || `${doc.id || "unknown"}.${fileType}`,
+    size: doc.size ?? 1024
   } as Document;
 };
 
-// Template tasks for each client
+// Template tasks for each client (no change)
 export const getClientTasks = (clientId: string): Task[] => {
   switch (clientId) {
     case 'jane-smith':
@@ -31,7 +33,7 @@ export const getClientTasks = (clientId: string): Task[] => {
         {
           id: "jane-task-2",
           title: "Schedule quarterly meeting",
-          dueDate: getDateFromDaysAgo(-7), // 7 days in the future
+          dueDate: getDateFromDaysAgo(-7),
           status: 'pending',
           priority: 'medium'
         }
@@ -48,14 +50,14 @@ export const getClientTasks = (clientId: string): Task[] => {
         {
           id: "robert-task-2",
           title: "Request updated bank statements",
-          dueDate: getDateFromDaysAgo(-3), // 3 days in the future
+          dueDate: getDateFromDaysAgo(-3),
           status: 'pending',
           priority: 'medium'
         },
         {
           id: "robert-task-3",
           title: "Prepare monthly report",
-          dueDate: getDateFromDaysAgo(-10), // 10 days in the future
+          dueDate: getDateFromDaysAgo(-10),
           status: 'pending',
           priority: 'low'
         }
@@ -72,7 +74,7 @@ export const getClientTasks = (clientId: string): Task[] => {
         {
           id: "maria-task-2",
           title: "Process debt consolidation agreement",
-          dueDate: getDateFromDaysAgo(-5), // 5 days in the future
+          dueDate: getDateFromDaysAgo(-5),
           status: 'pending',
           priority: 'high'
         }
@@ -82,13 +84,13 @@ export const getClientTasks = (clientId: string): Task[] => {
   }
 };
 
-// Template documents for each client
+// ---- Document templates updated. Each object is always passed through setDefaultDocumentProps ----
 export const getClientDocuments = (clientId: string): Document[] => {
   const now = getDateFromDaysAgo(0);
   const oneWeekAgo = getDateFromDaysAgo(7);
   const twoWeeksAgo = getDateFromDaysAgo(14);
   const oneMonthAgo = getDateFromDaysAgo(30);
-  
+
   switch (clientId) {
     case 'jane-smith':
       return [
@@ -246,17 +248,18 @@ export const getClientDocuments = (clientId: string): Document[] => {
           }
         }),
         setDefaultDocumentProps({
-          id: 'maria-form-43',
-          title: 'Form 43 - Consumer Proposal',
-          type: 'form',
+          id: 'maria-form-47',
+          title: 'Form 47 - Consumer Proposal',
+          type: 'form-47',
           created_at: oneWeekAgo,
           updated_at: oneWeekAgo,
           parent_folder_id: 'maria-proposal-folder',
+          storage_path: 'documents/maria-form-47.pdf',
           metadata: {
             client_name: 'Maria Garcia',
             client_id: 'maria-garcia',
             document_type: 'form',
-            form_number: '43'
+            form_number: '47'
           }
         }),
         setDefaultDocumentProps({
@@ -287,11 +290,40 @@ export const getClientDocuments = (clientId: string): Document[] => {
         })
       ];
     default:
-      return [];
+      return [
+        setDefaultDocumentProps({
+          id: 'client-folder',
+          title: `${clientId} Main Folder`,
+          type: 'folder',
+          created_at: oneMonthAgo,
+          updated_at: now,
+          is_folder: true,
+          folder_type: 'client',
+          metadata: {
+            client_name: clientId,
+            client_id: clientId
+          }
+        }),
+        setDefaultDocumentProps({
+          id: 'generic-form-47',
+          title: 'Form 47 - Consumer Proposal',
+          type: 'form-47',
+          created_at: now,
+          updated_at: now,
+          parent_folder_id: 'client-folder',
+          storage_path: `documents/${clientId}-form47.pdf`,
+          metadata: {
+            client_name: clientId,
+            client_id: clientId,
+            document_type: 'form',
+            form_number: '47'
+          }
+        })
+      ];
   }
 };
 
-// Client data
+// ---- Client data (no change) ----
 export const getClientData = (clientId: string): Client => {
   switch (clientId) {
     case 'jane-smith':
