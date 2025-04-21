@@ -1,11 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertCircle, FileText, RefreshCcw } from "lucide-react";
-import { PDFViewer } from "./PDFViewer";
+import { PDFViewer } from "./components/PDFViewer";
 import { ImageViewer } from "./ImageViewer";
 import { ExcelViewer } from "./ExcelViewer";
 import { useDocumentAnalysis } from "./hooks/useDocumentAnalysis";
@@ -50,7 +49,6 @@ export const DocumentPreview = ({
     handleAnalyzeDocument
   } = useDocumentAnalysis(storagePath, onAnalysisComplete);
   
-  // Fetch session for authentication
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -59,7 +57,6 @@ export const DocumentPreview = ({
     getSession();
   }, [setSession]);
   
-  // Fetch analysis data when document ID is available and not in analyzing state
   useEffect(() => {
     const fetchAnalysisData = async () => {
       if (!documentId || analyzing) return;
@@ -98,7 +95,6 @@ export const DocumentPreview = ({
       setDownloading(true);
       
       if (downloadUrl) {
-        // Create a link element and trigger download
         const a = document.createElement("a");
         a.href = downloadUrl;
         a.download = title || storagePath.split("/").pop() || "file";
@@ -125,12 +121,10 @@ export const DocumentPreview = ({
     }
   };
   
-  // Function to manually trigger analysis
   const triggerAnalysis = () => {
     handleAnalyzeDocument();
   };
   
-  // Render based on loading and error states
   if (previewLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-4 space-y-4">
@@ -154,10 +148,8 @@ export const DocumentPreview = ({
     );
   }
   
-  // Render the appropriate preview based on file type
   return (
     <div className="flex flex-col h-full">
-      {/* Analysis Status Bar */}
       {analyzing && (
         <div className="bg-amber-50 p-2 border border-amber-200 rounded-md mb-3">
           <div className="flex items-center justify-between">
@@ -178,7 +170,6 @@ export const DocumentPreview = ({
         </div>
       )}
       
-      {/* Analysis Error */}
       {analysisError && !analyzing && (
         <div className="bg-red-50 p-3 border border-red-200 rounded-md mb-3">
           <div className="flex items-center">
@@ -201,7 +192,6 @@ export const DocumentPreview = ({
         </div>
       )}
       
-      {/* Document Actions */}
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-lg font-medium truncate" title={title}>
           {title || storagePath.split("/").pop() || "Document"}
@@ -238,11 +228,10 @@ export const DocumentPreview = ({
         </div>
       </div>
       
-      {/* Document Preview */}
       <Card className="flex-grow overflow-hidden">
         <div className="h-full">
           {fileType === "pdf" && url && (
-            <PDFViewer url={url} />
+            <PDFViewer fileUrl={url} title={title || "Document"} zoomLevel={100} />
           )}
           
           {fileType === "image" && url && (

@@ -9,7 +9,7 @@ export const DeadlineItem: React.FC<DeadlineItemProps> = ({ deadline, onRemove }
       <div>
         <p className="font-medium text-sm">{deadline.title}</p>
         <p className="text-xs text-muted-foreground">
-          Due: {new Date(deadline.due_date).toLocaleString()}
+          Due: {new Date(deadline.dueDate).toLocaleString()}
         </p>
         {deadline.description && (
           <p className="text-xs text-muted-foreground mt-1">{deadline.description}</p>

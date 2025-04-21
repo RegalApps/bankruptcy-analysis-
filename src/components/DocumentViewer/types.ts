@@ -13,10 +13,11 @@ export interface Risk {
 export interface Deadline {
   id?: string;
   title: string;
-  dueDate: string;
+  dueDate: string; // This is the field name we should use consistently
   description?: string;
   status?: 'pending' | 'completed' | 'overdue';
   priority?: 'low' | 'medium' | 'high';
+  due_date?: string; // Adding this for backward compatibility
 }
 
 export interface Task {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDocumentDetails } from "./useDocumentDetails";
 import { useDocumentRealtime } from "./useDocumentRealtime";
@@ -45,6 +46,7 @@ export const useDocumentViewer = (documentId: string) => {
         storage_path: "sample-documents/form-47-consumer-proposal.pdf",
         analysis: [
           {
+            id: "form47-analysis",  // Add the required id property
             content: {
               extracted_info: {
                 formNumber: "47",
