@@ -11,6 +11,7 @@ const DocumentViewerPage = () => {
   const { documentId } = useParams<{ documentId: string }>();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [documentNotFound, setDocumentNotFound] = useState(false);
   
   useEffect(() => {
     if (!documentId) {
@@ -22,10 +23,14 @@ const DocumentViewerPage = () => {
     // Log the document ID being viewed
     console.log("Viewing document:", documentId);
     
-    // Simulate loading document data
+    // Simulate loading document data - shorter time for Form 47
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 500);
+      // For demo purposes, we'll consider Form 47 always available
+      if (documentId === "form47") {
+        setDocumentNotFound(false);
+      }
+    }, documentId === "form47" ? 300 : 500);
     
     return () => clearTimeout(timer);
   }, [documentId, navigate]);
@@ -36,11 +41,16 @@ const DocumentViewerPage = () => {
   
   const handleLoadFailure = () => {
     console.error("Failed to load document");
+    setDocumentNotFound(true);
     toast.error("Failed to load document", {
       description: "There was an error loading the document. Please try again."
     });
-    // Stay on the page to allow retrying
+    // We'll stay on the page to allow retrying
   };
+  
+  // Special case for Form 47 document - we'll provide a demo version instead
+  const isForm47 = documentId === "form47";
+  const documentTitle = isForm47 ? "Form 47 - Consumer Proposal" : undefined;
   
   return (
     <MainLayout>
@@ -61,11 +71,20 @@ const DocumentViewerPage = () => {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
           </div>
-        ) : documentId === "form47" ? (
+        ) : documentNotFound && !isForm47 ? (
+          <div className="flex flex-col justify-center items-center h-64 text-center">
+            <h3 className="text-xl font-semibold mb-2">Document Not Found</h3>
+            <p className="text-muted-foreground mb-4">
+              The document you requested could not be found. It may have been deleted or moved.
+            </p>
+            <Button onClick={handleBack}>Return to Documents</Button>
+          </div>
+        ) : isForm47 ? (
           <DocumentViewer 
             documentId="form47" 
             documentTitle="Form 47 - Consumer Proposal"
             isForm47={true}
+            bypassProcessing={true}
             onLoadFailure={handleLoadFailure}
           />
         ) : (

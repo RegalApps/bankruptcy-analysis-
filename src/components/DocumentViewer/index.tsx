@@ -56,12 +56,94 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     handleRefresh();
   };
 
+  // For Form 47, we create a mock document if needed
+  const form47Document = useMemo(() => {
+    if (isForm47 && !document && !loading) {
+      return {
+        id: "form47",
+        title: documentTitle || "Form 47 - Consumer Proposal",
+        type: "form",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        storage_path: "sample-documents/form-47-consumer-proposal.pdf",
+        analysis: [
+          {
+            content: {
+              extracted_info: {
+                formNumber: "47",
+                formType: "consumer-proposal",
+                title: "Consumer Proposal",
+                summary: "This is a form used for consumer proposals under the Bankruptcy and Insolvency Act."
+              },
+              risks: [
+                {
+                  type: "Missing Information",
+                  description: "Please ensure all required fields are completed.",
+                  severity: "medium"
+                }
+              ]
+            }
+          }
+        ],
+        comments: [],
+        tasks: [],
+        versions: [],
+        metadata: {
+          form_type: "consumer-proposal"
+        }
+      };
+    }
+    return null;
+  }, [isForm47, document, loading, documentTitle]);
+
   if (loading) {
     return <ViewerLoadingState 
       key={`${componentKey}-loading`} 
       onRetry={handleRefresh}
       networkError={isNetworkError}
     />;
+  }
+
+  // Special handling for Form 47
+  if (isForm47 && !document && form47Document) {
+    // Use the mock document for Form 47
+    return (
+      <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20" key={componentKey}>
+        <ViewerLayout
+          isForm47={true}
+          documentTitle={documentTitle || "Form 47 - Consumer Proposal"}
+          documentType="form"
+          sidebar={
+            <Sidebar document={form47Document} onDeadlineUpdated={handleDocumentUpdated} />
+          }
+          mainContent={
+            <DocumentPreview 
+              storagePath="sample-documents/form-47-consumer-proposal.pdf" 
+              title={documentTitle || "Form 47 - Consumer Proposal"}
+              documentId="form47"
+              bypassAnalysis={true}
+              key={`preview-form47`}
+            />
+          }
+          collaborationPanel={
+            <CollaborationPanel document={form47Document} onCommentAdded={handleDocumentUpdated} />
+          }
+          taskPanel={
+            <TaskManager 
+              documentId="form47" 
+              tasks={[]} 
+              onTaskUpdate={handleDocumentUpdated} 
+            />
+          }
+          versionPanel={
+            <VersionTab 
+              documentId="form47"
+              versions={[]}
+            />
+          }
+        />
+      </div>
+    );
   }
 
   if (loadingError) {

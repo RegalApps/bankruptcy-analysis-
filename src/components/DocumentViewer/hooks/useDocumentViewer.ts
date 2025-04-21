@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDocumentDetails } from "./useDocumentDetails";
 import { useDocumentRealtime } from "./useDocumentRealtime";
@@ -33,6 +32,42 @@ export const useDocumentViewer = (documentId: string) => {
   const handleDocumentError = useCallback((error: any) => {
     console.error("Error loading document:", error, "DocumentID:", documentId);
     fetchAttempts.current += 1;
+    
+    // Check if this is the Form 47 special case
+    if (documentId === "form47") {
+      // Create a synthetic document for Form 47
+      const form47Document: DocumentDetails = {
+        id: "form47",
+        title: "Form 47 - Consumer Proposal",
+        type: "form",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        storage_path: "sample-documents/form-47-consumer-proposal.pdf",
+        analysis: [
+          {
+            content: {
+              extracted_info: {
+                formNumber: "47",
+                formType: "consumer-proposal",
+                title: "Consumer Proposal",
+                summary: "This is a form used for consumer proposals under the Bankruptcy and Insolvency Act."
+              },
+              risks: [
+                {
+                  type: "Missing Information",
+                  description: "Please ensure all required fields are completed.",
+                  severity: "medium"
+                }
+              ]
+            }
+          }
+        ],
+        comments: []
+      };
+      
+      handleDocumentSuccess(form47Document);
+      return;
+    }
     
     // Check if this is a network error
     const isNetwork = error.message?.includes('Failed to fetch') ||
@@ -71,7 +106,7 @@ export const useDocumentViewer = (documentId: string) => {
       // End timing if we started it
       endTiming(`document-load-${documentId}`);
     }
-  }, [documentId, toast]);
+  }, [documentId, toast, handleDocumentSuccess]);
 
   const { fetchDocumentDetails } = useDocumentDetails(documentId, {
     onSuccess: handleDocumentSuccess,
@@ -87,6 +122,12 @@ export const useDocumentViewer = (documentId: string) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
+    }
+    
+    // Special case for Form 47
+    if (documentId === "form47" && cachedDocumentId.current === documentId) {
+      // We already tried to load Form 47, no need to keep trying
+      return;
     }
     
     // Avoid repeated fetches for the same document ID
@@ -121,6 +162,11 @@ export const useDocumentViewer = (documentId: string) => {
 
   // Reduced retry intervals with a maximum number of attempts
   useEffect(() => {
+    // Special case for form47 - we don't want to keep retrying
+    if (documentId === "form47") {
+      return;
+    }
+    
     // Clear existing timeout if any
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -165,7 +211,8 @@ export const useDocumentViewer = (documentId: string) => {
   }, [loading, fetchDocumentDetails, toast, documentId, isNetworkError]);
 
   // Set up real-time subscriptions - but only if we have a valid document
-  useDocumentRealtime(documentId, document ? fetchDocumentDetails : null);
+  // Skip for Form 47 since it's not a real document
+  useDocumentRealtime(documentId !== "form47" ? documentId : null, document ? fetchDocumentDetails : null);
 
   const handleRefresh = useCallback(() => {
     sonnerToast.info("Refreshing document...");
