@@ -1,11 +1,6 @@
 
 import { useState, useMemo } from 'react';
-
-interface Field {
-  key: string;
-  label: string;
-  value: string;
-}
+import { EditableField } from "../types";
 
 export const useDocumentFields = (
   clientName?: string,
@@ -36,13 +31,14 @@ export const useDocumentFields = (
   creditorAddress?: string,
   claimClassification?: string
 ) => {
-  const getRelevantFields = (formType: string): Field[] => {
+  const getRelevantFields = (formType: string): EditableField[] => {
     // Basic fields for all documents
-    const basicFields: Field[] = [
+    const basicFields: EditableField[] = [
       {
         key: 'clientName',
         label: 'Client Name',
-        value: clientName || ''
+        value: clientName || '',
+        showForTypes: ['all']
       }
     ];
 
@@ -53,47 +49,56 @@ export const useDocumentFields = (
         {
           key: 'formNumber',
           label: 'Form Number',
-          value: formNumber || '31'
+          value: formNumber || '31',
+          showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'claimantName',
           label: 'Creditor Name',
-          value: claimantName || creditorName || ''
+          value: claimantName || creditorName || '',
+          showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'claimAmount',
           label: 'Claim Amount',
-          value: claimAmount || ''
+          value: claimAmount || '',
+          showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'claimType',
           label: 'Claim Type',
-          value: claimType || claimClassification || ''
+          value: claimType || claimClassification || '',
+          showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'securityDetails',
           label: 'Security Details',
-          value: securityDetails || ''
+          value: securityDetails || '',
+          showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'creditorAddress',
           label: 'Creditor Address',
-          value: creditorAddress || ''
+          value: creditorAddress || '',
+          showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'dateSigned',
           label: 'Date Signed',
-          value: dateSigned || ''
+          value: dateSigned || '',
+          showForTypes: ['all']
         },
         {
           key: 'estateNumber',
           label: 'Estate Number',
-          value: estateNumber || ''
+          value: estateNumber || '',
+          showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'documentStatus',
           label: 'Status',
-          value: documentStatus || 'Pending Review'
+          value: documentStatus || 'Pending Review',
+          showForTypes: ['all']
         }
       ];
     } else if (formType === 'form-47' || formType?.includes('consumer-proposal')) {
@@ -103,32 +108,38 @@ export const useDocumentFields = (
         {
           key: 'formNumber',
           label: 'Form Number',
-          value: formNumber || '47'
+          value: formNumber || '47',
+          showForTypes: ['form-47', 'consumer-proposal']
         },
         {
           key: 'trusteeName',
           label: 'Trustee Name',
-          value: trusteeName || ''
+          value: trusteeName || '',
+          showForTypes: ['form-47', 'consumer-proposal']
         },
         {
           key: 'administratorName',
           label: 'Administrator Name',
-          value: administratorName || trusteeName || ''
+          value: administratorName || trusteeName || '',
+          showForTypes: ['form-47', 'consumer-proposal']
         },
         {
           key: 'dateSigned',
           label: 'Date Signed',
-          value: dateSigned || ''
+          value: dateSigned || '',
+          showForTypes: ['all']
         },
         {
           key: 'filingDate',
           label: 'Filing Date',
-          value: filingDate || dateSigned || ''
+          value: filingDate || dateSigned || '',
+          showForTypes: ['form-47', 'consumer-proposal']
         },
         {
           key: 'documentStatus',
           label: 'Status',
-          value: documentStatus || 'Pending Review'
+          value: documentStatus || 'Pending Review',
+          showForTypes: ['all']
         }
       ];
     } else if (formType?.includes('bankruptcy') || formType?.includes('assignment')) {
@@ -138,37 +149,44 @@ export const useDocumentFields = (
         {
           key: 'formNumber',
           label: 'Form Number',
-          value: formNumber || ''
+          value: formNumber || '',
+          showForTypes: ['bankruptcy', 'assignment']
         },
         {
           key: 'trusteeName',
           label: 'Trustee Name',
-          value: trusteeName || ''
+          value: trusteeName || '',
+          showForTypes: ['bankruptcy', 'assignment']
         },
         {
           key: 'dateBankruptcy',
           label: 'Date of Bankruptcy',
-          value: dateBankruptcy || dateSigned || ''
+          value: dateBankruptcy || dateSigned || '',
+          showForTypes: ['bankruptcy', 'assignment']
         },
         {
           key: 'estateNumber',
           label: 'Estate Number',
-          value: estateNumber || ''
+          value: estateNumber || '',
+          showForTypes: ['bankruptcy', 'assignment']
         },
         {
           key: 'district',
           label: 'District',
-          value: district || ''
+          value: district || '',
+          showForTypes: ['bankruptcy', 'assignment']
         },
         {
           key: 'divisionNumber',
           label: 'Division Number',
-          value: divisionNumber || ''
+          value: divisionNumber || '',
+          showForTypes: ['bankruptcy', 'assignment']
         },
         {
           key: 'documentStatus',
           label: 'Status',
-          value: documentStatus || 'Pending Review'
+          value: documentStatus || 'Pending Review',
+          showForTypes: ['all']
         }
       ];
     } else {
@@ -178,27 +196,32 @@ export const useDocumentFields = (
         {
           key: 'formNumber',
           label: 'Form Number',
-          value: formNumber || ''
+          value: formNumber || '',
+          showForTypes: ['all']
         },
         {
           key: 'trusteeName',
           label: 'Trustee Name',
-          value: trusteeName || ''
+          value: trusteeName || '',
+          showForTypes: ['all']
         },
         {
           key: 'dateSigned',
           label: 'Date Signed',
-          value: dateSigned || ''
+          value: dateSigned || '',
+          showForTypes: ['all']
         },
         {
           key: 'documentStatus',
           label: 'Status',
-          value: documentStatus || 'Pending Review'
+          value: documentStatus || 'Pending Review',
+          showForTypes: ['all']
         },
         {
           key: 'estateNumber',
           label: 'Estate Number',
-          value: estateNumber || ''
+          value: estateNumber || '',
+          showForTypes: ['all']
         }
       ];
     }

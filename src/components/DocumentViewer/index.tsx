@@ -157,6 +157,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   // Use passed documentTitle if available, otherwise use the one from document
   const displayTitle = documentTitle || document.title;
 
+  // Ensure versions have storage_path by adding an empty string for any missing paths
+  const adaptVersions = (versions = []) => {
+    return versions.map(version => ({
+      ...version,
+      storage_path: version.storage_path || ''
+    }));
+  };
+
   return (
     <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20" key={componentKey}>
       <ViewerLayout
@@ -188,7 +196,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         versionPanel={
           <VersionTab 
             documentId={documentId}
-            versions={document.versions || []}
+            versions={adaptVersions(document.versions)}
           />
         }
       />

@@ -1,5 +1,5 @@
 
-import { AnalysisProcessProps } from "./types";
+import { AnalysisProcessProps, AnalysisProcessContext } from "./types";
 import {
   documentIngestion,
   documentClassification,
@@ -62,7 +62,7 @@ export const useAnalysisProcess = ({
       // Step 6: Document Organization & Client Association
       await documentOrganization(documentRecord, enhancedContext);
       
-      // Step 7: Collaboration Setup
+      // Step 7: Collaboration Setup - use documentText here
       await collaborationSetup(documentRecord, documentText, isForm76, enhancedContext);
       
       // Step 8: Continuous Learning & Improvement

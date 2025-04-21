@@ -15,7 +15,7 @@ export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({ onAdd, onCance
   const [selectedTime, setSelectedTime] = useState<string>();
   const [newDeadline, setNewDeadline] = useState<Deadline>({
     title: '',
-    dueDate: '',
+    due_date: '',
     description: ''
   });
   const { toast } = useToast();
@@ -42,7 +42,7 @@ export const AddDeadlineForm: React.FC<AddDeadlineFormProps> = ({ onAdd, onCance
 
     await onAdd({
       ...newDeadline,
-      dueDate: deadlineDate.toISOString()
+      due_date: deadlineDate.toISOString()
     });
   };
 

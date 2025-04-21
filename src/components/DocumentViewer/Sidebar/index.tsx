@@ -2,7 +2,7 @@
 import { DocumentDetails } from "../DocumentDetails";
 import { RiskAssessment } from "../RiskAssessment";
 import { DeadlineManager } from "../DeadlineManager";
-import { DocumentDetails as DocumentDetailsType } from "../types";
+import { DocumentDetails as DocumentDetailsType, Risk as DocumentRisk } from "../types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { AlertTriangle, Calendar, FileSpreadsheet } from "lucide-react";
@@ -33,6 +33,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   logger.debug('Risks in Sidebar:', analysisContent?.risks || []);
   logger.debug('Is Form 47:', isForm47);
   logger.debug('Full document data:', document);
+
+  // Convert Risk[] type to ensure severity is treated as a proper enum
+  const adaptRisks = (risks: DocumentRisk[] = []): any[] => {
+    return risks.map(risk => ({
+      ...risk,
+      severity: risk.severity || 'medium', // Ensure severity is never undefined
+    }));
+  };
 
   return (
     <div className={cn(
@@ -98,7 +106,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
               </h3>
             </div>
             <RiskAssessment 
-              risks={analysisContent?.risks || []} 
+              risks={adaptRisks(analysisContent?.risks)} 
               documentId={document.id}
             />
           </div>
