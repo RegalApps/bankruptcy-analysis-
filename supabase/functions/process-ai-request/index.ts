@@ -15,35 +15,23 @@ serve(async (req) => {
   }
 
   try {
-    const { message, module, documentId } = await req.json();
+    const { message, documentId } = await req.json();
 
-    // Construct system message based on module
-    let systemMessage = "You are a helpful AI assistant.";
-    switch (module) {
-      case "document":
-        systemMessage = "You are a document analysis expert specializing in Canadian insolvency documents. Focus on extracting key information, categorizing documents, and providing detailed analysis.";
-        break;
-      case "legal":
-        systemMessage = "You are a legal expert specializing in Canadian insolvency law, OSB regulations, and BIA acts. Provide accurate legal information with references to specific regulations.";
-        break;
-      case "help":
-        systemMessage = "You are a training assistant helping users understand document management and legal compliance in the Canadian insolvency industry.";
-        break;
-    }
-
-    // If document ID is provided, fetch document content
-    let documentContext = "";
-    if (documentId) {
-      const { data: document, error } = await supabase
-        .from('documents')
-        .select('content, metadata')
-        .eq('id', documentId)
-        .single();
-
-      if (!error && document) {
-        documentContext = `\nRelevant document context: ${JSON.stringify(document)}`;
-      }
-    }
+    // Enhanced system prompt for form analysis
+    const systemPrompt = `You are an expert in Canadian bankruptcy and insolvency documents, specializing in form analysis and risk assessment. 
+    Pay special attention to Form 31 (Proof of Claim) requirements including:
+    - Creditor identification and contact details
+    - Claim amount and classification
+    - Supporting documentation requirements
+    - Signature and attestation requirements
+    
+    For any form analysis:
+    1. Identify the form type and number
+    2. Extract all relevant fields and data
+    3. Assess compliance with OSB requirements
+    4. Flag any missing required information
+    5. Provide a risk assessment
+    `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -54,10 +42,16 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: message + documentContext }
+          { 
+            role: 'system', 
+            content: systemPrompt 
+          },
+          { 
+            role: 'user', 
+            content: message 
+          }
         ],
-        temperature: 0.7,
+        temperature: 0.2, // Lower temperature for more focused analysis
       }),
     });
 
@@ -68,18 +62,37 @@ serve(async (req) => {
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
 
-    // If this is a document analysis request, store the analysis
-    if (module === 'document' && documentId) {
-      const { error: analysisError } = await supabase
+    // Store analysis results if document ID is provided
+    if (documentId) {
+      const { data: existingAnalysis, error: fetchError } = await supabase
         .from('document_analysis')
-        .insert({
-          document_id: documentId,
-          content: aiResponse,
-          created_at: new Date().toISOString()
-        });
+        .select('*')
+        .eq('document_id', documentId)
+        .maybeSingle();
 
-      if (analysisError) {
-        console.error('Error storing document analysis:', analysisError);
+      if (!fetchError) {
+        const analysisContent = {
+          formType: 'form-31',
+          aiAnalysis: aiResponse,
+          lastUpdated: new Date().toISOString(),
+          riskAssessment: extractRiskAssessment(aiResponse),
+          requiredFields: extractRequiredFields(aiResponse),
+          complianceStatus: assessComplianceStatus(aiResponse)
+        };
+
+        if (existingAnalysis) {
+          await supabase
+            .from('document_analysis')
+            .update({ content: analysisContent })
+            .eq('document_id', documentId);
+        } else {
+          await supabase
+            .from('document_analysis')
+            .insert({
+              document_id: documentId,
+              content: analysisContent
+            });
+        }
       }
     }
 
@@ -99,3 +112,31 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper functions for parsing AI response
+function extractRiskAssessment(aiResponse: string) {
+  // Extract risk assessment section from AI response
+  const riskPattern = /Risk Assessment:[\s\S]*?(?=\n\n|$)/i;
+  const match = aiResponse.match(riskPattern);
+  return match ? match[0] : '';
+}
+
+function extractRequiredFields(aiResponse: string) {
+  // Extract required fields section from AI response
+  const fieldsPattern = /Required Fields:[\s\S]*?(?=\n\n|$)/i;
+  const match = aiResponse.match(fieldsPattern);
+  return match ? match[0].split('\n').filter(line => line.trim()) : [];
+}
+
+function assessComplianceStatus(aiResponse: string) {
+  // Determine compliance status based on AI response
+  const hasErrors = aiResponse.toLowerCase().includes('error') || 
+                   aiResponse.toLowerCase().includes('missing required');
+  const hasWarnings = aiResponse.toLowerCase().includes('warning') || 
+                     aiResponse.toLowerCase().includes('recommended');
+                     
+  return {
+    status: hasErrors ? 'non-compliant' : hasWarnings ? 'warning' : 'compliant',
+    timestamp: new Date().toISOString()
+  };
+}
