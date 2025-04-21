@@ -7,6 +7,11 @@ import {
   handleJoshHartClient
 } from "./documentFetcher";
 import { initializeClientFromDocuments } from "./clientDataInitializer";
+import { 
+  extractClientName, 
+  standardizeClientName, 
+  getOrCreateClientRecord 
+} from "@/utils/documents/clientUtils";
 
 /**
  * Processes client documents and returns client data and documents
@@ -26,6 +31,35 @@ export const processClientDocuments = async (
     let clientDocs: Document[] = [];
     try {
       clientDocs = await fetchClientDocuments(clientId, searchClientId);
+      
+      // Improve organization of retrieved documents
+      if (clientDocs && clientDocs.length > 0) {
+        // Extract proper client name from first document if possible
+        const extractedName = extractClientName(clientDocs[0]);
+        if (extractedName) {
+          const standardized = standardizeClientName(extractedName);
+          
+          // If the extracted name differs from the search name, try again with standardized name
+          if (standardized.toLowerCase().replace(/\s+/g, '-') !== searchClientId) {
+            console.log("Trying with standardized client name:", standardized);
+            const additionalDocs = await fetchClientDocuments(
+              standardized,
+              standardized.toLowerCase().replace(/\s+/g, '-')
+            );
+            
+            // Merge document results, avoiding duplicates
+            if (additionalDocs && additionalDocs.length > 0) {
+              const existingIds = new Set(clientDocs.map(doc => doc.id));
+              const uniqueAdditionalDocs = additionalDocs.filter(doc => !existingIds.has(doc.id));
+              
+              if (uniqueAdditionalDocs.length > 0) {
+                console.log(`Found ${uniqueAdditionalDocs.length} additional documents with standardized name`);
+                clientDocs = [...clientDocs, ...uniqueAdditionalDocs];
+              }
+            }
+          }
+        }
+      }
     } catch (docsError) {
       // Special case handling for Josh Hart when there's an error
       const joshHartData = handleJoshHartClient(clientId, searchClientId);
@@ -68,6 +102,17 @@ export const processClientDocuments = async (
     
     if (clientDocs && clientDocs.length > 0) {
       const client = initializeClientFromDocuments(clientId, clientDocs);
+      
+      // If we have a client with valid ID from document organization, use that client ID
+      const firstDoc = clientDocs[0];
+      const metadata = firstDoc.metadata as Record<string, any> || {};
+      
+      if (metadata.client_id && metadata.client_name) {
+        // Update client with standardized name from document
+        client.id = metadata.client_id;
+        client.name = standardizeClientName(metadata.client_name);
+      }
+      
       return { client, documents: clientDocs };
     } 
     

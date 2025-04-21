@@ -36,3 +36,56 @@ export const isDocumentForm47 = (document: DocumentDetails): boolean => {
 
   return false;
 };
+
+/**
+ * Check if a document is a Form 76 (Monthly Income Statement)
+ */
+export const isDocumentForm76 = (document: DocumentDetails): boolean => {
+  // Check if document title contains form 76
+  if (document.title?.toLowerCase().includes('form 76') || 
+      document.title?.toLowerCase().includes('monthly income statement')) {
+    return true;
+  }
+
+  // Check for form type in analysis extracted_info
+  const formType = document.analysis?.[0]?.content?.extracted_info?.formType;
+  if (formType?.toLowerCase().includes('income') || 
+      formType?.toLowerCase() === 'form-76') {
+    return true;
+  }
+  
+  // Check for form number in extracted info
+  const formNumber = document.analysis?.[0]?.content?.extracted_info?.formNumber;
+  if (formNumber === '76') {
+    return true;
+  }
+
+  return false;
+};
+
+/**
+ * Extract client name from document with improved reliability
+ */
+export const extractClientNameFromDocument = (document: DocumentDetails): string | null => {
+  // Check in analysis data first (most reliable source)
+  const clientName = document.analysis?.[0]?.content?.extracted_info?.clientName;
+  if (clientName) return clientName;
+  
+  // Check in document title for form-specific patterns
+  if (document.title) {
+    // For Form 76, client name is often part of the filename
+    if (isDocumentForm76(document)) {
+      const form76NameMatch = document.title.match(/form[- ]?76[- ]?(.+?)(?:\.|$)/i);
+      if (form76NameMatch && form76NameMatch[1]) {
+        return form76NameMatch[1].trim();
+      }
+    }
+    
+    // For Form 47, it's often associated with Josh Hart in this system
+    if (isDocumentForm47(document)) {
+      return "Josh Hart";
+    }
+  }
+  
+  return null;
+};
