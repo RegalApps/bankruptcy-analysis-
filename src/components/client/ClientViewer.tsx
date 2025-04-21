@@ -8,7 +8,7 @@ import { getClientData } from "./data/clientTemplates";
 
 export const ClientViewer = (props: ClientViewerProps) => {
   const [hasError, setHasError] = useState(false);
-  const [useTemplate, setUseTemplate] = useState(true);
+  const [useTemplate, setUseTemplate] = useState(true); // Always start with template mode
   
   console.log("ClientViewer: Rendering with props:", {
     clientId: props.clientId,
@@ -17,25 +17,31 @@ export const ClientViewer = (props: ClientViewerProps) => {
     currentRoute: window.location.pathname
   });
   
-  // Load client data and show appropriate toast
+  // Special handling for josh-hart client ID
   useEffect(() => {
-    try {
-      const clientData = getClientData(props.clientId);
-      console.log(`ClientViewer: Loading data for ${clientData.name}`);
+    if (props.clientId.toLowerCase().includes('josh') || props.clientId.toLowerCase().includes('hart')) {
+      const clientId = 'josh-hart'; // Normalize to josh-hart
+      console.log(`ClientViewer: Detected Josh Hart client (${clientId})`);
       
-      toast.success(`Loading ${clientData.name}'s client information`, {
-        description: `Client profile loaded successfully`
-      });
-    } catch (error) {
-      console.error("ClientViewer: Error loading client data:", error);
-      setHasError(true);
-      
-      toast.error("Had trouble loading client data", {
-        description: "Using simplified view instead"
-      });
+      try {
+        // Get client data from templates
+        const clientData = getClientData(clientId);
+        console.log(`ClientViewer: Successfully loaded data for ${clientData.name}`);
+        
+        toast.success(`Loading ${clientData.name}'s client information`, {
+          description: `Client profile loaded successfully`
+        });
+      } catch (error) {
+        console.error("ClientViewer: Error loading Josh Hart data:", error);
+        setHasError(true);
+        
+        toast.error("Had trouble loading client data", {
+          description: "Using simplified view instead"
+        });
+      }
     }
   }, [props.clientId]);
-
+  
   // Handle errors in the client viewer
   const handleError = () => {
     console.log("ClientViewer: Error detected, switching to template mode");
@@ -46,10 +52,16 @@ export const ClientViewer = (props: ClientViewerProps) => {
     });
   };
   
+  // If clientId contains 'josh' or 'hart', normalize it to 'josh-hart'
+  const normalizedClientId = props.clientId.toLowerCase().includes('josh') || 
+                             props.clientId.toLowerCase().includes('hart') 
+                             ? 'josh-hart' 
+                             : props.clientId;
+  
   // Always use the template mode which is more reliable and has better layout
   return useTemplate || hasError ? (
     <ClientTemplate 
-      clientId={props.clientId} 
+      clientId={normalizedClientId} 
       onBack={props.onBack}
       onDocumentOpen={props.onDocumentOpen}
     />
@@ -57,6 +69,7 @@ export const ClientViewer = (props: ClientViewerProps) => {
     <ClientViewerContainer 
       {...props} 
       onError={handleError}
+      clientId={normalizedClientId}
     />
   );
 };

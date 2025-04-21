@@ -1,118 +1,94 @@
 
-import { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { Search, UserCircle, MapPin } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Alert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-// Client type definition
 interface Client {
   id: string;
   name: string;
-  status: 'active' | 'pending' | 'flagged';
-  location: string;
+  status: "active" | "inactive" | "pending" | "flagged";
+  location?: string;
   lastActivity?: string;
-  needsAttention: boolean;
+  needsAttention?: boolean;
 }
 
 interface ClientListProps {
   clients: Client[];
-  selectedClientId?: string | null;
-  onClientSelect?: (clientId: string) => void;
+  selectedClientId?: string;
 }
 
-export const ClientList = ({ clients, selectedClientId, onClientSelect }: ClientListProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
+export const ClientList = ({ clients, selectedClientId }: ClientListProps) => {
   const navigate = useNavigate();
   
-  // Filter clients based on search query
-  const filteredClients = clients.filter(client => 
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  const handleClientSelect = (clientId: string) => {
+  const handleSelectClient = (clientId: string) => {
     console.log("ClientList: Selected client ID:", clientId);
-    
-    if (onClientSelect) {
-      console.log("Using onClientSelect callback");
-      onClientSelect(clientId);
-    } else {
-      console.log("Navigating to client viewer:", `/client-viewer/${clientId}`);
-      navigate(`/client-viewer/${clientId}`);
-    }
-  };
-  
-  // Get status color for badge
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return "bg-green-100 text-green-800 hover:bg-green-200";
-      case 'pending':
-        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200";
-      case 'flagged':
-        return "bg-red-100 text-red-800 hover:bg-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-200";
-    }
+    toast.info(`Loading client: ${clientId}`);
+    console.log("Navigating to client viewer:", `/client-viewer/${clientId}`);
+    navigate(`/client-viewer/${clientId}`);
   };
   
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-5 border-b">
-        <h2 className="text-xl font-semibold mb-4">Clients</h2>
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search clients..."
-            className="pl-9 bg-background"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+    <div className="h-full border-r flex flex-col">
+      <div className="px-4 py-2 border-b bg-muted/30">
+        <h2 className="text-lg font-semibold">Clients</h2>
+        <p className="text-xs text-muted-foreground">Select a client to view their documents</p>
       </div>
       
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-1">
-          {filteredClients.length > 0 ? (
-            filteredClients.map((client) => (
-              <div
-                key={client.id}
-                className={cn(
-                  "flex items-center justify-between p-3 rounded-md cursor-pointer transition-all",
-                  selectedClientId === client.id 
-                    ? "bg-primary/10 shadow-sm" 
-                    : "hover:bg-accent/40"
-                )}
-                onClick={() => handleClientSelect(client.id)}
-              >
-                <div className="flex items-center min-w-0">
-                  <div className="relative">
-                    <UserCircle className="h-9 w-9 text-primary/70 mr-3" />
-                  </div>
-                  
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{client.name}</div>
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3 mr-1" />
-                      <span>{client.location}</span>
-                    </div>
-                  </div>
+        <div className="p-3 space-y-3">
+          {clients.map(client => (
+            <Card 
+              key={client.id}
+              className={cn(
+                "p-3 cursor-pointer hover:border-primary/50 transition-colors",
+                selectedClientId === client.id && "bg-muted border-primary"
+              )}
+              onClick={() => handleSelectClient(client.id)}
+            >
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-medium">{client.name}</div>
+                  {client.status && (
+                    <Badge 
+                      variant={
+                        client.status === "active" ? "default" : 
+                        client.status === "pending" ? "outline" :
+                        client.status === "flagged" ? "destructive" : "secondary"
+                      }
+                      className="text-xs"
+                    >
+                      {client.status}
+                    </Badge>
+                  )}
                 </div>
                 
-                <Badge className={cn(
-                  "ml-2 capitalize",
-                  getStatusColor(client.status)
-                )}>
-                  {client.status}
-                </Badge>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{client.location || "Unknown location"}</span>
+                  {client.lastActivity && (
+                    <span className="flex items-center text-xs">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {client.lastActivity}
+                    </span>
+                  )}
+                </div>
+                
+                {client.needsAttention && (
+                  <div className="flex items-center gap-1 text-amber-600 text-xs mt-1">
+                    <Alert className="h-3 w-3" />
+                    <span>Needs attention</span>
+                  </div>
+                )}
               </div>
-            ))
-          ) : (
-            <div className="p-4 text-center text-muted-foreground">
+            </Card>
+          ))}
+          
+          {clients.length === 0 && (
+            <div className="text-center p-8 text-muted-foreground">
               No clients found
             </div>
           )}

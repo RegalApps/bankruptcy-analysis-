@@ -107,7 +107,10 @@ export const ClientTab = ({ clientId, onBack, onDocumentOpen }: ClientTabProps) 
     };
   }, []);
   
-  const effectiveClientId = retryCount > 0 && retryId ? retryId : clientId;
+  // Always use josh-hart as the effective client ID if the original clientId contains "josh" or "hart"
+  const effectiveClientId = clientId.toLowerCase().includes('josh') || clientId.toLowerCase().includes('hart') 
+    ? 'josh-hart' 
+    : retryCount > 0 && retryId ? retryId : clientId;
   
   if (!effectiveClientId) {
     console.log("ClientTab: No client ID provided");

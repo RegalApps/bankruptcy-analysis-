@@ -25,6 +25,7 @@ function App() {
       <Route path="/crm" element={<CRMPage />} />
       <Route path="/documents/*" element={<DocumentsPage />} />
       <Route path="/documents/view/:documentId" element={<DocumentViewerPage />} />
+      <Route path="/client-viewer/:clientId" element={<ClientViewerPage />} />
       <Route path="/documents/client/:clientId" element={<ClientViewerPage />} />
       <Route path="/meetings/*" element={<MeetingsPage />} />
       <Route path="/calendar-fullscreen" element={<CalendarFullscreenPage />} />
