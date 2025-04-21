@@ -1,93 +1,86 @@
 
-export interface Risk {
-  type: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  regulation?: string;
-  impact?: string;
-  requiredAction?: string;
-  solution?: string;
-}
-
-export interface Deadline {
-  title: string;
-  dueDate: string;
-  description?: string;
-}
-
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  due_date: string;
-  created_at: string;
-  created_by: string;
-  assigned_to?: string;
-  document_id: string;
-  regulation?: string;
-  solution?: string;
-}
-
-export interface DocumentVersion {
-  id: string;
-  document_id: string;
-  version_number: number;
-  created_at: string;
-  created_by?: string;
-  storage_path: string;
-  is_current: boolean;
-  changes_description?: string;
-}
-
 export interface DocumentDetails {
   id: string;
   title: string;
   type: string;
   storage_path: string;
+  metadata?: any;
+  analysis?: DocumentAnalysis[];
+  comments?: DocumentComment[];
+  url?: string;
+  ai_processing_status?: string;
+  ai_confidence_score?: number;
+  folder_type?: string;
+  parent_folder_id?: string;
+}
+
+export interface DocumentAnalysis {
+  content: {
+    extracted_info?: {
+      clientName?: string;
+      trusteeName?: string;
+      administratorName?: string;
+      dateSigned?: string;
+      formNumber?: string;
+      formType?: string;
+      estateNumber?: string;
+      district?: string;
+      divisionNumber?: string;
+      courtNumber?: string;
+      meetingOfCreditors?: string;
+      chairInfo?: string;
+      securityInfo?: string;
+      dateBankruptcy?: string;
+      officialReceiver?: string;
+      documentStatus?: string;
+      filingDate?: string;
+      submissionDeadline?: string;
+      type?: string;
+      summary?: string;
+      // Form 31 specific fields
+      claimantName?: string;
+      creditorName?: string;
+      claimAmount?: string;
+      claimType?: string;
+      securityDetails?: string;
+      // Form 47 specific fields
+      proposalType?: string;
+      monthlyPayment?: string;
+      proposalDuration?: string;
+    };
+    risks?: Risk[];
+    regulatory_compliance?: {
+      status: string;
+      details: string;
+      references: string[];
+    };
+  };
+}
+
+export interface Risk {
+  type: string;
+  description: string;
+  severity: string;
+  regulation?: string;
+  impact?: string;
+  requiredAction?: string;
+  solution?: string;
+  deadline?: string;
+}
+
+export interface DocumentComment {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+}
+
+export interface DocumentDeadline {
+  id: string;
+  title: string;
+  description?: string;
+  due_date: string;
+  status: 'pending' | 'completed' | 'overdue';
   created_at: string;
   updated_at: string;
-  deadlines?: Deadline[];
-  tasks?: Task[];
-  versions?: DocumentVersion[];
-  ai_processing_status?: 'pending' | 'complete' | 'failed';
-  metadata?: {
-    form_type?: string;
-    [key: string]: any;
-  };
-  analysis?: {
-    content: {
-      extracted_info: {
-        type?: string;
-        formType?: string;
-        formNumber?: string;
-        clientName?: string;
-        trusteeName?: string;
-        administratorName?: string;
-        estateNumber?: string;
-        district?: string;
-        divisionNumber?: string;
-        courtNumber?: string;
-        meetingOfCreditors?: string;
-        chairInfo?: string;
-        securityInfo?: string;
-        dateBankruptcy?: string;
-        dateSigned?: string;
-        officialReceiver?: string;
-        summary?: string;
-        filingDate?: string;
-        submissionDeadline?: string;
-        documentStatus?: string;
-        paymentSchedule?: string;
-      };
-      risks: Risk[];
-    };
-  }[];
-  comments?: {
-    id: string;
-    content: string;
-    created_at: string;
-    user_id: string;
-  }[];
 }

@@ -30,7 +30,7 @@ export const identifyFormType = (text: string): string => {
     'proposal': /proposal|form\s*47|consumer proposal|division [i1]|paragraph 66\.13/i,
     'meeting': /meeting of creditors|form\s*29/i,
     'court': /court order|form\s*35/i,
-    'proof-of-claim': /proof\s+of\s+claim|form\s*31\b/i
+    'proof-of-claim': /proof\s+of\s+claim|form\s*31\b|creditor.{0,20}claim|claim.{0,20}creditor/i
   };
 
   for (const [type, pattern] of Object.entries(formPatterns)) {
@@ -50,12 +50,12 @@ export const extractFormFields = (text: string): FormFields => {
     formNumber: /form\s*(?:no\.?|number)?[\s:]*([\w-]+)/i,
     clientName: /(?:debtor|client|consumer)(?:'s)?\s*name[\s:]*([\w\s.-]+)/i,
     trusteeName: /(?:trustee|lit|administrator)[\s:]*([\w\s.-]+)/i,
-    claimantName: /(?:claimant|creditor)\s*name[\s:]*([\w\s.-]+)/i,
-    dateSigned: /(?:date|signed)(?:[\s:]*)([\d\/.-]+)/i,
+    claimantName: /(?:claimant|creditor)(?:'s)?\s*name[\s:]*([\w\s.-]+)/i,
+    dateSigned: /(?:date|signed|dated)(?:[\s:]*)([\d\/.\-]+|january|february|march|april|may|june|july|august|september|october|november|december\s+\d{1,2},?\s+\d{4})/i,
     proposalType: /(consumer proposal|division[i1] proposal)/i,
     courtFileNumber: /court\s+file\s+(?:no|number)[\s:.]*([a-z0-9-]+)/i,
     estateNumber: /(?:estate|bankruptcy)\s+(?:no|number)[\s:.]*([a-z0-9-]+)/i,
-    claimAmount: /(?:claim|amount)[\s:]*\$?\s*([\d,.]+)/i,
+    claimAmount: /(?:claim|amount|sum of)[\s:]*\$?\s*([\d,.]+)/i,
     claimType: /claim(?:s|ed)?\s+as\s+(?:an?\s+)?(unsecured|secured|preferred|priority|wage earner|farmer|fisherman|director)/i,
     securityDescription: /security\s+(?:held|described|valued)[\s:]*([^.]+)/i,
     
@@ -81,35 +81,7 @@ export const extractFormFields = (text: string): FormFields => {
     }
   }
 
-  // Enhanced Form 47 (Consumer Proposal) detection
-  if (/form[\s-]*47\b/i.test(text) || /\bconsumer proposal\b/i.test(text) || 
-      /\bparagraph 66\.13\b/i.test(text) || /\bsection 66\.13\b/i.test(text)) {
-    fields.formNumber = "47";
-    fields.formType = "consumer-proposal";
-    
-    // Look for proposal-specific sections
-    if (/payment to (secured|unsecured) creditors/i.test(text)) {
-      fields.hasCreditorPaymentSection = "yes";
-    }
-    
-    if (/administrator fees/i.test(text)) {
-      fields.hasAdminFeesSection = "yes";
-    }
-    
-    // Extract proposal duration if present 
-    const durationMatch = text.match(/(?:proposal|payment)\s+(?:period|duration|term)[\s:]*(\d+)\s*(?:months|years)/i);
-    if (durationMatch && durationMatch[1]) {
-      fields.proposalDuration = durationMatch[1];
-      fields.durationUnit = text.match(/months/i) ? 'months' : 'years';
-    }
-    
-    // Check for sworn declaration
-    if (/solemnly declare/i.test(text) || /sworn before me/i.test(text)) {
-      fields.hasDeclaration = "yes";
-    }
-  }
-
-  // Detect Form 31 (Proof of Claim) with enhanced recognition
+  // Enhanced Form 31 (Proof of Claim) detection
   if (/form[\s-]*31\b/i.test(text) || /\bproof of claim\b/i.test(text)) {
     fields.formNumber = "31";
     fields.formType = "proof-of-claim";
@@ -135,6 +107,31 @@ export const extractFormFields = (text: string): FormFields => {
         
         fields.claimType = checkboxMap[fields.claimCheckbox] || fields.claimType;
       }
+    }
+  } else if (/form[\s-]*47\b/i.test(text) || /\bconsumer proposal\b/i.test(text) || 
+      /\bparagraph 66\.13\b/i.test(text) || /\bsection 66\.13\b/i.test(text)) {
+    fields.formNumber = "47";
+    fields.formType = "consumer-proposal";
+    
+    // Look for proposal-specific sections
+    if (/payment to (secured|unsecured) creditors/i.test(text)) {
+      fields.hasCreditorPaymentSection = "yes";
+    }
+    
+    if (/administrator fees/i.test(text)) {
+      fields.hasAdminFeesSection = "yes";
+    }
+    
+    // Extract proposal duration if present 
+    const durationMatch = text.match(/(?:proposal|payment)\s+(?:period|duration|term)[\s:]*(\d+)\s*(?:months|years)/i);
+    if (durationMatch && durationMatch[1]) {
+      fields.proposalDuration = durationMatch[1];
+      fields.durationUnit = text.match(/months/i) ? 'months' : 'years';
+    }
+    
+    // Check for sworn declaration
+    if (/solemnly declare/i.test(text) || /sworn before me/i.test(text)) {
+      fields.hasDeclaration = "yes";
     }
   }
 
