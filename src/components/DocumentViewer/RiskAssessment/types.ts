@@ -1,15 +1,16 @@
 
-import { Risk } from "../types";
+import { Risk as DocumentRisk } from "../types";
 
-export { Risk };
+// Export Risk type explicitly with correct syntax for isolatedModules
+export type Risk = DocumentRisk;
 
-export interface Form47Risk extends Risk {
+export interface Form47Risk extends DocumentRisk {
   requiredAction?: string;
   deadline?: string;
 }
 
 export interface RiskAssessmentProps {
-  risks: Risk[];
+  risks: DocumentRisk[];
   documentId: string;
   isLoading?: boolean;
 }
