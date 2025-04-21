@@ -11,7 +11,8 @@ import { ViewerLoadingState } from "./components/ViewerLoadingState";
 import { ViewerErrorState } from "./components/ViewerErrorState";
 import { DocumentPreview } from "./DocumentPreview";
 import { RiskAssessment } from "./RiskAssessment";
-import { AlertTriangle, AlertCircle, RefreshCcw } from "lucide-react";
+import { AlertTriangle, AlertCircle, RefreshCcw, Bug } from "lucide-react";
+import { AIConnectionTest } from "@/components/AIConnectionTest";
 
 interface EnhancedDocumentViewerProps {
   documentId: string;
@@ -28,6 +29,7 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const { toast } = useToast();
   const isDevMode = process.env.NODE_ENV === 'development';
   
@@ -144,6 +146,11 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
         throw new Error(`Analysis failed: ${analysisError.message}`);
       }
       
+      if (!analysisData || (!analysisData.response && !analysisData.parsedData)) {
+        console.error("OpenAI returned no data. Response:", analysisData);
+        throw new Error("OpenAI returned no data. Please check your API key configuration.");
+      }
+      
       toast({
         title: "Analysis Complete",
         description: "Document has been successfully analyzed",
@@ -224,18 +231,37 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Analysis Issue</AlertTitle>
-          <AlertDescription>{analysisError}</AlertDescription>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2" 
-            onClick={triggerAnalysis}
-            disabled={analysisLoading}
-          >
-            <RefreshCcw className="h-4 w-4 mr-1" />
-            {analysisLoading ? "Analyzing..." : "Re-Analyze Document"}
-          </Button>
+          <AlertDescription className="flex flex-col gap-2">
+            <div>{analysisError}</div>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={triggerAnalysis}
+                disabled={analysisLoading}
+              >
+                <RefreshCcw className="h-4 w-4 mr-1" />
+                {analysisLoading ? "Analyzing..." : "Re-Analyze Document"}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowDiagnostics(!showDiagnostics)}
+              >
+                <Bug className="h-4 w-4 mr-1" />
+                {showDiagnostics ? "Hide Diagnostics" : "Show Diagnostics"}
+              </Button>
+            </div>
+          </AlertDescription>
         </Alert>
+      )}
+      
+      {/* OpenAI Connection Diagnostics */}
+      {showDiagnostics && (
+        <div className="mb-4">
+          <AIConnectionTest />
+        </div>
       )}
       
       {/* Document Preview */}
@@ -288,4 +314,3 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
     </div>
   );
 };
-

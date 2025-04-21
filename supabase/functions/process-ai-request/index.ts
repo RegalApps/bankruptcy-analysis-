@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -17,7 +18,7 @@ serve(async (req) => {
     // Log request details
     console.log("Received AI processing request");
     const requestData = await req.json();
-    const { message, documentId, module, formType, title } = requestData;
+    const { message, documentId, module, formType, title, testMode } = requestData;
 
     // Debug information collection
     const debugInfo = {
@@ -30,7 +31,7 @@ serve(async (req) => {
         end: null
       },
       status: {
-        openAIKeyPresent: false,
+        openAIKeyPresent: Boolean(openAIApiKey),
         openAIRequestSuccess: false,
         documentFound: false,
         documentUpdated: false,
@@ -41,6 +42,7 @@ serve(async (req) => {
         module,
         formType,
         title,
+        testMode: Boolean(testMode),
         messageLength: message?.length || 0
       },
       errors: []
@@ -57,7 +59,69 @@ serve(async (req) => {
     console.log(`OpenAI API key status: ${openAIApiKey ? 'Present (masked: ' + 
       `${openAIApiKey.substring(0, 3)}...${openAIApiKey.substring(openAIApiKey.length - 3)}` + ')' : 'Missing'}`);
     
-    debugInfo.status.openAIKeyPresent = !!openAIApiKey;
+    // Test mode - just check API connectivity without full document analysis
+    if (testMode) {
+      try {
+        debugInfo.timestamps.openAIRequestStart = new Date().toISOString();
+        const testResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { 
+                role: 'system', 
+                content: 'You are a test assistant. Please respond with "OpenAI connection successful."' 
+              },
+              { 
+                role: 'user', 
+                content: 'Test OpenAI connection' 
+              }
+            ],
+            max_tokens: 20,
+          }),
+        });
+        
+        debugInfo.timestamps.openAIRequestEnd = new Date().toISOString();
+        
+        if (!testResponse.ok) {
+          const errorBody = await testResponse.text();
+          console.error(`OpenAI API test error: ${testResponse.status} - ${errorBody}`);
+          debugInfo.errors.push(`OpenAI API returned error: ${testResponse.status} - ${errorBody}`);
+          throw new Error(`OpenAI API error: Status ${testResponse.status}`);
+        }
+        
+        const testData = await testResponse.json();
+        debugInfo.status.openAIRequestSuccess = true;
+        
+        return new Response(
+          JSON.stringify({ 
+            response: "OpenAI connection test successful", 
+            debugInfo: debugInfo,
+            testData: testData
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error("OpenAI test mode error:", error);
+        debugInfo.errors.push(`OpenAI test error: ${error.message}`);
+        
+        return new Response(
+          JSON.stringify({ 
+            error: error.message,
+            debugInfo: debugInfo,
+            timestamp: new Date().toISOString()
+          }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+    }
     
     // Form-specific system prompts for enhanced analysis
     let systemPrompt = `You are an expert in Canadian bankruptcy and insolvency documents, specializing in form analysis and risk assessment.`;
@@ -163,10 +227,16 @@ serve(async (req) => {
     }
 
     console.log(`Starting OpenAI API request with model: gpt-4o-mini`);
-    console.log(`Message length: ${message.length} characters`);
+    console.log(`Message length: ${message?.length} characters`);
     console.log(`Form type detected: ${formType || 'Unknown'}`);
     
     debugInfo.timestamps.openAIRequestStart = new Date().toISOString();
+    
+    // Verify we have a message to process
+    if (!message || message.length < 10) {
+      debugInfo.errors.push('Document content too short or empty');
+      throw new Error('Document content too short or empty. Please check the file.');
+    }
     
     const startTime = Date.now();
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -200,7 +270,7 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error(`OpenAI API error: ${response.status} - ${errorText}`);
       debugInfo.errors.push(`OpenAI API error: ${response.status} - ${errorText}`);
-      throw new Error(`OpenAI API error: ${await response.text()}`);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     debugInfo.status.openAIRequestSuccess = true;
@@ -208,8 +278,8 @@ serve(async (req) => {
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
     
-    console.log(`Received AI response of length: ${aiResponse.length} characters`);
-    console.log(`Response first 100 chars: ${aiResponse.substring(0, 100)}...`);
+    console.log(`Received AI response of length: ${aiResponse?.length} characters`);
+    console.log(`Response first 100 chars: ${aiResponse?.substring(0, 100)}...`);
 
     // Try parsing the response as JSON
     let parsedResponse;
@@ -229,19 +299,19 @@ serve(async (req) => {
       // Attempt to extract structured data from unstructured response
       parsedResponse = {
         extracted_info: {
-          summary: aiResponse.substring(0, 500)
+          summary: aiResponse?.substring(0, 500)
         },
-        risks: extractRisksFromText(aiResponse)
+        risks: extractRisksFromText(aiResponse || "")
       };
     }
 
     // Ensure we have all required fields with default values if missing
     parsedResponse = {
-      extracted_info: parsedResponse.extracted_info || {},
-      summary: parsedResponse.summary || 
-               parsedResponse.extracted_info?.summary || 
+      extracted_info: parsedResponse?.extracted_info || {},
+      summary: parsedResponse?.summary || 
+               parsedResponse?.extracted_info?.summary || 
                "Document analyzed but no summary was generated.",
-      risks: parsedResponse.risks || []
+      risks: parsedResponse?.risks || []
     };
 
     // Store analysis results if document ID provided
@@ -298,7 +368,7 @@ serve(async (req) => {
           }
         };
         
-        console.log(`Preparing analysis payload with extracted info and ${parsedResponse.risks.length} risks`);
+        console.log(`Preparing analysis payload with extracted info and ${parsedResponse.risks?.length} risks`);
         
         const { error: analysisError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/document_analysis`, {
           method: 'POST',
@@ -321,7 +391,7 @@ serve(async (req) => {
           
         // Update document status and metadata with form information
         const updateMetadata = {
-          ...document?.[0]?.metadata,
+          ...(document?.[0]?.metadata || {}),
           last_analyzed: new Date().toISOString(),
           analysis_status: 'complete',
           formType: formType || parsedResponse.extracted_info?.formType || null,
@@ -388,7 +458,7 @@ serve(async (req) => {
 });
 
 // Helper function to extract risk items from text
-function extractRisksFromText(text) {
+function extractRisksFromText(text: string) {
   console.log("Extracting risks from text...");
   const risks = [];
   

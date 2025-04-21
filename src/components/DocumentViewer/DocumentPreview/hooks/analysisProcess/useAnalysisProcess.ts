@@ -1,3 +1,4 @@
+
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import logger from "@/utils/logger";
@@ -104,11 +105,17 @@ export const useAnalysisProcess = (props: AnalysisProcessProps) => {
             }
           });
           
-          if (error) throw error;
+          if (error) {
+            console.error("Edge function error:", error);
+            throw error;
+          }
           
-          if (!data || !data.parsedData) {
+          console.log("OpenAI response:", data);
+          
+          // Check if we got a meaningful response from OpenAI
+          if (!data || (!data.parsedData && !data.response)) {
             logger.warn("Analysis returned empty data");
-            throw new Error("Analysis returned empty data");
+            throw new Error("Analysis returned empty data. The OpenAI API key may not be configured correctly.");
           }
           
           analysisData = data;
