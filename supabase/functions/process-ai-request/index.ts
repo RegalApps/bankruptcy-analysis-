@@ -15,10 +15,21 @@ serve(async (req) => {
   }
 
   try {
-    const { message, documentId } = await req.json();
+    // Log request details
+    console.log("Received AI processing request");
+    const requestData = await req.json();
+    const { message, documentId, module } = requestData;
 
-    console.log("Using OpenAI API key:", openAIApiKey ? `${openAIApiKey.substring(0, 4)}...${openAIApiKey.substring(openAIApiKey.length - 4)}` : "No key found");
+    // Validate OpenAI API key presence
+    if (!openAIApiKey) {
+      console.error("ERROR: OpenAI API key is missing");
+      throw new Error('OpenAI API key is not configured');
+    }
 
+    // Log key presence (without exposing the actual key)
+    console.log(`OpenAI API key status: ${openAIApiKey ? 'Present (masked: ' + 
+      `${openAIApiKey.substring(0, 3)}...${openAIApiKey.substring(openAIApiKey.length - 3)}` + ')' : 'Missing'}`);
+    
     // Form-specific system prompts for enhanced analysis
     let systemPrompt = `You are an expert in Canadian bankruptcy and insolvency documents, specializing in form analysis and risk assessment.`;
     
@@ -106,6 +117,10 @@ serve(async (req) => {
       `;
     }
 
+    console.log(`Starting OpenAI API request with model: gpt-4o-mini`);
+    console.log(`Message length: ${message.length} characters`);
+    
+    const startTime = Date.now();
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -128,18 +143,101 @@ serve(async (req) => {
       }),
     });
 
+    const responseTime = Date.now() - startTime;
+    console.log(`OpenAI API responded in ${responseTime}ms with status: ${response.status}`);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`OpenAI API error: ${response.status} - ${errorText}`);
       throw new Error(`OpenAI API error: ${await response.text()}`);
     }
 
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
+    
+    console.log(`Received AI response of length: ${aiResponse.length} characters`);
+    console.log(`Response first 100 chars: ${aiResponse.substring(0, 100)}...`);
 
     // Store analysis results if document ID provided
     if (documentId) {
-      // For brevity, you may add back detailed result processing here if needed
-      // This snippet mainly focuses on key usage and logs for the new key
-      console.log(`Document ID: ${documentId} - AI analysis response length: ${aiResponse.length}`);
+      try {
+        console.log(`Storing analysis results for document ID: ${documentId}`);
+        
+        // Get document data to update metadata
+        const { data: document, error: docError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/documents?id=eq.${documentId}&select=*`, {
+          headers: {
+            'apikey': Deno.env.get('SUPABASE_ANON_KEY') || '',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''}`,
+          }
+        }).then(res => res.json());
+        
+        if (docError) {
+          console.error('Error fetching document:', docError);
+        } else {
+          console.log(`Retrieved document data: ${document ? 'success' : 'not found'}`);
+        }
+
+        // Store analysis in document_analysis table
+        const analysisPayload = {
+          document_id: documentId,
+          user_id: "system", // We'll update this with actual user ID if available
+          content: {
+            extracted_info: {
+              formType: document?.[0]?.metadata?.formType || 'unknown',
+              formNumber: document?.[0]?.metadata?.formNumber || '',
+              summary: aiResponse.substring(0, 500),
+            },
+            risks: extractRisksFromText(aiResponse),
+            full_analysis: aiResponse
+          }
+        };
+        
+        console.log(`Preparing analysis payload: ${JSON.stringify(analysisPayload).substring(0, 200)}...`);
+        
+        const { error: analysisError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/document_analysis`, {
+          method: 'POST',
+          headers: {
+            'apikey': Deno.env.get('SUPABASE_ANON_KEY') || '',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(analysisPayload)
+        }).then(res => res.ok ? {error: null} : res.json());
+
+        if (analysisError) {
+          console.error('Error saving analysis:', analysisError);
+        } else {
+          console.log('Analysis saved successfully to document_analysis table');
+        }
+          
+        // Update document status
+        const { error: updateError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/documents?id=eq.${documentId}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': Deno.env.get('SUPABASE_ANON_KEY') || '',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            ai_processing_status: 'complete',
+            metadata: {
+              ...document?.[0]?.metadata,
+              last_analyzed: new Date().toISOString(),
+              analysis_status: 'complete'
+            }
+          })
+        }).then(res => res.ok ? {error: null} : res.json());
+        
+        if (updateError) {
+          console.error('Error updating document status:', updateError);
+        } else {
+          console.log('Document status updated successfully');
+        }
+      } catch (storageError) {
+        console.error('Error storing analysis results:', storageError);
+      }
     }
 
     return new Response(
@@ -157,3 +255,61 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to extract risk items from text
+function extractRisksFromText(text) {
+  const risks = [];
+  
+  // Look for RISK patterns in the text
+  const riskPatterns = [
+    /HIGH RISK:? (.*?)(?=\n|$)/gi,
+    /MEDIUM RISK:? (.*?)(?=\n|$)/gi,
+    /LOW RISK:? (.*?)(?=\n|$)/gi,
+    /Risk: (.*?)(?=\n|$)/gi
+  ];
+  
+  riskPatterns.forEach((pattern, index) => {
+    const severity = index === 0 ? 'high' : index === 1 ? 'medium' : 'low';
+    let match;
+    
+    while ((match = pattern.exec(text)) !== null) {
+      risks.push({
+        type: `Risk Item ${risks.length + 1}`,
+        description: match[1].trim(),
+        severity: severity,
+        regulation: "BIA Requirement",
+        solution: "Review and correct the issue"
+      });
+    }
+  });
+  
+  // If no specific risk patterns found, look for sections containing risk words
+  if (risks.length === 0) {
+    const lines = text.split('\n');
+    
+    lines.forEach(line => {
+      if (/risk|missing|incomplete|required|invalid/i.test(line)) {
+        risks.push({
+          type: "Potential Issue",
+          description: line.trim(),
+          severity: "medium",
+          regulation: "BIA Requirement",
+          solution: "Review and verify compliance"
+        });
+      }
+    });
+  }
+  
+  // If we still didn't find risks and text is long enough, create at least one default risk item
+  if (risks.length === 0 && text.length > 300) {
+    risks.push({
+      type: "Document Review Needed",
+      description: "AI analysis completed, but no specific risks were automatically identified. Manual review recommended.",
+      severity: "low",
+      regulation: "BIA General Compliance",
+      solution: "Review the document manually to ensure all requirements are met."
+    });
+  }
+  
+  return risks;
+}

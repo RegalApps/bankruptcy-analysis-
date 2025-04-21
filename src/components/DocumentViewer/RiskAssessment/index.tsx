@@ -57,10 +57,25 @@ export const RiskAssessment: React.FC<RiskProps> = ({ risks = [], documentId, is
     setExpandedRiskId(expandedRiskId === riskId ? null : riskId);
   };
   
-  // Filter out incomplete risk entries
-  const validRisks = sortedRisks.filter(risk => 
-    risk && risk.description && (risk.type || risk.description)
-  );
+  // Filter out incomplete risk entries and ensure proper structure 
+  const validRisks = sortedRisks.filter(risk => {
+    if (!risk) return false;
+    // Ensure risk has at least a description
+    return risk.description && (risk.type || risk.description);
+  }).map((risk, index) => {
+    // Assign default values for any missing fields
+    return {
+      ...risk,
+      type: risk.type || `Risk Item ${index + 1}`,
+      severity: risk.severity || 'medium',
+      regulation: risk.regulation || 'BIA Requirement',
+      solution: risk.solution || 'Review document for compliance'
+    };
+  });
+
+  // Debug console log to investigate risks data
+  console.log('Risk Assessment Props:', { documentId, risksCount: risks?.length, validRisksCount: validRisks.length });
+  console.log('Valid Risks Data:', validRisks);
 
   if (isLoading) {
     return (
