@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { ClientViewerContainer } from "./components/viewer/ClientViewerContainer";
 import { ClientViewerProps } from "./types";
 import { ClientTemplate } from "./components/ClientTemplate";
-import { getClientData } from "./data/clientTemplates";
+import { getClientData } from "./data/clientInfoTemplates";
 
 export const ClientViewer = (props: ClientViewerProps) => {
   const [hasError, setHasError] = useState(false);

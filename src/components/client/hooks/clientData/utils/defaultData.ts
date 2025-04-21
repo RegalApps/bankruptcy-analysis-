@@ -1,6 +1,6 @@
 
 import { Document } from "../../../types";
-import { getClientDocuments } from "../../../data/clientTemplates";
+import { getClientDocuments } from "../../../data/clientDocumentTemplates";
 
 /**
  * Helper function to add required properties to document objects

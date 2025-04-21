@@ -11,7 +11,9 @@ import { FileText, FileSpreadsheet, File, Calendar, PlusCircle } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { getClientData, getClientDocuments, getClientTasks } from "../data/clientTemplates";
+import { getClientData } from "../data/clientInfoTemplates";
+import { getClientDocuments } from "../data/clientDocumentTemplates";
+import { getClientTasks } from "../data/clientTaskTemplates";
 
 interface ClientTemplateProps {
   clientId: string;
@@ -196,3 +198,5 @@ export const ClientTemplate = ({ clientId, onBack, onDocumentOpen }: ClientTempl
     </div>
   );
 };
+
+export default ClientTemplate;
