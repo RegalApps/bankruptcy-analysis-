@@ -46,10 +46,16 @@ export interface DocumentDetails {
   title: string;
   type: string;
   storage_path: string;
+  created_at: string;
+  updated_at: string;
   deadlines?: Deadline[];
   tasks?: Task[];
   versions?: DocumentVersion[];
   ai_processing_status?: 'pending' | 'complete' | 'failed';
+  metadata?: {
+    form_type?: string;
+    [key: string]: any;
+  };
   analysis?: {
     content: {
       extracted_info: {

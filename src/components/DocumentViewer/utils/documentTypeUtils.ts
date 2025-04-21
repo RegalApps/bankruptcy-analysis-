@@ -20,13 +20,14 @@ export const isDocumentForm47 = (document: DocumentDetails): boolean => {
     return true;
   }
   
-  // Check metadata for form type
-  if (document.metadata?.form_type?.toLowerCase().includes('consumer') || 
-      document.metadata?.form_type?.toLowerCase().includes('proposal') ||
-      document.metadata?.form_type?.toLowerCase() === 'form-47') {
+  // Check for form type in analysis extracted_info
+  const formType = document.analysis?.[0]?.content?.extracted_info?.formType;
+  if (formType?.toLowerCase().includes('consumer') || 
+      formType?.toLowerCase().includes('proposal') ||
+      formType?.toLowerCase() === 'form-47') {
     return true;
   }
-
+  
   // Check for form number in extracted info
   const formNumber = document.analysis?.[0]?.content?.extracted_info?.formNumber;
   if (formNumber === '47') {

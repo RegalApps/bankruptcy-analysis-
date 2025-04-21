@@ -12,6 +12,7 @@ import { isDocumentForm47 } from "./utils/documentTypeUtils";
 import { TaskManager } from "./TaskManager";
 import { VersionTab } from "./VersionTab";
 import { debugTiming, isDebugMode } from "@/utils/debugMode";
+import { DocumentDetails, Risk } from "./types";
 
 interface DocumentViewerProps {
   documentId: string;
@@ -59,7 +60,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   // For Form 47, we create a mock document if needed
   const form47Document = useMemo(() => {
     if (isForm47 && !document && !loading) {
-      return {
+      const mockDocument: DocumentDetails = {
         id: "form47",
         title: documentTitle || "Form 47 - Consumer Proposal",
         type: "form",
@@ -72,14 +73,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               extracted_info: {
                 formNumber: "47",
                 formType: "consumer-proposal",
-                title: "Consumer Proposal",
                 summary: "This is a form used for consumer proposals under the Bankruptcy and Insolvency Act."
               },
               risks: [
                 {
                   type: "Missing Information",
                   description: "Please ensure all required fields are completed.",
-                  severity: "medium"
+                  severity: "medium" as "medium"
                 }
               ]
             }
@@ -87,11 +87,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         ],
         comments: [],
         tasks: [],
-        versions: [],
-        metadata: {
-          form_type: "consumer-proposal"
-        }
+        versions: []
       };
+      return mockDocument;
     }
     return null;
   }, [isForm47, document, loading, documentTitle]);

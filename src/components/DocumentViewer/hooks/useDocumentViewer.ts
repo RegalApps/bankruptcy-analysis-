@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDocumentDetails } from "./useDocumentDetails";
 import { useDocumentRealtime } from "./useDocumentRealtime";
-import { DocumentDetails } from "../types";
+import { DocumentDetails, Risk } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
 import { startTiming, endTiming } from "@/utils/performanceMonitor";
@@ -49,7 +49,6 @@ export const useDocumentViewer = (documentId: string) => {
               extracted_info: {
                 formNumber: "47",
                 formType: "consumer-proposal",
-                title: "Consumer Proposal",
                 summary: "This is a form used for consumer proposals under the Bankruptcy and Insolvency Act."
               },
               risks: [
@@ -57,7 +56,7 @@ export const useDocumentViewer = (documentId: string) => {
                   type: "Missing Information",
                   description: "Please ensure all required fields are completed.",
                   severity: "medium"
-                }
+                } as Risk
               ]
             }
           }
@@ -113,7 +112,6 @@ export const useDocumentViewer = (documentId: string) => {
     onError: handleDocumentError
   });
 
-  // Call fetchDocumentDetails initially - but only if the document ID changes
   useEffect(() => {
     // Skip fetching if document ID is null or undefined
     if (!documentId) return;
@@ -160,7 +158,6 @@ export const useDocumentViewer = (documentId: string) => {
     };
   }, [documentId, fetchDocumentDetails, document]);
 
-  // Reduced retry intervals with a maximum number of attempts
   useEffect(() => {
     // Special case for form47 - we don't want to keep retrying
     if (documentId === "form47") {
@@ -210,8 +207,6 @@ export const useDocumentViewer = (documentId: string) => {
     }
   }, [loading, fetchDocumentDetails, toast, documentId, isNetworkError]);
 
-  // Set up real-time subscriptions - but only if we have a valid document
-  // Skip for Form 47 since it's not a real document
   useDocumentRealtime(documentId !== "form47" ? documentId : null, document ? fetchDocumentDetails : null);
 
   const handleRefresh = useCallback(() => {
