@@ -18,7 +18,10 @@ export const CommentsTab: React.FC<CommentsTabProps> = ({
         title: document.title,
         type: document.type || 'document',
         storage_path: document.metadata?.storage_path || '',
-        comments: []
+        comments: [],
+        // Add the missing required properties
+        created_at: document.created_at,
+        updated_at: document.updated_at
       }}
       onCommentAdded={() => console.log('Comment added')}
     />
