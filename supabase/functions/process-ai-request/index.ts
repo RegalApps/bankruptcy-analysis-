@@ -1,8 +1,5 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,8 +14,92 @@ serve(async (req) => {
   try {
     // Log request details
     console.log("Received AI processing request");
-    const requestData = await req.json();
-    const { message, documentId, module, formType, title, testMode } = requestData;
+    
+    // Verify OpenAI API key presence
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      console.error("OpenAI API key is not configured");
+      return new Response(
+        JSON.stringify({
+          error: 'OpenAI API key is not configured in edge function secrets',
+          debugInfo: {
+            status: { openAIKeyPresent: false },
+            errors: ['OpenAI API key missing from environment']
+          }
+        }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Log key presence (without exposing the actual key)
+    console.log("OpenAI API key status:", openAIApiKey ? "Present" : "Missing");
+    
+    const { message, documentId, module, formType, title, testMode } = await req.json();
+
+    // Test mode - just verify OpenAI connectivity
+    if (testMode) {
+      try {
+        console.log("Running in test mode - verifying OpenAI connectivity");
+        const testResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'Test connection.' },
+              { role: 'user', content: 'Test' }
+            ],
+            max_tokens: 5
+          }),
+        });
+
+        if (!testResponse.ok) {
+          const errorBody = await testResponse.text();
+          throw new Error(`OpenAI API error (${testResponse.status}): ${errorBody}`);
+        }
+
+        const testData = await testResponse.json();
+        
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "OpenAI connection test successful",
+            debugInfo: {
+              status: {
+                openAIKeyPresent: true,
+                openAIResponseReceived: true
+              },
+              response: testData
+            }
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error("OpenAI test connection failed:", error);
+        return new Response(
+          JSON.stringify({
+            error: `OpenAI connection test failed: ${error.message}`,
+            debugInfo: {
+              status: {
+                openAIKeyPresent: true,
+                openAIResponseReceived: false
+              },
+              errors: [error.message]
+            }
+          }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+    }
 
     // Debug information collection
     const debugInfo = {
@@ -48,80 +129,10 @@ serve(async (req) => {
       errors: []
     };
 
-    // Validate OpenAI API key presence
-    if (!openAIApiKey) {
-      console.error("ERROR: OpenAI API key is missing");
-      debugInfo.errors.push('OpenAI API key is not configured');
-      throw new Error('OpenAI API key is not configured');
-    }
-
     // Log key presence (without exposing the actual key)
     console.log(`OpenAI API key status: ${openAIApiKey ? 'Present (masked: ' + 
       `${openAIApiKey.substring(0, 3)}...${openAIApiKey.substring(openAIApiKey.length - 3)}` + ')' : 'Missing'}`);
     
-    // Test mode - just check API connectivity without full document analysis
-    if (testMode) {
-      try {
-        debugInfo.timestamps.openAIRequestStart = new Date().toISOString();
-        const testResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openAIApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { 
-                role: 'system', 
-                content: 'You are a test assistant. Please respond with "OpenAI connection successful."' 
-              },
-              { 
-                role: 'user', 
-                content: 'Test OpenAI connection' 
-              }
-            ],
-            max_tokens: 20,
-          }),
-        });
-        
-        debugInfo.timestamps.openAIRequestEnd = new Date().toISOString();
-        
-        if (!testResponse.ok) {
-          const errorBody = await testResponse.text();
-          console.error(`OpenAI API test error: ${testResponse.status} - ${errorBody}`);
-          debugInfo.errors.push(`OpenAI API returned error: ${testResponse.status} - ${errorBody}`);
-          throw new Error(`OpenAI API error: Status ${testResponse.status}`);
-        }
-        
-        const testData = await testResponse.json();
-        debugInfo.status.openAIRequestSuccess = true;
-        
-        return new Response(
-          JSON.stringify({ 
-            response: "OpenAI connection test successful", 
-            debugInfo: debugInfo,
-            testData: testData
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } catch (error) {
-        console.error("OpenAI test mode error:", error);
-        debugInfo.errors.push(`OpenAI test error: ${error.message}`);
-        
-        return new Response(
-          JSON.stringify({ 
-            error: error.message,
-            debugInfo: debugInfo,
-            timestamp: new Date().toISOString()
-          }),
-          { 
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-    }
     
     // Form-specific system prompts for enhanced analysis
     let systemPrompt = `You are an expert in Canadian bankruptcy and insolvency documents, specializing in form analysis and risk assessment.`;

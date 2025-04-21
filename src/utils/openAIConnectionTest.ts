@@ -19,50 +19,38 @@ export const testOpenAIConnection = async () => {
   };
   
   try {
-    // Test direct API connectivity through the edge function
     console.log("Calling the edge function to test OpenAI connectivity");
     
     const { data, error } = await supabase.functions.invoke('process-ai-request', {
       body: {
-        message: "This is a test to verify OpenAI connectivity.",
-        testMode: true,
-        documentId: null,
-        module: "test",
+        message: "Test connection",
+        testMode: true
       }
     });
     
     if (error) {
+      console.error("Edge function error:", error);
       results.errors.push(`Edge function error: ${error.message}`);
       results.message = `Failed to connect to edge function: ${error.message}`;
       return results;
     }
     
+    console.log("Edge function response:", data);
+    
     results.connectionEstablished = true;
     results.details.edgeFunctionResponse = data;
     
-    // Check if we got a response from OpenAI
-    if (data && (data.response || data.parsedData)) {
+    if (data?.success) {
       results.responseReceived = true;
       results.success = true;
       results.message = "Successfully connected to OpenAI via edge function";
-    } else {
-      results.message = "Edge function returned but OpenAI response is missing";
-      results.errors.push("No OpenAI response in the edge function data");
+    } else if (data?.error) {
+      results.message = data.error;
+      results.errors.push(data.error);
     }
     
-    // If there are debug info, include them
     if (data?.debugInfo) {
       results.details.debugInfo = data.debugInfo;
-      
-      // Check if the debug info shows OpenAI key presence
-      if (data.debugInfo.status?.openAIKeyPresent === false) {
-        results.errors.push("OpenAI API key is missing in the edge function");
-      }
-      
-      // Check for OpenAI request errors
-      if (data.debugInfo.errors && data.debugInfo.errors.length > 0) {
-        results.errors.push(...data.debugInfo.errors);
-      }
     }
     
     return results;
