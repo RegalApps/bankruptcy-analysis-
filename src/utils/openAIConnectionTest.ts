@@ -32,7 +32,7 @@ export const testOpenAIConnection = async () => {
       const networkTest = await fetch('https://www.google.com');
       results.troubleshooting.networkConnectivity = networkTest.ok;
       console.log("Network connectivity test:", results.troubleshooting.networkConnectivity ? "Passed" : "Failed");
-    } catch (networkErr) {
+    } catch (networkErr: any) {
       results.troubleshooting.networkConnectivity = false;
       results.errors.push(`Network connectivity issue: ${networkErr.message}`);
       console.error("Network connectivity test failed:", networkErr);
@@ -43,7 +43,8 @@ export const testOpenAIConnection = async () => {
     const { data, error } = await supabase.functions.invoke('process-ai-request', {
       body: {
         message: "Test connection",
-        testMode: true
+        testMode: true,
+        debug: true
       }
     });
     

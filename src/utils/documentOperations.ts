@@ -1,12 +1,168 @@
 
+import { supabase } from "@/lib/supabase";
+import logger from "@/utils/logger";
+
+/**
+ * Uploads a document to storage and creates a database record
+ */
+export const uploadDocument = async (file: File) => {
+  try {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      throw new Error('Authentication required to upload documents');
+    }
+    
+    // Generate a unique file path
+    const fileExt = file.name.split('.').pop();
+    const userId = userData.user.id;
+    const uuid = crypto.randomUUID();
+    const filePath = `${userId}/${uuid}/${file.name}`;
+    
+    logger.info(`Uploading file ${file.name} to path ${filePath}`);
+    
+    // Upload to storage
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false
+      });
+    
+    if (uploadError) throw uploadError;
+    
+    logger.info(`Upload successful, creating database record`);
+    
+    // Create document record
+    const { data: documentData, error: insertError } = await supabase
+      .from('documents')
+      .insert([
+        {
+          title: file.name,
+          type: file.type,
+          size: file.size,
+          storage_path: filePath,
+          user_id: userId,
+          metadata: {
+            original_filename: file.name,
+            upload_timestamp: new Date().toISOString()
+          },
+          ai_processing_status: 'pending'
+        }
+      ])
+      .select()
+      .single();
+    
+    if (insertError) throw insertError;
+    
+    logger.info(`Document record created with id: ${documentData.id}`);
+    
+    // If it's a form file, try to extract form number from filename for metadata
+    const lcFileName = file.name.toLowerCase();
+    let formType = null;
+    
+    if (lcFileName.includes('form 31') || lcFileName.includes('form31') || lcFileName.includes('proof of claim')) {
+      formType = 'form-31';
+    } else if (lcFileName.includes('form 47') || lcFileName.includes('form47') || lcFileName.includes('consumer proposal')) {
+      formType = 'form-47';
+    } else if (lcFileName.includes('form 65') || lcFileName.includes('form65') || lcFileName.includes('notice of intention')) {
+      formType = 'form-65';
+    } else if (lcFileName.includes('form 76') || lcFileName.includes('form76') || lcFileName.includes('assignment')) {
+      formType = 'form-76';
+    }
+    
+    if (formType) {
+      logger.info(`Detected form type: ${formType}`);
+      
+      // Update document with form type
+      await supabase
+        .from('documents')
+        .update({
+          metadata: {
+            ...documentData.metadata,
+            formType,
+            form_detection_method: 'filename_analysis'
+          }
+        })
+        .eq('id', documentData.id);
+    }
+    
+    // If it's form 47, create a risk assessment (for demo purposes)
+    if (formType === 'form-47' || lcFileName.includes('form 47') || lcFileName.includes('form47')) {
+      logger.info(`Creating Form 47 risk assessment`);
+      
+      // This is imported from your utility file
+      const { createForm47RiskAssessment } = await import('./documents/documentOperations');
+      await createForm47RiskAssessment(documentData.id);
+      
+      logger.info(`Form 47 risk assessment created`);
+    } else {
+      // For other document types, trigger document analysis via edge function
+      try {
+        logger.info(`Downloading file to analyze content`);
+        
+        // Download the file content
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from('documents')
+          .download(filePath);
+          
+        if (downloadError) throw downloadError;
+        
+        // Convert to text
+        const text = await fileData.text();
+        
+        logger.info(`File downloaded, sending to analysis service`);
+        
+        // Call the edge function to analyze the document
+        await supabase.functions.invoke('process-ai-request', {
+          body: {
+            message: text,
+            documentId: documentData.id,
+            module: "document-analysis",
+            formType: formType,
+            title: file.name
+          }
+        });
+        
+        logger.info(`Analysis request sent successfully`);
+      } catch (analysisError) {
+        // Log error but don't fail upload
+        logger.error(`Error initiating document analysis:`, analysisError);
+      }
+    }
+    
+    // Create notification
+    await supabase.functions.invoke('handle-notifications', {
+      body: {
+        action: 'create',
+        userId: userId,
+        notification: {
+          title: 'Document Uploaded Successfully',
+          message: `"${file.name}" has been uploaded and is being analyzed`,
+          type: 'info',
+          category: 'file_activity',
+          priority: 'normal',
+          action_url: `/documents/${documentData.id}`,
+          metadata: {
+            documentId: documentData.id,
+            fileName: file.name,
+            fileSize: file.size
+          }
+        }
+      }
+    }).catch(e => console.error('Error creating notification:', e));
+    
+    return documentData;
+  } catch (error) {
+    logger.error('Document upload error:', error);
+    throw error;
+  }
+};
+
 /**
  * Creates a detailed risk assessment for Form 47 Consumer Proposal documents
  * @param documentId The document ID to create the risk assessment for
  */
-import { supabase } from "@/lib/supabase";
-import { createFolderIfNotExists } from "@/utils/documents/folder-utils/createFolder";
-import logger from "@/utils/logger";
-
 export const createForm47RiskAssessment = async (documentId: string): Promise<void> => {
   try {
     // Get existing analysis record if any
@@ -185,6 +341,7 @@ export const createForm47RiskAssessment = async (documentId: string): Promise<vo
           content: {
             extracted_info: clientInfo,
             risks: form47Risks,
+            summary: clientInfo.summary,
             regulatory_compliance: {
               status: 'requires_review',
               details: 'Form 47 Consumer Proposal requires detailed review for regulatory compliance',
@@ -214,6 +371,7 @@ export const createForm47RiskAssessment = async (documentId: string): Promise<vo
     await supabase
       .from('documents')
       .update({
+        ai_processing_status: 'complete',
         metadata: {
           formType: 'form-47',
           formNumber: '47',
@@ -259,182 +417,6 @@ export const createForm47RiskAssessment = async (documentId: string): Promise<vo
 
   } catch (error) {
     console.error('Error creating Form 47 risk assessment:', error);
-    throw error;
-  }
-};
-
-/**
- * Uploads a document file and creates a database record for it
- * @param file The document file to upload
- * @returns The created document data or null if there was an error
- */
-export const uploadDocument = async (file: File) => {
-  try {
-    // Create a unique file path for storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = file.name.replace(/\.[^/.]+$/, ""); // Get filename without extension
-    const filePath = `${crypto.randomUUID()}-${fileName}.${fileExt}`;
-
-    console.log(`Uploading file "${file.name}" to storage path: ${filePath}`);
-
-    // Make sure the documents bucket exists
-    try {
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const documentsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
-      
-      if (!documentsBucketExists) {
-        console.log("Documents bucket does not exist, creating...");
-        const { error: createBucketError } = await supabase.storage.createBucket('documents', {
-          public: true
-        });
-        
-        if (createBucketError) {
-          console.error("Error creating documents bucket:", createBucketError);
-        } else {
-          console.log("Documents bucket created successfully");
-        }
-      }
-    } catch (bucketError) {
-      console.warn("Error checking/creating bucket:", bucketError);
-      // Continue anyway, the bucket might already exist
-    }
-
-    // Upload the file to Supabase storage with public access
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (uploadError) {
-      console.error("Upload error:", uploadError);
-      throw uploadError;
-    }
-    
-    console.log("File uploaded successfully:", uploadData);
-
-    // Get current user
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError) throw userError;
-
-    // Check for Form 47 in the filename or content
-    const isForm47 = file.name.toLowerCase().includes('form 47') || 
-                    file.name.toLowerCase().includes('consumer proposal') ||
-                    file.name.toLowerCase().includes('f47');
-    
-    // Check for Form 76 in the filename
-    const isForm76 = file.name.toLowerCase().includes('form 76') || 
-                     file.name.toLowerCase().includes('statement of affairs') ||
-                     file.name.toLowerCase().includes('f76');
-    
-    // Check for financial documents
-    const isFinancial = file.name.toLowerCase().includes('statement') ||
-                      file.name.toLowerCase().includes('sheet') ||
-                      file.name.toLowerCase().includes('budget') ||
-                      file.name.toLowerCase().includes('.xls');
-                      
-    console.log(`File classification: ${isForm47 ? 'Form 47' : isForm76 ? 'Form 76' : isFinancial ? 'Financial' : 'Standard document'}`);
-    
-    // Determine client name for folder organization
-    let clientName = "Untitled Client";
-    
-    if (isForm47) {
-      clientName = "Josh Hart"; // Use the client name from the Form 47 example
-    } else if (isForm76) {
-      // Extract client name from Form 76 filename if possible
-      const nameMatch = file.name.match(/form[- ]?76[- ]?(.+?)(?:\.|$)/i);
-      if (nameMatch && nameMatch[1]) {
-        clientName = nameMatch[1].trim();
-      }
-    }
-    
-    // Create the client folder structure
-    let parentFolderId: string | undefined = undefined;
-    
-    if (clientName !== "Untitled Client") {
-      try {
-        // Create client folder if it doesn't exist
-        const clientFolderId = await createFolderIfNotExists(
-          clientName,
-          'client',
-          userData.user?.id || ''
-        );
-        
-        logger.info(`Client folder: ${clientName}, ID: ${clientFolderId}`);
-        
-        // Create appropriate subfolder based on document type - always create a Forms subfolder for form documents
-        let subfolderName = "Documents";
-        let subfolderType = "general";
-        
-        if (isForm47 || isForm76) {
-          subfolderName = "Forms";
-          subfolderType = "form";
-        } else if (isFinancial) {
-          subfolderName = "Financial Sheets";
-          subfolderType = "financial";
-        }
-        
-        const subFolderId = await createFolderIfNotExists(
-          subfolderName,
-          subfolderType,
-          userData.user?.id || '',
-          clientFolderId
-        );
-        
-        logger.info(`Subfolder: ${subfolderName}, ID: ${subFolderId}`);
-        
-        // Set the parent folder ID to the subfolder
-        parentFolderId = subFolderId;
-      } catch (folderError) {
-        logger.error("Error creating folder structure:", folderError);
-        // Continue without folder structure if there was an error
-      }
-    }
-    
-    // Create a database record for the document
-    const { data: documentData, error: dbError } = await supabase
-      .from('documents')
-      .insert({
-        title: file.name,
-        type: file.type,
-        size: file.size,
-        storage_path: filePath,
-        user_id: userData.user?.id,
-        ai_processing_status: 'pending',
-        parent_folder_id: parentFolderId, // Link document to the created folder structure
-        metadata: {
-          formType: isForm47 ? 'form-47' : isForm76 ? 'form-76' : null,
-          clientName: clientName !== "Untitled Client" ? clientName : null,
-          uploadDate: new Date().toISOString(),
-          documentStatus: isForm47 ? "Draft - Pending Review" : "Uploaded"
-        }
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error("Database error:", dbError);
-      throw dbError;
-    }
-    
-    console.log("Document record created:", documentData);
-
-    // If this is a Form 47, create a risk assessment for it
-    if (isForm47) {
-      await createForm47RiskAssessment(documentData.id);
-    }
-
-    // Get and log the public URL for verification
-    const { data: urlData } = await supabase.storage
-      .from('documents')
-      .getPublicUrl(filePath);
-      
-    console.log("Document public URL:", urlData?.publicUrl);
-
-    return documentData;
-  } catch (error) {
-    console.error('Error uploading document:', error);
     throw error;
   }
 };

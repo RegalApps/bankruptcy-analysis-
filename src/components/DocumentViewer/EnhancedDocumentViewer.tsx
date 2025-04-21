@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentDetails, Risk } from "./types";
@@ -11,8 +11,9 @@ import { ViewerLoadingState } from "./components/ViewerLoadingState";
 import { ViewerErrorState } from "./components/ViewerErrorState";
 import { DocumentPreview } from "./DocumentPreview";
 import { RiskAssessment } from "./RiskAssessment";
-import { AlertTriangle, AlertCircle, RefreshCcw, Bug } from "lucide-react";
+import { AlertTriangle, AlertCircle, RefreshCcw, Bug, FileText } from "lucide-react";
 import { AIConnectionTest } from "@/components/AIConnectionTest";
+import { DocumentClientInfo } from "./DocumentClientInfo";
 
 interface EnhancedDocumentViewerProps {
   documentId: string;
@@ -108,6 +109,11 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
         throw new Error("Document has no storage path");
       }
       
+      toast({
+        title: "Starting Document Analysis",
+        description: "Please wait while we analyze your document...",
+      });
+      
       // Get file content from storage
       const { data: fileData, error: fileError } = await supabase.storage
         .from('documents')
@@ -132,23 +138,27 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
       }
       
       // Call AI analysis function
+      console.log("Calling process-ai-request edge function for document analysis");
       const { data: analysisData, error: analysisError } = await supabase.functions.invoke('process-ai-request', {
         body: {
           message: textContent,
           documentId: documentId,
           module: "document-analysis",
           formType: formType,
-          title: document.title
+          title: document.title,
+          debug: true
         }
       });
+      
+      console.log("Edge function response:", analysisData);
       
       if (analysisError) {
         throw new Error(`Analysis failed: ${analysisError.message}`);
       }
       
-      if (!analysisData || (!analysisData.response && !analysisData.parsedData)) {
-        console.error("OpenAI returned no data. Response:", analysisData);
-        throw new Error("OpenAI returned no data. Please check your API key configuration.");
+      if (!analysisData) {
+        console.error("Edge function returned no data");
+        throw new Error("Analysis service returned no data. Please check your OpenAI API key configuration.");
       }
       
       toast({
@@ -157,7 +167,7 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
       });
       
       // Fetch updated document with new analysis
-      fetchDocumentDetails();
+      await fetchDocumentDetails();
       
     } catch (error: any) {
       console.error("Error triggering analysis:", error);
@@ -220,19 +230,16 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
   const analysisContent = document?.analysis?.[0]?.content || {};
   const risks = analysisContent.risks as Risk[] || [];
   const extractedInfo = analysisContent.extracted_info || {};
-  
-  // Fix: Get summary from extracted_info rather than directly from analysisContent
-  // This solves the TypeScript error by using the correct property path
-  const documentSummary = extractedInfo?.summary || "";
+  const documentSummary = extractedInfo?.summary || analysisContent.summary || "";
   
   return (
     <div className="flex flex-col h-full">
-      {analysisError && (
-        <Alert variant="destructive" className="mb-4">
+      {(analysisError || analysisLoading) && (
+        <Alert variant={analysisError ? "destructive" : "default"} className="mb-4">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Analysis Issue</AlertTitle>
+          <AlertTitle>{analysisLoading ? "Processing Document" : "Analysis Issue"}</AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
-            <div>{analysisError}</div>
+            <div>{analysisLoading ? "Document analysis in progress..." : analysisError}</div>
             <div className="flex items-center gap-2">
               <Button 
                 variant="outline" 
@@ -240,8 +247,8 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
                 onClick={triggerAnalysis}
                 disabled={analysisLoading}
               >
-                <RefreshCcw className="h-4 w-4 mr-1" />
-                {analysisLoading ? "Analyzing..." : "Re-Analyze Document"}
+                <RefreshCcw className={`h-4 w-4 mr-1 ${analysisLoading ? "animate-spin" : ""}`} />
+                {analysisLoading ? "Analyzing..." : "Analyze Document"}
               </Button>
               
               <Button 
@@ -264,8 +271,15 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
         </div>
       )}
       
+      {/* Document Client Info */}
+      {extractedInfo && Object.keys(extractedInfo).length > 0 && (
+        <div className="mb-4">
+          <DocumentClientInfo clientInfo={extractedInfo} />
+        </div>
+      )}
+      
       {/* Document Preview */}
-      <div className="flex-grow">
+      <div className="flex-grow mb-4">
         <DocumentPreview 
           documentId={documentId}
           title={document.title}
@@ -275,17 +289,24 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
       </div>
       
       {/* Document Summary */}
-      <Card className="p-4 mt-4">
-        <h3 className="text-lg font-medium mb-2">Document Summary</h3>
+      <Card className="p-4 mb-4">
+        <div className="flex items-center mb-2">
+          <FileText className="h-5 w-5 text-primary mr-2" />
+          <h3 className="text-lg font-medium">Document Summary</h3>
+        </div>
         {documentSummary ? (
           <p className="text-sm text-gray-700">{documentSummary}</p>
         ) : (
-          <Skeleton className="h-8 w-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-4/6" />
+          </div>
         )}
       </Card>
       
       {/* Risk Assessment */}
-      <div className="mt-4">
+      <div className="mb-4">
         <RiskAssessment 
           risks={risks} 
           documentId={documentId}
