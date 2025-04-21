@@ -27,8 +27,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   const extractedInfo = analysisContent?.extracted_info || {};
   const risks = analysisContent?.risks || [];
 
+  // Get document text safely from extracted info or from metadata
+  const documentText = extractedInfo?.fullText || 
+                      extractedInfo?.content || 
+                      document.metadata?.fullText || 
+                      "";
+  
   // Determine form type and add debug logs
-  const documentText = extractedInfo.fullText || "";
   const formType = detectFormType(document, documentText);
   const isForm47 = formType === 'form-47';
   const isForm31 = formType === 'form-31';

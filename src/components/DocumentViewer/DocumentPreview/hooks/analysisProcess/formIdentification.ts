@@ -23,6 +23,48 @@ export const isForm31 = (document: DocumentRecord, documentText?: string): boole
 };
 
 /**
+ * Checks if a document is Form 76 (Assignment for Benefit of Creditors)
+ */
+export const isForm76 = (document: DocumentRecord, documentText?: string): boolean => {
+  // Check document title
+  const titleHasForm76 = document.title?.toLowerCase().includes('form 76') || 
+                         document.title?.toLowerCase().includes('assignment');
+                         
+  // Check document type from metadata
+  const metadataHasForm76 = document.metadata?.formType === 'form-76' || 
+                           document.metadata?.formNumber === '76';
+  
+  // Check document text content if available
+  const textHasForm76 = documentText ? 
+                       (documentText.toLowerCase().includes('assignment') || 
+                        documentText.toLowerCase().includes('form 76')) : 
+                       false;
+                       
+  return titleHasForm76 || metadataHasForm76 || textHasForm76;
+};
+
+/**
+ * Checks if a document is Form 47 (Consumer Proposal)
+ */
+export const isForm47 = (document: DocumentRecord, documentText?: string): boolean => {
+  // Check document title
+  const titleHasForm47 = document.title?.toLowerCase().includes('form 47') || 
+                         document.title?.toLowerCase().includes('consumer proposal');
+                         
+  // Check document type from metadata
+  const metadataHasForm47 = document.metadata?.formType === 'form-47' || 
+                           document.metadata?.formNumber === '47';
+  
+  // Check document text content if available
+  const textHasForm47 = documentText ? 
+                       (documentText.toLowerCase().includes('consumer proposal') || 
+                        documentText.toLowerCase().includes('form 47')) : 
+                       false;
+                       
+  return titleHasForm47 || metadataHasForm47 || textHasForm47;
+};
+
+/**
  * Detects form type from document
  */
 export const detectFormType = (document: DocumentRecord, documentText?: string): string => {
@@ -30,23 +72,11 @@ export const detectFormType = (document: DocumentRecord, documentText?: string):
     return 'form-31';
   }
   
-  // Check for Form 47 (Consumer Proposal)
-  if (document.title?.toLowerCase().includes('form 47') || 
-      document.title?.toLowerCase().includes('consumer proposal') ||
-      document.metadata?.formType === 'form-47' ||
-      document.metadata?.formNumber === '47' ||
-      (documentText && (documentText.toLowerCase().includes('consumer proposal') ||
-                       documentText.toLowerCase().includes('form 47')))) {
+  if (isForm47(document, documentText)) {
     return 'form-47';
   }
   
-  // Check for Form 76 (Assignment for Benefit of Creditors)
-  if (document.title?.toLowerCase().includes('form 76') || 
-      document.title?.toLowerCase().includes('assignment') ||
-      document.metadata?.formType === 'form-76' ||
-      document.metadata?.formNumber === '76' ||
-      (documentText && (documentText.toLowerCase().includes('assignment') ||
-                       documentText.toLowerCase().includes('form 76')))) {
+  if (isForm76(document, documentText)) {
     return 'form-76';
   }
   

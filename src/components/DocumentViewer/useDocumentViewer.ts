@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -159,7 +160,7 @@ export const useDocumentViewer = (documentId: string) => {
         } catch (e) {
           console.error('Error processing analysis content:', e);
           toast({
-            variant: "warning",
+            variant: "default", // Changed from "warning" to "default"
             title: "Warning",
             description: "Could not process document analysis"
           });
