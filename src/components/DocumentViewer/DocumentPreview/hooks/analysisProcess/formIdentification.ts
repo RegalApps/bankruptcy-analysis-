@@ -1,84 +1,63 @@
 
-import { DocumentRecord } from '../types';
+import logger from "@/utils/logger";
 
-/**
- * Checks if a document is Form 31 (Proof of Claim)
- */
-export const isForm31 = (document: DocumentRecord, documentText?: string): boolean => {
-  // Check document title
-  const titleHasForm31 = document.title?.toLowerCase().includes('form 31') || 
-                         document.title?.toLowerCase().includes('proof of claim');
-                         
-  // Check document type from metadata
-  const metadataHasForm31 = document.metadata?.formType === 'form-31' || 
-                           document.metadata?.formNumber === '31';
-  
-  // Check document text content if available
-  const textHasForm31 = documentText ? 
-                       (documentText.toLowerCase().includes('proof of claim') || 
-                        documentText.toLowerCase().includes('form 31')) : 
-                       false;
-                       
-  return titleHasForm31 || metadataHasForm31 || textHasForm31;
-};
-
-/**
- * Checks if a document is Form 76 (Assignment for Benefit of Creditors)
- */
-export const isForm76 = (document: DocumentRecord, documentText?: string): boolean => {
-  // Check document title
-  const titleHasForm76 = document.title?.toLowerCase().includes('form 76') || 
-                         document.title?.toLowerCase().includes('assignment');
-                         
-  // Check document type from metadata
-  const metadataHasForm76 = document.metadata?.formType === 'form-76' || 
-                           document.metadata?.formNumber === '76';
-  
-  // Check document text content if available
-  const textHasForm76 = documentText ? 
-                       (documentText.toLowerCase().includes('assignment') || 
-                        documentText.toLowerCase().includes('form 76')) : 
-                       false;
-                       
-  return titleHasForm76 || metadataHasForm76 || textHasForm76;
-};
-
-/**
- * Checks if a document is Form 47 (Consumer Proposal)
- */
-export const isForm47 = (document: DocumentRecord, documentText?: string): boolean => {
-  // Check document title
-  const titleHasForm47 = document.title?.toLowerCase().includes('form 47') || 
-                         document.title?.toLowerCase().includes('consumer proposal');
-                         
-  // Check document type from metadata
-  const metadataHasForm47 = document.metadata?.formType === 'form-47' || 
-                           document.metadata?.formNumber === '47';
-  
-  // Check document text content if available
-  const textHasForm47 = documentText ? 
-                       (documentText.toLowerCase().includes('consumer proposal') || 
-                        documentText.toLowerCase().includes('form 47')) : 
-                       false;
-                       
-  return titleHasForm47 || metadataHasForm47 || textHasForm47;
-};
-
-/**
- * Detects form type from document
- */
-export const detectFormType = (document: DocumentRecord, documentText?: string): string => {
-  if (isForm31(document, documentText)) {
-    return 'form-31';
+export const detectFormType = (document: any, documentText: string) => {
+  // Try to extract from metadata or title first
+  if (document.metadata?.formType) {
+    logger.debug(`Form type detected from metadata: ${document.metadata.formType}`);
+    return document.metadata.formType.toLowerCase();
   }
   
-  if (isForm47(document, documentText)) {
-    return 'form-47';
+  // Look for form type in document title
+  const titleMatch = document.title?.match(/form[- ]?(\d+)/i);
+  if (titleMatch) {
+    const formNumber = titleMatch[1];
+    logger.debug(`Form number detected from title: ${formNumber}`);
+    return `form-${formNumber}`;
   }
   
-  if (isForm76(document, documentText)) {
-    return 'form-76';
+  // Check if analysis has already detected a form type
+  if (document.analysis && document.analysis[0]?.content?.extracted_info?.formType) {
+    const formType = document.analysis[0].content.extracted_info.formType;
+    logger.debug(`Form type detected from analysis: ${formType}`);
+    return formType;
   }
   
-  return '';
+  if (document.analysis && document.analysis[0]?.content?.extracted_info?.type) {
+    const formType = document.analysis[0].content.extracted_info.type;
+    logger.debug(`Form type detected from analysis type field: ${formType}`);
+    return formType;
+  }
+
+  // Check document text for forms
+  const form31Keywords = ["proof of claim", "form 31", "creditor claim"];
+  const form47Keywords = ["consumer proposal", "form 47", "payment schedule"];
+  
+  // Convert text to lowercase for case-insensitive matching
+  const lowerText = documentText ? documentText.toLowerCase() : '';
+  
+  if (lowerText) {
+    // Look for explicit form numbers in the text
+    const formNumberMatch = lowerText.match(/form[- ]?(\d+)/i);
+    if (formNumberMatch) {
+      const formNumber = formNumberMatch[1];
+      logger.debug(`Form number detected from text content: ${formNumber}`);
+      return `form-${formNumber}`;
+    }
+    
+    // Check for form-specific keywords
+    if (form31Keywords.some(keyword => lowerText.includes(keyword))) {
+      logger.debug('Form 31 detected based on keywords');
+      return 'form-31';
+    }
+    
+    if (form47Keywords.some(keyword => lowerText.includes(keyword))) {
+      logger.debug('Form 47 detected based on keywords');
+      return 'form-47';
+    }
+  }
+  
+  // Default to unknown if we couldn't determine the form type
+  logger.debug('Could not determine form type, defaulting to unknown');
+  return 'unknown';
 };

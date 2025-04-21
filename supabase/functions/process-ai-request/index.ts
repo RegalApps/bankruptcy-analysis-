@@ -358,6 +358,9 @@ function extractFormInfo(aiResponse, formType) {
       info['claimClassification'] = `Type ${claimTypeCodeMatch[1]} - ${claimTypeMap[claimTypeCodeMatch[1]] || 'Unknown Type'}`;
     }
     
+    // Generate a summary for Form 31
+    info['summary'] = `Proof of Claim (Form 31) submitted by ${info['creditorName'] || info['claimantName'] || 'creditor'} for ${info['claimAmount'] || 'an unspecified amount'}. Claim type: ${info['claimType'] || info['claimClassification'] || 'Unspecified'}.`;
+    
     // Try to identify supporting documents
     const supportingDocsMatch = aiResponse.match(/supporting\s+documents?\s*:([^\n]+)/i);
     if (supportingDocsMatch && supportingDocsMatch[1]) {
@@ -382,6 +385,9 @@ function extractFormInfo(aiResponse, formType) {
         return false;
       });
     });
+    
+    // Generate a summary for Form 47
+    info['summary'] = `Consumer Proposal (Form 47) filed by ${info['clientName'] || info['debtorName'] || 'debtor'}. ${info['proposalDuration'] ? `Duration: ${info['proposalDuration']}.` : ''} ${info['monthlyPayment'] ? `Monthly payment: ${info['monthlyPayment']}.` : ''}`;
   }
   
   // Set defaults for form number and type if not found

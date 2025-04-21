@@ -1,3 +1,4 @@
+
 import { DocumentDetails } from "../DocumentDetails";
 import { RiskAssessment } from "../RiskAssessment";
 import { DeadlineManager } from "../DeadlineManager";
@@ -35,8 +36,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   // Get document text safely from analysis content or document metadata
   const documentText =
     (document.metadata?.fullText as string) ||
-    (analysisContent as any)?.fullText as string ||
-    (analysisContent as any)?.rawText as string ||
+    extractedInfo?.fullText as string ||
+    analysisContent?.fullText as string ||
+    analysisContent?.rawText as string ||
     "";
 
   // Determine form type and add debug logs
