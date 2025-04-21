@@ -1,6 +1,6 @@
-
 import { supabase } from "@/lib/supabase";
 import logger from "@/utils/logger";
+import { Document } from "@/components/DocumentList/types";
 import { createFolderIfNotExists } from "./createFolder";
 import { mergeFinancialFolders } from "./mergeFinancialFolders";
 import { 
@@ -69,7 +69,7 @@ export const organizeDocumentIntoFolders = async (
     // First, retrieve the document to get complete information
     const { data: document, error: fetchError } = await supabase
       .from('documents')
-      .select('title, type, storage_path, metadata, is_folder, analysis')
+      .select('title, type, storage_path, metadata, is_folder, size, created_at, updated_at')
       .eq('id', documentId)
       .single();
     
@@ -83,8 +83,21 @@ export const organizeDocumentIntoFolders = async (
       return { success: true };
     }
 
+    // Create a proper Document object with all required fields
+    const documentObj: Document = {
+      id: documentId,
+      title: document.title,
+      type: document.type,
+      storage_path: document.storage_path,
+      metadata: document.metadata,
+      is_folder: document.is_folder,
+      size: document.size || 0,
+      created_at: document.created_at,
+      updated_at: document.updated_at
+    };
+
     // Check if it's a duplicate before organizing
-    const { isDuplicate, duplicateId } = await isDuplicateDocument(document);
+    const { isDuplicate, duplicateId } = await isDuplicateDocument(documentObj);
     
     if (isDuplicate && duplicateId) {
       logger.warn(`Document ${documentId} appears to be a duplicate of ${duplicateId}, but will continue with organization`);
@@ -92,14 +105,11 @@ export const organizeDocumentIntoFolders = async (
     }
     
     // Determine folder path based on document content and metadata
-    const extractedClientName = clientName || extractClientName(document);
+    const extractedClientName = clientName || extractClientName(documentObj);
     let folderInfo;
     
     if (extractedClientName) {
-      folderInfo = determineDocumentFolderPath({
-        ...document,
-        id: documentId
-      });
+      folderInfo = determineDocumentFolderPath(documentObj);
     } else {
       folderInfo = {
         clientName: 'Untitled Client',

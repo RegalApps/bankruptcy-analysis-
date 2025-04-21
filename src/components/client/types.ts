@@ -25,16 +25,20 @@ export interface ClientMetrics {
   urgentDeadlines: number;
 }
 
+// Updated to match DocumentList/types.ts Document interface
 export interface Document {
   id: string;
   title: string;
   type: string;
   created_at: string;
   updated_at: string;
+  storage_path: string;
+  size: number;
   metadata?: Record<string, any>;
   is_folder?: boolean;
   folder_type?: string;
   parent_folder_id?: string;
+  analysis?: any[];
 }
 
 export interface ClientViewerProps {

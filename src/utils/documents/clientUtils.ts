@@ -1,4 +1,3 @@
-
 import { Document } from "@/components/DocumentList/types";
 import { supabase } from "@/lib/supabase";
 import logger from "@/utils/logger";
@@ -72,9 +71,9 @@ export const extractClientName = (document: Document): string | null => {
     return "Josh Hart";
   }
   
-  // Extract from analysis data if available
-  if (document.analysis && document.analysis[0]?.content?.extracted_info?.clientName) {
-    return standardizeClientName(document.analysis[0].content.extracted_info.clientName);
+  // Extract from analysis data if available (only if it exists)
+  if (document.metadata?.analysis && document.metadata.analysis[0]?.content?.extracted_info?.clientName) {
+    return standardizeClientName(document.metadata.analysis[0].content.extracted_info.clientName);
   }
   
   // Try to extract from filename as a last resort

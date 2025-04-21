@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { Client, Document } from "../../../types";
 import { 
@@ -35,7 +34,14 @@ export const processClientDocuments = async (
       // Improve organization of retrieved documents
       if (clientDocs && clientDocs.length > 0) {
         // Extract proper client name from first document if possible
-        const extractedName = extractClientName(clientDocs[0]);
+        // Convert client document to DocumentList type for compatibility
+        const documentForExtraction = {
+          ...clientDocs[0],
+          storage_path: clientDocs[0].storage_path || "",
+          size: clientDocs[0].size || 0
+        };
+        
+        const extractedName = extractClientName(documentForExtraction);
         if (extractedName) {
           const standardized = standardizeClientName(extractedName);
           
@@ -129,7 +135,6 @@ export const processClientDocuments = async (
     console.error("No client documents found");
     toast.error("Could not find client information");
     return { client: null, documents: [] };
-    
   } catch (error) {
     console.error('Error processing client documents:', error);
     toast.error("Failed to load client information");
