@@ -1,104 +1,19 @@
 
-import { useEffect } from "react";
-import { ClientList } from "@/components/documents/ClientList";
-import { DocumentTree } from "@/components/documents/DocumentTree";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { MainHeader } from "@/components/header/MainHeader";
 import { MainSidebar } from "@/components/layout/MainSidebar";
-import { toast } from "sonner";
-
-// Hardcoded demo data for Josh Hart
-const DEMO_CLIENTS = [
-  {
-    id: "josh-hart",
-    name: "Josh Hart",
-    status: "active" as const,
-    location: "Ontario",
-    lastActivity: "2024-06-01",
-    needsAttention: true
-  },
-  {
-    id: "client-2",
-    name: "Jane Smith",
-    status: "active" as const,
-    location: "British Columbia",
-    lastActivity: "2024-05-28",
-    needsAttention: false
-  },
-  {
-    id: "client-3",
-    name: "Robert Johnson",
-    status: "pending" as const,
-    location: "Alberta",
-    lastActivity: "2024-05-25",
-    needsAttention: false
-  },
-  {
-    id: "client-4",
-    name: "Maria Garcia",
-    status: "flagged" as const,
-    location: "Quebec",
-    lastActivity: "2024-05-20",
-    needsAttention: true
-  }
-];
-
-// Josh Hart's document tree structure
-const JOSH_HART_DOCUMENTS = [
-  {
-    id: "josh-hart-root",
-    name: "Josh Hart",
-    type: "folder" as const,
-    folderType: "client" as const,
-    status: "needs-review" as const,
-    children: [
-      {
-        id: "estate-folder",
-        name: "Estate 2025-47",
-        type: "folder" as const,
-        folderType: "estate" as const,
-        children: [
-          {
-            id: "form47-folder",
-            name: "Form 47 - Consumer Proposal",
-            type: "folder" as const,
-            folderType: "form" as const,
-            children: [
-              {
-                id: "form47-file",
-                name: "Form47_Draft1.pdf",
-                type: "file" as const,
-                status: "needs-review" as const,
-                filePath: "/documents/form47.pdf"
-              }
-            ]
-          },
-          {
-            id: "financials-folder",
-            name: "Financials",
-            type: "folder" as const,
-            folderType: "financials" as const,
-            children: [
-              {
-                id: "budget-file",
-                name: "Budget_2025.xlsx",
-                type: "file" as const,
-                status: "needs-review" as const,
-                filePath: "/documents/budget.xlsx"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-];
+import { ClientList } from "@/components/documents/ClientList";
+import { DocumentTree } from "@/components/documents/DocumentTree";
+import { useDocumentsData } from "../../hooks/useDocumentsData";
 
 const DocumentsPage = () => {
   const navigate = useNavigate();
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const { clients, documents, filteredDocuments } = useDocumentsData(selectedClient);
   
   useEffect(() => {
-    // Show a toast when the page loads
     toast.success("Documents loaded", {
       description: "Document tree is now visible"
     });
@@ -107,22 +22,36 @@ const DocumentsPage = () => {
   const handleNodeSelect = (node: any) => {
     console.log("Selected node:", node);
   };
-  
+
   const handleClientSelect = (clientId: string) => {
+    console.log("DocumentsPage: Selected client:", clientId);
+    setSelectedClient(clientId);
     // Navigate to the client viewer page
     navigate(`/client-viewer/${clientId}`);
   };
-  
+
   const handleFileOpen = (node: any) => {
     console.log("Opening file:", node);
     
-    // For demonstration, let's only handle the Form47 file
-    if (node.id === "form47-file") {
-      // Navigate to the document viewer with the form47 document ID
-      navigate("/document-viewer/form47");
+    if (node?.type === "file") {
+      // Check for Form 47 or Consumer Proposal files
+      const lowerName = (node.name || "").toLowerCase();
+      if (
+        lowerName.includes("form 47") ||
+        lowerName.includes("consumer proposal") ||
+        node.id === "form47-file"
+      ) {
+        navigate("/document-viewer/form47");
+        return;
+      }
+      
+      // General fallback for other documents
+      if (node.id) {
+        navigate(`/document-viewer/${node.id}`);
+      }
     }
   };
-  
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <MainSidebar />
@@ -132,21 +61,28 @@ const DocumentsPage = () => {
           {/* Left Panel: Client List */}
           <div className="w-72 flex-shrink-0">
             <ClientList 
-              clients={DEMO_CLIENTS}
+              clients={clients}
+              selectedClientId={selectedClient}
               onClientSelect={handleClientSelect}
             />
           </div>
           
           {/* Right Panel: Document Tree */}
           <div className="flex-1 border-l p-4">
-            <h2 className="text-xl font-semibold mb-4">Document Tree</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              {selectedClient 
+                ? `${clients.find(c => c.id === selectedClient)?.name}'s Documents` 
+                : "All Documents"}
+            </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              System-wide view of all document activity. Click a client on the left to view their dedicated page.
+              {selectedClient 
+                ? "Client-specific documents and folders" 
+                : "System-wide view of all document activity. Click a client on the left to view their dedicated page."}
             </p>
             
             <div className="border rounded-lg shadow-sm overflow-hidden">
               <DocumentTree 
-                rootNodes={JOSH_HART_DOCUMENTS}
+                rootNodes={filteredDocuments}
                 onNodeSelect={handleNodeSelect}
                 onFileOpen={handleFileOpen}
               />
