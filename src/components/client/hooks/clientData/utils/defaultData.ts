@@ -1,5 +1,17 @@
+
 import { Document } from "../../../types";
 import { getClientDocuments } from "../../../data/clientTemplates";
+
+/**
+ * Helper function to add required properties to document objects
+ */
+const ensureDocumentProps = (doc: Partial<Document>): Document => {
+  return {
+    ...doc,
+    storage_path: doc.storage_path || `${doc.id || 'unknown'}.pdf`,
+    size: doc.size || 1024 // Default size of 1KB
+  } as Document;
+};
 
 /**
  * Returns default document for a specific client
@@ -17,7 +29,7 @@ export const getDefaultDocuments = (clientName: string): Document[] => {
   const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   
   return [
-    {
+    ensureDocumentProps({
       id: 'client-folder',
       title: `${clientName} Documents`,
       type: 'folder',
@@ -28,8 +40,8 @@ export const getDefaultDocuments = (clientName: string): Document[] => {
       metadata: {
         client_name: clientName
       }
-    },
-    {
+    }),
+    ensureDocumentProps({
       id: 'form-47-doc',
       title: 'Form 47 - Consumer Proposal',
       type: 'form-47',
@@ -39,8 +51,8 @@ export const getDefaultDocuments = (clientName: string): Document[] => {
         client_name: clientName,
         storage_path: 'sample-documents/form-47-consumer-proposal.pdf'
       }
-    },
-    {
+    }),
+    ensureDocumentProps({
       id: 'bank-folder',
       title: 'Bank Statements',
       type: 'folder',
@@ -52,8 +64,8 @@ export const getDefaultDocuments = (clientName: string): Document[] => {
       metadata: {
         client_name: clientName
       }
-    },
-    {
+    }),
+    ensureDocumentProps({
       id: 'bank-statement',
       title: 'Bank Statement - March 2023',
       type: 'financial',
@@ -63,6 +75,6 @@ export const getDefaultDocuments = (clientName: string): Document[] => {
       metadata: {
         client_name: clientName
       }
-    }
+    })
   ];
 };

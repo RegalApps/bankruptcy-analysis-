@@ -21,6 +21,15 @@ export const useClientData = (clientId: string, onBack: () => void) => {
   
   const { activeTab, setActiveTab } = useClientTabs();
 
+  // Helper function to ensure document has required properties
+  const ensureCompleteDocument = (doc: Partial<Document>): Document => {
+    return {
+      ...doc,
+      storage_path: doc.storage_path || `default/${doc.id || 'unknown'}.pdf`,
+      size: doc.size || 1024 // Default 1KB
+    } as Document;
+  };
+
   // Add effect to log client data loading state
   useEffect(() => {
     console.log("useClientData: Client data state updated:", {
@@ -54,28 +63,32 @@ export const useClientData = (clientId: string, onBack: () => void) => {
       
       // Create fallback documents with metadata containing client information
       const fallbackDocuments: Document[] = [
-        {
+        ensureCompleteDocument({
           id: 'form-47-doc',
           title: 'Form 47 - Consumer Proposal',
           type: 'form-47',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+          storage_path: 'fallback-documents/form-47.pdf',
+          size: 2048,
           metadata: {
             client_id: 'josh-hart',
             client_name: 'Josh Hart'
           }
-        },
-        {
+        }),
+        ensureCompleteDocument({
           id: 'bank-statement',
           title: 'Bank Statement - March 2023',
           type: 'financial',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+          storage_path: 'fallback-documents/bank-statement.pdf',
+          size: 1536,
           metadata: {
             client_id: 'josh-hart',
             client_name: 'Josh Hart'
           }
-        }
+        })
       ];
       
       // Set fallback data

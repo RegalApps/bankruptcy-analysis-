@@ -1,4 +1,3 @@
-
 import { Client, Document, Task } from "../types";
 
 // Helper function to get ISO date string based on days ago
@@ -6,6 +5,15 @@ const getDateFromDaysAgo = (daysAgo: number): string => {
   const date = new Date();
   date.setDate(date.getDate() - daysAgo);
   return date.toISOString();
+};
+
+// Helper function to set default storage_path and size for documents
+const setDefaultDocumentProps = (doc: Partial<Document>): Document => {
+  return {
+    ...doc,
+    storage_path: doc.storage_path || `${doc.id}.pdf`,
+    size: doc.size || 1024 // Default size of 1KB
+  } as Document;
 };
 
 // Template tasks for each client
@@ -84,7 +92,7 @@ export const getClientDocuments = (clientId: string): Document[] => {
   switch (clientId) {
     case 'jane-smith':
       return [
-        {
+        setDefaultDocumentProps({
           id: 'jane-folder',
           title: 'Jane Smith',
           type: 'folder',
@@ -96,8 +104,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_name: 'Jane Smith',
             client_id: 'jane-smith'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'jane-financial-folder',
           title: 'Financial Documents',
           type: 'folder',
@@ -110,8 +118,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_name: 'Jane Smith',
             client_id: 'jane-smith'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'jane-tax-return',
           title: 'Tax Return 2023',
           type: 'financial',
@@ -123,8 +131,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_id: 'jane-smith',
             document_type: 'tax_return'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'jane-employment-letter',
           title: 'Employment Verification Letter',
           type: 'document',
@@ -136,11 +144,11 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_id: 'jane-smith',
             document_type: 'employment_verification'
           }
-        }
+        })
       ];
     case 'robert-johnson':
       return [
-        {
+        setDefaultDocumentProps({
           id: 'robert-folder',
           title: 'Robert Johnson',
           type: 'folder',
@@ -152,8 +160,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_name: 'Robert Johnson',
             client_id: 'robert-johnson'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'robert-form-folder',
           title: 'Forms',
           type: 'folder',
@@ -166,8 +174,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_name: 'Robert Johnson',
             client_id: 'robert-johnson'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'robert-form-32',
           title: 'Form 32 - Debt Restructuring',
           type: 'form',
@@ -180,8 +188,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             document_type: 'form',
             form_number: '32'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'robert-bank-statements',
           title: 'Bank Statements - Q1 2024',
           type: 'financial',
@@ -193,8 +201,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_id: 'robert-johnson',
             document_type: 'bank_statement'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'robert-credit-report',
           title: 'Credit Report',
           type: 'document',
@@ -206,11 +214,11 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_id: 'robert-johnson',
             document_type: 'credit_report'
           }
-        }
+        })
       ];
     case 'maria-garcia':
       return [
-        {
+        setDefaultDocumentProps({
           id: 'maria-folder',
           title: 'Maria Garcia',
           type: 'folder',
@@ -222,8 +230,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_name: 'Maria Garcia',
             client_id: 'maria-garcia'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'maria-proposal-folder',
           title: 'Consumer Proposal',
           type: 'folder',
@@ -236,8 +244,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_name: 'Maria Garcia',
             client_id: 'maria-garcia'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'maria-form-43',
           title: 'Form 43 - Consumer Proposal',
           type: 'form',
@@ -250,8 +258,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             document_type: 'form',
             form_number: '43'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'maria-creditor-list',
           title: 'Creditor List',
           type: 'document',
@@ -263,8 +271,8 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_id: 'maria-garcia',
             document_type: 'creditor_list'
           }
-        },
-        {
+        }),
+        setDefaultDocumentProps({
           id: 'maria-income-statement',
           title: 'Income and Expense Statement',
           type: 'financial',
@@ -276,7 +284,7 @@ export const getClientDocuments = (clientId: string): Document[] => {
             client_id: 'maria-garcia',
             document_type: 'income_statement'
           }
-        }
+        })
       ];
     default:
       return [];
