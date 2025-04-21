@@ -10,6 +10,31 @@ export interface Risk {
   deadline?: string;
 }
 
+export interface Deadline {
+  id?: string;
+  title: string;
+  dueDate: string;
+  description?: string;
+  status?: 'pending' | 'completed' | 'overdue';
+  priority?: 'low' | 'medium' | 'high';
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  assigned_to?: string;
+  created_by: string;
+  status: string;
+  due_date?: string;
+  document_id?: string;
+  severity: string;
+  regulation?: string;
+  solution?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface DocumentDetails {
   id: string;
   title: string;
@@ -26,6 +51,9 @@ export interface DocumentDetails {
   is_folder?: boolean;
   url?: string;
   folder_type?: string;
+  deadlines?: Deadline[];
+  tasks?: Task[];
+  versions?: any[];
   analysis?: {
     id: string;
     content: {
