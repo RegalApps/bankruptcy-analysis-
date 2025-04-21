@@ -20,15 +20,43 @@ serve(async (req) => {
     const requestData = await req.json();
     const { message, documentId, module } = requestData;
 
+    // Debug information collection
+    const debugInfo = {
+      timestamps: {
+        start: new Date().toISOString(),
+        openAIRequestStart: null,
+        openAIRequestEnd: null,
+        analysisStorageStart: null,
+        analysisStorageEnd: null,
+        end: null
+      },
+      status: {
+        openAIKeyPresent: false,
+        openAIRequestSuccess: false,
+        documentFound: false,
+        documentUpdated: false,
+        analysisStorageSuccess: false
+      },
+      metadata: {
+        documentId,
+        module,
+        messageLength: message?.length || 0
+      },
+      errors: []
+    };
+
     // Validate OpenAI API key presence
     if (!openAIApiKey) {
       console.error("ERROR: OpenAI API key is missing");
+      debugInfo.errors.push('OpenAI API key is not configured');
       throw new Error('OpenAI API key is not configured');
     }
 
     // Log key presence (without exposing the actual key)
     console.log(`OpenAI API key status: ${openAIApiKey ? 'Present (masked: ' + 
       `${openAIApiKey.substring(0, 3)}...${openAIApiKey.substring(openAIApiKey.length - 3)}` + ')' : 'Missing'}`);
+    
+    debugInfo.status.openAIKeyPresent = !!openAIApiKey;
     
     // Form-specific system prompts for enhanced analysis
     let systemPrompt = `You are an expert in Canadian bankruptcy and insolvency documents, specializing in form analysis and risk assessment.`;
@@ -80,6 +108,11 @@ serve(async (req) => {
       LOW risks include formatting issues, illegible handwriting, or missing non-essential info.
       
       Structure your response in a clear section-by-section assessment with specific references to the BIA.
+      
+      IMPORTANT: Always return results with proper JSON structure containing these fields:
+      - extracted_info: Containing all extracted document information
+      - summary: A brief overview of the document
+      - risks: An array of objects with type, description, severity, regulation, and solution fields
       `;
     } else if (message.toLowerCase().includes('form 47') || message.toLowerCase().includes('consumer proposal')) {
       systemPrompt += `
@@ -99,6 +132,11 @@ serve(async (req) => {
       5. Compliance with surplus income regulations
       
       Ensure you flag any missing required fields as HIGH risk items.
+      
+      IMPORTANT: Always return results with proper JSON structure containing these fields:
+      - extracted_info: Containing all extracted document information
+      - summary: A brief overview of the document
+      - risks: An array of objects with type, description, severity, regulation, and solution fields
       `;
     } else {
       systemPrompt += `
@@ -114,11 +152,18 @@ serve(async (req) => {
       3. Assess compliance with OSB requirements
       4. Flag any missing required information
       5. Provide a risk assessment
+      
+      IMPORTANT: Always return results with proper JSON structure containing these fields:
+      - extracted_info: Containing all extracted document information
+      - summary: A brief overview of the document
+      - risks: An array of objects with type, description, severity, regulation, and solution fields
       `;
     }
 
     console.log(`Starting OpenAI API request with model: gpt-4o-mini`);
     console.log(`Message length: ${message.length} characters`);
+    
+    debugInfo.timestamps.openAIRequestStart = new Date().toISOString();
     
     const startTime = Date.now();
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -140,27 +185,50 @@ serve(async (req) => {
           }
         ],
         temperature: 0.2,
+        response_format: { type: "json_object" }, // Enforce JSON response
       }),
     });
 
     const responseTime = Date.now() - startTime;
+    debugInfo.timestamps.openAIRequestEnd = new Date().toISOString();
     console.log(`OpenAI API responded in ${responseTime}ms with status: ${response.status}`);
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`OpenAI API error: ${response.status} - ${errorText}`);
+      debugInfo.errors.push(`OpenAI API error: ${response.status} - ${errorText}`);
       throw new Error(`OpenAI API error: ${await response.text()}`);
     }
 
+    debugInfo.status.openAIRequestSuccess = true;
+    
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
     
     console.log(`Received AI response of length: ${aiResponse.length} characters`);
     console.log(`Response first 100 chars: ${aiResponse.substring(0, 100)}...`);
 
+    // Try parsing the response as JSON
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(aiResponse);
+      console.log("Successfully parsed OpenAI response as JSON");
+    } catch (e) {
+      console.error("Failed to parse OpenAI response as JSON:", e);
+      console.log("Raw response:", aiResponse);
+      // Attempt to extract structured data from unstructured response
+      parsedResponse = {
+        extracted_info: {
+          summary: aiResponse.substring(0, 500)
+        },
+        risks: extractRisksFromText(aiResponse)
+      };
+    }
+
     // Store analysis results if document ID provided
     if (documentId) {
       try {
+        debugInfo.timestamps.analysisStorageStart = new Date().toISOString();
         console.log(`Storing analysis results for document ID: ${documentId}`);
         
         // Get document data to update metadata
@@ -173,22 +241,47 @@ serve(async (req) => {
         
         if (docError) {
           console.error('Error fetching document:', docError);
+          debugInfo.errors.push(`Error fetching document: ${docError}`);
         } else {
+          debugInfo.status.documentFound = !!document?.length;
           console.log(`Retrieved document data: ${document ? 'success' : 'not found'}`);
         }
 
-        // Store analysis in document_analysis table
+        // First, delete any existing analysis for this document to prevent duplicates
+        console.log(`Deleting existing analysis for document ID: ${documentId}`);
+        const { error: deleteError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/document_analysis?document_id=eq.${documentId}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': Deno.env.get('SUPABASE_ANON_KEY') || '',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          }
+        }).then(res => res.ok ? {error: null} : res.json());
+
+        if (deleteError) {
+          console.warn('Error deleting existing analysis:', deleteError);
+          debugInfo.errors.push(`Error deleting existing analysis: ${deleteError}`);
+        } else {
+          console.log('Successfully deleted existing analysis entries if any');
+        }
+
+        // Ensure we have the required fields
+        const extractedInfo = parsedResponse.extracted_info || {};
+        extractedInfo.formType = extractedInfo.formType || document?.[0]?.metadata?.formType || 'unknown';
+        extractedInfo.formNumber = extractedInfo.formNumber || document?.[0]?.metadata?.formNumber || '';
+        extractedInfo.summary = parsedResponse.summary || extractedInfo.summary || aiResponse.substring(0, 500);
+
+        // Prepare analysis with consistent structure
         const analysisPayload = {
           document_id: documentId,
           user_id: "system", // We'll update this with actual user ID if available
           content: {
-            extracted_info: {
-              formType: document?.[0]?.metadata?.formType || 'unknown',
-              formNumber: document?.[0]?.metadata?.formNumber || '',
-              summary: aiResponse.substring(0, 500),
-            },
-            risks: extractRisksFromText(aiResponse),
-            full_analysis: aiResponse
+            extracted_info: extractedInfo,
+            summary: parsedResponse.summary || extractedInfo.summary || aiResponse.substring(0, 500),
+            risks: parsedResponse.risks || extractRisksFromText(aiResponse),
+            full_analysis: aiResponse,
+            debug_info: debugInfo
           }
         };
         
@@ -207,8 +300,10 @@ serve(async (req) => {
 
         if (analysisError) {
           console.error('Error saving analysis:', analysisError);
+          debugInfo.errors.push(`Error saving analysis: ${analysisError}`);
         } else {
           console.log('Analysis saved successfully to document_analysis table');
+          debugInfo.status.analysisStorageSuccess = true;
         }
           
         // Update document status
@@ -232,22 +327,37 @@ serve(async (req) => {
         
         if (updateError) {
           console.error('Error updating document status:', updateError);
+          debugInfo.errors.push(`Error updating document status: ${updateError}`);
         } else {
           console.log('Document status updated successfully');
+          debugInfo.status.documentUpdated = true;
         }
+
+        debugInfo.timestamps.analysisStorageEnd = new Date().toISOString();
       } catch (storageError) {
         console.error('Error storing analysis results:', storageError);
+        debugInfo.errors.push(`Error storing analysis results: ${storageError.message}`);
       }
     }
 
+    // Complete debug info
+    debugInfo.timestamps.end = new Date().toISOString();
+
     return new Response(
-      JSON.stringify({ response: aiResponse }),
+      JSON.stringify({ 
+        response: aiResponse,
+        parsedData: parsedResponse, 
+        debugInfo: debugInfo 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error in process-ai-request:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -258,6 +368,7 @@ serve(async (req) => {
 
 // Helper function to extract risk items from text
 function extractRisksFromText(text) {
+  console.log("Extracting risks from text...");
   const risks = [];
   
   // Look for RISK patterns in the text
@@ -280,6 +391,34 @@ function extractRisksFromText(text) {
         regulation: "BIA Requirement",
         solution: "Review and correct the issue"
       });
+    }
+  });
+  
+  // Look for structured risk information in a more general way
+  const sections = text.split(/\n\n|\r\n\r\n/);
+  sections.forEach(section => {
+    if (section.toLowerCase().includes('risk') && !section.toLowerCase().includes('low risk') && 
+        !section.toLowerCase().includes('medium risk') && !section.toLowerCase().includes('high risk')) {
+      // Check if this section contains risk information
+      const lines = section.split(/\n|\r\n/);
+      if (lines.length >= 2) {
+        // Try to determine severity based on content
+        let severity = 'medium'; // Default
+        if (section.toLowerCase().includes('critical') || section.toLowerCase().includes('severe') ||
+            section.toLowerCase().includes('important') || section.toLowerCase().includes('major')) {
+          severity = 'high';
+        } else if (section.toLowerCase().includes('minor') || section.toLowerCase().includes('small')) {
+          severity = 'low';
+        }
+        
+        risks.push({
+          type: lines[0].trim(),
+          description: lines.slice(1).join(' ').trim(),
+          severity: severity,
+          regulation: "BIA Requirement",
+          solution: "Review and address this issue"
+        });
+      }
     }
   });
   
@@ -311,5 +450,6 @@ function extractRisksFromText(text) {
     });
   }
   
+  console.log(`Extracted ${risks.length} risks from text`);
   return risks;
 }

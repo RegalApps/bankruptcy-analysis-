@@ -47,11 +47,17 @@ export const RiskAssessment: React.FC<RiskProps> = ({ risks = [], documentId, is
   };
 
   // Sort risks by severity
-  const sortedRisks = [...risks].sort((a, b) => {
-    const severityOrder = { high: 0, medium: 1, low: 2, undefined: 3 };
-    return severityOrder[a.severity as keyof typeof severityOrder] - 
-           severityOrder[b.severity as keyof typeof severityOrder];
-  });
+  const sortedRisks = React.useMemo(() => {
+    if (!risks || risks.length === 0) {
+      return [];
+    }
+    
+    return [...risks].sort((a, b) => {
+      const severityOrder = { high: 0, medium: 1, low: 2, undefined: 3 };
+      return severityOrder[(a.severity as keyof typeof severityOrder) || 'undefined'] - 
+             severityOrder[(b.severity as keyof typeof severityOrder) || 'undefined'];
+    });
+  }, [risks]);
   
   const toggleRisk = (riskId: string) => {
     setExpandedRiskId(expandedRiskId === riskId ? null : riskId);

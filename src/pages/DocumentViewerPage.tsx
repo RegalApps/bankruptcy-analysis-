@@ -5,13 +5,16 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { DocumentViewer } from "@/components/DocumentViewer";
+import { EnhancedDocumentViewer } from "@/components/DocumentViewer/EnhancedDocumentViewer";
 import { toast } from "sonner";
+import { runFullSystemDiagnostics } from "@/utils/diagnoseBiaSystem";
 
 const DocumentViewerPage = () => {
   const { documentId } = useParams<{ documentId: string }>();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [documentNotFound, setDocumentNotFound] = useState(false);
+  const [diagnosticResults, setDiagnosticResults] = useState<any>(null);
   
   useEffect(() => {
     if (!documentId) {
@@ -22,6 +25,23 @@ const DocumentViewerPage = () => {
 
     // Log the document ID being viewed
     console.log("Viewing document:", documentId);
+    
+    // Run diagnostics if in development environment
+    if (process.env.NODE_ENV === 'development') {
+      runFullSystemDiagnostics(documentId).then(results => {
+        console.log('System diagnostic results:', results);
+        setDiagnosticResults(results);
+        
+        if (!results.success) {
+          toast.warning("System diagnostic identified issues", {
+            description: results.message,
+            duration: 5000
+          });
+        }
+      }).catch(err => {
+        console.error("Diagnostics failed:", err);
+      });
+    }
     
     // Simulate loading document data - shorter time for Form 47
     const timer = setTimeout(() => {
@@ -80,17 +100,14 @@ const DocumentViewerPage = () => {
             <Button onClick={handleBack}>Return to Documents</Button>
           </div>
         ) : isForm47 ? (
-          <DocumentViewer 
+          <EnhancedDocumentViewer 
             documentId="form47" 
             documentTitle="Form 47 - Consumer Proposal"
-            isForm47={true}
-            bypassProcessing={true}
-            onLoadFailure={handleLoadFailure}
           />
         ) : (
-          <DocumentViewer 
-            documentId={documentId} 
-            onLoadFailure={handleLoadFailure}
+          <EnhancedDocumentViewer 
+            documentId={documentId!} 
+            documentTitle={undefined}
           />
         )}
       </div>
