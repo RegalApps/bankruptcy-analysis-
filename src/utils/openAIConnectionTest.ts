@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -74,6 +75,7 @@ export const useOpenAITest = () => {
     toast({
       title: "Testing OpenAI Connection",
       description: "Please wait while we test the connection...",
+      variant: "default"
     });
     
     try {
