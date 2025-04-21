@@ -214,8 +214,9 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
   const risks = analysisContent.risks as Risk[] || [];
   const extractedInfo = analysisContent.extracted_info || {};
   
-  // Get summary from the right place in the analysis content
-  const documentSummary = analysisContent.summary || extractedInfo?.summary || "";
+  // Fix: Get summary from extracted_info rather than directly from analysisContent
+  // This solves the TypeScript error by using the correct property path
+  const documentSummary = extractedInfo?.summary || "";
   
   return (
     <div className="flex flex-col h-full">
@@ -287,3 +288,4 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
     </div>
   );
 };
+
