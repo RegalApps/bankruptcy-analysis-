@@ -33,17 +33,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   const extractedInfo = analysisContent?.extracted_info || {};
   const risks = analysisContent?.risks || [];
 
-  // Get document text safely from metadata, analysis, or fallback to empty string
-  const documentText =
+  // Get document text safely from metadata or extracted info, prioritizing certain fields
+  // and falling back to empty string if none are available
+  const documentText = (
+    // From metadata
     (document.metadata?.text as string) ||
     (document.metadata?.fullText as string) ||
     (document.metadata?.content as string) ||
-    (extractedInfo?.text as string) ||
-    (extractedInfo?.fullText as string) ||
-    (analysisContent?.text as string) ||
+    // From extracted_info
+    (extractedInfo.fullText as string) ||
+    // From analysis content directly (although unlikely to exist)
     (analysisContent?.fullText as string) ||
-    (analysisContent?.rawText as string) ||
-    "";
+    // Final fallback
+    ""
+  );
 
   // Determine form type and add debug logs
   const formType = detectFormType(document, documentText);
