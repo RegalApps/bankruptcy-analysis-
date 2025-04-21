@@ -55,6 +55,13 @@ serve(async (req) => {
       - Related party relationships disclosed (s. 4(5))
       - Filed within claim period (s. 124(4))
       
+      5. Critical Deadlines for Form 31:
+      - Claims for first meeting: 2 days before creditor meeting (BIA s. 102(1))
+      - Ordinary bankruptcy claims: 30 days after first creditor meeting (BIA s. 124(4))
+      - Claims after notice: Time specified in notice (BIA s. 124(2)) 
+      - Late filing allowance: Within trustee's discretion (BIA s. 124(4))
+      - Pre-discharge claims: Before discharge (BIA s. 178)
+      
       For any section, identify if there are HIGH, MEDIUM, or LOW risk issues and provide solutions.
       HIGH risks include missing signatures, no claim amount, wrong debtor name, or missing attachments.
       MEDIUM risks include incorrect claim type, insufficient supporting docs, or undisclosed relationships.

@@ -74,7 +74,7 @@ export interface DocumentAnalysis {
 export interface Risk {
   type: string;
   description: string;
-  severity: string;
+  severity: "high" | "medium" | "low" | string;
   regulation?: string;
   impact?: string;
   requiredAction?: string;
@@ -98,6 +98,8 @@ export interface DocumentDeadline {
   created_at: string;
   updated_at: string;
 }
+
+export type Deadline = DocumentDeadline;
 
 export interface Task {
   id: string;
@@ -134,4 +136,5 @@ export interface Field {
   key: string;
   label: string;
   value: string;
+  icon?: React.ReactNode;
 }

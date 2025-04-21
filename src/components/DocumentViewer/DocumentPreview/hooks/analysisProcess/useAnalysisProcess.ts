@@ -57,24 +57,16 @@ export const useAnalysisProcess = ({
       await riskAssessment(documentRecord, isForm76, enhancedContext);
       
       // Step 5: Issue Prioritization & Solution Recommendations
-      await issuePrioritization(documentRecord, { 
-        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
-      });
+      await issuePrioritization(documentRecord, enhancedContext);
       
       // Step 6: Document Organization & Client Association
-      await documentOrganization(documentRecord, { 
-        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
-      });
+      await documentOrganization(documentRecord, enhancedContext);
       
       // Step 7: Collaboration Setup
-      await collaborationSetup(documentRecord, { 
-        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
-      });
+      await collaborationSetup(documentRecord, documentText, isForm76, enhancedContext);
       
       // Step 8: Continuous Learning & Improvement
-      await continuousLearning(documentRecord, { 
-        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
-      });
+      await continuousLearning(documentRecord, enhancedContext);
       
       setAnalysisStep("Analysis completed successfully");
       setProgress(100);

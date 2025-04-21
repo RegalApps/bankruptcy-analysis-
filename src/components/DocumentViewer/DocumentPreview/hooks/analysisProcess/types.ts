@@ -10,7 +10,9 @@ export interface AnalysisProcessProps {
 
 export interface AnalysisProcessContext extends AnalysisProcessProps {
   isForm76?: boolean;
-  isForm47?: boolean; // Added the isForm47 property
+  isForm47?: boolean;
+  isForm31?: boolean;
+  documentText?: string;
 }
 
 export interface AnalysisResult {

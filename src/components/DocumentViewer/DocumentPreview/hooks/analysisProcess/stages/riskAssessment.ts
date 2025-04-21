@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { DocumentRecord } from "../../types";
 import { updateAnalysisStatus } from "../documentStatusUpdates";
@@ -10,7 +11,7 @@ export const riskAssessment = async (
   isForm76: boolean,
   context: AnalysisProcessContext
 ): Promise<void> => {
-  const { setAnalysisStep, setProgress, isForm47 = false, documentText = "" } = context;
+  const { setAnalysisStep, setProgress, isForm47 = false, isForm31: isForm31Context = false, documentText = "" } = context;
   
   // Check if this is a Form 47 (Consumer Proposal) - use either context or metadata
   const isForm47Document = isForm47 || documentRecord.metadata?.formType === 'form-47' || 
@@ -18,7 +19,7 @@ export const riskAssessment = async (
                   documentRecord.title?.toLowerCase().includes('consumer proposal');
                   
   // Check if this is a Form 31 (Proof of Claim)
-  const isForm31Document = isForm31(documentRecord, documentText) ||
+  const isForm31Document = isForm31Context || isForm31(documentRecord, documentText) ||
                   documentRecord.metadata?.formType === 'form-31' ||
                   documentRecord.metadata?.formType === 'proof-of-claim' ||
                   documentRecord.title?.toLowerCase().includes('form 31') ||
@@ -218,7 +219,7 @@ export const riskAssessment = async (
       ];
       
       // Extract Form 31 specific fields from the document text
-      let extractedClaimInfo = {};
+      const extractedClaimInfo: Record<string, string> = {};
       if (documentText) {
         console.log("Extracting Form 31 specific fields from text...");
         
@@ -245,16 +246,33 @@ export const riskAssessment = async (
         // Extract filing date
         const filingMatch = documentText.match(/(?:date|filed)\s+on:?\s*([0-9]{1,2}[\s/\-\.]{1,2}[0-9]{1,2}[\s/\-\.]{1,2}[0-9]{2,4}|[a-z]+\s+[0-9]{1,2},?\s*[0-9]{2,4})/i);
         
-        extractedClaimInfo = {
-          creditorName: creditorMatch ? creditorMatch[1].trim() : '',
-          claimAmount: amountMatch ? `$${amountMatch[1].trim()}` : '',
-          claimType: claimTypeMatch ? 
-                    claimTypeMatch[2] ? claimTypeMatch[2].trim() : claimTypeMatch[0].trim() : 
-                    '',
-          securityDetails: securityMatch ? securityMatch[1].trim() : '',
-          debtorName: debtorMatch ? debtorMatch[1].trim() : '',
-          filingDate: filingMatch ? filingMatch[1].trim() : ''
-        };
+        if (creditorMatch && creditorMatch[1]) {
+          extractedClaimInfo.creditorName = creditorMatch[1].trim();
+        }
+        
+        if (amountMatch && amountMatch[1]) {
+          extractedClaimInfo.claimAmount = `$${amountMatch[1].trim()}`;
+        }
+        
+        if (claimTypeMatch) {
+          if (claimTypeMatch[2]) {
+            extractedClaimInfo.claimType = claimTypeMatch[2].trim();
+          } else {
+            extractedClaimInfo.claimType = claimTypeMatch[0].trim();
+          }
+        }
+        
+        if (securityMatch && securityMatch[1]) {
+          extractedClaimInfo.securityDetails = securityMatch[1].trim();
+        }
+        
+        if (debtorMatch && debtorMatch[1]) {
+          extractedClaimInfo.debtorName = debtorMatch[1].trim();
+        }
+        
+        if (filingMatch && filingMatch[1]) {
+          extractedClaimInfo.filingDate = filingMatch[1].trim();
+        }
         
         console.log("Extracted Form 31 fields:", extractedClaimInfo);
       }
