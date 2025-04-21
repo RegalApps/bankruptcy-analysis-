@@ -42,12 +42,16 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
       });
       
       // Get document information from storage path
-      const { data: document } = await supabase
+      const { data: document, error: docError } = await supabase
         .from('documents')
-        .select('id, title, type')
+        .select('id, title, type, metadata')
         .eq('storage_path', storagePath)
         .maybeSingle();
         
+      if (docError) {
+        throw new Error(`Error fetching document: ${docError.message}`);
+      }
+      
       if (!document) {
         throw new Error('Document not found in database');
       }
@@ -138,11 +142,16 @@ export const useDocumentAnalysis = (storagePath: string, onAnalysisComplete?: ()
     if (session && storagePath && !analyzing) {
       const checkDocumentStatus = async () => {
         try {
-          const { data: document } = await supabase
+          const { data: document, error: docError } = await supabase
             .from('documents')
             .select('id, ai_processing_status, metadata, type, title')
             .eq('storage_path', storagePath)
             .maybeSingle();
+            
+          if (docError) {
+            console.error("Error fetching document status:", docError);
+            return;
+          }
             
           if (!document) {
             console.log("Document not found in database, cannot check status");
