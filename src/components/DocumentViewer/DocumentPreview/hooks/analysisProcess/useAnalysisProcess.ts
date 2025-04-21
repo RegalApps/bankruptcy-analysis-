@@ -57,7 +57,8 @@ export const useAnalysisProcess = ({
       await riskAssessment(documentRecord, isForm76, enhancedContext);
       
       // Step 5: Issue Prioritization & Solution Recommendations
-      await issuePrioritization(documentRecord, enhancedContext);
+      // Fix: Pass enhancedContext as the third argument to issuePrioritization
+      await issuePrioritization(documentRecord, isForm76, enhancedContext);
       
       // Step 6: Document Organization & Client Association
       await documentOrganization(documentRecord, enhancedContext);
