@@ -1,4 +1,3 @@
-
 // Handles form-specific extra information in the Sidebar (for Form 31 & 47)
 import { Separator } from "@/components/ui/separator";
 import { FileSpreadsheet, Info } from "lucide-react";
