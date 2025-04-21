@@ -28,8 +28,13 @@ export const useDocumentFields = (
   formType?: string,
   // Form 31 specific fields
   claimantName?: string,
+  creditorName?: string,
   claimAmount?: string,
-  claimType?: string
+  claimType?: string,
+  securityDetails?: string,
+  debtorName?: string,
+  creditorAddress?: string,
+  claimClassification?: string
 ) => {
   const getRelevantFields = (formType: string): Field[] => {
     // Basic fields for all documents
@@ -53,7 +58,7 @@ export const useDocumentFields = (
         {
           key: 'claimantName',
           label: 'Creditor Name',
-          value: claimantName || ''
+          value: claimantName || creditorName || ''
         },
         {
           key: 'claimAmount',
@@ -63,7 +68,17 @@ export const useDocumentFields = (
         {
           key: 'claimType',
           label: 'Claim Type',
-          value: claimType || ''
+          value: claimType || claimClassification || ''
+        },
+        {
+          key: 'securityDetails',
+          label: 'Security Details',
+          value: securityDetails || ''
+        },
+        {
+          key: 'creditorAddress',
+          label: 'Creditor Address',
+          value: creditorAddress || ''
         },
         {
           key: 'dateSigned',

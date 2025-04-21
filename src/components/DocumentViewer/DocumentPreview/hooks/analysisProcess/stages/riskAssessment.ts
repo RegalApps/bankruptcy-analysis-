@@ -3,13 +3,14 @@ import { DocumentRecord } from "../../types";
 import { updateAnalysisStatus } from "../documentStatusUpdates";
 import { AnalysisProcessContext } from "../types";
 import { createForm47RiskAssessment } from "@/utils/documentOperations";
+import { isForm31 } from "../formIdentification";
 
 export const riskAssessment = async (
   documentRecord: DocumentRecord,
   isForm76: boolean,
   context: AnalysisProcessContext
 ): Promise<void> => {
-  const { setAnalysisStep, setProgress, isForm47 = false } = context;
+  const { setAnalysisStep, setProgress, isForm47 = false, documentText = "" } = context;
   
   // Check if this is a Form 47 (Consumer Proposal) - use either context or metadata
   const isForm47Document = isForm47 || documentRecord.metadata?.formType === 'form-47' || 
@@ -17,24 +18,25 @@ export const riskAssessment = async (
                   documentRecord.title?.toLowerCase().includes('consumer proposal');
                   
   // Check if this is a Form 31 (Proof of Claim)
-  const isForm31 = documentRecord.metadata?.formType === 'form-31' ||
+  const isForm31Document = isForm31(documentRecord, documentText) ||
+                  documentRecord.metadata?.formType === 'form-31' ||
                   documentRecord.metadata?.formType === 'proof-of-claim' ||
                   documentRecord.title?.toLowerCase().includes('form 31') ||
                   documentRecord.title?.toLowerCase().includes('proof of claim');
   
   if (isForm47Document) {
     setAnalysisStep("Stage 4: Analyzing Consumer Proposal for compliance...");
+  } else if (isForm31Document) {
+    setAnalysisStep("Stage 4: Analyzing Proof of Claim (Form 31) compliance...");
   } else if (isForm76) {
     setAnalysisStep("Stage 4: Performing regulatory compliance analysis for Form 76..."); 
-  } else if (isForm31) {
-    setAnalysisStep("Stage 4: Analyzing Proof of Claim (Form 31) compliance...");
   } else {
     setAnalysisStep("Stage 4: Risk & Compliance Assessment...");
   }
   
   setProgress(55);
   
-  console.log(`Starting risk assessment for document ${documentRecord.id}, Form 76: ${isForm76}, Form 47: ${isForm47Document}, Form 31: ${isForm31}`);
+  console.log(`Starting risk assessment for document ${documentRecord.id}, Form 76: ${isForm76}, Form 47: ${isForm47Document}, Form 31: ${isForm31Document}`);
   
   try {
     // For Form 76, add specific risks related to Statement of Affairs
@@ -152,7 +154,7 @@ export const riskAssessment = async (
       // Process Form 47 Consumer Proposal
       await createForm47RiskAssessment(documentRecord.id);
       console.log('Created Form 47 risk assessment');
-    } else if (isForm31) {
+    } else if (isForm31Document) {
       // Process Form 31 Proof of Claim
       // Get existing analysis record if any
       const { data: existingAnalysis } = await supabase
@@ -161,109 +163,170 @@ export const riskAssessment = async (
         .eq('document_id', documentRecord.id)
         .maybeSingle();
       
-      // If we don't have a full analysis yet from OpenAI, add default Form 31 risks
-      if (!existingAnalysis?.content?.comprehensive_risks) {
-        const form31DefaultRisks = [
-          {
-            type: "Document Verification",
-            description: "Form 31 must be the current version prescribed by the Superintendent",
-            severity: "medium",
-            reference: "BIA Rule 150",
-            impact: "Outdated forms may be rejected by the court or OSB",
-            required_action: "Verify form version is current",
-            solution: "Download current version from OSB website if needed",
-            deadline: "Immediately"
-          },
-          {
-            type: "Signature Authentication",
-            description: "Form 31 requires proper signature authentication",
-            severity: "high",
-            reference: "BIA Rule 31(1)",
-            impact: "Improperly signed forms are invalid and not legally enforceable",
-            required_action: "Verify creditor signature is present",
-            solution: "Ensure document is properly signed by authorized party",
-            deadline: "Immediately"
-          },
-          {
-            type: "Supporting Documentation",
-            description: "Form 31 requires appropriate supporting documents based on claim type",
-            severity: "medium",
-            reference: "BIA Practice",
-            impact: "Claims without proper support may be disallowed",
-            required_action: "Review attachments and supporting documentation",
-            solution: "Request additional documentation if claim support is insufficient",
-            deadline: "7 days"
-          },
-          {
-            type: "Claim Classification",
-            description: "Form 31 claim type must be properly selected (Section 4 checkboxes)",
-            severity: "high",
-            reference: "BIA s. 121-128",
-            impact: "Incorrectly classified claims may affect distribution and voting rights",
-            required_action: "Verify claim type selection is appropriate",
-            solution: "Validate claim type against supporting documentation",
-            deadline: "5 days"
-          },
-          {
-            type: "Electronic Filing Compliance",
-            description: "Electronic filing of Form 31 must include Form 1.1 declaration",
-            severity: "medium",
-            reference: "OSB Directive No. 18R",
-            impact: "Non-compliant e-filings may be rejected",
-            required_action: "Verify Form 1.1 is included if electronically filed",
-            solution: "Attach Form 1.1 declaration if missing",
-            deadline: "3 days"
-          }
-        ];
+      // Create Form 31 specific risks based on comprehensive guide
+      const form31Risks = [
+        {
+          type: "Document Verification",
+          description: "Form 31 must be the current version prescribed by the Superintendent",
+          severity: "medium",
+          regulation: "BIA Rule 150",
+          impact: "Outdated forms may be rejected by the court or OSB",
+          requiredAction: "Verify form version is current",
+          solution: "Download current version from OSB website if needed",
+          deadline: "Immediately"
+        },
+        {
+          type: "Signature Authentication",
+          description: "Form 31 requires proper signature authentication",
+          severity: "high",
+          regulation: "BIA Rule 31(1)",
+          impact: "Improperly signed forms are invalid and not legally enforceable",
+          requiredAction: "Verify creditor signature is present",
+          solution: "Ensure document is properly signed by authorized party",
+          deadline: "Immediately"
+        },
+        {
+          type: "Supporting Documentation",
+          description: "Form 31 requires appropriate supporting documents based on claim type",
+          severity: "medium",
+          regulation: "BIA Practice",
+          impact: "Claims without proper support may be disallowed",
+          requiredAction: "Review attachments and supporting documentation",
+          solution: "Request additional documentation if claim support is insufficient",
+          deadline: "7 days"
+        },
+        {
+          type: "Claim Classification",
+          description: "Form 31 claim type must be properly selected (Section 4 checkboxes)",
+          severity: "high",
+          regulation: "BIA s. 121-128",
+          impact: "Incorrectly classified claims may affect distribution and voting rights",
+          requiredAction: "Verify claim type selection is appropriate",
+          solution: "Validate claim type against supporting documentation",
+          deadline: "5 days"
+        },
+        {
+          type: "Electronic Filing Compliance",
+          description: "Electronic filing of Form 31 must include Form 1.1 declaration",
+          severity: "medium",
+          regulation: "OSB Directive No. 18R",
+          impact: "Non-compliant e-filings may be rejected",
+          requiredAction: "Verify Form 1.1 is included if electronically filed",
+          solution: "Attach Form 1.1 declaration if missing",
+          deadline: "3 days"
+        }
+      ];
+      
+      // Extract Form 31 specific fields from the document text
+      let extractedClaimInfo = {};
+      if (documentText) {
+        console.log("Extracting Form 31 specific fields from text...");
         
-        // Update or create analysis with default Form 31 risks
-        if (existingAnalysis) {
-          const existingContent = existingAnalysis.content || {};
+        // Extract creditor name
+        const creditorMatch = documentText.match(/creditor(?:'s)?\s+name:?\s*([^\n,]+)/i) || 
+                            documentText.match(/name\s+of\s+creditor:?\s*([^\n,]+)/i);
+        
+        // Extract claim amount
+        const amountMatch = documentText.match(/(?:total|claim)\s+amount:?\s*[$]?\s*([\d,.]+)/i) || 
+                          documentText.match(/amount\s+of\s+claim:?\s*[$]?\s*([\d,.]+)/i);
+        
+        // Extract claim type
+        const claimTypeMatch = documentText.match(/(?:claim|type)\s+([A-J])\s*[-:]\s*([^\n,]+)/i) ||
+                             documentText.match(/(?:secured|unsecured|preferred)\s+claim/i);
+        
+        // Extract security details if available
+        const securityMatch = documentText.match(/security:?\s*([^\n]+)/i) ||
+                            documentText.match(/particulars\s+of\s+security:?\s*([^\n]+)/i);
+        
+        // Extract debtor name
+        const debtorMatch = documentText.match(/(?:debtor|bankrupt)(?:'s)?\s+name:?\s*([^\n,]+)/i) ||
+                          documentText.match(/in\s+(?:the|re)\s+(?:matter\s+of)\s*(?:the\s+bankruptcy\s+of)?\s*([^\n,]+)/i);
+        
+        // Extract filing date
+        const filingMatch = documentText.match(/(?:date|filed)\s+on:?\s*([0-9]{1,2}[\s/\-\.]{1,2}[0-9]{1,2}[\s/\-\.]{1,2}[0-9]{2,4}|[a-z]+\s+[0-9]{1,2},?\s*[0-9]{2,4})/i);
+        
+        extractedClaimInfo = {
+          creditorName: creditorMatch ? creditorMatch[1].trim() : '',
+          claimAmount: amountMatch ? `$${amountMatch[1].trim()}` : '',
+          claimType: claimTypeMatch ? 
+                    claimTypeMatch[2] ? claimTypeMatch[2].trim() : claimTypeMatch[0].trim() : 
+                    '',
+          securityDetails: securityMatch ? securityMatch[1].trim() : '',
+          debtorName: debtorMatch ? debtorMatch[1].trim() : '',
+          filingDate: filingMatch ? filingMatch[1].trim() : ''
+        };
+        
+        console.log("Extracted Form 31 fields:", extractedClaimInfo);
+      }
+      
+      // Update or create analysis with Form 31 risks and extracted info
+      if (existingAnalysis) {
+        const existingContent = existingAnalysis.content || {};
+        const existingExtractedInfo = existingContent.extracted_info || {};
+        const existingRisks = existingContent.risks || [];
+        
+        const updatedContent = {
+          ...existingContent,
+          extracted_info: {
+            ...existingExtractedInfo,
+            formType: 'form-31',
+            formNumber: '31',
+            type: 'proof-of-claim',
+            claimantName: existingExtractedInfo.claimantName || extractedClaimInfo.creditorName || '',
+            creditorName: existingExtractedInfo.creditorName || extractedClaimInfo.creditorName || '',
+            claimAmount: existingExtractedInfo.claimAmount || extractedClaimInfo.claimAmount || '',
+            claimType: existingExtractedInfo.claimType || extractedClaimInfo.claimType || '',
+            securityDetails: existingExtractedInfo.securityDetails || extractedClaimInfo.securityDetails || '',
+            debtorName: existingExtractedInfo.debtorName || extractedClaimInfo.debtorName || existingExtractedInfo.clientName || '',
+            dateSigned: existingExtractedInfo.dateSigned || extractedClaimInfo.filingDate || '',
+            filingDate: existingExtractedInfo.filingDate || extractedClaimInfo.filingDate || '',
+            summary: "Form 31 - Proof of Claim against debtor/bankrupt",
+            documentStatus: existingExtractedInfo.documentStatus || 'Pending Review'
+          },
+          risks: [...existingRisks, ...form31Risks]
+        };
+        
+        await supabase
+          .from('document_analysis')
+          .update({ content: updatedContent })
+          .eq('document_id', documentRecord.id);
           
-          const updatedContent = {
-            ...existingContent,
-            comprehensive_risks: form31DefaultRisks,
-            document_verification: {
-              is_form_31: true,
-              current_version: "unknown",
-              file_numbers: {
-                estate_number: documentRecord.metadata?.estateNumber || "unknown",
-                court_file_number: documentRecord.metadata?.courtFileNumber || "unknown"
+        console.log('Updated existing analysis with Form 31 info and risks');
+      } else {
+        // Create new analysis with Form 31 risks
+        const { data: userData } = await supabase.auth.getUser();
+        
+        await supabase
+          .from('document_analysis')
+          .insert({
+            document_id: documentRecord.id,
+            user_id: userData.user?.id,
+            content: {
+              extracted_info: {
+                formType: 'form-31',
+                formNumber: '31',
+                type: 'proof-of-claim',
+                claimantName: extractedClaimInfo.creditorName || '',
+                creditorName: extractedClaimInfo.creditorName || '',
+                claimAmount: extractedClaimInfo.claimAmount || '',
+                claimType: extractedClaimInfo.claimType || '',
+                securityDetails: extractedClaimInfo.securityDetails || '',
+                debtorName: extractedClaimInfo.debtorName || documentRecord.metadata?.clientName || '',
+                dateSigned: extractedClaimInfo.filingDate || '',
+                filingDate: extractedClaimInfo.filingDate || '',
+                summary: "Form 31 - Proof of Claim against debtor/bankrupt",
+                documentStatus: 'Pending Review'
+              },
+              risks: form31Risks,
+              regulatory_compliance: {
+                status: 'requires_review',
+                details: 'Form 31 requires detailed review for regulatory compliance',
+                references: ['BIA Rule 31(1)', 'BIA Rule 150', 'OSB Directive No. 18R', 'BIA s. 121-128']
               }
             }
-          };
+          });
           
-          await supabase
-            .from('document_analysis')
-            .update({ content: updatedContent })
-            .eq('document_id', documentRecord.id);
-            
-          console.log('Updated existing analysis with Form 31 default risks');
-        } else {
-          // Create new analysis with Form 31 risks
-          const { data: userData } = await supabase.auth.getUser();
-          
-          await supabase
-            .from('document_analysis')
-            .insert({
-              document_id: documentRecord.id,
-              user_id: userData.user?.id,
-              content: {
-                comprehensive_risks: form31DefaultRisks,
-                document_verification: {
-                  is_form_31: true,
-                  current_version: "unknown",
-                  file_numbers: {
-                    estate_number: documentRecord.metadata?.estateNumber || "unknown",
-                    court_file_number: documentRecord.metadata?.courtFileNumber || "unknown"
-                  }
-                },
-                summary: "Form 31 - Proof of Claim requires detailed review for compliance with BIA requirements"
-              }
-            });
-            
-          console.log('Created new analysis with Form 31 risks');
-        }
+        console.log('Created new analysis with Form 31 risks');
       }
     }
     

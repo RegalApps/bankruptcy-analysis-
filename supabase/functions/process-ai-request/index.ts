@@ -23,21 +23,44 @@ serve(async (req) => {
     // Check if this is a Form 31 analysis 
     if (message.toLowerCase().includes('form 31') || message.toLowerCase().includes('proof of claim')) {
       systemPrompt += `
-      You are analyzing Form 31 (Proof of Claim). Pay special attention to:
-      - Creditor identification and contact details (Section 1)
-      - Claim amount and classification (Sections A-G)
-      - Supporting documentation requirements (Section 2)
-      - Signature and attestation requirements (Section 3)
-      - Security description if applicable
-
-      Form 31 requires:
-      1. Complete creditor information
-      2. Selection of proper claim type (A-G checkboxes)
-      3. Valid claim amount
-      4. Appropriate supporting documents
-      5. Proper signature and dating
+      You are analyzing Form 31 (Proof of Claim). Pay special attention to these elements based on the BIA framework:
       
-      Ensure you flag any missing required fields as HIGH risk items.
+      1. Document Verification:
+      - Form title must be "Form 31 - Proof of Claim" (BIA Form 31)
+      - Current version prescribed by the Superintendent (Rule 150)
+      - Estate/bankruptcy number must be included (Rule 73)
+      - Court file reference if applicable (Rule 73(1))
+      
+      2. Key Information to Extract:
+      - Debtor identification (full legal name, address, entity type)
+      - Creditor details (full legal name, complete mailing address, business/individual status)
+      - Representative information (name, address, relationship to creditor)
+      - Contact methods (phone, email, fax)
+      - Total claim amount (in Canadian funds)
+      - Interest calculation details
+      - Claim type classification (A-J codes)
+      - Security details for secured claims
+      
+      3. Required Attachments:
+      - Schedule A: Statement of Account
+      - Supporting documents (original or certified copies)
+      - Affidavit if applicable (Form 95)
+      - Security documents for secured claims
+      - Proxy Form (Form 36) if representative filing
+      
+      4. Critical Verification Points:
+      - Signature and authentication (Rule 31(1))
+      - Correct claim classification (Section 4)
+      - Priority claims properly supported (s. 136)
+      - Related party relationships disclosed (s. 4(5))
+      - Filed within claim period (s. 124(4))
+      
+      For any section, identify if there are HIGH, MEDIUM, or LOW risk issues and provide solutions.
+      HIGH risks include missing signatures, no claim amount, wrong debtor name, or missing attachments.
+      MEDIUM risks include incorrect claim type, insufficient supporting docs, or undisclosed relationships.
+      LOW risks include formatting issues, illegible handwriting, or missing non-essential info.
+      
+      Structure your response in a clear section-by-section assessment with specific references to the BIA.
       `;
     } 
     // Check if this is a Form 47 analysis
@@ -284,12 +307,20 @@ function extractFormInfo(aiResponse, formType) {
     });
   });
   
-  // Form 31 specific fields
+  // Form 31 specific fields - Enhanced extraction based on comprehensive guide
   if (formType === 'form-31') {
     [
-      { field: 'claimantName', patterns: [/creditor name:([^,\n]+)/i, /claimant:([^,\n]+)/i] },
-      { field: 'claimAmount', patterns: [/claim amount:([^,\n]+)/i, /amount:([^,\n]+)/i] },
-      { field: 'claimType', patterns: [/claim type:([^,\n]+)/i, /type of claim:([^,\n]+)/i] }
+      { field: 'claimantName', patterns: [/creditor name:([^,\n]+)/i, /claimant:([^,\n]+)/i, /name of creditor:([^,\n]+)/i] },
+      { field: 'creditorName', patterns: [/creditor(?:'s)?\s+name:([^,\n]+)/i, /name of creditor:([^,\n]+)/i] },
+      { field: 'claimAmount', patterns: [/claim amount:([^,\n]+)/i, /amount:([^,\n]+)/i, /total claim:([^,\n]+)/i] },
+      { field: 'claimType', patterns: [/claim type:([^,\n]+)/i, /type of claim:([^,\n]+)/i, /claim classification:([^,\n]+)/i] },
+      { field: 'securityDetails', patterns: [/security:([^,\n]+)/i, /security details:([^,\n]+)/i, /particulars of security:([^,\n]+)/i] },
+      { field: 'debtorName', patterns: [/(?:debtor|bankrupt)(?:'s)?\s+name:([^,\n]+)/i, /in(?:\s+the)?\s+matter\s+of(?:\s+the\s+bankruptcy\s+of)?:?\s*([^,\n]+)/i] },
+      { field: 'creditorAddress', patterns: [/creditor(?:'s)?\s+address:([^,\n]+)/i, /address\s+of\s+creditor:([^,\n]+)/i] },
+      { field: 'creditorContactInfo', patterns: [/contact(?:\s+details)?:([^,\n]+)/i, /(?:phone|email|contact\s+information):([^,\n]+)/i] },
+      { field: 'estateNumber', patterns: [/estate\s+(?:number|no\.):([^,\n]+)/i, /bankruptcy\s+(?:number|no\.):([^,\n]+)/i, /file\s+(?:number|no\.):([^,\n]+)/i] },
+      { field: 'interestCalculation', patterns: [/interest(?:\s+calculation|\s+rate):([^,\n]+)/i] },
+      { field: 'documentStatus', patterns: [/status:([^,\n]+)/i] }
     ].forEach(({ field, patterns }) => {
       patterns.some(pattern => {
         const match = aiResponse.match(pattern);
@@ -300,13 +331,40 @@ function extractFormInfo(aiResponse, formType) {
         return false;
       });
     });
+    
+    // Check for claim type code (A-J)
+    const claimTypeCodeMatch = aiResponse.match(/(?:claim|type)\s+([A-J])\s*[-:]/i);
+    if (claimTypeCodeMatch && claimTypeCodeMatch[1]) {
+      const claimTypeMap = {
+        'A': 'Unsecured Claim',
+        'B': 'Lease Disclaimer Claim',
+        'C': 'Secured Claim',
+        'D': 'Farmer/Fisherman Claim',
+        'E': 'Wage Earner Claim',
+        'F': 'Director Liability Claim',
+        'G': 'Securities Customer Claim',
+        'H': 'Employee Priority Claim',
+        'I': 'Compensation Priority Claim',
+        'J': 'Other Claim'
+      };
+      
+      info['claimClassification'] = `Type ${claimTypeCodeMatch[1]} - ${claimTypeMap[claimTypeCodeMatch[1]] || 'Unknown Type'}`;
+    }
+    
+    // Try to identify supporting documents
+    const supportingDocsMatch = aiResponse.match(/supporting\s+documents?\s*:([^\n]+)/i);
+    if (supportingDocsMatch && supportingDocsMatch[1]) {
+      info['supportingDocuments'] = supportingDocsMatch[1].trim();
+    }
   }
   
   // Form 47 specific fields
   if (formType === 'form-47') {
     [
       { field: 'proposalType', patterns: [/proposal type:([^,\n]+)/i] },
-      { field: 'monthlyPayment', patterns: [/monthly payment:([^,\n]+)/i, /payment:([^,\n]+)/i] }
+      { field: 'monthlyPayment', patterns: [/monthly payment:([^,\n]+)/i, /payment:([^,\n]+)/i] },
+      { field: 'proposalDuration', patterns: [/duration:([^,\n]+)/i, /term:([^,\n]+)/i, /period:([^,\n]+)/i] },
+      { field: 'administratorName', patterns: [/administrator:([^,\n]+)/i, /administrator name:([^,\n]+)/i] }
     ].forEach(({ field, patterns }) => {
       patterns.some(pattern => {
         const match = aiResponse.match(pattern);
@@ -321,6 +379,7 @@ function extractFormInfo(aiResponse, formType) {
   
   // Set defaults for form number and type if not found
   info.type = formType || 'unknown';
+  info.formType = formType || 'unknown';
   info.formNumber = info.formNumber || (formType === 'form-31' ? '31' : formType === 'form-47' ? '47' : '');
   
   return info;

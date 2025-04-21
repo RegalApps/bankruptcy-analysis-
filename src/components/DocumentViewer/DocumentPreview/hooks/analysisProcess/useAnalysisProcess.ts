@@ -10,6 +10,7 @@ import {
   collaborationSetup,
   continuousLearning
 } from "./stages";
+import { isForm31 } from "./formIdentification";
 
 export const useAnalysisProcess = ({
   setAnalysisStep,
@@ -32,10 +33,21 @@ export const useAnalysisProcess = ({
         setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
       });
       
+      // Check if document is Form 31 (Proof of Claim)
+      const isForm31Doc = isForm31(documentRecord, documentText);
+      
       // Enhanced context with form type information
       const enhancedContext = { 
-        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete, 
-        isForm76, isForm47
+        setAnalysisStep, 
+        setProgress, 
+        setError, 
+        setProcessingStage, 
+        toast, 
+        onAnalysisComplete, 
+        isForm76, 
+        isForm47,
+        isForm31: isForm31Doc,
+        documentText
       };
       
       // Step 3: Data Extraction & Content Processing
@@ -44,24 +56,40 @@ export const useAnalysisProcess = ({
       // Step 4: Risk & Compliance Assessment
       await riskAssessment(documentRecord, isForm76, enhancedContext);
       
-      // Step 5: Issue Prioritization & Task Management
-      await issuePrioritization(documentRecord, isForm76, enhancedContext);
+      // Step 5: Issue Prioritization & Solution Recommendations
+      await issuePrioritization(documentRecord, { 
+        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
+      });
       
-      // Step 6: Document Organization & Client Management
-      await documentOrganization(documentRecord, enhancedContext);
+      // Step 6: Document Organization & Client Association
+      await documentOrganization(documentRecord, { 
+        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
+      });
       
-      // Step 7: User Notification & Collaboration
-      await collaborationSetup(documentRecord, documentText, isForm76, enhancedContext);
+      // Step 7: Collaboration Setup
+      await collaborationSetup(documentRecord, { 
+        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
+      });
       
-      // Step 8: Continuous AI Learning & Improvement
-      await continuousLearning(documentRecord, enhancedContext);
+      // Step 8: Continuous Learning & Improvement
+      await continuousLearning(documentRecord, { 
+        setAnalysisStep, setProgress, setError, setProcessingStage, toast, onAnalysisComplete 
+      });
       
-      console.log('Analysis completed successfully.');
+      setAnalysisStep("Analysis completed successfully");
+      setProgress(100);
       
-    } catch (error) {
+      if (onAnalysisComplete) {
+        onAnalysisComplete();
+      }
+    } catch (error: any) {
+      console.error(`Error in analysis process:`, error);
+      setError(error.message || 'Unknown error');
       throw error;
     }
   };
-  
-  return { executeAnalysisProcess };
+
+  return {
+    executeAnalysisProcess
+  };
 };

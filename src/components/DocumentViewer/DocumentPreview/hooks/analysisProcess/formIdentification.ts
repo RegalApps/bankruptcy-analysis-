@@ -131,9 +131,7 @@ export const isForm47 = (documentRecord: DocumentRecord, documentText: string): 
     'payment of preferred claims',
     'payment to unsecured creditors',
     'administrator fees',
-    'distribution of payments',
-    'josh hart', // Client name specific to the provided sample
-    'tom francis' // Administrator name specific to the provided sample
+    'distribution of payments'
   ];
   
   const hasForm47Sections = sectionIndicators.some(section => 
@@ -188,5 +186,118 @@ export const isForm47 = (documentRecord: DocumentRecord, documentText: string): 
                 hasStructuralIndicators;
   
   console.log(`Form 47 detection result: ${result}`);
+  return result;
+};
+
+/**
+ * Enhanced detection of Form 31 Proof of Claim documents
+ * Uses multiple methods to increase detection reliability based on comprehensive guide
+ */
+export const isForm31 = (documentRecord: DocumentRecord, documentText: string): boolean => {
+  console.log("Checking if document is Form 31...");
+  
+  // Create a clean version of the text for better matching
+  const cleanText = documentText.toLowerCase().replace(/\s+/g, ' ');
+  
+  // Method 1: Check the document title
+  const titleIndicatesForm31 = Boolean(
+    documentRecord.title?.toLowerCase().includes('form 31') ||
+    documentRecord.title?.toLowerCase().includes('f31') ||
+    documentRecord.title?.toLowerCase().includes('form31') ||
+    documentRecord.title?.toLowerCase().includes('proof of claim')
+  );
+  
+  // Method 2: Check document type if available
+  const metadataIndicatesForm31 = Boolean(
+    documentRecord.metadata?.formType === 'form-31' ||
+    documentRecord.metadata?.formType === 'form31' ||
+    documentRecord.metadata?.formNumber === '31'
+  );
+  
+  // Method 3: Check text content with multiple patterns
+  const textPatterns = [
+    /\bf(?:orm)?\s*31\b/i,
+    /\bproof\s+of\s+claim\b/i,
+    /\bbia\s+(?:form|s|sec|section)\s*121\b/i,
+    /\bclaim\s+against\s+bankrupt\b/i,
+    /\bcreditor['']s\s+claim\b/i,
+    /\bsecured\s+creditor\b/i
+  ];
+  
+  const textIndicatesForm31 = textPatterns.some(pattern => pattern.test(cleanText));
+  
+  // Method 4: Check for typical Form 31 sections based on comprehensive guide
+  const sectionIndicators = [
+    'proof of claim',
+    'total claim amount',
+    'interest calculation',
+    'claim type classification',
+    'statement of account',
+    'security details',
+    'secured claim',
+    'unsecured claim',
+    'wage earner',
+    'director liability',
+    'securities customer'
+  ];
+  
+  const hasForm31Sections = sectionIndicators.some(section => 
+    cleanText.includes(section.toLowerCase())
+  );
+  
+  // Method 5: Check for Form 31 specific legal references from comprehensive guide
+  const legalReferences = [
+    'bia s. 121',
+    'bia s. 124',
+    'bia s. 50(13)',
+    'bia s. 128(1)',
+    'bia s. 81.2(1)',
+    'bia s. 136(1)',
+    'rule 31(1)',
+    'rule 73',
+    'bankruptcy and insolvency rules',
+    'directive no. 18r'
+  ];
+  
+  const hasLegalReferences = legalReferences.some(reference => 
+    cleanText.includes(reference.toLowerCase())
+  );
+  
+  // Method 6: Check for Form 31 claim types
+  const claimTypes = [
+    'type a', 'unsecured claim',
+    'type b', 'lease disclaimer',
+    'type c', 'secured claim',
+    'type d', 'farmer or fisherman',
+    'type e', 'wage earner',
+    'type f', 'director liability',
+    'type g', 'securities customer',
+    'type h', 'employee priority',
+    'type i', 'compensation priority'
+  ];
+  
+  const hasClaimTypes = claimTypes.some(type => 
+    cleanText.includes(type.toLowerCase())
+  );
+  
+  // Log all detection results for debugging
+  console.log({
+    titleIndicatesForm31,
+    metadataIndicatesForm31,
+    textIndicatesForm31,
+    hasForm31Sections,
+    hasLegalReferences,
+    hasClaimTypes
+  });
+  
+  // Document is Form 31 if any method indicates it is
+  const result = titleIndicatesForm31 || 
+                metadataIndicatesForm31 || 
+                textIndicatesForm31 || 
+                hasForm31Sections ||
+                hasLegalReferences ||
+                hasClaimTypes;
+  
+  console.log(`Form 31 detection result: ${result}`);
   return result;
 };

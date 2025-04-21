@@ -12,6 +12,11 @@ export interface DocumentDetails {
   ai_confidence_score?: number;
   folder_type?: string;
   parent_folder_id?: string;
+  tasks?: Task[];
+  deadlines?: DocumentDeadline[];
+  versions?: DocumentVersion[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DocumentAnalysis {
@@ -37,12 +42,21 @@ export interface DocumentAnalysis {
       submissionDeadline?: string;
       type?: string;
       summary?: string;
+      paymentSchedule?: string;
       // Form 31 specific fields
       claimantName?: string;
       creditorName?: string;
       claimAmount?: string;
       claimType?: string;
       securityDetails?: string;
+      debtorName?: string;
+      creditorAddress?: string;
+      claimClassification?: string;
+      supportingDocuments?: string[];
+      creditorRepresentative?: string;
+      creditorContactInfo?: string;
+      interestCalculation?: string;
+      currencyConversion?: string;
       // Form 47 specific fields
       proposalType?: string;
       monthlyPayment?: string;
@@ -83,4 +97,41 @@ export interface DocumentDeadline {
   status: 'pending' | 'completed' | 'overdue';
   created_at: string;
   updated_at: string;
+}
+
+export interface Task {
+  id: string;
+  document_id: string;
+  assigned_to?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  due_date?: string;
+  title: string;
+  description?: string;
+  status: string;
+  severity: string;
+  regulation?: string;
+  solution?: string;
+}
+
+export interface DocumentVersion {
+  id: string;
+  document_id: string;
+  version_number: number;
+  storage_path?: string;
+  created_at: string;
+  is_current: boolean;
+  description?: string;
+  changes_summary?: string;
+}
+
+export interface EditableField extends Field {
+  showForTypes: string[];
+}
+
+export interface Field {
+  key: string;
+  label: string;
+  value: string;
 }

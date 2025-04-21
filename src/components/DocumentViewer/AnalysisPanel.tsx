@@ -27,7 +27,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadli
   };
 
   // Determine form type for specialized display
-  const formType = extractedInfo?.type || document.type;
+  const formType = extractedInfo?.type || extractedInfo?.formType || document.type;
   const isForm31 = formType?.includes('form-31') || formType?.includes('proof-of-claim') || (extractedInfo?.formNumber === '31');
   const isForm47 = formType?.includes('form-47') || formType?.includes('consumer-proposal') || (extractedInfo?.formNumber === '47');
 
@@ -54,7 +54,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadli
             {/* Generic fields */}
             <div>
               <span className="text-muted-foreground">Client Name:</span>
-              <p>{extractedInfo?.clientName || 'Not extracted'}</p>
+              <p>{extractedInfo?.clientName || extractedInfo?.debtorName || 'Not extracted'}</p>
             </div>
 
             {/* Form 31 specific fields */}
@@ -70,7 +70,15 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadli
                 </div>
                 <div>
                   <span className="text-muted-foreground">Claim Type:</span>
-                  <p>{extractedInfo?.claimType || 'Not extracted'}</p>
+                  <p>{extractedInfo?.claimType || extractedInfo?.claimClassification || 'Not extracted'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Security Details:</span>
+                  <p>{extractedInfo?.securityDetails || 'Not provided'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Creditor Address:</span>
+                  <p>{extractedInfo?.creditorAddress || 'Not extracted'}</p>
                 </div>
               </>
             )}
@@ -86,6 +94,14 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadli
                   <span className="text-muted-foreground">Administrator:</span>
                   <p>{extractedInfo?.administratorName || extractedInfo?.trusteeName || 'Not extracted'}</p>
                 </div>
+                <div>
+                  <span className="text-muted-foreground">Proposal Type:</span>
+                  <p>{extractedInfo?.proposalType || 'Consumer Proposal'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Monthly Payment:</span>
+                  <p>{extractedInfo?.monthlyPayment || 'Not specified'}</p>
+                </div>
               </>
             )}
 
@@ -96,7 +112,11 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ document, onDeadli
             </div>
             <div>
               <span className="text-muted-foreground">Form Number:</span>
-              <p>{extractedInfo?.formNumber || 'Not extracted'}</p>
+              <p>{extractedInfo?.formNumber || (isForm31 ? '31' : isForm47 ? '47' : 'Not extracted')}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Estate Number:</span>
+              <p>{extractedInfo?.estateNumber || 'Not extracted'}</p>
             </div>
           </div>
         </div>
