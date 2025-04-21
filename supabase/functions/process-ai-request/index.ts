@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -18,7 +17,7 @@ serve(async (req) => {
     // Log request details
     console.log("Received AI processing request");
     const requestData = await req.json();
-    const { message, documentId, module } = requestData;
+    const { message, documentId, module, formType, title } = requestData;
 
     // Debug information collection
     const debugInfo = {
@@ -40,6 +39,8 @@ serve(async (req) => {
       metadata: {
         documentId,
         module,
+        formType,
+        title,
         messageLength: message?.length || 0
       },
       errors: []
@@ -61,7 +62,8 @@ serve(async (req) => {
     // Form-specific system prompts for enhanced analysis
     let systemPrompt = `You are an expert in Canadian bankruptcy and insolvency documents, specializing in form analysis and risk assessment.`;
     
-    if (message.toLowerCase().includes('form 31') || message.toLowerCase().includes('proof of claim')) {
+    // Enhanced prompt for Form 31
+    if (formType === 'form-31' || (title && title.toLowerCase().includes('proof of claim'))) {
       systemPrompt += `
       You are analyzing Form 31 (Proof of Claim). Pay special attention to these elements based on the BIA framework:
       
@@ -110,11 +112,11 @@ serve(async (req) => {
       Structure your response in a clear section-by-section assessment with specific references to the BIA.
       
       IMPORTANT: Always return results with proper JSON structure containing these fields:
-      - extracted_info: Containing all extracted document information
-      - summary: A brief overview of the document
+      - extracted_info: Containing all extracted document information including creditorName, debtorName, claimAmount, claimType, securityDetails
+      - summary: A brief overview of the document (approximately 2-3 sentences)
       - risks: An array of objects with type, description, severity, regulation, and solution fields
       `;
-    } else if (message.toLowerCase().includes('form 47') || message.toLowerCase().includes('consumer proposal')) {
+    } else if (formType === 'form-47' || (title && title.toLowerCase().includes('consumer proposal'))) {
       systemPrompt += `
       You are analyzing Form 47 (Consumer Proposal). Pay special attention to:
       - Debtor identification and contact details
@@ -162,6 +164,7 @@ serve(async (req) => {
 
     console.log(`Starting OpenAI API request with model: gpt-4o-mini`);
     console.log(`Message length: ${message.length} characters`);
+    console.log(`Form type detected: ${formType || 'Unknown'}`);
     
     debugInfo.timestamps.openAIRequestStart = new Date().toISOString();
     
@@ -213,6 +216,13 @@ serve(async (req) => {
     try {
       parsedResponse = JSON.parse(aiResponse);
       console.log("Successfully parsed OpenAI response as JSON");
+      
+      // Log parsed data structure to help with debugging
+      console.log("Parsed response structure:");
+      console.log("- extracted_info present:", !!parsedResponse.extracted_info);
+      console.log("- summary present:", !!parsedResponse.summary);
+      console.log("- risks present:", !!parsedResponse.risks && Array.isArray(parsedResponse.risks));
+      
     } catch (e) {
       console.error("Failed to parse OpenAI response as JSON:", e);
       console.log("Raw response:", aiResponse);
@@ -224,6 +234,15 @@ serve(async (req) => {
         risks: extractRisksFromText(aiResponse)
       };
     }
+
+    // Ensure we have all required fields with default values if missing
+    parsedResponse = {
+      extracted_info: parsedResponse.extracted_info || {},
+      summary: parsedResponse.summary || 
+               parsedResponse.extracted_info?.summary || 
+               "Document analyzed but no summary was generated.",
+      risks: parsedResponse.risks || []
+    };
 
     // Store analysis results if document ID provided
     if (documentId) {
@@ -266,26 +285,20 @@ serve(async (req) => {
           console.log('Successfully deleted existing analysis entries if any');
         }
 
-        // Ensure we have the required fields
-        const extractedInfo = parsedResponse.extracted_info || {};
-        extractedInfo.formType = extractedInfo.formType || document?.[0]?.metadata?.formType || 'unknown';
-        extractedInfo.formNumber = extractedInfo.formNumber || document?.[0]?.metadata?.formNumber || '';
-        extractedInfo.summary = parsedResponse.summary || extractedInfo.summary || aiResponse.substring(0, 500);
-
-        // Prepare analysis with consistent structure
+        // Prepare consistent analysis structure
         const analysisPayload = {
           document_id: documentId,
           user_id: "system", // We'll update this with actual user ID if available
           content: {
-            extracted_info: extractedInfo,
-            summary: parsedResponse.summary || extractedInfo.summary || aiResponse.substring(0, 500),
-            risks: parsedResponse.risks || extractRisksFromText(aiResponse),
+            extracted_info: parsedResponse.extracted_info,
+            summary: parsedResponse.summary,
+            risks: parsedResponse.risks,
             full_analysis: aiResponse,
             debug_info: debugInfo
           }
         };
         
-        console.log(`Preparing analysis payload: ${JSON.stringify(analysisPayload).substring(0, 200)}...`);
+        console.log(`Preparing analysis payload with extracted info and ${parsedResponse.risks.length} risks`);
         
         const { error: analysisError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/document_analysis`, {
           method: 'POST',
@@ -306,7 +319,19 @@ serve(async (req) => {
           debugInfo.status.analysisStorageSuccess = true;
         }
           
-        // Update document status
+        // Update document status and metadata with form information
+        const updateMetadata = {
+          ...document?.[0]?.metadata,
+          last_analyzed: new Date().toISOString(),
+          analysis_status: 'complete',
+          formType: formType || parsedResponse.extracted_info?.formType || null,
+          // Also store key extracted fields in document metadata for easier querying
+          clientName: parsedResponse.extracted_info?.clientName || 
+                     parsedResponse.extracted_info?.debtorName || null,
+          formNumber: parsedResponse.extracted_info?.formNumber || 
+                     (formType === 'form-31' ? '31' : formType === 'form-47' ? '47' : null)
+        };
+        
         const { error: updateError } = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/documents?id=eq.${documentId}`, {
           method: 'PATCH',
           headers: {
@@ -317,11 +342,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             ai_processing_status: 'complete',
-            metadata: {
-              ...document?.[0]?.metadata,
-              last_analyzed: new Date().toISOString(),
-              analysis_status: 'complete'
-            }
+            metadata: updateMetadata
           })
         }).then(res => res.ok ? {error: null} : res.json());
         

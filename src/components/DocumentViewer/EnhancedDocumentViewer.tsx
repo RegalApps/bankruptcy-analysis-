@@ -118,12 +118,25 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
       // Convert file to text
       const textContent = await fileData.text();
       
+      // Detect form type from title if possible
+      let formType = null;
+      if (document.title) {
+        const title = document.title.toLowerCase();
+        if (title.includes('form 31') || title.includes('proof of claim')) {
+          formType = 'form-31';
+        } else if (title.includes('form 47') || title.includes('consumer proposal')) {
+          formType = 'form-47';
+        }
+      }
+      
       // Call AI analysis function
       const { data: analysisData, error: analysisError } = await supabase.functions.invoke('process-ai-request', {
         body: {
           message: textContent,
           documentId: documentId,
-          module: "document-analysis"
+          module: "document-analysis",
+          formType: formType,
+          title: document.title
         }
       });
       
@@ -197,10 +210,12 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
     return <ViewerErrorState error="Document not found" onRetry={fetchDocumentDetails} />;
   }
 
-  const risks = document?.analysis?.[0]?.content?.risks as Risk[] || [];
-  const extractedInfo = document?.analysis?.[0]?.content?.extracted_info || {};
-  // Fix the summary access by getting it from the right place
-  const documentSummary = document?.analysis?.[0]?.content?.extracted_info?.summary || "";
+  const analysisContent = document?.analysis?.[0]?.content || {};
+  const risks = analysisContent.risks as Risk[] || [];
+  const extractedInfo = analysisContent.extracted_info || {};
+  
+  // Get summary from the right place in the analysis content
+  const documentSummary = analysisContent.summary || extractedInfo?.summary || "";
   
   return (
     <div className="flex flex-col h-full">

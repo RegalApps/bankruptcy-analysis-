@@ -46,7 +46,7 @@ export const runFullSystemDiagnostics = async (documentId: string) => {
     try {
       const { data: document, error } = await supabase
         .from('documents')
-        .select('id, title, storage_path, ai_processing_status')
+        .select('id, title, storage_path, ai_processing_status, metadata')
         .eq('id', documentId)
         .single();
       
@@ -60,11 +60,29 @@ export const runFullSystemDiagnostics = async (documentId: string) => {
       results.documentFound = true;
       results.details.documentTitle = document.title;
       results.details.aiProcessingStatus = document.ai_processing_status;
+      results.details.metadata = document.metadata;
       
       // Test storage path validity
       if (document.storage_path) {
         results.storagePathValid = true;
         results.details.storagePath = document.storage_path;
+        
+        // Check if file exists in storage
+        try {
+          const { data, error: storageError } = await supabase.storage
+            .from('documents')
+            .download(document.storage_path);
+          
+          if (storageError) {
+            results.storagePathValid = false;
+            results.details.storagePathError = storageError.message;
+          } else {
+            results.details.fileSize = data.size;
+          }
+        } catch (storageErr) {
+          results.storagePathValid = false;
+          results.details.storagePathError = (storageErr as Error).message;
+        }
       } else {
         results.storagePathValid = false;
         results.details.storagePathMissing = true;
@@ -80,8 +98,9 @@ export const runFullSystemDiagnostics = async (documentId: string) => {
     try {
       const { data: analysis, error } = await supabase
         .from('document_analysis')
-        .select('id, content')
+        .select('id, content, created_at, updated_at')
         .eq('document_id', documentId)
+        .order('created_at', { ascending: false })
         .maybeSingle();
       
       if (error) {
@@ -98,6 +117,8 @@ export const runFullSystemDiagnostics = async (documentId: string) => {
       } else {
         results.analysisFound = true;
         results.analysisStatus = "found";
+        results.details.analysisCreatedAt = analysis.created_at;
+        results.details.analysisUpdatedAt = analysis.updated_at;
         
         // Check if content exists and has proper structure
         if (!analysis.content) {
@@ -112,6 +133,20 @@ export const runFullSystemDiagnostics = async (documentId: string) => {
             results.message = "Analysis missing extracted_info";
           }
           
+          // Check summary (either directly or in extracted_info)
+          const summary = analysis.content.summary || analysis.content.extracted_info?.summary;
+          if (!summary) {
+            if (results.analysisStatus === "incomplete") {
+              results.message += " and summary";
+            } else {
+              results.analysisStatus = "incomplete";
+              results.success = false;
+              results.message = "Analysis missing summary";
+            }
+          } else {
+            results.details.hasSummary = true;
+          }
+          
           // Check risks
           if (!analysis.content.risks || !Array.isArray(analysis.content.risks)) {
             if (results.analysisStatus === "incomplete") {
@@ -121,6 +156,8 @@ export const runFullSystemDiagnostics = async (documentId: string) => {
               results.success = false;
               results.message = "Analysis missing risks array";
             }
+          } else {
+            results.details.riskCount = analysis.content.risks.length;
           }
         }
         
