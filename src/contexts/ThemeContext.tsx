@@ -1,17 +1,18 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
   theme: Theme;
+  setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('system');
   
   useEffect(() => {
     // Try to get the theme from localStorage
@@ -32,7 +33,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Apply the theme to the document
     const root = document.documentElement;
     
-    if (theme === 'dark') {
+    if (theme === 'system') {
+      // Check system preference
+      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (isDarkMode) {
+        root.classList.add('dark-mode-transition');
+        root.setAttribute('data-theme', 'dark');
+      } else {
+        root.classList.add('dark-mode-transition');
+        root.removeAttribute('data-theme');
+      }
+    } else if (theme === 'dark') {
       root.classList.add('dark-mode-transition');
       root.setAttribute('data-theme', 'dark');
     } else {
@@ -53,7 +64,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

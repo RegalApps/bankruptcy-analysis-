@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Monitor, Moon, Sun, Globe2, Save, Loader2 } from "lucide-react";
+import { Monitor, Moon, Sun, Globe2, Save, Loader2, Coins } from "lucide-react";
 
 interface GeneralSettingsProps {
   settings: {
@@ -17,6 +17,8 @@ interface GeneralSettingsProps {
     setAutoSave: (value: boolean) => void;
     documentSync: boolean;
     setDocumentSync: (value: boolean) => void;
+    defaultCurrency: string;
+    setDefaultCurrency: (value: string) => void;
   };
   onSave: () => void;
   isLoading: boolean;
@@ -74,7 +76,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
             <CardTitle>Language & Region</CardTitle>
           </div>
           <CardDescription>
-            Set your preferred language and timezone
+            Set your preferred language, timezone, and currency
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -102,6 +104,21 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
                 <SelectItem value="EST">Eastern Time</SelectItem>
                 <SelectItem value="CST">Central Time</SelectItem>
                 <SelectItem value="PST">Pacific Time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Currency</Label>
+            <Select value={settings.defaultCurrency} onValueChange={settings.setDefaultCurrency}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CAD">CAD ($)</SelectItem>
+                <SelectItem value="USD">USD ($)</SelectItem>
+                <SelectItem value="EUR">EUR (€)</SelectItem>
+                <SelectItem value="GBP">GBP (£)</SelectItem>
               </SelectContent>
             </Select>
           </div>
