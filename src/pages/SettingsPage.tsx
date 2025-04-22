@@ -53,16 +53,13 @@ const SettingsPage = () => {
 
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="w-full lg:w-64 shrink-0">
-            <Tabs 
-              orientation="vertical"
-              value={activeTab} 
-              onValueChange={setActiveTab}
-              className="space-y-4"
-            >
+            <div className="space-y-4">
               <TabsList className="h-auto flex flex-col w-full bg-muted p-2 rounded-lg">
                 <TabsTrigger 
                   value="general" 
                   className="w-full justify-start gap-2 p-3"
+                  onClick={() => setActiveTab("general")}
+                  data-state={activeTab === "general" ? "active" : ""}
                 >
                   <Settings className="h-4 w-4" />
                   General
@@ -70,6 +67,8 @@ const SettingsPage = () => {
                 <TabsTrigger 
                   value="security" 
                   className="w-full justify-start gap-2 p-3"
+                  onClick={() => setActiveTab("security")}
+                  data-state={activeTab === "security" ? "active" : ""}
                 >
                   <Shield className="h-4 w-4" />
                   Security
@@ -77,6 +76,8 @@ const SettingsPage = () => {
                 <TabsTrigger 
                   value="access" 
                   className="w-full justify-start gap-2 p-3"
+                  onClick={() => setActiveTab("access")}
+                  data-state={activeTab === "access" ? "active" : ""}
                 >
                   <Users className="h-4 w-4" />
                   Access Control
@@ -84,38 +85,42 @@ const SettingsPage = () => {
                 <TabsTrigger 
                   value="integrations" 
                   className="w-full justify-start gap-2 p-3"
+                  onClick={() => setActiveTab("integrations")}
+                  data-state={activeTab === "integrations" ? "active" : ""}
                 >
                   <Link className="h-4 w-4" />
                   Integrations
                 </TabsTrigger>
               </TabsList>
-            </Tabs>
+            </div>
           </div>
           
           <div className="flex-1 min-w-0">
-            <TabsContent value="general" className="mt-0">
-              <GeneralSettings 
-                settings={settings.generalSettings} 
-                onSave={handleSaveGeneralSettings}
-                isLoading={isLoading}
-              />
-            </TabsContent>
-            
-            <TabsContent value="security" className="mt-0">
-              <SecuritySettings 
-                settings={settings.securitySettings} 
-                onSave={handleSaveSecuritySettings}
-                isLoading={isLoading}
-              />
-            </TabsContent>
-            
-            <TabsContent value="access" className="mt-0">
-              <AccessControlSettings />
-            </TabsContent>
-            
-            <TabsContent value="integrations" className="mt-0">
-              <MeetingIntegrationsSection />
-            </TabsContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsContent value="general" className="mt-0">
+                <GeneralSettings 
+                  settings={settings.generalSettings} 
+                  onSave={handleSaveGeneralSettings}
+                  isLoading={isLoading}
+                />
+              </TabsContent>
+              
+              <TabsContent value="security" className="mt-0">
+                <SecuritySettings 
+                  settings={settings.securitySettings} 
+                  onSave={handleSaveSecuritySettings}
+                  isLoading={isLoading}
+                />
+              </TabsContent>
+              
+              <TabsContent value="access" className="mt-0">
+                <AccessControlSettings />
+              </TabsContent>
+              
+              <TabsContent value="integrations" className="mt-0">
+                <MeetingIntegrationsSection />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
