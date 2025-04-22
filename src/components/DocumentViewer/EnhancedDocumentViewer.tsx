@@ -12,7 +12,6 @@ import { ViewerErrorState } from "./components/ViewerErrorState";
 import { DocumentPreview } from "./DocumentPreview";
 import { RiskAssessment } from "./RiskAssessment";
 import { AlertTriangle, AlertCircle, RefreshCcw, Bug, FileText } from "lucide-react";
-import { AIConnectionTest } from "@/components/AIConnectionTest";
 import { DocumentClientInfo } from "./DocumentClientInfo";
 
 interface EnhancedDocumentViewerProps {
@@ -264,10 +263,21 @@ export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
         </Alert>
       )}
       
-      {/* OpenAI Connection Diagnostics */}
+      {/* OpenAI Connection Diagnostics removed */}
       {showDiagnostics && (
         <div className="mb-4">
-          <AIConnectionTest />
+          <Card className="p-4">
+            <h3 className="font-medium mb-2">Document Diagnostics</h3>
+            <pre className="text-xs bg-muted p-2 rounded overflow-auto">
+              {JSON.stringify({
+                documentId,
+                hasAnalysis: !!document?.analysis?.length,
+                analysisFields: document?.analysis?.[0]?.content 
+                  ? Object.keys(document.analysis[0].content)
+                  : [],
+              }, null, 2)}
+            </pre>
+          </Card>
         </div>
       )}
       
