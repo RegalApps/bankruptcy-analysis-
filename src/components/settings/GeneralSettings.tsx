@@ -3,89 +3,160 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Loader2, Save } from "lucide-react";
+import { Monitor, Moon, Sun, Globe2, Save, Loader2 } from "lucide-react";
 
 interface GeneralSettingsProps {
-  settings: any;
+  settings: {
+    language: string;
+    setLanguage: (value: string) => void;
+    timeZone: string;
+    setTimeZone: (value: string) => void;
+    autoSave: boolean;
+    setAutoSave: (value: boolean) => void;
+    documentSync: boolean;
+    setDocumentSync: (value: boolean) => void;
+  };
   onSave: () => void;
   isLoading: boolean;
 }
 
 export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettingsProps) => {
-  const { theme, toggleTheme } = useTheme();
-  const isDarkMode = theme === "dark";
-
-  const handleSave = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onSave();
-  };
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Appearance</CardTitle>
+          <div className="flex items-center gap-2">
+            <Monitor className="h-5 w-5 text-primary" />
+            <CardTitle>Appearance</CardTitle>
+          </div>
           <CardDescription>
-            Customize how Secure Files AI looks on your device
+            Customize how SecureFiles AI looks on your device
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="dark-mode">Dark Mode</Label>
-              <CardDescription>
-                Switch between light and dark themes
-              </CardDescription>
-            </div>
-            <Switch
-              id="dark-mode"
-              checked={isDarkMode}
-              onCheckedChange={toggleTheme}
-            />
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-3 gap-4">
+            <Button
+              variant={theme === 'light' ? 'default' : 'outline'}
+              className="w-full"
+              onClick={() => setTheme('light')}
+            >
+              <Sun className="h-4 w-4 mr-2" />
+              Light
+            </Button>
+            <Button
+              variant={theme === 'dark' ? 'default' : 'outline'}
+              className="w-full"
+              onClick={() => setTheme('dark')}
+            >
+              <Moon className="h-4 w-4 mr-2" />
+              Dark
+            </Button>
+            <Button
+              variant={theme === 'system' ? 'default' : 'outline'}
+              className="w-full"
+              onClick={() => setTheme('system')}
+            >
+              <Monitor className="h-4 w-4 mr-2" />
+              System
+            </Button>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Language</CardTitle>
+          <div className="flex items-center gap-2">
+            <Globe2 className="h-5 w-5 text-primary" />
+            <CardTitle>Language & Region</CardTitle>
+          </div>
           <CardDescription>
-            Choose your preferred language for the application
+            Set your preferred language and timezone
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              variant={settings?.language === "en" ? "default" : "outline"}
-              className="w-full"
-              onClick={() => {
-                if (settings) settings.setLanguage("en");
-              }}
-            >
-              English
-            </Button>
-            <Button
-              variant={settings?.language === "fr" ? "default" : "outline"}
-              className="w-full"
-              onClick={() => {
-                if (settings) settings.setLanguage("fr");
-              }}
-            >
-              French
-            </Button>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label>Language</Label>
+            <Select value={settings.language} onValueChange={settings.setLanguage}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="fr">Français</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Timezone</Label>
+            <Select value={settings.timeZone} onValueChange={settings.setTimeZone}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="UTC">UTC</SelectItem>
+                <SelectItem value="EST">Eastern Time</SelectItem>
+                <SelectItem value="CST">Central Time</SelectItem>
+                <SelectItem value="PST">Pacific Time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Document Settings</CardTitle>
+          <CardDescription>
+            Configure document handling preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Auto-Save Documents</Label>
+              <CardDescription>
+                Automatically save documents while editing
+              </CardDescription>
+            </div>
+            <Switch
+              checked={settings.autoSave}
+              onCheckedChange={settings.setAutoSave}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Document Sync</Label>
+              <CardDescription>
+                Keep documents in sync across devices
+              </CardDescription>
+            </div>
+            <Switch
+              checked={settings.documentSync}
+              onCheckedChange={settings.setDocumentSync}
+            />
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={isLoading}>
+        <Button onClick={onSave} disabled={isLoading}>
           {isLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
           ) : (
-            <Save className="mr-2 h-4 w-4" />
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
           )}
-          Save Changes
         </Button>
       </div>
     </div>

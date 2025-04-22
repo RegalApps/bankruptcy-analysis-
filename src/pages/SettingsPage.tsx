@@ -8,6 +8,7 @@ import { AccessControlSettings } from "@/components/settings/AccessControlSettin
 import { MeetingIntegrationsSection } from "@/components/settings/MeetingIntegrationsSection";
 import { useSettings } from "@/hooks/useSettings";
 import { toast } from "sonner";
+import { Settings, Shield, Users, Link } from "lucide-react";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<string>("general");
@@ -42,70 +43,81 @@ const SettingsPage = () => {
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your account settings and preferences.
+      <div className="container mx-auto py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage your application preferences and security settings.
           </p>
         </div>
 
-        <Tabs 
-          value={activeTab} 
-          onValueChange={setActiveTab}
-          className="space-y-4"
-        >
-          <TabsList className="border-b w-full justify-start rounded-none p-0">
-            <TabsTrigger 
-              value="general" 
-              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="w-full lg:w-64 shrink-0">
+            <Tabs 
+              orientation="vertical"
+              value={activeTab} 
+              onValueChange={setActiveTab}
+              className="space-y-4"
             >
-              General
-            </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
-              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-            >
-              Security
-            </TabsTrigger>
-            <TabsTrigger 
-              value="access" 
-              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-            >
-              Access Control
-            </TabsTrigger>
-            <TabsTrigger 
-              value="integrations" 
-              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
-            >
-              Integrations
-            </TabsTrigger>
-          </TabsList>
+              <TabsList className="h-auto flex flex-col w-full bg-muted p-2 rounded-lg">
+                <TabsTrigger 
+                  value="general" 
+                  className="w-full justify-start gap-2 p-3"
+                >
+                  <Settings className="h-4 w-4" />
+                  General
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="security" 
+                  className="w-full justify-start gap-2 p-3"
+                >
+                  <Shield className="h-4 w-4" />
+                  Security
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="access" 
+                  className="w-full justify-start gap-2 p-3"
+                >
+                  <Users className="h-4 w-4" />
+                  Access Control
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="integrations" 
+                  className="w-full justify-start gap-2 p-3"
+                >
+                  <Link className="h-4 w-4" />
+                  Integrations
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
           
-          <TabsContent value="general" className="mt-6">
-            <GeneralSettings 
-              settings={settings.generalSettings} 
-              onSave={handleSaveGeneralSettings}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-          
-          <TabsContent value="security" className="mt-6">
-            <SecuritySettings 
-              settings={settings.securitySettings} 
-              onSave={handleSaveSecuritySettings}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-          
-          <TabsContent value="access" className="mt-6">
-            <AccessControlSettings />
-          </TabsContent>
-          
-          <TabsContent value="integrations" className="mt-6">
-            <MeetingIntegrationsSection />
-          </TabsContent>
-        </Tabs>
+          <div className="flex-1 min-w-0">
+            <TabsContent value="general" className="mt-0">
+              <GeneralSettings 
+                settings={settings.generalSettings} 
+                onSave={handleSaveGeneralSettings}
+                isLoading={isLoading}
+              />
+            </TabsContent>
+            
+            <TabsContent value="security" className="mt-0">
+              <SecuritySettings 
+                settings={settings.securitySettings} 
+                onSave={handleSaveSecuritySettings}
+                isLoading={isLoading}
+              />
+            </TabsContent>
+            
+            <TabsContent value="access" className="mt-0">
+              <AccessControlSettings />
+            </TabsContent>
+            
+            <TabsContent value="integrations" className="mt-0">
+              <MeetingIntegrationsSection />
+            </TabsContent>
+          </div>
+        </div>
       </div>
     </MainLayout>
   );

@@ -1,10 +1,11 @@
 
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Loader2, Save } from "lucide-react";
+import { Save, Shield, Clock, Globe, Bell } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface SecuritySettingsProps {
   settings: {
@@ -26,145 +27,143 @@ interface SecuritySettingsProps {
 }
 
 export const SecuritySettings = ({ settings, onSave, isLoading }: SecuritySettingsProps) => {
-  const handleSave = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onSave();
-  };
-
   return (
-    <Card className="p-6">
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-lg font-semibold mb-6">Security Settings</h2>
-
-          {/* Authentication Security */}
-          <div className="space-y-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Authentication</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="2fa">Two-Factor Authentication (2FA)</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Require a verification code in addition to your password
-                  </p>
-                </div>
-                <Switch
-                  id="2fa"
-                  checked={settings.twoFactorEnabled}
-                  onCheckedChange={settings.setTwoFactorEnabled}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="loginNotifications">Login Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive notifications for new login attempts
-                  </p>
-                </div>
-                <Switch
-                  id="loginNotifications"
-                  checked={settings.loginNotifications}
-                  onCheckedChange={settings.setLoginNotifications}
-                />
-              </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            <CardTitle>Authentication</CardTitle>
+          </div>
+          <CardDescription>
+            Configure your account security and authentication preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Two-Factor Authentication</Label>
+              <CardDescription>
+                Add an extra layer of security to your account
+              </CardDescription>
             </div>
+            <Switch
+              checked={settings.twoFactorEnabled}
+              onCheckedChange={settings.setTwoFactorEnabled}
+            />
           </div>
 
-          {/* Session Security */}
-          <div className="mt-8 space-y-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Session Management</h3>
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
-                  <Select value={settings.sessionTimeout} onValueChange={settings.setSessionTimeout}>
-                    <SelectTrigger id="sessionTimeout">
-                      <SelectValue placeholder="Select timeout" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="passwordExpiry">Password Expiry (days)</Label>
-                  <Select value={settings.passwordExpiry} onValueChange={settings.setPasswordExpiry}>
-                    <SelectTrigger id="passwordExpiry">
-                      <SelectValue placeholder="Select expiry period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="60">60 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
-                      <SelectItem value="180">180 days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Document Security */}
-          <div className="mt-8 space-y-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Document Security</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="encryption">Document Encryption</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Enable end-to-end encryption for sensitive documents
-                  </p>
-                </div>
-                <Switch
-                  id="encryption"
-                  checked={settings.documentEncryption}
-                  onCheckedChange={settings.setDocumentEncryption}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Access Control */}
-          <div className="mt-8 space-y-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Access Control</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="ipWhitelist">IP Whitelisting</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Restrict access to specific IP addresses
-                  </p>
-                </div>
-                <Switch
-                  id="ipWhitelist"
-                  checked={settings.ipWhitelisting}
-                  onCheckedChange={settings.setIpWhitelisting}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Save Button */}
-          <div className="mt-8 flex justify-end">
-            <Button 
-              onClick={handleSave}
-              disabled={isLoading}
+          <div className="space-y-2">
+            <Label>Session Timeout</Label>
+            <CardDescription className="mb-2">
+              Automatically log out after a period of inactivity
+            </CardDescription>
+            <Select
+              value={settings.sessionTimeout}
+              onValueChange={settings.setSessionTimeout}
             >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Save Security Settings
-            </Button>
+              <SelectTrigger>
+                <SelectValue placeholder="Select timeout duration" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15">15 minutes</SelectItem>
+                <SelectItem value="30">30 minutes</SelectItem>
+                <SelectItem value="60">1 hour</SelectItem>
+                <SelectItem value="120">2 hours</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            <CardTitle>Access Control</CardTitle>
+          </div>
+          <CardDescription>
+            Manage IP restrictions and access settings
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>IP Whitelisting</Label>
+              <CardDescription>
+                Restrict access to specific IP addresses
+              </CardDescription>
+            </div>
+            <Switch
+              checked={settings.ipWhitelisting}
+              onCheckedChange={settings.setIpWhitelisting}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Login Notifications</Label>
+              <CardDescription>
+                Receive alerts for new login attempts
+              </CardDescription>
+            </div>
+            <Switch
+              checked={settings.loginNotifications}
+              onCheckedChange={settings.setLoginNotifications}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            <CardTitle>Password Policy</CardTitle>
+          </div>
+          <CardDescription>
+            Configure password expiration and security policies
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label>Password Expiry</Label>
+            <CardDescription className="mb-2">
+              Require password changes after a specific period
+            </CardDescription>
+            <Select
+              value={settings.passwordExpiry}
+              onValueChange={settings.setPasswordExpiry}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select expiry period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="30">30 days</SelectItem>
+                <SelectItem value="60">60 days</SelectItem>
+                <SelectItem value="90">90 days</SelectItem>
+                <SelectItem value="180">180 days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={onSave} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
+          )}
+        </Button>
       </div>
-    </Card>
+    </div>
   );
 };
