@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { isDebugMode, debugTiming } from "@/utils/debugMode";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
-import { AIConnectionTest } from '@/components/AIConnectionTest';
 
 const Index = () => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
@@ -152,9 +151,6 @@ const Index = () => {
       ) : (
         <div className="flex flex-col min-h-screen">
           <MainLayout>
-            <div className="mb-8">
-              <AIConnectionTest />
-            </div>
             <RecentlyAccessedPage />
           </MainLayout>
           <Footer compact className="mt-auto w-full" />

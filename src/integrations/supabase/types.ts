@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          event_type: string
+          id: string
+          metadata: Json | null
+          timestamp: string | null
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          timestamp?: string | null
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
       api_integrations: {
         Row: {
           api_key: string
