@@ -6,10 +6,12 @@ import { supabase } from "@/lib/supabase";
  * Sets up real-time subscriptions for document updates
  */
 export const useDocumentRealtime = (
-  documentId: string,
-  onUpdate: () => void
+  documentId: string | null,
+  onUpdate: (() => void) | null
 ) => {
   useEffect(() => {
+    if (!documentId || !onUpdate) return;
+    
     const channelName = `document_updates_${documentId}`;
     const channel = supabase
       .channel(channelName)
@@ -36,19 +38,6 @@ export const useDocumentRealtime = (
         },
         async (payload) => {
           console.log("Comment update detected:", payload);
-          await onUpdate();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `metadata->>'documentId'=eq.${documentId}`
-        },
-        async (payload) => {
-          console.log("Notification update detected for document:", payload);
           await onUpdate();
         }
       )
