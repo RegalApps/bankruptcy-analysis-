@@ -8,7 +8,7 @@ import { AccessControlSettings } from "@/components/settings/AccessControlSettin
 import { MeetingIntegrationsSection } from "@/components/settings/MeetingIntegrationsSection";
 import { useSettings } from "@/hooks/useSettings";
 import { toast } from "sonner";
-import { Settings, Shield, Users, Link, Tablet } from "lucide-react";
+import { Settings, Shield, Users, Link, Layers } from "lucide-react";
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<string>("general");
@@ -81,8 +81,11 @@ const SettingsPage = () => {
                 value="integrations"
                 className="flex items-center gap-2 px-4 py-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
-                <Link className="h-5 w-5" />
-                <span className="border-b border-current">Integrations</span>
+                <Layers className="h-5 w-5" />
+                <span className="relative">
+                  Integrations
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary opacity-50 group-data-[state=active]:opacity-100 transition-opacity"></span>
+                </span>
               </TabsTrigger>
             </TabsList>
 
