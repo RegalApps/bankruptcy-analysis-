@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -36,7 +35,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
         </p>
       </div>
 
-      <Card className="border-2">
+      <Card className="border-2 hover:border-primary/20 transition-colors duration-200">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Monitor className="h-5 w-5 text-primary" />
@@ -48,11 +47,11 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
           <div className="grid grid-cols-3 gap-4">
             <Button
               variant={theme === 'light' ? 'default' : 'outline'}
-              className="w-full h-24 flex flex-col gap-2"
+              className="w-full h-24 flex flex-col gap-2 hover:bg-primary/10 transition-colors"
               onClick={() => setTheme('light')}
             >
               <Sun className="h-6 w-6" />
@@ -60,7 +59,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
             </Button>
             <Button
               variant={theme === 'dark' ? 'default' : 'outline'}
-              className="w-full h-24 flex flex-col gap-2"
+              className="w-full h-24 flex flex-col gap-2 hover:bg-primary/10 transition-colors"
               onClick={() => setTheme('dark')}
             >
               <Moon className="h-6 w-6" />
@@ -68,7 +67,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
             </Button>
             <Button
               variant={theme === 'system' ? 'default' : 'outline'}
-              className="w-full h-24 flex flex-col gap-2"
+              className="w-full h-24 flex flex-col gap-2 hover:bg-primary/10 transition-colors"
               onClick={() => setTheme('system')}
             >
               <Monitor className="h-6 w-6" />
@@ -78,7 +77,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
         </CardContent>
       </Card>
 
-      <Card className="border-2">
+      <Card className="border-2 hover:border-primary/20 transition-colors duration-200">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Globe2 className="h-5 w-5 text-primary" />
@@ -90,7 +89,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
           <div className="grid gap-6">
             <div className="space-y-2">
               <Label className="text-sm font-medium">Language</Label>
@@ -138,7 +137,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
         </CardContent>
       </Card>
 
-      <Card className="border-2">
+      <Card className="border-2 hover:border-primary/20 transition-colors duration-200">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Save className="h-5 w-5 text-primary" />
@@ -150,7 +149,7 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
           <div className="flex items-center justify-between py-3">
             <div className="space-y-0.5">
               <Label className="text-base">Auto-Save Documents</Label>
@@ -180,7 +179,12 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={onSave} disabled={isLoading} size="lg">
+        <Button 
+          onClick={onSave} 
+          disabled={isLoading} 
+          size="lg"
+          className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
+        >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />

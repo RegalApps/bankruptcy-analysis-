@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,103 +43,75 @@ const SettingsPage = () => {
   return (
     <MainLayout>
       <div className="container mx-auto py-8 max-w-[1200px]">
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-gray-100 dark:to-gray-400">
-            Settings
-          </h1>
-          <p className="text-muted-foreground mt-2 text-lg">
-            Customize your workspace preferences and security settings.
-          </p>
+        <div className="mb-10 relative overflow-hidden rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 p-8 md:p-10">
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold text-white mb-2">Settings</h1>
+            <p className="text-white/80 text-lg max-w-2xl">
+              Customize your workspace preferences and security settings
+            </p>
+          </div>
+          <div className="absolute inset-0 bg-grid-white/[0.2] [mask-image:linear-gradient(0deg,transparent,black)]" />
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-10">
-          <div className="w-full lg:w-72 shrink-0">
-            <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical">
-              <TabsList className="h-auto flex flex-col w-full p-1 gap-1 bg-card shadow-inner rounded-xl border-2">
-                <TabsTrigger 
-                  value="general" 
-                  className="w-full justify-start gap-3 p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all"
-                >
-                  <Settings className="h-5 w-5" />
-                  <div className="flex flex-col items-start text-left">
-                    <span className="font-semibold">General</span>
-                    <span className="text-xs text-muted-foreground font-normal">
-                      Appearance, language and regional settings
-                    </span>
-                  </div>
-                </TabsTrigger>
-                
-                <TabsTrigger 
-                  value="security" 
-                  className="w-full justify-start gap-3 p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all"
-                >
-                  <Shield className="h-5 w-5" />
-                  <div className="flex flex-col items-start text-left">
-                    <span className="font-semibold">Security</span>
-                    <span className="text-xs text-muted-foreground font-normal">
-                      Password, 2FA and access management
-                    </span>
-                  </div>
-                </TabsTrigger>
-                
-                <TabsTrigger 
-                  value="access" 
-                  className="w-full justify-start gap-3 p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all"
-                >
-                  <Users className="h-5 w-5" />
-                  <div className="flex flex-col items-start text-left">
-                    <span className="font-semibold">Access Control</span>
-                    <span className="text-xs text-muted-foreground font-normal">
-                      User roles and permissions
-                    </span>
-                  </div>
-                </TabsTrigger>
-                
-                <TabsTrigger 
-                  value="integrations" 
-                  className="w-full justify-start gap-3 p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all"
-                >
-                  <Link className="h-5 w-5" />
-                  <div className="flex flex-col items-start text-left">
-                    <span className="font-semibold">Integrations</span>
-                    <span className="text-xs text-muted-foreground font-normal">
-                      Connect external services
-                    </span>
-                  </div>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="bg-card shadow-sm rounded-xl border-2 p-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsContent value="general" className="mt-0">
-                  <GeneralSettings 
-                    settings={settings.generalSettings} 
-                    onSave={handleSaveGeneralSettings}
-                    isLoading={isLoading}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="security" className="mt-0">
-                  <SecuritySettings 
-                    settings={settings.securitySettings} 
-                    onSave={handleSaveSecuritySettings}
-                    isLoading={isLoading}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="access" className="mt-0">
-                  <AccessControlSettings />
-                </TabsContent>
-                
-                <TabsContent value="integrations" className="mt-0">
-                  <MeetingIntegrationsSection />
-                </TabsContent>
-              </Tabs>
+        <div className="space-y-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="w-full justify-start p-1 gap-1 bg-card shadow-inner rounded-xl border-2">
+              <TabsTrigger
+                value="general"
+                className="flex items-center gap-2 px-4 py-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Settings className="h-5 w-5" />
+                <span>General</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="security"
+                className="flex items-center gap-2 px-4 py-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Shield className="h-5 w-5" />
+                <span>Security</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="access"
+                className="flex items-center gap-2 px-4 py-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Users className="h-5 w-5" />
+                <span>Access Control</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="integrations"
+                className="flex items-center gap-2 px-4 py-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Link className="h-5 w-5" />
+                <span>Integrations</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="mt-6 bg-card shadow-sm rounded-xl border-2 p-6">
+              <TabsContent value="general">
+                <GeneralSettings 
+                  settings={settings.generalSettings} 
+                  onSave={handleSaveGeneralSettings}
+                  isLoading={isLoading}
+                />
+              </TabsContent>
+              
+              <TabsContent value="security">
+                <SecuritySettings 
+                  settings={settings.securitySettings} 
+                  onSave={handleSaveSecuritySettings}
+                  isLoading={isLoading}
+                />
+              </TabsContent>
+              
+              <TabsContent value="access">
+                <AccessControlSettings />
+              </TabsContent>
+              
+              <TabsContent value="integrations">
+                <MeetingIntegrationsSection />
+              </TabsContent>
             </div>
-          </div>
+          </Tabs>
         </div>
       </div>
     </MainLayout>
