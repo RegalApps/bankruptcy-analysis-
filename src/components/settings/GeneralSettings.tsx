@@ -28,114 +28,132 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-8">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-2xl font-semibold tracking-tight">General Settings</h2>
+        <p className="text-muted-foreground">
+          Manage your application preferences and appearance
+        </p>
+      </div>
+
+      <Card className="border-2">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Monitor className="h-5 w-5 text-primary" />
-            <CardTitle>Appearance</CardTitle>
+            <div>
+              <CardTitle className="text-lg">Appearance</CardTitle>
+              <CardDescription className="mt-1.5">
+                Customize how SecureFiles AI looks on your device
+              </CardDescription>
+            </div>
           </div>
-          <CardDescription>
-            Customize how SecureFiles AI looks on your device
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-3 gap-4">
             <Button
               variant={theme === 'light' ? 'default' : 'outline'}
-              className="w-full"
+              className="w-full h-24 flex flex-col gap-2"
               onClick={() => setTheme('light')}
             >
-              <Sun className="h-4 w-4 mr-2" />
+              <Sun className="h-6 w-6" />
               Light
             </Button>
             <Button
               variant={theme === 'dark' ? 'default' : 'outline'}
-              className="w-full"
+              className="w-full h-24 flex flex-col gap-2"
               onClick={() => setTheme('dark')}
             >
-              <Moon className="h-4 w-4 mr-2" />
+              <Moon className="h-6 w-6" />
               Dark
             </Button>
             <Button
               variant={theme === 'system' ? 'default' : 'outline'}
-              className="w-full"
+              className="w-full h-24 flex flex-col gap-2"
               onClick={() => setTheme('system')}
             >
-              <Monitor className="h-4 w-4 mr-2" />
+              <Monitor className="h-6 w-6" />
               System
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-2">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Globe2 className="h-5 w-5 text-primary" />
-            <CardTitle>Language & Region</CardTitle>
+            <div>
+              <CardTitle className="text-lg">Language & Region</CardTitle>
+              <CardDescription className="mt-1.5">
+                Set your preferred language, timezone, and currency
+              </CardDescription>
+            </div>
           </div>
-          <CardDescription>
-            Set your preferred language, timezone, and currency
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label>Language</Label>
-            <Select value={settings.language} onValueChange={settings.setLanguage}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="fr">Français</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="grid gap-6">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Language</Label>
+              <Select value={settings.language} onValueChange={settings.setLanguage}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="fr">Français</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label>Timezone</Label>
-            <Select value={settings.timeZone} onValueChange={settings.setTimeZone}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select timezone" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="UTC">UTC</SelectItem>
-                <SelectItem value="EST">Eastern Time</SelectItem>
-                <SelectItem value="CST">Central Time</SelectItem>
-                <SelectItem value="PST">Pacific Time</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Timezone</Label>
+              <Select value={settings.timeZone} onValueChange={settings.setTimeZone}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select timezone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="UTC">UTC</SelectItem>
+                  <SelectItem value="EST">Eastern Time</SelectItem>
+                  <SelectItem value="CST">Central Time</SelectItem>
+                  <SelectItem value="PST">Pacific Time</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label>Currency</Label>
-            <Select value={settings.defaultCurrency} onValueChange={settings.setDefaultCurrency}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CAD">CAD ($)</SelectItem>
-                <SelectItem value="USD">USD ($)</SelectItem>
-                <SelectItem value="EUR">EUR (€)</SelectItem>
-                <SelectItem value="GBP">GBP (£)</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Currency</Label>
+              <Select value={settings.defaultCurrency} onValueChange={settings.setDefaultCurrency}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CAD">CAD ($)</SelectItem>
+                  <SelectItem value="USD">USD ($)</SelectItem>
+                  <SelectItem value="EUR">EUR (€)</SelectItem>
+                  <SelectItem value="GBP">GBP (£)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-2">
         <CardHeader>
-          <CardTitle>Document Settings</CardTitle>
-          <CardDescription>
-            Configure document handling preferences
-          </CardDescription>
+          <div className="flex items-center gap-2">
+            <Save className="h-5 w-5 text-primary" />
+            <div>
+              <CardTitle className="text-lg">Document Settings</CardTitle>
+              <CardDescription className="mt-1.5">
+                Configure document handling preferences
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between py-3">
             <div className="space-y-0.5">
-              <Label>Auto-Save Documents</Label>
+              <Label className="text-base">Auto-Save Documents</Label>
               <CardDescription>
                 Automatically save documents while editing
               </CardDescription>
@@ -146,9 +164,9 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between py-3 border-t">
             <div className="space-y-0.5">
-              <Label>Document Sync</Label>
+              <Label className="text-base">Document Sync</Label>
               <CardDescription>
                 Keep documents in sync across devices
               </CardDescription>
@@ -162,15 +180,15 @@ export const GeneralSettings = ({ settings, onSave, isLoading }: GeneralSettings
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={onSave} disabled={isLoading}>
+        <Button onClick={onSave} disabled={isLoading} size="lg">
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               Saving...
             </>
           ) : (
             <>
-              <Save className="mr-2 h-4 w-4" />
+              <Save className="mr-2 h-5 w-5" />
               Save Changes
             </>
           )}

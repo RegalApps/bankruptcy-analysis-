@@ -43,76 +43,103 @@ const SettingsPage = () => {
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your application preferences and security settings.
+      <div className="container mx-auto py-8 max-w-[1200px]">
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent dark:from-gray-100 dark:to-gray-400">
+            Settings
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Customize your workspace preferences and security settings.
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="w-full lg:w-64 shrink-0">
+        <div className="flex flex-col lg:flex-row gap-10">
+          <div className="w-full lg:w-72 shrink-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical">
-              <TabsList className="h-auto flex flex-col w-full bg-muted p-2 rounded-lg">
+              <TabsList className="h-auto flex flex-col w-full p-1 gap-1 bg-card shadow-inner rounded-xl border-2">
                 <TabsTrigger 
                   value="general" 
-                  className="w-full justify-start gap-2 p-3"
+                  className="w-full justify-start gap-3 p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all"
                 >
-                  <Settings className="h-4 w-4" />
-                  General
+                  <Settings className="h-5 w-5" />
+                  <div className="flex flex-col items-start text-left">
+                    <span className="font-semibold">General</span>
+                    <span className="text-xs text-muted-foreground font-normal">
+                      Appearance, language and regional settings
+                    </span>
+                  </div>
                 </TabsTrigger>
+                
                 <TabsTrigger 
                   value="security" 
-                  className="w-full justify-start gap-2 p-3"
+                  className="w-full justify-start gap-3 p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all"
                 >
-                  <Shield className="h-4 w-4" />
-                  Security
+                  <Shield className="h-5 w-5" />
+                  <div className="flex flex-col items-start text-left">
+                    <span className="font-semibold">Security</span>
+                    <span className="text-xs text-muted-foreground font-normal">
+                      Password, 2FA and access management
+                    </span>
+                  </div>
                 </TabsTrigger>
+                
                 <TabsTrigger 
                   value="access" 
-                  className="w-full justify-start gap-2 p-3"
+                  className="w-full justify-start gap-3 p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all"
                 >
-                  <Users className="h-4 w-4" />
-                  Access Control
+                  <Users className="h-5 w-5" />
+                  <div className="flex flex-col items-start text-left">
+                    <span className="font-semibold">Access Control</span>
+                    <span className="text-xs text-muted-foreground font-normal">
+                      User roles and permissions
+                    </span>
+                  </div>
                 </TabsTrigger>
+                
                 <TabsTrigger 
                   value="integrations" 
-                  className="w-full justify-start gap-2 p-3"
+                  className="w-full justify-start gap-3 p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all"
                 >
-                  <Link className="h-4 w-4" />
-                  Integrations
+                  <Link className="h-5 w-5" />
+                  <div className="flex flex-col items-start text-left">
+                    <span className="font-semibold">Integrations</span>
+                    <span className="text-xs text-muted-foreground font-normal">
+                      Connect external services
+                    </span>
+                  </div>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
           
           <div className="flex-1 min-w-0">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsContent value="general" className="mt-0">
-                <GeneralSettings 
-                  settings={settings.generalSettings} 
-                  onSave={handleSaveGeneralSettings}
-                  isLoading={isLoading}
-                />
-              </TabsContent>
-              
-              <TabsContent value="security" className="mt-0">
-                <SecuritySettings 
-                  settings={settings.securitySettings} 
-                  onSave={handleSaveSecuritySettings}
-                  isLoading={isLoading}
-                />
-              </TabsContent>
-              
-              <TabsContent value="access" className="mt-0">
-                <AccessControlSettings />
-              </TabsContent>
-              
-              <TabsContent value="integrations" className="mt-0">
-                <MeetingIntegrationsSection />
-              </TabsContent>
-            </Tabs>
+            <div className="bg-card shadow-sm rounded-xl border-2 p-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsContent value="general" className="mt-0">
+                  <GeneralSettings 
+                    settings={settings.generalSettings} 
+                    onSave={handleSaveGeneralSettings}
+                    isLoading={isLoading}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="security" className="mt-0">
+                  <SecuritySettings 
+                    settings={settings.securitySettings} 
+                    onSave={handleSaveSecuritySettings}
+                    isLoading={isLoading}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="access" className="mt-0">
+                  <AccessControlSettings />
+                </TabsContent>
+                
+                <TabsContent value="integrations" className="mt-0">
+                  <MeetingIntegrationsSection />
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         </div>
       </div>
