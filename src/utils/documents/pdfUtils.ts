@@ -1,8 +1,4 @@
-
-import * as pdfjs from 'pdfjs-dist';
-
-// Set the worker source
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+import pdfjs from '@/utils/pdfConfig';
 
 /**
  * Extracts text from a PDF document with enhanced error handling

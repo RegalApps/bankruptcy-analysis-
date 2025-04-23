@@ -1,0 +1,23 @@
+{
+  "test": {
+    "extracted_info": {
+      "clientName": "Test Client",
+      "formNumber": "Test",
+      "formType": "test form",
+      "documentStatus": "complete",
+      "summary": "This is a test analysis."
+    },
+    "risks": [
+      {
+        "type": "Test Risk",
+        "description": "This is a test risk description.",
+        "severity": "medium",
+        "regulation": "Test Regulation",
+        "impact": "Test Impact",
+        "requiredAction": "Test Action",
+        "solution": "Test Solution",
+        "deadline": "Test Deadline"
+      }
+    ]
+  }
+}

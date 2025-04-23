@@ -1,6 +1,6 @@
-
 import { toast } from "sonner";
 import { startTiming, endTiming } from "./performanceMonitor";
+import logger from './logger';
 import { analyticsService } from "@/services/analyticsService";
 
 // Debounce function to prevent excessive toasts

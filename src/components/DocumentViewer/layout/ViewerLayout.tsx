@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
@@ -12,7 +11,6 @@ interface ViewerLayoutProps {
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
   collaborationPanel: React.ReactNode;
-  taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
   documentTitle: string;
   documentType: string;
@@ -23,7 +21,6 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
   sidebar,
   mainContent,
   collaborationPanel,
-  taskPanel,
   versionPanel,
   documentTitle,
   documentType,
@@ -62,7 +59,6 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
           mainContent={mainContent}
           showCollaborationPanel={showCollaborationPanel}
           collaborationPanel={collaborationPanel}
-          taskPanel={taskPanel}
           versionPanel={versionPanel}
           selectedTab={selectedTab}
           setSelectedTab={setSelectedTab}
@@ -74,7 +70,6 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
           mainContent={mainContent}
           showCollaborationPanel={showCollaborationPanel}
           collaborationPanel={collaborationPanel}
-          taskPanel={taskPanel}
           versionPanel={versionPanel}
           selectedTab={selectedTab}
           setSelectedTab={setSelectedTab}
@@ -84,7 +79,6 @@ export const ViewerLayout: React.FC<ViewerLayoutProps> = ({
           sidebar={sidebar}
           mainContent={mainContent}
           collaborationPanel={collaborationPanel}
-          taskPanel={taskPanel}
           versionPanel={versionPanel}
           selectedTab={selectedTab}
           setSelectedTab={setSelectedTab}

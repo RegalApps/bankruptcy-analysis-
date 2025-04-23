@@ -1,4 +1,3 @@
-
 import React from "react";
 import { TabsContainer } from "./TabsContainer";
 
@@ -8,7 +7,6 @@ interface MobileLayoutProps {
   mainContent: React.ReactNode;
   showCollaborationPanel: boolean;
   collaborationPanel: React.ReactNode;
-  taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
   selectedTab: string;
   setSelectedTab: (value: string) => void;
@@ -20,7 +18,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   mainContent,
   showCollaborationPanel,
   collaborationPanel,
-  taskPanel,
   versionPanel,
   selectedTab,
   setSelectedTab,
@@ -43,7 +40,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             selectedTab={selectedTab}
             setSelectedTab={setSelectedTab}
             collaborationPanel={collaborationPanel}
-            taskPanel={taskPanel}
             versionPanel={versionPanel}
           />
         </div>

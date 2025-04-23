@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { useState } from "react";
 import { Circle, CheckCircle2, AlertTriangle, AlertOctagon, Bell } from "lucide-react";
@@ -15,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { createTask } from "./services/taskService";
 
 interface TaskCreationDialogProps {
   isOpen: boolean;
@@ -48,26 +47,29 @@ export const TaskCreationDialog: React.FC<TaskCreationDialogProps> = ({
     setIsSubmitting(true);
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
+      // Calculate due date based on severity
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + (severity === 'high' ? 2 : severity === 'medium' ? 5 : 7));
 
-      const { error: taskError } = await supabase
-        .from('tasks')
-        .insert({
-          title,
-          description,
-          severity,
-          document_id: documentId,
-          created_by: user.id,
-          assigned_to: assignedTo,
-          due_date: dueDate.toISOString(),
-          status: 'pending'
-        });
+      // Create a mock user ID for local implementation
+      const currentUserId = localStorage.getItem('current_user_id') || `user-${Date.now()}`;
+      
+      // Store the user ID for future use
+      if (!localStorage.getItem('current_user_id')) {
+        localStorage.setItem('current_user_id', currentUserId);
+      }
 
-      if (taskError) throw taskError;
+      // Create the task using our local storage service
+      await createTask(documentId, {
+        title,
+        description,
+        severity,
+        document_id: documentId,
+        created_by: currentUserId,
+        assigned_to: assignedTo,
+        due_date: dueDate.toISOString(),
+        status: 'pending'
+      });
 
       toast({
         title: "Task Created",

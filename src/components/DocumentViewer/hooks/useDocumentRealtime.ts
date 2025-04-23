@@ -1,9 +1,9 @@
-
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 
 /**
- * Sets up real-time subscriptions for document updates
+ * A stub for real-time updates in local-only mode
+ * In a local-only implementation, there's no real-time subscription needed
+ * This is kept as a placeholder to maintain the same API
  */
 export const useDocumentRealtime = (
   documentId: string | null,
@@ -12,42 +12,14 @@ export const useDocumentRealtime = (
   useEffect(() => {
     if (!documentId || !onUpdate) return;
     
-    const channelName = `document_updates_${documentId}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'document_analysis',
-          filter: `document_id=eq.${documentId}`
-        },
-        async (payload) => {
-          console.log("Analysis update detected:", payload);
-          await onUpdate();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'document_comments',
-          filter: `document_id=eq.${documentId}`
-        },
-        async (payload) => {
-          console.log("Comment update detected:", payload);
-          await onUpdate();
-        }
-      )
-      .subscribe((status) => {
-        console.log(`Subscription status for ${channelName}:`, status);
-      });
-
+    // Log that we're in local-only mode
+    console.log(`Local-only mode: No real-time updates for document ${documentId}`);
+    
+    // In local-only mode, we don't need to set up any subscriptions
+    // This is just a placeholder to maintain the same API
+    
     return () => {
-      console.log("Cleaning up real-time subscription for channel:", channelName);
-      supabase.removeChannel(channel);
+      // No cleanup needed in local-only mode
     };
   }, [documentId, onUpdate]);
 };

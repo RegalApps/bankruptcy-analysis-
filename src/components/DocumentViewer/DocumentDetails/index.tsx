@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { DocumentDetailsProps } from "./types";
 import { useDocumentUpdate } from "./useDocumentUpdate";
@@ -7,6 +6,7 @@ import { EditableFields } from "./EditableFields";
 import { DocumentDetailsHeader } from "./components/DocumentDetailsHeader";
 import { ReadOnlyFields } from "./components/ReadOnlyFields";
 import { useDocumentFields } from "./hooks/useDocumentFields";
+import { getDocumentSummary } from '@/utils/documentSummaries';
 
 export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
   clientName,
@@ -42,6 +42,10 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
 
   const relevantFields = getRelevantFields(formType);
 
+  // Get comprehensive assessment text if available for this form type
+  const normalizedFormType = formType?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
+  const comprehensiveAssessment = getDocumentSummary(normalizedFormType);
+
   const handleEdit = () => {
     const initialValues = relevantFields.reduce((acc, field) => ({
       ...acc,
@@ -75,7 +79,12 @@ export const DocumentDetails: React.FC<DocumentDetailsProps> = ({
         handleCancel={handleCancel}
       />
 
-      {summary && <DocumentSummary summary={summary} />}
+      {summary && (
+        <DocumentSummary 
+          summary={summary} 
+          comprehensiveAssessment={comprehensiveAssessment}
+        />
+      )}
 
       <div className="space-y-1 mt-4">
         {isEditing ? (

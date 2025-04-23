@@ -1,17 +1,24 @@
-
 import React from "react";
 import { RefreshCw, AlertTriangle, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ViewerErrorStateProps {
-  error: string;
-  onRetry: () => void;
+  error?: string;
+  title?: string;
+  description?: string;
+  onRetry?: () => void;
 }
 
-export const ViewerErrorState: React.FC<ViewerErrorStateProps> = ({ error, onRetry }) => {
-  const isNetworkError = error.toLowerCase().includes('network') || 
-                         error.toLowerCase().includes('connection') ||
-                         error.toLowerCase().includes('fetch');
+export const ViewerErrorState: React.FC<ViewerErrorStateProps> = ({ 
+  error, 
+  title, 
+  description, 
+  onRetry 
+}) => {
+  const errorMessage = error || description || "An error occurred while loading the document";
+  const isNetworkError = errorMessage.toLowerCase().includes('network') || 
+                         errorMessage.toLowerCase().includes('connection') ||
+                         errorMessage.toLowerCase().includes('fetch');
   
   return (
     <div className="py-12 flex flex-col items-center justify-center gap-4">
@@ -27,10 +34,10 @@ export const ViewerErrorState: React.FC<ViewerErrorStateProps> = ({ error, onRet
         )}
         
         <h3 className="text-lg font-medium mb-3">
-          {isNetworkError ? "Network Connection Error" : "Document Loading Error"}
+          {title || (isNetworkError ? "Network Connection Error" : "Document Loading Error")}
         </h3>
         
-        <p className="text-muted-foreground mb-6">{error}</p>
+        <p className="text-muted-foreground mb-6">{errorMessage}</p>
         
         {isNetworkError && (
           <p className="text-sm text-muted-foreground mb-4">
@@ -38,10 +45,12 @@ export const ViewerErrorState: React.FC<ViewerErrorStateProps> = ({ error, onRet
           </p>
         )}
         
-        <Button onClick={onRetry} className="mx-auto">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Retry Loading
-        </Button>
+        {onRetry && (
+          <Button onClick={onRetry} className="mx-auto">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry Loading
+          </Button>
+        )}
       </div>
     </div>
   );

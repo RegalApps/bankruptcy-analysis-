@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo } from "react";
 import { DocumentPreview } from "./DocumentPreview";
 import { useDocumentViewer } from "./hooks/useDocumentViewer";
@@ -9,7 +8,6 @@ import { ViewerLoadingState } from "./components/ViewerLoadingState";
 import { ViewerErrorState } from "./components/ViewerErrorState";
 import { ViewerNotFoundState } from "./components/ViewerNotFoundState";
 import { isDocumentForm47 } from "./utils/documentTypeUtils";
-import { TaskManager } from "./TaskManager";
 import { VersionTab } from "./VersionTab";
 import { debugTiming, isDebugMode } from "@/utils/debugMode";
 import { DocumentDetails, Risk } from "./types";
@@ -127,13 +125,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           collaborationPanel={
             <CollaborationPanel document={form47Document} onCommentAdded={handleDocumentUpdated} />
           }
-          taskPanel={
-            <TaskManager 
-              documentId="form47" 
-              tasks={[]} 
-              onTaskUpdate={handleDocumentUpdated} 
-            />
-          }
           versionPanel={
             <VersionTab 
               documentId="form47"
@@ -186,13 +177,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         }
         collaborationPanel={
           <CollaborationPanel document={document} onCommentAdded={handleDocumentUpdated} />
-        }
-        taskPanel={
-          <TaskManager 
-            documentId={documentId} 
-            tasks={document.tasks || []} 
-            onTaskUpdate={handleDocumentUpdated} 
-          />
         }
         versionPanel={
           <VersionTab 

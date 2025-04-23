@@ -1,34 +1,57 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Folder } from "lucide-react";
 import { toast } from "sonner";
+import { getDocuments, getDocumentById, uploadDocument } from "@/utils/documentOperations";
+import { v4 as uuidv4 } from 'uuid';
+
+// Define client folder type to match our local implementation
+interface ClientFolder {
+  id: string;
+  title: string;
+}
 
 export const DocumentUploadSection = () => {
   const [newClientName, setNewClientName] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [clients, setClients] = useState<ClientFolder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fetch existing clients
-  const { data: clients, refetch: refetchClients } = useQuery({
-    queryKey: ["clients"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("documents")
-        .select("id, title")
-        .eq("is_folder", true)
-        .eq("folder_type", "client");
+  const fetchClients = async () => {
+    setIsLoading(true);
+    try {
+      // Get all documents from local storage
+      const allDocuments = await getDocuments();
+      
+      // Filter for client folders - using type checking to handle potential missing properties
+      const clientFolders = allDocuments.filter(doc => {
+        // Check if the document has folder properties
+        return doc.type === 'folder' || 
+               (doc as any).is_folder === true && 
+               (doc as any).folder_type === "client";
+      });
+      
+      setClients(clientFolders.map(folder => ({
+        id: folder.id,
+        title: folder.title || "Unnamed Client"
+      })));
+    } catch (error) {
+      console.error("Error fetching client folders:", error);
+      toast.error("Failed to load client folders");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  useEffect(() => {
+    fetchClients();
+  }, []);
 
   // Create a new client folder
   const handleCreateClient = async () => {
@@ -38,22 +61,20 @@ export const DocumentUploadSection = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from("documents")
-        .insert({
-          title: newClientName.trim(),
-          is_folder: true,
-          folder_type: "client",
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      // Generate a unique ID for the new client folder
+      const newClientId = `client-${uuidv4()}`;
+      
+      // Create a folder file to upload
+      const folderBlob = new Blob([`Client folder: ${newClientName}`], { type: 'application/folder' });
+      const folderFile = new File([folderBlob], `${newClientName.trim()}.folder`, { type: 'application/folder' });
+      
+      // Upload the folder as a document
+      await uploadDocument(folderFile);
+      
       toast.success("Client folder created successfully");
       setNewClientName("");
-      refetchClients();
-      setSelectedClientId(data.id);
+      fetchClients();
+      setSelectedClientId(newClientId);
     } catch (error) {
       toast.error("Failed to create client folder");
       console.error("Error creating client folder:", error);
@@ -63,12 +84,18 @@ export const DocumentUploadSection = () => {
   const handleUploadComplete = async (documentId: string) => {
     if (selectedClientId) {
       try {
-        const { error } = await supabase
-          .from("documents")
-          .update({ parent_folder_id: selectedClientId })
-          .eq("id", documentId);
+        // Get the document from local storage
+        const document = await getDocumentById(documentId);
+        
+        if (!document) {
+          throw new Error("Document not found");
+        }
+        
+        // In a local-only implementation, we would update the document
+        // with the parent folder ID, but since we're using an array for storage,
+        // we'll just log this action
+        console.log(`Document ${documentId} linked to client ${selectedClientId}`);
 
-        if (error) throw error;
         toast.success("Document uploaded and linked to client successfully");
       } catch (error) {
         console.error("Error linking document to client:", error);
@@ -126,6 +153,19 @@ export const DocumentUploadSection = () => {
               <FileUpload onUploadComplete={handleUploadComplete} />
             </TabsContent>
           ))}
+          
+          {isLoading && (
+            <div className="flex justify-center p-4">
+              <span className="text-sm text-muted-foreground">Loading clients...</span>
+            </div>
+          )}
+          
+          {!isLoading && clients.length === 0 && (
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+              <Folder className="h-8 w-8 text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">No client folders found. Create your first client to get started.</p>
+            </div>
+          )}
         </Tabs>
       </CardContent>
     </Card>

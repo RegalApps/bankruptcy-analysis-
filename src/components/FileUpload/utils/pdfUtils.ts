@@ -1,5 +1,5 @@
-
-import * as pdfjs from 'pdfjs-dist';
+// Import the configured pdfjs with worker
+import pdfjs from './pdfWorkerConfig';
 import { PDF_CONFIG } from './pdfConfig';
 import { preprocessDocument } from './documentPreprocessing';
 import { extractFormFields, identifyFormType } from './formRecognition';

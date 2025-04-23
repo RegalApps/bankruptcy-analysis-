@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertCircle, FileText, RefreshCcw } from "lucide-react";
-import { PDFViewer } from "./components/PDFViewer";
-import { ImageViewer } from "./ImageViewer";
-import { ExcelViewer } from "./ExcelViewer";
-import { useDocumentAnalysis } from "./hooks/useDocumentAnalysis";
 import { usePreviewState } from "./hooks/usePreviewState";
+import { analyzeBankruptcyForm, BankruptcyAnalysisResult } from "@/utils/documentOperations";
+import { getJson, setJson } from "@/utils/storage";
+import logger from "@/utils/logger";
 
 interface DocumentPreviewProps {
   documentId?: string;
@@ -17,6 +15,73 @@ interface DocumentPreviewProps {
   bypassAnalysis?: boolean;
   onAnalysisComplete?: () => void;
 }
+
+// Local storage for document analysis
+const getLocalAnalysisData = (documentId: string) => {
+  const analysisKey = `local_analysis_${documentId}`;
+  return getJson(analysisKey);
+};
+
+// Save analysis data to local storage
+const saveLocalAnalysisData = (documentId: string, data: any) => {
+  const analysisKey = `local_analysis_${documentId}`;
+  setJson(analysisKey, data);
+};
+
+// Convert bankruptcy analysis to document analysis format
+const convertBankruptcyAnalysisToDocumentAnalysis = (
+  analysis: BankruptcyAnalysisResult,
+  fileName: string
+) => {
+  // Create risks array from missing fields and validation issues
+  const risks = [
+    ...analysis.missingFields.map(field => ({
+      type: 'Missing Information',
+      description: `Missing field: ${field}`,
+      severity: analysis.riskLevel as string,
+      regulation: 'Bankruptcy Filing Guidelines',
+      impact: 'Potential delay in processing',
+      requiredAction: 'Complete all required fields',
+      solution: 'Review document for completeness',
+      deadline: '7 days'
+    })),
+    ...analysis.validationIssues.map(issue => ({
+      type: 'Validation Issue',
+      description: issue,
+      severity: analysis.riskLevel as string,
+      regulation: 'Bankruptcy Filing Guidelines',
+      impact: 'Potential rejection of filing',
+      requiredAction: 'Address validation issues',
+      solution: 'Correct errors in document',
+      deadline: '5 days'
+    }))
+  ];
+
+  // If no specific risks were found but risk level is not low, add a general risk
+  if (risks.length === 0 && analysis.riskLevel !== 'low') {
+    risks.push({
+      type: 'General Risk',
+      description: 'This document requires additional review',
+      severity: analysis.riskLevel,
+      regulation: 'Bankruptcy Filing Guidelines',
+      impact: 'Potential processing issues',
+      requiredAction: 'Review document thoroughly',
+      solution: 'Consult with an expert',
+      deadline: '7 days'
+    });
+  }
+
+  // Create extracted info from key fields
+  return {
+    extracted_info: {
+      clientName: analysis.keyFields.creditor || analysis.keyFields.debtor || 'Unknown',
+      formNumber: analysis.formType.split(',')[0].replace('Form', '').trim(),
+      formType: analysis.formType.split(',')[1]?.trim() || analysis.formType,
+      summary: analysis.narrative
+    },
+    risks: risks
+  };
+};
 
 export const DocumentPreview = ({
   documentId,
@@ -27,6 +92,10 @@ export const DocumentPreview = ({
 }: DocumentPreviewProps) => {
   const [downloading, setDownloading] = useState(false);
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [analysisStep, setAnalysisStep] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const { toast } = useToast();
   
   const {
@@ -34,54 +103,29 @@ export const DocumentPreview = ({
     isLoading: previewLoading,
     error: previewError,
     fileType,
-    isExcelFile,
     fileExists,
     downloadUrl,
+    isLocalFile,
   } = usePreviewState({ storagePath });
-  
-  const {
-    analyzing,
-    analysisStep,
-    progress,
-    processingStage,
-    error: analysisError,
-    setSession,
-    handleAnalyzeDocument
-  } = useDocumentAnalysis(storagePath, onAnalysisComplete);
-  
-  useEffect(() => {
-    const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-    };
-    getSession();
-  }, [setSession]);
   
   useEffect(() => {
     const fetchAnalysisData = async () => {
       if (!documentId || analyzing) return;
       
       try {
-        console.log("Fetching analysis data for document:", documentId);
-        const { data, error } = await supabase
-          .from('document_analysis')
-          .select('content')
-          .eq('document_id', documentId)
-          .maybeSingle();
-          
-        if (error) {
-          console.error("Error fetching analysis data:", error);
-          return;
-        }
+        logger.info("Fetching analysis data for document:", documentId);
         
-        if (data?.content) {
-          console.log("Analysis data found:", data.content);
-          setAnalysisData(data.content);
+        // Get analysis data from local storage
+        const data = getLocalAnalysisData(documentId);
+        
+        if (data) {
+          logger.info("Analysis data found:", data);
+          setAnalysisData(data);
         } else {
-          console.log("No analysis data found for document");
+          logger.info("No analysis data found for document");
         }
       } catch (err) {
-        console.error("Error in fetchAnalysisData:", err);
+        logger.error("Error in fetchAnalysisData:", err);
       }
     };
     
@@ -89,47 +133,99 @@ export const DocumentPreview = ({
   }, [documentId, analyzing]);
   
   const handleDownload = async () => {
-    if (!storagePath) return;
-    
-    try {
-      setDownloading(true);
-      
-      if (downloadUrl) {
-        const a = document.createElement("a");
-        a.href = downloadUrl;
-        a.download = title || storagePath.split("/").pop() || "file";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        toast({ title: "Download started" });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Download failed",
-          description: "File URL not available"
-        });
-      }
-    } catch (error) {
-      console.error("Download error:", error);
+    if (isLocalFile) {
       toast({
-        variant: "destructive",
-        title: "Download failed",
-        description: "An error occurred while downloading the file"
+        title: "Local Only Mode",
+        description: "Download functionality is disabled in local-only mode"
       });
-    } finally {
-      setDownloading(false);
+    } else {
+      // Implement download logic here
     }
   };
   
-  const triggerAnalysis = () => {
-    handleAnalyzeDocument();
+  const triggerAnalysis = async () => {
+    if (!documentId || !url) {
+      toast({
+        variant: "destructive",
+        title: "Analysis Error",
+        description: "Document not available for analysis"
+      });
+      return;
+    }
+    
+    setAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysisStep("Initializing analysis...");
+    setProgress(10);
+    
+    try {
+      // Fetch the document as a blob
+      setAnalysisStep("Downloading document...");
+      setProgress(20);
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to download document: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      setProgress(30);
+      
+      // Convert blob to File object
+      const file = new File([blob], title || "document.pdf", { type: blob.type });
+      
+      setAnalysisStep("Analyzing document...");
+      setProgress(40);
+      
+      // Process the document using bankruptcyAnalyzer
+      const analysisResult = await analyzeBankruptcyForm(file);
+      
+      setProgress(70);
+      setAnalysisStep("Processing results...");
+      
+      // Convert the analysis to the format expected by the UI
+      const documentAnalysis = convertBankruptcyAnalysisToDocumentAnalysis(analysisResult, file.name);
+      
+      // Save analysis to local storage
+      if (documentId) {
+        saveLocalAnalysisData(documentId, documentAnalysis);
+        logger.info("Analysis saved to local storage:", documentId);
+      }
+      
+      // Update state with analysis data
+      setAnalysisData(documentAnalysis);
+      setProgress(100);
+      setAnalysisStep("Analysis complete");
+      
+      // Notify parent component if callback provided
+      if (onAnalysisComplete) {
+        onAnalysisComplete();
+      }
+      
+      toast({
+        title: "Analysis complete",
+        description: "Document has been analyzed successfully"
+      });
+    } catch (error) {
+      logger.error("Analysis error:", error);
+      setAnalysisError(error.message || "An error occurred during analysis");
+      
+      toast({
+        variant: "destructive",
+        title: "Analysis Failed",
+        description: error.message || "Failed to analyze document"
+      });
+    } finally {
+      setAnalyzing(false);
+    }
   };
   
   if (previewLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-4 space-y-4">
         <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full"></div>
-        <p className="text-center text-muted-foreground">Loading document preview...</p>
+        <p className="text-center text-muted-foreground">Loading document...</p>
       </div>
     );
   }
@@ -140,9 +236,8 @@ export const DocumentPreview = ({
         <div className="p-3 bg-red-100 rounded-full">
           <AlertCircle className="h-12 w-12 text-red-500" />
         </div>
-        <h3 className="text-xl font-medium">Error Loading Document</h3>
         <p className="text-center text-muted-foreground">
-          {previewError || "The document could not be loaded. It may have been deleted or moved."}
+          {previewError || "Document not found or cannot be previewed"}
         </p>
       </div>
     );
@@ -159,10 +254,6 @@ export const DocumentPreview = ({
             </div>
             <span className="text-amber-600 text-xs font-medium">{progress}%</span>
           </div>
-          
-          {processingStage && (
-            <p className="text-xs text-amber-700 mt-1">{processingStage}</p>
-          )}
           
           <div className="w-full bg-amber-200 rounded-full h-1 mt-2">
             <div className="bg-amber-500 h-1 rounded-full" style={{ width: `${progress}%` }}></div>
@@ -216,48 +307,57 @@ export const DocumentPreview = ({
             onClick={handleDownload}
             disabled={downloading}
           >
-            {downloading ? (
-              <>
-                <div className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full mr-1"></div>
-                Downloading...
-              </>
-            ) : (
-              <>Download</>
-            )}
+            Download
           </Button>
         </div>
       </div>
       
       <Card className="flex-grow overflow-hidden">
-        <div className="h-full">
-          {fileType === "pdf" && url && (
-            <PDFViewer fileUrl={url} title={title || "Document"} zoomLevel={100} />
-          )}
-          
-          {fileType === "image" && url && (
-            <ImageViewer url={url} />
-          )}
-          
-          {isExcelFile && url && (
-            <ExcelViewer url={url} />
-          )}
-          
-          {fileType !== "pdf" && fileType !== "image" && !isExcelFile && (
-            <div className="flex flex-col items-center justify-center h-full p-4">
-              <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-              <p className="text-center text-muted-foreground">
-                Preview not available for this file type. Please download the file to view it.
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleDownload}
-                className="mt-4"
-              >
-                Download
-              </Button>
-            </div>
-          )}
+        <div className="h-full p-4">
+          {/* Simplified document preview - just shows file type */}
+          <div className="flex flex-col items-center justify-center h-full">
+            <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+            <p className="text-center text-muted-foreground">
+              {fileType.toUpperCase()} document: {title || storagePath.split("/").pop()}
+            </p>
+            <p className="text-center text-muted-foreground text-sm mt-2">
+              Document preview is simplified in local-only mode.
+            </p>
+            {analysisData && (
+              <div className="mt-6 w-full max-w-md p-4 border rounded-md bg-background/50">
+                <h3 className="font-medium mb-2">Analysis Results:</h3>
+                <p className="text-sm mb-1">
+                  <span className="font-medium">Summary:</span> {analysisData.extracted_info?.summary || 'No summary available'}
+                </p>
+                <p className="text-sm mb-1">
+                  <span className="font-medium">Client:</span> {analysisData.extracted_info?.clientName || 'Unknown'}
+                </p>
+                <p className="text-sm mb-1">
+                  <span className="font-medium">Form Type:</span> {analysisData.extracted_info?.formType || 'Unknown'}
+                </p>
+                
+                {analysisData.risks && analysisData.risks.length > 0 && (
+                  <div className="mt-3">
+                    <h4 className="font-medium mb-1">Identified Risks:</h4>
+                    <ul className="text-sm space-y-2">
+                      {analysisData.risks.map((risk: any, index: number) => (
+                        <li key={index} className="p-2 rounded bg-background border">
+                          <div className="flex items-center">
+                            <div className={`w-2 h-2 rounded-full mr-2 ${
+                              risk.severity === 'high' ? 'bg-red-500' : 
+                              risk.severity === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
+                            }`} />
+                            <span className="font-medium">{risk.type}</span>
+                          </div>
+                          <p className="mt-1">{risk.description}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </Card>
     </div>

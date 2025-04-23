@@ -1,11 +1,12 @@
-
 import { supabase } from "@/lib/supabase";
 import logger from "@/utils/logger";
 
 /**
  * Creates a detailed risk assessment for Form 47 Consumer Proposal documents
+ * This function is currently disabled as part of removing Supabase dependencies
  * @param documentId The document ID to create the risk assessment for
  */
+/*
 export const createForm47RiskAssessment = async (documentId) => {
   try {
     // Get existing analysis record if any
@@ -258,6 +259,7 @@ export const createForm47RiskAssessment = async (documentId) => {
     throw error;
   }
 };
+*/
 
 // Export other document operations as needed
 export const uploadDocument = async (file) => {

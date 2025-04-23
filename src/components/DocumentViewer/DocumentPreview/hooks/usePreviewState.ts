@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import logger from "@/utils/logger";
+import { getJson } from "@/utils/storage";
 
 interface UsePreviewStateProps {
   storagePath: string;
@@ -12,7 +12,8 @@ export const usePreviewState = ({ storagePath }: UsePreviewStateProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fileExists, setFileExists] = useState(false);
-  const [fileType, setFileType] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string>('unknown');
+  const [isLocalFile, setIsLocalFile] = useState(false);
   
   // Check if the file is an Excel file
   const isExcelFile = !!storagePath && /\.(xlsx|xls|csv)$/i.test(storagePath);
@@ -29,68 +30,69 @@ export const usePreviewState = ({ storagePath }: UsePreviewStateProps) => {
       setError(null);
 
       try {
-        // First, check if file exists
-        const { data, error: checkError } = await supabase
-          .storage
-          .from('documents')
-          .list(storagePath.split('/').slice(0, -1).join('/'), {
-            search: storagePath.split('/').pop() || ''
-          });
-
-        if (checkError) {
-          console.error("Error checking file existence:", checkError);
-          setError("Error verifying file existence");
+        // For local files, we need to check if the file exists in localStorage
+        const documents = getJson<Record<string, any>>('uploaded_documents') || {};
+        const documentId = storagePath.includes('/') ? storagePath.split('/').pop() : storagePath;
+        
+        if (!documentId) {
+          setError("Invalid document path");
           setIsLoading(false);
           setFileExists(false);
           return;
         }
-
-        // If file doesn't exist or list is empty
-        if (!data || data.length === 0) {
-          setError("File not found");
+        
+        const documentData = documents[documentId];
+        
+        if (!documentData || !documentData.dataUrl) {
+          // If we can't find the document in localStorage, check if it's a public file
+          if (storagePath.startsWith('/') || storagePath.startsWith('./') || storagePath.startsWith('../')) {
+            // This is a relative path to a file in the public directory
+            setUrl(storagePath);
+            setDownloadUrl(storagePath);
+            setFileExists(true);
+            setIsLocalFile(false);
+            
+            // Determine file type from extension
+            determineFileType(storagePath);
+            
+            setIsLoading(false);
+            return;
+          }
+          
+          setError("File not found in local storage");
           setIsLoading(false);
           setFileExists(false);
           return;
         }
-
+        
+        // File exists in localStorage
+        setUrl(documentData.dataUrl);
+        setDownloadUrl(documentData.dataUrl);
         setFileExists(true);
-
+        setIsLocalFile(true);
+        
         // Determine file type
-        const fileName = storagePath.toLowerCase();
-        if (fileName.endsWith('.pdf')) {
-          setFileType('pdf');
-        } else if (fileName.match(/\.(jpe?g|png|gif|bmp|webp|svg)$/i)) {
-          setFileType('image');
-        } else if (fileName.match(/\.(xlsx?|csv)$/i)) {
-          setFileType('excel');
-        } else if (fileName.match(/\.(docx?|txt|rtf)$/i)) {
-          setFileType('document');
-        } else {
-          setFileType('other');
-        }
-
-        // Get the file URL
-        const { data: urlData, error: urlError } = await supabase
-          .storage
-          .from('documents')
-          .createSignedUrl(storagePath, 60 * 60); // 1 hour expiry
-
-        if (urlError) {
-          console.error("Error getting signed URL:", urlError);
-          setError("Error generating file URL");
-          setIsLoading(false);
-          return;
-        }
-
-        // Set both URL and downloadUrl
-        setUrl(urlData?.signedUrl || null);
-        setDownloadUrl(urlData?.signedUrl || null);
-
+        determineFileType(documentData.name || storagePath);
       } catch (error: any) {
-        console.error("Error in fetch file URL:", error);
+        logger.error("Error in fetch file URL:", error);
         setError(error.message || "An unknown error occurred");
       } finally {
         setIsLoading(false);
+      }
+    };
+    
+    const determineFileType = (fileName: string) => {
+      const lowerFileName = fileName.toLowerCase();
+      if (lowerFileName.endsWith('.pdf')) {
+        setFileType('pdf');
+      } else if (lowerFileName.match(/\.(jpe?g|png|gif|bmp|webp|svg)$/i)) {
+        setFileType('image');
+      } else if (lowerFileName.match(/\.(xlsx?|csv)$/i)) {
+        setFileType('excel');
+      } else if (lowerFileName.match(/\.(docx?|txt|rtf)$/i)) {
+        setFileType('document');
+      } else {
+        setFileType('other');
       }
     };
 
@@ -104,7 +106,8 @@ export const usePreviewState = ({ storagePath }: UsePreviewStateProps) => {
     error,
     fileExists,
     fileType,
-    isExcelFile
+    isExcelFile,
+    isLocalFile
   };
 };
 

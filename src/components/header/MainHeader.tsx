@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Search, LogOut, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -10,23 +9,14 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { NotificationBell } from "../notifications/NotificationBell";
-import { NotificationsList } from "../notifications/NotificationsList";
+// Notification components are completely disabled
 import { supabase } from "@/lib/supabase";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 
 export const MainHeader = () => {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -77,20 +67,7 @@ export const MainHeader = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <Popover open={showNotifications} onOpenChange={setShowNotifications}>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative rounded-full p-0 h-9 w-9">
-                <NotificationBell />
-                <span className="sr-only">Notifications</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-[380px] p-0 max-h-[500px] overflow-hidden">
-              <NotificationsList 
-                notifications={notifications} 
-                isLoading={isLoadingNotifications} 
-              />
-            </PopoverContent>
-          </Popover>
+          {/* Notification functionality removed */}
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

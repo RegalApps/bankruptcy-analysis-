@@ -1,186 +1,146 @@
-
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import React, { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { ViewerLoadingState } from "./components/ViewerLoadingState";
-import { ViewerErrorState } from "./components/ViewerErrorState";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentPreview } from "./DocumentPreview";
-import { RiskAssessment } from "./RiskAssessment";
-import { AlertTriangle, AlertCircle, RefreshCcw, Bug, FileText } from "lucide-react";
-import { DocumentClientInfo } from "./DocumentClientInfo";
-import { useDocumentState } from "./hooks/useDocumentState";
-import { DiagnosticsPanel } from "./components/DiagnosticsPanel";
+import { BankruptcyAnalysisResult } from "@/utils/documentOperations";
+import { AlertTriangle, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import logger from '@/utils/logger';
 
 interface EnhancedDocumentViewerProps {
-  documentId: string;
-  documentTitle?: string;
+  document: any;
+  analysis: BankruptcyAnalysisResult | null;
 }
 
-export const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({
-  documentId,
-  documentTitle
-}) => {
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const isDevMode = process.env.NODE_ENV === 'development';
+const EnhancedDocumentViewer: React.FC<EnhancedDocumentViewerProps> = ({ document, analysis }) => {
+  const [pdfError, setPdfError] = useState<boolean>(false);
   
-  const {
-    document,
-    loading,
-    loadingError,
-    analysisError,
-    analysisLoading,
-    debugInfo,
-    fetchDocumentDetails,
-    triggerAnalysis
-  } = useDocumentState(documentId, documentTitle);
+  // Get the document ID and storage path
+  const documentId = document?.id || '';
+  const documentTitle = document?.title || 'Document Preview';
   
-  // Initial document fetch
-  useEffect(() => {
-    if (documentId) {
-      fetchDocumentDetails();
-    }
-  }, [documentId]);
+  // Use the document's storage path or a fallback
+  const storagePath = document?.id || '';
   
-  // Set up real-time subscription for analysis updates
-  useEffect(() => {
-    if (!documentId) return;
-    
-    const channel = supabase
-      .channel(`document_analysis_${documentId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'document_analysis',
-          filter: `document_id=eq.${documentId}`
-        },
-        async () => {
-          console.log("Real-time update received for document analysis");
-          fetchDocumentDetails();
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [documentId]);
-
-  if (loading) {
-    return <ViewerLoadingState message={`Loading ${documentTitle || "Document"}...`} />;
-  }
-
-  if (loadingError) {
-    return <ViewerErrorState error={loadingError} onRetry={fetchDocumentDetails} />;
-  }
-
-  if (!document) {
-    return <ViewerErrorState error="Document not found" onRetry={fetchDocumentDetails} />;
-  }
-
-  const analysisContent = document?.analysis?.[0]?.content || {};
-  const risks = analysisContent.risks || [];
-  const extractedInfo = analysisContent.extracted_info || {};
-  const documentSummary = extractedInfo?.summary || analysisContent.summary || "";
+  const handlePdfError = (error: Error) => {
+    logger.error('Error loading PDF document:', error);
+    setPdfError(true);
+  };
 
   return (
     <div className="flex flex-col h-full">
-      {(analysisError || analysisLoading) && (
-        <Alert variant={analysisError ? "destructive" : "default"} className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{analysisLoading ? "Processing Document" : "Analysis Issue"}</AlertTitle>
-          <AlertDescription className="flex flex-col gap-2">
-            <div>{analysisLoading ? "Document analysis in progress..." : analysisError}</div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={triggerAnalysis}
-                disabled={analysisLoading}
-              >
-                <RefreshCcw className={`h-4 w-4 mr-1 ${analysisLoading ? "animate-spin" : ""}`} />
-                {analysisLoading ? "Analyzing..." : "Analyze Document"}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowDiagnostics(!showDiagnostics)}
-              >
-                <Bug className="h-4 w-4 mr-1" />
-                {showDiagnostics ? "Hide Diagnostics" : "Show Diagnostics"}
-              </Button>
-            </div>
+      {analysis && analysis.riskLevel === 'high' && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>High Risk Document</AlertTitle>
+          <AlertDescription>
+            This document has been flagged as high risk. Please review carefully.
           </AlertDescription>
         </Alert>
       )}
       
-      {showDiagnostics && (
-        <div className="mb-4">
-          <DiagnosticsPanel documentId={documentId} document={document} />
-        </div>
+      {pdfError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTitle>Error loading PDF</AlertTitle>
+          <AlertDescription>
+            There was a problem loading this PDF. The file may be corrupted or in an unsupported format.
+          </AlertDescription>
+        </Alert>
       )}
       
-      {extractedInfo && Object.keys(extractedInfo).length > 0 && (
-        <div className="mb-4">
-          <DocumentClientInfo clientInfo={extractedInfo} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="h-full overflow-hidden">
+            <DocumentPreview 
+              documentId={documentId}
+              title={documentTitle}
+              storagePath={storagePath}
+              onAnalysisComplete={() => logger.info('Analysis completed')}
+            />
+          </Card>
         </div>
-      )}
-      
-      <div className="flex-grow mb-4">
-        <DocumentPreview 
-          documentId={documentId}
-          title={document.title}
-          storagePath={document.storage_path || ""}
-          bypassAnalysis={true}
-        />
-      </div>
-      
-      <Card className="p-4 mb-4">
-        <div className="flex items-center mb-2">
-          <FileText className="h-5 w-5 text-primary mr-2" />
-          <h3 className="text-lg font-medium">Document Summary</h3>
-        </div>
-        {documentSummary ? (
-          <p className="text-sm text-gray-700">{documentSummary}</p>
-        ) : (
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-4/6" />
-          </div>
-        )}
-      </Card>
-      
-      <div className="mb-4">
-        <RiskAssessment 
-          risks={risks} 
-          documentId={documentId}
-          isLoading={analysisLoading} 
-        />
         
-        {risks && risks.length > 0 && (
-          <div className="mt-2 text-sm flex items-center text-amber-600">
-            <AlertTriangle className="h-4 w-4 mr-1" />
-            <span>Found {risks.length} {risks.length === 1 ? 'risk' : 'risks'} that require attention</span>
-          </div>
-        )}
+        <div className="lg:col-span-1">
+          <Card className="h-full p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Analysis</h2>
+              {analysis && (
+                <Badge variant={
+                  analysis.riskLevel === 'high' ? 'destructive' : 
+                  analysis.riskLevel === 'medium' ? 'default' : 
+                  'default'
+                }>
+                  {analysis.riskLevel.toUpperCase()} RISK
+                </Badge>
+              )}
+            </div>
+            
+            {!analysis ? (
+              <div className="flex flex-col items-center justify-center h-64">
+                <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground text-center">
+                  No analysis available for this document.
+                </p>
+              </div>
+            ) : (
+              <Tabs defaultValue="summary">
+                <TabsList className="w-full">
+                  <TabsTrigger value="summary">Summary</TabsTrigger>
+                  <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="issues">Issues</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="summary" className="mt-4">
+                  <h3 className="font-medium mb-2">Form Type</h3>
+                  <p className="text-sm mb-4">{analysis.formType}</p>
+                  
+                  <h3 className="font-medium mb-2">Narrative</h3>
+                  <p className="text-sm">{analysis.narrative}</p>
+                </TabsContent>
+                
+                <TabsContent value="details" className="mt-4">
+                  <h3 className="font-medium mb-2">Key Fields</h3>
+                  <div className="space-y-2">
+                    {Object.entries(analysis.keyFields).map(([key, value]) => (
+                      <div key={key} className="grid grid-cols-3 gap-2 text-sm">
+                        <div className="font-medium capitalize">{key}</div>
+                        <div className="col-span-2">{value as string}</div>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="issues" className="mt-4">
+                  <h3 className="font-medium mb-2">Missing Fields</h3>
+                  {analysis.missingFields.length > 0 ? (
+                    <ul className="list-disc list-inside text-sm mb-4">
+                      {analysis.missingFields.map((field, index) => (
+                        <li key={index}>{field}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm mb-4">No missing fields detected.</p>
+                  )}
+                  
+                  <h3 className="font-medium mb-2">Validation Issues</h3>
+                  {analysis.validationIssues.length > 0 ? (
+                    <ul className="list-disc list-inside text-sm">
+                      {analysis.validationIssues.map((issue, index) => (
+                        <li key={index}>{issue}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm">No validation issues detected.</p>
+                  )}
+                </TabsContent>
+              </Tabs>
+            )}
+          </Card>
+        </div>
       </div>
-      
-      {isDevMode && debugInfo && (
-        <Card className="p-4 mt-4 bg-stone-50">
-          <details>
-            <summary className="text-sm font-medium cursor-pointer">Debug Information (Dev Only)</summary>
-            <pre className="text-xs mt-2 overflow-auto max-h-40 p-2 bg-stone-100 rounded">
-              {JSON.stringify(debugInfo, null, 2)}
-            </pre>
-          </details>
-        </Card>
-      )}
     </div>
   );
 };
+
+export default EnhancedDocumentViewer;

@@ -1,16 +1,11 @@
-
-import * as pdfjs from 'pdfjs-dist';
-import { PDF_CONFIG } from './utils/pdfConfig';
-import { isScannedPage, pageToImage } from './utils/pdfPageUtils';
+import pdfjs from '@/utils/pdfConfig';
+import { PDF_PROCESSING_CONFIG } from '@/utils/pdfConfig';
+import { preprocessDocument } from './utils/documentPreprocessing';
+import { extractFormFields, identifyFormType } from './utils/formRecognition';
 import { performOCR } from './utils/ocrUtils';
+import { isScannedPage, pageToImage } from './utils/pdfPageUtils';
 import { PdfTextContent, PdfTextItem, PageError, TextExtractionResult } from './utils/pdfTypes';
 import logger from '@/utils/logger';
-
-// Initialize PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url
-).toString();
 
 /**
  * Extracts text content from a PDF file.
@@ -29,7 +24,7 @@ export const extractTextFromPdf = async (arrayBuffer: ArrayBuffer): Promise<Text
     logger.debug('Loading PDF document...');
     const pdf = await pdfjs.getDocument({
       data: arrayBuffer,
-      ...PDF_CONFIG
+      ...PDF_PROCESSING_CONFIG
     }).promise;
     
     logger.info(`PDF loaded successfully. Total pages: ${pdf.numPages}`);

@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import type { Task } from "../../types";
+import { getDocumentTasks } from "../services/taskService";
 
 interface UseTaskManagerProps {
   documentId: string;
@@ -17,15 +16,12 @@ export const useTaskManager = ({ documentId, initialTasks, onTaskUpdate }: UseTa
   const fetchTasks = async () => {
     try {
       console.log('Fetching tasks for document:', documentId);
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('document_id', documentId);
-
-      if (error) throw error;
-
-      console.log('Fetched tasks:', data);
-      setLocalTasks(data || []);
+      
+      // Use our local storage service to get tasks
+      const tasks = await getDocumentTasks(documentId);
+      
+      console.log('Fetched tasks:', tasks);
+      setLocalTasks(tasks || []);
     } catch (error) {
       console.error('Error fetching tasks:', error);
       toast({
@@ -37,32 +33,24 @@ export const useTaskManager = ({ documentId, initialTasks, onTaskUpdate }: UseTa
   };
 
   useEffect(() => {
-    console.log('Setting up real-time subscription for document:', documentId);
+    console.log('Setting up local task manager for document:', documentId);
     fetchTasks();
 
-    const channel = supabase
-      .channel('tasks_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks',
-          filter: `document_id=eq.${documentId}`
-        },
-        async (payload) => {
-          console.log('Task change detected:', payload);
-          await fetchTasks();
-          onTaskUpdate();
-        }
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-      });
+    // Set up a simple event listener for storage changes
+    // This will allow us to update tasks if they're modified in another tab
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'local_tasks') {
+        console.log('Local tasks storage changed, refreshing tasks');
+        fetchTasks();
+        onTaskUpdate();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      console.log('Cleaning up real-time subscription');
-      supabase.removeChannel(channel);
+      console.log('Cleaning up local task manager');
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [documentId, onTaskUpdate]);
 

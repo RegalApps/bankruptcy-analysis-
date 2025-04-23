@@ -1,4 +1,3 @@
-
 import React from "react";
 import { 
   ResizablePanelGroup, 
@@ -11,7 +10,6 @@ interface DesktopLayoutProps {
   sidebar: React.ReactNode;
   mainContent: React.ReactNode;
   collaborationPanel: React.ReactNode;
-  taskPanel: React.ReactNode;
   versionPanel: React.ReactNode;
   selectedTab: string;
   setSelectedTab: (value: string) => void;
@@ -21,7 +19,6 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   sidebar,
   mainContent,
   collaborationPanel,
-  taskPanel,
   versionPanel,
   selectedTab,
   setSelectedTab,
@@ -59,7 +56,6 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               selectedTab={selectedTab}
               setSelectedTab={setSelectedTab}
               collaborationPanel={collaborationPanel}
-              taskPanel={taskPanel}
               versionPanel={versionPanel}
             />
           </ResizablePanel>

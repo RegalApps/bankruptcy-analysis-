@@ -1,118 +1,115 @@
-
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { analyticsService, EventCategory, EventSubcategory, EventTrend } from '@/services/analyticsService';
 import { useDebouncedCallback } from './useDebounce';
 
 interface UseEnhancedAnalyticsOptions {
-  pageName?: string;
-  userRole?: string;
   enablePersistence?: boolean;
+  userRole?: string;
 }
 
-export const useEnhancedAnalytics = ({
-  pageName,
-  userRole = 'user',
-  enablePersistence = true
-}: UseEnhancedAnalyticsOptions = {}) => {
+/**
+ * Enhanced analytics hook that provides analytics tracking functionality
+ */
+export const useEnhancedAnalytics = (options: UseEnhancedAnalyticsOptions = {}) => {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [trendData, setTrendData] = useState<EventTrend[]>([]);
-  const [isLoadingTrends, setIsLoadingTrends] = useState(false);
-  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const { enablePersistence = true, userRole = 'user' } = options;
   
-  // Initialize analytics with configuration - only run once on mount
+  // Initialize analytics service
   useEffect(() => {
-    // Set user role for analytics
-    analyticsService.setUserRole(userRole);
+    const initAnalytics = async () => {
+      try {
+        await analyticsService.initialize();
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Failed to initialize analytics service:', error);
+      }
+    };
     
-    // Configure persistence
-    analyticsService.setPersistenceEnabled(enablePersistence);
-    
-    setIsInitialized(true);
-  }, [userRole, enablePersistence]);
+    initAnalytics();
+  }, []);
   
-  // Track page view if pageName is provided - only run when pageName changes
+  // Set up user role when provided
   useEffect(() => {
-    if (pageName && isInitialized) {
-      // Track page view and return cleanup function
+    if (userRole && analyticsService.setUserRole) {
+      analyticsService.setUserRole(userRole);
+    }
+  }, [userRole]);
+  
+  // Set up persistence configuration
+  useEffect(() => {
+    if (isInitialized && analyticsService.setPersistenceEnabled) {
+      analyticsService.setPersistenceEnabled(enablePersistence);
+    }
+  }, [enablePersistence, isInitialized]);
+  
+  // Track page view with debounce to prevent duplicate events
+  const trackPageView = useCallback((pageName: string) => {
+    if (isInitialized) {
       return analyticsService.trackPageView(pageName);
     }
-  }, [pageName, isInitialized]);
+  }, [isInitialized]);
   
-  // Function to fetch trend data with cache control
-  const fetchTrendData = useCallback(async (
+  const debouncedTrackPageView = useDebouncedCallback(trackPageView, 300);
+  
+  // Get event trends for a specific period (for dashboard components)
+  const getEventTrends = useCallback(async (
     period: 'day' | 'week' | 'month' = 'day',
-    options: {
-      category?: EventCategory;
-      subcategory?: EventSubcategory;
-      startDate?: Date;
-      endDate?: Date;
-    } = {}
+    options: any = {}
   ) => {
-    // Prevent excessive fetches within a short time
-    const now = Date.now();
-    if (now - lastFetchTime < 3000 && isLoadingTrends) {
-      return; // Don't fetch if we've fetched in the last 3 seconds
-    }
-    
-    setIsLoadingTrends(true);
-    setLastFetchTime(now);
+    if (!isInitialized) return [];
     
     try {
-      const trends = await analyticsService.getEventTrends(period, {
-        ...options,
-        userRole
-      });
-      
-      setTrendData(trends);
+      const trends = await analyticsService.getEventTrends(period, options);
+      return trends;
     } catch (error) {
-      console.error('Error fetching trend data:', error);
-    } finally {
-      // Use setTimeout to prevent the flickering of loading state
-      setTimeout(() => {
-        setIsLoadingTrends(false);
-      }, 300);
+      console.error('Error fetching event trends:', error);
+      return [];
     }
-  }, [userRole, lastFetchTime, isLoadingTrends]);
+  }, [isInitialized]);
   
-  // Debounced version of event tracking to prevent excessive calls
-  const debouncedTrackInteraction = useDebouncedCallback(
-    (component: string, action: string, subcategory: EventSubcategory = 'Click', metadata?: Record<string, any>) => {
-      analyticsService.trackInteraction(component, action, subcategory, metadata);
-    },
-    300
-  );
+  // Track interaction in a more user-friendly way
+  const trackInteraction = useCallback((
+    component: string, 
+    action: string, 
+    subcategory: EventSubcategory = 'Click' as EventSubcategory, 
+    metadata?: Record<string, any>
+  ) => {
+    if (!isInitialized) return;
+    analyticsService.trackInteraction(component, action, subcategory, metadata);
+  }, [isInitialized]);
   
-  // Create a memoized object to prevent unnecessary re-renders of components that use this hook
-  const analyticsApi = useMemo(() => ({
-    // Event tracking methods
-    trackEvent: analyticsService.trackEvent.bind(analyticsService),
-    trackInteraction: debouncedTrackInteraction,
-    trackDocumentEvent: analyticsService.trackDocumentEvent.bind(analyticsService),
-    trackClientEvent: analyticsService.trackClientEvent.bind(analyticsService),
-    trackError: analyticsService.trackError.bind(analyticsService),
+  // Return analytics utility functions
+  return useMemo(() => ({
+    // Track events
+    trackEvent: (event: any) => analyticsService.trackEvent(event),
+    trackPageView: debouncedTrackPageView,
+    trackDocumentEvent: (action: string, documentId: string, subcategory?: EventSubcategory, metadata?: any) => 
+      analyticsService.trackDocumentEvent(action, documentId, subcategory, metadata),
+    trackClientEvent: (action: string, clientId: string, subcategory?: EventSubcategory, metadata?: any) => 
+      analyticsService.trackClientEvent ? analyticsService.trackClientEvent(action, clientId, subcategory, metadata) : null,
+    trackError: (errorType: string, message: string, metadata?: any) => 
+      analyticsService.trackError ? analyticsService.trackError(errorType, message, metadata) : null,
+    trackInteraction,
     
-    // Data retrieval methods
-    getAnalyticsData: analyticsService.getAnalyticsData.bind(analyticsService),
-    getMetrics: analyticsService.getMetrics.bind(analyticsService),
-    getPageViewData: analyticsService.getPageViewData.bind(analyticsService),
-    getEventsByCategory: analyticsService.getEventsByCategory.bind(analyticsService),
-    getEventsBySubcategory: analyticsService.getEventsBySubcategory.bind(analyticsService),
-    getHistoricalData: analyticsService.getHistoricalData.bind(analyticsService),
+    // Get analytics data
+    getAnalyticsData: () => analyticsService.getAnalyticsData(),
+    getMetrics: () => analyticsService.getMetrics(),
+    getPageViewData: () => analyticsService.getPageViewData ? analyticsService.getPageViewData() : [],
+    getEventsByCategory: () => analyticsService.getEventsByCategory ? analyticsService.getEventsByCategory() : [],
+    getEventsBySubcategory: () => analyticsService.getEventsBySubcategory ? analyticsService.getEventsBySubcategory() : [],
+    getHistoricalData: () => analyticsService.getHistoricalData(),
+    getEventTrends,
     
-    // Trend data and fetching
-    trendData,
-    isLoadingTrends,
-    fetchTrendData,
+    // State
+    isInitialized,
     
     // Configuration
-    setUserRole: analyticsService.setUserRole.bind(analyticsService),
-    setPersistenceEnabled: analyticsService.setPersistenceEnabled.bind(analyticsService),
+    setUserRole: (role: string) => analyticsService.setUserRole ? analyticsService.setUserRole(role) : null,
+    setPersistenceEnabled: (enabled: boolean) => analyticsService.setPersistenceEnabled ? analyticsService.setPersistenceEnabled(enabled) : null,
   }), [
-    trendData, 
-    isLoadingTrends, 
-    fetchTrendData, 
-    debouncedTrackInteraction
+    isInitialized, 
+    debouncedTrackPageView, 
+    trackInteraction, 
+    getEventTrends
   ]);
-  
-  return analyticsApi;
 };

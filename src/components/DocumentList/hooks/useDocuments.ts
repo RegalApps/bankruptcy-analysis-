@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Document } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { getDocuments } from "@/utils/documentOperations";
 
 export function useDocuments() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -19,26 +18,24 @@ export function useDocuments() {
     try {
       analytics.trackEvent('documents_fetch_started');
       
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .order('updated_at', { ascending: false });
+      // Get documents from local storage
+      const data = await getDocuments();
       
-      if (error) {
-        throw error;
-      }
-      
-      // Transform data to match Document interface with proper type handling
+      // Transform data to match Document interface
       const transformedData: Document[] = data.map(item => ({
         id: item.id,
-        title: item.title || 'Untitled Document', // Ensure title is always a string
+        title: item.title || 'Untitled Document',
         created_at: item.created_at,
-        updated_at: item.updated_at,
-        is_folder: item.is_folder || false,
-        folder_type: item.folder_type,
-        parent_folder_id: item.parent_folder_id,
-        storage_path: item.storage_path,
-        metadata: typeof item.metadata === 'object' ? item.metadata : {}, // Ensure metadata is always an object
+        updated_at: item.created_at, // Use created_at as updated_at
+        is_folder: false,
+        folder_type: null,
+        parent_folder_id: null,
+        storage_path: null,
+        metadata: {
+          formType: item.analysis?.formType || null,
+          riskLevel: item.analysis?.riskLevel || null,
+          status: item.status
+        },
         type: item.type,
         size: item.size || 0,
       }));
@@ -52,28 +49,21 @@ export function useDocuments() {
       
       toast({
         variant: "destructive",
-        title: "Error fetching documents",
-        description: err instanceof Error ? err.message : "An unknown error occurred",
+        title: "Failed to load documents",
+        description: err instanceof Error ? err.message : "An unknown error occurred"
       });
     } finally {
       setIsLoading(false);
     }
-  }, [analytics, toast]);
+  }, [toast, analytics]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    
+  const refetch = useCallback(() => {
     fetchDocuments();
-    
-    return () => {
-      controller.abort();
-    };
   }, [fetchDocuments]);
 
-  return {
-    documents,
-    isLoading,
-    error,
-    refetch: fetchDocuments
-  };
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  return { documents, isLoading, error, refetch };
 }

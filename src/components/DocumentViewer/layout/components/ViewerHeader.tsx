@@ -1,6 +1,6 @@
-
 import React from "react";
 import { FileBarChart, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ViewerHeaderProps {
   documentTitle: string;
@@ -69,5 +69,3 @@ export const ViewerHeader: React.FC<ViewerHeaderProps> = ({
     </div>
   );
 };
-
-import { Button } from "@/components/ui/button";

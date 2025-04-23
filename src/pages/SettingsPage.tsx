@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +8,7 @@ import { MeetingIntegrationsSection } from "@/components/settings/MeetingIntegra
 import { useSettings } from "@/hooks/useSettings";
 import { toast } from "sonner";
 import { Settings, Shield, Users, Link, Layers } from "lucide-react";
+import OpenAIKeyInput from '@/components/OpenAIKeyInput';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<string>("general");
@@ -87,6 +87,13 @@ const SettingsPage = () => {
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary opacity-50 group-data-[state=active]:opacity-100 transition-opacity"></span>
                 </span>
               </TabsTrigger>
+              <TabsTrigger
+                value="api"
+                className="flex items-center gap-2 px-4 py-3 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Link className="h-5 w-5" />
+                <span>API Keys</span>
+              </TabsTrigger>
             </TabsList>
 
             <div className="mt-6 bg-card shadow-sm rounded-xl border border-border p-6">
@@ -112,6 +119,10 @@ const SettingsPage = () => {
               
               <TabsContent value="integrations">
                 <MeetingIntegrationsSection />
+              </TabsContent>
+              
+              <TabsContent value="api">
+                <OpenAIKeyInput />
               </TabsContent>
             </div>
           </Tabs>

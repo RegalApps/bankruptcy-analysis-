@@ -1,6 +1,6 @@
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { DocumentDetails } from "../types";
+import { localDocumentStorage, getDocumentById } from "@/utils/documentOperations";
 
 interface UseDocumentDetailsOptions {
   onSuccess?: (document: DocumentDetails) => void;
@@ -15,55 +15,33 @@ export const useDocumentDetails = (
 
   const fetchDocumentDetails = async () => {
     try {
-      // For Form 47 documents by ID, we can use a fallback if the direct fetch fails
-      const isForm47ID = documentId.toLowerCase().includes('form-47') || 
-                          documentId.toLowerCase().includes('consumer-proposal');
+      console.log(`Fetching document details for ID: ${documentId}`);
       
-      console.log(`Fetching document details for ID: ${documentId}, identified as Form 47: ${isForm47ID}`);
-
-      // First try direct document fetch
-      let { data: document, error: docError } = await supabase
-        .from('documents')
-        .select(`
-          *,
-          analysis:document_analysis(content),
-          comments:document_comments(id, content, created_at, user_id)
-        `)
-        .eq('id', documentId)
-        .maybeSingle();
-
-      // If not found and looks like a Form 47, try to find by title
-      if (!document && (isForm47ID || documentId.toLowerCase().includes('form') || documentId.toLowerCase().includes('consumer'))) {
-        console.log("Document not found by ID, trying Form 47 fallback");
-        const { data: form47Doc, error: form47Error } = await supabase
-          .from('documents')
-          .select(`
-            *,
-            analysis:document_analysis(content),
-            comments:document_comments(id, content, created_at, user_id)
-          `)
-          .or('title.ilike.%form 47%,title.ilike.%consumer proposal%')
-          .limit(1)
-          .maybeSingle();
-          
-        if (form47Error) {
-          console.error("Form 47 fallback search error:", form47Error);
-        }
-        
-        if (form47Doc) {
-          console.log("Found Form 47 document by title:", form47Doc.title);
-          document = form47Doc;
-        }
-      }
-
+      // Get document from local storage
+      const document = await getDocumentById(documentId);
+      
       if (!document) {
         console.error("Document not found:", documentId);
         if (options.onError) options.onError(new Error(`Document not found: ${documentId}`));
         return null;
       }
       
-      // Process the analysis content
-      const processedDocument = processDocumentData(document);
+      // Process the document to match expected format
+      const processedDocument = processDocumentData({
+        ...document,
+        // Add fields expected by the UI
+        storage_path: document.id, // Use ID as storage path for local files
+        updated_at: document.created_at,
+        analysis: document.analysis ? [{ 
+          id: `analysis-${document.id}`,
+          content: document.analysis 
+        }] : [],
+        comments: [],
+        tasks: [],
+        versions: []
+      });
+      
+      console.log("Processed document:", processedDocument);
       
       if (options.onSuccess) options.onSuccess(processedDocument);
       return processedDocument;
@@ -79,7 +57,7 @@ export const useDocumentDetails = (
 };
 
 /**
- * Processes raw document data from Supabase, enhancing and formatting analysis content
+ * Processes raw document data from local storage, enhancing and formatting analysis content
  */
 const processDocumentData = (document: any): DocumentDetails => {
   // Process the analysis content
