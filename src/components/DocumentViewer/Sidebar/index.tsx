@@ -11,13 +11,10 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { detectFormType } from "../DocumentPreview/hooks/analysisProcess/formIdentification";
 import { SidebarHeader } from "./SidebarHeader";
-import { SidebarSummary } from "./SidebarSummary";
 import { SidebarDetails } from "./SidebarDetails";
 import { SidebarRisks } from "./SidebarRisks";
 import { SidebarDeadlines } from "./SidebarDeadlines";
 import { SidebarFormSpecific } from "./SidebarFormSpecific";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   document: DocumentDetailsType;
@@ -28,7 +25,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
   const [isLoading, setIsLoading] = useState(false);
-  const [isDebugOpen, setIsDebugOpen] = useState(false);
   
   // Ensure document has all required properties with safe fallbacks
   const safeDocument = {
@@ -54,9 +50,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
   // Get document text safely with fallbacks
   const documentText = "";  // Simplified for local-only mode
 
-  // Determine form type and add debug logs
-  const formType = safeDocument.title?.toLowerCase().includes('form 47') ? 'form-47' : 
-                  safeDocument.title?.toLowerCase().includes('form 31') ? 'form-31' : 'unknown';
+  // Determine form type with improved detection
+  let formType = 'unknown';
+  
+  // Check for form type in title
+  if (safeDocument.title?.toLowerCase().includes('form 47') || safeDocument.title?.toLowerCase().includes('consumer proposal')) {
+    formType = 'form-47';
+  } else if (safeDocument.title?.toLowerCase().includes('form 31') || safeDocument.title?.toLowerCase().includes('proof of claim')) {
+    formType = 'form-31';
+  } 
+  // Check for form type in document ID
+  else if (safeDocument.id?.toLowerCase().includes('form47') || safeDocument.id?.toLowerCase().includes('form-47')) {
+    formType = 'form-47';
+  } else if (safeDocument.id?.toLowerCase().includes('form31') || safeDocument.id?.toLowerCase().includes('form-31')) {
+    formType = 'form-31';
+  }
+  // Check for form type in metadata or analysis
+  else if (extractedInfo?.formType === 'form-47' || extractedInfo?.formType === 'consumer-proposal') {
+    formType = 'form-47';
+  } else if (extractedInfo?.formType === 'form-31' || extractedInfo?.formType === 'proof-of-claim') {
+    formType = 'form-31';
+  }
+  // For testing purposes - force form type based on URL
+  else if (window.location.href.includes('form47') || window.location.href.includes('form-47')) {
+    formType = 'form-47';
+  } else if (window.location.href.includes('form31') || window.location.href.includes('form-31')) {
+    formType = 'form-31';
+  }
+  
   const isForm47 = formType === 'form-47';
   const isForm31 = formType === 'form-31';
   
@@ -85,66 +106,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ document, onDeadlineUpdated })
       <SidebarHeader isDarkMode={isDarkMode} />
       <ScrollArea className="h-[calc(100vh-14rem)] pr-2">
         <div className="px-3 py-3 space-y-4">
-          <SidebarSummary formType={formType} extractedInfo={extractedInfo} />
           <SidebarDetails document={safeDocument} formType={formType} extractedInfo={extractedInfo} />
           <SidebarRisks formType={formType} risks={adaptRisks(risks)} documentId={safeDocument.id} isLoading={isLoading} />
           <SidebarDeadlines formType={formType} document={safeDocument} onDeadlineUpdated={onDeadlineUpdated} />
           <SidebarFormSpecific formType={formType} extractedInfo={extractedInfo} />
-          
-          {/* Debug Section */}
-          <Separator className="my-3" />
-          <Collapsible 
-            open={isDebugOpen} 
-            onOpenChange={setIsDebugOpen}
-            className="bg-muted/30 rounded-md p-2 mt-4"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Code className="h-4 w-4 text-blue-600" />
-                <h3 className="text-sm font-medium text-primary">Raw Analysis Data</h3>
-              </div>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-9 p-0">
-                  <span className="sr-only">Toggle</span>
-                  {isDebugOpen ? '▲' : '▼'}
-                </Button>
-              </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent className="mt-2 space-y-2">
-              <div className="text-xs">
-                <h4 className="font-bold mb-1">Document ID: {safeDocument.id}</h4>
-                <h4 className="font-bold mb-1">Form Type: {formType || 'Unknown'}</h4>
-                
-                <h4 className="font-bold mt-3 mb-1">Extracted Info:</h4>
-                <div className="bg-background/60 p-2 rounded-md overflow-x-auto">
-                  <pre className="whitespace-pre-wrap break-all text-[10px]">
-                    {JSON.stringify(extractedInfo, null, 2)}
-                  </pre>
-                </div>
-                
-                <h4 className="font-bold mt-3 mb-1">Risks Assessment:</h4>
-                <div className="bg-background/60 p-2 rounded-md overflow-x-auto">
-                  <pre className="whitespace-pre-wrap break-all text-[10px]">
-                    {JSON.stringify(risks, null, 2)}
-                  </pre>
-                </div>
-                
-                <h4 className="font-bold mt-3 mb-1">Full Analysis:</h4>
-                <div className="bg-background/60 p-2 rounded-md overflow-x-auto">
-                  <pre className="whitespace-pre-wrap break-all text-[10px]">
-                    {JSON.stringify(safeDocument.analysis, null, 2)}
-                  </pre>
-                </div>
-                
-                <h4 className="font-bold mt-3 mb-1">Document Metadata:</h4>
-                <div className="bg-background/60 p-2 rounded-md overflow-x-auto">
-                  <pre className="whitespace-pre-wrap break-all text-[10px]">
-                    {JSON.stringify(safeDocument.metadata || {}, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
         </div>
       </ScrollArea>
     </div>

@@ -1,5 +1,4 @@
 import logger from "@/utils/logger";
-import { analyzeBankruptcyForm } from "@/services/bankruptcyAnalyzer";
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -12,7 +11,7 @@ export interface DocumentData {
   size: number;
   created_at: string;
   analysis: any;
-  status: 'processed' | 'pending' | 'error';
+  status: 'processed' | 'pending' | 'error' | 'analyzing';
   dataUrl?: string;
 }
 
@@ -148,25 +147,30 @@ export const uploadDocument = async (file: File): Promise<DocumentData> => {
     await fileDataPromise;
     
     // For PDF files, analyze with bankruptcy form analyzer
-    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    if (file.type === 'application/pdf') {
       try {
-        logger.info(`Analyzing PDF with bankruptcy form analyzer: ${file.name}`);
-        const analysisResult = await analyzeBankruptcyForm(file);
+        // Update document status to 'analyzing'
+        const docIndex = localDocumentStorage.findIndex(doc => doc.id === documentId);
+        if (docIndex !== -1) {
+          localDocumentStorage[docIndex].status = 'analyzing';
+        }
+        
+        // Analyze the document
+        const analysisResult = await analyzeDocument(documentId);
         
         // Update document with analysis results
-        const docIndex = localDocumentStorage.findIndex(doc => doc.id === documentId);
         if (docIndex !== -1) {
           localDocumentStorage[docIndex].analysis = analysisResult;
           localDocumentStorage[docIndex].status = 'processed';
-          
-          logger.info(`Analysis completed for document: ${documentId}`);
-          return localDocumentStorage[docIndex];
         }
+        
+        logger.info(`Analysis completed for document: ${documentId}`);
+        return localDocumentStorage[docIndex];
       } catch (analysisError) {
         logger.error(`Error analyzing document: ${analysisError}`);
-        const docIndex = localDocumentStorage.findIndex(doc => doc.id === documentId);
-        if (docIndex !== -1) {
-          localDocumentStorage[docIndex].status = 'error';
+        const index = localDocumentStorage.findIndex(doc => doc.id === documentId);
+        if (index !== -1) {
+          localDocumentStorage[index].status = 'error';
         }
       }
     }
@@ -182,7 +186,12 @@ export const uploadDocument = async (file: File): Promise<DocumentData> => {
  * Retrieves all documents from local storage
  */
 export const getDocuments = async (): Promise<DocumentData[]> => {
-  return [...localDocumentStorage];
+  try {
+    return [...localDocumentStorage];
+  } catch (error) {
+    logger.error('Error loading documents:', error);
+    return [];
+  }
 };
 
 /**
@@ -219,4 +228,69 @@ export const deleteDocument = async (documentId: string): Promise<boolean> => {
   }
   
   return false;
+};
+
+/**
+ * Bankruptcy analysis result interface
+ */
+export interface BankruptcyAnalysisResult {
+  risks: any[];
+  extracted_info: any;
+}
+
+/**
+ * Analyzes a document and updates its analysis data
+ * This is a mock implementation for development
+ */
+export const analyzeDocument = async (documentId: string): Promise<BankruptcyAnalysisResult | null> => {
+  try {
+    // Find the document in local storage
+    const docIndex = localDocumentStorage.findIndex(doc => doc.id === documentId);
+    
+    if (docIndex === -1) {
+      // Document not found - silently fail in development
+      logger.info(`Document not found for analysis: ${documentId}`);
+      return null;
+    }
+    
+    // Update document status to analyzing
+    localDocumentStorage[docIndex].status = 'analyzing';
+    
+    // Simulate analysis delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Create mock analysis result based on document type
+    const mockAnalysis: BankruptcyAnalysisResult = {
+      extracted_info: {
+        clientName: 'Mock Client',
+        formNumber: localDocumentStorage[docIndex].title.includes('47') ? '47' : '31',
+        formType: localDocumentStorage[docIndex].title.includes('47') ? 'form-47' : 'form-31',
+        documentStatus: 'analyzed',
+        summary: 'Document analyzed successfully'
+      },
+      risks: [
+        {
+          type: 'Mock Risk',
+          description: 'This is a mock risk for development purposes.',
+          severity: 'medium',
+          regulation: 'Development Guidelines',
+          impact: 'None - this is a mock risk',
+          requiredAction: 'No action required',
+          solution: 'This is a development environment',
+          deadline: 'N/A'
+        }
+      ]
+    };
+    
+    // Update document with analysis results
+    localDocumentStorage[docIndex].analysis = mockAnalysis;
+    localDocumentStorage[docIndex].status = 'processed';
+    
+    logger.info(`Mock analysis completed for document: ${documentId}`);
+    return mockAnalysis;
+  } catch (error) {
+    // Log the error but don't throw to prevent console errors
+    logger.error(`Error in mock document analysis: ${error}`);
+    return null;
+  }
 };

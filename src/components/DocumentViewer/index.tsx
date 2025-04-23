@@ -17,6 +17,7 @@ interface DocumentViewerProps {
   bypassProcessing?: boolean;
   documentTitle?: string | null;
   isForm47?: boolean;
+  isForm31?: boolean;
   onLoadFailure?: () => void;
 }
 
@@ -25,6 +26,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   bypassProcessing = false,
   documentTitle,
   isForm47 = false,
+  isForm31 = false,
   onLoadFailure
 }) => {
   // Use a stable key for this component to force full remount when documentId changes
@@ -61,17 +63,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       const mockDocument: DocumentDetails = {
         id: "form47",
         title: documentTitle || "Form 47 - Consumer Proposal",
-        type: "form",
+        type: "form-47",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         storage_path: "sample-documents/form-47-consumer-proposal.pdf",
         analysis: [
           {
-            id: "form47-analysis",  // Add the required id property
+            id: "form47-analysis",
             content: {
               extracted_info: {
                 formNumber: "47",
-                formType: "consumer-proposal",
+                formType: "form-47",
                 summary: "This is a form used for consumer proposals under the Bankruptcy and Insolvency Act."
               },
               risks: [
@@ -93,6 +95,44 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return null;
   }, [isForm47, document, loading, documentTitle]);
 
+  // For Form 31, we create a mock document if needed
+  const form31Document = useMemo(() => {
+    if (isForm31 && !document && !loading) {
+      const mockDocument: DocumentDetails = {
+        id: "form31",
+        title: documentTitle || "Form 31 - Proof of Claim",
+        type: "form-31",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        storage_path: "sample-documents/form-31-proof-of-claim.pdf",
+        analysis: [
+          {
+            id: "form31-analysis",
+            content: {
+              extracted_info: {
+                formNumber: "31",
+                formType: "form-31",
+                summary: "This is a proof of claim form used under the Bankruptcy and Insolvency Act."
+              },
+              risks: [
+                {
+                  type: "Missing Information",
+                  description: "Please ensure all required fields are completed.",
+                  severity: "medium" as "medium"
+                }
+              ]
+            }
+          }
+        ],
+        comments: [],
+        tasks: [],
+        versions: []
+      };
+      return mockDocument;
+    }
+    return null;
+  }, [isForm31, document, loading, documentTitle]);
+
   if (loading) {
     return <ViewerLoadingState 
       key={`${componentKey}-loading`} 
@@ -109,7 +149,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         <ViewerLayout
           isForm47={true}
           documentTitle={documentTitle || "Form 47 - Consumer Proposal"}
-          documentType="form"
+          documentType="form-47"
           sidebar={
             <Sidebar document={form47Document} onDeadlineUpdated={handleDocumentUpdated} />
           }
@@ -128,6 +168,41 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           versionPanel={
             <VersionTab 
               documentId="form47"
+              versions={[]}
+            />
+          }
+        />
+      </div>
+    );
+  }
+
+  // Special handling for Form 31
+  if (isForm31 && !document && form31Document) {
+    // Use the mock document for Form 31
+    return (
+      <div className="h-full overflow-hidden rounded-lg shadow-sm border border-border/20" key={componentKey}>
+        <ViewerLayout
+          isForm47={false}
+          documentTitle={documentTitle || "Form 31 - Proof of Claim"}
+          documentType="form-31"
+          sidebar={
+            <Sidebar document={form31Document} onDeadlineUpdated={handleDocumentUpdated} />
+          }
+          mainContent={
+            <DocumentPreview 
+              storagePath="sample-documents/form-31-proof-of-claim.pdf" 
+              title={documentTitle || "Form 31 - Proof of Claim"}
+              documentId="form31"
+              bypassAnalysis={true}
+              key={`preview-form31`}
+            />
+          }
+          collaborationPanel={
+            <CollaborationPanel document={form31Document} onCommentAdded={handleDocumentUpdated} />
+          }
+          versionPanel={
+            <VersionTab 
+              documentId="form31"
               versions={[]}
             />
           }

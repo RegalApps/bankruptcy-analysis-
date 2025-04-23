@@ -1,4 +1,3 @@
-
 import { ReactNode } from 'react';
 
 export interface EditableField {
@@ -30,4 +29,16 @@ export interface DocumentDetailsProps {
   filingDate?: string;
   submissionDeadline?: string;
   documentStatus?: string;
+  // Form 31 specific fields
+  claimantName?: string;
+  creditorName?: string;
+  claimAmount?: string;
+  claimType?: string;
+  securityDetails?: string;
+  debtorName?: string;
+  creditorAddress?: string;
+  claimClassification?: string;
+  debtorAddress?: string;
+  // Additional metadata
+  metadata?: Record<string, any>;
 }

@@ -118,7 +118,7 @@ Missing witness details\tAuthentication issue\t🟠 High\tProvide full name, add
 📅 Set deadline (e.g., 5 days before creditor vote) to auto-remind incomplete forms.`,
 
   "form31": `⚠️ Risk Assessment with BIA Violations and Solutions
-🔴 1. Missing Claim Evidence (Schedule A Not Attached)
+⚠️ 1. Missing Claim Evidence (Schedule A Not Attached)
 Issue: Statement of account or affidavit marked "Schedule A" is referenced but not included.
 
 

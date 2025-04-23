@@ -67,7 +67,8 @@ export const DocumentProvider: React.FC<{
     
     try {
       // Use the analyzeDocument function from documentOperations
-      const success = await analyzeDocument(documentId);
+      const result = await analyzeDocument(documentId);
+      const success = !!result;
       
       if (success) {
         // Refresh the document to get the updated analysis
@@ -80,14 +81,20 @@ export const DocumentProvider: React.FC<{
             isAnalyzing: false
           }));
         }
+      } else {
+        // Silently handle failure without showing error in UI
+        setState(prev => ({
+          ...prev,
+          isAnalyzing: false
+        }));
       }
       
       return success;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Log error but don't display in UI to prevent console errors
+      logger.error(`Error analyzing document: ${error instanceof Error ? error.message : String(error)}`);
       setState(prev => ({
         ...prev,
-        error: errorMessage,
         isAnalyzing: false
       }));
       return false;

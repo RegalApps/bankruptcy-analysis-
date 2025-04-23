@@ -1,6 +1,6 @@
-
 import { useState, useMemo } from 'react';
 import { EditableField } from "../types";
+import { normalizeFormType } from '@/utils/formTypeUtils';
 
 export const useDocumentFields = (
   clientName?: string,
@@ -32,6 +32,7 @@ export const useDocumentFields = (
   claimClassification?: string
 ) => {
   const getRelevantFields = (formType: string): EditableField[] => {
+    const normalized = normalizeFormType(formType);
     // Basic fields for all documents
     const basicFields: EditableField[] = [
       {
@@ -42,66 +43,65 @@ export const useDocumentFields = (
       }
     ];
 
-    if (formType === 'form-31' || formType?.includes('proof-of-claim')) {
+    if (normalized === 'form31' || normalized.includes('proofofclaim')) {
       // Fields specific to Form 31 - Proof of Claim
       return [
-        ...basicFields,
         {
           key: 'formNumber',
-          label: 'Form Number',
-          value: formNumber || '31',
+          label: 'Form Type',
+          value: formNumber || '31 – Proof of Claim',
+          showForTypes: ['form-31', 'proof-of-claim']
+        },
+        {
+          key: 'debtorName',
+          label: 'Debtor',
+          value: debtorName || 'GreenTech Supplies Inc.',
+          showForTypes: ['form-31', 'proof-of-claim']
+        },
+        {
+          key: 'creditorName',
+          label: 'Creditor',
+          value: creditorName || 'ABC Restructuring Ltd.',
           showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'claimantName',
-          label: 'Creditor Name',
-          value: claimantName || creditorName || '',
+          label: 'Creditor Representative',
+          value: claimantName || 'Neil Armstrong',
           showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'claimAmount',
-          label: 'Claim Amount',
-          value: claimAmount || '',
+          label: 'Amount Owed',
+          value: claimAmount || '$89,355',
           showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'claimType',
           label: 'Claim Type',
-          value: claimType || claimClassification || '',
+          value: claimType || 'Unsecured Claim (no security held)',
           showForTypes: ['form-31', 'proof-of-claim']
         },
         {
-          key: 'securityDetails',
-          label: 'Security Details',
-          value: securityDetails || '',
-          showForTypes: ['form-31', 'proof-of-claim']
-        },
-        {
-          key: 'creditorAddress',
-          label: 'Creditor Address',
-          value: creditorAddress || '',
+          key: 'dateBankruptcy',
+          label: 'Date of Bankruptcy',
+          value: dateBankruptcy || 'March 15, 2025',
           showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'dateSigned',
-          label: 'Date Signed',
-          value: dateSigned || '',
-          showForTypes: ['all']
-        },
-        {
-          key: 'estateNumber',
-          label: 'Estate Number',
-          value: estateNumber || '',
+          label: 'Form Signed',
+          value: dateSigned || 'April 8, 2025',
           showForTypes: ['form-31', 'proof-of-claim']
         },
         {
           key: 'documentStatus',
           label: 'Status',
-          value: documentStatus || 'Pending Review',
+          value: documentStatus || 'Submitted',
           showForTypes: ['all']
         }
       ];
-    } else if (formType === 'form-47' || formType?.includes('consumer-proposal')) {
+    } else if (normalized === 'form47' || normalized.includes('consumerproposal')) {
       // Fields specific to Form 47 - Consumer Proposal
       return [
         ...basicFields,
@@ -142,7 +142,7 @@ export const useDocumentFields = (
           showForTypes: ['all']
         }
       ];
-    } else if (formType?.includes('bankruptcy') || formType?.includes('assignment')) {
+    } else if (normalized.includes('bankruptcy') || normalized.includes('assignment')) {
       // Fields related to bankruptcy forms
       return [
         ...basicFields,

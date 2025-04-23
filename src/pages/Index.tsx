@@ -22,6 +22,7 @@ const Index = () => {
   const [documentKey, setDocumentKey] = useState<number>(0); // Key for forcing re-render
   const [documentTitle, setDocumentTitle] = useState<string | null>(null);
   const [isForm47, setIsForm47] = useState<boolean>(false);
+  const [isForm31, setIsForm31] = useState<boolean>(false);
   const [loadFailed, setLoadFailed] = useState<boolean>(false);
   
   const location = useLocation();
@@ -37,6 +38,26 @@ const Index = () => {
     confirmationEmail,
     handleSignOut
   } = useAuthState();
+
+  // Check URL parameters for demo documents
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const demoDoc = params.get('demo');
+    
+    if (demoDoc === 'form47') {
+      setIsForm47(true);
+      setIsForm31(false);
+      setDocumentTitle("Form 47 - Consumer Proposal");
+      setSelectedDocument("form47");
+      setDocumentKey(prev => prev + 1);
+    } else if (demoDoc === 'form31') {
+      setIsForm31(true);
+      setIsForm47(false);
+      setDocumentTitle("Form 31 - Proof of Claim");
+      setSelectedDocument("form31");
+      setDocumentKey(prev => prev + 1);
+    }
+  }, []);
 
   useEffect(() => {
     if (location.state?.selectedDocument) {
@@ -55,7 +76,12 @@ const Index = () => {
       
       if (location.state.isForm47) {
         setIsForm47(true);
+        setIsForm31(false);
         console.log("Document is Form 47");
+      } else if (location.state.isForm31) {
+        setIsForm31(true);
+        setIsForm47(false);
+        console.log("Document is Form 31");
       }
       
       if (location.state.documentTitle) {
@@ -82,6 +108,7 @@ const Index = () => {
     setSelectedDocument(null);
     setDocumentTitle(null);
     setIsForm47(false);
+    setIsForm31(false);
     setLoadFailed(false);
     navigate('/', { replace: true });
   }, [navigate]);
@@ -141,10 +168,11 @@ const Index = () => {
             <DocumentViewer 
               documentId={selectedDocument} 
               key={`doc-${selectedDocument}-${documentKey}`}
-              bypassProcessing={isDebugMode() || isForm47}
+              bypassProcessing={isDebugMode() || isForm47 || isForm31}
               onLoadFailure={handleDocumentLoadFailure}
               documentTitle={documentTitle}
               isForm47={isForm47}
+              isForm31={isForm31}
             />
           </div>
         </div>
